@@ -18,7 +18,7 @@ DEFAULT_SIGN_COMMAND='gpg --detach-sign'
 DEFAULT_GAIA_SIGS=${GAIA_SIGS:-'gaia.sigs'}
 DEFAULT_GITIAN_REPO='https://github.com/tendermint/gitian-builder'
 DEFAULT_GBUILD_FLAGS=''
-DEFAULT_SIGS_REPO='https://github.com/cosmos/gaia.sigs'
+DEFAULT_SIGS_REPO='https://github.com/cosmwasm/wasmd.sigs'
 
 # Overrides
 

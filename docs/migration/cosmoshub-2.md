@@ -23,19 +23,19 @@ protocol changes, and application structural changes that favor developer ergono
 and application development.
 
 First and foremost, the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) and the
-[Gaia](https://github.com/cosmos/gaia) application have been split into separate
+[Gaia](https://github.com/cosmwasm/wasmd) application have been split into separate
 repositories. This allows for both the Cosmos SDK and Gaia to evolve naturally
-and independently. Thus, any future [releases](https://github.com/cosmos/gaia/releases)
+and independently. Thus, any future [releases](https://github.com/cosmwasm/wasmd/releases)
 of Gaia going forward, including this one, will be built and tagged from this
 repository not the Cosmos SDK.
 
 Since the Cosmos SDK and Gaia have now been split into separate repositories, their
 versioning will also naturally diverge. In an attempt to decrease community confusion and strive for
 semantic versioning, the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) will continue
-on its current versioning path (i.e. v0.36.x ) and the [Gaia](https://github.com/cosmos/gaia)
+on its current versioning path (i.e. v0.36.x ) and the [Gaia](https://github.com/cosmwasm/wasmd)
 application will become v2.0.x.
 
-__[Gaia](https://github.com/cosmos/gaia) application v2.0.3 is
+__[Gaia](https://github.com/cosmwasm/wasmd) application v2.0.3 is
 what full node operators will upgrade to and run in this next major upgrade__.
 
 ## Major Updates
@@ -74,7 +74,7 @@ before resetting your validator.
 
 Prior to exporting `cosmoshub-2` state, validators are encouraged to take a full data snapshot at the
 export height before proceeding. Snapshotting depends heavily on infrastructure, but generally this
-can be done by backing up the `.gaiacli` and `.gaiad` directories.
+can be done by backing up the `.wasmcli` and `.wasmd` directories.
 
 In the event that the upgrade does not succeed, validators and operators must downgrade back to
 v0.34.6+ of the _Cosmos SDK_ and restore to their latest snapshot before restarting their nodes.
@@ -93,7 +93,7 @@ __Note__: It is assumed you are currently operating a full-node running v0.34.6+
 1. Verify you are currently running the correct version (v0.34.6+) of the _Cosmos SDK_:
 
    ```shell
-   $ gaiad version --long
+   $ wasmd version --long
    cosmos-sdk: 0.34.6
    git commit: 80234baf91a15dd9a7df8dca38677b66b8d148c1
    vendor hash: f60176672270c09455c01e9d880079ba36130df4f5cd89df58b6701f50b13aad
@@ -108,10 +108,10 @@ __Note__: It is assumed you are currently operating a full-node running v0.34.6+
    comes online in a sufficient and agreed upon amount of time. In such a case, the chain will fallback
    to continue operating `cosmoshub-2`. See [Recovery](#recovery) for details on how to proceed.
 
-   Before exporting state via the following command, the `gaiad` binary must be stopped!
+   Before exporting state via the following command, the `wasmd` binary must be stopped!
 
    ```shell
-   $ gaiad export --for-zero-height --height=[PLACEHOLDER] > cosmoshub_2_genesis_export.json
+   $ wasmd export --for-zero-height --height=[PLACEHOLDER] > cosmoshub_2_genesis_export.json
    ```
 
 3. Verify the SHA256 of the (sorted) exported genesis file:
@@ -122,21 +122,21 @@ __Note__: It is assumed you are currently operating a full-node running v0.34.6+
    ```
 
 4. At this point you now have a valid exported genesis state! All further steps now require
-v2.0.3 of [Gaia](https://github.com/cosmos/gaia).
+v2.0.3 of [Gaia](https://github.com/cosmwasm/wasmd).
 
    **NOTE**: Go [1.13+](https://golang.org/dl/) is required!
 
    ```shell
-   $ git clone https://github.com/cosmos/gaia.git; git checkout v2.0.3; make install
+   $ git clone https://github.com/cosmwasm/wasmd.git; git checkout v2.0.3; make install
    ```
 
 5. Verify you are currently running the correct version (v2.0.3) of the _Gaia_:
 
    ```shell
-   $ gaiad version --long
+   $ wasmd version --long
    name: gaia
-   server_name: gaiad
-   client_name: gaiacli
+   server_name: wasmd
+   client_name: wasmcli
    version: 2.0.3
    commit: 2f6783e298f25ff4e12cb84549777053ab88749a
    build_tags: netgo,ledger
@@ -146,7 +146,7 @@ v2.0.3 of [Gaia](https://github.com/cosmos/gaia).
 6. Migrate exported state from the current v0.34.6+ version to the new v2.0.3 version:
 
    ```shell
-   $ gaiad migrate v0.36 cosmoshub_2_genesis_export.json --chain-id=cosmoshub-3 --genesis-time=[PLACEHOLDER]> genesis.json
+   $ wasmd migrate v0.36 cosmoshub_2_genesis_export.json --chain-id=cosmoshub-3 --genesis-time=[PLACEHOLDER]> genesis.json
    ```
 
    **NOTE**: The `migrate` command takes an input genesis state and migrates it to a targeted version.
@@ -181,20 +181,20 @@ single parameter, `max_validators`, that we're upgrading based on [proposal 10](
    See [Recovery](#recovery) for details on how to proceed.
 
    ```shell
-   $ gaiad unsafe-reset-all
+   $ wasmd unsafe-reset-all
    ```
 
-10. Move the new `genesis.json` to your `.gaiad/config/` directory
-11. Replace the `db_backend` on `.gaiad/config/config.toml` to:
+10. Move the new `genesis.json` to your `.wasmd/config/` directory
+11. Replace the `db_backend` on `.wasmd/config/config.toml` to:
 
     ```toml
     db_backend = "goleveldb"
     ```
 
-12. Note, if you have any application configuration in `gaiad.toml`, that file has now been renamed to `app.toml`:
+12. Note, if you have any application configuration in `wasmd.toml`, that file has now been renamed to `app.toml`:
 
     ```shell
-    $ mv .gaiad/config/gaiad.toml .gaiad/config/app.toml
+    $ mv .wasmd/config/wasmd.toml .wasmd/config/app.toml
     ```
 
 ## Notes for Service Providers
@@ -205,7 +205,7 @@ single parameter, `max_validators`, that we're upgrading based on [proposal 10](
 2. Anyone running signing infrastructure(wallets and exchanges) should be conscious that the `type:`
    field on `StdTx` will have changed from `"type":"auth/StdTx","value":...` to  `"type":"cosmos-sdk/StdTx","value":...`
 3. As mentioned in the notes and SDK CHANGELOG, many queries to cosmos cli are wrapped with `height` fields now.
-4. We highly recommend standing up a [testnet](https://github.com/cosmos/gaia/blob/master/docs/deploy-testnet.md)
+4. We highly recommend standing up a [testnet](https://github.com/cosmwasm/wasmd/blob/master/docs/deploy-testnet.md)
    with the `gaia-2.0` release or joining the gaia-13006 testnet. More info for joining the testnet can be
    found in the [riot validator room](https://riot.im/app/#/room/#cosmos-validators:matrix.org).
 5. We expect that developers with iOS or Android based apps may have to notify their users of downtime

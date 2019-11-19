@@ -1,14 +1,14 @@
 [Unit]
-Description=gaiad
+Description=wasmd
 Requires=network-online.target
 After=network-online.target
 
 [Service]
 Restart=on-failure
-User=gaiad
-Group=gaiad
+User=wasmd
+Group=wasmd
 PermissionsStartOnly=true
-ExecStart=/usr/bin/gaiad start
+ExecStart=/usr/bin/wasmd start
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGTERM
 

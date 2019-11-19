@@ -3,7 +3,7 @@
 
 #Usage: terraform.sh <testnet_name> <testnet_region_number> <testnet_node_number>
 
-#Add gaiad node number for remote identification
+#Add wasmd node number for remote identification
 REGION="$(($2 + 1))"
 RNODE="$(($3 + 1))"
 ID="$((${REGION} * 100 + ${RNODE}))"

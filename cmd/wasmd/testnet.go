@@ -55,7 +55,7 @@ necessary files (private validator, genesis, config, etc.).
 Note, strict routability for addresses is turned off in the config file.
 
 Example:
-	gaiad testnet --v 4 --output-dir ./output --starting-ip-address 192.168.10.2
+	wasmd testnet --v 4 --output-dir ./output --starting-ip-address 192.168.10.2
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -223,7 +223,7 @@ func InitTestnet(cmd *cobra.Command, config *tmconfig.Config, cdc *codec.Codec,
 
 		// TODO: Rename config file to server.toml as it's not particular to Gaia
 		// (REF: https://github.com/cosmos/cosmos-sdk/issues/4125).
-		wasmConfigFilePath := filepath.Join(nodeDir, "config/gaiad.toml")
+		wasmConfigFilePath := filepath.Join(nodeDir, "config/wasmd.toml")
 		srvconfig.WriteConfigFile(wasmConfigFilePath, wasmConfig)
 	}
 

@@ -1,6 +1,6 @@
 # 部署你自己的测试网
 
-这篇文章介绍了三种创建`gaiad`节点的测试网的方式，每种针对不同的使用场景：
+这篇文章介绍了三种创建`wasmd`节点的测试网的方式，每种针对不同的使用场景：
 
 1. 单节点，本地的，手动的测试网
 2. 多节点，本地的，自动的测试网
@@ -14,10 +14,10 @@
 
 如果你需要使用或部署gaia作为容器，你可以跳过`build`步骤并使用官方镜像，$TAG标识你感兴趣的版本：
 
-+ `docker run -it -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiad init`
-+ `docker run -it -p 26657:26657 -p 26656:26656 -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiad start`
++ `docker run -it -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmd init`
++ `docker run -it -p 26657:26657 -p 26656:26656 -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmd start`
 + ...
-+ `docker run -it -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiacli version`
++ `docker run -it -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmcli version`
 
 相同的镜像也可以用于构建你自己的docker-compose栈
 
@@ -36,27 +36,27 @@
 cd $HOME
 
 # Initialize the genesis.json file that will help you to bootstrap the network
-gaiad init --chain-id=testing testing
+wasmd init --chain-id=testing testing
 
 # Create a key to hold your validator account
-gaiacli keys add validator
+wasmcli keys add validator
 
 # Add that key into the genesis.app_state.accounts array in the genesis file
 # NOTE: this command lets you set the number of coins. Make sure this account has some coins
 # with the genesis.app_state.staking.params.bond_denom denom, the default is staking
-gaiad add-genesis-account $(gaiacli keys show validator -a) 1000000000stake,1000000000validatortoken
+wasmd add-genesis-account $(wasmcli keys show validator -a) 1000000000stake,1000000000validatortoken
 
 # Generate the transaction that creates your validator
-gaiad gentx --name validator
+wasmd gentx --name validator
 
 # Add the generated bonding transaction to the genesis file
-gaiad collect-gentxs
+wasmd collect-gentxs
 
-# Now its safe to start `gaiad`
-gaiad start
+# Now its safe to start `wasmd`
+wasmd start
 ```
 
-启动将会把`gaiad`相关的所有数据放在`~/.gaiad`目录。你可以检查所创建的genesis文件——`~/.gaiad/config/genesis.json`。同时`gaiacli`也已经配置完成并且有了一个拥有token的账户(stake和自定义的代币)。
+启动将会把`wasmd`相关的所有数据放在`~/.wasmd`目录。你可以检查所创建的genesis文件——`~/.wasmd/config/genesis.json`。同时`wasmcli`也已经配置完成并且有了一个拥有token的账户(stake和自定义的代币)。
 
 ## 多节点，本地的，自动的测试网
 
@@ -70,7 +70,7 @@ gaiad start
 
 ### 编译
 
-编译`gaiad`二进制文件(linux)和运行`localnet`命令所需的`tendermint/gaianode` docker images。这个二进制文件将被安装到container中，并且可以更新重建image，因此您只需要构建一次image。
+编译`wasmd`二进制文件(linux)和运行`localnet`命令所需的`tendermint/gaianode` docker images。这个二进制文件将被安装到container中，并且可以更新重建image，因此您只需要构建一次image。
 
 ```
 # Work from the SDK repo
@@ -79,8 +79,8 @@ cd $GOPATH/src/github.com/cosmos/cosmos-sdk
 # Build the linux binary in ./build
 make build-linux
 
-# Build tendermint/gaiadnode image
-make build-docker-gaiadnode
+# Build tendermint/wasmdnode image
+make build-docker-wasmdnode
 ```
 
 ### 运行你的测试网
@@ -91,7 +91,7 @@ make build-docker-gaiadnode
 make localnet-start
 ```
 
-此命令使用gaiadnode image创建了一个4节点网络。每个节点的端口可以在下表中找到：
+此命令使用wasmdnode image创建了一个4节点网络。每个节点的端口可以在下表中找到：
 
 | `Node ID` | `P2P Port` | `RPC Port` |
 | ----- | ----- | ---- |
@@ -108,72 +108,72 @@ make build-linux localnet-start
 
 ### 配置
 
-`make localnet-start`命令通过调用`gaiad testnet`命令在`./build`中创建了一个4节点测试网络的文件。输出`./build`目录下一些文件:
+`make localnet-start`命令通过调用`wasmd testnet`命令在`./build`中创建了一个4节点测试网络的文件。输出`./build`目录下一些文件:
 
 ```bash
 $ tree -L 2 build/
 build/
-├── gaiacli
-├── gaiad
+├── wasmcli
+├── wasmd
 ├── gentxs
 │   ├── node0.json
 │   ├── node1.json
 │   ├── node2.json
 │   └── node3.json
 ├── node0
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   ├── key_seed.json
 │   │   └── keys
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 ├── node1
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   └── key_seed.json
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 ├── node2
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   └── key_seed.json
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 └── node3
-    ├── gaiacli
+    ├── wasmcli
     │   └── key_seed.json
-    └── gaiad
-        ├── ${LOG:-gaiad.log}
+    └── wasmd
+        ├── ${LOG:-wasmd.log}
         ├── config
         └── data
 ```
 
-每个`./build/nodeN`目录被挂载到对应container的`/gaiad`目录。
+每个`./build/nodeN`目录被挂载到对应container的`/wasmd`目录。
 
 ### 日志输出
 
-日志被保存在每个`./build/nodeN/gaiad/gaia.log`文件中。你也可以直接通过Docker来查看日志：
+日志被保存在每个`./build/nodeN/wasmd/gaia.log`文件中。你也可以直接通过Docker来查看日志：
 
 ```bash
-docker logs -f gaiadnode0
+docker logs -f wasmdnode0
 ```
 
 
 ### 密钥&账户
 
-你需要使用指定节点的`gaiacli`目录作为你的`home`来同`gaiacli`交互，并执行查询或者创建交易:
+你需要使用指定节点的`wasmcli`目录作为你的`home`来同`wasmcli`交互，并执行查询或者创建交易:
 
 ```bash
-gaiacli keys list --home ./build/node0/gaiacli
+wasmcli keys list --home ./build/node0/wasmcli
 ```
 
 现在账户已经存在了，你可以创建新的账户并向其发送资金！
 
 ::: 提示
-注意：每个节点的密钥种子放在`./build/nodeN/gaiacli/key_seed.json`中，可以通过`gaiacli keys add --restore`命令来回复。
+注意：每个节点的密钥种子放在`./build/nodeN/wasmcli/key_seed.json`中，可以通过`wasmcli keys add --restore`命令来回复。
 :::
 
 ### 特殊的可执行程序

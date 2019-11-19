@@ -29,7 +29,7 @@ Welcome to the documentation of the **Cosmos Hub application: `gaia`**.
 
 # Contribute
 
-See [this file](https://github.com/cosmos/gaia/blob/master/docs/DOCS_README.md) for details of the build process and
+See [this file](https://github.com/cosmwasm/wasmd/blob/master/docs/DOCS_README.md) for details of the build process and
 considerations when making changes.
 
 # Version

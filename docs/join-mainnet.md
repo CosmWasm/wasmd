@@ -17,21 +17,21 @@ These instructions are for setting up a brand new full node from scratch.
 First, initialize the node and create the necessary config files:
 
 ```bash
-gaiad init <your_custom_moniker>
+wasmd init <your_custom_moniker>
 ```
 
 ::: warning Note
 Monikers can contain only ASCII characters. Using Unicode characters will render your node unreachable.
 :::
 
-You can edit this `moniker` later, in the `~/.gaiad/config/config.toml` file:
+You can edit this `moniker` later, in the `~/.wasmd/config/config.toml` file:
 
 ```toml
 # A custom human readable name for this node
 moniker = "<your_custom_moniker>"
 ```
 
-You can edit the `~/.gaiad/config/gaiad.toml` file in order to enable the anti spam mechanism and reject incoming transactions with less than the minimum gas prices:
+You can edit the `~/.wasmd/config/wasmd.toml` file in order to enable the anti spam mechanism and reject incoming transactions with less than the minimum gas prices:
 
 ```
 # This is a TOML config file.
@@ -52,11 +52,11 @@ Your full node has been initialized!
 
 ### Copy the Genesis File
 
-Fetch the mainnet's `genesis.json` file into `gaiad`'s config directory.
+Fetch the mainnet's `genesis.json` file into `wasmd`'s config directory.
 
 ```bash
-mkdir -p $HOME/.gaiad/config
-curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.gaiad/config/genesis.json
+mkdir -p $HOME/.wasmd/config
+curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.wasmd/config/genesis.json
 ```
 
 Note we use the `latest` directory in the [launch repo](https://github.com/cosmos/launch) which contains details for the mainnet like the latest version and the genesis file. 
@@ -68,12 +68,12 @@ If you want to connect to the public testnet instead, click [here](./join-testne
 To verify the correctness of the configuration run:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 ### Add Seed Nodes
 
-Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.gaiad/config/config.toml`. The [`launch`](https://github.com/cosmos/launch) repo contains links to some seed nodes.
+Your node needs to know how to find peers. You'll need to add healthy seed nodes to `$HOME/.wasmd/config/config.toml`. The [`launch`](https://github.com/cosmos/launch) repo contains links to some seed nodes.
 
 If those seeds aren't working, you can find more seeds and persistent peers on a Cosmos Hub explorer (a list can be found on the [launch page](https://cosmos.network/launch)). 
 
@@ -105,7 +105,7 @@ For mainnet, the recommended `gas-prices` is `0.025uatom`.
 
 ## Set `minimum-gas-prices`
 
-Your full-node keeps unconfirmed transactions in its mempool. In order to protect it from spam, it is better to set a `minimum-gas-prices` that the transaction must meet in order to be accepted in your node's mempool. This parameter can be set in the following file `~/.gaiad/config/gaiad.toml`.
+Your full-node keeps unconfirmed transactions in its mempool. In order to protect it from spam, it is better to set a `minimum-gas-prices` that the transaction must meet in order to be accepted in your node's mempool. This parameter can be set in the following file `~/.wasmd/config/wasmd.toml`.
 
 The initial recommended `min-gas-prices` is `0.025uatom`, but you might want to change it later. 
 
@@ -114,13 +114,13 @@ The initial recommended `min-gas-prices` is `0.025uatom`, but you might want to 
 Start the full node with this command:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 Check that everything is running smoothly:
 
 ```bash
-gaiacli status
+wasmcli status
 ```
 
 View the status of the network with the [Cosmos Explorer](https://cosmos.network/launch). 
@@ -132,19 +132,19 @@ Gaia can dump the entire application state to a JSON file, which could be useful
 Export state with:
 
 ```bash
-gaiad export > [filename].json
+wasmd export > [filename].json
 ```
 
 You can also export state from a particular height (at the end of processing the block of that height):
 
 ```bash
-gaiad export --height [height] > [filename].json
+wasmd export --height [height] > [filename].json
 ```
 
 If you plan to start a new network from the exported state, export with the `--for-zero-height` flag:
 
 ```bash
-gaiad export --height [height] --for-zero-height > [filename].json
+wasmd export --height [height] --for-zero-height > [filename].json
 ```
 
 ## Verify Mainnet 
@@ -158,7 +158,7 @@ are computationally expensive, they are not enabled by default. To run a node wi
 these checks start your node with the assert-invariants-blockly flag:
 
 ```bash
-gaiad start --assert-invariants-blockly
+wasmd start --assert-invariants-blockly
 ```
 
 If an invariant is broken on your node, your node will panic and prompt you to send
@@ -170,7 +170,7 @@ invariant broken:
         pool.NotBondedTokens: 100
         sum of account tokens: 101
     CRITICAL please submit the following transaction:
-        gaiacli tx crisis invariant-broken staking supply
+        wasmcli tx crisis invariant-broken staking supply
 
 ```
 

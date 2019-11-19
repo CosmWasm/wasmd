@@ -4,11 +4,11 @@ executors:
   golang:
     docker:
       - image: circleci/golang:1.13
-    working_directory: /go/src/github.com/cosmos/gaia
+    working_directory: /go/src/github.com/cosmwasm/wasmd
   mac:
     macos:
       xcode: "10.3.0"
-    working_directory: /Users/distiller/project/src/github.com/cosmos/gaia
+    working_directory: /Users/distiller/project/src/github.com/cosmwasm/wasmd
     environment:
       GO_VERSION: "1.13"
   docs:
@@ -197,7 +197,7 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/github.com/cosmos/gaia
+    working_directory: /home/circleci/.go_workspace/src/github.com/cosmwasm/wasmd
     machine:
       image: circleci/classic:latest
     environment:
@@ -329,14 +329,14 @@ jobs:
               rm -rf gitian-build-${os}/
             done
       - store_artifacts:
-          path: /go/src/github.com/cosmos/gaia/gaia-darwin-res.yml
+          path: /go/src/github.com/cosmwasm/wasmd/gaia-darwin-res.yml
       - store_artifacts:
-          path: /go/src/github.com/cosmos/gaia/gaia-linux-res.yml
+          path: /go/src/github.com/cosmwasm/wasmd/gaia-linux-res.yml
       - store_artifacts:
-          path: /go/src/github.com/cosmos/gaia/gaia-windows-res.yml
+          path: /go/src/github.com/cosmwasm/wasmd/gaia-windows-res.yml
 
 # FIXME: The `setup-contract-tests-data` make target is broken as it completely
-# overrides the .gaiad directory.
+# overrides the .wasmd directory.
 #
 #  contract_tests:
 #    executor: golang

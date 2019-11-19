@@ -3,6 +3,6 @@
 
 #Usage: terraform.sh <testnet_name> <testnet_node_number>
 
-#Add gaiad node number for remote identification
+#Add wasmd node number for remote identification
 echo "$2" > /etc/nodeid
 

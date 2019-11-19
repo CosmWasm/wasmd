@@ -17,21 +17,21 @@
 
 
 ```bash
-gaiad init <your_custom_moniker>
+wasmd init <your_custom_moniker>
 ```
 
 ::: warning 참고
 `--moniker`는 ASCII 캐릭터만을 지원합니다. Unicode 캐릭터를 이용하는 경우 노드 접근이 불가능할 수 있으니 참고하세요.
 :::
 
-`moniker`는 `~/.gaiad/config/config.toml` 파일을 통해 추후에 변경이 가능합니다:
+`moniker`는 `~/.wasmd/config/config.toml` 파일을 통해 추후에 변경이 가능합니다:
 
 ```toml
 # A custom human readable name for this node
 moniker = "<your_custom_moniker>"
 ```
 
-최소 가스 가격보다 낮은 트랜잭션을 거절하는 스팸 방지 메커니즘을 활성화 하시려면 `~/.gaiad/config/gaiad.toml` 파일을 변경하시면 됩니다:
+최소 가스 가격보다 낮은 트랜잭션을 거절하는 스팸 방지 메커니즘을 활성화 하시려면 `~/.wasmd/config/wasmd.toml` 파일을 변경하시면 됩니다:
 
 ```
 # This is a TOML config file.
@@ -52,11 +52,11 @@ minimum-gas-prices = ""
 
 ### 제네시스 파일 복사하기
 
-테스트넷의 `genesis.json`파일을 `gaiad`의 config 디렉토리로 가져옵니다.
+테스트넷의 `genesis.json`파일을 `wasmd`의 config 디렉토리로 가져옵니다.
 
 ```bash
-mkdir -p $HOME/.gaiad/config
-curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.gaiad/config/genesis.json
+mkdir -p $HOME/.wasmd/config
+curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.wasmd/config/genesis.json
 ```
 
 위 예시에서는 최신 테스트넷에 대한 정보가 포함되어있는 [launch repo](https://github.com/cosmos/launch)의 `latest` 디렉토리를 이용하는 것을 참고하세요. 
@@ -68,11 +68,11 @@ curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME
 설정이 올바르게 작동하는지 확인하기 위해서는 다음을 실행하세요:
 
 ```bash
-gaiad start
+wasmd start
 ```
 ### 시드 노드 추가하기
 
-이제 노드가 다른 피어들을 찾는 방법을 알아야합니다. `$HOME/.gaiad/config/config.toml`에 안정적인 시드 노드들을 추가할 차례입니다. [`launch`](https://github.com/cosmos/launch) repo에 몇 개 시드 노드 링크가 포함되어있습니다.
+이제 노드가 다른 피어들을 찾는 방법을 알아야합니다. `$HOME/.wasmd/config/config.toml`에 안정적인 시드 노드들을 추가할 차례입니다. [`launch`](https://github.com/cosmos/launch) repo에 몇 개 시드 노드 링크가 포함되어있습니다.
 
 만약 해당 시드가 작동하지 않는다면, 추가적인 시드와 피어들을 코스모스 허브 익스플로러에서 확인하세요(목록은 [launch](https://cosmos.network/launch) 페이지에 있습니다.)
 
@@ -105,7 +105,7 @@ gaiad start
 
 ## 최소 가스 가격(`minimum-gas-prices`) 설정하기
 
-풀노드는 컨펌되지 않은 트랜잭션을 멤풀에 보관합니다. 스팸 트랜잭션으로부터 풀노드를 보호하기 위해서 노드 멤풀에 보관되기 위한 트랜잭션의 최소 가스 가격(`minimum-gas-prices`)을 설정할 것을 권장합니다. 해당 파라미터는 `~/.gaiad/config/gaiad.toml`에서 설정하실 수 있씁니다.
+풀노드는 컨펌되지 않은 트랜잭션을 멤풀에 보관합니다. 스팸 트랜잭션으로부터 풀노드를 보호하기 위해서 노드 멤풀에 보관되기 위한 트랜잭션의 최소 가스 가격(`minimum-gas-prices`)을 설정할 것을 권장합니다. 해당 파라미터는 `~/.wasmd/config/wasmd.toml`에서 설정하실 수 있씁니다.
 
 기본 권장 `minimum-gas-prices`는 `0.025uatom`이지만, 추후 바꾸실 수 있습니다. 
 
@@ -114,13 +114,13 @@ gaiad start
 다음 커맨드로 풀노드를 시작하세요:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 모든 것이 잘 작동하고 있는지 확인하기 위해서는:
 
 ```bash
-gaiacli status
+wasmcli status
 ```
 
 네트워크 상태를 [코스모스 익스플로러](https://cosmos.network/launch)에서 확인하세요.
@@ -132,19 +132,19 @@ Gaia는 현재 애플리케이션의 상태를 JSON파일 형태로 내보낼 �
 현재 상태를 내보내기 위해서는:
 
 ```bash
-gaiad export > [filename].json
+wasmd export > [filename].json
 ```
 
 특정 블록 높이의 상태를 내보낼 수 있습니다(해당 블록 처리 후 상태):
 
 ```bash
-gaiad export --height [height] > [filename].json
+wasmd export --height [height] > [filename].json
 ```
 
 만약 해당 상태를 기반으로 새로운 네트워크를 시작하시려 한다면, `--for-zero-height` 플래그를 이용하셔서 내보내기를 실행해주세요:
 
 ```bash
-gaiad export --height [height] --for-zero-height > [filename].json
+wasmd export --height [height] --for-zero-height > [filename].json
 ```
 
 ## 메인넷 검증하기
@@ -154,7 +154,7 @@ gaiad export --height [height] --for-zero-height > [filename].json
 Invariant check는 블록체인 연산력을 상당하게 소모하기 때문에, 기본적으로 비활성화 되어있습니다. Invariant check를 실행한 상태로 노드를 시작하기 원하시는 경우 `assert-invariants-blockly` 플래그를 추가하세요:
 
 ```bash
-gaiad start --assert-invariants-blockly
+wasmd start --assert-invariants-blockly
 ```
 
 만약 노드 내 invariant가 문제를 감지하는 경우, 노드는 패닉하여 메인넷을 중지하는 트랜잭션을 전송합니다. 예시 메시지는 다음과 같습니다:
@@ -165,7 +165,7 @@ invariant broken:
         pool.NotBondedTokens: 100
         sum of account tokens: 101
     CRITICAL please submit the following transaction:
-        gaiacli tx crisis invariant-broken staking supply
+        wasmcli tx crisis invariant-broken staking supply
 
 ```
 

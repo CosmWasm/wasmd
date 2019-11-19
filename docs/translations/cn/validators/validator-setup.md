@@ -21,7 +21,7 @@
 你的`cosmosvalconspub`可以用于通过抵押token来创建一个新的验证人。你可以通过运行下面的命令来查看你的验证人公钥：
 
 ```bash
-gaiad tendermint show-validator
+wasmd tendermint show-validator
 ```
 
 使用下面的命令创建你的验证人：
@@ -31,9 +31,9 @@ gaiad tendermint show-validator
 :::
 
 ```bash
-gaiacli tx staking create-validator \
+wasmcli tx staking create-validator \
   --amount=1000000uatom \
-  --pubkey=$(gaiad tendermint show-validator) \
+  --pubkey=$(wasmd tendermint show-validator) \
   --moniker="choose a moniker" \
   --chain-id=<chain_id> \
   --commission-rate="0.10" \
@@ -50,7 +50,7 @@ gaiacli tx staking create-validator \
 :::
 
 ::: 提示
-如果没有指定，`consensus_pubkey`将默认为`gaiad tendermint show-validator`命令的输出。`key_name`是将用于对交易进行签名的私钥的名称。
+如果没有指定，`consensus_pubkey`将默认为`wasmd tendermint show-validator`命令的输出。`key_name`是将用于对交易进行签名的私钥的名称。
 :::
 
 你可以在第三方区块链浏览器上确定你是否处于验证人行列。
@@ -66,10 +66,10 @@ gaiacli tx staking create-validator \
 你的`cosmosvalconspub`可以用于通过抵押token来创建一个新的验证人。运行如下命令来获取你的验证人节点公钥：
 
 ```bash
-gaiad tendermint show-validator
+wasmd tendermint show-validator
 ```
 
-然后执行`gaiad gentx`命令:
+然后执行`wasmd gentx`命令:
 
 ::: 提示
 `gentx`是持有self-delegation的JSON文件。所有的创世交易会被`创世协调员`收集起来验证并初始化成一个`genesis.json`
@@ -80,7 +80,7 @@ gaiad tendermint show-validator
 :::
 
 ```bash
-gaiad gentx \
+wasmd gentx \
   --amount <amount_of_delegation_uatom> \
   --commission-rate <commission_rate> \
   --commission-max-rate <commission_max_rate> \
@@ -104,7 +104,7 @@ gaiad gentx \
 `--identity`可用于验证和Keybase或UPort这样的系统一起验证身份。与Keybase一起使用时，`--identity`应使用由一个[keybase.io](https://keybase.io/)帐户生成的16位字符串。它是一种加密安全的方法，可以跨多个在线网络验证您的身份。 Keybase API允许我们检索你的Keybase头像。这是你可以在验证人配置文件中添加徽标的方法。
 
 ```bash
-gaiacli tx staking edit-validator
+wasmcli tx staking edit-validator
   --moniker="choose a moniker" \
   --website="https://cosmos.network" \
   --identity=6A0D65E29A4CBC8E \
@@ -127,7 +127,7 @@ gaiacli tx staking edit-validator
 通过该命令查看验证人的描述信息:
 
 ```bash
-gaiacli query staking validator <account_cosmos>
+wasmcli query staking validator <account_cosmos>
 ```
 
 ## 跟踪验证人的签名信息
@@ -135,7 +135,7 @@ gaiacli query staking validator <account_cosmos>
 你可以通过`signing-info`命令跟踪过往的验证人签名：
 
 ```bash
-gaiacli query slashing signing-info <validator-pubkey>\
+wasmcli query slashing signing-info <validator-pubkey>\
   --chain-id=<chain_id>
 ```
 
@@ -144,7 +144,7 @@ gaiacli query slashing signing-info <validator-pubkey>\
 当验证人因停机而"jailed"(入狱)时，你必须用节点操作人帐户提交一笔`Unjail`交易，使其再次能够获得区块提交的奖励（奖励多少取决于分区的fee分配）。
 
 ```bash
-gaiacli tx slashing unjail \
+wasmcli tx slashing unjail \
 	--from=<key_name> \
 	--chain-id=<chain_id>
 ```
@@ -154,10 +154,10 @@ gaiacli tx slashing unjail \
 如果下面的命令返回有内容就证明你的验证人正处于活跃状态:
 
 ```bash
-gaiacli query tendermint-validator-set | grep "$(gaiad tendermint show-validator)"
+wasmcli query tendermint-validator-set | grep "$(wasmd tendermint show-validator)"
 ```
 
-你必须要在[区块浏览器](https://explorecosmos.network/validators)中看见你的验证人节点信息。你可以在`~/.gaiad/config/priv_validator.json`文件中找到`bech32`编码格式的`address`。
+你必须要在[区块浏览器](https://explorecosmos.network/validators)中看见你的验证人节点信息。你可以在`~/.wasmd/config/priv_validator.json`文件中找到`bech32`编码格式的`address`。
 
 ::: warning 注意
 为了能进入验证人集合，你的权重必须超过第100名的验证人。
@@ -169,10 +169,10 @@ gaiacli query tendermint-validator-set | grep "$(gaiad tendermint show-validator
 
 你的验证人已经是jailed状态。如果验证人在最近`10000`个区块中有超过`500`个区块没有进行投票，或者被发现双签，就会被jail掉。
 
-如果被因为掉线而遭到jail，你可以重获你的投票股权以重回验证人队伍。首先，如果`gaiad`没有运行，请再次启动：
+如果被因为掉线而遭到jail，你可以重获你的投票股权以重回验证人队伍。首先，如果`wasmd`没有运行，请再次启动：
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 等待你的全节点追赶上最新的区块高度。然后，运行如下命令。接着，你可以[unjail你的验证人]()。
@@ -180,18 +180,18 @@ gaiad start
 最后，检查你的验证人看看投票股权是否恢复：
 
 ```bash
-gaiacli status
+wasmcli status
 ```
 
 你可能会注意到你的投票权比之前要少。这是由于你的下线受到的削减处罚！
 
 
-### 问题 #2 : 我的`gaiad`由于`too many open files`而崩溃
+### 问题 #2 : 我的`wasmd`由于`too many open files`而崩溃
 
-Linux可以打开的默认文件数（每个进程）是1024。已知`gaiad`可以打开超过1024个文件。这会导致进程崩溃。快速修复运行`ulimit -n 4096`（增加允许的打开文件数）来快速修复，然后使用`gaiad start`重新启动进程。如果你使用`systemd`或其他进程管理器来启动`gaiad`，则可能需要在该级别进行一些配置。解决此问题的示例`systemd`文件如下：
+Linux可以打开的默认文件数（每个进程）是1024。已知`wasmd`可以打开超过1024个文件。这会导致进程崩溃。快速修复运行`ulimit -n 4096`（增加允许的打开文件数）来快速修复，然后使用`wasmd start`重新启动进程。如果你使用`systemd`或其他进程管理器来启动`wasmd`，则可能需要在该级别进行一些配置。解决此问题的示例`systemd`文件如下：
 
 ```toml
-# /etc/systemd/system/gaiad.service
+# /etc/systemd/system/wasmd.service
 [Unit]
 Description=Cosmos Gaia Node
 After=network.target
@@ -200,7 +200,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu
-ExecStart=/home/ubuntu/go/bin/gaiad start
+ExecStart=/home/ubuntu/go/bin/wasmd start
 Restart=on-failure
 RestartSec=3
 LimitNOFILE=4096

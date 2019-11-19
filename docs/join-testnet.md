@@ -30,8 +30,8 @@ These instructions are for full nodes that have ran on previous versions of and 
 First, remove the outdated files and reset the data.
 
 ```bash
-rm $HOME/.gaiad/config/addrbook.json $HOME/.gaiad/config/genesis.json
-gaiad unsafe-reset-all
+rm $HOME/.wasmd/config/addrbook.json $HOME/.wasmd/config/genesis.json
+wasmd unsafe-reset-all
 ```
 
 Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before,
@@ -47,7 +47,7 @@ Make sure that every node has a unique `priv_validator.json`. Do not copy the `p
 Now it is time to upgrade the software:
 
 ```bash
-cd $GOPATH/src/github.com/cosmos/gaia
+cd $GOPATH/src/github.com/cosmwasm/wasmd
 git fetch --all && git checkout master
 make update_tools install
 ```
@@ -57,6 +57,6 @@ make update_tools install
 :::
 
 Note we use `master` here since it contains the latest stable release.
-See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which testnet, and the [Gaia release page](https://github.com/cosmos/gaia/releases) for details on each release.
+See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which testnet, and the [Gaia release page](https://github.com/cosmwasm/wasmd/releases) for details on each release.
 
 Your full node has been cleanly upgraded!

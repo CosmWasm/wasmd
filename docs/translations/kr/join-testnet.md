@@ -17,21 +17,21 @@
 우선 노드를 실행하고 필요한 config 파일을 생성합니다:
 
 ```bash
-gaiad init --moniker <your_custom_moniker>
+wasmd init --moniker <your_custom_moniker>
 ```
 
 ::: warning 참고
 `--moniker`는 ASCII 캐릭터만을 지원합니다. Unicode 캐릭터를 이용하는 경우 노드 접근이 불가능할 수 있으니 참고하세요.
 :::
 
-`moniker`는 `~/.gaiad/config/config.toml` 파일을 통해 추후에 변경이 가능합니다:
+`moniker`는 `~/.wasmd/config/config.toml` 파일을 통해 추후에 변경이 가능합니다:
 
 ```toml
 # A custom human readable name for this node
 moniker = "<your_custom_moniker>"
 ```
 
-최소 수수료보다 낮은 트랜잭션을 거절하는 스팸 방지 메커니즘을 활성화 하시려면 `~/.gaiad/config/gaiad.toml` 파일을 변경하시면 됩니다:
+최소 수수료보다 낮은 트랜잭션을 거절하는 스팸 방지 메커니즘을 활성화 하시려면 `~/.wasmd/config/wasmd.toml` 파일을 변경하시면 됩니다:
 
 ```
 # This is a TOML config file.
@@ -55,8 +55,8 @@ minimum_fees = ""
 우선, 과거 파일을 삭제하고 데이터를 리셋합니다.
 
 ```bash
-rm $HOME/.gaiad/config/addrbook.json $HOME/.gaiad/config/genesis.json
-gaiad unsafe-reset-all
+rm $HOME/.wasmd/config/addrbook.json $HOME/.wasmd/config/genesis.json
+wasmd unsafe-reset-all
 ```
 
 이제 `priv_validator.json`과 `config.toml`을 제외하고 노드가 초기화 되었습니다. 만약 해당 노드에 연결된적이 있는 센트리노드나 풀노드가 같이 업그레이드 되지 않았다면 연결이 실패할 수 있습니다.
@@ -87,11 +87,11 @@ make update_tools install
 
 ### 제네시스 파일 복사하기
 
-테스트넷의 `genesis.json`파일을 `gaiad`의 config 디렉토리로 가져옵니다.
+테스트넷의 `genesis.json`파일을 `wasmd`의 config 디렉토리로 가져옵니다.
 
 ```bash
-mkdir -p $HOME/.gaiad/config
-curl https://raw.githubusercontent.com/cosmos/testnets/master/latest/genesis.json > $HOME/.gaiad/config/genesis.json
+mkdir -p $HOME/.wasmd/config
+curl https://raw.githubusercontent.com/cosmos/testnets/master/latest/genesis.json > $HOME/.wasmd/config/genesis.json
 ```
 
 위 예시에서는 최신 테스트넷에 대한 정보가 포함되어있는 [테스트넷 repo]의 `latest`를 이용하는 것을 참고하세요. 만약 다른 테스트넷에 연결하신다면 해당 테스트넷의 파일을 가져오는 것인지 확인하세요.
@@ -99,12 +99,12 @@ curl https://raw.githubusercontent.com/cosmos/testnets/master/latest/genesis.jso
 설정이 올바르게 작동하는지 확인하기 위해서는 다음을 실행하세요:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 ### 시드 노드 추가하기
 
-이제 노드가 다른 피어들을 찾는 방법을 알아야합니다. `$HOME/.gaiad/config/config.toml`에 안정적인 시드 노드들을 추가할 차례입니다. `testnets` repo에 각 테스트넷에 대한 시드 노드 링크가 포함되어있습니다. 만약 현재 운영되고 있는 테스트넷을 참가하고 싶으시다면 [여기](https://github.com/cosmos/testnets)에서 어떤 노드를 이용할지 확인하세요.
+이제 노드가 다른 피어들을 찾는 방법을 알아야합니다. `$HOME/.wasmd/config/config.toml`에 안정적인 시드 노드들을 추가할 차례입니다. `testnets` repo에 각 테스트넷에 대한 시드 노드 링크가 포함되어있습니다. 만약 현재 운영되고 있는 테스트넷을 참가하고 싶으시다면 [여기](https://github.com/cosmos/testnets)에서 어떤 노드를 이용할지 확인하세요.
 
 만약 해당 시드가 작동하지 않는다면, 추가적인 시드와 피어들을 [코스모스 익스플로러](https://explorer.cosmos.network/nodes)를 통해 확인하실 수 있습니다. `Full Nodes` 탭을 들어가셔서 프라이빗(`10.x.x.x`) 또는 로컬 IP 주소(https://en.wikipedia.org/wiki/Private_network)가 *아닌* 노드를 열어보세요. `Persistent Peer` 값에 연결 스트링(connection string)이 표기되어 있습니다. 가장 최적화된 결과를 위해서는 4-6을 이용하세요.
 
@@ -117,13 +117,13 @@ gaiad start
 다음 커맨드로 풀노드를 시작하세요:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 모든 것이 잘 작동하고 있는지 확인하기 위해서는:
 
 ```bash
-gaiacli status
+wasmcli status
 ```
 
 네트워크 상태를 [코스모스 익스플로러](https://explorecosmos.network)를 통해 확인하세요. 현재 풀 노드가 현재 블록높이로 싱크되었을 경우, 익스플로러의 [풀 노드 리스트](https://explorecosmos.network/validators)에 표시가 될 것입니다. 익스플로러가 모든 노드에 연결하지는 않아 표시가 되지 않을 수 있다는 점 참고해주십시오.
@@ -135,19 +135,19 @@ Gaia는 현재 애플리케이션의 상태를 JSON파일 형태로 내보낼 �
 현재 상태를 내보내기 위해서는:
 
 ```bash
-gaiad export > [filename].json
+wasmd export > [filename].json
 ```
 
 특정 블록 높이의 상태를 내보낼 수 있습니다(해당 블록 처리 후 상태):
 
 ```bash
-gaiad export --height [height] > [filename].json
+wasmd export --height [height] > [filename].json
 ```
 
 만약 해당 상태를 기반으로 새로운 네트워크를 시작하시려 한다면, `--for-zero-height` 플래그를 이용하셔서 내보내기를 실행해주세요:
 
 ```bash
-gaiad export --height [height] --for-zero-height > [filename].json
+wasmd export --height [height] --for-zero-height > [filename].json
 ```
 
 ## 밸리데이터 노드로 업그레이드 하기

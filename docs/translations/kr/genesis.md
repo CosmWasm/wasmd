@@ -5,10 +5,10 @@
 참고로 기본 설정이 적용된 제네시스 파일을 사용해 테스트넷을 운영하기 위해서는 다음 명령어를 입력할 수 있습니다:
 
 ```bash
-gaiad init <명칭(moniker)> --chain-id <체인_아이디(chain-id)>
+wasmd init <명칭(moniker)> --chain-id <체인_아이디(chain-id)>
 ```
 
-제네시스 파일은 `~/.gaiad/config/genesis.toml`에 저장됩니다.
+제네시스 파일은 `~/.wasmd/config/genesis.toml`에 저장됩니다.
 
 ## 제네시스 파일은 무엇인가?
 
@@ -68,9 +68,9 @@ gaiad init <명칭(moniker)> --chain-id <체인_아이디(chain-id)>
 이 항목에서는 초기 토큰 분배가 정의됩니다. 수동으로 제네시스 파일에 계정을 추가할 수 있지만, 다음 명령어를 통해 계정을 추가할 수도 있습니다:
 
 ```bash
-// 예시: gaiad add-genesis-account cosmos1qs8tnw2t8l6amtzvdemnnsq9dzk0ag0z37gh3h 10000000uatom
+// 예시: wasmd add-genesis-account cosmos1qs8tnw2t8l6amtzvdemnnsq9dzk0ag0z37gh3h 10000000uatom
 
-gaiad add-genesis-account <계정_주소(account_address)> <수량(amount)> <단위(denom)>
+wasmd add-genesis-account <계정_주소(account_address)> <수량(amount)> <단위(denom)>
 ```
 
 위 명령어는 `app_state` 항목 내 `accounts` 리스트에 아이템을 추가합니다.
@@ -327,7 +327,7 @@ gaiad add-genesis-account <계정_주소(account_address)> <수량(amount)> <단
 `gentx`는 수동으로 제네시스 파일에 추가되거나 다음 명령어를 사용해 추가할 수 있습니다:
 
 ```bash
-gaiad collect-gentxs
+wasmd collect-gentxs
 ```
 
-위 명령어는 `~/.gaiad/config/gentx`에 있는 모든 `gentxs`를 제네시스 파일에 추가합니다. 제네시스 트랜잭션을 생성하기 위해서는 [여기](./validators/validator-setup.md#participate-in-genesis-as-a-validator)를 확인하세요.
+위 명령어는 `~/.wasmd/config/gentx`에 있는 모든 `gentxs`를 제네시스 파일에 추가합니다. 제네시스 트랜잭션을 생성하기 위해서는 [여기](./validators/validator-setup.md#participate-in-genesis-as-a-validator)를 확인하세요.

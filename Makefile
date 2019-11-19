@@ -105,7 +105,7 @@ go.sum: go.mod
 draw-deps:
 	@# requires brew install graphviz or apt-get install graphviz
 	go get github.com/RobotsAndPencils/goviz
-	@goviz -i ./cmd/gaiad -d 2 | dot -Tpng -o dependency-graph.png
+	@goviz -i ./cmd/wasmd -d 2 | dot -Tpng -o dependency-graph.png
 
 clean:
 	rm -rf snapcraft-local.yaml build/
@@ -150,12 +150,12 @@ benchmark:
 ########################################
 ### Local validator nodes using docker and docker-compose
 
-build-docker-gaiadnode:
+build-docker-wasmdnode:
 	$(MAKE) -C networks/local
 
 # Run a 4-node testnet locally
 localnet-start: build-linux localnet-stop
-	@if ! [ -f build/node0/gaiad/config/genesis.json ]; then docker run -e COSMOS_SDK_TEST_KEYRING=y --rm -v $(CURDIR)/build:/gaiad:Z tendermint/gaiadnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
+	@if ! [ -f build/node0/wasmd/config/genesis.json ]; then docker run -e COSMOS_SDK_TEST_KEYRING=y --rm -v $(CURDIR)/build:/wasmd:Z tendermint/wasmdnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
 	docker-compose up -d
 
 # Stop testnet
@@ -167,11 +167,11 @@ setup-contract-tests-data:
 	rm -rf /tmp/contract_tests ; \
 	mkdir /tmp/contract_tests ; \
 	cp "${GOPATH}/pkg/mod/${SDK_PACK}/client/lcd/swagger-ui/swagger.yaml" /tmp/contract_tests/swagger.yaml ; \
-	./build/gaiad init --home /tmp/contract_tests/.gaiad --chain-id lcd contract-tests ; \
+	./build/wasmd init --home /tmp/contract_tests/.wasmd --chain-id lcd contract-tests ; \
 	tar -xzf lcd_test/testdata/state.tar.gz -C /tmp/contract_tests/
 
 start-gaia: setup-contract-tests-data
-	./build/gaiad --home /tmp/contract_tests/.gaiad start &
+	./build/wasmd --home /tmp/contract_tests/.wasmd start &
 	@sleep 2s
 
 setup-transactions: start-gaia
@@ -179,11 +179,11 @@ setup-transactions: start-gaia
 
 run-lcd-contract-tests:
 	@echo "Running Gaia LCD for contract tests"
-	./build/gaiacli rest-server --laddr tcp://0.0.0.0:8080 --home /tmp/contract_tests/.gaiacli --node http://localhost:26657 --chain-id lcd --trust-node true
+	./build/wasmcli rest-server --laddr tcp://0.0.0.0:8080 --home /tmp/contract_tests/.wasmcli --node http://localhost:26657 --chain-id lcd --trust-node true
 
 contract-tests: setup-transactions
 	@echo "Running Gaia LCD for contract tests"
-	dredd && pkill gaiad
+	dredd && pkill wasmd
 
 # include simulations
 include sims.mk

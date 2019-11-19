@@ -14,14 +14,14 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func TestWasmddExport(t *testing.T) {
+func TestWasmdExport(t *testing.T) {
 	db := db.NewMemDB()
-	gapp := NewWasmdApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
+	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
 	err := setGenesis(gapp)
 	require.NoError(t, err)
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newGapp := NewWasmdApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
+	newGapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
 	_, _, err = newGapp.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -29,7 +29,7 @@ func TestWasmddExport(t *testing.T) {
 // ensure that black listed addresses are properly set in bank keeper
 func TestBlackListedAddrs(t *testing.T) {
 	db := db.NewMemDB()
-	gapp := NewWasmdApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
+	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
 
 	for acc := range maccPerms {
 		require.True(t, gapp.bankKeeper.BlacklistedAddr(gapp.supplyKeeper.GetModuleAddress(acc)))

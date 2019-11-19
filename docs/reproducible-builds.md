@@ -65,7 +65,7 @@ Please refer to the `contrib/gitian-build.sh`'s help screen for further informat
 
 ## Signatures upload
 
-Once signatures are generated, they could be uploaded to gaia's dedicated repository: https://github.com/cosmos/gaia.sigs.
+Once signatures are generated, they could be uploaded to gaia's dedicated repository: https://github.com/cosmwasm/wasmd.sigs.
 The build script can take care of cloning the signatures repository and commit the signed result too:
 
 ```
