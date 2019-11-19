@@ -48,7 +48,7 @@ func testnetCmd(ctx *server.Context, cdc *codec.Codec,
 
 	cmd := &cobra.Command{
 		Use:   "testnet",
-		Short: "Initialize files for a Gaiad testnet",
+		Short: "Initialize files for a Wasmd testnet",
 		Long: `testnet will create "v" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
 
@@ -80,9 +80,9 @@ Example:
 		"Directory to store initialization data for the testnet")
 	cmd.Flags().String(flagNodeDirPrefix, "node",
 		"Prefix the directory name for each node with (node results in node0, node1, ...)")
-	cmd.Flags().String(flagNodeDaemonHome, "gaiad",
+	cmd.Flags().String(flagNodeDaemonHome, "wasmd",
 		"Home directory of the node's daemon configuration")
-	cmd.Flags().String(flagNodeCLIHome, "gaiacli",
+	cmd.Flags().String(flagNodeCLIHome, "wasmcli",
 		"Home directory of the node's cli configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1",
 		"Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
@@ -110,8 +110,8 @@ func InitTestnet(cmd *cobra.Command, config *tmconfig.Config, cdc *codec.Codec,
 	nodeIDs := make([]string, numValidators)
 	valPubKeys := make([]crypto.PubKey, numValidators)
 
-	gaiaConfig := srvconfig.DefaultConfig()
-	gaiaConfig.MinGasPrices = minGasPrices
+	wasmConfig := srvconfig.DefaultConfig()
+	wasmConfig.MinGasPrices = minGasPrices
 
 	//nolint:prealloc
 	var (
@@ -223,8 +223,8 @@ func InitTestnet(cmd *cobra.Command, config *tmconfig.Config, cdc *codec.Codec,
 
 		// TODO: Rename config file to server.toml as it's not particular to Gaia
 		// (REF: https://github.com/cosmos/cosmos-sdk/issues/4125).
-		gaiaConfigFilePath := filepath.Join(nodeDir, "config/gaiad.toml")
-		srvconfig.WriteConfigFile(gaiaConfigFilePath, gaiaConfig)
+		wasmConfigFilePath := filepath.Join(nodeDir, "config/gaiad.toml")
+		srvconfig.WriteConfigFile(wasmConfigFilePath, wasmConfig)
 	}
 
 	if err := initGenFiles(cdc, mbm, chainID, genAccounts, genFiles, numValidators); err != nil {

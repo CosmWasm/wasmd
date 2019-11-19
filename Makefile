@@ -48,9 +48,9 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaia \
-		  -X github.com/cosmos/cosmos-sdk/version.ServerName=gaiad \
-		  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiacli \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
+		  -X github.com/cosmos/cosmos-sdk/version.ServerName=wasmd \
+		  -X github.com/cosmos/cosmos-sdk/version.ClientName=wasmcli \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -70,11 +70,11 @@ all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	go build -mod=readonly $(BUILD_FLAGS) -o build/gaiad.exe ./cmd/gaiad
-	go build -mod=readonly $(BUILD_FLAGS) -o build/gaiacli.exe ./cmd/gaiacli
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli.exe ./cmd/wasmcli
 else
-	go build -mod=readonly $(BUILD_FLAGS) -o build/gaiad ./cmd/gaiad
-	go build -mod=readonly $(BUILD_FLAGS) -o build/gaiacli ./cmd/gaiacli
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli ./cmd/wasmcli
 endif
 
 build-linux: go.sum
@@ -88,8 +88,8 @@ else
 endif
 
 install: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/gaiad
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/gaiacli
+	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
+	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
 
 ########################################
 ### Tools & dependencies

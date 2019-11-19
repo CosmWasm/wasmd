@@ -38,7 +38,7 @@ func init() {
 	simapp.GetSimulatorFlags()
 }
 
-func testAndRunTxs(app *GaiaApp, config simulation.Config) []simulation.WeightedOperation {
+func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.WeightedOperation {
 	ap := make(simulation.AppParams)
 
 	paramChanges := app.sm.GenerateParamChanges(config.Seed)
@@ -246,7 +246,7 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 }
 
 // Profile with:
-// /usr/local/go/bin/go test -benchmem -run=^$ github.com/cosmos/cosmos-sdk/GaiaApp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
+// /usr/local/go/bin/go test -benchmem -run=^$ github.com/cosmos/cosmos-sdk/WasmApp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
 func BenchmarkFullAppSimulation(b *testing.B) {
 	logger := log.NewNopLogger()
 	config := simapp.NewConfigFromFlags()
@@ -267,7 +267,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		_ = os.RemoveAll(dir)
 	}()
 
-	gapp := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
+	gapp := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
 
 	// Run randomized simulation
 	// TODO: parameterize numbers, save for a later PR
@@ -328,8 +328,8 @@ func TestFullAppSimulation(t *testing.T) {
 		_ = os.RemoveAll(dir)
 	}()
 
-	gapp := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
-	require.Equal(t, "GaiaApp", gapp.Name())
+	gapp := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
+	require.Equal(t, "WasmApp", gapp.Name())
 
 	// Run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -384,7 +384,7 @@ func TestAppImportExport(t *testing.T) {
 		_ = os.RemoveAll(dir)
 	}()
 
-	app := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
+	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, "SimApp", app.Name())
 
 	// Run randomized simulation
@@ -430,7 +430,7 @@ func TestAppImportExport(t *testing.T) {
 		_ = os.RemoveAll(newDir)
 	}()
 
-	newApp := NewGaiaApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, "SimApp", newApp.Name())
 
 	var genesisState simapp.GenesisState
@@ -504,8 +504,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		_ = os.RemoveAll(dir)
 	}()
 
-	gapp := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
-	require.Equal(t, "GaiaApp", gapp.Name())
+	gapp := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, fauxMerkleModeOpt)
+	require.Equal(t, "WasmApp", gapp.Name())
 
 	// Run randomized simulation
 	// Run randomized simulation
@@ -560,8 +560,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		_ = os.RemoveAll(newDir)
 	}()
 
-	newApp := NewGaiaApp(log.NewNopLogger(), newDB, nil, true, 0, fauxMerkleModeOpt)
-	require.Equal(t, "GaiaApp", newApp.Name())
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, 0, fauxMerkleModeOpt)
+	require.Equal(t, "WasmApp", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
@@ -599,7 +599,7 @@ func TestAppStateDeterminism(t *testing.T) {
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			logger := log.NewNopLogger()
 			db := dbm.NewMemDB()
-			app := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
+			app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -647,7 +647,7 @@ func BenchmarkInvariants(b *testing.B) {
 		os.RemoveAll(dir)
 	}()
 
-	gapp := NewGaiaApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
+	gapp := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, interBlockCacheOpt())
 
 	// 2. Run parameterized simulation (w/o invariants)
 	_, simParams, simErr := simulation.SimulateFromSeed(

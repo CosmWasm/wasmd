@@ -31,14 +31,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/supply"
 )
 
-const appName = "GaiaApp"
+const appName = "WasmApp"
 
 var (
-	// DefaultCLIHome default home directories for gaiacli
-	DefaultCLIHome = os.ExpandEnv("$HOME/.gaiacli")
+	// DefaultCLIHome default home directories for wasmcli
+	DefaultCLIHome = os.ExpandEnv("$HOME/.wasmcli")
 
-	// DefaultNodeHome default home directories for gaiad
-	DefaultNodeHome = os.ExpandEnv("$HOME/.gaiad")
+	// DefaultNodeHome default home directories for wasmd
+	DefaultNodeHome = os.ExpandEnv("$HOME/.wasmd")
 
 	// ModuleBasics The module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
@@ -83,8 +83,8 @@ func MakeCodec() *codec.Codec {
 	return cdc.Seal()
 }
 
-// GaiaApp extended ABCI application
-type GaiaApp struct {
+// WasmApp extended ABCI application
+type WasmApp struct {
 	*bam.BaseApp
 	cdc *codec.Codec
 
@@ -114,11 +114,11 @@ type GaiaApp struct {
 	sm *module.SimulationManager
 }
 
-// NewGaiaApp returns a reference to an initialized GaiaApp.
-func NewGaiaApp(
+// NewWasmApp returns a reference to an initialized WasmApp.
+func NewWasmApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
-) *GaiaApp {
+) *WasmApp {
 
 	cdc := MakeCodec()
 
@@ -133,7 +133,7 @@ func NewGaiaApp(
 	)
 	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
-	app := &GaiaApp{
+	app := &WasmApp{
 		BaseApp:        bApp,
 		cdc:            cdc,
 		invCheckPeriod: invCheckPeriod,
@@ -264,17 +264,17 @@ func NewGaiaApp(
 }
 
 // application updates every begin block
-func (app *GaiaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *WasmApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // application updates every end block
-func (app *GaiaApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *WasmApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
 // application update at chain initialization
-func (app *GaiaApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *WasmApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
 
@@ -282,12 +282,12 @@ func (app *GaiaApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 }
 
 // load a particular height
-func (app *GaiaApp) LoadHeight(height int64) error {
+func (app *WasmApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
-func (app *GaiaApp) ModuleAccountAddrs() map[string]bool {
+func (app *WasmApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
 		modAccAddrs[supply.NewModuleAddress(acc).String()] = true
@@ -297,7 +297,7 @@ func (app *GaiaApp) ModuleAccountAddrs() map[string]bool {
 }
 
 // Codec returns the application's sealed codec.
-func (app *GaiaApp) Codec() *codec.Codec {
+func (app *WasmApp) Codec() *codec.Codec {
 	return app.cdc
 }
 
