@@ -17,6 +17,6 @@
     dest: "/lib/systemd/system/{{item}}.service.d"
   notify: reload systemctl
   with_items:
-    - gaiad
-    - gaiacli
+    - wasmd
+    - wasmcli
 

@@ -1,14 +1,14 @@
 [Unit]
-Description=gaiacli
+Description=wasmcli
 Requires=network-online.target
 After=network-online.target
 
 [Service]
 Restart=on-failure
-User=gaiad
-Group=gaiad
+User=wasmd
+Group=wasmd
 PermissionsStartOnly=true
-ExecStart=/usr/bin/gaiacli rest-server --laddr {{GAIACLI_ADDRESS}}
+ExecStart=/usr/bin/wasmcli rest-server --laddr {{GAIACLI_ADDRESS}}
 ExecReload=/bin/kill -HUP $MAINPID
 KillSignal=SIGTERM
 

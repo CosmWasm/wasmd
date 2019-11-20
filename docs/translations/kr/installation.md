@@ -1,6 +1,6 @@
 ## Gaia 설치하기
 
-이 가이드는 `gaiad`와 `gaiacli`를 엔트리포인트를 시스템에 설치하는 방법을 설명합니다. `gaiad`와 `gaiacli`가 설치된 서버를 통해 [풀노드](./join-testnet.md#run-a-full-node) 또는 [밸리데이터로](./validators/validator-setup.md)써 최신 테스트넷에 참가하실 수 있습니다.
+이 가이드는 `wasmd`와 `wasmcli`를 엔트리포인트를 시스템에 설치하는 방법을 설명합니다. `wasmd`와 `wasmcli`가 설치된 서버를 통해 [풀노드](./join-testnet.md#run-a-full-node) 또는 [밸리데이터로](./validators/validator-setup.md)써 최신 테스트넷에 참가하실 수 있습니다.
 
 ### Go 설치하기
 
@@ -19,17 +19,17 @@ source ~/.bash_profile
 
 ### 바이너리 설치하기
 
-다음은 최신 Gaia 버전을 설치하는 것입니다. 필요에 따라 `git checkout`을 통해 올바른 [릴리즈 버전](https://github.com/cosmos/gaia/releases)이 설치되어있는지 확인하세요.
+다음은 최신 Gaia 버전을 설치하는 것입니다. 필요에 따라 `git checkout`을 통해 올바른 [릴리즈 버전](https://github.com/cosmwasm/wasmd/releases)이 설치되어있는지 확인하세요.
 
 ```bash
-git clone -b <latest-release-tag> https://github.com/cosmos/gaia
+git clone -b <latest-release-tag> https://github.com/cosmwasm/wasmd
 cd gaia && make install
 ```
 
 만약 다음과 같은 에러 메시지로 명령어가 실패하는 경우, 이미 `LDFLAGS`를 설정하셨을 수 있습니다.
 
 ```
-# github.com/cosmos/gaia/cmd/gaiad
+# github.com/cosmwasm/wasmd/cmd/wasmd
 flag provided but not defined: -L
 usage: link [options] main.o
 ...
@@ -44,20 +44,20 @@ LDFLAGS="" make install
 
 > *참고*: 여기에서 문제가 발생한다면, Go의 최신 스테이블 버전이 설치되어있는지 확인하십시오.
 
-위 절차를 따라하시면 `gaiad`와 `gaiacli` 바이너리가 설치될 것입니다. 설치가 잘 되어있는지 확인하십시오:
+위 절차를 따라하시면 `wasmd`와 `wasmcli` 바이너리가 설치될 것입니다. 설치가 잘 되어있는지 확인하십시오:
 
 
 ```bash
-$ gaiad version --long
-$ gaiacli version --long
+$ wasmd version --long
+$ wasmcli version --long
 ```
 
-`gaiacli` 명령어는 다음과 비슷한 아웃풋을 내보냅니다:
+`wasmcli` 명령어는 다음과 비슷한 아웃풋을 내보냅니다:
 
 ```shell
 name: gaia
-server_name: gaiad
-client_name: gaiacli
+server_name: wasmd
+client_name: wasmcli
 version: 1.0.0
 commit: 89e6316a27343304d332aadfe2869847bf52331c
 build_tags: netgo,ledger

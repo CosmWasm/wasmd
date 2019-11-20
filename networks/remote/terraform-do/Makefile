@@ -12,8 +12,8 @@ CLUSTER_NAME?=$(TESTNET_NAME)
 # Number of servers to put in one availability zone in AWS.
 SERVERS?=1
 
-# Path to gaiad for deployment. Must be a Linux binary.
-BINARY?=$(CURDIR)/../build/gaiad
+# Path to wasmd for deployment. Must be a Linux binary.
+BINARY?=$(CURDIR)/../build/wasmd
 
 # Path to the genesis.json and config.toml files to deploy on full nodes.
 GENESISFILE?=$(CURDIR)/../build/genesis.json
@@ -74,11 +74,11 @@ fullnodes-status:
 ########################################
 ### Other calls
 
-upgrade-gaiad:
+upgrade-wasmd:
 	@if [ -z "$(DO_API_TOKEN)" ]; then echo "DO_API_TOKEN environment variable not set." ; false ; fi
 	@if ! [ -f $(HOME)/.ssh/id_rsa.pub ]; then ssh-keygen ; fi
 	@if [ -z "`file $(BINARY) | grep 'ELF 64-bit'`" ]; then echo "Please build a linux binary using 'make build-linux'." ; false ; fi
-	cd remote/ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/digital_ocean.py -l "$(CLUSTER_NAME)" -e BINARY=$(BINARY) upgrade-gaiad.yml
+	cd remote/ansible && ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/digital_ocean.py -l "$(CLUSTER_NAME)" -e BINARY=$(BINARY) upgrade-wasmd.yml
 
 list:
 	remote/ansible/inventory/digital_ocean.py | python -c 'import json,sys ; print "\n".join(json.loads("".join(sys.stdin.readlines()))["$(CLUSTER_NAME)"]["hosts"])'
@@ -96,5 +96,5 @@ remove-datadog:
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: all extract-config validators-start validators-stop validators-status fullnodes-start fullnodes-stop fullnodes-status upgrade-gaiad list-do install-datadog remove-datadog
+.PHONY: all extract-config validators-start validators-stop validators-status fullnodes-start fullnodes-stop fullnodes-status upgrade-wasmd list-do install-datadog remove-datadog
 

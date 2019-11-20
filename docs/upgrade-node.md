@@ -1,13 +1,13 @@
 # Upgrade Your Node
 
-This document describes the upgrade procedure of a `gaiad` full-node to a new version. 
+This document describes the upgrade procedure of a `wasmd` full-node to a new version. 
 
 ## Software Upgrade
 
-First, stop your instance of `gaiad`. Next, upgrade the software:
+First, stop your instance of `wasmd`. Next, upgrade the software:
 
 ```bash
-cd $GOPATH/src/github.com/cosmos/gaia
+cd $GOPATH/src/github.com/cosmwasm/wasmd
 git fetch --all && git checkout <new_version>
 make install
 ```
@@ -16,7 +16,7 @@ make install
 *NOTE*: If you have issues at this step, please check that you have the latest stable version of GO installed.
 :::
 
-See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which public testnet, and the [Gaia release page](https://github.com/cosmos/Gaia/releases) for details on each release.
+See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which public testnet, and the [Gaia release page](https://github.com/cosmwasm/wasmd/releases) for details on each release.
 
 Your full node has been cleanly upgraded!
 
@@ -35,7 +35,7 @@ If you are joining the mainnet, fetch the genesis from the [mainnet repo](https:
 Save the new genesis as `new_genesis.json`. Then replace the old `genesis.json` with `new_genesis.json`
 
 ```bash
-cd $HOME/.gaiad/config
+cd $HOME/.wasmd/config
 cp -f genesis.json new_genesis.json
 mv new_genesis.json genesis.json
 ```
@@ -47,8 +47,8 @@ Then, go to the [reset data](#reset-data) section.
 If you were running a node in the previous version of the network and want to build your new genesis locally from a state of this previous network, use the following command: 
 
 ```bash
-cd $HOME/.gaiad/config
-gaiad export --for-zero-height --height=<export-height> > new_genesis.json
+cd $HOME/.wasmd/config
+wasmd export --for-zero-height --height=<export-height> > new_genesis.json
 ```
 
 The command above take a state at a certain height `<export-height>` and turns it into a new genesis file that can be used to start a new network. 
@@ -69,7 +69,7 @@ If the version <new_version> you are upgrading to is not breaking from the previ
 :::
 
 ::: warning 
-If you are running a **validator node** on the mainnet, always be careful when doing `gaiad unsafe-reset-all`. You should never use this command if you are not switching `chain-id`.
+If you are running a **validator node** on the mainnet, always be careful when doing `wasmd unsafe-reset-all`. You should never use this command if you are not switching `chain-id`.
 :::
 
 ::: danger IMPORTANT
@@ -79,7 +79,7 @@ Make sure that every node has a unique `priv_validator.json`. Do not copy the `p
 First, remove the outdated files and reset the data. **If you are running a validator node, make sure you understand what you are doing before resetting**. 
 
 ```bash
-gaiad unsafe-reset-all
+wasmd unsafe-reset-all
 ```
 
 Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before, your node will still try to connect to them, but may fail if they haven't also been upgraded.
@@ -89,5 +89,5 @@ Your node is now in a pristine state while keeping the original `priv_validator.
 To restart your node, just type:
 
 ```bash
-gaiad start
+wasmd start
 ```

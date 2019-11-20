@@ -8,7 +8,7 @@ if [ $# -ne 4 ]; then
 fi
 set -eux
 
-if [ -z "`file ../build/gaiad | grep 'ELF 64-bit'`" ]; then
+if [ -z "`file ../build/wasmd | grep 'ELF 64-bit'`" ]; then
   # Build the linux binary we're going to ship to the nodes
   make -C .. build-linux
 fi

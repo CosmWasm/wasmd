@@ -17,7 +17,7 @@ import (
 	tmstore "github.com/tendermint/tendermint/store"
 	tm "github.com/tendermint/tendermint/types"
 
-	"github.com/cosmos/gaia/app"
+	"github.com/cosmwasm/wasmd/app"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -92,7 +92,7 @@ func replayTxs(rootDir string) error {
 
 	// Application
 	fmt.Fprintln(os.Stderr, "Creating application")
-	gapp := app.NewGaiaApp(
+	gapp := app.NewWasmApp(
 		ctx.Logger, appDB, traceStoreWriter, true, uint(1),
 		baseapp.SetPruning(store.PruneEverything), // nothing
 	)

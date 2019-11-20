@@ -1,4 +1,4 @@
-module github.com/cosmos/gaia
+module github.com/cosmwasm/wasmd
 
 go 1.13
 

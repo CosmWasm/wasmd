@@ -15,21 +15,21 @@
 首先，初始化节点并创建必要的配置文件：
 
 ```bash
-gaiad init <your_custom_moniker>
+wasmd init <your_custom_moniker>
 ```
 
 ::: 注意
 moniker只能包含ASCII字符。使用Unicode字符会使得你的节点不可访问
 :::
 
-你可以稍后在`~/.gaiad/config/config.toml`文件中编辑`moniker`:
+你可以稍后在`~/.wasmd/config/config.toml`文件中编辑`moniker`:
 
 ```toml
 # A custom human readable name for this node
 moniker = "<your_custom_moniker>"
 ```
 
-你可以编辑`~/.gaiad/config/config.toml`文件来开启垃圾交易过滤机制以拒绝收到的手续费过低的交易：
+你可以编辑`~/.wasmd/config/config.toml`文件来开启垃圾交易过滤机制以拒绝收到的手续费过低的交易：
 
 ```
 # This is a TOML config file.
@@ -50,11 +50,11 @@ minimum-gas-prices = ""
 
 ### 复制genesis文件
 
-将主网的`genesis.json`文件放置在`gaiad`的配置文件夹中
+将主网的`genesis.json`文件放置在`wasmd`的配置文件夹中
 
 ```bash
-mkdir -p $HOME/.gaiad/config
-curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.gaiad/config/genesis.json
+mkdir -p $HOME/.wasmd/config
+curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME/.wasmd/config/genesis.json
 ```
 
 注意我们使用了[launch repo](https://github.com/cosmos/launch)中的`latest`文件夹，该文件夹包含了最新版本主网的详细信息。
@@ -66,12 +66,12 @@ curl https://raw.githubusercontent.com/cosmos/launch/master/genesis.json > $HOME
 运行命令验证配置的正确性:
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 ### 添加种子节点
 
-你的节点需要知道如何寻找伙伴节点。你需要添加有用的种子节点到`$HOME/.gaiad/config/config.toml`文件中。[`launch`](https://github.com/cosmos/launch) repo包含了一些种子节点的链接。
+你的节点需要知道如何寻找伙伴节点。你需要添加有用的种子节点到`$HOME/.wasmd/config/config.toml`文件中。[`launch`](https://github.com/cosmos/launch) repo包含了一些种子节点的链接。
 
 如果这些种子节点不再运行，你可以在Cosmos Hub浏览器(可以在[launch page](https://cosmos.network/launch)中找到)发现种子节点和持久节点。
 
@@ -102,7 +102,7 @@ fees = gas * gasPrices
 
 ## 设置`minimum-gas-prices`
 
-你的全节点可以在交易池中放入未确认的交易。为了保护其免受Spam攻击，最好设置一个`minimum-gas-prices`来过滤交易以决定是否要放入交易池。这个参数可以在`~/.gaiad/config/gaiad.toml`文件中配置。
+你的全节点可以在交易池中放入未确认的交易。为了保护其免受Spam攻击，最好设置一个`minimum-gas-prices`来过滤交易以决定是否要放入交易池。这个参数可以在`~/.wasmd/config/wasmd.toml`文件中配置。
 
 推荐的初始`minimum-gas-prices`是`0.025uatom`，如果你愿意可以稍后再修改它。
 
@@ -111,13 +111,13 @@ fees = gas * gasPrices
 通过这条命令开始运行全节点：
 
 ```bash
-gaiad start
+wasmd start
 ```
 
 检查一切是否平稳运行中:
 
 ```bash
-gaiacli status
+wasmcli status
 ```
 
 使用[Cosmos Explorer](https://cosmos.network/launch)查看网络状态。
@@ -129,19 +129,19 @@ Gaia能够将整个应用程序的状态转存到一个JSON文件中，该文件
 导出状态:
 
 ```bash
-gaiad export > [filename].json
+wasmd export > [filename].json
 ```
 
 你还可以导出指定高度的状态(处理完指定高度后的状态):
 
 ```bash
-gaiad export --height [height] > [filename].json
+wasmd export --height [height] > [filename].json
 ```
 
 如果你计划使用导出的状态文件启动一个新网络，导出时要加上`--for-zero-height`标识:
 
 ```bash
-gaiad export --height [height] --for-zero-height > [filename].json
+wasmd export --height [height] --for-zero-height > [filename].json
 ```
 
 ## 升级成为验证人节点

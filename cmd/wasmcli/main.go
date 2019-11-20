@@ -23,7 +23,7 @@ import (
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/libs/cli"
 
-	"github.com/cosmos/gaia/app"
+	"github.com/cosmwasm/wasmd/app"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 	config.SetBech32PrefixForAccount(sdk.Bech32PrefixAccAddr, sdk.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(sdk.Bech32PrefixValAddr, sdk.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(sdk.Bech32PrefixConsAddr, sdk.Bech32PrefixConsPub)
-	config.SetKeyringServiceName("gaia")
+	config.SetKeyringServiceName("wasmd")
 	config.Seal()
 
 	// TODO: setup keybase, viper object, etc. to be passed into
@@ -46,8 +46,8 @@ func main() {
 	// with the cdc
 
 	rootCmd := &cobra.Command{
-		Use:   "gaiacli",
-		Short: "Command line interface for interacting with gaiad",
+		Use:   "wasmcli",
+		Short: "Command line interface for interacting with wasmd",
 	}
 
 	// Add --chain-id to persistent flags and mark it required
@@ -71,8 +71,8 @@ func main() {
 		client.NewCompletionCmd(rootCmd, true),
 	)
 
-	// Add flags and prefix all env exposed with GA
-	executor := cli.PrepareMainCmd(rootCmd, "GA", app.DefaultCLIHome)
+	// Add flags and prefix all env exposed with WM
+	executor := cli.PrepareMainCmd(rootCmd, "WM", app.DefaultCLIHome)
 
 	err := executor.Execute()
 	if err != nil {

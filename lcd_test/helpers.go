@@ -47,7 +47,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/gaia/app"
+	"github.com/cosmwasm/wasmd/app"
 )
 
 // TODO: Make InitializeTestLCD safe to call in multiple tests at the same time
@@ -70,7 +70,7 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	logger = log.NewFilter(logger, log.AllowError())
 
 	db := dbm.NewMemDB()
-	gapp := app.NewGaiaApp(logger, db, nil, true, 0, baseapp.SetPruning(store.PruneNothing))
+	gapp := app.NewWasmApp(logger, db, nil, true, 0, baseapp.SetPruning(store.PruneNothing))
 	cdc = app.MakeCodec()
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
@@ -310,7 +310,7 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 // TODO: Clean up the WAL dir or enable it to be not persistent!
 func startTM(
 	tmcfg *tmcfg.Config, logger log.Logger, genDoc *tmtypes.GenesisDoc,
-	privVal tmtypes.PrivValidator, app *app.GaiaApp,
+	privVal tmtypes.PrivValidator, app *app.WasmApp,
 ) (*nm.Node, error) {
 
 	genDocProvider := func() (*tmtypes.GenesisDoc, error) { return genDoc, nil }
@@ -356,7 +356,7 @@ func startLCD(logger log.Logger, listenAddr string, cdc *codec.Codec) (net.Liste
 	return listener, nil
 }
 
-// NOTE: If making updates here also update cmd/gaia/cmd/gaiacli/main.go
+// NOTE: If making updates here also update cmd/gaia/cmd/wasmcli/main.go
 func registerRoutes(rs *lcd.RestServer) {
 	client.RegisterRoutes(rs.CliCtx, rs.Mux)
 	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
@@ -417,9 +417,9 @@ func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds
 
 // AddrSeed combines an Address with the mnemonic of the private key to that address
 type AddrSeed struct {
-	Address  sdk.AccAddress
-	Seed     string
-	Name     string
+	Address sdk.AccAddress
+	Seed    string
+	Name    string
 }
 
 // AddrSeedSlice implements `Interface` in sort package.

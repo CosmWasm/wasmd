@@ -6,8 +6,8 @@
   run_once: true
   become: no
 
-- name: Create gaiad user
-  user: name=gaiad home=/home/gaiad shell=/bin/bash
+- name: Create wasmd user
+  user: name=wasmd home=/home/wasmd shell=/bin/bash
 
 - name: Copy binary
   copy:
@@ -16,7 +16,7 @@
     mode: 0755
 
 - name: Copy service file
-  copy: src=gaiad.service dest=/etc/systemd/system/gaiad.service mode=0755
+  copy: src=wasmd.service dest=/etc/systemd/system/wasmd.service mode=0755
   notify: reload systemd
 
 - name: Get node ID
@@ -24,13 +24,13 @@
   changed_when: false
   register: nodeid
 
-- name: gaiad init
-  command: "/usr/bin/gaiad init --chain-id={{TESTNET_NAME}} --name=fullnode{{nodeid.stdout_lines[0]}}"
+- name: wasmd init
+  command: "/usr/bin/wasmd init --chain-id={{TESTNET_NAME}} --name=fullnode{{nodeid.stdout_lines[0]}}"
   become: yes
-  become_user: gaiad
+  become_user: wasmd
   register: initresult
   args:
-    creates: /home/gaiad/.gaiad/config
+    creates: /home/wasmd/.wasmd/config
 
 - name: Get wallet word seed from result of initial transaction locally
   when: initresult["changed"]
@@ -48,14 +48,14 @@
 - name: Copy genesis file
   copy:
     src: "{{GENESISFILE}}"
-    dest: /home/gaiad/.gaiad/config/genesis.json
+    dest: /home/wasmd/.wasmd/config/genesis.json
   become: yes
-  become_user: gaiad
+  become_user: wasmd
 
 - name: Copy config.toml file
   copy:
     src: "{{CONFIGFILE}}"
-    dest: /home/gaiad/.gaiad/config/config.toml
+    dest: /home/wasmd/.wasmd/config/config.toml
   become: yes
-  become_user: gaiad
+  become_user: wasmd
 

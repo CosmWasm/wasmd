@@ -1,6 +1,6 @@
 # Install Gaia
 
-This guide will explain how to install the `gaiad` and `gaiacli` entrypoints
+This guide will explain how to install the `wasmd` and `wasmcli` entrypoints
 onto your system. With these installed on a server, you can participate in the
 mainnet as either a [Full Node](./join-mainnet.md) or a
 [Validator](./validators/validator-setup.md).
@@ -24,17 +24,17 @@ source ~/.bash_profile
 ## Install the binaries
 
 Next, let's install the latest version of Gaia. Make sure you `git checkout` the
-correct [released version](https://github.com/cosmos/gaia/releases).
+correct [released version](https://github.com/cosmwasm/wasmd/releases).
 
 ```bash
-git clone -b <latest-release-tag> https://github.com/cosmos/gaia
+git clone -b <latest-release-tag> https://github.com/cosmwasm/wasmd
 cd gaia && make install
 ```
 
 If this command fails due to the following error message, you might have already set `LDFLAGS` prior to running this step.
 
 ```
-# github.com/cosmos/gaia/cmd/gaiad
+# github.com/cosmwasm/wasmd/cmd/wasmd
 flag provided but not defined: -L
 usage: link [options] main.o
 ...
@@ -49,19 +49,19 @@ LDFLAGS="" make install
 
 > _NOTE_: If you still have issues at this step, please check that you have the latest stable version of GO installed.
 
-That will install the `gaiad` and `gaiacli` binaries. Verify that everything is OK:
+That will install the `wasmd` and `wasmcli` binaries. Verify that everything is OK:
 
 ```bash
-$ gaiad version --long
-$ gaiacli version --long
+$ wasmd version --long
+$ wasmcli version --long
 ```
 
-`gaiacli` for instance should output something similar to:
+`wasmcli` for instance should output something similar to:
 
 ```shell
 name: gaia
-server_name: gaiad
-client_name: gaiacli
+server_name: wasmd
+client_name: wasmcli
 version: 1.0.0
 commit: 89e6316a27343304d332aadfe2869847bf52331c
 build_tags: netgo,ledger

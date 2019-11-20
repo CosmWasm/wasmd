@@ -16,7 +16,7 @@ import (
 )
 
 // ExportStateToJSON util function to export the app state to JSON
-func ExportStateToJSON(app *GaiaApp, path string) error {
+func ExportStateToJSON(app *WasmApp, path string) error {
 	fmt.Println("exporting app state...")
 	appState, _, err := app.ExportAppStateAndValidators(false, nil)
 	if err != nil {
@@ -26,13 +26,13 @@ func ExportStateToJSON(app *GaiaApp, path string) error {
 	return ioutil.WriteFile(path, []byte(appState), 0644)
 }
 
-// NewGaiaAppUNSAFE is used for debugging purposes only.
+// NewWasmAppUNSAFE is used for debugging purposes only.
 //
 // NOTE: to not use this function with non-test code
-func NewGaiaAppUNSAFE(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
+func NewWasmAppUNSAFE(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	invCheckPeriod uint, baseAppOptions ...func(*baseapp.BaseApp),
-) (gapp *GaiaApp, keyMain, keyStaking *sdk.KVStoreKey, stakingKeeper staking.Keeper) {
+) (gapp *WasmApp, keyMain, keyStaking *sdk.KVStoreKey, stakingKeeper staking.Keeper) {
 
-	gapp = NewGaiaApp(logger, db, traceStore, loadLatest, invCheckPeriod, baseAppOptions...)
+	gapp = NewWasmApp(logger, db, traceStore, loadLatest, invCheckPeriod, baseAppOptions...)
 	return gapp, gapp.keys[bam.MainStoreKey], gapp.keys[staking.StoreKey], gapp.stakingKeeper
 }

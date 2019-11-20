@@ -1,12 +1,12 @@
 # Deploy Your Own Gaia Testnet
 
-This document describes 3 ways to setup a network of `gaiad` nodes, each serving a different usecase:
+This document describes 3 ways to setup a network of `wasmd` nodes, each serving a different usecase:
 
 1. Single-node, local, manual testnet
 2. Multi-node, local, automated testnet
 3. Multi-node, remote, automated testnet
 
-Supporting code can be found in the [networks directory](https://github.com/cosmos/gaia/tree/master/networks) and additionally the `local` or `remote` sub-directories.
+Supporting code can be found in the [networks directory](https://github.com/cosmwasm/wasmd/tree/master/networks) and additionally the `local` or `remote` sub-directories.
 
 > NOTE: The `remote` network bootstrapping may be out of sync with the latest releases and is not to be relied upon.
 
@@ -14,10 +14,10 @@ Supporting code can be found in the [networks directory](https://github.com/cosm
 
 In case you need to use or deploy gaia as a container you could skip the `build` steps and use the official images, $TAG stands for the version you are interested in:
 
-- `docker run -it -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiad init`
-- `docker run -it -p 26657:26657 -p 26656:26656 -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiad start`
+- `docker run -it -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmd init`
+- `docker run -it -p 26657:26657 -p 26656:26656 -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmd start`
 - ...
-- `docker run -it -v ~/.gaiad:/root/.gaiad -v ~/.gaiacli:/root/.gaiacli tendermint:$TAG gaiacli version`
+- `docker run -it -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli tendermint:$TAG wasmcli version`
 
 The same images can be used to build your own docker-compose stack.
 
@@ -37,31 +37,31 @@ This guide helps you create a single validator node that runs a network locally 
 cd $HOME
 
 # Initialize the genesis.json file that will help you to bootstrap the network
-gaiad init --chain-id=testing testing
+wasmd init --chain-id=testing testing
 
 # Create a key to hold your validator account
-gaiacli keys add validator
+wasmcli keys add validator
 
 # Add that key into the genesis.app_state.accounts array in the genesis file
 # NOTE: this command lets you set the number of coins. Make sure this account has some coins
 # with the genesis.app_state.staking.params.bond_denom denom, the default is staking
-gaiad add-genesis-account $(gaiacli keys show validator -a) 1000000000stake,1000000000validatortoken
+wasmd add-genesis-account $(wasmcli keys show validator -a) 1000000000stake,1000000000validatortoken
 
 # Generate the transaction that creates your validator
-gaiad gentx --name validator
+wasmd gentx --name validator
 
 # Add the generated bonding transaction to the genesis file
-gaiad collect-gentxs
+wasmd collect-gentxs
 
-# Now its safe to start `gaiad`
-gaiad start
+# Now its safe to start `wasmd`
+wasmd start
 ```
 
-This setup puts all the data for `gaiad` in `~/.gaiad`. You can examine the genesis file you created at `~/.gaiad/config/genesis.json`. With this configuration `gaiacli` is also ready to use and has an account with tokens (both staking and custom).
+This setup puts all the data for `wasmd` in `~/.wasmd`. You can examine the genesis file you created at `~/.wasmd/config/genesis.json`. With this configuration `wasmcli` is also ready to use and has an account with tokens (both staking and custom).
 
 ## Multi-node, Local, Automated Testnet
 
-From the [networks/local directory](https://github.com/cosmos/gaia/tree/master/networks/local):
+From the [networks/local directory](https://github.com/cosmwasm/wasmd/tree/master/networks/local):
 
 ### Requirements
 
@@ -71,17 +71,17 @@ From the [networks/local directory](https://github.com/cosmos/gaia/tree/master/n
 
 ### Build
 
-Build the `gaiad` binary (linux) and the `tendermint/gaiadnode` docker image required for running the `localnet` commands. This binary will be mounted into the container and can be updated rebuilding the image, so you only need to build the image once.
+Build the `wasmd` binary (linux) and the `tendermint/wasmdnode` docker image required for running the `localnet` commands. This binary will be mounted into the container and can be updated rebuilding the image, so you only need to build the image once.
 
 ```bash
 # Work from the SDK repo
-cd $GOPATH/src/github.com/cosmos/gaia
+cd $GOPATH/src/github.com/cosmwasm/wasmd
 
 # Build the linux binary in ./build
 make build-linux
 
-# Build tendermint/gaiadnode image
-make build-docker-gaiadnode
+# Build tendermint/wasmdnode image
+make build-docker-wasmdnode
 ```
 
 ### Run Your Testnet
@@ -92,7 +92,7 @@ To start a 4 node testnet run:
 make localnet-start
 ```
 
-This command creates a 4-node network using the gaiadnode image.
+This command creates a 4-node network using the wasmdnode image.
 The ports for each node are found in this table:
 
 | Node ID | P2P Port | RPC Port |
@@ -111,75 +111,75 @@ make build-linux localnet-start
 ### Configuration
 
 The `make localnet-start` creates files for a 4-node testnet in `./build` by
-calling the `gaiad testnet` command. This outputs a handful of files in the
+calling the `wasmd testnet` command. This outputs a handful of files in the
 `./build` directory:
 
 ```bash
 $ tree -L 2 build/
 build/
-├── gaiacli
-├── gaiad
+├── wasmcli
+├── wasmd
 ├── gentxs
 │   ├── node0.json
 │   ├── node1.json
 │   ├── node2.json
 │   └── node3.json
 ├── node0
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   ├── key_seed.json
 │   │   └── keys
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 ├── node1
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   └── key_seed.json
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 ├── node2
-│   ├── gaiacli
+│   ├── wasmcli
 │   │   └── key_seed.json
-│   └── gaiad
-│       ├── ${LOG:-gaiad.log}
+│   └── wasmd
+│       ├── ${LOG:-wasmd.log}
 │       ├── config
 │       └── data
 └── node3
-    ├── gaiacli
+    ├── wasmcli
     │   └── key_seed.json
-    └── gaiad
-        ├── ${LOG:-gaiad.log}
+    └── wasmd
+        ├── ${LOG:-wasmd.log}
         ├── config
         └── data
 ```
 
-Each `./build/nodeN` directory is mounted to the `/gaiad` directory in each container.
+Each `./build/nodeN` directory is mounted to the `/wasmd` directory in each container.
 
 ### Logging
 
-Logs are saved under each `./build/nodeN/gaiad/gaia.log`. You can also watch logs
+Logs are saved under each `./build/nodeN/wasmd/gaia.log`. You can also watch logs
 directly via Docker, for example:
 
 ```
-docker logs -f gaiadnode0
+docker logs -f wasmdnode0
 ```
 
 ### Keys & Accounts
 
-To interact with `gaiacli` and start querying state or creating txs, you use the
-`gaiacli` directory of any given node as your `home`, for example:
+To interact with `wasmcli` and start querying state or creating txs, you use the
+`wasmcli` directory of any given node as your `home`, for example:
 
 ```shell
-gaiacli keys list --home ./build/node0/gaiacli
+wasmcli keys list --home ./build/node0/wasmcli
 ```
 
 Now that accounts exists, you may create new accounts and send those accounts
 funds!
 
 ::: tip
-**Note**: Each node's seed is located at `./build/nodeN/gaiacli/key_seed.json` and can be restored to the CLI using the `gaiacli keys add --restore` command
+**Note**: Each node's seed is located at `./build/nodeN/wasmcli/key_seed.json` and can be restored to the CLI using the `wasmcli keys add --restore` command
 :::
 
 ### Special Binaries
@@ -193,7 +193,7 @@ BINARY=gaiafoo make localnet-start
 
 ## Multi-Node, Remote, Automated Testnet
 
-The following should be run from the [networks directory](https://github.com/cosmos/gaia/tree/master/networks).
+The following should be run from the [networks directory](https://github.com/cosmwasm/wasmd/tree/master/networks).
 
 ### Terraform & Ansible
 
