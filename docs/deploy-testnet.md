@@ -89,8 +89,9 @@ wasmcli query account $(wasmcli keys show fred -a)
 wasmcli query account $(wasmcli keys show bob -a)
 
 # instantiate contract and verify
-INIT="{\"verifier\":\"$(wasmcli keys show fred -a)\", \"beneficiary\":\"$(wasmcli keys show fred -a)\"}"
-wasmcli tx wasm create validator 1 "$INIT" --amount=50000stake
+INIT="{\"verifier\":\"$(wasmcli keys show fred -a)\", \"beneficiary\":\"$(wasmcli keys show bob -a)\"}"
+wasmcli tx wasm instantiate validator 1 "$INIT" --amount=50000stake
+sleep 3
 wasmcli query wasm list-contracts
 CONTRACT=cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 # TODO: remove prefix store - make init_msg string
@@ -99,11 +100,13 @@ wasmcli query wasm contract-state $CONTRACT
 wasmcli query account $CONTRACT
 
 # execute fails if wrong person
-# TODO: make exec - fix logic
-wasmcli tx wasm send validator $CONTRACT "{}"
+wasmcli tx wasm execute validator $CONTRACT "{}"
+sleep 3
+wasmcli query tx <hash from above>
 wasmcli query account $(wasmcli keys show bob -a)
 
-wasmcli tx wasm send fred $CONTRACT "{}"
+wasmcli tx wasm execute fred $CONTRACT "{}"
+sleep 3
 wasmcli query account $(wasmcli keys show bob -a)
 wasmcli query account $CONTRACT
 ```

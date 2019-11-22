@@ -71,7 +71,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [from_key_or_address] [code_id_int64] [json_encoded_init_args]",
+		Use:   "instantiate [from_key_or_address] [code_id_int64] [json_encoded_init_args]",
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -111,7 +111,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "send [from_key_or_address] [contract_addr_bech32] [json_encoded_send_args]",
+		Use:   "execute [from_key_or_address] [contract_addr_bech32] [json_encoded_send_args]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -131,7 +131,7 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			execMsg := args[3]
+			execMsg := args[2]
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
