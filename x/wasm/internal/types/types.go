@@ -4,7 +4,7 @@ import (
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
 // CodeInfo is data for the uploaded contract WASM code
@@ -73,8 +73,8 @@ func NewContract(codeID uint64, creator sdk.AccAddress, initMsg []byte, prefixSt
 // CosmosResult converts from a Wasm Result type
 func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
 	return sdk.Result{
-		Data: []byte(wasmResult.Data),
-		Log:  wasmResult.Log,
+		Data:    []byte(wasmResult.Data),
+		Log:     wasmResult.Log,
 		GasUsed: wasmResult.GasUsed,
 	}
 }

@@ -2,17 +2,17 @@ package client
 
 import (
 	"bufio"
-	"strconv"
+	// "strconv"
 	"io/ioutil"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
@@ -25,11 +25,11 @@ const (
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
-		Use:   types.ModuleName,
-		Short: "Wasm transaction subcommands",
+		Use:                        types.ModuleName,
+		Short:                      "Wasm transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
-		RunE:                       utils.ValidateCmd,
+		RunE:                       client.ValidateCmd,
 	}
 	txCmd.AddCommand(
 		StoreCodeCmd(cdc),
