@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	// "github.com/cosmwasm/wasmd/x/wasm/client/cli"
+	"github.com/cosmwasm/wasmd/x/wasm/client/cli"
 	// "github.com/cosmwasm/wasmd/x/wasm/client/rest"
 )
 
@@ -57,7 +57,9 @@ func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
-func (AppModuleBasic) GetTxCmd(_ *codec.Codec) *cobra.Command { return nil }
+func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	return cli.GetTxCmd(cdc)
+}
 
 // GetQueryCmd returns no root query command for the wasm module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
