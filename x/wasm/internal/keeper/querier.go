@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
 
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
@@ -115,8 +117,14 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 	return bz, nil
 }
 
+type ListCodeResponse struct {
+	ID       uint64         `json:"id"`
+	Creator  sdk.AccAddress `json:"creator"`
+	CodeHash cmn.HexBytes   `json:"code_hash"`
+}
+
 func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var info []*types.CodeInfo
+	var info []ListCodeResponse
 
 	i := uint64(1)
 	for true {
@@ -125,7 +133,11 @@ func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 		if res == nil {
 			break
 		}
-		info = append(info, res)
+		info = append(info, ListCodeResponse{
+			ID:       i,
+			Creator:  res.Creator,
+			CodeHash: res.CodeHash,
+		})
 	}
 
 	bz, err := json.MarshalIndent(info, "", "  ")

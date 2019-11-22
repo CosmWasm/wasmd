@@ -2,7 +2,6 @@ package types
 
 import (
 	wasmTypes "github.com/confio/go-cosmwasm/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
@@ -23,10 +22,9 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 
 // Contract stores a WASM contract instance
 type Contract struct {
-	CodeID      uint64         `json:"code_id"`
-	Creator     sdk.AccAddress `json:"creator"`
-	InitMsg     []byte         `json:"init_msg"`
-	PrefixStore prefix.Store   `json:"prefix_store"`
+	CodeID  uint64         `json:"code_id"`
+	Creator sdk.AccAddress `json:"creator"`
+	InitMsg string         `json:"init_msg"`
 }
 
 // NewParams initializes params for a contract instance
@@ -61,12 +59,11 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 }
 
 // NewContract creates a new instance of a given WASM contract
-func NewContract(codeID uint64, creator sdk.AccAddress, initMsg []byte, prefixStore prefix.Store) Contract {
+func NewContract(codeID uint64, creator sdk.AccAddress, initMsg string) Contract {
 	return Contract{
-		CodeID:      codeID,
-		Creator:     creator,
-		InitMsg:     initMsg,
-		PrefixStore: prefixStore,
+		CodeID:  codeID,
+		Creator: creator,
+		InitMsg: initMsg,
 	}
 }
 
