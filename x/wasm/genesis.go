@@ -3,7 +3,7 @@ package wasm
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	// "github.com/cosmos/modules/incubator/wasm/internal/types"
+	// "github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 type GenesisState struct {

@@ -14,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth"
 
-	"github.com/cosmos/modules/incubator/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 const (

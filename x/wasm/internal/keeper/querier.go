@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/cosmos/modules/incubator/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 const (
