@@ -126,10 +126,10 @@ type ListCodeResponse struct {
 func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var info []ListCodeResponse
 
-	i := uint64(1)
+	var i uint64
 	for true {
-		res := keeper.GetCodeInfo(ctx, i)
 		i++
+		res := keeper.GetCodeInfo(ctx, i)
 		if res == nil {
 			break
 		}

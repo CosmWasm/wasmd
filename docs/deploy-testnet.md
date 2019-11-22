@@ -76,7 +76,7 @@ wasmcli query wasm list-contracts
 # upload a contract and verify
 cp $HOME/go/src/github.com/cosmwasm/wasmd/x/wasm/internal/keeper/testdata/contract.wasm upload.wasm
 wasmcli tx wasm store validator upload.wasm --gas 800000
-# TODO: add id to json output
+# TODO: stops after one hit
 wasmcli query wasm list-code
 wasmcli query wasm code 1 download.wasm
 sha256sum upload.wasm download.wasm
@@ -94,7 +94,6 @@ wasmcli tx wasm instantiate validator 1 "$INIT" --amount=50000stake
 sleep 3
 wasmcli query wasm list-contracts
 CONTRACT=cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
-# TODO: remove prefix store - make init_msg string
 wasmcli query wasm contract $CONTRACT
 wasmcli query wasm contract-state $CONTRACT
 wasmcli query account $CONTRACT
