@@ -59,6 +59,55 @@ wasmd start
 
 This setup puts all the data for `wasmd` in `~/.wasmd`. You can examine the genesis file you created at `~/.wasmd/config/genesis.json`. With this configuration `wasmcli` is also ready to use and has an account with tokens (both staking and custom).
 
+### Set up client
+
+```bash
+wasmcli config chain-id testing
+wasmcli config trust-node true
+wasmcli config node tcp://localhost:26657
+wasmcli config output json
+wasmcli config indent true
+
+# verify initial setup
+wasmcli query account $(wasmcli keys show validator -a)
+wasmcli query wasm list-code
+wasmcli query wasm list-contracts
+
+# upload a contract and verify
+cp $HOME/go/src/github.com/cosmwasm/wasmd/x/wasm/internal/keeper/testdata/contract.wasm upload.wasm
+wasmcli tx wasm store validator upload.wasm --gas 800000
+# TODO: add id to json output
+wasmcli query wasm list-code
+wasmcli query wasm code 1 download.wasm
+sha256sum upload.wasm download.wasm
+
+# prepare more accounts
+wasmcli keys add fred
+wasmcli keys add bob
+wasmcli tx send $(wasmcli keys show validator -a) $(wasmcli keys show fred -a) 98765stake
+wasmcli query account $(wasmcli keys show fred -a)
+wasmcli query account $(wasmcli keys show bob -a)
+
+# instantiate contract and verify
+INIT="{\"verifier\":\"$(wasmcli keys show fred -a)\", \"beneficiary\":\"$(wasmcli keys show fred -a)\"}"
+wasmcli tx wasm create validator 1 "$INIT" --amount=50000stake
+wasmcli query wasm list-contracts
+CONTRACT=cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+# TODO: remove prefix store - make init_msg string
+wasmcli query wasm contract $CONTRACT
+wasmcli query wasm contract-state $CONTRACT
+wasmcli query account $CONTRACT
+
+# execute fails if wrong person
+# TODO: make exec - fix logic
+wasmcli tx wasm send validator $CONTRACT "{}"
+wasmcli query account $(wasmcli keys show bob -a)
+
+wasmcli tx wasm send fred $CONTRACT "{}"
+wasmcli query account $(wasmcli keys show bob -a)
+wasmcli query account $CONTRACT
+```
+
 ## Multi-node, Local, Automated Testnet
 
 From the [networks/local directory](https://github.com/cosmwasm/wasmd/tree/master/networks/local):

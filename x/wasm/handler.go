@@ -18,12 +18,18 @@ func NewHandler(k Keeper) sdk.Handler {
 
 		switch msg := msg.(type) {
 		case MsgStoreCode:
+			return handleStoreCode(ctx, k, &msg)
+		case *MsgStoreCode:
 			return handleStoreCode(ctx, k, msg)
 
 		case MsgInstantiateContract:
+			return handleInstantiate(ctx, k, &msg)
+		case *MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
 
 		case MsgExecuteContract:
+			return handleExecute(ctx, k, &msg)
+		case *MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
 
 		default:
@@ -33,7 +39,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleStoreCode(ctx sdk.Context, k Keeper, msg MsgStoreCode) sdk.Result {
+func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
 	codeID, err := k.Create(ctx, msg.Sender, msg.WASMByteCode)
 	if err != nil {
 		return err.Result()
@@ -55,7 +61,7 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg MsgStoreCode) sdk.Result {
 	}
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) sdk.Result {
+func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) sdk.Result {
 	contractAddr, err := k.Instantiate(ctx, msg.Sender, msg.Code, msg.InitMsg, msg.InitFunds)
 	if err != nil {
 		return err.Result()
@@ -78,7 +84,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg MsgInstantiateContract) sd
 	}
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg MsgExecuteContract) sdk.Result {
+func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) sdk.Result {
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.SentFunds, msg.Msg)
 	if err != nil {
 		return err.Result()

@@ -50,7 +50,7 @@ func GetCmdListCode(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -107,7 +107,7 @@ func GetCmdListContracts(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -133,7 +133,7 @@ func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -159,7 +159,7 @@ func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
