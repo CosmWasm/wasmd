@@ -271,10 +271,6 @@ func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum in
 	assert.Equal(t, expectedNum, len(res))
 }
 
-type wasmCode struct {
-	Code []byte `json:"code", yaml:"code"`
-}
-
 func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expectedBytes []byte) {
 	path := []string{QueryGetCode, fmt.Sprintf("%d", codeID)}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
@@ -285,7 +281,7 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 		return
 	}
 
-	var res wasmCode
+	var res GetCodeResponse
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 

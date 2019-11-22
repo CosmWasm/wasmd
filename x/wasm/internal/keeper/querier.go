@@ -93,7 +93,7 @@ func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, kee
 	return bz, nil
 }
 
-type wasmCode struct {
+type GetCodeResponse struct {
 	Code []byte `json:"code", yaml:"code"`
 }
 
@@ -108,7 +108,7 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 		return nil, sdk.ErrUnknownRequest("loading wasm code: " + err.Error())
 	}
 
-	bz, err := json.MarshalIndent(wasmCode{code}, "", "  ")
+	bz, err := json.MarshalIndent(GetCodeResponse{code}, "", "  ")
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}
