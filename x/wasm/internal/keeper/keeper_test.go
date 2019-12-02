@@ -72,7 +72,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	kvStoreGas := uint64(28757) // calculated by disabling contract gas reduction and running test
-	require.Equal(t, kvStoreGas+285, gasAfter-gasBefore)
+	require.Equal(t, kvStoreGas+288, gasAfter-gasBefore)
 }
 
 func TestExecute(t *testing.T) {
@@ -133,12 +133,12 @@ func TestExecute(t *testing.T) {
 	diff := time.Now().Sub(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	assert.Equal(t, uint64(81891), res.GasUsed)
+	assert.Equal(t, uint64(81778), res.GasUsed)
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	kvStoreGas := uint64(30321) // calculated by disabling contract gas reduction and running test
-	require.Equal(t, kvStoreGas+815, gasAfter-gasBefore)
+	require.Equal(t, kvStoreGas+814, gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
