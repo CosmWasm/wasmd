@@ -67,11 +67,6 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-type model struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	addr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
@@ -79,9 +74,9 @@ func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, kee
 	}
 	iter := keeper.GetContractState(ctx, addr)
 
-	var state []model
+	var state []types.Model
 	for ; iter.Valid(); iter.Next() {
-		m := model{
+		m := types.Model{
 			Key:   string(iter.Key()),
 			Value: string(iter.Value()),
 		}

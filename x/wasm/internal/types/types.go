@@ -6,6 +6,12 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
+// Model is a struct that holds a KV pair
+type Model struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
 	CodeHash []byte         `json:"code_hash"`

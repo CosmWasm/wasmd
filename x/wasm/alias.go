@@ -45,6 +45,7 @@ var (
 	ErrInstantiateFailed      = types.ErrInstantiateFailed
 	ErrExecuteFailed          = types.ErrExecuteFailed
 	ErrGasLimit               = types.ErrGasLimit
+	ErrInvalidGenesis         = types.ErrInvalidGenesis
 	GetCodeKey                = types.GetCodeKey
 	GetContractAddressKey     = types.GetContractAddressKey
 	GetContractStorePrefixKey = types.GetContractStorePrefixKey
@@ -53,6 +54,11 @@ var (
 	NewWasmCoins              = types.NewWasmCoins
 	NewContract               = types.NewContract
 	CosmosResult              = types.CosmosResult
+
+	// genesis aliases
+	ValidateGenesis = types.ValidateGenesis
+	InitGenesis     = keeper.InitGenesis
+	ExportGenesis   = keeper.ExportGenesis
 
 	// variable aliases
 	ModuleCdc           = types.ModuleCdc
@@ -71,4 +77,6 @@ type (
 	MsgExecuteContract     = types.MsgExecuteContract
 	CodeInfo               = types.CodeInfo
 	Contract               = types.Contract
+
+	GenesisState = types.GenesisState
 )
