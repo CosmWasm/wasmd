@@ -341,9 +341,9 @@ func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccA
 	return addrFromUint64(contractID)
 }
 
-func (k Keeper) GetNextID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
+	bz := store.Get(types.KeyLastCodeID)
 	id := uint64(1)
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)

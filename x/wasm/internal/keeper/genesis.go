@@ -13,24 +13,20 @@ import (
 //
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
-	for id, info := range data.CodeInfos {
-		bytecode := data.CodesBytes[id]
-		newId, err := keeper.Create(ctx, info.Creator, bytecode)
+	for _, code := range data.Codes {
+		newId, err := keeper.Create(ctx, code.CodeInfo.Creator, code.CodesBytes)
 		if err != nil {
 			panic(err)
 		}
 		newInfo := keeper.GetCodeInfo(ctx, newId)
-		if !bytes.Equal(info.CodeHash, newInfo.CodeHash) {
+		if !bytes.Equal(code.CodeInfo.CodeHash, newInfo.CodeHash) {
 			panic("code hashes not same")
 		}
 	}
 
-	for i, addr := range data.ContractAddresses {
-		info := data.ContractInfos[i]
-		state := data.ContractStates[i]
-
-		keeper.setContractInfo(ctx, addr, info)
-		keeper.setContractState(ctx, addr, state)
+	for _, contract := range data.Contracts {
+		keeper.setContractInfo(ctx, contract.ContractAddress, contract.ContractInfo)
+		keeper.setContractState(ctx, contract.ContractAddress, contract.ContractState)
 	}
 
 }
@@ -39,20 +35,19 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	var genState types.GenesisState
 
-	maxCodeID := keeper.GetNextCodeID(ctx, types.KeyLastCodeID)
+	maxCodeID := keeper.GetNextCodeID(ctx)
 	for i := uint64(1); i < maxCodeID; i++ {
-		genState.CodeInfos = append(genState.CodeInfos, *keeper.GetCodeInfo(ctx, i))
 		bytecode, err := keeper.GetByteCode(ctx, i)
 		if err != nil {
 			panic(err)
 		}
-		genState.CodesBytes = append(genState.CodesBytes, bytecode)
+		genState.Codes = append(genState.Codes, types.CodeData{
+			CodeInfo:   *keeper.GetCodeInfo(ctx, i),
+			CodesBytes: bytecode,
+		})
 	}
 
 	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, contract types.Contract) bool {
-		genState.ContractAddresses = append(genState.ContractAddresses, addr)
-		genState.ContractInfos = append(genState.ContractInfos, contract)
-
 		contractStateIterator := keeper.GetContractState(ctx, addr)
 		var state []types.Model
 		for ; contractStateIterator.Valid(); contractStateIterator.Next() {
@@ -62,7 +57,12 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 			}
 			state = append(state, m)
 		}
-		genState.ContractStates = append(genState.ContractStates, state)
+
+		genState.Contracts = append(genState.Contracts, types.ContractData{
+			ContractAddress: addr,
+			ContractInfo:    contract,
+			ContractState:   state,
+		})
 
 		return false
 	})
