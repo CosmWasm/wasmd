@@ -20,10 +20,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			panic(err)
 		}
 		newInfo := keeper.GetCodeInfo(ctx, newId)
-		if !info.Creator.Equals(newInfo.Creator) {
-			panic("code creators not same")
-		}
-		if bytes.Compare(info.CodeHash, newInfo.CodeHash) != 0 {
+		if !bytes.Equal(info.CodeHash, newInfo.CodeHash) {
 			panic("code hashes not same")
 		}
 	}
@@ -42,8 +39,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	var genState types.GenesisState
 
-	maxCodeID := keeper.GetLastID(ctx, types.KeyLastCodeID)
-	for i := uint64(0); i < maxCodeID; i++ {
+	maxCodeID := keeper.GetNextCodeID(ctx, types.KeyLastCodeID)
+	for i := uint64(1); i < maxCodeID; i++ {
 		genState.CodeInfos = append(genState.CodeInfos, *keeper.GetCodeInfo(ctx, i))
 		bytecode, err := keeper.GetByteCode(ctx, i)
 		if err != nil {
