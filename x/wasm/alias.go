@@ -52,7 +52,7 @@ var (
 	NewCodeInfo               = types.NewCodeInfo
 	NewParams                 = types.NewParams
 	NewWasmCoins              = types.NewWasmCoins
-	NewContract               = types.NewContract
+	NewContractInfo           = types.NewContractInfo
 	CosmosResult              = types.CosmosResult
 
 	// genesis aliases
@@ -76,7 +76,7 @@ type (
 	MsgInstantiateContract = types.MsgInstantiateContract
 	MsgExecuteContract     = types.MsgExecuteContract
 	CodeInfo               = types.CodeInfo
-	Contract               = types.Contract
+	ContractInfo           = types.ContractInfo
 
 	GenesisState = types.GenesisState
 )

@@ -19,7 +19,7 @@ type CodeData struct {
 // ContractData struct encompasses ContractAddress, ContractInfo, and ContractState
 type ContractData struct {
 	ContractAddress sdk.AccAddress `json:"contract_address"`
-	ContractInfo    Contract       `json:"contract_info"`
+	ContractInfo    ContractInfo   `json:"contract_info"`
 	ContractState   []Model        `json:"contract_state"`
 }
 

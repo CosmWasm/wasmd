@@ -56,7 +56,7 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 
 func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var addrs []string
-	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, _ types.Contract) bool {
+	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
 		addrs = append(addrs, addr.String())
 		return false
 	})

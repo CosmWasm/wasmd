@@ -47,7 +47,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		})
 	}
 
-	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, contract types.Contract) bool {
+	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, contract types.ContractInfo) bool {
 		contractStateIterator := keeper.GetContractState(ctx, addr)
 		var state []types.Model
 		for ; contractStateIterator.Valid(); contractStateIterator.Next() {

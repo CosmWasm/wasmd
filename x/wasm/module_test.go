@@ -417,7 +417,7 @@ func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.A
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
-	var res Contract
+	var res ContractInfo
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 
