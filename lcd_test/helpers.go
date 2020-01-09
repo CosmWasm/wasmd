@@ -15,6 +15,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/codec"
 	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
@@ -70,7 +72,7 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	logger = log.NewFilter(logger, log.AllowError())
 
 	db := dbm.NewMemDB()
-	gapp := app.NewWasmApp(logger, db, nil, true, 0, baseapp.SetPruning(store.PruneNothing))
+	gapp := app.NewWasmApp(logger, db, nil, true, 0, map[int64]bool{}, baseapp.SetPruning(store.PruneNothing))
 	cdc = app.MakeCodec()
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
@@ -91,10 +93,10 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	}
 
 	// XXX: Need to set this so LCD knows the tendermint node address!
-	viper.Set(client.FlagNode, config.RPC.ListenAddress)
-	viper.Set(client.FlagChainID, genDoc.ChainID)
+	viper.Set(flags.FlagNode, config.RPC.ListenAddress)
+	viper.Set(flags.FlagChainID, genDoc.ChainID)
 	// TODO Set to false once the upstream Tendermint proof verification issue is fixed.
-	viper.Set(client.FlagTrustNode, true)
+	viper.Set(flags.FlagTrustNode, true)
 
 	node, err := startTM(config, logger, genDoc, privVal, gapp)
 	if err != nil {
@@ -259,8 +261,8 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 	mintData := mint.DefaultGenesisState()
 	inflationMin := sdk.ZeroDec()
 	if minting {
-		inflationMin = sdk.MustNewDecFromStr("10000.0")
-		mintData.Params.InflationMax = sdk.MustNewDecFromStr("15000.0")
+		inflationMin = sdk.MustNewDecFromStr("0.9")
+		mintData.Params.InflationMax = sdk.MustNewDecFromStr("1.0")
 	} else {
 		mintData.Params.InflationMax = inflationMin
 	}
@@ -279,9 +281,9 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 
 	//// double check inflation is set according to the minting boolean flag
 	if minting {
-		if !(mintData.Params.InflationMax.Equal(sdk.MustNewDecFromStr("15000.0")) &&
-			mintData.Minter.Inflation.Equal(sdk.MustNewDecFromStr("10000.0")) &&
-			mintData.Params.InflationMin.Equal(sdk.MustNewDecFromStr("10000.0"))) {
+		if !(mintData.Params.InflationMax.Equal(sdk.MustNewDecFromStr("1.0")) &&
+			mintData.Minter.Inflation.Equal(sdk.MustNewDecFromStr("0.9")) &&
+			mintData.Params.InflationMin.Equal(sdk.MustNewDecFromStr("0.9"))) {
 			err = errors.New("mint parameters does not correspond to their defaults")
 			return
 		}
@@ -356,7 +358,7 @@ func startLCD(logger log.Logger, listenAddr string, cdc *codec.Codec) (net.Liste
 	return listener, nil
 }
 
-// NOTE: If making updates here also update cmd/gaia/cmd/wasmcli/main.go
+// NOTE: If making updates here also update cmd/wasmcli/main.go
 func registerRoutes(rs *lcd.RestServer) {
 	client.RegisterRoutes(rs.CliCtx, rs.Mux)
 	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
@@ -377,7 +379,7 @@ func CreateAddr(name string, kb crkeys.Keybase) (sdk.AccAddress, string, error) 
 		info crkeys.Info
 		seed string
 	)
-	info, seed, err = kb.CreateMnemonic(name, crkeys.English, client.DefaultKeyPass, crkeys.Secp256k1)
+	info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
 	return sdk.AccAddress(info.GetPubKey().Address()), seed, err
 }
 
@@ -394,7 +396,7 @@ func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds
 
 	for i := 0; i < numAddrs; i++ {
 		name := fmt.Sprintf("test%d", i)
-		info, seed, err = kb.CreateMnemonic(name, crkeys.English, client.DefaultKeyPass, crkeys.Secp256k1)
+		info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
 		if err != nil {
 			errs = append(errs, err)
 		}

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
@@ -64,21 +64,21 @@ func newQuerier(keeper Keeper) func(sdk.Context, []string, abci.RequestQuery) ([
 		case QueryListCode:
 			return queryCodeList(ctx, req, keeper)
 		default:
-			return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unknown query path: %s", path[0])
 		}
 	}
 }
 
-func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
-		return nil, sdk.ErrUnknownRequest(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, err.Error())
 	}
 	info := keeper.GetContractInfo(ctx, addr)
 
 	bz, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, sdk.ErrInvalidAddress(err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 	return bz, nil
 }
@@ -91,15 +91,15 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	})
 	bz, err := json.MarshalIndent(addrs, "", "  ")
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrJSONMarshal, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
 
 func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	contractAddr, err := sdk.AccAddressFromBech32(bech)
+	addr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrInvalidAddress, bech)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 
 	var resultData []types.Model
@@ -123,7 +123,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	}
 	bz, err := json.MarshalIndent(resultData, "", "  ")
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrJSONMarshal, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
@@ -135,17 +135,17 @@ type GetCodeResponse struct {
 func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	codeID, err := strconv.ParseUint(codeIDstr, 10, 64)
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "invalid codeID: "+err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "invalid codeID: "+err.Error())
 	}
 
 	code, err := keeper.GetByteCode(ctx, codeID)
 	if err != nil {
-		return nil, sdkErrors.Wrap(err, "loading wasm code")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "loading wasm code: "+err.Error())
 	}
 
 	bz, err := json.MarshalIndent(GetCodeResponse{code}, "", "  ")
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrJSONMarshal, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }
@@ -175,7 +175,7 @@ func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 
 	bz, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
-		return nil, sdkErrors.Wrap(sdkErrors.ErrJSONMarshal, err.Error())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	return bz, nil
 }

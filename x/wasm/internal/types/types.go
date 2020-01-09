@@ -83,9 +83,8 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg string) Cont
 // CosmosResult converts from a Wasm Result type
 func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
 	return sdk.Result{
-		Data:    []byte(wasmResult.Data),
-		Log:     wasmResult.Log,
-		GasUsed: wasmResult.GasUsed,
+		Data: []byte(wasmResult.Data),
+		Log:  wasmResult.Log,
 	}
 }
 

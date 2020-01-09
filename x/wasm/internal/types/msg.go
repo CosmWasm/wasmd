@@ -7,12 +7,15 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
 	MaxWasmSize   = 500 * 1024
 	BuildTagRegex = "^cosmwasm-opt:"
 )
+
+var _, _, _ sdk.Msg = MsgStoreCode{}, MsgInstantiateContract{}, MsgExecuteContract{}
 
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
@@ -32,13 +35,13 @@ func (msg MsgStoreCode) Type() string {
 	return "store-code"
 }
 
-func (msg MsgStoreCode) ValidateBasic() sdk.Error {
+func (msg MsgStoreCode) ValidateBasic() error {
 	if len(msg.WASMByteCode) == 0 {
-		return sdk.ErrInternal("empty wasm code")
+		return sdkerrors.Wrap(ErrCreateFailed, "empty wasm code")
 	}
 
 	if len(msg.WASMByteCode) > MaxWasmSize {
-		return sdk.ErrInternal("wasm code too large")
+		return sdkerrors.Wrap(ErrCreateFailed, "wasm code too large")
 	}
 
 	if msg.Source != "" {
@@ -91,9 +94,9 @@ func (msg MsgInstantiateContract) Type() string {
 	return "instantiate"
 }
 
-func (msg MsgInstantiateContract) ValidateBasic() sdk.Error {
+func (msg MsgInstantiateContract) ValidateBasic() error {
 	if msg.InitFunds.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative InitFunds")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
 	}
 	return nil
 }
@@ -121,9 +124,9 @@ func (msg MsgExecuteContract) Type() string {
 	return "execute"
 }
 
-func (msg MsgExecuteContract) ValidateBasic() sdk.Error {
+func (msg MsgExecuteContract) ValidateBasic() error {
 	if msg.SentFunds.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative SentFunds")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative SentFunds")
 	}
 	return nil
 }

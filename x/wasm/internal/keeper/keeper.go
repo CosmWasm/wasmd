@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -62,6 +62,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 }
 
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract
+<<<<<<< HEAD
 func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
@@ -71,6 +72,12 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		// return 0, sdkErrors.Wrap(err, "cosmwasm create")
 		return 0, sdkErrors.Wrap(types.ErrCreateFailed, err.Error())
+=======
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, err error) {
+	codeHash, err := k.wasmer.Create(wasmCode)
+	if err != nil {
+		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+>>>>>>> in progress
 	}
 
 	store := ctx.KVStore(k.storeKey)
@@ -83,12 +90,21 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 }
 
 // Instantiate creates an instance of a WASM contract
+<<<<<<< HEAD
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (sdk.AccAddress, error) {
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return nil, sdkErrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
+=======
+func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint64, initMsg []byte, deposit sdk.Coins) (sdk.AccAddress, error) {
+	// create contract address
+	contractAddress := k.generateContractAddress(ctx, codeID)
+	existingAccnt := k.accountKeeper.GetAccount(ctx, contractAddress)
+	if existingAccnt != nil {
+		return nil, sdkerrors.Wrap(types.ErrAccountExists, existingAccnt.GetAddress().String())
+>>>>>>> in progress
 	}
 
 	// deposit initial contract funds
@@ -119,7 +135,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	gas := gasForContract(ctx)
 	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, gas)
 	if err != nil {
-		return contractAddress, sdkErrors.Wrap(types.ErrInstantiateFailed, err.Error())
+		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		// return contractAddress, sdkErrors.Wrap(err, "cosmwasm instantiate")
 	}
 	consumeGas(ctx, res.GasUsed)
@@ -154,7 +170,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	gas := gasForContract(ctx)
 	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)
 	if execErr != nil {
-		return sdk.Result{}, sdkErrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
 
@@ -296,14 +312,25 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 }
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
+<<<<<<< HEAD
 	// maybe use this instead for the arg?
 	contractAddr := contract.GetAddress()
 	if msg.Send != nil {
 		return k.sendTokens(ctx, contractAddr, msg.Send.FromAddress, msg.Send.ToAddress, msg.Send.Amount)
 	} else if msg.Contract != nil {
+=======
+	// we check each type (pointers would make it easier to test if set)
+	if msg.Send.FromAddress != "" {
+		sendMsg, err := convertCosmosSendMsg(msg.Send)
+		if err != nil {
+			return err
+		}
+		return k.handleSdkMessage(ctx, contract, sendMsg)
+	} else if msg.Contract.ContractAddr != "" {
+>>>>>>> in progress
 		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)
 		if stderr != nil {
-			return sdk.ErrInvalidAddress(msg.Contract.ContractAddr)
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Contract.ContractAddr)
 		}
 		err := k.sendTokens(ctx, contractAddr, contractAddr.String(), targetAddr.String(), msg.Contract.Send)
 		if err != nil {
@@ -322,6 +349,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
 }
 
+<<<<<<< HEAD
 func (k Keeper) sendTokens(ctx sdk.Context, signer sdk.AccAddress, origin string, target string, tokens []wasmTypes.Coin) error {
 	if len(tokens) == 0 {
 		return nil
@@ -337,17 +365,27 @@ func convertCosmosSendMsg(from string, to string, coins []wasmTypes.Coin) (bank.
 	fromAddr, stderr := sdk.AccAddressFromBech32(from)
 	if stderr != nil {
 		return bank.MsgSend{}, sdk.ErrInvalidAddress(from)
+=======
+func convertCosmosSendMsg(msg wasmTypes.SendMsg) (bank.MsgSend, error) {
+	fromAddr, stderr := sdk.AccAddressFromBech32(msg.FromAddress)
+	if stderr != nil {
+		return bank.MsgSend{}, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.FromAddress)
+>>>>>>> in progress
 	}
 	toAddr, stderr := sdk.AccAddressFromBech32(to)
 	if stderr != nil {
+<<<<<<< HEAD
 		return bank.MsgSend{}, sdk.ErrInvalidAddress(to)
+=======
+		return bank.MsgSend{}, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.ToAddress)
+>>>>>>> in progress
 	}
 
 	var toSend sdk.Coins
 	for _, coin := range coins {
 		amount, ok := sdk.NewIntFromString(coin.Amount)
 		if !ok {
-			return bank.MsgSend{}, sdk.ErrInvalidCoins(coin.Amount + coin.Denom)
+			return bank.MsgSend{}, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
 		}
 		c := sdk.Coin{
 			Denom:  coin.Denom,
@@ -363,17 +401,26 @@ func convertCosmosSendMsg(from string, to string, coins []wasmTypes.Coin) (bank.
 	return sendMsg, nil
 }
 
+<<<<<<< HEAD
 func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {
+=======
+func (k Keeper) handleSdkMessage(ctx sdk.Context, contract exported.Account, msg sdk.Msg) error {
+>>>>>>> in progress
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
+<<<<<<< HEAD
 			return sdkErrors.Wrap(sdkErrors.ErrUnauthorized, "contract doesn't have permission")
+=======
+			return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
+>>>>>>> in progress
 		}
 	}
 
 	// find the handler and execute it
-	h := k.router.Route(msg.Route())
+	h := k.router.Route(ctx, msg.Route())
 	if h == nil {
+<<<<<<< HEAD
 		return sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, msg.Route())
 	}
 	res := h(ctx, msg)
@@ -381,6 +428,12 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg 
 		return sdkErrors.ABCIError(string(res.Codespace), uint32(res.Code), res.Log)
 	}
 	return nil
+=======
+		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized message route: %s", msg.Route())
+	}
+	_, err := h(ctx, msg)
+	return err
+>>>>>>> in progress
 }
 
 func gasForContract(ctx sdk.Context) uint64 {
