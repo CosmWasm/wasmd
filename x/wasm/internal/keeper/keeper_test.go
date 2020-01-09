@@ -39,6 +39,33 @@ func TestCreate(t *testing.T) {
 	contractID, err := keeper.Create(ctx, creator, wasmCode)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
+	// and verify content
+	storedCode, err := keeper.GetByteCode(ctx, contractID)
+	require.NoError(t, err)
+	require.Equal(t, wasmCode, storedCode)
+}
+
+func TestCreateWithGzippedPayload(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), contractID)
+	// and verify content
+	storedCode, err := keeper.GetByteCode(ctx, contractID)
+	require.NoError(t, err)
+	rawCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+	require.Equal(t, rawCode, storedCode)
 }
 
 func TestInstantiate(t *testing.T) {
