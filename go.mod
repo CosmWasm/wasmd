@@ -3,6 +3,7 @@ module github.com/cosmwasm/wasmd
 go 1.13
 
 require (
+	github.com/Workiva/go-datastructures v1.0.50
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/confio/go-cosmwasm v0.6.2
 	github.com/cosmos/cosmos-sdk v0.34.4-0.20200108184110-67c2acd75aaa

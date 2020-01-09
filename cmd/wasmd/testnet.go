@@ -51,9 +51,7 @@ func testnetCmd(ctx *server.Context, cdc *codec.Codec,
 		Short: "Initialize files for a Wasmd testnet",
 		Long: `testnet will create "v" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
-
 Note, strict routability for addresses is turned off in the config file.
-
 Example:
 	wasmd testnet --v 4 --output-dir ./output --starting-ip-address 192.168.10.2
 	`,
@@ -91,6 +89,7 @@ Example:
 	cmd.Flags().String(
 		server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
 		"Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)")
+	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 	return cmd
 }
 

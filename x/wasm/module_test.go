@@ -113,7 +113,7 @@ func TestHandleCreate(t *testing.T) {
 				assertCodeBytes(t, q, data.ctx, 1, nil)
 				return
 			}
-			require.Nil(t, err, err.Error())
+			require.Nil(t, err)
 			assertCodeList(t, q, data.ctx, 1)
 		})
 	}
