@@ -41,7 +41,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		if err != nil {
 			panic(err)
 		}
-		genState.Codes = append(genState.Codes, types.CodeData{
+		genState.Codes = append(genState.Codes, types.Code{
 			CodeInfo:   *keeper.GetCodeInfo(ctx, i),
 			CodesBytes: bytecode,
 		})
@@ -58,7 +58,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 			state = append(state, m)
 		}
 
-		genState.Contracts = append(genState.Contracts, types.ContractData{
+		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr,
 			ContractInfo:    contract,
 			ContractState:   state,
