@@ -9,9 +9,9 @@ const (
 )
 
 type MsgStoreCode struct {
-	Sender       sdk.AccAddress `json:"sender" yaml:"sender"`
+	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
-	WASMByteCode []byte         `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 }
 
 func (msg MsgStoreCode) Route() string {

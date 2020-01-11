@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bytes"
+	"compress/gzip"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -39,7 +41,7 @@ func TestUncompress(t *testing.T) {
 			src:       []byte{0x1, 0x2},
 			expResult: []byte{0x1, 0x2},
 		},
-		"handle big slice": {
+		"handle big input slice": {
 			src:       []byte(strings.Repeat("a", maxSize+1)),
 			expResult: []byte(strings.Repeat("a", maxSize+1)),
 		},
@@ -51,13 +53,32 @@ func TestUncompress(t *testing.T) {
 			src:      append(gzipIdent, byte(0x1)),
 			expError: io.ErrUnexpectedEOF,
 		},
+		"handle incomplete gzip": {
+			src:      wasmGzipped[:len(wasmGzipped)-5],
+			expError: io.ErrUnexpectedEOF,
+		},
+		"handle big gzip output": {
+			src:      asGzip(strings.Repeat("a", maxSize+1)),
+			expError: io.ErrUnexpectedEOF,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			r, err := uncompress(spec.src)
 			require.True(t, errors.Is(spec.expError, err), "exp %+v got %+v", spec.expError, err)
+			if spec.expError != nil {
+				return
+			}
 			assert.Equal(t, spec.expResult, r)
 		})
 	}
 
+}
+
+func asGzip(src string) []byte {
+	var buf bytes.Buffer
+	if _, err := io.Copy(gzip.NewWriter(&buf), strings.NewReader(src)); err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
 }
