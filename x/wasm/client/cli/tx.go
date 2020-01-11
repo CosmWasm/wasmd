@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
@@ -55,6 +57,17 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			wasm, err := ioutil.ReadFile(args[1])
 			if err != nil {
 				return err
+			}
+
+			// gzip the wasm file
+			if wasmUtils.IsWasm(wasm) {
+				wasm, err = wasmUtils.GzipIt(wasm)
+
+				if err != nil {
+					return err
+				}
+			} else if !wasmUtils.IsGzip(wasm) {
+				return fmt.Errorf("invalid input file. Accepts only wasm binary or gzip %s")
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
