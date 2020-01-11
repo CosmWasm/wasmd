@@ -12,12 +12,6 @@ type Model struct {
 	Value string `json:"value"`
 }
 
-// CodeData struct encompasses CodeInfo and CodeBytes
-type Code struct {
-	CodeInfo   CodeInfo `json:"code_info"`
-	CodesBytes []byte   `json:"code_bytes"`
-}
-
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
 	CodeHash []byte         `json:"code_hash"`
@@ -32,14 +26,7 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 	}
 }
 
-// ContractData struct encompasses ContractAddress, ContractInfo, and ContractState
-type Contract struct {
-	ContractAddress sdk.AccAddress `json:"contract_address"`
-	ContractInfo    ContractInfo   `json:"contract_info"`
-	ContractState   []Model        `json:"contract_state"`
-}
-
-// Contract stores a WASM contract instance
+// ContractInfo stores a WASM contract instance
 type ContractInfo struct {
 	CodeID  uint64         `json:"code_id"`
 	Creator sdk.AccAddress `json:"creator"`
