@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/json"
 	"strconv"
 
@@ -29,7 +30,18 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryListContracts:
 			return queryContractList(ctx, req, keeper)
 		case QueryGetContractState:
-			return queryContractState(ctx, path[1], req, keeper)
+			var accept func([]byte) bool
+			if len(path) > 2 { // passed with key
+				binKey := []byte(path[2])
+				accept = func(b []byte) bool {
+					return bytes.Equal(b, binKey)
+				}
+			} else {
+				accept = func(b []byte) bool {
+					return true
+				}
+			}
+			return selectContractState(ctx, path[1], keeper, accept)
 		case QueryGetCode:
 			return queryCode(ctx, path[1], req, keeper)
 		case QueryListCode:
@@ -67,7 +79,7 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func selectContractState(ctx sdk.Context, bech string, keeper Keeper, accept func([]byte) bool) ([]byte, sdk.Error) {
 	addr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
@@ -76,13 +88,15 @@ func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, kee
 
 	var state []types.Model
 	for ; iter.Valid(); iter.Next() {
+		if !accept(iter.Key()) {
+			continue
+		}
 		m := types.Model{
 			Key:   string(iter.Key()),
 			Value: string(iter.Value()),
 		}
 		state = append(state, m)
 	}
-
 	bz, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())

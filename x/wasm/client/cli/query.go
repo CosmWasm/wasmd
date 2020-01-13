@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -145,10 +146,26 @@ func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
 
 // GetCmdGetContractState dumps full internal state of a given contract
 func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        "contract-state",
+		Short:                      "Querying commands for the wasm module",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+	cmd.AddCommand(client.GetCommands(
+		GetCmdGetContractStateAll(cdc),
+		GetCmdGetContractStateRaw(cdc),
+	)...)
+	return cmd
+
+}
+
+func GetCmdGetContractStateAll(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "contract-state [bech32_address]",
-		Short: "Prints out internal state of a contract given its address",
-		Long:  "Prints out internal state of a contract given its address",
+		Use:   "all [bech32_address]",
+		Short: "Prints out all internal state of a contract given its address",
+		Long:  "Prints out all internal state of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -159,6 +176,33 @@ func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
 			}
 
 			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String())
+			res, _, err := cliCtx.Query(route)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(res))
+			return nil
+		},
+	}
+}
+func GetCmdGetContractStateRaw(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "raw [bech32_address] [key]",
+		Short: "Prints out internal state for key of a contract given its address",
+		Long:  "Prints out internal state for of a contract given its address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			addr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+			key := args[1]
+			if key == "" {
+				return errors.New("key must not be empty")
+			}
+			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), key)
 			res, _, err := cliCtx.Query(route)
 			if err != nil {
 				return err
