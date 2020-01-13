@@ -16,6 +16,7 @@ const (
 	CodeExecuteFailed     sdk.CodeType = 4
 	CodeGasLimit          sdk.CodeType = 5
 	CodeInvalidGenesis    sdk.CodeType = 6
+	CodeNotFound          sdk.CodeType = 7
 )
 
 // ErrCreateFailed error for wasm code that has already been uploaded or failed
@@ -46,4 +47,9 @@ func ErrGasLimit(msg string) sdk.Error {
 // ErrInvalidGenesis error for out of gas
 func ErrInvalidGenesis(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeInvalidGenesis, fmt.Sprintf("invalid genesis: %s", msg))
+}
+
+// ErrNotFound error for an entry not found in the stoe
+func ErrNotFound(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeNotFound, fmt.Sprintf("not found: %s", msg))
 }
