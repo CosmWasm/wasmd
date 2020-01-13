@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -73,6 +74,27 @@ func TestInstantiate(t *testing.T) {
 	gasAfter := ctx.GasMeter().GasConsumed()
 	kvStoreGas := uint64(28757) // calculated by disabling contract gas reduction and running test
 	require.Equal(t, kvStoreGas+288, gasAfter-gasBefore)
+}
+
+func TestInstantiateWithNonExistingCodeID(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	require.NoError(t, err)
+
+	initMsg := InitMsg{}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	const nonExistingCodeID = 9999
+	addr, err := keeper.Instantiate(ctx, creator, nonExistingCodeID, initMsgBz, nil)
+	require.Error(t, err, types.ErrNotFound("contract"))
+	require.Nil(t, addr)
 }
 
 func TestExecute(t *testing.T) {
@@ -152,6 +174,21 @@ func TestExecute(t *testing.T) {
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
 
 	t.Logf("Duration: %v (81488 gas)\n", diff)
+}
+
+func TestExecuteWithNonExistingAddress(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+
+	// unauthorized - trialCtx so we don't change state
+	nonExistingAddress := addrFromUint64(9999)
+	_, err = keeper.Execute(ctx, nonExistingAddress, creator, nil, []byte(`{}`))
+	require.Error(t, err, types.ErrNotFound("contract info"))
 }
 
 type InitMsg struct {

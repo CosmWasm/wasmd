@@ -91,10 +91,11 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 	// get contact info
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
-	var codeInfo types.CodeInfo
-	if bz != nil {
-		k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
+	if bz == nil {
+		return nil, types.ErrNotFound("contract")
 	}
+	var codeInfo types.CodeInfo
+	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	// prepare params for contract instantiate call
 	params := types.NewParams(ctx, creator, deposit, contractAccount)
@@ -129,17 +130,19 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msgs []byte) (sdk.Result, sdk.Error) {
 	store := ctx.KVStore(k.storeKey)
 
-	var contract types.ContractInfo
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
-	if contractBz != nil {
-		k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+	if contractBz == nil {
+		return sdk.Result{}, types.ErrNotFound("contract")
 	}
+	var contract types.ContractInfo
+	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
 
-	var codeInfo types.CodeInfo
 	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
-	if contractInfoBz != nil {
-		k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
+	if contractInfoBz == nil {
+		return sdk.Result{}, types.ErrNotFound("contract info")
 	}
+	var codeInfo types.CodeInfo
+	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
 
 	// add more funds
 	sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
