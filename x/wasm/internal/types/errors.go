@@ -15,6 +15,7 @@ const (
 	CodeInstantiateFailed sdk.CodeType = 3
 	CodeExecuteFailed     sdk.CodeType = 4
 	CodeGasLimit          sdk.CodeType = 5
+	CodeInvalidGenesis    sdk.CodeType = 6
 )
 
 // ErrCreateFailed error for wasm code that has already been uploaded or failed
@@ -40,4 +41,9 @@ func ErrExecuteFailed(err error) sdk.Error {
 // ErrGasLimit error for out of gas
 func ErrGasLimit(msg string) sdk.Error {
 	return sdk.NewError(DefaultCodespace, CodeGasLimit, fmt.Sprintf("insufficient gas: %s", msg))
+}
+
+// ErrInvalidGenesis error for out of gas
+func ErrInvalidGenesis(msg string) sdk.Error {
+	return sdk.NewError(DefaultCodespace, CodeInvalidGenesis, fmt.Sprintf("invalid genesis: %s", msg))
 }

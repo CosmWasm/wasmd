@@ -6,6 +6,12 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
+// Model is a struct that holds a KV pair
+type Model struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
 	CodeHash []byte         `json:"code_hash"`
@@ -20,8 +26,8 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
 	}
 }
 
-// Contract stores a WASM contract instance
-type Contract struct {
+// ContractInfo stores a WASM contract instance
+type ContractInfo struct {
 	CodeID  uint64         `json:"code_id"`
 	Creator sdk.AccAddress `json:"creator"`
 	InitMsg string         `json:"init_msg"`
@@ -58,9 +64,9 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 	return wasmCoins
 }
 
-// NewContract creates a new instance of a given WASM contract
-func NewContract(codeID uint64, creator sdk.AccAddress, initMsg string) Contract {
-	return Contract{
+// NewContractInfo creates a new instance of a given WASM contract info
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg string) ContractInfo {
+	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,
 		InitMsg: initMsg,
