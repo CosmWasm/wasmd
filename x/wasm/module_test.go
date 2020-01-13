@@ -23,6 +23,7 @@ type testData struct {
 	module     module.AppModule
 	ctx        sdk.Context
 	acctKeeper auth.AccountKeeper
+	keeper     Keeper
 }
 
 // returns a cleanup function, which must be defered on
@@ -35,6 +36,7 @@ func setupTest(t *testing.T) (testData, func()) {
 		module:     NewAppModule(keeper),
 		ctx:        ctx,
 		acctKeeper: acctKeeper,
+		keeper:     keeper,
 	}
 	cleanup := func() { os.RemoveAll(tempDir) }
 	return data, cleanup
