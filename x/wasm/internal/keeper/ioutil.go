@@ -15,21 +15,15 @@ var gzipIdent = []byte("\x1F\x8B\x08")
 // limit max bytes read to prevent gzip bombs
 const maxSize = 400 * 1024
 
-
 // uncompress returns gzip uncompressed content or given src when not gzip.
 func uncompress(src []byte) ([]byte, error) {
 	if len(src) < 3 {
 		return src, nil
 	}
-	in := bytes.NewReader(src)
-	buf := make([]byte, 3)
-	if _, err := io.ReadAtLeast(in, buf, 3); err != nil {
-		return nil, err
-	}
-	if !bytes.Equal(gzipIdent, buf) {
+	if !bytes.Equal(gzipIdent, src[0:3]) {
 		return src, nil
 	}
-	zr, err := gzip.NewReader(io.MultiReader(bytes.NewReader(buf), in))
+	zr, err := gzip.NewReader(bytes.NewReader(src))
 	if err != nil {
 		return nil, err
 	}
