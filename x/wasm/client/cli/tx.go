@@ -25,6 +25,9 @@ const (
 	flagAmount = "amount"
 )
 
+// limit max bytes read to prevent gzip bombs
+const maxSize = 400 * 1024
+
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
@@ -59,6 +62,12 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			// limit the input size
+			if len(wasm) > maxSize {
+				return fmt.Errorf("input size exceeds the max size allowed (allowed:%d, actual: %d)",
+					maxSize, len(wasm))
+			}
+
 			// gzip the wasm file
 			if wasmUtils.IsWasm(wasm) {
 				wasm, err = wasmUtils.GzipIt(wasm)
@@ -67,7 +76,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 					return err
 				}
 			} else if !wasmUtils.IsGzip(wasm) {
-				return fmt.Errorf("invalid input file. Accepts only wasm binary or gzip %s")
+				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint

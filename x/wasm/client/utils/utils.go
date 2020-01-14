@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"compress/gzip"
-	"io"
 )
 
 var (
@@ -11,43 +10,14 @@ var (
 	wasmIdent = []byte("\x00\x61\x73\x6D")
 )
 
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
-
 // IsGzip returns checks if the file contents are gzip compressed
 func IsGzip(input []byte) bool {
-	if len(input) < 3 {
-		return false
-	}
-
-	in := io.LimitReader(bytes.NewReader(input), maxSize)
-	buf := make([]byte, 3)
-
-	if _, err := io.ReadAtLeast(in, buf, 3); err != nil {
-		return false
-	}
-
-	return bytes.Equal(gzipIdent, buf)
+	return bytes.Equal(input[:3], gzipIdent)
 }
 
 // IsWasm checks if the file contents are of wasm binary
 func IsWasm(input []byte) bool {
-	if len(input) < 3 {
-		return false
-	}
-
-	in := io.LimitReader(bytes.NewReader(input), maxSize)
-	buf := make([]byte, 4)
-
-	if _, err := io.ReadAtLeast(in, buf, 4); err != nil {
-		return false
-	}
-
-	if bytes.Equal(wasmIdent, buf) {
-		return true
-	}
-
-	return false
+	return bytes.Equal(input[:4], wasmIdent)
 }
 
 // GzipIt compresses the input ([]byte)
