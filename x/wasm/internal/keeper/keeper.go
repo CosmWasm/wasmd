@@ -190,10 +190,13 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 	}
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return []types.Model{{
-		Key:   string(key),
-		Value: string(prefixStore.Get(key)),
-	}}
+	if val := prefixStore.Get(key); val != nil {
+		return []types.Model{{
+			Key:   string(key),
+			Value: string(val),
+		}}
+	}
+	return []types.Model{}
 }
 
 func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, sdk.Error) {

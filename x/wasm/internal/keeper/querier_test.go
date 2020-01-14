@@ -88,10 +88,9 @@ func TestQueryContractState(t *testing.T) {
 			//expModelContains: []model{}, // stopping here as contract internals are not stable
 		},
 		"query unknown raw key": {
-			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:           abci.RequestQuery{Data: []byte("unknown")},
-			expModelLen:      1,
-			expModelContains: []model{{Key: "unknown", Value: ""}},
+			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:      abci.RequestQuery{Data: []byte("unknown")},
+			expModelLen: 0,
 		},
 		"query empty raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
