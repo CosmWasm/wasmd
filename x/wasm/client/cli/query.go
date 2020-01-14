@@ -156,6 +156,7 @@ func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
 	cmd.AddCommand(client.GetCommands(
 		GetCmdGetContractStateAll(cdc),
 		GetCmdGetContractStateRaw(cdc),
+		GetCmdGetContractStateSmart(cdc),
 	)...)
 	return cmd
 
@@ -185,6 +186,7 @@ func GetCmdGetContractStateAll(cdc *codec.Codec) *cobra.Command {
 		},
 	}
 }
+
 func GetCmdGetContractStateRaw(cdc *codec.Codec) *cobra.Command {
 	return &cobra.Command{
 		Use:   "raw [bech32_address] [key]",
@@ -202,11 +204,42 @@ func GetCmdGetContractStateRaw(cdc *codec.Codec) *cobra.Command {
 			if key == "" {
 				return errors.New("key must not be empty")
 			}
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), key)
-			res, _, err := cliCtx.Query(route)
+			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
+			queryData := []byte(key) // todo: open question: encode into json???
+			res, _, err := cliCtx.QueryWithData(route, queryData)
 			if err != nil {
 				return err
 			}
+			fmt.Println(string(res))
+			return nil
+		},
+	}
+}
+
+func GetCmdGetContractStateSmart(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "smart [bech32_address] [query]",
+		Short: "Calls contract with given address  with query data and prints the returned result",
+		Long:  "Calls contract with given address  with query data and prints the returned result",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			addr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+			key := args[1]
+			if key == "" {
+				return errors.New("key must not be empty")
+			}
+			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateSmart)
+			var queryData []byte
+			res, _, err := cliCtx.QueryWithData(route, queryData)
+			if err != nil {
+				return err
+			}
+			// todo: decode response
 			fmt.Println(string(res))
 			return nil
 		},
