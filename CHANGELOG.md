@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
-
+* (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
 * (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
 flag and configuration.
 * (wasmcli) [\#132](https://github.com/cosmwasm/wasmd/pull/132) Add `tx decode` command to decode
