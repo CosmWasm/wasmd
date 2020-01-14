@@ -394,7 +394,7 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []st
 
 type model struct {
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value string `json:"val"`
 }
 
 func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, expected state) {

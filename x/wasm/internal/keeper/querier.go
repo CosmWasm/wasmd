@@ -82,33 +82,27 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}
 
-	var result interface{}
+	var resultData []types.Model
 	switch queryMethod {
 	case QueryMethodContractStateAll:
-		var state []types.Model
 		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
-			state = append(state, types.Model{
+			resultData = append(resultData, types.Model{
 				Key:   string(iter.Key()),
 				Value: string(iter.Value()),
 			})
 		}
-		result = state
 	case QueryMethodContractStateRaw:
-		value := keeper.getContractStateForKey(ctx, contractAddr, req.Data)
-		result = []types.Model{{
-			Key:   string(req.Data),
-			Value: string(value),
-		}}
+		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
 	case QueryMethodContractStateSmart:
-		res, err := keeper.Query(ctx, contractAddr, req.Data)
+		res, err := keeper.QuerySmart(ctx, contractAddr, req.Data)
 		if err != nil {
 			return nil, err
 		}
-		result = res.Results
+		resultData = res
 	default:
 		return nil, sdk.ErrUnknownRequest("unsupported data query method for contract-state")
 	}
-	bz, err := json.MarshalIndent(result, "", "  ")
+	bz, err := json.MarshalIndent(resultData, "", "  ")
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}

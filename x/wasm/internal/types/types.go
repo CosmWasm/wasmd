@@ -9,7 +9,7 @@ import (
 // Model is a struct that holds a KV pair
 type Model struct {
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value string `json:"val"`
 }
 
 // CodeInfo is data for the uploaded contract WASM code

@@ -160,19 +160,40 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return types.CosmosResult(*res), nil
 }
 
-func (k Keeper) Query(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) (*wasmTypes.QueryResult, sdk.Error) {
+// QuerySmart queries the smart contract itself.
+func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]types.Model, sdk.Error) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
 
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
-	res, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, gasForContract(ctx))
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, gasForContract(ctx))
 	if qErr != nil {
 		return nil, types.ErrExecuteFailed(qErr)
 	}
 	consumeGas(ctx, gasUsed)
-	return res, nil
+	models := make([]types.Model, len(queryResult.Results))
+	for i := range queryResult.Results {
+		models[i] = types.Model{
+			Key:   queryResult.Results[i].Key,
+			Value: string(queryResult.Results[i].Value),
+		}
+	}
+	return models, nil
+}
+
+// QueryRaw returns the contract's state for give key. For a `nil` key a `nil` result is returned.
+func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []types.Model {
+	if key == nil {
+		return nil
+	}
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	return []types.Model{{
+		Key:   string(key),
+		Value: string(prefixStore.Get(key)),
+	}}
 }
 
 func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, sdk.Error) {
@@ -229,12 +250,6 @@ func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	return prefixStore.Iterator(nil, nil)
-}
-
-func (k Keeper) getContractStateForKey(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return prefixStore.Get(key)
 }
 
 func (k Keeper) setContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) {
