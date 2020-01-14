@@ -91,6 +91,9 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 				Value: string(iter.Value()),
 			})
 		}
+		if resultData == nil {
+			resultData = make([]types.Model, 0)
+		}
 	case QueryMethodContractStateRaw:
 		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
 	case QueryMethodContractStateSmart:

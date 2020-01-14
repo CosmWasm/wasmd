@@ -119,6 +119,7 @@ func TestQueryContractState(t *testing.T) {
 			var r []model
 			if spec.expErr == nil {
 				require.NoError(t, json.Unmarshal(binResult, &r))
+				require.NotNil(t, r)
 			}
 			require.Len(t, r, spec.expModelLen)
 			// and in result set
