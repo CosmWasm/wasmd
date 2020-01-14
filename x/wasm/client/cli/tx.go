@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
+	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
@@ -22,6 +24,9 @@ const (
 	flagTo     = "to"
 	flagAmount = "amount"
 )
+
+// limit max bytes read to prevent gzip bombs
+const maxSize = 400 * 1024
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -55,6 +60,23 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			wasm, err := ioutil.ReadFile(args[1])
 			if err != nil {
 				return err
+			}
+
+			// limit the input size
+			if len(wasm) > maxSize {
+				return fmt.Errorf("input size exceeds the max size allowed (allowed:%d, actual: %d)",
+					maxSize, len(wasm))
+			}
+
+			// gzip the wasm file
+			if wasmUtils.IsWasm(wasm) {
+				wasm, err = wasmUtils.GzipIt(wasm)
+
+				if err != nil {
+					return err
+				}
+			} else if !wasmUtils.IsGzip(wasm) {
+				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint
