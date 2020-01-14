@@ -61,6 +61,10 @@ func TestUncompress(t *testing.T) {
 			src:      asGzip(strings.Repeat("a", maxSize+1)),
 			expError: io.ErrUnexpectedEOF,
 		},
+		"handle other big gzip output": {
+			src:      asGzip(strings.Repeat("a", 2*maxSize)),
+			expError: io.ErrUnexpectedEOF,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
