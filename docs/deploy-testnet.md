@@ -95,7 +95,7 @@ sleep 3
 wasmcli query wasm list-contracts
 CONTRACT=cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 wasmcli query wasm contract $CONTRACT
-wasmcli query wasm contract-state $CONTRACT
+wasmcli query wasm contract-state all $CONTRACT
 wasmcli query account $CONTRACT
 
 # execute fails if wrong person
