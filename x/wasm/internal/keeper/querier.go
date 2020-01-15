@@ -20,6 +20,12 @@ const (
 	QueryListCode         = "list-code"
 )
 
+const (
+	QueryMethodContractStateSmart = "smart"
+	QueryMethodContractStateAll   = "all"
+	QueryMethodContractStateRaw   = "raw"
+)
+
 // NewQuerier creates a new querier
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
@@ -29,7 +35,10 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		case QueryListContracts:
 			return queryContractList(ctx, req, keeper)
 		case QueryGetContractState:
-			return queryContractState(ctx, path[1], req, keeper)
+			if len(path) < 3 {
+				return nil, sdk.ErrUnknownRequest("unknown data query endpoint")
+			}
+			return queryContractState(ctx, path[1], path[2], req, keeper)
 		case QueryGetCode:
 			return queryCode(ctx, path[1], req, keeper)
 		case QueryListCode:
@@ -67,23 +76,36 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-func queryContractState(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	addr, err := sdk.AccAddressFromBech32(bech)
+func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	contractAddr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}
-	iter := keeper.GetContractState(ctx, addr)
 
-	var state []types.Model
-	for ; iter.Valid(); iter.Next() {
-		m := types.Model{
-			Key:   string(iter.Key()),
-			Value: string(iter.Value()),
+	var resultData []types.Model
+	switch queryMethod {
+	case QueryMethodContractStateAll:
+		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
+			resultData = append(resultData, types.Model{
+				Key:   string(iter.Key()),
+				Value: string(iter.Value()),
+			})
 		}
-		state = append(state, m)
+		if resultData == nil {
+			resultData = make([]types.Model, 0)
+		}
+	case QueryMethodContractStateRaw:
+		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
+	case QueryMethodContractStateSmart:
+		res, err := keeper.QuerySmart(ctx, contractAddr, req.Data)
+		if err != nil {
+			return nil, err
+		}
+		resultData = res
+	default:
+		return nil, sdk.ErrUnknownRequest("unsupported data query method for contract-state")
 	}
-
-	bz, err := json.MarshalIndent(state, "", "  ")
+	bz, err := json.MarshalIndent(resultData, "", "  ")
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(err.Error())
 	}

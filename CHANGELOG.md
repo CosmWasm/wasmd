@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
-
+* (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
 * (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
 flag and configuration.
 * (wasmcli) [\#132](https://github.com/cosmwasm/wasmd/pull/132) Add `tx decode` command to decode
@@ -48,7 +48,8 @@ Base64 encoded transactions.
     - `addr`: convert a address between hex and bech32
     - `raw-bytes` convert raw-bytes to hex
 * (wasmcli) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
-
+* (wasmd) [\#9](https://github.com/cosmwasm/wasmd/pull/9) Allow gzip data in tx body on Create 
+ 
 ## [v2.0.3] - 2019-11-04
 
 ### Improvements

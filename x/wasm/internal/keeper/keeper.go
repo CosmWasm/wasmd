@@ -27,6 +27,8 @@ const GasMultiplier = 100
 // MaxGas for a contract is 900 million (enforced in rust)
 const MaxGas = 900_000_000
 
+const smartQueryGasLimit = 3000000 // Todo: should be set by app.toml
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
@@ -37,6 +39,8 @@ type Keeper struct {
 	router sdk.Router
 
 	wasmer wasm.Wasmer
+	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
+	queryGasLimit uint64
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -53,11 +57,16 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		router:        router,
+		queryGasLimit: smartQueryGasLimit,
 	}
 }
 
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract
 func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte) (codeID uint64, sdkErr sdk.Error) {
+	wasmCode, err := uncompress(wasmCode)
+	if err != nil {
+		return 0, types.ErrCreateFailed(err)
+	}
 	codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
 		return 0, types.ErrCreateFailed(err)
@@ -128,22 +137,10 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 
 // Execute executes the contract instance
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msgs []byte) (sdk.Result, sdk.Error) {
-	store := ctx.KVStore(k.storeKey)
-
-	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
-	if contractBz == nil {
-		return sdk.Result{}, types.ErrNotFound("contract")
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
+	if err != nil {
+		return sdk.Result{}, err
 	}
-	var contract types.ContractInfo
-	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
-
-	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
-	if contractInfoBz == nil {
-		return sdk.Result{}, types.ErrNotFound("contract info")
-	}
-	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
-
 	// add more funds
 	sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
 	if sdkerr != nil {
@@ -152,13 +149,10 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
 	params := types.NewParams(ctx, caller, coins, contractAccount)
 
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-
 	gas := gasForContract(ctx)
-	res, err := k.wasmer.Execute(codeInfo.CodeHash, params, msgs, prefixStore, gas)
-	if err != nil {
-		return sdk.Result{}, types.ErrExecuteFailed(err)
+	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msgs, prefixStore, gas)
+	if execErr != nil {
+		return sdk.Result{}, types.ErrExecuteFailed(execErr)
 	}
 	consumeGas(ctx, res.GasUsed)
 
@@ -168,6 +162,68 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	return types.CosmosResult(*res), nil
+}
+
+// QuerySmart queries the smart contract itself.
+func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]types.Model, sdk.Error) {
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
+
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return nil, err
+	}
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, gasForContract(ctx))
+	if qErr != nil {
+		return nil, types.ErrExecuteFailed(qErr)
+	}
+	consumeGas(ctx, gasUsed)
+	models := make([]types.Model, len(queryResult.Results))
+	for i := range queryResult.Results {
+		models[i] = types.Model{
+			Key:   queryResult.Results[i].Key,
+			Value: string(queryResult.Results[i].Value),
+		}
+	}
+	return models, nil
+}
+
+// QueryRaw returns the contract's state for give key. For a `nil` key a empty slice` result is returned.
+func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []types.Model {
+	result := make([]types.Model, 0)
+	if key == nil {
+		return result
+	}
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+
+	if val := prefixStore.Get(key); val != nil {
+		return append(result, types.Model{
+			Key:   string(key),
+			Value: string(val),
+		})
+	}
+	return result
+}
+
+func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, sdk.Error) {
+	store := ctx.KVStore(k.storeKey)
+
+	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
+	if contractBz == nil {
+		return types.CodeInfo{}, prefix.Store{}, types.ErrNotFound("contract")
+	}
+	var contract types.ContractInfo
+	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+
+	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
+	if contractInfoBz == nil {
+		return types.CodeInfo{}, prefix.Store{}, types.ErrNotFound("contract info")
+	}
+	var codeInfo types.CodeInfo
+	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	return codeInfo, prefixStore, nil
 }
 
 func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
