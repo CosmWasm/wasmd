@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -395,11 +396,11 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []st
 
 type model struct {
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value string `json:"val"`
 }
 
 func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, expected state) {
-	path := []string{QueryGetContractState, addr.String()}
+	path := []string{QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
