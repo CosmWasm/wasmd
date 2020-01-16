@@ -42,11 +42,11 @@ func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contr
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Signer:    creator.String(),
+			Signer:    wasmTypes.CanonicalAddress(creator),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: contractAcct.GetAddress().String(),
+			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
 			Balance: NewWasmCoins(contractAcct.GetCoins()),
 		},
 	}

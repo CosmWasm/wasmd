@@ -97,11 +97,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	case QueryMethodContractStateRaw:
 		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
 	case QueryMethodContractStateSmart:
-		res, err := keeper.QuerySmart(ctx, contractAddr, req.Data)
-		if err != nil {
-			return nil, err
-		}
-		resultData = res
+		return keeper.QuerySmart(ctx, contractAddr, req.Data)
 	default:
 		return nil, sdk.ErrUnknownRequest("unsupported data query method for contract-state")
 	}
@@ -113,7 +109,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 }
 
 type GetCodeResponse struct {
-	Code []byte `json:"code", yaml:"code"`
+	Code []byte `json:"code" yaml:"code"`
 }
 
 func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {

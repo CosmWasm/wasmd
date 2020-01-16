@@ -116,7 +116,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, gas)
+	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, gas)
 	if err != nil {
 		return contractAddress, types.ErrInstantiateFailed(err)
 	}
@@ -136,7 +136,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 }
 
 // Execute executes the contract instance
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msgs []byte) (sdk.Result, sdk.Error) {
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msg []byte) (sdk.Result, sdk.Error) {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return sdk.Result{}, err
@@ -150,7 +150,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	params := types.NewParams(ctx, caller, coins, contractAccount)
 
 	gas := gasForContract(ctx)
-	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msgs, prefixStore, gas)
+	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)
 	if execErr != nil {
 		return sdk.Result{}, types.ErrExecuteFailed(execErr)
 	}
@@ -165,26 +165,19 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 }
 
 // QuerySmart queries the smart contract itself.
-func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]types.Model, sdk.Error) {
+func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, sdk.Error) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(k.queryGasLimit))
 
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, gasForContract(ctx))
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, gasForContract(ctx))
 	if qErr != nil {
 		return nil, types.ErrExecuteFailed(qErr)
 	}
 	consumeGas(ctx, gasUsed)
-	models := make([]types.Model, len(queryResult.Results))
-	for i := range queryResult.Results {
-		models[i] = types.Model{
-			Key:   queryResult.Results[i].Key,
-			Value: string(queryResult.Results[i].Value),
-		}
-	}
-	return models, nil
+	return queryResult, nil
 }
 
 // QueryRaw returns the contract's state for give key. For a `nil` key a empty slice` result is returned.
