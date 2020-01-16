@@ -54,7 +54,8 @@ func TestQueryContractState(t *testing.T) {
 	}
 	keeper.setContractState(ctx, addr, contractModel)
 
-	q := NewQuerier(keeper)
+	// this gets us full error, not redacted sdk.Error
+	q := newQuerier(keeper)
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery

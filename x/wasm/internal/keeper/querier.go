@@ -27,33 +27,14 @@ const (
 	QueryMethodContractStateRaw   = "raw"
 )
 
-// controls error output on querier
-const debug = true
+// controls error output on querier - set true when testing/debugging
+const debug = false
 
 // NewQuerier creates a new querier
 func NewQuerier(keeper Keeper) sdk.Querier {
+	q := newQuerier(keeper)
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
-		var res []byte
-		var err error
-
-		switch path[0] {
-		case QueryGetContract:
-			res, err = queryContractInfo(ctx, path[1], req, keeper)
-		case QueryListContracts:
-			res, err = queryContractList(ctx, req, keeper)
-		case QueryGetContractState:
-			if len(path) < 3 {
-				res, err = nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
-			}
-			res, err = queryContractState(ctx, path[1], path[2], req, keeper)
-		case QueryGetCode:
-			res, err = queryCode(ctx, path[1], req, keeper)
-		case QueryListCode:
-			res, err = queryCodeList(ctx, req, keeper)
-		default:
-			res, err = nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
-		}
-
+		res, err := q(ctx, path, req)
 		// convert returned errors
 		if err != nil {
 			space, code, log := sdkErrors.ABCIInfo(err, debug)
@@ -61,6 +42,30 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return nil, sdkErr
 		}
 		return res, nil
+	}
+}
+
+// pull this out as a separate function for testing.
+// this returns proper error before redacting, NewQuerier is adapting to 0.37 style
+func newQuerier(keeper Keeper) func(sdk.Context, []string, abci.RequestQuery) ([]byte, error) {
+	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
+		switch path[0] {
+		case QueryGetContract:
+			return queryContractInfo(ctx, path[1], req, keeper)
+		case QueryListContracts:
+			return queryContractList(ctx, req, keeper)
+		case QueryGetContractState:
+			if len(path) < 3 {
+				return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
+			}
+			return queryContractState(ctx, path[1], path[2], req, keeper)
+		case QueryGetCode:
+			return queryCode(ctx, path[1], req, keeper)
+		case QueryListCode:
+			return queryCodeList(ctx, req, keeper)
+		default:
+			return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
+		}
 	}
 }
 
