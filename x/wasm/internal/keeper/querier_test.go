@@ -91,11 +91,11 @@ func TestQueryContractState(t *testing.T) {
 			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
 			expSmartRes: "cosmos1uf348t8j0h06ghr5udaw0hvlj9fhemhlsvve0f",
 		},
-		// "query smart invalid request": {
-		// 	srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-		// 	srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
-		// 	expErr:  nil, // TODO
-		// },
+		"query smart invalid request": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+			expErr:  types.ErrQueryFailed,
+		},
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:      abci.RequestQuery{Data: []byte("unknown")},

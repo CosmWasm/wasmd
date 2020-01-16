@@ -155,8 +155,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	gas := gasForContract(ctx)
 	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)
 	if execErr != nil {
-		// return sdk.Result{}, sdkErrors.Wrap(types.ErrExecuteFailed, err.Error())
-		return sdk.Result{}, sdkErrors.Wrap(execErr, "cosmwasm execute")
+		return sdk.Result{}, sdkErrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
 
@@ -178,9 +177,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	}
 	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, gasForContract(ctx))
 	if qErr != nil {
-		return nil, sdkErrors.Wrap(types.ErrQueryFailed, "unknown")
-		// return nil, sdkErrors.Wrap(types.ErrQueryFailed, err.Error())
-		// return nil, sdkErrors.Wrap(qErr, "cosmwasm query")
+		return nil, sdkErrors.Wrap(types.ErrQueryFailed, qErr.Error())
 	}
 	consumeGas(ctx, gasUsed)
 	return queryResult, nil
