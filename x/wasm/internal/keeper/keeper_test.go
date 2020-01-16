@@ -123,7 +123,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 
 	const nonExistingCodeID = 9999
 	addr, err := keeper.Instantiate(ctx, creator, nonExistingCodeID, initMsgBz, nil)
-	require.Error(t, err, types.ErrNotFound("contract"))
+	require.True(t, types.ErrNotFound.Is(err), err)
 	require.Nil(t, addr)
 }
 
@@ -217,7 +217,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := addrFromUint64(9999)
 	_, err = keeper.Execute(ctx, nonExistingAddress, creator, nil, []byte(`{}`))
-	require.Error(t, err, types.ErrNotFound("contract info"))
+	require.True(t, types.ErrNotFound.Is(err), err)
 }
 
 type InitMsg struct {

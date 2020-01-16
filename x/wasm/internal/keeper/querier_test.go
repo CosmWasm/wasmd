@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +64,7 @@ func TestQueryContractState(t *testing.T) {
 		// if success and expSmartRes is not set, we parse into []model and compare
 		expModelLen      int
 		expModelContains []model
-		expErr           sdk.Error
+		expErr           *sdkErrors.Error
 	}{
 		"query all": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
@@ -86,11 +87,15 @@ func TestQueryContractState(t *testing.T) {
 			expModelContains: []model{{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})}},
 		},
 		"query smart": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:  abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
-			// srcReq:      abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
 			expSmartRes: "cosmos1uf348t8j0h06ghr5udaw0hvlj9fhemhlsvve0f",
 		},
+		// "query smart invalid request": {
+		// 	srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+		// 	srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+		// 	expErr:  nil, // TODO
+		// },
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:      abci.RequestQuery{Data: []byte("unknown")},
@@ -111,15 +116,15 @@ func TestQueryContractState(t *testing.T) {
 		"query smart with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
 			expModelLen: 0,
-			expErr:      types.ErrNotFound("contract"),
+			expErr:      types.ErrNotFound,
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			require.Equal(t, spec.expErr, err, "unexpected error")
-			// require.Equal(t, spec.expErr, err, err.Error())
+			// require.True(t, spec.expErr.Is(err), "unexpected error")
+			require.True(t, spec.expErr.Is(err), err)
 
 			// if smart query, check custom response
 			if spec.expSmartRes != "" {
