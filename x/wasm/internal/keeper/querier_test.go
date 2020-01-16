@@ -37,8 +37,8 @@ func TestQueryContractState(t *testing.T) {
 
 	_, _, bob := keyPubAddr()
 	initMsg := InitMsg{
-		Verifier:    anyAddr.String(),
-		Beneficiary: bob.String(),
+		Verifier:    anyAddr,
+		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -114,7 +114,8 @@ func TestQueryContractState(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			require.Equal(t, spec.expErr, err)
+			require.Equal(t, spec.expErr, err, "foo")
+			// require.Equal(t, spec.expErr, err, err.Error())
 			// then
 			var r []model
 			if spec.expErr == nil {
