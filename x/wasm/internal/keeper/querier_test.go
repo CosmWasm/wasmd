@@ -55,8 +55,12 @@ func TestQueryContractState(t *testing.T) {
 
 	q := NewQuerier(keeper)
 	specs := map[string]struct {
-		srcPath          []string
-		srcReq           abci.RequestQuery
+		srcPath []string
+		srcReq  abci.RequestQuery
+		// smart queries return raw bytes from contract not []model
+		// if this is set, then we just compare - (should be json encoded string)
+		expSmartRes string
+		// if success and expSmartRes is not set, we parse into []model and compare
 		expModelLen      int
 		expModelContains []model
 		expErr           sdk.Error
@@ -82,10 +86,10 @@ func TestQueryContractState(t *testing.T) {
 			expModelContains: []model{{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})}},
 		},
 		"query smart": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:      abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
-			expModelLen: 1,
-			//expModelContains: []model{}, // stopping here as contract internals are not stable
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
+			// srcReq:      abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+			expSmartRes: "cosmos1uf348t8j0h06ghr5udaw0hvlj9fhemhlsvve0f",
 		},
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
@@ -114,9 +118,16 @@ func TestQueryContractState(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			require.Equal(t, spec.expErr, err, "foo")
+			require.Equal(t, spec.expErr, err, "unexpected error")
 			// require.Equal(t, spec.expErr, err, err.Error())
-			// then
+
+			// if smart query, check custom response
+			if spec.expSmartRes != "" {
+				require.Equal(t, spec.expSmartRes, string(binResult))
+				return
+			}
+
+			// otherwise, check returned models
 			var r []model
 			if spec.expErr == nil {
 				require.NoError(t, json.Unmarshal(binResult, &r))
