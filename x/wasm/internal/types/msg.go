@@ -1,6 +1,9 @@
 package types
 
 import (
+	"net/url"
+	"regexp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -33,6 +36,21 @@ func (msg MsgStoreCode) ValidateBasic() sdk.Error {
 	if len(msg.WASMByteCode) > MaxWasmSize {
 		return sdk.ErrInternal("wasm code too large")
 	}
+	if msg.Source != "" {
+		_, err := url.Parse(msg.Source)
+		if err != nil {
+			return sdk.ErrInternal("invalid source")
+		}
+	}
+	if msg.Builder != "" {
+		ok, err := regexp.MatchString("cosmwasm-op:", msg.Builder)
+		if err != nil {
+			if !ok {
+				return sdk.ErrInternal("invalid tag supplied for builder")
+			}
+		}
+	}
+
 	return nil
 }
 

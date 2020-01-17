@@ -40,6 +40,7 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
+	err := msg.ValidateBasic()
 	codeID, err := k.Create(ctx, msg.Sender, msg.WASMByteCode, msg.Source, msg.Builder)
 	if err != nil {
 		return err.Result()

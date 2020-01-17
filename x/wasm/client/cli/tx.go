@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -27,9 +26,6 @@ const (
 	flagSource  = "source"
 	flagBuilder = "builder"
 )
-
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
 
 // whitelist
 var validBuildTags = map[string]bool{
@@ -72,29 +68,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 			source := viper.GetString(flagSource)
 
-			// ensure source to be a valid uri
-			if source != "" {
-				_, err := url.Parse(source)
-
-				if err != nil {
-					return fmt.Errorf("invalid url supplied for source %s", source)
-				}
-			}
-
 			builder := viper.GetString(flagBuilder)
-
-			// ensure builder to be a valid build tag
-			if builder != "" {
-				if !validBuildTags[builder] {
-					return fmt.Errorf("invalid tag supplied for builder %s", source)
-				}
-			}
-
-			// limit the input size
-			if len(wasm) > maxSize {
-				return fmt.Errorf("input size exceeds the max size allowed (allowed:%d, actual: %d)",
-					maxSize, len(wasm))
-			}
 
 			// gzip the wasm file
 			if wasmUtils.IsWasm(wasm) {
@@ -113,6 +87,10 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				WASMByteCode: wasm,
 				Source:       source,
 				Builder:      builder,
+			}
+			err = msg.ValidateBasic()
+			if err != nil {
+				return fmt.Errorf("invalid message")
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
