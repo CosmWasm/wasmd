@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/spf13/viper"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -20,6 +19,7 @@ import (
 )
 
 const flagLRUCacheSize = "lru_size"
+const flagQueryGasLimit = "query_gas_limit"
 
 func MakeTestCodec() *codec.Codec {
 	var cdc = codec.New()
@@ -72,9 +72,11 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	h := bank.NewHandler(bk)
 	router.AddRoute(bank.RouterKey, h)
 
-	// Read LRU cache size from app.toml
-	cacheSize := uint64(viper.GetInt64(flagLRUCacheSize))
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, cacheSize)
+	// TODO Read LRU cache size, query gas limit from app.toml
+	cacheSize := uint64(3)
+	smartQueryGasLimit := uint64(3000000)
+
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, cacheSize, smartQueryGasLimit)
 
 	return ctx, accountKeeper, keeper
 }
