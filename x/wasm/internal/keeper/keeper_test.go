@@ -185,11 +185,11 @@ func TestExecute(t *testing.T) {
 	diff := time.Now().Sub(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
-	assert.Equal(t, uint64(118673), res.GasUsed)
+	assert.Equal(t, uint64(119513), res.GasUsed)
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(31714), gasAfter-gasBefore)
+	require.Equal(t, uint64(31723), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
