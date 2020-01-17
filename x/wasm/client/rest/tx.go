@@ -4,7 +4,13 @@ import (
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/gorilla/mux"
+
+	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
@@ -13,9 +19,68 @@ func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/{contractAddr}", executeContractHandlerFn(cliCtx)).Methods("POST")
 }
 
+// limit max bytes read to prevent gzip bombs
+const maxSize = 400 * 1024
+
+type storeCodeReq struct {
+	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
+	WasmBytes []byte       `json:"wasm_bytes"`
+}
+
+type InstantiateContractReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	InitMsg []byte       `json:"init_msg" yaml:"init_msg"`
+}
+
 func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var req storeCodeReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
 
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		var err error
+		wasm := req.WasmBytes
+		if len(wasm) > maxSize {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
+			return
+		}
+
+		// gzip the wasm file
+		if wasmUtils.IsWasm(wasm) {
+			wasm, err = wasmUtils.GzipIt(wasm)
+			if err != nil {
+				rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		} else if !wasmUtils.IsGzip(wasm) {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid input file, use wasm binary or zip")
+			return
+		}
+
+		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// build and sign the transaction, then broadcast to Tendermint
+		msg := types.MsgStoreCode{
+			Sender:       fromAddr,
+			WASMByteCode: wasm,
+		}
+
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
