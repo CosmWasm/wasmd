@@ -88,15 +88,13 @@ func TestHandleCreate(t *testing.T) {
 			},
 			isValid: true,
 		},
-		// TODO: enable this when we upload 0.6.3 escrow contract
-
-		// "other valid wasm": {
-		// 	msg: MsgStoreCode{
-		// 		Sender:       addr1,
-		// 		WASMByteCode: escrowContract,
-		// 	},
-		// 	isValid: true,
-		// },
+		"other valid wasm": {
+			msg: MsgStoreCode{
+				Sender:       addr1,
+				WASMByteCode: escrowContract,
+			},
+			isValid: true,
+		},
 	}
 
 	for name, tc := range cases {
@@ -272,8 +270,6 @@ func TestHandleExecute(t *testing.T) {
 }
 
 func TestHandleExecuteEscrow(t *testing.T) {
-	// TODO
-	t.Skip("Update escrow contract first")
 	data, cleanup := setupTest(t)
 	defer cleanup()
 
