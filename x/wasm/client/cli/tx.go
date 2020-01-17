@@ -89,9 +89,11 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				Builder:      builder,
 			}
 			err = msg.ValidateBasic()
+
 			if err != nil {
-				return fmt.Errorf("invalid message")
+				return err
 			}
+
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}

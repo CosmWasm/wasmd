@@ -24,11 +24,45 @@ func TestInitGenesis(t *testing.T) {
 	h := data.module.NewHandler()
 	q := data.module.NewQuerierHandler()
 
+	t.Log("fail with invalid source url")
 	msg := MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
+		Source:       "someinvalidurl",
+		Builder:      "",
 	}
+
+	err := msg.ValidateBasic()
+	require.Error(t, err)
+
 	res := h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with invalid build tag")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "",
+		Builder:      "somerandombuildtag-0.6.2",
+	}
+
+	err = msg.ValidateBasic()
+	require.Error(t, err)
+
+	res = h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("no error with valid source and build tag")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
+		Builder:      "cosmwasm-opt:0.5.2",
+	}
+	err = msg.ValidateBasic()
+	require.NoError(t, err)
+
+	res = h(data.ctx, msg)
 	require.True(t, res.IsOK())
 	require.Equal(t, res.Data, []byte("1"))
 
@@ -37,8 +71,8 @@ func TestInitGenesis(t *testing.T) {
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
+	initMsgBz, _err := json.Marshal(initMsg)
+	require.NoError(t, _err)
 
 	initCmd := MsgInstantiateContract{
 		Sender:    creator,

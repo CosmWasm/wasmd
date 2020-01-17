@@ -1,14 +1,17 @@
 package types
 
 import (
-	"net/url"
+	"fmt"
 	"regexp"
+
+	"github.com/asaskevich/govalidator"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
-	MaxWasmSize = 500 * 1024
+	MaxWasmSize   = 500 * 1024
+	BuildTagRegex = "cosmwasm-opt:"
 )
 
 type MsgStoreCode struct {
@@ -33,21 +36,23 @@ func (msg MsgStoreCode) ValidateBasic() sdk.Error {
 	if len(msg.WASMByteCode) == 0 {
 		return sdk.ErrInternal("empty wasm code")
 	}
+
 	if len(msg.WASMByteCode) > MaxWasmSize {
 		return sdk.ErrInternal("wasm code too large")
 	}
+
 	if msg.Source != "" {
-		_, err := url.Parse(msg.Source)
-		if err != nil {
-			return sdk.ErrInternal("invalid source")
+		fmt.Println("source: ", msg.Source)
+
+		if !govalidator.IsURL(msg.Source) {
+			return sdk.ErrInternal("source should be a valid url")
 		}
 	}
+
 	if msg.Builder != "" {
-		ok, err := regexp.MatchString("cosmwasm-op:", msg.Builder)
-		if err != nil {
-			if !ok {
-				return sdk.ErrInternal("invalid tag supplied for builder")
-			}
+		ok, err := regexp.MatchString(BuildTagRegex, msg.Builder)
+		if err != nil || !ok {
+			return sdk.ErrInternal("invalid tag supplied for builder")
 		}
 	}
 
