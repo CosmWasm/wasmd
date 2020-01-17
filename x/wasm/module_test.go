@@ -7,17 +7,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	wasmTypes "github.com/confio/go-cosmwasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 )
 
 type testData struct {
@@ -119,14 +120,14 @@ func TestHandleCreate(t *testing.T) {
 }
 
 type initMsg struct {
-	Verifier    string `json:"verifier"`
-	Beneficiary string `json:"beneficiary"`
+	Verifier    sdk.AccAddress `json:"verifier"`
+	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
 
 type state struct {
-	Verifier    string `json:"verifier"`
-	Beneficiary string `json:"beneficiary"`
-	Funder      string `json:"funder"`
+	Verifier    wasmTypes.CanonicalAddress `json:"verifier"`
+	Beneficiary wasmTypes.CanonicalAddress `json:"beneficiary"`
+	Funder      wasmTypes.CanonicalAddress `json:"funder"`
 }
 
 func TestHandleInstantiate(t *testing.T) {
@@ -147,9 +148,12 @@ func TestHandleInstantiate(t *testing.T) {
 	require.True(t, res.IsOK())
 	require.Equal(t, res.Data, []byte("1"))
 
+	_, _, bob := keyPubAddr()
+	_, _, fred := keyPubAddr()
+
 	initMsg := initMsg{
-		Verifier:    "fred",
-		Beneficiary: "bob",
+		Verifier:    fred,
+		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -162,7 +166,7 @@ func TestHandleInstantiate(t *testing.T) {
 		InitFunds: nil,
 	}
 	res = h(data.ctx, initCmd)
-	require.True(t, res.IsOK())
+	require.True(t, res.IsOK(), res.Log)
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
@@ -172,9 +176,9 @@ func TestHandleInstantiate(t *testing.T) {
 	assertContractList(t, q, data.ctx, []string{contractAddr.String()})
 	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
 	assertContractState(t, q, data.ctx, contractAddr, state{
-		Verifier:    "fred",
-		Beneficiary: "bob",
-		Funder:      creator.String(),
+		Verifier:    []byte(fred),
+		Beneficiary: []byte(bob),
+		Funder:      []byte(creator),
 	})
 }
 
@@ -200,8 +204,8 @@ func TestHandleExecute(t *testing.T) {
 
 	_, _, bob := keyPubAddr()
 	initMsg := initMsg{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
+		Verifier:    fred,
+		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -259,9 +263,9 @@ func TestHandleExecute(t *testing.T) {
 	assertContractList(t, q, data.ctx, []string{contractAddr.String()})
 	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
 	assertContractState(t, q, data.ctx, contractAddr, state{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
-		Funder:      creator.String(),
+		Verifier:    []byte(fred),
+		Beneficiary: []byte(bob),
+		Funder:      []byte(creator),
 	})
 }
 
@@ -281,7 +285,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		WASMByteCode: escrowContract,
 	}
 	res := h(data.ctx, &msg)
-	require.True(t, res.IsOK())
+	require.True(t, res.IsOK(), res.Log)
 	require.Equal(t, res.Data, []byte("1"))
 
 	_, _, bob := keyPubAddr()

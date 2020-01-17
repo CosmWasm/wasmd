@@ -1,55 +1,34 @@
 package types
 
 import (
-	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // Codes for wasm contract errors
-const (
-	DefaultCodespace sdk.CodespaceType = ModuleName
+var (
+	DefaultCodespace = ModuleName
 
-	CodeCreatedFailed     sdk.CodeType = 1
-	CodeAccountExists     sdk.CodeType = 2
-	CodeInstantiateFailed sdk.CodeType = 3
-	CodeExecuteFailed     sdk.CodeType = 4
-	CodeGasLimit          sdk.CodeType = 5
-	CodeInvalidGenesis    sdk.CodeType = 6
-	CodeNotFound          sdk.CodeType = 7
+	// ErrCreateFailed error for wasm code that has already been uploaded or failed
+	ErrCreateFailed = sdkErrors.Register(DefaultCodespace, 1, "create wasm contract failed")
+
+	// ErrAccountExists error for a contract account that already exists
+	ErrAccountExists = sdkErrors.Register(DefaultCodespace, 2, "contract account already exists")
+
+	// ErrInstantiateFailed error for rust instantiate contract failure
+	ErrInstantiateFailed = sdkErrors.Register(DefaultCodespace, 3, "instantiate wasm contract failed")
+
+	// ErrExecuteFailed error for rust execution contract failure
+	ErrExecuteFailed = sdkErrors.Register(DefaultCodespace, 4, "execute wasm contract failed")
+
+	// ErrGasLimit error for out of gas
+	ErrGasLimit = sdkErrors.Register(DefaultCodespace, 5, "insufficient gas")
+
+	// ErrInvalidGenesis error for invalid genesis file syntax
+	ErrInvalidGenesis = sdkErrors.Register(DefaultCodespace, 6, "invalid genesis")
+
+	// ErrNotFound error for an entry not found in the store
+	ErrNotFound = sdkErrors.Register(DefaultCodespace, 7, "not found")
+
+	// ErrQueryFailed error for rust smart query contract failure
+	ErrQueryFailed = sdkErrors.Register(DefaultCodespace, 8, "query wasm contract failed")
 )
-
-// ErrCreateFailed error for wasm code that has already been uploaded or failed
-func ErrCreateFailed(err error) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeCreatedFailed, fmt.Sprintf("create wasm contract failed: %s", err.Error()))
-}
-
-// ErrAccountExists error for a contract account that already exists
-func ErrAccountExists(addr sdk.AccAddress) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeAccountExists, fmt.Sprintf("contract account %s already exists", addr.String()))
-}
-
-// ErrInstantiateFailed error for rust instantiate contract failure
-func ErrInstantiateFailed(err error) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeInstantiateFailed, fmt.Sprintf("instantiate wasm contract failed: %s", err.Error()))
-}
-
-// ErrExecuteFailed error for rust execution contract failure
-func ErrExecuteFailed(err error) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeExecuteFailed, fmt.Sprintf("execute wasm contract failed: %s", err.Error()))
-}
-
-// ErrGasLimit error for out of gas
-func ErrGasLimit(msg string) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeGasLimit, fmt.Sprintf("insufficient gas: %s", msg))
-}
-
-// ErrInvalidGenesis error for out of gas
-func ErrInvalidGenesis(msg string) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeInvalidGenesis, fmt.Sprintf("invalid genesis: %s", msg))
-}
-
-// ErrNotFound error for an entry not found in the stoe
-func ErrNotFound(msg string) sdk.Error {
-	return sdk.NewError(DefaultCodespace, CodeNotFound, fmt.Sprintf("not found: %s", msg))
-}

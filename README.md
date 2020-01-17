@@ -13,6 +13,7 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 **Note**: Requires [Go 1.13+](https://golang.org/dl/)
 
+**Compatibility**: Last merge from `cosmos/gaia` was `d6dfa141e2ae38a1ff9f53fca8078c0822671b95`
 
 ## Quick Start
 

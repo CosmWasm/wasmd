@@ -40,10 +40,9 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
-	err := msg.ValidateBasic()
 	codeID, err := k.Create(ctx, msg.Sender, msg.WASMByteCode, msg.Source, msg.Builder)
 	if err != nil {
-		return err.Result()
+		return sdk.ResultFromError(err)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -65,7 +64,7 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) sdk.Result {
 func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) sdk.Result {
 	contractAddr, err := k.Instantiate(ctx, msg.Sender, msg.Code, msg.InitMsg, msg.InitFunds)
 	if err != nil {
-		return err.Result()
+		return sdk.ResultFromError(err)
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -88,7 +87,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) s
 func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) sdk.Result {
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.SentFunds, msg.Msg)
 	if err != nil {
-		return err.Result()
+		return sdk.ResultFromError(err)
 	}
 
 	ctx.EventManager().EmitEvent(
