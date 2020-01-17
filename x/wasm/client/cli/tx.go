@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -21,12 +22,19 @@ import (
 )
 
 const (
-	flagTo     = "to"
-	flagAmount = "amount"
+	flagTo      = "to"
+	flagAmount  = "amount"
+	flagSource  = "source"
+	flagBuilder = "builder"
 )
 
 // limit max bytes read to prevent gzip bombs
 const maxSize = 400 * 1024
+
+// whitelist
+var validBuildTags = map[string]bool{
+	"cosmwasm-opt:0.6.0": true, "cosmwasm-opt:0.5.2": true,
+}
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -48,7 +56,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store [from_key_or_address] [wasm file]",
+		Use:   "store [from_key_or_address] [wasm file] --source [source] --builder [builder]",
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,6 +68,26 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			wasm, err := ioutil.ReadFile(args[1])
 			if err != nil {
 				return err
+			}
+
+			source := viper.GetString(flagSource)
+
+			// ensure source to be a valid uri
+			if source != "" {
+				_, err := url.Parse(source)
+
+				if err != nil {
+					return fmt.Errorf("invalid url supplied for source %s", source)
+				}
+			}
+
+			builder := viper.GetString(flagBuilder)
+
+			// ensure builder to be a valid build tag
+			if builder != "" {
+				if !validBuildTags[builder] {
+					return fmt.Errorf("invalid tag supplied for builder %s", source)
+				}
 			}
 
 			// limit the input size
@@ -83,10 +111,16 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			msg := types.MsgStoreCode{
 				Sender:       cliCtx.GetFromAddress(),
 				WASMByteCode: wasm,
+				Source:       source,
+				Builder:      builder,
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
+	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
+
 	return cmd
 }
 

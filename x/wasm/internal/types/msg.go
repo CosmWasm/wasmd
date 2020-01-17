@@ -12,6 +12,10 @@ type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	// Source is a valid URI reference to the contract's source code, optional
+	Source string `json:"source" yaml:"source"`
+	// Builder is a docker tag, optional
+	Builder string `json:"builder" yaml:"builder"`
 }
 
 func (msg MsgStoreCode) Route() string {

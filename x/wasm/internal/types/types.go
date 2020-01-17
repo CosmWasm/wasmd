@@ -16,13 +16,17 @@ type Model struct {
 type CodeInfo struct {
 	CodeHash []byte         `json:"code_hash"`
 	Creator  sdk.AccAddress `json:"creator"`
+	Source   string         `json:"source"`
+	Builder  string         `json:"builder"`
 }
 
 // NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress) CodeInfo {
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
 	return CodeInfo{
 		CodeHash: codeHash,
 		Creator:  creator,
+		Source:   source,
+		Builder:  builder,
 	}
 }
 

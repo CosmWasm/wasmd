@@ -37,7 +37,7 @@ func TestCreate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -58,7 +58,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -81,7 +81,7 @@ func TestInstantiate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
 
 	initMsg := InitMsg{
@@ -138,7 +138,7 @@ func TestExecute(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
