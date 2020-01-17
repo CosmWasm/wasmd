@@ -44,8 +44,8 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new contract Keeper instance
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, router sdk.Router, homeDir string) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), 3)
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, router sdk.Router, homeDir string, cacheSize uint64) Keeper {
+	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), cacheSize)
 	if err != nil {
 		panic(err)
 	}

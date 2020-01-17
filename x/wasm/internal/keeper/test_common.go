@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/spf13/viper"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,6 +18,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 )
+
+const flagLRUCacheSize = "lru_size"
 
 func MakeTestCodec() *codec.Codec {
 	var cdc = codec.New()
@@ -69,7 +72,9 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	h := bank.NewHandler(bk)
 	router.AddRoute(bank.RouterKey, h)
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir)
+	// Read LRU cache size from app.toml
+	cacheSize := uint64(viper.GetInt64(flagLRUCacheSize))
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, cacheSize)
 
 	return ctx, accountKeeper, keeper
 }

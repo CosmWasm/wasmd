@@ -38,6 +38,7 @@ import (
 )
 
 const appName = "WasmApp"
+const flagLRUCacheSize = "lru_size"
 
 var (
 	// DefaultCLIHome default home directories for wasmcli
@@ -181,7 +182,11 @@ func NewWasmApp(
 	// better way to get this dir???
 	homeDir := viper.GetString(cli.HomeFlag)
 	wasmDir := filepath.Join(homeDir, "wasm")
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir)
+
+	// Read LRU cache size from app.toml
+	cacheSize := uint64(viper.GetInt64(flagLRUCacheSize))
+
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, cacheSize)
 
 	// create evidence keeper with evidence router
 	app.evidenceKeeper = evidence.NewKeeper(
