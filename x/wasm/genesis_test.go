@@ -9,6 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type contractState struct {
+}
+
 func TestInitGenesis(t *testing.T) {
 	data, cleanup := setupTest(t)
 	defer cleanup()
@@ -31,8 +34,8 @@ func TestInitGenesis(t *testing.T) {
 
 	_, _, bob := keyPubAddr()
 	initMsg := initMsg{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
+		Verifier:    fred,
+		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -63,9 +66,9 @@ func TestInitGenesis(t *testing.T) {
 	assertContractList(t, q, data.ctx, []string{contractAddr.String()})
 	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
 	assertContractState(t, q, data.ctx, contractAddr, state{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
-		Funder:      creator.String(),
+		Verifier:    []byte(fred),
+		Beneficiary: []byte(bob),
+		Funder:      []byte(creator),
 	})
 
 	// export into genstate
@@ -86,8 +89,8 @@ func TestInitGenesis(t *testing.T) {
 	assertContractList(t, q2, newData.ctx, []string{contractAddr.String()})
 	assertContractInfo(t, q2, newData.ctx, contractAddr, 1, creator)
 	assertContractState(t, q2, newData.ctx, contractAddr, state{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
-		Funder:      creator.String(),
+		Verifier:    []byte(fred),
+		Beneficiary: []byte(bob),
+		Funder:      []byte(creator),
 	})
 }
