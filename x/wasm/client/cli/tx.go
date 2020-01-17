@@ -27,11 +27,6 @@ const (
 	flagBuilder = "builder"
 )
 
-// whitelist
-var validBuildTags = map[string]bool{
-	"cosmwasm-opt:0.6.0": true, "cosmwasm-opt:0.5.2": true,
-}
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd := &cobra.Command{
