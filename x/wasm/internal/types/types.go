@@ -45,11 +45,11 @@ func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contr
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Signer:    creator.String(),
+			Signer:    wasmTypes.CanonicalAddress(creator),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: contractAcct.GetAddress().String(),
+			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
 			Balance: NewWasmCoins(contractAcct.GetCoins()),
 		},
 	}
@@ -85,11 +85,13 @@ func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
 	}
 }
 
+// WasmConfig is the extra config required for wasm
 type WasmConfig struct {
 	SmartQueryGasLimit uint64 `mapstructure:"query_gas_limit"`
 	CacheSize          uint64 `mapstructure:"lru_size"`
 }
 
+// DefaultWasmConfig returns the default settings for WasmConfig
 func DefaultWasmConfig() WasmConfig {
 	return WasmConfig{
 		SmartQueryGasLimit: defaultQueryGasLimit,

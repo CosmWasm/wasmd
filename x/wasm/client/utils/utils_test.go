@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func GetTestData() ([]byte, []byte, []byte, error){
+func GetTestData() ([]byte, []byte, []byte, error) {
 	wasmCode, err := ioutil.ReadFile("../../internal/keeper/testdata/contract.wasm")
 
 	if err != nil {
@@ -23,7 +23,7 @@ func GetTestData() ([]byte, []byte, []byte, error){
 	return wasmCode, someRandomStr, gzipData, nil
 }
 
-func TestIsWasm (t *testing.T) {
+func TestIsWasm(t *testing.T) {
 	wasmCode, someRandomStr, gzipData, err := GetTestData()
 	require.NoError(t, err)
 
@@ -35,7 +35,7 @@ func TestIsWasm (t *testing.T) {
 	require.True(t, IsWasm(wasmCode))
 }
 
-func TestIsGzip (t *testing.T) {
+func TestIsGzip(t *testing.T) {
 	wasmCode, someRandomStr, gzipData, err := GetTestData()
 	require.NoError(t, err)
 
@@ -44,7 +44,7 @@ func TestIsGzip (t *testing.T) {
 	require.True(t, IsGzip(gzipData))
 }
 
-func TestGzipIt (t *testing.T) {
+func TestGzipIt(t *testing.T) {
 	wasmCode, someRandomStr, _, err := GetTestData()
 	originalGzipData := []byte{31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 202, 72, 205, 201, 201, 87, 40, 207, 47, 202, 73, 1,
 		4, 0, 0, 255, 255, 133, 17, 74, 13, 11, 0, 0, 0}
