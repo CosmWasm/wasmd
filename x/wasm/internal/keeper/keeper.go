@@ -43,8 +43,8 @@ type Keeper struct {
 
 // NewKeeper creates a new contract Keeper instance
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
-	router sdk.Router, homeDir string, cacheSize uint64, smartQueryGasLimit uint64) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), cacheSize)
+	router sdk.Router, homeDir string, wasmConfig types.WasmConfig) Keeper {
+	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +56,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		router:        router,
-		queryGasLimit: smartQueryGasLimit,
+		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
 }
 

@@ -6,6 +6,9 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
+const defaultLRUCacheSize = uint64(0)
+const defaultQueryGasLimit = uint64(3000000)
+
 // Model is a struct that holds a KV pair
 type Model struct {
 	Key   string `json:"key"`
@@ -79,5 +82,17 @@ func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
 		Data:    []byte(wasmResult.Data),
 		Log:     wasmResult.Log,
 		GasUsed: wasmResult.GasUsed,
+	}
+}
+
+type WasmConfig struct {
+	SmartQueryGasLimit uint64 `mapstructure:"query_gas_limit"`
+	CacheSize          uint64 `mapstructure:"lru_size"`
+}
+
+func DefaultWasmConfig() WasmConfig {
+	return WasmConfig{
+		SmartQueryGasLimit: defaultQueryGasLimit,
+		CacheSize:          defaultLRUCacheSize,
 	}
 }

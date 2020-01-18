@@ -16,6 +16,8 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 const flagLRUCacheSize = "lru_size"
@@ -72,11 +74,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	h := bank.NewHandler(bk)
 	router.AddRoute(bank.RouterKey, h)
 
-	// TODO Read LRU cache size, query gas limit from app.toml
-	cacheSize := uint64(3)
-	smartQueryGasLimit := uint64(3000000)
+	// Load default wasm config
+	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, cacheSize, smartQueryGasLimit)
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig)
 
 	return ctx, accountKeeper, keeper
 }

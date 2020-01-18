@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -38,8 +39,6 @@ import (
 )
 
 const appName = "WasmApp"
-const flagLRUCacheSize = "lru_size"
-const flagQueryGasLimit = "query_gas_limit"
 
 var (
 	// DefaultCLIHome default home directories for wasmcli
@@ -184,13 +183,13 @@ func NewWasmApp(
 	homeDir := viper.GetString(cli.HomeFlag)
 	wasmDir := filepath.Join(homeDir, "wasm")
 
-	// Read LRU cache size from config (app.toml), defaults to `0`
-	cacheSize := uint64(viper.GetInt64(flagLRUCacheSize))
-	// Read query gas limit from config
-	smartQueryGasLimit := uint64(viper.GetInt64(flagQueryGasLimit))
+	wasmConfig := wasm.DefaultWasmConfig()
+	err := viper.Unmarshal(&wasmConfig)
+	if err != nil {
+		fmt.Println("error while reading wasm config:", err.Error())
+	}
 
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter,
-		wasmDir, cacheSize, smartQueryGasLimit)
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
 
 	// create evidence keeper with evidence router
 	app.evidenceKeeper = evidence.NewKeeper(

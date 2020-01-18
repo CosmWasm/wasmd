@@ -54,6 +54,7 @@ var (
 	NewWasmCoins              = types.NewWasmCoins
 	NewContractInfo           = types.NewContractInfo
 	CosmosResult              = types.CosmosResult
+	DefaultWasmConfig         = types.DefaultWasmConfig
 
 	// genesis aliases
 	ValidateGenesis = types.ValidateGenesis
@@ -77,6 +78,7 @@ type (
 	MsgExecuteContract     = types.MsgExecuteContract
 	CodeInfo               = types.CodeInfo
 	ContractInfo           = types.ContractInfo
+	WasmConfig             = types.WasmConfig
 
 	GenesisState = types.GenesisState
 )
