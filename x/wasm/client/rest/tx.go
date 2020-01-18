@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,7 +16,7 @@ import (
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/code/", storeCodeHandlerFn(cliCtx)).Methods("POST")
-	r.HandleFunc("/wasm/code/{codeID}", instantiateContractHandlerFn(cliCtx)).Methods("POST")
+	r.HandleFunc("/wasm/code/{codeId}", instantiateContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/{contractAddr}", executeContractHandlerFn(cliCtx)).Methods("POST")
 }
 
@@ -29,6 +30,7 @@ type storeCodeReq struct {
 
 type InstantiateContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
 	InitMsg []byte       `json:"init_msg" yaml:"init_msg"`
 }
 
@@ -86,6 +88,30 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var req InstantiateContractReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+		vars := mux.Vars(r)
+		codeId := vars["codeId"]
+
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		// get the id of the code to instantiate
+		codeID, err := strconv.ParseUint(codeId, 10, 64)
+		if err != nil {
+			return
+		}
+
+		msg := types.MsgInstantiateContract{
+			Sender:    cliCtx.GetFromAddress(),
+			Code:      codeID,
+			InitFunds: req.Deposit,
+			InitMsg:   req.InitMsg,
+		}
 
 	}
 }
