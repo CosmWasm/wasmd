@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,8 +38,8 @@ func TestQueryContractState(t *testing.T) {
 
 	_, _, bob := keyPubAddr()
 	initMsg := InitMsg{
-		Verifier:    anyAddr.String(),
-		Beneficiary: bob.String(),
+		Verifier:    anyAddr,
+		Beneficiary: bob,
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -53,13 +54,18 @@ func TestQueryContractState(t *testing.T) {
 	}
 	keeper.setContractState(ctx, addr, contractModel)
 
-	q := NewQuerier(keeper)
+	// this gets us full error, not redacted sdk.Error
+	q := newQuerier(keeper)
 	specs := map[string]struct {
-		srcPath          []string
-		srcReq           abci.RequestQuery
+		srcPath []string
+		srcReq  abci.RequestQuery
+		// smart queries return raw bytes from contract not []model
+		// if this is set, then we just compare - (should be json encoded string)
+		expSmartRes string
+		// if success and expSmartRes is not set, we parse into []model and compare
 		expModelLen      int
 		expModelContains []model
-		expErr           sdk.Error
+		expErr           *sdkErrors.Error
 	}{
 		"query all": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
@@ -83,9 +89,13 @@ func TestQueryContractState(t *testing.T) {
 		},
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:      abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
-			expModelLen: 1,
-			//expModelContains: []model{}, // stopping here as contract internals are not stable
+			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
+			expSmartRes: "cosmos1uf348t8j0h06ghr5udaw0hvlj9fhemhlsvve0f",
+		},
+		"query smart invalid request": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+			expErr:  types.ErrQueryFailed,
 		},
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
@@ -107,15 +117,23 @@ func TestQueryContractState(t *testing.T) {
 		"query smart with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
 			expModelLen: 0,
-			expErr:      types.ErrNotFound("contract"),
+			expErr:      types.ErrNotFound,
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			require.Equal(t, spec.expErr, err)
-			// then
+			// require.True(t, spec.expErr.Is(err), "unexpected error")
+			require.True(t, spec.expErr.Is(err), err)
+
+			// if smart query, check custom response
+			if spec.expSmartRes != "" {
+				require.Equal(t, spec.expSmartRes, string(binResult))
+				return
+			}
+
+			// otherwise, check returned models
 			var r []model
 			if spec.expErr == nil {
 				require.NoError(t, json.Unmarshal(binResult, &r))
