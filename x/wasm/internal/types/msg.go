@@ -1,17 +1,16 @@
 package types
 
 import (
-	"fmt"
+	"net/http"
+	"net/url"
 	"regexp"
-
-	"github.com/asaskevich/govalidator"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
 	MaxWasmSize   = 500 * 1024
-	BuildTagRegex = "cosmwasm-opt:"
+	BuildTagRegex = "^cosmwasm-opt:"
 )
 
 type MsgStoreCode struct {
@@ -42,10 +41,19 @@ func (msg MsgStoreCode) ValidateBasic() sdk.Error {
 	}
 
 	if msg.Source != "" {
-		fmt.Println("source: ", msg.Source)
-
-		if !govalidator.IsURL(msg.Source) {
+		u, err := url.Parse(msg.Source)
+		if err != nil {
 			return sdk.ErrInternal("source should be a valid url")
+		}
+
+		if !u.IsAbs() {
+			return sdk.ErrInternal("source should be an absolute url")
+		}
+
+		// check if the source is reachable
+		resp, err := http.Get(msg.Source)
+		if err != nil || resp.StatusCode != 200 {
+			return sdk.ErrInternal("source url is not reachable")
 		}
 	}
 

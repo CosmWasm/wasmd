@@ -32,10 +32,38 @@ func TestInitGenesis(t *testing.T) {
 		Builder:      "",
 	}
 
-	err := msg.ValidateBasic()
-	require.Error(t, err)
+	sdkerr := msg.ValidateBasic()
+	require.Error(t, sdkerr)
 
 	res := h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with relative source url")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "./testdata/escrow.wasm",
+		Builder:      "",
+	}
+
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
+	res = h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with unreachable source url")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "https://github.com/cosmwasm/wasmddddddrandom",
+		Builder:      "",
+	}
+
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
+	res = h(data.ctx, msg)
 	require.False(t, res.IsOK())
 
 	t.Log("fail with invalid build tag")
@@ -46,8 +74,8 @@ func TestInitGenesis(t *testing.T) {
 		Builder:      "somerandombuildtag-0.6.2",
 	}
 
-	err = msg.ValidateBasic()
-	require.Error(t, err)
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
 
 	res = h(data.ctx, msg)
 	require.False(t, res.IsOK())
@@ -59,8 +87,8 @@ func TestInitGenesis(t *testing.T) {
 		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
 		Builder:      "cosmwasm-opt:0.5.2",
 	}
-	err = msg.ValidateBasic()
-	require.NoError(t, err)
+	sdkerr = msg.ValidateBasic()
+	require.NoError(t, sdkerr)
 
 	res = h(data.ctx, msg)
 	require.True(t, res.IsOK())
@@ -71,8 +99,8 @@ func TestInitGenesis(t *testing.T) {
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
-	initMsgBz, _err := json.Marshal(initMsg)
-	require.NoError(t, _err)
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
 		Sender:    creator,
