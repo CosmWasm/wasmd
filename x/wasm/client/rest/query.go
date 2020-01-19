@@ -19,7 +19,9 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/code/{codeID}", queryCodeHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/", listAllContractsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/{contractAddr}", queryContractHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/contract/{contractAddr}/state", queryContractStateHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/state", queryContractStateAllHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/smart", queryContractStateSmartHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/raw", queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
 }
 
 func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -31,7 +33,6 @@ func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, string(res))
-		return
 	}
 }
 
@@ -57,15 +58,16 @@ func queryCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		var code keeper.GetCodeResponse
 		err = json.Unmarshal(res, &code)
 		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		if len(code.Code) == 0 {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
 			return
 		}
 
 		rest.PostProcessResponse(w, cliCtx, string(code.Code))
-		return
 	}
 }
 
@@ -74,13 +76,11 @@ func listAllContractsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListContracts)
 		res, _, err := cliCtx.Query(route)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, string(res))
-		return
-
 	}
 }
 
@@ -88,22 +88,45 @@ func queryContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		addr, err := sdk.AccAddressFromBech32(mux.Vars(r)["codeId"])
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContract, addr.String())
 		res, _, err := cliCtx.Query(route)
 		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, string(res))
-		return
 	}
 }
 
-func queryContractStateHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func queryContractStateAllHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		addr, err := sdk.AccAddressFromBech32(mux.Vars(r)["contractAddr"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll)
+		res, _, err := cliCtx.Query(route)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, string(res))
+	}
+}
+
+func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
