@@ -3,7 +3,6 @@ module github.com/cosmwasm/wasmd
 go 1.13
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/confio/go-cosmwasm v0.6.0
 	github.com/cosmos/cosmos-sdk v0.34.4-0.20191114141721-d4c831e63ad3
