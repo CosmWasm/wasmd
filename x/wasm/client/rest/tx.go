@@ -28,10 +28,16 @@ type storeCodeReq struct {
 	WasmBytes []byte       `json:"wasm_bytes"`
 }
 
-type InstantiateContractReq struct {
+type instantiateContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
 	InitMsg []byte       `json:"init_msg" yaml:"init_msg"`
+}
+
+type executeContractReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	ExecMsg []byte       `json:"exec_msg" yaml:"exec_msg"`
+	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
 }
 
 func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -88,7 +94,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req InstantiateContractReq
+		var req instantiateContractReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -113,11 +119,48 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			InitMsg:   req.InitMsg,
 		}
 
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
 
 func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var req executeContractReq
+		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			return
+		}
+		vars := mux.Vars(r)
+		contractAddr := vars["contractAddr"]
 
+		req.BaseReq = req.BaseReq.Sanitize()
+		if !req.BaseReq.ValidateBasic(w) {
+			return
+		}
+
+		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
+		if err != nil {
+			return
+		}
+
+		msg := types.MsgExecuteContract{
+			Sender:    cliCtx.GetFromAddress(),
+			Contract:  contractAddress,
+			Msg:       req.ExecMsg,
+			SentFunds: req.Amount,
+		}
+
+		err = msg.ValidateBasic()
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
