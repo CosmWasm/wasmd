@@ -48,16 +48,16 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store [from_key_or_address] [wasm file]",
+		Use:   "store [wasm file]",
 		Short: "Upload a wasm binary",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInputAndFrom(inBuf, args[0]).WithCodec(cdc)
+			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			// parse coins trying to be sent
-			wasm, err := ioutil.ReadFile(args[1])
+			wasm, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return err
 			}
@@ -93,16 +93,16 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [from_key_or_address] [code_id_int64] [json_encoded_init_args]",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args]",
 		Short: "Instantiate a wasm contract",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInputAndFrom(inBuf, args[0]).WithCodec(cdc)
+			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			// get the id of the code to instantiate
-			codeID, err := strconv.ParseUint(args[1], 10, 64)
+			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -113,7 +113,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			initMsg := args[2]
+			initMsg := args[1]
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgInstantiateContract{
@@ -133,16 +133,16 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute [from_key_or_address] [contract_addr_bech32] [json_encoded_send_args]",
+		Use:   "execute [contract_addr_bech32] [json_encoded_send_args]",
 		Short: "Execute a command on a wasm contract",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInputAndFrom(inBuf, args[0]).WithCodec(cdc)
+			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
 			// get the id of the code to instantiate
-			contractAddr, err := sdk.AccAddressFromBech32(args[1])
+			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			execMsg := args[2]
+			execMsg := args[1]
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
