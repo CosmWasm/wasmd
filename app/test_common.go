@@ -5,6 +5,7 @@ This file is full of test helper functions, taken from simapp
 **/
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -69,6 +70,7 @@ func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *WasmApp {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(string(stateBytes))
 
 	// Initialize the chain
 	app.InitChain(
@@ -98,7 +100,7 @@ func SignAndDeliver(
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
 		DefaultGenTxGas,
-		"",
+		SimAppChainID,
 		accNums,
 		seq,
 		priv...,
