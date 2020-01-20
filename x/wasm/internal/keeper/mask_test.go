@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/binary"
+	"fmt"
 	"testing"
 
 	"github.com/cosmwasm/wasmd/app"
@@ -12,8 +13,8 @@ import (
 	authExported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
+
 	// "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
@@ -21,6 +22,7 @@ import (
 // CreateTestApp will create a new wasmd application and provide money to every address
 // listed there
 func CreateTestApp(t *testing.T, accounts []*auth.BaseAccount) *app.WasmApp {
+	fmt.Printf("%#v\n", accounts[1])
 	genAccounts := make([]authExported.GenesisAccount, len(accounts))
 	for i, acct := range accounts {
 		genAccounts[i] = acct
@@ -41,16 +43,12 @@ func TestSendWithApp(t *testing.T) {
 		ToAddress:   accts[1].Address,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("stake", 20)),
 	}
-	_ = sign(t, wasm, 2, msg, &keys[0], true)
+	_ = sign(t, wasm, msg, &keys[0], true)
 }
 
-func sign(t *testing.T, wasm *app.WasmApp, height int64, msg sdk.Msg, signer *signer, expectPass bool) sdk.Result {
-	header := abci.Header{
-		Height:  height,
-		ChainID: app.SimAppChainID,
-	}
+func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) sdk.Result {
+	res := app.SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
 	signer.seq++
-	res := app.SignAndDeliver(t, wasm, header, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
 	return res
 }
 
@@ -65,10 +63,13 @@ func genAccountsWithKey(t *testing.T, coins sdk.Coins, n int) ([]*auth.BaseAccou
 	keys := make([]signer, n)
 
 	for i := range accts {
-		priv, _, addr := maskKeyPubAddr()
+		priv, pub, addr := maskKeyPubAddr()
 		baseAcct := auth.NewBaseAccountWithAddress(addr)
 		err := baseAcct.SetCoins(coins)
 		require.NoError(t, err)
+		baseAcct.SetPubKey(pub)
+		baseAcct.SetAccountNumber(uint64(i + 1))
+		baseAcct.SetSequence(1)
 		accts[i] = &baseAcct
 		keys[i] = signer{
 			priv:    priv,

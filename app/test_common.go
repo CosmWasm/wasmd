@@ -81,7 +81,7 @@ func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *WasmApp {
 	)
 
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	return app
 }
@@ -91,7 +91,7 @@ func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *WasmApp {
 // the parameter 'expPass' against the result. A corresponding result is
 // returned.
 func SignAndDeliver(
-	t *testing.T, app *WasmApp, header abci.Header, msgs []sdk.Msg,
+	t *testing.T, app *WasmApp, msgs []sdk.Msg,
 	accNums, seq []uint64, expPass bool, priv ...crypto.PrivKey,
 ) sdk.Result {
 	// ) (sdk.GasInfo, *sdk.Result, error) {
@@ -107,7 +107,7 @@ func SignAndDeliver(
 	)
 
 	// Simulate a sending a transaction and committing a block
-	app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	res := app.Deliver(tx)
 	if expPass {
