@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -24,7 +25,16 @@ type ownerPayload struct {
 }
 
 type reflectPayload struct {
-	Msg []byte `json:"msg"`
+	Msg cosmosMsg `json:"msg"`
+	// Msg wasmTypes.CosmosMsg `json:"msg"`
+}
+
+// replaces wasmTypes.CosmosMsg{
+// TODO: fix upstream
+type cosmosMsg struct {
+	Send     *wasmTypes.SendMsg     `json:"send,omitempty"`
+	Contract *wasmTypes.ContractMsg `json:"contract,omitempty"`
+	Opaque   *wasmTypes.OpaqueMsg   `json:"opaque,omitempty"`
 }
 
 func TestMaskSend(t *testing.T) {
@@ -36,7 +46,7 @@ func TestMaskSend(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 	bob := createFakeFundedAccount(ctx, accKeeper, deposit)
-	// _, _, fred := keyPubAddr()
+	_, _, fred := keyPubAddr()
 
 	// upload code
 	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
@@ -65,5 +75,47 @@ func TestMaskSend(t *testing.T) {
 	_, err = keeper.Execute(ctx, contractAddr, creator, nil, transferBz)
 	require.NoError(t, err)
 
-	// bob can send contract's tokens to fred
+	// check some account values
+	contractAcct := accKeeper.GetAccount(ctx, contractAddr)
+	require.NotNil(t, contractAcct)
+	require.Equal(t, contractAcct.GetCoins(), contractStart)
+	bobAcct := accKeeper.GetAccount(ctx, bob)
+	require.NotNil(t, bobAcct)
+	require.Equal(t, bobAcct.GetCoins(), deposit)
+	fredAcct := accKeeper.GetAccount(ctx, fred)
+	require.Nil(t, fredAcct)
+
+	// bob can send contract's tokens to fred (using SendMsg)
+	// TODO: fix this upstream
+	msg := cosmosMsg{
+		Send: &wasmTypes.SendMsg{
+			FromAddress: contractAddr.String(),
+			ToAddress:   fred.String(),
+			Amount: []wasmTypes.Coin{{
+				Denom:  "denom",
+				Amount: "15000",
+			}},
+		},
+	}
+	reflectSend := MaskHandleMsg{
+		Reflect: &reflectPayload{
+			Msg: msg,
+		},
+	}
+	reflectSendBz, err := json.Marshal(reflectSend)
+	require.NoError(t, err)
+	fmt.Println(string(reflectSendBz))
+	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
+	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectSendBz)
+	require.NoError(t, err)
+
+	// fred got coins
+	fredAcct = accKeeper.GetAccount(ctx, fred)
+	require.NotNil(t, fredAcct)
+	require.Equal(t, fredAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	// contract lost them
+	contractAcct = accKeeper.GetAccount(ctx, contractAddr)
+	require.NotNil(t, contractAcct)
+	require.Equal(t, contractAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+
 }
