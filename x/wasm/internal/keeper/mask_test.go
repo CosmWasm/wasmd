@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -104,7 +103,6 @@ func TestMaskSend(t *testing.T) {
 	}
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
-	fmt.Println(string(reflectSendBz))
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
 	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectSendBz)
 	require.NoError(t, err)
@@ -127,7 +125,6 @@ func TestMaskSend(t *testing.T) {
 	opaqueBz, err := keeper.cdc.MarshalJSON(sdkSendMsg)
 	require.NoError(t, err)
 	// Note: contract doesn't parse strings with quoted string inside
-	fmt.Println(string(opaqueBz))
 	opaqueStr := base64.StdEncoding.EncodeToString(opaqueBz)
 
 	reflectOpaque := MaskHandleMsg{
@@ -141,7 +138,6 @@ func TestMaskSend(t *testing.T) {
 	}
 	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
 	require.NoError(t, err)
-	fmt.Println(string(reflectOpaqueBz))
 
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
 	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectOpaqueBz)

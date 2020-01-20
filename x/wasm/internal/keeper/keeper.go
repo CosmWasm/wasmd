@@ -297,7 +297,6 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 }
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
-	fmt.Printf("\ndispatchMsg: %#v\n\n", msg)
 	// we check each type (pointers would make it easier to test if set)
 	if msg.Send.FromAddress != "" {
 		sendMsg, err := convertCosmosSendMsg(msg.Send)
@@ -326,7 +325,6 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		if err != nil {
 			return sdk.ErrTxDecode(err.Error())
 		}
-		fmt.Printf("\ndecoded: %#v\n", msg)
 		return k.handleSdkMessage(ctx, contract, msg)
 	}
 	// what is it?
