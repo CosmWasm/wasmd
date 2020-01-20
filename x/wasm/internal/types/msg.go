@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -76,10 +77,10 @@ func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 }
 
 type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress `json:"sender" yaml:"sender"`
-	Code      uint64         `json:"code_id" yaml:"code_id"`
-	InitMsg   []byte         `json:"init_msg" yaml:"init_msg"`
-	InitFunds sdk.Coins      `json:"init_funds" yaml:"init_funds"`
+	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
+	Code      uint64          `json:"code_id" yaml:"code_id"`
+	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
+	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
 }
 
 func (msg MsgInstantiateContract) Route() string {
@@ -106,10 +107,10 @@ func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 }
 
 type MsgExecuteContract struct {
-	Sender    sdk.AccAddress `json:"sender" yaml:"sender"`
-	Contract  sdk.AccAddress `json:"contract" yaml:"contract"`
-	Msg       []byte         `json:"msg" yaml:"msg"`
-	SentFunds sdk.Coins      `json:"sent_funds" yaml:"sent_funds"`
+	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
+	Contract  sdk.AccAddress  `json:"contract" yaml:"contract"`
+	Msg       json.RawMessage `json:"msg" yaml:"msg"`
+	SentFunds sdk.Coins       `json:"sent_funds" yaml:"sent_funds"`
 }
 
 func (msg MsgExecuteContract) Route() string {
