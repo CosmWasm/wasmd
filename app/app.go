@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -122,6 +123,12 @@ type WasmApp struct {
 	sm *module.SimulationManager
 }
 
+// WasmWrapper allows us to use namespacing in the config file
+// This is only used for parsing in the app, x/wasm expects WasmConfig
+type WasmWrapper struct {
+	Wasm wasm.WasmConfig `mapstructure:"wasm"`
+}
+
 // NewWasmApp returns a reference to an initialized WasmApp.
 func NewWasmApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
@@ -181,7 +188,16 @@ func NewWasmApp(
 	// better way to get this dir???
 	homeDir := viper.GetString(cli.HomeFlag)
 	wasmDir := filepath.Join(homeDir, "wasm")
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir)
+
+	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
+	err := viper.Unmarshal(&wasmWrap)
+	if err != nil {
+		fmt.Println("error while reading wasm config:", err.Error())
+	}
+	wasmConfig := wasmWrap.Wasm
+	fmt.Printf("WasmConfig: %#v\n", wasmConfig)
+
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
 
 	// create evidence keeper with evidence router
 	app.evidenceKeeper = evidence.NewKeeper(
