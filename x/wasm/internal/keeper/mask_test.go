@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 // MaskInitMsg is {}
@@ -60,7 +62,6 @@ func TestMaskSend(t *testing.T) {
 	contractAddr, err := keeper.Instantiate(ctx, creator, codeID, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
-	fmt.Println(contractAddr.String())
 
 	// set owner to bob
 	transfer := MaskHandleMsg{
@@ -70,7 +71,6 @@ func TestMaskSend(t *testing.T) {
 	}
 	transferBz, err := json.Marshal(transfer)
 	require.NoError(t, err)
-	fmt.Println(string(transferBz))
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
 	_, err = keeper.Execute(ctx, contractAddr, creator, nil, transferBz)
 	require.NoError(t, err)
@@ -117,5 +117,34 @@ func TestMaskSend(t *testing.T) {
 	contractAcct = accKeeper.GetAccount(ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	require.Equal(t, contractAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+
+	// construct an opaque message
+	var sdkSendMsg sdk.Msg = &bank.MsgSend{
+		FromAddress: contractAddr,
+		ToAddress:   fred,
+		Amount:      sdk.NewCoins(sdk.NewInt64Coin("denom", 23000)),
+	}
+	opaqueBz, err := keeper.cdc.MarshalJSON(sdkSendMsg)
+	require.NoError(t, err)
+	// Note: contract doesn't parse strings with quoted string inside
+	fmt.Println(string(opaqueBz))
+	opaqueStr := base64.StdEncoding.EncodeToString(opaqueBz)
+
+	reflectOpaque := MaskHandleMsg{
+		Reflect: &reflectPayload{
+			Msg: cosmosMsg{
+				Opaque: &wasmTypes.OpaqueMsg{
+					Data: opaqueStr,
+				},
+			},
+		},
+	}
+	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
+	require.NoError(t, err)
+	fmt.Println(string(reflectOpaqueBz))
+
+	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
+	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectOpaqueBz)
+	require.NoError(t, err)
 
 }

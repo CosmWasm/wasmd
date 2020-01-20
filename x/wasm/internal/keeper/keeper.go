@@ -202,7 +202,6 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 
 func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, error) {
 	store := ctx.KVStore(k.storeKey)
-	fmt.Printf("instance %s\n", contractAddress.String())
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
@@ -297,6 +296,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 }
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
+	fmt.Printf("\ndispatchMsg: %#v\n\n", msg)
 	// we check each type (pointers would make it easier to test if set)
 	if msg.Send.FromAddress != "" {
 		sendMsg, err := convertCosmosSendMsg(msg.Send)
