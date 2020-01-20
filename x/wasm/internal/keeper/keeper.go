@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"path/filepath"
@@ -315,8 +316,18 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 			return err
 		}
 	} else if msg.Opaque.Data != "" {
-		// TODO: handle opaque
-		panic("dispatch opaque message not yet implemented")
+		// until more is changes, format is amino json encoding, wrapped base64
+		bz, err := base64.StdEncoding.DecodeString(msg.Opaque.Data)
+		if err != nil {
+			return sdk.ErrTxDecode(err.Error())
+		}
+		var msg sdk.Msg
+		err = k.cdc.UnmarshalJSON(bz, &msg)
+		if err != nil {
+			return sdk.ErrTxDecode(err.Error())
+		}
+		fmt.Printf("\ndecoded: %#v\n", msg)
+		return k.handleSdkMessage(ctx, contract, msg)
 	}
 	// what is it?
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))

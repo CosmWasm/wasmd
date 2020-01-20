@@ -147,4 +147,12 @@ func TestMaskSend(t *testing.T) {
 	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectOpaqueBz)
 	require.NoError(t, err)
 
+	// fred got more coins
+	fredAcct = accKeeper.GetAccount(ctx, fred)
+	require.NotNil(t, fredAcct)
+	require.Equal(t, fredAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
+	// contract lost them
+	contractAcct = accKeeper.GetAccount(ctx, contractAddr)
+	require.NotNil(t, contractAcct)
+	require.Equal(t, contractAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
 }
