@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -122,17 +121,12 @@ func TestMaskSend(t *testing.T) {
 		ToAddress:   fred,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("denom", 23000)),
 	}
-	opaqueBz, err := keeper.cdc.MarshalJSON(sdkSendMsg)
+	opaque, err := ToOpaqueMsg(keeper.cdc, sdkSendMsg)
 	require.NoError(t, err)
-	// Note: contract doesn't parse strings with quoted string inside
-	opaqueStr := base64.StdEncoding.EncodeToString(opaqueBz)
-
 	reflectOpaque := MaskHandleMsg{
 		Reflect: &reflectPayload{
 			Msg: cosmosMsg{
-				Opaque: &wasmTypes.OpaqueMsg{
-					Data: opaqueStr,
-				},
+				Opaque: opaque,
 			},
 		},
 	}
