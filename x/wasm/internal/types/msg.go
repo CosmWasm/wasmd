@@ -1,17 +1,26 @@
 package types
 
 import (
+	"net/http"
+	"net/url"
+	"regexp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
-	MaxWasmSize = 500 * 1024
+	MaxWasmSize   = 500 * 1024
+	BuildTagRegex = "^cosmwasm-opt:"
 )
 
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	// Source is a valid URI reference to the contract's source code, optional
+	Source string `json:"source" yaml:"source"`
+	// Builder is a docker tag, optional
+	Builder string `json:"builder" yaml:"builder"`
 }
 
 func (msg MsgStoreCode) Route() string {
@@ -26,9 +35,35 @@ func (msg MsgStoreCode) ValidateBasic() sdk.Error {
 	if len(msg.WASMByteCode) == 0 {
 		return sdk.ErrInternal("empty wasm code")
 	}
+
 	if len(msg.WASMByteCode) > MaxWasmSize {
 		return sdk.ErrInternal("wasm code too large")
 	}
+
+	if msg.Source != "" {
+		u, err := url.Parse(msg.Source)
+		if err != nil {
+			return sdk.ErrInternal("source should be a valid url")
+		}
+
+		if !u.IsAbs() {
+			return sdk.ErrInternal("source should be an absolute url")
+		}
+
+		// check if the source is reachable
+		resp, err := http.Get(msg.Source)
+		if err != nil || resp.StatusCode != 200 {
+			return sdk.ErrInternal("source url is not reachable")
+		}
+	}
+
+	if msg.Builder != "" {
+		ok, err := regexp.MatchString(BuildTagRegex, msg.Builder)
+		if err != nil || !ok {
+			return sdk.ErrInternal("invalid tag supplied for builder")
+		}
+	}
+
 	return nil
 }
 

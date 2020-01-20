@@ -24,11 +24,73 @@ func TestInitGenesis(t *testing.T) {
 	h := data.module.NewHandler()
 	q := data.module.NewQuerierHandler()
 
+	t.Log("fail with invalid source url")
 	msg := MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
+		Source:       "someinvalidurl",
+		Builder:      "",
 	}
+
+	sdkerr := msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
 	res := h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with relative source url")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "./testdata/escrow.wasm",
+		Builder:      "",
+	}
+
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
+	res = h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with unreachable source url")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "https://github.com/cosmwasm/wasmddddddrandom",
+		Builder:      "",
+	}
+
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
+	res = h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("fail with invalid build tag")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "",
+		Builder:      "somerandombuildtag-0.6.2",
+	}
+
+	sdkerr = msg.ValidateBasic()
+	require.Error(t, sdkerr)
+
+	res = h(data.ctx, msg)
+	require.False(t, res.IsOK())
+
+	t.Log("no error with valid source and build tag")
+	msg = MsgStoreCode{
+		Sender:       creator,
+		WASMByteCode: testContract,
+		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
+		Builder:      "cosmwasm-opt:0.5.2",
+	}
+	sdkerr = msg.ValidateBasic()
+	require.NoError(t, sdkerr)
+
+	res = h(data.ctx, msg)
 	require.True(t, res.IsOK())
 	require.Equal(t, res.Data, []byte("1"))
 

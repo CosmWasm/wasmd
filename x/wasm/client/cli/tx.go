@@ -21,12 +21,11 @@ import (
 )
 
 const (
-	flagTo     = "to"
-	flagAmount = "amount"
+	flagTo      = "to"
+	flagAmount  = "amount"
+	flagSource  = "source"
+	flagBuilder = "builder"
 )
-
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -48,7 +47,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store [wasm file]",
+		Use:   "store [wasm file] --source [source] --builder [builder]",
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,11 +61,9 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			// limit the input size
-			if len(wasm) > maxSize {
-				return fmt.Errorf("input size exceeds the max size allowed (allowed:%d, actual: %d)",
-					maxSize, len(wasm))
-			}
+			source := viper.GetString(flagSource)
+
+			builder := viper.GetString(flagBuilder)
 
 			// gzip the wasm file
 			if wasmUtils.IsWasm(wasm) {
@@ -83,10 +80,22 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			msg := types.MsgStoreCode{
 				Sender:       cliCtx.GetFromAddress(),
 				WASMByteCode: wasm,
+				Source:       source,
+				Builder:      builder,
 			}
+			err = msg.ValidateBasic()
+
+			if err != nil {
+				return err
+			}
+
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
+
+	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
+	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
+
 	return cmd
 }
 
