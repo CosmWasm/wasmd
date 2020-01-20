@@ -41,6 +41,7 @@ var (
 	NewWasmCoins              = types.NewWasmCoins
 	NewContractInfo           = types.NewContractInfo
 	CosmosResult              = types.CosmosResult
+	DefaultWasmConfig         = types.DefaultWasmConfig
 	InitGenesis               = keeper.InitGenesis
 	ExportGenesis             = keeper.ExportGenesis
 	NewKeeper                 = keeper.NewKeeper
@@ -76,6 +77,7 @@ type (
 	Model                  = types.Model
 	CodeInfo               = types.CodeInfo
 	ContractInfo           = types.ContractInfo
+	WasmConfig             = types.WasmConfig
 	Keeper                 = keeper.Keeper
 	GetCodeResponse        = keeper.GetCodeResponse
 	ListCodeResponse       = keeper.ListCodeResponse

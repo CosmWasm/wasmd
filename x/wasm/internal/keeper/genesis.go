@@ -14,7 +14,7 @@ import (
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	for _, code := range data.Codes {
-		newId, err := keeper.Create(ctx, code.CodeInfo.Creator, code.CodesBytes)
+		newId, err := keeper.Create(ctx, code.CodeInfo.Creator, code.CodesBytes, code.CodeInfo.Source, code.CodeInfo.Builder)
 		if err != nil {
 			panic(err)
 		}

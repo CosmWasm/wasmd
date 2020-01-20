@@ -16,7 +16,12 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+
+	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
+
+const flagLRUCacheSize = "lru_size"
+const flagQueryGasLimit = "query_gas_limit"
 
 func MakeTestCodec() *codec.Codec {
 	var cdc = codec.New()
@@ -69,7 +74,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	h := bank.NewHandler(bk)
 	router.AddRoute(bank.RouterKey, h)
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir)
+	// Load default wasm config
+	wasmConfig := wasmTypes.DefaultWasmConfig()
+
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig)
 
 	return ctx, accountKeeper, keeper
 }

@@ -38,7 +38,7 @@ func TestCreate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -59,7 +59,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -82,7 +82,7 @@ func TestInstantiate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "")
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -103,7 +103,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(36698), gasAfter-gasBefore)
+	require.Equal(t, uint64(36923), gasAfter-gasBefore)
 }
 
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
@@ -141,7 +141,7 @@ func TestExecute(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
