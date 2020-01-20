@@ -28,8 +28,6 @@ const GasMultiplier = 100
 // MaxGas for a contract is 900 million (enforced in rust)
 const MaxGas = 900_000_000
 
-const smartQueryGasLimit = 3000000 // Todo: should be set by app.toml
-
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
@@ -45,8 +43,9 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new contract Keeper instance
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, router sdk.Router, homeDir string) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), 0)
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
+	router sdk.Router, homeDir string, wasmConfig types.WasmConfig) Keeper {
+	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +57,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		router:        router,
-		queryGasLimit: smartQueryGasLimit,
+		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
 }
 
