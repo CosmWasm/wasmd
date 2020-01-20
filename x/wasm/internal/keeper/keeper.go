@@ -202,6 +202,7 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 
 func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, error) {
 	store := ctx.KVStore(k.storeKey)
+	fmt.Printf("instance %s\n", contractAddress.String())
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
