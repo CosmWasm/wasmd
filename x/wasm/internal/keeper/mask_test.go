@@ -26,16 +26,7 @@ type ownerPayload struct {
 }
 
 type reflectPayload struct {
-	Msg cosmosMsg `json:"msg"`
-	// Msg wasmTypes.CosmosMsg `json:"msg"`
-}
-
-// replaces wasmTypes.CosmosMsg{
-// TODO: fix upstream
-type cosmosMsg struct {
-	Send     *wasmTypes.SendMsg     `json:"send,omitempty"`
-	Contract *wasmTypes.ContractMsg `json:"contract,omitempty"`
-	Opaque   *wasmTypes.OpaqueMsg   `json:"opaque,omitempty"`
+	Msg wasmTypes.CosmosMsg `json:"msg"`
 }
 
 func TestMaskSend(t *testing.T) {
@@ -81,7 +72,7 @@ func TestMaskSend(t *testing.T) {
 
 	// bob can send contract's tokens to fred (using SendMsg)
 	// TODO: fix this upstream
-	msg := cosmosMsg{
+	msg := wasmTypes.CosmosMsg{
 		Send: &wasmTypes.SendMsg{
 			FromAddress: contractAddr.String(),
 			ToAddress:   fred.String(),
@@ -118,7 +109,7 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 	reflectOpaque := MaskHandleMsg{
 		Reflect: &reflectPayload{
-			Msg: cosmosMsg{
+			Msg: wasmTypes.CosmosMsg{
 				Opaque: opaque,
 			},
 		},

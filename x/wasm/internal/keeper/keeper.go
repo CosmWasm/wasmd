@@ -297,13 +297,13 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
 	// we check each type (pointers would make it easier to test if set)
-	if msg.Send.FromAddress != "" {
+	if msg.Send != nil {
 		sendMsg, err := convertCosmosSendMsg(msg.Send)
 		if err != nil {
 			return err
 		}
 		return k.handleSdkMessage(ctx, contract, sendMsg)
-	} else if msg.Contract.ContractAddr != "" {
+	} else if msg.Contract != nil {
 		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)
 		if stderr != nil {
 			return sdk.ErrInvalidAddress(msg.Contract.ContractAddr)
@@ -313,8 +313,8 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		if err != nil {
 			return err
 		}
-	} else if msg.Opaque.Data != "" {
-		msg, err := ParseOpaqueMsg(k.cdc, &msg.Opaque)
+	} else if msg.Opaque != nil {
+		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
 }
 
-func convertCosmosSendMsg(msg wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
+func convertCosmosSendMsg(msg *wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
 	fromAddr, stderr := sdk.AccAddressFromBech32(msg.FromAddress)
 	if stderr != nil {
 		return bank.MsgSend{}, sdk.ErrInvalidAddress(msg.FromAddress)
