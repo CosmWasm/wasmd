@@ -308,11 +308,8 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		if stderr != nil {
 			return sdk.ErrInvalidAddress(msg.Contract.ContractAddr)
 		}
-		// TODO: use non nil payment once we update go-cosmwasm (ContractMsg contains optional payment)
 		_, err := k.Execute(ctx, targetAddr, contract.GetAddress(), []byte(msg.Contract.Msg), nil)
-		if err != nil {
-			return err
-		}
+		return err // may be nil
 	} else if msg.Opaque != nil {
 		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
 		if err != nil {
