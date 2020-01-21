@@ -1,4 +1,4 @@
-package app
+package integration
 
 /**
 This file is full of test helper functions, taken from simapp
@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	wasmd "github.com/cosmwasm/wasmd/app"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -27,14 +28,14 @@ const (
 	SimAppChainID   = "wasmd-app"
 )
 
-// Setup initializes a new WasmApp. A Nop logger is set in WasmApp.
-func Setup(isCheckTx bool) *WasmApp {
+// Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
+func Setup(isCheckTx bool) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := NewWasmApp(log.NewNopLogger(), db, nil, true, 0)
-	// app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
+	app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, 0)
+	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
-		genesisState := NewDefaultGenesisState()
+		genesisState := wasmd.NewDefaultGenesisState()
 		stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 		if err != nil {
 			panic(err)
@@ -52,15 +53,15 @@ func Setup(isCheckTx bool) *WasmApp {
 	return app
 }
 
-// SetupWithGenesisAccounts initializes a new WasmApp with the passed in
+// SetupWithGenesisAccounts initializes a new wasmd.WasmApp with the passed in
 // genesis accounts.
-func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *WasmApp {
+func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
-	// app := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, 0)
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
+	// app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, 0)
 
 	// initialize the chain with the passed in genesis accounts
-	genesisState := NewDefaultGenesisState()
+	genesisState := wasmd.NewDefaultGenesisState()
 
 	authGenesis := auth.NewGenesisState(auth.DefaultParams(), genAccs)
 	genesisStateBz := app.Codec().MustMarshalJSON(authGenesis)
@@ -91,7 +92,7 @@ func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *WasmApp {
 // the parameter 'expPass' against the result. A corresponding result is
 // returned.
 func SignAndDeliver(
-	t *testing.T, app *WasmApp, msgs []sdk.Msg,
+	t *testing.T, app *wasmd.WasmApp, msgs []sdk.Msg,
 	accNums, seq []uint64, expPass bool, priv ...crypto.PrivKey,
 ) sdk.Result {
 	// ) (sdk.GasInfo, *sdk.Result, error) {

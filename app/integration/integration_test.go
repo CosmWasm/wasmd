@@ -1,4 +1,4 @@
-package keeper_test
+package integration
 
 import (
 	"encoding/binary"
@@ -27,7 +27,7 @@ func CreateTestApp(t *testing.T, accounts []*auth.BaseAccount) *app.WasmApp {
 	for i, acct := range accounts {
 		genAccounts[i] = acct
 	}
-	wasmd := app.SetupWithGenesisAccounts(genAccounts)
+	wasmd := SetupWithGenesisAccounts(genAccounts)
 	return wasmd
 }
 
@@ -50,7 +50,7 @@ func TestSendWithApp(t *testing.T) {
 }
 
 func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) sdk.Result {
-	res := app.SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
+	res := SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
 	signer.seq++
 	return res
 }
