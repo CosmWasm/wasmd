@@ -10,6 +10,7 @@ import (
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
@@ -74,14 +75,9 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// check some account values
-	contractAcct := accKeeper.GetAccount(ctx, contractAddr)
-	require.NotNil(t, contractAcct)
-	require.Equal(t, contractAcct.GetCoins(), contractStart)
-	bobAcct := accKeeper.GetAccount(ctx, bob)
-	require.NotNil(t, bobAcct)
-	require.Equal(t, bobAcct.GetCoins(), deposit)
-	fredAcct := accKeeper.GetAccount(ctx, fred)
-	require.Nil(t, fredAcct)
+	checkAccount(t, ctx, accKeeper, contractAddr, contractStart)
+	checkAccount(t, ctx, accKeeper, bob, deposit)
+	checkAccount(t, ctx, accKeeper, fred, nil)
 
 	// bob can send contract's tokens to fred (using SendMsg)
 	// TODO: fix this upstream
@@ -107,13 +103,10 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	fredAcct = accKeeper.GetAccount(ctx, fred)
-	require.NotNil(t, fredAcct)
-	require.Equal(t, fredAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
 	// contract lost them
-	contractAcct = accKeeper.GetAccount(ctx, contractAddr)
-	require.NotNil(t, contractAcct)
-	require.Equal(t, contractAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	checkAccount(t, ctx, accKeeper, bob, deposit)
 
 	// construct an opaque message
 	var sdkSendMsg sdk.Msg = &bank.MsgSend{
@@ -138,11 +131,18 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got more coins
-	fredAcct = accKeeper.GetAccount(ctx, fred)
-	require.NotNil(t, fredAcct)
-	require.Equal(t, fredAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
+	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
 	// contract lost them
-	contractAcct = accKeeper.GetAccount(ctx, contractAddr)
-	require.NotNil(t, contractAcct)
-	require.Equal(t, contractAcct.GetCoins(), sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
+	checkAccount(t, ctx, accKeeper, bob, deposit)
+}
+
+func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
+	acct := accKeeper.GetAccount(ctx, addr)
+	if expected == nil {
+		require.Nil(t, acct)
+	} else {
+		require.NotNil(t, acct)
+		require.Equal(t, acct.GetCoins(), expected)
+	}
 }
