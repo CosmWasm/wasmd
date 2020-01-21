@@ -1,4 +1,10 @@
 approach 1:
+
+Build:
+
+`docker build  -t wasmd:manual .`
+
+
 Start from the outside
 ```sh
 WORK_DIR=$(pwd)/tmp
@@ -6,7 +12,14 @@ mkdir -p ${WORK_DIR}
 
 docker run -v ${WORK_DIR}/.wasmd:/root/.wasmd -it wasmd:manual wasmd init --chain-id=testing testing
 docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmcli keys add validator
-docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd add-genesis-account '$(wasmcli keys show validator -a)' 1000000000stake,1000000000validatortoken
+
+# # here you must blindly type the passphrase, we tail to remove the prompt
+# VALIDATOR=$(docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmcli keys show validator -a | tail -1)
+# # but we don't need this approach
+# docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd add-genesis-account $VALIDATOR 1000000000stake,1000000000validatortoken
+
+docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd add-genesis-account validator 1000000000stake,1000000000validatortoken
+
 docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd gentx --name validator
 docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd collect-gentxs
 docker run -v ${WORK_DIR}:/root -it wasmd:manual wasmd start

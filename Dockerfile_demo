@@ -19,8 +19,9 @@ RUN make install
 
 # Start demo
 RUN wasmd init --chain-id=testing testing
-RUN echo "xxxxxxxxx" | wasmcli keys add validator
-RUN wasmd add-genesis-account $(echo "xxxxxxxxx" | wasmcli keys show validator -a) 1000000000stake,1000000000validatortoken
+# RUN echo "xxxxxxxxx" | wasmcli keys add validator
+RUN wasmcli keys add validator
+RUN wasmd add-genesis-account validator 1000000000stake,1000000000validatortoken
 RUN wasmd gentx --name validator
 RUN wasmd collect-gentxs
 
