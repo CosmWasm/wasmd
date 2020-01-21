@@ -296,46 +296,55 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 }
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
-	// we check each type (pointers would make it easier to test if set)
+	// maybe use this instead for the arg?
+	contractAddr := contract.GetAddress()
 	if msg.Send != nil {
-		sendMsg, err := convertCosmosSendMsg(msg.Send)
-		if err != nil {
-			return err
-		}
-		return k.handleSdkMessage(ctx, contract, sendMsg)
+		return k.sendTokens(ctx, contractAddr, msg.Send.FromAddress, msg.Send.ToAddress, msg.Send.Amount)
 	} else if msg.Contract != nil {
 		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)
 		if stderr != nil {
 			return sdk.ErrInvalidAddress(msg.Contract.ContractAddr)
 		}
-		// TODO: use non nil payment once we update go-cosmwasm (ContractMsg contains optional payment)
-		_, err := k.Execute(ctx, targetAddr, contract.GetAddress(), []byte(msg.Contract.Msg), nil)
+		err := k.sendTokens(ctx, contractAddr, contractAddr.String(), targetAddr.String(), msg.Contract.Send)
 		if err != nil {
 			return err
 		}
+		_, err = k.Execute(ctx, targetAddr, contractAddr, []byte(msg.Contract.Msg), nil)
+		return err // may be nil
 	} else if msg.Opaque != nil {
 		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
 		if err != nil {
 			return err
 		}
-		return k.handleSdkMessage(ctx, contract, msg)
+		return k.handleSdkMessage(ctx, contractAddr, msg)
 	}
 	// what is it?
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
 }
 
-func convertCosmosSendMsg(msg *wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
-	fromAddr, stderr := sdk.AccAddressFromBech32(msg.FromAddress)
-	if stderr != nil {
-		return bank.MsgSend{}, sdk.ErrInvalidAddress(msg.FromAddress)
+func (k Keeper) sendTokens(ctx sdk.Context, signer sdk.AccAddress, origin string, target string, tokens []wasmTypes.Coin) error {
+	if len(tokens) == 0 {
+		return nil
 	}
-	toAddr, stderr := sdk.AccAddressFromBech32(msg.ToAddress)
+	msg, err := convertCosmosSendMsg(origin, target, tokens)
+	if err != nil {
+		return err
+	}
+	return k.handleSdkMessage(ctx, signer, msg)
+}
+
+func convertCosmosSendMsg(from string, to string, coins []wasmTypes.Coin) (bank.MsgSend, sdk.Error) {
+	fromAddr, stderr := sdk.AccAddressFromBech32(from)
 	if stderr != nil {
-		return bank.MsgSend{}, sdk.ErrInvalidAddress(msg.ToAddress)
+		return bank.MsgSend{}, sdk.ErrInvalidAddress(from)
+	}
+	toAddr, stderr := sdk.AccAddressFromBech32(to)
+	if stderr != nil {
+		return bank.MsgSend{}, sdk.ErrInvalidAddress(to)
 	}
 
-	var coins sdk.Coins
-	for _, coin := range msg.Amount {
+	var toSend sdk.Coins
+	for _, coin := range coins {
 		amount, ok := sdk.NewIntFromString(coin.Amount)
 		if !ok {
 			return bank.MsgSend{}, sdk.ErrInvalidCoins(coin.Amount + coin.Denom)
@@ -344,19 +353,18 @@ func convertCosmosSendMsg(msg *wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
 			Denom:  coin.Denom,
 			Amount: amount,
 		}
-		coins = append(coins, c)
+		toSend = append(toSend, c)
 	}
 	sendMsg := bank.MsgSend{
 		FromAddress: fromAddr,
 		ToAddress:   toAddr,
-		Amount:      coins,
+		Amount:      toSend,
 	}
 	return sendMsg, nil
 }
 
-func (k Keeper) handleSdkMessage(ctx sdk.Context, contract exported.Account, msg sdk.Msg) error {
+func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {
 	// make sure this account can send it
-	contractAddr := contract.GetAddress()
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
 			return sdkErrors.Wrap(sdkErrors.ErrUnauthorized, "contract doesn't have permission")
