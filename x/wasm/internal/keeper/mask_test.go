@@ -49,7 +49,7 @@ func TestMaskSend(t *testing.T) {
 
 	// creator instantiates a contract and gives it tokens
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	contractAddr, err := keeper.Instantiate(ctx, creator, codeID, []byte("{}"), contractStart)
+	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -62,7 +62,7 @@ func TestMaskSend(t *testing.T) {
 	transferBz, err := json.Marshal(transfer)
 	require.NoError(t, err)
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, creator, nil, transferBz)
+	_, err = keeper.Execute(ctx, contractAddr, creator, transferBz, nil)
 	require.NoError(t, err)
 
 	// check some account values
@@ -90,7 +90,7 @@ func TestMaskSend(t *testing.T) {
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectSendBz)
+	_, err = keeper.Execute(ctx, contractAddr, bob, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// fred got coins
@@ -118,7 +118,7 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectOpaqueBz)
+	_, err = keeper.Execute(ctx, contractAddr, bob, reflectOpaqueBz, nil)
 	require.NoError(t, err)
 
 	// fred got more coins

@@ -98,7 +98,7 @@ func TestInstantiate(t *testing.T) {
 	gasBefore := ctx.GasMeter().GasConsumed()
 
 	// create with no balance is also legal
-	addr, err := keeper.Instantiate(ctx, creator, contractID, initMsgBz, nil)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, nil)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -122,7 +122,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.NoError(t, err)
 
 	const nonExistingCodeID = 9999
-	addr, err := keeper.Instantiate(ctx, creator, nonExistingCodeID, initMsgBz, nil)
+	addr, err := keeper.Instantiate(ctx, nonExistingCodeID, creator, initMsgBz, nil)
 	require.True(t, types.ErrNotFound.Is(err), err)
 	require.Nil(t, addr)
 }
@@ -152,7 +152,7 @@ func TestExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, creator, contractID, initMsgBz, deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, deposit)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -173,7 +173,7 @@ func TestExecute(t *testing.T) {
 
 	// unauthorized - trialCtx so we don't change state
 	trialCtx := ctx.WithMultiStore(ctx.MultiStore().CacheWrap().(sdk.MultiStore))
-	res, err := keeper.Execute(trialCtx, addr, creator, nil, []byte(`{}`))
+	res, err := keeper.Execute(trialCtx, addr, creator, []byte(`{}`), nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Unauthorized")
 
@@ -181,7 +181,7 @@ func TestExecute(t *testing.T) {
 	start := time.Now()
 	gasBefore := ctx.GasMeter().GasConsumed()
 
-	res, err = keeper.Execute(ctx, addr, fred, topUp, []byte(`{}`))
+	res, err = keeper.Execute(ctx, addr, fred, []byte(`{}`), topUp)
 	diff := time.Now().Sub(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
@@ -216,7 +216,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := addrFromUint64(9999)
-	_, err = keeper.Execute(ctx, nonExistingAddress, creator, nil, []byte(`{}`))
+	_, err = keeper.Execute(ctx, nonExistingAddress, creator, []byte(`{}`), nil)
 	require.True(t, types.ErrNotFound.Is(err), err)
 }
 

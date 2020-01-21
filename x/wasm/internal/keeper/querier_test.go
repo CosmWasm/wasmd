@@ -44,7 +44,7 @@ func TestQueryContractState(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, creator, contractID, initMsgBz, deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, deposit)
 	require.NoError(t, err)
 
 	contractModel := []types.Model{
