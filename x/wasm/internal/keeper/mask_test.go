@@ -26,16 +26,7 @@ type ownerPayload struct {
 }
 
 type reflectPayload struct {
-	Msg cosmosMsg `json:"msg"`
-	// Msg wasmTypes.CosmosMsg `json:"msg"`
-}
-
-// replaces wasmTypes.CosmosMsg{
-// TODO: fix upstream
-type cosmosMsg struct {
-	Send     *wasmTypes.SendMsg     `json:"send,omitempty"`
-	Contract *wasmTypes.ContractMsg `json:"contract,omitempty"`
-	Opaque   *wasmTypes.OpaqueMsg   `json:"opaque,omitempty"`
+	Msg wasmTypes.CosmosMsg `json:"msg"`
 }
 
 func TestMaskSend(t *testing.T) {
@@ -58,7 +49,7 @@ func TestMaskSend(t *testing.T) {
 
 	// creator instantiates a contract and gives it tokens
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	contractAddr, err := keeper.Instantiate(ctx, creator, codeID, []byte("{}"), contractStart)
+	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, []byte("{}"), contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -71,7 +62,7 @@ func TestMaskSend(t *testing.T) {
 	transferBz, err := json.Marshal(transfer)
 	require.NoError(t, err)
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, creator, nil, transferBz)
+	_, err = keeper.Execute(ctx, contractAddr, creator, transferBz, nil)
 	require.NoError(t, err)
 
 	// check some account values
@@ -81,7 +72,7 @@ func TestMaskSend(t *testing.T) {
 
 	// bob can send contract's tokens to fred (using SendMsg)
 	// TODO: fix this upstream
-	msg := cosmosMsg{
+	msg := wasmTypes.CosmosMsg{
 		Send: &wasmTypes.SendMsg{
 			FromAddress: contractAddr.String(),
 			ToAddress:   fred.String(),
@@ -99,7 +90,7 @@ func TestMaskSend(t *testing.T) {
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectSendBz)
+	_, err = keeper.Execute(ctx, contractAddr, bob, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// fred got coins
@@ -118,7 +109,7 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 	reflectOpaque := MaskHandleMsg{
 		Reflect: &reflectPayload{
-			Msg: cosmosMsg{
+			Msg: wasmTypes.CosmosMsg{
 				Opaque: opaque,
 			},
 		},
@@ -127,7 +118,7 @@ func TestMaskSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// TODO: switch order of args Instantiate vs Execute (caller/code vs contract/caller), (msg/coins vs coins/msg)
-	_, err = keeper.Execute(ctx, contractAddr, bob, nil, reflectOpaqueBz)
+	_, err = keeper.Execute(ctx, contractAddr, bob, reflectOpaqueBz, nil)
 	require.NoError(t, err)
 
 	// fred got more coins

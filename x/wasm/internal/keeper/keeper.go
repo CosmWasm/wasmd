@@ -83,7 +83,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 }
 
 // Instantiate creates an instance of a WASM contract
-func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint64, initMsg []byte, deposit sdk.Coins) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, deposit sdk.Coins) (sdk.AccAddress, error) {
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
@@ -138,7 +138,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, creator sdk.AccAddress, codeID uint
 }
 
 // Execute executes the contract instance
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, coins sdk.Coins, msg []byte) (sdk.Result, error) {
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (sdk.Result, error) {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return sdk.Result{}, err
@@ -297,24 +297,24 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msg
 
 func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
 	// we check each type (pointers would make it easier to test if set)
-	if msg.Send.FromAddress != "" {
+	if msg.Send != nil {
 		sendMsg, err := convertCosmosSendMsg(msg.Send)
 		if err != nil {
 			return err
 		}
 		return k.handleSdkMessage(ctx, contract, sendMsg)
-	} else if msg.Contract.ContractAddr != "" {
+	} else if msg.Contract != nil {
 		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)
 		if stderr != nil {
 			return sdk.ErrInvalidAddress(msg.Contract.ContractAddr)
 		}
 		// TODO: use non nil payment once we update go-cosmwasm (ContractMsg contains optional payment)
-		_, err := k.Execute(ctx, targetAddr, contract.GetAddress(), nil, []byte(msg.Contract.Msg))
+		_, err := k.Execute(ctx, targetAddr, contract.GetAddress(), []byte(msg.Contract.Msg), nil)
 		if err != nil {
 			return err
 		}
-	} else if msg.Opaque.Data != "" {
-		msg, err := ParseOpaqueMsg(k.cdc, &msg.Opaque)
+	} else if msg.Opaque != nil {
+		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
 }
 
-func convertCosmosSendMsg(msg wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
+func convertCosmosSendMsg(msg *wasmTypes.SendMsg) (bank.MsgSend, sdk.Error) {
 	fromAddr, stderr := sdk.AccAddressFromBech32(msg.FromAddress)
 	if stderr != nil {
 		return bank.MsgSend{}, sdk.ErrInvalidAddress(msg.FromAddress)

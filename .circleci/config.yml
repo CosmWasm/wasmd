@@ -293,9 +293,9 @@ workflows:
             tags:
               only:
                 - /^v.*/
-      - integration-tests:
-          requires:
-            - setup-dependencies
+      # - integration-tests:
+      #     requires:
+      #       - setup-dependencies
       - test-cover:
           requires:
             - setup-dependencies
