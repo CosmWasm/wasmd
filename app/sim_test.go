@@ -63,7 +63,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			banksim.SimulateMsgSend(app.AccountKeeper, app.bankKeeper),
+			banksim.SimulateMsgSend(app.accountKeeper, app.bankKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -74,7 +74,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			banksim.SimulateMsgMultiSend(app.AccountKeeper, app.bankKeeper),
+			banksim.SimulateMsgMultiSend(app.accountKeeper, app.bankKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -85,7 +85,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			distrsim.SimulateMsgSetWithdrawAddress(app.AccountKeeper, app.distrKeeper),
+			distrsim.SimulateMsgSetWithdrawAddress(app.accountKeeper, app.distrKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -96,7 +96,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			distrsim.SimulateMsgWithdrawDelegatorReward(app.AccountKeeper, app.distrKeeper, app.stakingKeeper),
+			distrsim.SimulateMsgWithdrawDelegatorReward(app.accountKeeper, app.distrKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -107,7 +107,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			distrsim.SimulateMsgWithdrawValidatorCommission(app.AccountKeeper, app.distrKeeper, app.stakingKeeper),
+			distrsim.SimulateMsgWithdrawValidatorCommission(app.accountKeeper, app.distrKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -118,7 +118,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			govsim.SimulateSubmitProposal(app.AccountKeeper, app.govKeeper, govsim.SimulateTextProposalContent),
+			govsim.SimulateSubmitProposal(app.accountKeeper, app.govKeeper, govsim.SimulateTextProposalContent),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -129,7 +129,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			govsim.SimulateSubmitProposal(app.AccountKeeper, app.govKeeper, distrsim.SimulateCommunityPoolSpendProposalContent(app.distrKeeper)),
+			govsim.SimulateSubmitProposal(app.accountKeeper, app.govKeeper, distrsim.SimulateCommunityPoolSpendProposalContent(app.distrKeeper)),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -140,7 +140,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			govsim.SimulateSubmitProposal(app.AccountKeeper, app.govKeeper, paramsim.SimulateParamChangeProposalContent(paramChanges)),
+			govsim.SimulateSubmitProposal(app.accountKeeper, app.govKeeper, paramsim.SimulateParamChangeProposalContent(paramChanges)),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -151,7 +151,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			govsim.SimulateMsgDeposit(app.AccountKeeper, app.govKeeper),
+			govsim.SimulateMsgDeposit(app.accountKeeper, app.govKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -162,7 +162,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			govsim.SimulateMsgVote(app.AccountKeeper, app.govKeeper),
+			govsim.SimulateMsgVote(app.accountKeeper, app.govKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -173,7 +173,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			stakingsim.SimulateMsgCreateValidator(app.AccountKeeper, app.stakingKeeper),
+			stakingsim.SimulateMsgCreateValidator(app.accountKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -184,7 +184,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			stakingsim.SimulateMsgEditValidator(app.AccountKeeper, app.stakingKeeper),
+			stakingsim.SimulateMsgEditValidator(app.accountKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -195,7 +195,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			stakingsim.SimulateMsgDelegate(app.AccountKeeper, app.stakingKeeper),
+			stakingsim.SimulateMsgDelegate(app.accountKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -206,7 +206,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			stakingsim.SimulateMsgUndelegate(app.AccountKeeper, app.stakingKeeper),
+			stakingsim.SimulateMsgUndelegate(app.accountKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -217,7 +217,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			stakingsim.SimulateMsgBeginRedelegate(app.AccountKeeper, app.stakingKeeper),
+			stakingsim.SimulateMsgBeginRedelegate(app.accountKeeper, app.stakingKeeper),
 		},
 		{
 			func(_ *rand.Rand) int {
@@ -228,7 +228,7 @@ func testAndRunTxs(app *WasmApp, config simulation.Config) []simulation.Weighted
 					})
 				return v
 			}(nil),
-			slashingsim.SimulateMsgUnjail(app.AccountKeeper, app.slashingKeeper, app.stakingKeeper),
+			slashingsim.SimulateMsgUnjail(app.accountKeeper, app.slashingKeeper, app.stakingKeeper),
 		},
 	}
 }

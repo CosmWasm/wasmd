@@ -46,7 +46,6 @@ func TestQueryContractState(t *testing.T) {
 
 	addr, err := keeper.Instantiate(ctx, creator, contractID, initMsgBz, deposit)
 	require.NoError(t, err)
-	// require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	contractModel := []types.Model{
 		{Key: "foo", Value: "bar"},
