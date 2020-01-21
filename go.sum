@@ -38,6 +38,8 @@ github.com/confio/go-cosmwasm v0.6.0 h1:6MsfozR4IWb+V9TgVhDoGvcEs0ItBCqHg4pGbMaf
 github.com/confio/go-cosmwasm v0.6.0/go.mod h1:pHipRby+f3cv97QPLELkzOAlNs/s87uDyhc+SnMn7L4=
 github.com/confio/go-cosmwasm v0.6.1 h1:ifjLWE4T0mKngoq+ubZdtfGJFNWyOeQpfJWNO9y6WKI=
 github.com/confio/go-cosmwasm v0.6.1/go.mod h1:pHipRby+f3cv97QPLELkzOAlNs/s87uDyhc+SnMn7L4=
+github.com/confio/go-cosmwasm v0.6.2 h1:UMi8mP6VjID1QMPnLMW6xP6zdn7hXmgQTOYSwQgCN0k=
+github.com/confio/go-cosmwasm v0.6.2/go.mod h1:pHipRby+f3cv97QPLELkzOAlNs/s87uDyhc+SnMn7L4=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
