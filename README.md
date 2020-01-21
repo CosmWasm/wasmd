@@ -26,3 +26,30 @@ To set up a single node testnet, [look at the deployment documentation](./docs/d
 
 If you want to deploy a whole cluster, [look at the network scripts](./networks/README.md).
 
+## Dockerized
+
+This is just designed for local testing/CI - DO NOT USE IN PRODUCTION
+
+Build: `docker build  -t wasmd:manual .`
+
+Run:
+
+```sh
+docker volume rm -f wasmd_data
+
+# pick a simple (8 char) passphrase for testing.. you will type it many times
+docker run --rm -it \
+    --mount type=volume,source=wasmd_data,target=/root \
+    wasmd:manual ./setup.sh
+
+# This will start both wasmd and wasmcli rest-server, only wasmcli output is shown on the screen
+docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
+    --mount type=volume,source=wasmd_data,target=/root \
+    wasmd:manual ./run.sh
+
+# view wasmd logs in another shell
+docker run --rm -it \
+    --mount type=volume,source=wasmd_data,target=/root,readonly \
+    wasmd:manual ./logs.sh
+```
+
