@@ -314,8 +314,11 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 			return err
 		}
 	} else if msg.Opaque.Data != "" {
-		// TODO: handle opaque
-		panic("dispatch opaque message not yet implemented")
+		msg, err := ParseOpaqueMsg(k.cdc, &msg.Opaque)
+		if err != nil {
+			return err
+		}
+		return k.handleSdkMessage(ctx, contract, msg)
 	}
 	// what is it?
 	panic(fmt.Sprintf("Unknown CosmosMsg: %#v", msg))
