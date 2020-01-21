@@ -17,4 +17,13 @@ COPY . .
 RUN make tools
 RUN make install
 
-CMD ["wasmd"]
+# Start demo
+RUN wasmd init --chain-id=testing testing
+RUN echo "xxxxxxxxx" | wasmcli keys add validator
+RUN wasmd add-genesis-account $(echo "xxxxxxxxx" | wasmcli keys show validator -a) 1000000000stake,1000000000validatortoken
+RUN wasmd gentx --name validator
+RUN wasmd collect-gentxs
+
+EXPOSE 26657
+
+CMD ["wasmd", "start"]
