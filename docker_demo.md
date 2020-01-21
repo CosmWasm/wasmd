@@ -1,8 +1,6 @@
 approach 1:
 
-Build:
-
-`docker build  -t wasmd:manual .`
+Build: `docker build  -t wasmd:manual .`
 
 
 Start from the outside
@@ -42,4 +40,30 @@ panic: too many failed passphrase attempts
 
 goroutine 1 [running]:
 github.com/cosmos/cosmos-sdk/crypto/keys.keyringKeybase.writeInfo(0x13b4720, 0xc0008ea0f0, 0x7ffdf0302f1a, 0x9, 0x13b4860, 0xc0008ea2a0)
+```
+
+approach 3:
+
+Use scripts inside docker:
+
+Build: `docker build  -t wasmd:manual .`
+
+Run:
+
+```sh
+docker volume rm -f wasmd_data
+
+# pick a simple (8 char) passphrase for testing.. you will type it many times
+docker run --rm -it \
+    --mount type=volume,source=wasmd_data,target=/root \
+    wasmd:manual ./setup.sh
+
+docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
+    --mount type=volume,source=wasmd_data,target=/root \
+    wasmd:manual ./run.sh
+
+# view logs in another shell
+docker run --rm -it \
+    --mount type=volume,source=wasmd_data,target=/root,readonly \
+    wasmd:manual ./logs.sh
 ```
