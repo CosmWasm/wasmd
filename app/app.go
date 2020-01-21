@@ -195,7 +195,6 @@ func NewWasmApp(
 		fmt.Println("error while reading wasm config:", err.Error())
 	}
 	wasmConfig := wasmWrap.Wasm
-	fmt.Printf("WasmConfig: %#v\n", wasmConfig)
 
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
 
