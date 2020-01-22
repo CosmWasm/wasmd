@@ -2,32 +2,33 @@
 # > docker build -t gaia .
 # > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli gaia wasmd init
 # > docker run -it -p 46657:46657 -p 46656:46656 -v ~/.wasmd:/root/.wasmd -v ~/.wasmcli:/root/.wasmcli gaia wasmd start
-FROM golang:alpine AS build-env
+FROM golang:1.13-buster AS build-env
 
-# Set up dependencies
-ENV PACKAGES curl make git libc-dev bash gcc linux-headers eudev-dev python
+# Install minimum necessary dependencies, build Cosmos SDK, remove packages
+RUN apt update
+RUN apt install -y curl git build-essential
+# debug: for live editting in the image
+RUN apt install -y vim
 
 # Set working directory for the build
 WORKDIR /go/src/github.com/cosmwasm/wasmd
 
 # Add source files
 COPY . .
+#
+RUN make tools
+RUN make install
 
-# Install minimum necessary dependencies, build Cosmos SDK, remove packages
-RUN apk add --no-cache $PACKAGES && \
-    make tools && \
-    make install
+COPY docker/* /opt/
+RUN chmod +x /opt/*.sh
 
-# Final image
-FROM alpine:edge
+WORKDIR /opt
 
-# Install ca-certificates
-RUN apk add --update ca-certificates
-WORKDIR /root
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
 
-# Copy over binaries from the build-env
-COPY --from=build-env /go/bin/wasmd /usr/bin/wasmd
-COPY --from=build-env /go/bin/wasmcli /usr/bin/wasmcli
-
-# Run wasmd by default, omit entrypoint to ease using container with wasmcli
 CMD ["wasmd"]
