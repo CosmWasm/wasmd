@@ -37,8 +37,9 @@ Run:
 ```sh
 docker volume rm -f wasmd_data
 
-# pick a simple (8 char) passphrase for testing.. you will type it many times
+# pass password (one time) as env variable for setup, so we don't need to keep typing it
 docker run --rm -it \
+    -e PASSWORD=my-secret-password \
     --mount type=volume,source=wasmd_data,target=/root \
     wasmd:manual ./setup.sh
 
@@ -52,4 +53,3 @@ docker run --rm -it \
     --mount type=volume,source=wasmd_data,target=/root,readonly \
     wasmd:manual ./logs.sh
 ```
-
