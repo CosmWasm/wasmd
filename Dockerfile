@@ -7,6 +7,8 @@ FROM golang:1.13-buster AS build-env
 # Install minimum necessary dependencies, build Cosmos SDK, remove packages
 RUN apt update
 RUN apt install -y curl git build-essential
+# debug: for live editting in the image
+RUN apt install -y vim
 
 # Set working directory for the build
 WORKDIR /go/src/github.com/cosmwasm/wasmd
