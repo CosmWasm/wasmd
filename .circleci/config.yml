@@ -194,8 +194,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: yes
+      - setup_remote_docker
       - run:
           name: Build Docker artifact - demo
           command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_SHA1}" .
@@ -215,8 +214,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: yes
+      - setup_remote_docker
       - run:
           name: Build Docker artifact - demo
           command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_TAG}" . .
@@ -233,8 +231,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
       - run:
           name: Build gaia
           no_output_timeout: 20m
