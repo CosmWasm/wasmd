@@ -51,7 +51,7 @@ docker run --rm -it \
 # This will start both wasmd and wasmcli rest-server, only wasmcli output is shown on the screen
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    wasmd:manual ./run.sh
+    wasmd:manual ./run_all.sh
 
 # view wasmd logs in another shell
 docker run --rm -it \
@@ -80,12 +80,12 @@ docker volume rm -f wasmd_data
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=bind,source=$(pwd)/template,target=/template \
     --mount type=volume,source=wasmd_data,target=/root \
-    wasmd:manual ./run.sh /template
+    wasmd:manual ./run_all.sh /template
 
 # RESTART CHAIN with existing state
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    wasmd:manual ./run.sh
+    wasmd:manual ./run_all.sh
 
 # view wasmd logs in another shell
 docker run --rm -it \
