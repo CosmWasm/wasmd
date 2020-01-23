@@ -1,3 +1,7 @@
+<!--
+order: 4
+-->
+
 # Join the Public Testnet 
 
 ::: tip Current Testnet
@@ -17,7 +21,7 @@ of Gaia to use and details about the genesis file.
 To start a new node, the mainnet instructions apply:
 
 - [Join the mainnet](./join-mainnet.md)
-- [Deploy a validator](./validators/validator-setup.md)
+- [Deploy a validator](../validators/validator-setup.md)
 
 The only difference is the SDK version and genesis file. See the [testnet repo](https://github.com/cosmos/testnets) for information on testnets, including the correct version of the Cosmos-SDK to use and details about the genesis file.
 
@@ -30,8 +34,8 @@ These instructions are for full nodes that have ran on previous versions of and 
 First, remove the outdated files and reset the data.
 
 ```bash
-rm $HOME/.wasmd/config/addrbook.json $HOME/.wasmd/config/genesis.json
-wasmd unsafe-reset-all
+rm $HOME/.gaiad/config/addrbook.json $HOME/.gaiad/config/genesis.json
+gaiad unsafe-reset-all
 ```
 
 Your node is now in a pristine state while keeping the original `priv_validator.json` and `config.toml`. If you had any sentry nodes or full nodes setup before,
@@ -47,16 +51,17 @@ Make sure that every node has a unique `priv_validator.json`. Do not copy the `p
 Now it is time to upgrade the software:
 
 ```bash
-cd $GOPATH/src/github.com/cosmwasm/wasmd
+git clone https://github.com/cosmos/gaia.git
+cd gaia
 git fetch --all && git checkout master
-make update_tools install
+make install
 ```
 
 ::: tip
-*NOTE*: If you have issues at this step, please check that you have the latest stable version of GO installed.
+_NOTE_: If you have issues at this step, please check that you have the latest stable version of GO installed.
 :::
 
 Note we use `master` here since it contains the latest stable release.
-See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which testnet, and the [Gaia release page](https://github.com/cosmwasm/wasmd/releases) for details on each release.
+See the [testnet repo](https://github.com/cosmos/testnets) for details on which version is needed for which testnet, and the [Gaia release page](https://github.com/cosmos/gaia/releases) for details on each release.
 
 Your full node has been cleanly upgraded!

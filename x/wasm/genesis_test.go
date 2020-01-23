@@ -18,7 +18,7 @@ func TestInitGenesis(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
 
 	h := data.module.NewHandler()
@@ -32,11 +32,11 @@ func TestInitGenesis(t *testing.T) {
 		Builder:      "",
 	}
 
-	sdkerr := msg.ValidateBasic()
-	require.Error(t, sdkerr)
+	err := msg.ValidateBasic()
+	require.Error(t, err)
 
-	res := h(data.ctx, msg)
-	require.False(t, res.IsOK())
+	_, err = h(data.ctx, msg)
+	require.Error(t, err)
 
 	t.Log("fail with relative source url")
 	msg = MsgStoreCode{
@@ -46,11 +46,11 @@ func TestInitGenesis(t *testing.T) {
 		Builder:      "",
 	}
 
-	sdkerr = msg.ValidateBasic()
-	require.Error(t, sdkerr)
+	err = msg.ValidateBasic()
+	require.Error(t, err)
 
-	res = h(data.ctx, msg)
-	require.False(t, res.IsOK())
+	_, err = h(data.ctx, msg)
+	require.Error(t, err)
 
 	t.Log("fail with invalid build tag")
 	msg = MsgStoreCode{
@@ -60,11 +60,11 @@ func TestInitGenesis(t *testing.T) {
 		Builder:      "somerandombuildtag-0.6.2",
 	}
 
-	sdkerr = msg.ValidateBasic()
-	require.Error(t, sdkerr)
+	err = msg.ValidateBasic()
+	require.Error(t, err)
 
-	res = h(data.ctx, msg)
-	require.False(t, res.IsOK())
+	_, err = h(data.ctx, msg)
+	require.Error(t, err)
 
 	t.Log("no error with valid source and build tag")
 	msg = MsgStoreCode{
@@ -73,11 +73,11 @@ func TestInitGenesis(t *testing.T) {
 		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
 		Builder:      "cosmwasm-opt:0.5.2",
 	}
-	sdkerr = msg.ValidateBasic()
-	require.NoError(t, sdkerr)
+	err = msg.ValidateBasic()
+	require.NoError(t, err)
 
-	res = h(data.ctx, msg)
-	require.True(t, res.IsOK())
+	res, err := h(data.ctx, msg)
+	require.NoError(t, err)
 	require.Equal(t, res.Data, []byte("1"))
 
 	_, _, bob := keyPubAddr()
@@ -94,8 +94,8 @@ func TestInitGenesis(t *testing.T) {
 		InitMsg:   initMsgBz,
 		InitFunds: deposit,
 	}
-	res = h(data.ctx, initCmd)
-	require.True(t, res.IsOK())
+	res, err = h(data.ctx, initCmd)
+	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 
 	execCmd := MsgExecuteContract{
@@ -104,8 +104,8 @@ func TestInitGenesis(t *testing.T) {
 		Msg:       []byte("{}"),
 		SentFunds: topUp,
 	}
-	res = h(data.ctx, execCmd)
-	require.True(t, res.IsOK())
+	res, err = h(data.ctx, execCmd)
+	require.NoError(t, err)
 
 	// ensure all contract state is as after init
 	assertCodeList(t, q, data.ctx, 1)

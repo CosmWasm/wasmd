@@ -54,7 +54,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	ctx := sdk.NewContext(ms, abci.Header{}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams, params.DefaultCodespace)
+	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
 
 	accountKeeper := auth.NewAccountKeeper(
 		cdc,    // amino codec
@@ -66,7 +66,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	bk := bank.NewBaseKeeper(
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
-		bank.DefaultCodespace,
 		nil,
 	)
 	bk.SetSendEnabled(ctx, true)

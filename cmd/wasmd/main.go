@@ -16,8 +16,8 @@ import (
 	"github.com/cosmwasm/wasmd/app"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +59,7 @@ func main() {
 	)
 	rootCmd.AddCommand(genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics))
 	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc, app.DefaultNodeHome, app.DefaultCLIHome))
-	rootCmd.AddCommand(client.NewCompletionCmd(rootCmd, true))
+	rootCmd.AddCommand(flags.NewCompletionCmd(rootCmd, true))
 	// rootCmd.AddCommand(testnetCmd(ctx, cdc, app.ModuleBasics, auth.GenesisAccountIterator{}))
 	rootCmd.AddCommand(replayCmd())
 	rootCmd.AddCommand(debug.Cmd(cdc))
@@ -83,8 +83,13 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 		cache = store.NewCommitKVStoreCacheManager()
 	}
 
+	skipUpgradeHeights := make(map[int64]bool)
+	for _, h := range viper.GetIntSlice(server.FlagUnsafeSkipUpgrades) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+
 	return app.NewWasmApp(
-		logger, db, traceStore, true, invCheckPeriod,
+		logger, db, traceStore, true, invCheckPeriod, skipUpgradeHeights,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
@@ -98,7 +103,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1))
+		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), nil)
 		err := gapp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -106,6 +111,6 @@ func exportAppStateAndTMValidators(
 		return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1))
+	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), nil)
 	return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

@@ -15,6 +15,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/codec"
 	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
@@ -51,6 +53,7 @@ import (
 )
 
 // TODO: Make InitializeTestLCD safe to call in multiple tests at the same time
+
 // InitializeLCD starts Tendermint and the LCD in process, listening on
 // their respective sockets where nValidators is the total number of validators
 // and initAddrs are the accounts to initialize with some stake tokens. It
@@ -64,13 +67,13 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	}
 	config.Consensus.TimeoutCommit = 100
 	config.Consensus.SkipTimeoutCommit = false
-	config.TxIndex.IndexAllTags = true
+	config.TxIndex.IndexAllKeys = true
 
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.NewFilter(logger, log.AllowError())
 
 	db := dbm.NewMemDB()
-	gapp := app.NewWasmApp(logger, db, nil, true, 0, baseapp.SetPruning(store.PruneNothing))
+	gapp := app.NewWasmApp(logger, db, nil, true, 0, nil, baseapp.SetPruning(store.PruneNothing))
 	cdc = app.MakeCodec()
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
@@ -91,10 +94,10 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	}
 
 	// XXX: Need to set this so LCD knows the tendermint node address!
-	viper.Set(client.FlagNode, config.RPC.ListenAddress)
-	viper.Set(client.FlagChainID, genDoc.ChainID)
+	viper.Set(flags.FlagNode, config.RPC.ListenAddress)
+	viper.Set(flags.FlagChainID, genDoc.ChainID)
 	// TODO Set to false once the upstream Tendermint proof verification issue is fixed.
-	viper.Set(client.FlagTrustNode, true)
+	viper.Set(flags.FlagTrustNode, true)
 
 	node, err := startTM(config, logger, genDoc, privVal, gapp)
 	if err != nil {
@@ -102,6 +105,7 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	}
 
 	tests.WaitForNextHeightTM(tests.ExtractPortFromAddress(config.RPC.ListenAddress))
+
 	lcdInstance, err := startLCD(logger, listenAddr, cdc)
 	if err != nil {
 		return
@@ -259,8 +263,8 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 	mintData := mint.DefaultGenesisState()
 	inflationMin := sdk.ZeroDec()
 	if minting {
-		inflationMin = sdk.MustNewDecFromStr("10000.0")
-		mintData.Params.InflationMax = sdk.MustNewDecFromStr("15000.0")
+		inflationMin = sdk.MustNewDecFromStr("0.9")
+		mintData.Params.InflationMax = sdk.MustNewDecFromStr("1.0")
 	} else {
 		mintData.Params.InflationMax = inflationMin
 	}
@@ -279,9 +283,9 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 
 	//// double check inflation is set according to the minting boolean flag
 	if minting {
-		if !(mintData.Params.InflationMax.Equal(sdk.MustNewDecFromStr("15000.0")) &&
-			mintData.Minter.Inflation.Equal(sdk.MustNewDecFromStr("10000.0")) &&
-			mintData.Params.InflationMin.Equal(sdk.MustNewDecFromStr("10000.0"))) {
+		if !(mintData.Params.InflationMax.Equal(sdk.MustNewDecFromStr("1.0")) &&
+			mintData.Minter.Inflation.Equal(sdk.MustNewDecFromStr("0.9")) &&
+			mintData.Params.InflationMin.Equal(sdk.MustNewDecFromStr("0.9"))) {
 			err = errors.New("mint parameters does not correspond to their defaults")
 			return
 		}
@@ -377,11 +381,11 @@ func CreateAddr(name string, kb crkeys.Keybase) (sdk.AccAddress, string, error) 
 		info crkeys.Info
 		seed string
 	)
-	info, seed, err = kb.CreateMnemonic(name, crkeys.English, client.DefaultKeyPass, crkeys.Secp256k1)
+	info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
 	return sdk.AccAddress(info.GetPubKey().Address()), seed, err
 }
 
-// CreateAddr adds multiple address to the key store and returns the addresses and associated seeds in lexographical order by address.
+// CreateAddrs adds multiple address to the key store and returns the addresses and associated seeds in lexographical order by address.
 // It also requires that the keys could be created.
 func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds, names []string, errs []error) {
 	var (
@@ -394,7 +398,7 @@ func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds
 
 	for i := 0; i < numAddrs; i++ {
 		name := fmt.Sprintf("test%d", i)
-		info, seed, err = kb.CreateMnemonic(name, crkeys.English, client.DefaultKeyPass, crkeys.Secp256k1)
+		info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
 		if err != nil {
 			errs = append(errs, err)
 		}

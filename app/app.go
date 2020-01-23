@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,8 +9,8 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
-	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -34,6 +33,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 
 	"github.com/cosmwasm/wasmd/x/wasm"
 )
@@ -57,12 +58,13 @@ var (
 		staking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler),
+		gov.NewAppModuleBasic(paramsclient.ProposalHandler, distr.ProposalHandler, upgradeclient.ProposalHandler),
 		params.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		supply.AppModuleBasic{},
+		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 	)
 
@@ -91,6 +93,9 @@ func MakeCodec() *codec.Codec {
 	return cdc.Seal()
 }
 
+// Verify app interface at compile time
+var _ simapp.App = (*WasmApp)(nil)
+
 // WasmApp extended ABCI application
 type WasmApp struct {
 	*bam.BaseApp
@@ -101,6 +106,9 @@ type WasmApp struct {
 	// keys to access the substores
 	keys  map[string]*sdk.KVStoreKey
 	tKeys map[string]*sdk.TransientStoreKey
+
+	// subspaces
+	subspaces map[string]params.Subspace
 
 	// keepers
 	accountKeeper  auth.AccountKeeper
@@ -114,6 +122,7 @@ type WasmApp struct {
 	crisisKeeper   crisis.Keeper
 	paramsKeeper   params.Keeper
 	evidenceKeeper *evidence.Keeper
+	upgradeKeeper  upgrade.Keeper
 	wasmKeeper     wasm.Keeper
 
 	// the module manager
@@ -132,7 +141,7 @@ type WasmWrapper struct {
 // NewWasmApp returns a reference to an initialized WasmApp.
 func NewWasmApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	invCheckPeriod uint, baseAppOptions ...func(*bam.BaseApp),
+	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp),
 ) *WasmApp {
 
 	cdc := MakeCodec()
@@ -142,9 +151,10 @@ func NewWasmApp(
 	bApp.SetAppVersion(version.Version)
 
 	keys := sdk.NewKVStoreKeys(
-		bam.MainStoreKey, auth.StoreKey, staking.StoreKey, supply.StoreKey,
-		mint.StoreKey, distr.StoreKey, slashing.StoreKey, gov.StoreKey,
-		params.StoreKey, evidence.StoreKey, wasm.StoreKey,
+		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
+		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
+		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey,
+		wasm.StoreKey,
 	)
 	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -154,34 +164,49 @@ func NewWasmApp(
 		invCheckPeriod: invCheckPeriod,
 		keys:           keys,
 		tKeys:          tKeys,
+		subspaces:      make(map[string]params.Subspace),
 	}
 
 	// init params keeper and subspaces
-	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tKeys[params.TStoreKey], params.DefaultCodespace)
-	authSubspace := app.paramsKeeper.Subspace(auth.DefaultParamspace)
-	bankSubspace := app.paramsKeeper.Subspace(bank.DefaultParamspace)
-	stakingSubspace := app.paramsKeeper.Subspace(staking.DefaultParamspace)
-	mintSubspace := app.paramsKeeper.Subspace(mint.DefaultParamspace)
-	distrSubspace := app.paramsKeeper.Subspace(distr.DefaultParamspace)
-	slashingSubspace := app.paramsKeeper.Subspace(slashing.DefaultParamspace)
-	govSubspace := app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
-	crisisSubspace := app.paramsKeeper.Subspace(crisis.DefaultParamspace)
-	evidenceSubspace := app.paramsKeeper.Subspace(evidence.DefaultParamspace)
+	app.paramsKeeper = params.NewKeeper(app.cdc, keys[params.StoreKey], tKeys[params.TStoreKey])
+	app.subspaces[auth.ModuleName] = app.paramsKeeper.Subspace(auth.DefaultParamspace)
+	app.subspaces[bank.ModuleName] = app.paramsKeeper.Subspace(bank.DefaultParamspace)
+	app.subspaces[staking.ModuleName] = app.paramsKeeper.Subspace(staking.DefaultParamspace)
+	app.subspaces[mint.ModuleName] = app.paramsKeeper.Subspace(mint.DefaultParamspace)
+	app.subspaces[distr.ModuleName] = app.paramsKeeper.Subspace(distr.DefaultParamspace)
+	app.subspaces[slashing.ModuleName] = app.paramsKeeper.Subspace(slashing.DefaultParamspace)
+	app.subspaces[gov.ModuleName] = app.paramsKeeper.Subspace(gov.DefaultParamspace).WithKeyTable(gov.ParamKeyTable())
+	app.subspaces[crisis.ModuleName] = app.paramsKeeper.Subspace(crisis.DefaultParamspace)
+	app.subspaces[evidence.ModuleName] = app.paramsKeeper.Subspace(evidence.DefaultParamspace)
 
 	// add keepers
-	app.accountKeeper = auth.NewAccountKeeper(app.cdc, keys[auth.StoreKey], authSubspace, auth.ProtoBaseAccount)
-	app.bankKeeper = bank.NewBaseKeeper(app.accountKeeper, bankSubspace, bank.DefaultCodespace, app.ModuleAccountAddrs())
-	app.supplyKeeper = supply.NewKeeper(app.cdc, keys[supply.StoreKey], app.accountKeeper, app.bankKeeper, maccPerms)
+	app.accountKeeper = auth.NewAccountKeeper(
+		app.cdc, keys[auth.StoreKey], app.subspaces[auth.ModuleName], auth.ProtoBaseAccount,
+	)
+	app.bankKeeper = bank.NewBaseKeeper(
+		app.accountKeeper, app.subspaces[bank.ModuleName], app.ModuleAccountAddrs(),
+	)
+	app.supplyKeeper = supply.NewKeeper(
+		app.cdc, keys[supply.StoreKey], app.accountKeeper, app.bankKeeper, maccPerms,
+	)
 	stakingKeeper := staking.NewKeeper(
-		app.cdc, keys[staking.StoreKey], app.supplyKeeper, stakingSubspace, staking.DefaultCodespace,
+		app.cdc, keys[staking.StoreKey], app.supplyKeeper, app.subspaces[staking.ModuleName],
 	)
-	app.mintKeeper = mint.NewKeeper(app.cdc, keys[mint.StoreKey], mintSubspace, &stakingKeeper, app.supplyKeeper, auth.FeeCollectorName)
-	app.distrKeeper = distr.NewKeeper(app.cdc, keys[distr.StoreKey], distrSubspace, &stakingKeeper,
-		app.supplyKeeper, distr.DefaultCodespace, auth.FeeCollectorName, app.ModuleAccountAddrs())
+	app.mintKeeper = mint.NewKeeper(
+		app.cdc, keys[mint.StoreKey], app.subspaces[mint.ModuleName], &stakingKeeper,
+		app.supplyKeeper, auth.FeeCollectorName,
+	)
+	app.distrKeeper = distr.NewKeeper(
+		app.cdc, keys[distr.StoreKey], app.subspaces[distr.ModuleName], &stakingKeeper,
+		app.supplyKeeper, auth.FeeCollectorName, app.ModuleAccountAddrs(),
+	)
 	app.slashingKeeper = slashing.NewKeeper(
-		app.cdc, keys[slashing.StoreKey], &stakingKeeper, slashingSubspace, slashing.DefaultCodespace,
+		app.cdc, keys[slashing.StoreKey], &stakingKeeper, app.subspaces[slashing.ModuleName],
 	)
-	app.crisisKeeper = crisis.NewKeeper(crisisSubspace, invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName)
+	app.crisisKeeper = crisis.NewKeeper(
+		app.subspaces[crisis.ModuleName], invCheckPeriod, app.supplyKeeper, auth.FeeCollectorName,
+	)
+	app.upgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc)
 
 	// just re-use the full router - do we want to limit this more?
 	var wasmRouter = bApp.Router()
@@ -192,28 +217,32 @@ func NewWasmApp(
 	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
 	err := viper.Unmarshal(&wasmWrap)
 	if err != nil {
-		fmt.Println("error while reading wasm config:", err.Error())
+		panic("error while reading wasm config: " + err.Error())
 	}
 	wasmConfig := wasmWrap.Wasm
 
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
 
 	// create evidence keeper with evidence router
-	app.evidenceKeeper = evidence.NewKeeper(
-		app.cdc, keys[evidence.StoreKey], evidenceSubspace, evidence.DefaultCodespace,
+	evidenceKeeper := evidence.NewKeeper(
+		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &stakingKeeper, app.slashingKeeper,
 	)
 	evidenceRouter := evidence.NewRouter()
-	// TODO: Register evidence routes.
-	app.evidenceKeeper.SetRouter(evidenceRouter)
+
+	// TODO: register evidence routes
+	evidenceKeeper.SetRouter(evidenceRouter)
+
+	app.evidenceKeeper = evidenceKeeper
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
 	govRouter.AddRoute(gov.RouterKey, gov.ProposalHandler).
 		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
-		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper))
+		AddRoute(distr.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
+		AddRoute(upgrade.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper))
 	app.govKeeper = gov.NewKeeper(
-		app.cdc, keys[gov.StoreKey], govSubspace,
-		app.supplyKeeper, &stakingKeeper, gov.DefaultCodespace, govRouter,
+		app.cdc, keys[gov.StoreKey], app.subspaces[gov.ModuleName],
+		app.supplyKeeper, &stakingKeeper, govRouter,
 	)
 
 	// register the staking hooks
@@ -230,20 +259,21 @@ func NewWasmApp(
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
-		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
+		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
 		mint.NewAppModule(app.mintKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
+		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
 		evidence.NewAppModule(*app.evidenceKeeper),
 		wasm.NewAppModule(app.wasmKeeper),
+		upgrade.NewAppModule(app.upgradeKeeper),
+		evidence.NewAppModule(*app.evidenceKeeper),
 	)
-
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
-	app.mm.SetOrderBeginBlockers(mint.ModuleName, distr.ModuleName, slashing.ModuleName)
 
+	app.mm.SetOrderBeginBlockers(upgrade.ModuleName, mint.ModuleName, distr.ModuleName, slashing.ModuleName)
 	app.mm.SetOrderEndBlockers(crisis.ModuleName, gov.ModuleName, staking.ModuleName)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -265,11 +295,11 @@ func NewWasmApp(
 		auth.NewAppModule(app.accountKeeper),
 		bank.NewAppModule(app.bankKeeper, app.accountKeeper),
 		supply.NewAppModule(app.supplyKeeper, app.accountKeeper),
-		gov.NewAppModule(app.govKeeper, app.supplyKeeper),
+		gov.NewAppModule(app.govKeeper, app.accountKeeper, app.supplyKeeper),
 		mint.NewAppModule(app.mintKeeper),
-		distr.NewAppModule(app.distrKeeper, app.supplyKeeper),
+		distr.NewAppModule(app.distrKeeper, app.accountKeeper, app.supplyKeeper, app.stakingKeeper),
 		staking.NewAppModule(app.stakingKeeper, app.accountKeeper, app.supplyKeeper),
-		slashing.NewAppModule(app.slashingKeeper, app.stakingKeeper),
+		slashing.NewAppModule(app.slashingKeeper, app.accountKeeper, app.stakingKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -287,24 +317,27 @@ func NewWasmApp(
 	if loadLatest {
 		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
 		if err != nil {
-			cmn.Exit(err.Error())
+			tmos.Exit(err.Error())
 		}
 	}
 
 	return app
 }
 
+// Name returns the name of the App
+func (app *WasmApp) Name() string { return app.BaseApp.Name() }
+
 // application updates every begin block
 func (app *WasmApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-// application updates every end block
+// EndBlocker application updates every end block
 func (app *WasmApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
-// application update at chain initialization
+// InitChainer application update at chain initialization
 func (app *WasmApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
@@ -312,7 +345,7 @@ func (app *WasmApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
-// load a particular height
+// LoadHeight loads a particular height
 func (app *WasmApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
 }
@@ -330,6 +363,11 @@ func (app *WasmApp) ModuleAccountAddrs() map[string]bool {
 // Codec returns the application's sealed codec.
 func (app *WasmApp) Codec() *codec.Codec {
 	return app.cdc
+}
+
+// SimulationManager implements the SimulationApp interface
+func (app *WasmApp) SimulationManager() *module.SimulationManager {
+	return app.sm
 }
 
 // GetMaccPerms returns a mapping of the application's module account permissions.

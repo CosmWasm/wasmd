@@ -27,7 +27,7 @@ func TestQueryContractState(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
@@ -54,7 +54,7 @@ func TestQueryContractState(t *testing.T) {
 	keeper.setContractState(ctx, addr, contractModel)
 
 	// this gets us full error, not redacted sdk.Error
-	q := newQuerier(keeper)
+	q := NewQuerier(keeper)
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery

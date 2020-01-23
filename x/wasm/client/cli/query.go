@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -30,7 +31,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	queryCmd.AddCommand(client.GetCommands(
+	queryCmd.AddCommand(flags.GetCommands(
 		GetCmdListCode(cdc),
 		GetCmdQueryCode(cdc),
 		GetCmdListContracts(cdc),
@@ -157,7 +158,7 @@ func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	cmd.AddCommand(client.GetCommands(
+	cmd.AddCommand(flags.GetCommands(
 		GetCmdGetContractStateAll(cdc),
 		GetCmdGetContractStateRaw(cdc),
 		GetCmdGetContractStateSmart(cdc),

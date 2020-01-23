@@ -1,4 +1,8 @@
-## Build Gaia Deterministically
+<!--
+order: 6
+-->
+
+# Build Gaia Deterministically
 
 Gitian is the deterministic build process that is used to build the Gaia executables. It provides a way to be reasonably sure that the executables are really built from the git source. It also makes sure that the same, tested dependencies are used and statically built into the executable.
 
@@ -65,7 +69,7 @@ Please refer to the `contrib/gitian-build.sh`'s help screen for further informat
 
 ## Signatures upload
 
-Once signatures are generated, they could be uploaded to gaia's dedicated repository: https://github.com/cosmwasm/wasmd.sigs.
+Once signatures are generated, they could be uploaded to gaia's dedicated repository: https://github.com/cosmos/gaia.sigs.
 The build script can take care of cloning the signatures repository and commit the signed result too:
 
 ```

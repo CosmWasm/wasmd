@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -31,30 +32,30 @@ func (msg MsgStoreCode) Type() string {
 	return "store-code"
 }
 
-func (msg MsgStoreCode) ValidateBasic() sdk.Error {
+func (msg MsgStoreCode) ValidateBasic() error {
 	if len(msg.WASMByteCode) == 0 {
-		return sdk.ErrInternal("empty wasm code")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
 
 	if len(msg.WASMByteCode) > MaxWasmSize {
-		return sdk.ErrInternal("wasm code too large")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
 	}
 
 	if msg.Source != "" {
 		u, err := url.Parse(msg.Source)
 		if err != nil {
-			return sdk.ErrInternal("source should be a valid url")
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be a valid url")
 		}
 
 		if !u.IsAbs() {
-			return sdk.ErrInternal("source should be an absolute url")
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be an absolute url")
 		}
 	}
 
 	if msg.Builder != "" {
 		ok, err := regexp.MatchString(BuildTagRegex, msg.Builder)
 		if err != nil || !ok {
-			return sdk.ErrInternal("invalid tag supplied for builder")
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid tag supplied for builder")
 		}
 	}
 
@@ -84,9 +85,9 @@ func (msg MsgInstantiateContract) Type() string {
 	return "instantiate"
 }
 
-func (msg MsgInstantiateContract) ValidateBasic() sdk.Error {
+func (msg MsgInstantiateContract) ValidateBasic() error {
 	if msg.InitFunds.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative InitFunds")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
 	}
 	return nil
 }
@@ -114,9 +115,9 @@ func (msg MsgExecuteContract) Type() string {
 	return "execute"
 }
 
-func (msg MsgExecuteContract) ValidateBasic() sdk.Error {
+func (msg MsgExecuteContract) ValidateBasic() error {
 	if msg.SentFunds.IsAnyNegative() {
-		return sdk.ErrInvalidCoins("negative SentFunds")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative SentFunds")
 	}
 	return nil
 }
