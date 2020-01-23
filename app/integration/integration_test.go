@@ -49,9 +49,11 @@ func TestSendWithApp(t *testing.T) {
 	_ = sign(t, wasm, msg, &keys[0], true)
 }
 
-func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) sdk.Result {
-	res := SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
-	signer.seq++
+func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) *sdk.Result {
+	_, res, _ := SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
+	if expectPass {
+		signer.seq++
+	}
 	return res
 }
 

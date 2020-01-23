@@ -13,17 +13,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosmos/gaia/app"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/stretchr/testify/require"
 
 	"github.com/cosmwasm/wasmd/app"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/tests"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
