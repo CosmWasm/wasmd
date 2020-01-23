@@ -47,24 +47,24 @@ func (msg MsgStoreCode) ValidateBasic() error {
 	if msg.Source != "" {
 		u, err := url.Parse(msg.Source)
 		if err != nil {
-			return sdk.ErrInternal("source should be a valid url")
+			return sdkerrors.Wrap(ErrNotFound, "source should be a valid url")
 		}
 
 		if !u.IsAbs() {
-			return sdk.ErrInternal("source should be an absolute url")
+			return sdkerrors.Wrap(ErrNotFound, "source should be an absolute url")
 		}
 
 		// check if the source is reachable
 		resp, err := http.Get(msg.Source)
 		if err != nil || resp.StatusCode != 200 {
-			return sdk.ErrInternal("source url is not reachable")
+			return sdkerrors.Wrap(ErrNotFound, "source url is not reachable")
 		}
 	}
 
 	if msg.Builder != "" {
 		ok, err := regexp.MatchString(BuildTagRegex, msg.Builder)
 		if err != nil || !ok {
-			return sdk.ErrInternal("invalid tag supplied for builder")
+			return sdkerrors.Wrap(ErrNotFound, "invalid tag supplied for builder")
 		}
 	}
 

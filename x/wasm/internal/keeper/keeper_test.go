@@ -185,11 +185,7 @@ func TestExecute(t *testing.T) {
 	diff := time.Now().Sub(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
-<<<<<<< HEAD
-	assert.Equal(t, uint64(119513), res.GasUsed)
-=======
 	// assert.Equal(t, uint64(81778), res.GasUsed)
->>>>>>> in progress
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
@@ -216,7 +212,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := addrFromUint64(9999)

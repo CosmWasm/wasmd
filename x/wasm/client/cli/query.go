@@ -158,7 +158,7 @@ func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	cmd.AddCommand(client.GetCommands(
+	cmd.AddCommand(flags.GetCommands(
 		GetCmdGetContractStateAll(cdc),
 		GetCmdGetContractStateRaw(cdc),
 		GetCmdGetContractStateSmart(cdc),

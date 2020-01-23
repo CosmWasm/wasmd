@@ -31,23 +31,7 @@ const (
 const debug = false
 
 // NewQuerier creates a new querier
-func NewQuerier(keeper Keeper) sdk.Querier {
-	q := newQuerier(keeper)
-	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, sdk.Error) {
-		res, err := q(ctx, path, req)
-		// convert returned errors
-		if err != nil {
-			space, code, log := sdkErrors.ABCIInfo(err, debug)
-			sdkErr := sdk.NewError(sdk.CodespaceType(space), sdk.CodeType(code), log)
-			return nil, sdkErr
-		}
-		return res, nil
-	}
-}
-
-// pull this out as a separate function for testing.
-// this returns proper error before redacting, NewQuerier is adapting to 0.37 style
-func newQuerier(keeper Keeper) func(sdk.Context, []string, abci.RequestQuery) ([]byte, error) {
+func NewQuerier(keeper Keeper) func(sdk.Context, []string, abci.RequestQuery) ([]byte, error) {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
 		case QueryGetContract:
@@ -56,7 +40,7 @@ func newQuerier(keeper Keeper) func(sdk.Context, []string, abci.RequestQuery) ([
 			return queryContractList(ctx, req, keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
-				return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, "unknown data query endpoint")
+				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 			}
 			return queryContractState(ctx, path[1], path[2], req, keeper)
 		case QueryGetCode:
@@ -97,7 +81,7 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 }
 
 func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	addr, err := sdk.AccAddressFromBech32(bech)
+	contractAddr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
@@ -119,7 +103,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	case QueryMethodContractStateSmart:
 		return keeper.QuerySmart(ctx, contractAddr, req.Data)
 	default:
-		return nil, sdkErrors.Wrap(sdkErrors.ErrUnknownRequest, queryMethod)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, queryMethod)
 	}
 	bz, err := json.MarshalIndent(resultData, "", "  ")
 	if err != nil {
@@ -151,9 +135,9 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 }
 
 type ListCodeResponse struct {
-	ID       uint64         `json:"id"`
-	Creator  sdk.AccAddress `json:"creator"`
-	CodeHash tmbytes.HexBytes   `json:"code_hash"`
+	ID       uint64           `json:"id"`
+	Creator  sdk.AccAddress   `json:"creator"`
+	CodeHash tmbytes.HexBytes `json:"code_hash"`
 }
 
 func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {

@@ -31,8 +31,7 @@ const (
 // Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
 func Setup(isCheckTx bool) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, 0)
-	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
+	app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, 0, map[int64]bool{})
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := wasmd.NewDefaultGenesisState()
@@ -57,8 +56,7 @@ func Setup(isCheckTx bool) *wasmd.WasmApp {
 // genesis accounts.
 func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0)
-	// app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, 0)
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{})
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := wasmd.NewDefaultGenesisState()
@@ -110,26 +108,26 @@ func SignAndDeliver(
 	// Simulate a sending a transaction and committing a block
 	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
-	res := app.Deliver(tx)
-	if expPass {
-		require.True(t, res.IsOK(), res)
-	} else {
-		require.False(t, res.IsOK(), res)
-	}
-
-	// gInfo, res, err := app.Deliver(tx)
+	// res := app.Deliver(tx)
 	// if expPass {
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, res)
+	// 	require.True(t, res.IsOK(), res)
 	// } else {
-	// 	require.Error(t, err)
-	// 	require.Nil(t, res)
+	// 	require.False(t, res.IsOK(), res)
 	// }
+
+	_, res, err := app.Deliver(tx)
+	if expPass {
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	} else {
+		require.Error(t, err)
+		require.Nil(t, res)
+	}
 
 	app.EndBlock(abci.RequestEndBlock{})
 	app.Commit()
 
-	return res
+	return *res
 }
 
 // GenTx generates a signed mock transaction.
