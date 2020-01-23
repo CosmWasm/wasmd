@@ -20,10 +20,10 @@ type Model struct {
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash tmBytes.HexBytes `json:"code_hash"`
-	Creator  sdk.AccAddress   `json:"creator"`
-	Source   string           `json:"source"`
-	Builder  string           `json:"builder"`
+	CodeHash []byte         `json:"code_hash"`
+	Creator  sdk.AccAddress `json:"creator"`
+	Source   string         `json:"source"`
+	Builder  string         `json:"builder"`
 }
 
 // NewCodeInfo fills a new Contract struct

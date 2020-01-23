@@ -15,10 +15,7 @@ import (
 )
 
 func TestQueryContractState(t *testing.T) {
-	type model struct {
-		Key   string `json:"key"`
-		Value string `json:"val"`
-	}
+	type model = types.Model
 
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -48,8 +45,8 @@ func TestQueryContractState(t *testing.T) {
 	require.NoError(t, err)
 
 	contractModel := []types.Model{
-		{Key: "foo", Value: "bar"},
-		{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})},
+		{Key: []byte("foo"), Value: []byte("\"bar\"")},
+		{Key: []byte{0x0, 0x1}, Value: []byte("{}")},
 	}
 	keeper.setContractState(ctx, addr, contractModel)
 
@@ -70,21 +67,21 @@ func TestQueryContractState(t *testing.T) {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
 			expModelLen: 3,
 			expModelContains: []model{
-				{Key: "foo", Value: "bar"},
-				{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})},
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 			},
 		},
 		"query raw key": {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte("foo")},
 			expModelLen:      1,
-			expModelContains: []model{{Key: "foo", Value: "bar"}},
+			expModelContains: []model{{Key: []byte("foo"), Value: []byte(`["bar"]`)}},
 		},
 		"query raw binary key": {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte{0x0, 0x1}},
 			expModelLen:      1,
-			expModelContains: []model{{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})}},
+			expModelContains: []model{{Key: []byte{0x0, 0x1}, Value: []byte("798")},
 		},
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},

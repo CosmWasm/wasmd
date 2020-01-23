@@ -193,8 +193,8 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 
 	if val := prefixStore.Get(key); val != nil {
 		return append(result, types.Model{
-			Key:   string(key),
-			Value: string(val),
+			Key:   key,
+			Value: val,
 		})
 	}
 	return result
