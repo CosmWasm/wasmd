@@ -22,8 +22,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/", listAllContractsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/{contractAddr}", queryContractHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/{contractAddr}/state", queryContractStateAllHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/contract/{contractAddr}/smart/{query}/{encoding}", queryContractStateSmartHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/contract/{contractAddr}/raw/{key}/{encoding}", queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/smart/{query}", queryContractStateSmartHandlerFn(cliCtx)).Queries("encoding", "{encoding}").Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/raw/{key}", queryContractStateRawHandlerFn(cliCtx)).Queries("encoding", "{encoding}").Methods("GET")
 }
 
 func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -148,7 +148,7 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 
 func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		decoder := newArgDecoder(asciiDecodeString)
+		decoder := newArgDecoder(hex.DecodeString)
 
 		addr, err := sdk.AccAddressFromBech32(mux.Vars(r)["contractAddr"])
 		if err != nil {
@@ -186,8 +186,6 @@ func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
 func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
 
 	switch a.encoding {
-	case "ascii":
-		return asciiDecodeString(s)
 	case "hex":
 		return hex.DecodeString(s)
 	case "base64":
@@ -195,8 +193,4 @@ func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
 	default:
 		return a.dec(s)
 	}
-}
-
-func asciiDecodeString(s string) ([]byte, error) {
-	return []byte(s), nil
 }
