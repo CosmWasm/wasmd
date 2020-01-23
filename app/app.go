@@ -217,7 +217,7 @@ func NewWasmApp(
 	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
 	err := viper.Unmarshal(&wasmWrap)
 	if err != nil {
-		fmt.Println("error while reading wasm config:", err.Error())
+		panic("error while reading wasm config: " + err.Error())
 	}
 	wasmConfig := wasmWrap.Wasm
 
@@ -232,7 +232,7 @@ func NewWasmApp(
 	// TODO: register evidence routes
 	evidenceKeeper.SetRouter(evidenceRouter)
 
-	app.evidenceKeeper = *evidenceKeeper
+	app.evidenceKeeper = evidenceKeeper
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
@@ -267,7 +267,7 @@ func NewWasmApp(
 		evidence.NewAppModule(*app.evidenceKeeper),
 		wasm.NewAppModule(app.wasmKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
-		evidence.NewAppModule(app.evidenceKeeper),
+		evidence.NewAppModule(*app.evidenceKeeper),
 	)
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
@@ -325,7 +325,7 @@ func NewWasmApp(
 }
 
 // Name returns the name of the App
-func (app *GaiaApp) Name() string { return app.BaseApp.Name() }
+func (app *WasmApp) Name() string { return app.BaseApp.Name() }
 
 // application updates every begin block
 func (app *WasmApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
