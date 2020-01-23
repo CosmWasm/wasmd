@@ -453,7 +453,7 @@ func (f *Fixtures) QueryAccount(address sdk.AccAddress, flags ...string) auth.Ba
 
 // QueryTxs is wasmcli query txs
 func (f *Fixtures) QueryTxs(page, limit int, events ...string) *sdk.SearchTxsResult {
-	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --tags='%s' %v", f.GaiacliBinary, page, limit, queryEvents(events), f.Flags())
+	cmd := fmt.Sprintf("%s query txs --page=%d --limit=%d --events='%s' %v", f.GaiacliBinary, page, limit, queryEvents(events), f.Flags())
 	out, _ := tests.ExecuteT(f.T, cmd, "")
 	var result sdk.SearchTxsResult
 	cdc := app.MakeCodec()
