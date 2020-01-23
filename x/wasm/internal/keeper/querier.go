@@ -90,6 +90,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	case QueryMethodContractStateAll:
 		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
 			resultData = append(resultData, types.Model{
+				// TODO: binary and raw json
 				Key:   string(iter.Key()),
 				Value: string(iter.Value()),
 			})
