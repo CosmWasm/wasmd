@@ -8,7 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	cmn "github.com/tendermint/tendermint/libs/common"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
@@ -153,7 +153,7 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 type ListCodeResponse struct {
 	ID       uint64         `json:"id"`
 	Creator  sdk.AccAddress `json:"creator"`
-	CodeHash cmn.HexBytes   `json:"code_hash"`
+	CodeHash tmbytes.HexBytes   `json:"code_hash"`
 }
 
 func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
