@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"net/http"
 	"net/url"
 	"regexp"
 
@@ -49,12 +48,6 @@ func (msg MsgStoreCode) ValidateBasic() sdk.Error {
 
 		if !u.IsAbs() {
 			return sdk.ErrInternal("source should be an absolute url")
-		}
-
-		// check if the source is reachable
-		resp, err := http.Get(msg.Source)
-		if err != nil || resp.StatusCode != 200 {
-			return sdk.ErrInternal("source url is not reachable")
 		}
 	}
 
