@@ -1,40 +1,43 @@
+<!--
+order: 2
+-->
+
 # Install Gaia
 
-This guide will explain how to install the `wasmd` and `wasmcli` entrypoints
+This guide will explain how to install the `gaiad` and `gaiacli` entrypoints
 onto your system. With these installed on a server, you can participate in the
 mainnet as either a [Full Node](./join-mainnet.md) or a
-[Validator](./validators/validator-setup.md).
+[Validator](../validators/validator-setup.md).
 
 ## Install Go
 
 Install `go` by following the [official docs](https://golang.org/doc/install).
-Remember to set your `$GOPATH` and `$PATH` environment variables, for example:
+Remember to set your `$PATH` environment variable, for example:
 
 ```bash
 mkdir -p $HOME/go/bin
-echo "export GOPATH=$HOME/go" >> ~/.bash_profile
-echo "export PATH=\$PATH:\$GOPATH/bin" >> ~/.bash_profile
+echo "export PATH=$PATH:$(go env GOPATH)/bin" >> ~/.bash_profile
 source ~/.bash_profile
 ```
 
 ::: tip
-**Go 1.12+** is required for the Cosmos SDK.
+**Go 1.13+** is required for the Cosmos SDK.
 :::
 
 ## Install the binaries
 
 Next, let's install the latest version of Gaia. Make sure you `git checkout` the
-correct [released version](https://github.com/cosmwasm/wasmd/releases).
+correct [released version](https://github.com/cosmos/gaia/releases).
 
 ```bash
-git clone -b <latest-release-tag> https://github.com/cosmwasm/wasmd
+git clone -b <latest-release-tag> https://github.com/cosmos/gaia
 cd gaia && make install
 ```
 
 If this command fails due to the following error message, you might have already set `LDFLAGS` prior to running this step.
 
 ```
-# github.com/cosmwasm/wasmd/cmd/wasmd
+# github.com/cosmos/gaia/cmd/gaiad
 flag provided but not defined: -L
 usage: link [options] main.o
 ...
@@ -49,21 +52,21 @@ LDFLAGS="" make install
 
 > _NOTE_: If you still have issues at this step, please check that you have the latest stable version of GO installed.
 
-That will install the `wasmd` and `wasmcli` binaries. Verify that everything is OK:
+That will install the `gaiad` and `gaiacli` binaries. Verify that everything is OK:
 
 ```bash
-$ wasmd version --long
-$ wasmcli version --long
+$ gaiad version --long
+$ gaiacli version --long
 ```
 
-`wasmcli` for instance should output something similar to:
+`gaiacli` for instance should output something similar to:
 
 ```shell
 name: gaia
-server_name: wasmd
-client_name: wasmcli
-version: 1.0.0
-commit: 89e6316a27343304d332aadfe2869847bf52331c
+server_name: gaiad
+client_name: gaiacli
+version: 2.0.3
+commit: 2f6783e298f25ff4e12cb84549777053ab88749a
 build_tags: netgo,ledger
 go: go version go1.12.5 darwin/amd64
 ```

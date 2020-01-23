@@ -3,13 +3,14 @@ package lcdtest
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	clientkeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/crypto/keys"
@@ -165,19 +166,20 @@ func getTransactionRequest(t *testing.T, port, hash string) (*http.Response, str
 // POST /txs broadcast txs
 
 // GET /txs search transactions
-func getTransactions(t *testing.T, port string, tags ...string) *sdk.SearchTxsResult {
+func getTransactions(t *testing.T, port string, events ...string) *sdk.SearchTxsResult {
 	var txs []sdk.TxResponse
 	result := sdk.NewSearchTxsResult(0, 0, 1, 30, txs)
-	if len(tags) == 0 {
+	if len(events) == 0 {
 		return &result
 	}
-	queryStr := strings.Join(tags, "&")
+
+	queryStr := strings.Join(events, "&")
 	res, body := Request(t, port, "GET", fmt.Sprintf("/txs?%s", queryStr), nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
 
 	err := cdc.UnmarshalJSON([]byte(body), &result)
-
 	require.NoError(t, err)
+
 	return &result
 }
 
@@ -265,7 +267,7 @@ func doTransferWithGas(
 	kb2 := crkeys.NewInMemory()
 
 	receiveInfo, _, err := kb2.CreateMnemonic(
-		"receive_address", crkeys.English, client.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
+		"receive_address", crkeys.English, clientkeys.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
 	)
 	require.Nil(t, err)
 
@@ -273,7 +275,7 @@ func doTransferWithGas(
 	acc := getAccount(t, port, addr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 
 	from := addr.String()
 	baseReq := rest.NewBaseReq(
@@ -313,12 +315,12 @@ func doTransferWithGasAccAuto(
 	acc := getAccount(t, port, addr)
 
 	receiveInfo, _, err := kb2.CreateMnemonic(
-		"receive_address", crkeys.English, client.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
+		"receive_address", crkeys.English, clientkeys.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
 	)
 	require.Nil(t, err)
 
 	receiveAddr = sdk.AccAddress(receiveInfo.GetPubKey().Address())
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 
 	from := addr.String()
 	baseReq := rest.NewBaseReq(
@@ -350,7 +352,7 @@ func signAndBroadcastGenTx(
 	gasAdjustment float64, simulate bool, kb crkeys.Keybase,
 ) (resp *http.Response, body string) {
 
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 
 	var tx auth.StdTx
 	err := cdc.UnmarshalJSON([]byte(genTx), &tx)
@@ -369,7 +371,7 @@ func signAndBroadcastGenTx(
 		nil,
 	).WithKeybase(kb)
 
-	signedTx, err := txbldr.SignStdTx(name, client.DefaultKeyPass, tx, false)
+	signedTx, err := txbldr.SignStdTx(name, clientkeys.DefaultKeyPass, tx, false)
 	require.NoError(t, err)
 
 	return doBroadcast(t, port, signedTx)
@@ -389,7 +391,7 @@ func doDelegate(
 	acc := getAccount(t, port, delAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -407,7 +409,7 @@ func doDelegate(
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	// sign and broadcast
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -427,7 +429,7 @@ func doUndelegate(
 	acc := getAccount(t, port, delAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -444,7 +446,7 @@ func doUndelegate(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/staking/delegators/%s/unbonding_delegations", delAddr), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -464,7 +466,7 @@ func doBeginRedelegation(
 	acc := getAccount(t, port, delAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -482,7 +484,7 @@ func doBeginRedelegation(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/staking/delegators/%s/redelegations", delAddr), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -678,7 +680,7 @@ func doSubmitProposal(
 	acc := getAccount(t, port, proposerAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -698,7 +700,7 @@ func doSubmitProposal(
 	resp, body := Request(t, port, "POST", "/gov/proposals", req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -717,7 +719,7 @@ func doSubmitParamChangeProposal(
 	acc := getAccount(t, port, proposerAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -728,7 +730,7 @@ func doSubmitParamChangeProposal(
 		Proposer:    proposerAddr,
 		Deposit:     sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, amount)},
 		Changes: paramscutils.ParamChangesJSON{
-			paramscutils.NewParamChangeJSON("staking", "MaxValidators", "", []byte(`105`)),
+			paramscutils.NewParamChangeJSON("staking", "MaxValidators", json.RawMessage(`105`)),
 		},
 	}
 
@@ -738,7 +740,7 @@ func doSubmitParamChangeProposal(
 	resp, body := Request(t, port, "POST", "/gov/proposals/param_change", req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -757,7 +759,7 @@ func doSubmitCommunityPoolSpendProposal(
 	acc := getAccount(t, port, proposerAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -777,7 +779,7 @@ func doSubmitCommunityPoolSpendProposal(
 	resp, body := Request(t, port, "POST", "/gov/proposals/community_pool_spend", req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -852,7 +854,7 @@ func doDeposit(
 	acc := getAccount(t, port, proposerAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -868,7 +870,7 @@ func doDeposit(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/gov/proposals/%d/deposits", proposalID), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -911,7 +913,7 @@ func doVote(
 	acc := getAccount(t, port, proposerAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -927,7 +929,7 @@ func doVote(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/gov/proposals/%d/votes", proposalID), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, kb)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, kb)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -1067,7 +1069,7 @@ func doUnjail(
 
 	acc := getAccount(t, port, sdk.AccAddress(valAddr.Bytes()))
 	from := acc.GetAddress().String()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", 1, 1, fees, nil, false)
 	ur := slashingrest.UnjailReq{
@@ -1079,7 +1081,7 @@ func doUnjail(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/slashing/validators/%s/unjail", valAddr.String()), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, nil)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
@@ -1099,7 +1101,7 @@ func doWithdrawDelegatorAllRewards(
 	acc := getAccount(t, port, delegatorAddr)
 	accnum := acc.GetAccountNumber()
 	sequence := acc.GetSequence()
-	chainID := viper.GetString(client.FlagChainID)
+	chainID := viper.GetString(flags.FlagChainID)
 	from := acc.GetAddress().String()
 
 	baseReq := rest.NewBaseReq(from, "", chainID, "", "", accnum, sequence, fees, nil, false)
@@ -1112,7 +1114,7 @@ func doWithdrawDelegatorAllRewards(
 	resp, body := Request(t, port, "POST", fmt.Sprintf("/distribution/delegators/%s/rewards", delegatorAddr), req)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
-	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, client.DefaultGasAdjustment, false, nil)
+	resp, body = signAndBroadcastGenTx(t, port, name, body, acc, flags.DefaultGasAdjustment, false, nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 
 	var txResp sdk.TxResponse
