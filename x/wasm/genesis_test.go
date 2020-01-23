@@ -52,20 +52,6 @@ func TestInitGenesis(t *testing.T) {
 	res = h(data.ctx, msg)
 	require.False(t, res.IsOK())
 
-	t.Log("fail with unreachable source url")
-	msg = MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-		Source:       "https://github.com/cosmwasm/wasmddddddrandom",
-		Builder:      "",
-	}
-
-	sdkerr = msg.ValidateBasic()
-	require.Error(t, sdkerr)
-
-	res = h(data.ctx, msg)
-	require.False(t, res.IsOK())
-
 	t.Log("fail with invalid build tag")
 	msg = MsgStoreCode{
 		Sender:       creator,
