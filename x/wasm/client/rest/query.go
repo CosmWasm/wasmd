@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,8 +22,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/", listAllContractsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/{contractAddr}", queryContractHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/wasm/contract/{contractAddr}/state", queryContractStateAllHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/contract/{contractAddr}/smart", queryContractStateSmartHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/wasm/contract/{contractAddr}/raw", queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/smart/{query}/{encoding}", queryContractStateSmartHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/wasm/contract/{contractAddr}/raw/{key}/{encoding}", queryContractStateRawHandlerFn(cliCtx)).Methods("GET")
 }
 
 func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -122,12 +124,78 @@ func queryContractStateAllHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 
 func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		decoder := newArgDecoder(hex.DecodeString)
+
+		addr, err := sdk.AccAddressFromBech32(mux.Vars(r)["contractAddr"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		decoder.encoding = mux.Vars(r)["encoding"]
+		queryData, err := decoder.DecodeString(mux.Vars(r)["query"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
+		res, _, err := cliCtx.QueryWithData(route, queryData)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, string(res))
 
 	}
 }
 
 func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		decoder := newArgDecoder(asciiDecodeString)
+		addr, err := sdk.AccAddressFromBech32(mux.Vars(r)["contractAddr"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		decoder.encoding = mux.Vars(r)["encoding"]
+		queryData, err := decoder.DecodeString(mux.Vars(r)["key"])
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
+		res, _, err := cliCtx.QueryWithData(route, queryData)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, string(res))
 	}
+}
+
+type argumentDecoder struct {
+	// dec is the default decoder
+	dec      func(string) ([]byte, error)
+	encoding string
+}
+
+func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
+	return &argumentDecoder{dec: def}
+}
+
+func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
+
+	switch a.encoding {
+	case "ascii":
+		return asciiDecodeString(s)
+	case "hex":
+		return hex.DecodeString(s)
+	case "base64":
+		return base64.StdEncoding.DecodeString(s)
+	default:
+		return a.dec(s)
+	}
+}
+
+func asciiDecodeString(s string) ([]byte, error) {
+	return []byte(s), nil
 }
