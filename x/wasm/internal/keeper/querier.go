@@ -104,7 +104,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	default:
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, queryMethod)
 	}
-	bz, err := json.MarshalIndent(resultData, "", "  ")
+	bz, err := json.Marshal(resultData)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

@@ -45,8 +45,8 @@ func TestQueryContractState(t *testing.T) {
 	require.NoError(t, err)
 
 	contractModel := []types.Model{
-		{Key: []byte("foo"), Value: []byte("\"bar\"")},
-		{Key: []byte{0x0, 0x1}, Value: []byte("{}")},
+		{Key: []byte("foo"), Value: []byte(`"bar"`)},
+		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
 	keeper.setContractState(ctx, addr, contractModel)
 
@@ -75,13 +75,13 @@ func TestQueryContractState(t *testing.T) {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte("foo")},
 			expModelLen:      1,
-			expModelContains: []model{{Key: []byte("foo"), Value: []byte(`["bar"]`)}},
+			expModelContains: []model{{Key: []byte("foo"), Value: []byte(`"bar"`)}},
 		},
 		"query raw binary key": {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte{0x0, 0x1}},
 			expModelLen:      1,
-			expModelContains: []model{{Key: []byte{0x0, 0x1}, Value: []byte("798")},
+			expModelContains: []model{{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)}},
 		},
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
