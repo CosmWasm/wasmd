@@ -55,19 +55,19 @@ docker volume rm -f wasmd_data
 # pass password (one time) as env variable for setup, so we don't need to keep typing it
 # add some addresses that you have private keys for (locally) to give them genesis funds
 docker run --rm -it \
-    -e PASSWORD=my-secret-password \
+    -e PASSWORD=xxxxxxxxx \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:manual ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd-demo:latest ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
 # This will start both wasmd and wasmcli rest-server, only wasmcli output is shown on the screen
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:manual ./run_all.sh
+    cosmwasm/wasmd-demo:latest ./run_all.sh
 
 # view wasmd logs in another shell
 docker run --rm -it \
     --mount type=volume,source=wasmd_data,target=/root,readonly \
-    cosmwasm/wasmd:manual ./logs.sh
+    cosmwasm/wasmd-demo:latest ./logs.sh
 ```
 
 ### CI
@@ -78,9 +78,9 @@ For CI, we want to generate a template one time and save to disk/repo. Then we c
 # Init chain and pass addresses so they are non-empty accounts
 rm -rf ./template && mkdir ./template
 docker run --rm -it \
-    -e PASSWORD=my-secret-password \
+    -e PASSWORD=xxxxxxxxx \
     --mount type=bind,source=$(pwd)/template,target=/root \
-    cosmwasm/wasmd:manual ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd-demo:latest ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
 sudo chown -R $(id -u):$(id -g) ./template
 
@@ -91,15 +91,15 @@ docker volume rm -f wasmd_data
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=bind,source=$(pwd)/template,target=/template \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:manual ./run_all.sh /template
+    cosmwasm/wasmd-demo:latest ./run_all.sh /template
 
 # RESTART CHAIN with existing state
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:manual ./run_all.sh
+    cosmwasm/wasmd-demo:latest ./run_all.sh
 
 # view wasmd logs in another shell
 docker run --rm -it \
     --mount type=volume,source=wasmd_data,target=/root,readonly \
-    cosmwasm/wasmd:manual ./logs.sh
+    cosmwasm/wasmd-demo:latest ./logs.sh
 ```
