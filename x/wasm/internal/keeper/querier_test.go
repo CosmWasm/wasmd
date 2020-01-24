@@ -15,11 +15,6 @@ import (
 )
 
 func TestQueryContractState(t *testing.T) {
-	type model struct {
-		Key   string `json:"key"`
-		Value string `json:"val"`
-	}
-
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
@@ -48,8 +43,8 @@ func TestQueryContractState(t *testing.T) {
 	require.NoError(t, err)
 
 	contractModel := []types.Model{
-		{Key: "foo", Value: "bar"},
-		{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})},
+		{Key: []byte("foo"), Value: []byte(`"bar"`)},
+		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
 	keeper.setContractState(ctx, addr, contractModel)
 
@@ -58,33 +53,33 @@ func TestQueryContractState(t *testing.T) {
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery
-		// smart queries return raw bytes from contract not []model
+		// smart queries return raw bytes from contract not []types.Model
 		// if this is set, then we just compare - (should be json encoded string)
 		expSmartRes string
-		// if success and expSmartRes is not set, we parse into []model and compare
+		// if success and expSmartRes is not set, we parse into []types.Model and compare
 		expModelLen      int
-		expModelContains []model
+		expModelContains []types.Model
 		expErr           *sdkErrors.Error
 	}{
 		"query all": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
 			expModelLen: 3,
-			expModelContains: []model{
-				{Key: "foo", Value: "bar"},
-				{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})},
+			expModelContains: []types.Model{
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 			},
 		},
 		"query raw key": {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte("foo")},
 			expModelLen:      1,
-			expModelContains: []model{{Key: "foo", Value: "bar"}},
+			expModelContains: []types.Model{{Key: []byte("foo"), Value: []byte(`"bar"`)}},
 		},
 		"query raw binary key": {
 			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:           abci.RequestQuery{Data: []byte{0x0, 0x1}},
 			expModelLen:      1,
-			expModelContains: []model{{Key: string([]byte{0x0, 0x1}), Value: string([]byte{0x2, 0x3})}},
+			expModelContains: []types.Model{{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)}},
 		},
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
@@ -133,7 +128,7 @@ func TestQueryContractState(t *testing.T) {
 			}
 
 			// otherwise, check returned models
-			var r []model
+			var r []types.Model
 			if spec.expErr == nil {
 				require.NoError(t, json.Unmarshal(binResult, &r))
 				require.NotNil(t, r)

@@ -90,8 +90,8 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	case QueryMethodContractStateAll:
 		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
 			resultData = append(resultData, types.Model{
-				Key:   string(iter.Key()),
-				Value: string(iter.Value()),
+				Key:   iter.Key(),
+				Value: iter.Value(),
 			})
 		}
 		if resultData == nil {
@@ -104,7 +104,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	default:
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, queryMethod)
 	}
-	bz, err := json.MarshalIndent(resultData, "", "  ")
+	bz, err := json.Marshal(resultData)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

@@ -52,8 +52,8 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		var state []types.Model
 		for ; contractStateIterator.Valid(); contractStateIterator.Next() {
 			m := types.Model{
-				Key:   string(contractStateIterator.Key()),
-				Value: string(contractStateIterator.Value()),
+				Key:   contractStateIterator.Key(),
+				Value: contractStateIterator.Value(),
 			}
 			state = append(state, m)
 		}

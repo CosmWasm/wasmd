@@ -398,25 +398,20 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []st
 	assert.Equal(t, addrs, res)
 }
 
-type model struct {
-	Key   string `json:"key"`
-	Value string `json:"val"`
-}
-
 func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, expected state) {
 	path := []string{QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
-	var res []model
+	var res []Model
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(res), "#v", res)
-	require.Equal(t, "config", res[0].Key)
+	require.Equal(t, []byte("config"), []byte(res[0].Key))
 
 	expectedBz, err := json.Marshal(expected)
 	require.NoError(t, err)
-	assert.Equal(t, string(expectedBz), res[0].Value)
+	assert.Equal(t, json.RawMessage(expectedBz), res[0].Value)
 }
 
 func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, codeID uint64, creator sdk.AccAddress) {

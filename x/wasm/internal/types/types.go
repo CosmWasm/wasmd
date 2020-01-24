@@ -1,6 +1,9 @@
 package types
 
 import (
+	"encoding/json"
+	tmBytes "github.com/tendermint/tendermint/libs/bytes"
+
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
@@ -11,8 +14,8 @@ const defaultQueryGasLimit = uint64(3000000)
 
 // Model is a struct that holds a KV pair
 type Model struct {
-	Key   string `json:"key"`
-	Value string `json:"val"`
+	Key   tmBytes.HexBytes `json:"key"`
+	Value json.RawMessage  `json:"val"`
 }
 
 // CodeInfo is data for the uploaded contract WASM code
@@ -35,9 +38,9 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
-	CodeID  uint64         `json:"code_id"`
-	Creator sdk.AccAddress `json:"creator"`
-	InitMsg string         `json:"init_msg"`
+	CodeID  uint64          `json:"code_id"`
+	Creator sdk.AccAddress  `json:"creator"`
+	InitMsg json.RawMessage `json:"init_msg"`
 }
 
 // NewParams initializes params for a contract instance
@@ -72,7 +75,7 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg string) ContractInfo {
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte) ContractInfo {
 	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,

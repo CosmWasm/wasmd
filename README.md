@@ -15,6 +15,16 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 **Compatibility**: Last merge from `cosmos/gaia` was `090c545347b03e59415a18107a0a279c703c8f40` (Jan 23, 2020)
 
+## Stability
+
+**This is alpha software, do not run on a production system.** Notably, we currently provide **no migration path** not even "dump state and restart" to move to future versions. At **beta** we will begin to offer migrations and better backwards compatibility guarantees.
+
+With the `v0.6.0` tag, we are entering semver. That means anything with `v0.6.x` tags is compatible. We will have a series of minor version updates prior to `v1.0.0`, where we offer strong backwards compatibility guarantees. In particular, work has begun in the `cosmwasm` library on `v0.7`, which will change many internal APIs, in order to allow adding other languages for writing smart contracts. We hope to stabilize much of this well before `v1`, but we are still in the process of learning from real-world use-cases
+
+## Encoding
+
+We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for your use case.
+
 ## Quick Start
 
 ```
