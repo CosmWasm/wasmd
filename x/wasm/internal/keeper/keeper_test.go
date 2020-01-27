@@ -151,7 +151,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(36923), gasAfter-gasBefore)
+	require.Equal(t, uint64(37052), gasAfter-gasBefore)
 }
 
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
@@ -236,7 +236,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(31723), gasAfter-gasBefore)
+	require.Equal(t, uint64(31728), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
