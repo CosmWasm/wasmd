@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	stypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 )
@@ -45,6 +46,53 @@ func TestCreate(t *testing.T) {
 	storedCode, err := keeper.GetByteCode(ctx, contractID)
 	require.NoError(t, err)
 	require.Equal(t, wasmCode, storedCode)
+}
+
+func TestCreateWithSimulation(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+	ctx = ctx.WithBlockHeader(abci.Header{Height: 1}).
+		WithGasMeter(stypes.NewInfiniteGasMeter())
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), contractID)
+	// and verify content
+	_, err = keeper.GetByteCode(ctx, contractID)
+	require.Error(t, err, os.ErrNotExist)
+}
+
+func TestIsSimulationMode(t *testing.T) {
+	specs := map[string]struct {
+		ctx sdk.Context
+		exp bool
+	}{
+		"genesis block": {
+			ctx: sdk.Context{}.WithBlockHeader(abci.Header{}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			exp: false,
+		},
+		"any regular block": {
+			ctx: sdk.Context{}.WithBlockHeader(abci.Header{Height: 1}).WithGasMeter(stypes.NewGasMeter(10000000)),
+			exp: false,
+		},
+		"simulation": {
+			ctx: sdk.Context{}.WithBlockHeader(abci.Header{Height: 1}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			exp: true,
+		},
+	}
+	for msg, _ := range specs {
+		t.Run(msg, func(t *testing.T) {
+			//assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
+		})
+	}
 }
 
 func TestCreateWithGzippedPayload(t *testing.T) {
