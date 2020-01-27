@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmwasm/wasmd/x/wasm/client/cli"
-	// "github.com/cosmwasm/wasmd/x/wasm/client/rest"
+	"github.com/cosmwasm/wasmd/x/wasm/client/rest"
 )
 
 var (
@@ -52,8 +52,7 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 
 // RegisterRESTRoutes registers the REST routes for the wasm module.
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	// TODO
-	// rest.RegisterRoutes(ctx, rtr)
+	rest.RegisterRoutes(ctx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
