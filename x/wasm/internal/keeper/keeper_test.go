@@ -151,7 +151,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(37052), gasAfter-gasBefore)
+	require.Equal(t, uint64(28426), gasAfter-gasBefore)
 }
 
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
@@ -249,7 +249,7 @@ func TestExecute(t *testing.T) {
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
 
-	t.Logf("Duration: %v (81488 gas)\n", diff)
+	t.Logf("Duration: %v (31728 gas)\n", diff)
 }
 
 func TestExecuteWithNonExistingAddress(t *testing.T) {

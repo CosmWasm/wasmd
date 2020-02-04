@@ -68,11 +68,11 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	var codeHash []byte
-	if isSimulationMode(ctx){
+	if isSimulationMode(ctx) {
 		// https://github.com/cosmwasm/wasmd/issues/42
 		// any sha256 hash is good enough
 		codeHash = make([]byte, 32)
-	}else {
+	} else {
 		codeHash, err = k.wasmer.Create(wasmCode)
 		if err != nil {
 			// return 0, sdkerrors.Wrap(err, "cosmwasm create")
@@ -103,11 +103,17 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 
 	// deposit initial contract funds
-	sdkerr := k.bankKeeper.SendCoins(ctx, creator, contractAddress, deposit)
-	if sdkerr != nil {
-		return nil, sdkerr
+	var contractAccount exported.Account
+	if !deposit.IsZero() {
+		sdkerr := k.bankKeeper.SendCoins(ctx, creator, contractAddress, deposit)
+		if sdkerr != nil {
+			return nil, sdkerr
+		}
+		contractAccount = k.accountKeeper.GetAccount(ctx, contractAddress)
+	} else {
+		contractAccount = k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		k.accountKeeper.SetAccount(ctx, contractAccount)
 	}
-	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
 
 	// get contact info
 	store := ctx.KVStore(k.storeKey)
@@ -154,12 +160,16 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return sdk.Result{}, err
 	}
+
 	// add more funds
-	sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
-	if sdkerr != nil {
-		return sdk.Result{}, sdkerr
+	if !coins.IsZero() {
+		sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
+		if sdkerr != nil {
+			return sdk.Result{}, sdkerr
+		}
 	}
 	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
+
 	params := types.NewParams(ctx, caller, coins, contractAccount)
 
 	gas := gasForContract(ctx)
