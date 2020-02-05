@@ -217,7 +217,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build Docker artifact - demo
-          command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_TAG}" . .
+          command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_TAG}" .
       - run:
           name: Push application Docker image to docker hub
           command: |
