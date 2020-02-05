@@ -10,6 +10,7 @@ import (
 const (
 	AttributeKeyContract = "contract_address"
 	AttributeKeyCodeID   = "code_id"
+	AttributeSigner      = "signer"
 )
 
 // NewHandler returns a handler for "bank" type messages.
@@ -51,12 +52,13 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 		return nil, err
 	}
 
+	// de-duplicate events sent in other parts of the sdk
+	// https://github.com/confio/cosm-js/pull/40#discussion_r374811810
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeyAction, "store-code"),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
+			sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 			sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
 		),
 	)
@@ -77,8 +79,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeyAction, "instantiate"),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
+			sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 			sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", msg.Code)),
 			sdk.NewAttribute(AttributeKeyContract, contractAddr.String()),
 		),
@@ -100,8 +101,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeyAction, "execute"),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
+			sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 			sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
 		),
 	)

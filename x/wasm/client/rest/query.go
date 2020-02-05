@@ -40,7 +40,7 @@ func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func queryCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		codeID, err := strconv.ParseUint(mux.Vars(r)["codeId"], 10, 64)
+		codeID, err := strconv.ParseUint(mux.Vars(r)["codeID"], 10, 64)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
