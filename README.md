@@ -103,3 +103,27 @@ docker run --rm -it \
     --mount type=volume,source=wasmd_data,target=/root,readonly \
     cosmwasm/wasmd-demo:latest ./logs.sh
 ```
+
+## Contributors
+
+Much thanks to all who have contributed to this project, from this app, to the `cosmwasm` framework, to example contracts and documentation.
+Or even testing the app and bringing up critical issues. The following have helped bring this project to life:
+
+* Ethan Frey [ethanfrey](https://github.com/ethanfrey)
+* Simon Warta [webmaster128](https://github.com/webmaster128)
+* Alex Peters [alpe](https://github.com/alpe)
+* Aaron Craelius [aaronc](https://github.com/aaronc)
+* Sunny Aggarwal [sunnya97](https://github.com/sunnya97)
+* Cory Levinson [clevinson](https://github.com/clevinson)
+* Sahith Narahari [sahith-narahari](https://github.com/sahith-narahari)
+* Jehan Tremback [jtremback](https://github.com/jtremback)
+* Shane [shanev](https://github.com/shanev)
+* Billy Rennekamp [okwme](https://github.com/okwme)
+* Westaking [westaking](https://github.com/westaking)
+* Marco [marbar3778](https://github.com/marbar3778)
+* JayB [kogisin](https://github.com/kogisin)
+* Rick Dudley [AFDudley](https://github.com/AFDudley)
+* KamiD [KamiD](https://github.com/KamiD)
+* Valery Litvin [litvintech](https://github.com/litvintech)
+
+Sorry if I forgot you from this list, just contact me or add yourself in a PR :)
