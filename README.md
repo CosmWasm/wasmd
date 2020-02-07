@@ -120,7 +120,7 @@ Or even testing the app and bringing up critical issues. The following have help
 * Shane [shanev](https://github.com/shanev)
 * Billy Rennekamp [okwme](https://github.com/okwme)
 * Westaking [westaking](https://github.com/westaking)
-* Marco [marbar3778](https://github.com/marbar3778)
+* Marko [marbar3778](https://github.com/marbar3778)
 * JayB [kogisin](https://github.com/kogisin)
 * Rick Dudley [AFDudley](https://github.com/AFDudley)
 * KamiD [KamiD](https://github.com/KamiD)
