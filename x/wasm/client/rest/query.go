@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
-	"net/http"
-	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/gorilla/mux"
@@ -69,7 +70,7 @@ func queryCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, string(code.Code))
+		rest.PostProcessResponse(w, cliCtx, code)
 	}
 }
 
