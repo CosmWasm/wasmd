@@ -267,6 +267,80 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	require.True(t, types.ErrNotFound.Is(err), err)
 }
 
+func TestExecuteWithPanic(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	// let's make sure we get a reasonable error, no panic/crash
+	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
+	require.Error(t, err)
+}
+
+func TestExecuteWithCpuLoop(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, deposit)
+	require.NoError(t, err)
+
+	// make sure we set a limit before calling
+	var gasLimit uint64 = 400_000
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
+	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
+
+	// this must fail
+	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"cpuloop":{}}`), nil)
+	require.Error(t, err)
+	// make sure gas ran out
+	// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
+	// require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
+}
+
 type InitMsg struct {
 	Verifier    sdk.AccAddress `json:"verifier"`
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
