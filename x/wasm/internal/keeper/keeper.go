@@ -330,7 +330,8 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		if err != nil {
 			return err
 		}
-		_, err = k.Execute(ctx, targetAddr, contractAddr, []byte(msg.Contract.Msg), sentFunds)
+		payload, err := DecodeCosmosMsgContract(msg.Contract.Msg)
+		_, err = k.Execute(ctx, targetAddr, contractAddr, payload, sentFunds)
 		return err // may be nil
 	} else if msg.Opaque != nil {
 		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)
