@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	QueryListContracts    = "list-contracts"
-	QueryGetContract      = "contract-info"
-	QueryGetContractState = "contract-state"
-	QueryGetCode          = "code"
-	QueryListCode         = "list-code"
+	QueryListContracts      = "list-contracts"
+	QueryListContractByCode = "list-contracts-by-code"
+	QueryGetContract        = "contract-info"
+	QueryGetContractState   = "contract-state"
+	QueryGetCode            = "code"
+	QueryListCode           = "list-code"
 )
 
 const (
@@ -38,6 +39,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryContractInfo(ctx, path[1], req, keeper)
 		case QueryListContracts:
 			return queryContractList(ctx, req, keeper)
+		case QueryListContractByCode:
+			return queryContractListByCode(ctx, path[1], req, keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
@@ -75,6 +78,26 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	})
 	sort.Strings(addrs)
 	bz, err := json.MarshalIndent(addrs, "", "  ")
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return bz, nil
+}
+
+func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+	codeID, err := strconv.ParseUint(codeIDstr, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	var contracts []types.ContractInfo
+	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
+		if info.CodeID == codeID {
+			contracts = append(contracts, info)
+		}
+		return false
+	})
+	bz, err := json.MarshalIndent(contracts, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
