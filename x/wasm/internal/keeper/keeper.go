@@ -175,6 +175,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	gas := gasForContract(ctx)
 	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)
 	if execErr != nil {
+		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
@@ -330,7 +331,8 @@ func (k Keeper) dispatchMessage(ctx sdk.Context, contract exported.Account, msg 
 		if err != nil {
 			return err
 		}
-		_, err = k.Execute(ctx, targetAddr, contractAddr, []byte(msg.Contract.Msg), sentFunds)
+		payload, err := DecodeCosmosMsgContract(msg.Contract.Msg)
+		_, err = k.Execute(ctx, targetAddr, contractAddr, payload, sentFunds)
 		return err // may be nil
 	} else if msg.Opaque != nil {
 		msg, err := ParseOpaqueMsg(k.cdc, msg.Opaque)

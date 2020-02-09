@@ -37,3 +37,11 @@ func ParseOpaqueMsg(cdc *codec.Codec, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error)
 	}
 	return sdkmsg, nil
 }
+
+func EncodeCosmosMsgContract(raw string) string {
+	return base64.StdEncoding.EncodeToString([]byte(raw))
+}
+
+func DecodeCosmosMsgContract(encoded string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(encoded)
+}

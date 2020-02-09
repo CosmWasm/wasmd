@@ -177,7 +177,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	// we also send an additional 14k tokens there.
 	// this should reduce the mask balance by 14k (to 26k)
 	// this 14k is added to the escrow, then the entire balance is sent to bob (total: 39k)
-	approveMsg := "{}"
+	approveMsg := EncodeCosmosMsgContract(`{"release":{}}`)
 	msg := wasmTypes.CosmosMsg{
 		Contract: &wasmTypes.ContractMsg{
 			ContractAddr: escrowAddr.String(),

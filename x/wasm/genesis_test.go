@@ -101,7 +101,7 @@ func TestInitGenesis(t *testing.T) {
 	execCmd := MsgExecuteContract{
 		Sender:    fred,
 		Contract:  contractAddr,
-		Msg:       []byte("{}"),
+		Msg:       []byte(`{"release":{}}`),
 		SentFunds: topUp,
 	}
 	res, err = h(data.ctx, execCmd)
