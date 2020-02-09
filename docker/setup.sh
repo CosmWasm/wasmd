@@ -2,9 +2,8 @@
 set -o errexit -o nounset -o pipefail
 
 PASSWORD=${PASSWORD:-1234567890}
-# we can override the default token tickers as cli args
-STAKE=${1:-ustake}
-FEE=${2:-ucosm}
+STAKE=${STAKE_TOKEN:-ustake}
+FEE=${FEE_TOKEN:-ucosm}
 
 wasmd init --chain-id=testing testing
 # staking/governance token is hardcoded in config, change this
