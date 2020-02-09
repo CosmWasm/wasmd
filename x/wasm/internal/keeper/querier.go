@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,6 +73,7 @@ func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 		addrs = append(addrs, addr.String())
 		return false
 	})
+	sort.Strings(addrs)
 	bz, err := json.MarshalIndent(addrs, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
