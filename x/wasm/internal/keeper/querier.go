@@ -162,6 +162,8 @@ type ListCodeResponse struct {
 	ID       uint64           `json:"id"`
 	Creator  sdk.AccAddress   `json:"creator"`
 	CodeHash tmbytes.HexBytes `json:"code_hash"`
+	Source   string           `json:"source"`
+	Builder  string           `json:"builder"`
 }
 
 func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
@@ -178,6 +180,8 @@ func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 			ID:       i,
 			Creator:  res.Creator,
 			CodeHash: res.CodeHash,
+			Source:   res.Source,
+			Builder:  res.Builder,
 		})
 	}
 
