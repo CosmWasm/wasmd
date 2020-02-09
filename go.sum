@@ -39,6 +39,8 @@ github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46f
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
+github.com/confio/cosmos-sdk v0.38.2 h1:w0SWy9hS7wvHkqPY5F/ZuGVf38rMJptdftrMats7j7U=
+github.com/confio/cosmos-sdk v0.38.2/go.mod h1:9ZZex0GKpyNCvilvVAPBoB+0n3A/aO1+/UhPVEaiCy4=
 github.com/confio/go-cosmwasm v0.6.2 h1:UMi8mP6VjID1QMPnLMW6xP6zdn7hXmgQTOYSwQgCN0k=
 github.com/confio/go-cosmwasm v0.6.2/go.mod h1:pHipRby+f3cv97QPLELkzOAlNs/s87uDyhc+SnMn7L4=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
