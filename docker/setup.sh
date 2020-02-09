@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -o errexit -o nounset -o pipefail
 
 PASSWORD=${PASSWORD:-1234567890}
 # we can override the default token tickers as cli args
