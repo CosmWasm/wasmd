@@ -77,7 +77,12 @@ func queryCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func listContractsByCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListContractByCode)
+		codeID, err := strconv.ParseUint(mux.Vars(r)["codeID"], 10, 64)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryListContractByCode, codeID)
 		res, _, err := cliCtx.Query(route)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
