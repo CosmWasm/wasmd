@@ -138,6 +138,15 @@ func queryContractStateAllHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 		rest.PostProcessResponse(w, cliCtx, string(res))
+
+		// parse res
+		var resultData []types.Model
+		err = json.Unmarshal(res, &resultData)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, resultData)
 	}
 }
 
@@ -156,12 +165,20 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 		route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
+
 		res, _, err := cliCtx.QueryWithData(route, queryData)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		// parse res
+		var resultData []types.Model
+		err = json.Unmarshal(res, &resultData)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		rest.PostProcessResponse(w, cliCtx, resultData)
 	}
 }
 
@@ -188,7 +205,8 @@ func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFun
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		// return as raw bytes (to be base64-encoded)
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 

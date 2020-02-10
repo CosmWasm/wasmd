@@ -411,7 +411,7 @@ func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.
 
 	expectedBz, err := json.Marshal(expected)
 	require.NoError(t, err)
-	assert.Equal(t, json.RawMessage(expectedBz), res[0].Value)
+	assert.Equal(t, expectedBz, res[0].Value)
 }
 
 func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, codeID uint64, creator sdk.AccAddress) {
