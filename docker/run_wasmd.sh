@@ -7,4 +7,4 @@ if test -n "$1"; then
 fi
 
 mkdir -p /root/log
-wasmd start --rpc.laddr tcp://0.0.0.0:26657
+wasmd start --rpc.laddr tcp://0.0.0.0:26657 --trace
