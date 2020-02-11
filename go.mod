@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/confio/go-cosmwasm v0.6.3
-	github.com/cosmos/cosmos-sdk v0.38.0
+	github.com/cosmos/cosmos-sdk v0.38.1
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/onsi/ginkgo v1.8.0 // indirect
@@ -30,4 +30,5 @@ require (
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 
-replace github.com/cosmos/cosmos-sdk => github.com/confio/cosmos-sdk v0.38.2
+// this include a few extra debug helpers on top of cosmos v0.38.1 but original also works fine
+replace github.com/cosmos/cosmos-sdk => github.com/confio/cosmos-sdk v0.38.3
