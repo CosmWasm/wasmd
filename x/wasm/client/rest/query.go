@@ -137,7 +137,6 @@ func queryContractStateAllHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		rest.PostProcessResponse(w, cliCtx, string(res))
 
 		// parse res
 		var resultData []types.Model
@@ -182,6 +181,10 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 	}
 }
 
+type smartResponse struct {
+	Smart []byte `json:"smart"`
+}
+
 func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		decoder := newArgDecoder(hex.DecodeString)
@@ -206,7 +209,8 @@ func queryContractStateSmartHandlerFn(cliCtx context.CLIContext) http.HandlerFun
 			return
 		}
 		// return as raw bytes (to be base64-encoded)
-		rest.PostProcessResponse(w, cliCtx, res)
+		responseData := smartResponse{Smart: res}
+		rest.PostProcessResponse(w, cliCtx, responseData)
 	}
 }
 
