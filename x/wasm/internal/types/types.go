@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
@@ -14,8 +15,10 @@ const defaultQueryGasLimit = uint64(3000000)
 
 // Model is a struct that holds a KV pair
 type Model struct {
-	Key   tmBytes.HexBytes `json:"key"`
-	Value json.RawMessage  `json:"val"`
+	// hex-encode key to read it better (this is often ascii)
+	Key tmBytes.HexBytes `json:"key"`
+	// base64-encode raw value
+	Value []byte `json:"val"`
 }
 
 // CodeInfo is data for the uploaded contract WASM code

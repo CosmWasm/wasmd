@@ -113,6 +113,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 	var resultData []types.Model
 	switch queryMethod {
 	case QueryMethodContractStateAll:
+		// this returns a serialized json object (which internally encoded binary fields properly)
 		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
 			resultData = append(resultData, types.Model{
 				Key:   iter.Key(),
@@ -123,8 +124,10 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 			resultData = make([]types.Model, 0)
 		}
 	case QueryMethodContractStateRaw:
+		// this returns a serialized json object
 		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
 	case QueryMethodContractStateSmart:
+		// this returns raw bytes (must be base64-encoded)
 		return keeper.QuerySmart(ctx, contractAddr, req.Data)
 	default:
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, queryMethod)
