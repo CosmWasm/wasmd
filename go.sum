@@ -40,6 +40,8 @@ github.com/confio/cosmos-sdk v0.38.3 h1:7NH1UosmF/lqJPxFwDCLX3Y3Xz0PQnXJXCO4+62u
 github.com/confio/cosmos-sdk v0.38.3/go.mod h1:9ZZex0GKpyNCvilvVAPBoB+0n3A/aO1+/UhPVEaiCy4=
 github.com/confio/cosmos-sdk v0.38.4 h1:zq564UHdZ7jnyBlKl6UPpUdxUaDsdgV4whoeGZr5Rnc=
 github.com/confio/cosmos-sdk v0.38.4/go.mod h1:xvO/3BXAYyZuyah4c5wekn2chBe+Gx0yaDVdhp0duyo=
+github.com/confio/cosmos-sdk v0.38.5 h1:C7pYioZREhtK1t7TFgm6JMejaQnmk+qxPKNwI9ZIbKg=
+github.com/confio/cosmos-sdk v0.38.5/go.mod h1:xvO/3BXAYyZuyah4c5wekn2chBe+Gx0yaDVdhp0duyo=
 github.com/confio/go-cosmwasm v0.6.3 h1:TcZ8k0RsGissZ83JcRMvOu93FpDu2S9XGzCd79xwKyU=
 github.com/confio/go-cosmwasm v0.6.3/go.mod h1:pHipRby+f3cv97QPLELkzOAlNs/s87uDyhc+SnMn7L4=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
