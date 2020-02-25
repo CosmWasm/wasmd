@@ -43,6 +43,10 @@ func (msg MsgStoreCode) Type() string {
 }
 
 func (msg MsgStoreCode) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return err
+	}
+
 	if len(msg.WASMByteCode) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
@@ -56,9 +60,11 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be a valid url")
 		}
-
 		if !u.IsAbs() {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be an absolute url")
+		}
+		if u.Scheme != "https" {
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source must use https")
 		}
 	}
 
