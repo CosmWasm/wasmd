@@ -12,6 +12,9 @@ import (
 const (
 	MaxWasmSize = 500 * 1024
 
+	// MaxLabelSize is the longest label that can be used when Instantiating a contract
+	MaxLabelSize = 128
+
 	// BuildTagRegexp is a docker image regexp. We remove support for non-standard registries for simplicity.
 	// https://docs.docker.com/engine/reference/commandline/tag/#extended-description
 	//
@@ -89,6 +92,7 @@ func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 type MsgInstantiateContract struct {
 	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
+	Label     string          `json:"string" yaml:"string"`
 	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
 	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
 }
@@ -102,6 +106,20 @@ func (msg MsgInstantiateContract) Type() string {
 }
 
 func (msg MsgInstantiateContract) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return err
+	}
+
+	if msg.Code == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+	}
+	if msg.Label == "" {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+	}
+	if len(msg.Label) > MaxLabelSize {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label cannot be longer than 128 characters")
+	}
+
 	if msg.InitFunds.IsAnyNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
 	}
@@ -132,6 +150,13 @@ func (msg MsgExecuteContract) Type() string {
 }
 
 func (msg MsgExecuteContract) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return err
+	}
+	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
+		return err
+	}
+
 	if msg.SentFunds.IsAnyNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative SentFunds")
 	}
