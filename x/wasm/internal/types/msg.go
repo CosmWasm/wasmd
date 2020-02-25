@@ -10,17 +10,27 @@ import (
 )
 
 const (
-	MaxWasmSize   = 500 * 1024
-	BuildTagRegex = "^cosmwasm-opt:"
+	MaxWasmSize = 500 * 1024
+
+	// BuildTagRegexp is a docker image regexp. We remove support for non-standard registries for simplicity.
+	// https://docs.docker.com/engine/reference/commandline/tag/#extended-description
+	//
+	// An image name is made up of slash-separated name components (optionally prefixed by a registry hostname).
+	// Name components may contain lowercase characters, digits and separators.
+	// A separator is defined as a period, one or two underscores, or one or more dashes. A name component may not start or end with a separator.
+	//
+	// A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits, underscores, periods and dashes.
+	// A tag name may not start with a period or a dash and may contain a maximum of 128 characters.
+	BuildTagRegexp = "^[a-z0-9][a-z0-9._-]*[a-z0-9](/[a-z0-9][a-z0-9._-]*[a-z0-9])*:[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$"
 )
 
 type MsgStoreCode struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
-	// Source is a valid URI reference to the contract's source code, optional
+	// Source is a valid absolute HTTPS URI to the contract's source code, optional
 	Source string `json:"source" yaml:"source"`
-	// Builder is a docker tag, optional
+	// Builder is a valid docker image name with tag, optional
 	Builder string `json:"builder" yaml:"builder"`
 }
 
@@ -33,6 +43,10 @@ func (msg MsgStoreCode) Type() string {
 }
 
 func (msg MsgStoreCode) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return err
+	}
+
 	if len(msg.WASMByteCode) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
@@ -46,14 +60,16 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if err != nil {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be a valid url")
 		}
-
 		if !u.IsAbs() {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be an absolute url")
+		}
+		if u.Scheme != "https" {
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source must use https")
 		}
 	}
 
 	if msg.Builder != "" {
-		ok, err := regexp.MatchString(BuildTagRegex, msg.Builder)
+		ok, err := regexp.MatchString(BuildTagRegexp, msg.Builder)
 		if err != nil || !ok {
 			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid tag supplied for builder")
 		}
