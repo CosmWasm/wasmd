@@ -382,8 +382,8 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 	assert.Equal(t, expectedBytes, res.Code)
 }
 
-func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []string) {
-	bz, sdkerr := q(ctx, []string{QueryListContracts}, abci.RequestQuery{})
+func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, addrs []string) {
+	bz, sdkerr := q(ctx, []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
 	if len(bz) == 0 {
@@ -391,9 +391,14 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []st
 		return
 	}
 
-	var res []string
+	var res []ContractInfo
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
+
+	var hasAddrs = make([]string, len(res))
+	for i, r := range res {
+		hasAddrs[i] = r.Address
+	}
 
 	assert.Equal(t, addrs, res)
 }

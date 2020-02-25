@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"sort"
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	QueryListContracts      = "list-contracts"
 	QueryListContractByCode = "list-contracts-by-code"
 	QueryGetContract        = "contract-info"
 	QueryGetContractState   = "contract-state"
@@ -28,6 +27,13 @@ const (
 	QueryMethodContractStateRaw   = "raw"
 )
 
+// ContractInfoWithAddress adds the address (key) to the ContractInfo representation
+type ContractInfoWithAddress struct {
+	// embedded here, so all json items remain top level
+	*types.ContractInfo
+	Address sdk.AccAddress `json:"address"`
+}
+
 // controls error output on querier - set true when testing/debugging
 const debug = false
 
@@ -37,8 +43,6 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case QueryGetContract:
 			return queryContractInfo(ctx, path[1], req, keeper)
-		case QueryListContracts:
-			return queryContractList(ctx, req, keeper)
 		case QueryListContractByCode:
 			return queryContractListByCode(ctx, path[1], req, keeper)
 		case QueryGetContractState:
@@ -62,25 +66,16 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 	info := keeper.GetContractInfo(ctx, addr)
+	infoWithAddress := ContractInfoWithAddress{
+		Address:      addr,
+		ContractInfo: info,
+	}
 
-	bz, err := json.MarshalIndent(info, "", "  ")
+	bz, err := json.MarshalIndent(infoWithAddress, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	return bz, nil
-}
-
-func queryContractList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
-	var addrs []string
-	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
-		addrs = append(addrs, addr.String())
-		return false
-	})
-	sort.Strings(addrs)
-	bz, err := json.MarshalIndent(addrs, "", "  ")
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
+	fmt.Println(string(bz))
 	return bz, nil
 }
 
@@ -90,10 +85,17 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 		return nil, err
 	}
 
-	var contracts []types.ContractInfo
+	var contracts []ContractInfoWithAddress
 	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
 		if info.CodeID == codeID {
-			contracts = append(contracts, info)
+			// remove init message on list
+			info.InitMsg = nil
+			// and add the address
+			infoWithAddress := ContractInfoWithAddress{
+				Address:      addr,
+				ContractInfo: &info,
+			}
+			contracts = append(contracts, infoWithAddress)
 		}
 		return false
 	})
