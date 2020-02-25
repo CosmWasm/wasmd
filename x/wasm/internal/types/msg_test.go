@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -99,6 +100,96 @@ func TestStoreCodeValidation(t *testing.T) {
 				WASMByteCode: []byte("foo"),
 				Builder:      "cosmwasm-opt:0.6.2",
 				Source:       "/api/download-ss",
+			},
+			valid: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+
+}
+
+func TestInstantiateContractValidation(t *testing.T) {
+	badAddress, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20))
+
+	cases := map[string]struct {
+		msg   MsgInstantiateContract
+		valid bool
+	}{
+		"empty": {
+			msg:   MsgInstantiateContract{},
+			valid: false,
+		},
+		"correct minimal": {
+			msg: MsgInstantiateContract{
+				Sender:  goodAddress,
+				Code:    1,
+				Label:   "foo",
+				InitMsg: []byte("{}"),
+			},
+			valid: true,
+		},
+		"missing code": {
+			msg: MsgInstantiateContract{
+				Sender:  goodAddress,
+				Label:   "foo",
+				InitMsg: []byte("{}"),
+			},
+			valid: false,
+		},
+		"missing label": {
+			msg: MsgInstantiateContract{
+				Sender:  goodAddress,
+				InitMsg: []byte("{}"),
+			},
+			valid: false,
+		},
+		"label too long": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				Label:  strings.Repeat("food", 33),
+			},
+			valid: false,
+		},
+		"bad sender minimal": {
+			msg: MsgInstantiateContract{
+				Sender:  badAddress,
+				Code:    1,
+				Label:   "foo",
+				InitMsg: []byte("{}"),
+			},
+			valid: false,
+		},
+		"correct maximal": {
+			msg: MsgInstantiateContract{
+				Sender:    goodAddress,
+				Code:      1,
+				Label:     "foo",
+				InitMsg:   []byte(`{"some": "data"}`),
+				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+			},
+			valid: true,
+		},
+		"negative funds": {
+			msg: MsgInstantiateContract{
+				Sender:  goodAddress,
+				Code:    1,
+				Label:   "foo",
+				InitMsg: []byte(`{"some": "data"}`),
+				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
+				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
 			},
 			valid: false,
 		},
