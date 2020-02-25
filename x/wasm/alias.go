@@ -23,6 +23,7 @@ const (
 	QueryGetContractState         = keeper.QueryGetContractState
 	QueryGetCode                  = keeper.QueryGetCode
 	QueryListCode                 = keeper.QueryListCode
+	QueryListContractByCode       = keeper.QueryListContractByCode
 	QueryMethodContractStateSmart = keeper.QueryMethodContractStateSmart
 	QueryMethodContractStateAll   = keeper.QueryMethodContractStateAll
 	QueryMethodContractStateRaw   = keeper.QueryMethodContractStateRaw
@@ -76,9 +77,9 @@ type (
 	Model                   = types.Model
 	CodeInfo                = types.CodeInfo
 	ContractInfo            = types.ContractInfo
-	ContractInfoWithAddress = types.ContractInfoWithAddress
 	WasmConfig              = types.WasmConfig
 	Keeper                  = keeper.Keeper
+	ContractInfoWithAddress = keeper.ContractInfoWithAddress
 	GetCodeResponse         = keeper.GetCodeResponse
 	ListCodeResponse        = keeper.ListCodeResponse
 )
