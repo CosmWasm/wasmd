@@ -152,6 +152,14 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	require.Equal(t, uint64(28936), gasAfter-gasBefore)
+
+	// ensure it is stored properly
+	info := keeper.GetContractInfo(ctx, addr)
+	require.NotNil(t, info)
+	assert.Equal(t, info.Creator, creator)
+	assert.Equal(t, info.CodeID, contractID)
+	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
+	assert.Equal(t, info.Label, "demo contract 1")
 }
 
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
