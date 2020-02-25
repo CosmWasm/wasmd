@@ -43,6 +43,7 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 type ContractInfo struct {
 	CodeID  uint64          `json:"code_id"`
 	Creator sdk.AccAddress  `json:"creator"`
+	Label   string          `json:"label"`
 	InitMsg json.RawMessage `json:"init_msg"`
 }
 
@@ -78,11 +79,12 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte) ContractInfo {
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string) ContractInfo {
 	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,
 		InitMsg: initMsg,
+		Label:   label,
 	}
 }
 
