@@ -48,8 +48,8 @@ type ContractInfo struct {
 }
 
 // NewParams initializes params for a contract instance
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Params {
-	return wasmTypes.Params{
+func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
+	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
 			Time:    ctx.BlockTime().Unix(),
@@ -88,11 +88,27 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 	}
 }
 
+const CustomEventType = "wasm"
+const AttributeKeyContractAddr = "contract_address"
+
 // CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
+func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
+	var events []sdk.Event
+	if len(wasmResult.Log) > 0 {
+		// we always tag with the contract address issuing this event
+		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
+		for _, l := range wasmResult.Log {
+			// and reserve the contract_address key for our use (not contract)
+			if l.Key != AttributeKeyContractAddr {
+				attr := sdk.NewAttribute(l.Key, l.Value)
+				attrs = append(attrs, attr)
+			}
+		}
+		events = []sdk.Event{sdk.NewEvent(CustomEventType, attrs...)}
+	}
 	return sdk.Result{
-		Data: []byte(wasmResult.Data),
-		Log:  wasmResult.Log,
+		Data:   []byte(wasmResult.Data),
+		Events: events,
 	}
 }
 

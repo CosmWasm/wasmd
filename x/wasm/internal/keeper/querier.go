@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,7 +74,6 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	fmt.Println(string(bz))
 	return bz, nil
 }
 

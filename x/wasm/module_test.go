@@ -17,6 +17,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 )
@@ -169,6 +170,10 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
+	// this should be standard x/wasm init event, nothing from contract
+	require.Equal(t, 1, len(res.Events), prettyEvents(res.Events))
+	assert.Equal(t, "message", res.Events[0].Type)
+	assertAttribute(t, "module", "wasm", res.Events[0].Attributes[0])
 
 	assertCodeList(t, q, data.ctx, 1)
 	assertCodeBytes(t, q, data.ctx, 1, testContract)
@@ -220,6 +225,14 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
+	// this should be standard x/wasm init event, plus a bank send event (2), with no custom contract events
+	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
+	assert.Equal(t, "transfer", res.Events[0].Type)
+	// second part of bank transfer event... FIXME
+	assert.Equal(t, "message", res.Events[1].Type)
+	assertAttribute(t, "sender", creator.String(), res.Events[1].Attributes[0])
+	assert.Equal(t, "message", res.Events[2].Type)
+	assertAttribute(t, "module", "wasm", res.Events[2].Attributes[0])
 
 	// ensure bob doesn't exist
 	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
@@ -244,6 +257,21 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
+	// this should be standard x/wasm init event, plus 2 bank send event, plus a special event from the contract
+	require.Equal(t, 5, len(res.Events), prettyEvents(res.Events))
+	assert.Equal(t, "transfer", res.Events[0].Type)
+	// second part of bank transfer event... FIXME
+	assert.Equal(t, "message", res.Events[1].Type)
+	assertAttribute(t, "sender", fred.String(), res.Events[1].Attributes[0])
+	// custom contract event
+	assert.Equal(t, "wasm", res.Events[2].Type)
+	assertAttribute(t, "contract_address", contractAddr.String(), res.Events[2].Attributes[0])
+	assertAttribute(t, "action", "release", res.Events[2].Attributes[1])
+	// second transfer (this without conflicting message)
+	assert.Equal(t, "transfer", res.Events[3].Type)
+	// finally, standard x/wasm tag
+	assert.Equal(t, "message", res.Events[4].Type)
+	assertAttribute(t, "module", "wasm", res.Events[4].Attributes[0])
 
 	// ensure bob now exists and got both payments released
 	bobAcct = data.acctKeeper.GetAccount(data.ctx, bob)
@@ -347,6 +375,43 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	// 	Beneficiary: bob.String(),
 	// 	Funder:      creator.String(),
 	// })
+}
+
+type prettyEvent struct {
+	Type string
+	Attr []sdk.Attribute
+}
+
+func prettyEvents(evts sdk.Events) string {
+	res := make([]prettyEvent, len(evts))
+	for i, e := range evts {
+		res[i] = prettyEvent{
+			Type: e.Type,
+			Attr: prettyAttrs(e.Attributes),
+		}
+	}
+	bz, err := json.MarshalIndent(res, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(bz)
+}
+
+func prettyAttrs(attrs []kv.Pair) []sdk.Attribute {
+	pretty := make([]sdk.Attribute, len(attrs))
+	for i, a := range attrs {
+		pretty[i] = prettyAttr(a)
+	}
+	return pretty
+}
+
+func prettyAttr(attr kv.Pair) sdk.Attribute {
+	return sdk.NewAttribute(string(attr.Key), string(attr.Value))
+}
+
+func assertAttribute(t *testing.T, key string, value string, attr kv.Pair) {
+	assert.Equal(t, key, string(attr.Key), prettyAttr(attr))
+	assert.Equal(t, value, string(attr.Value), prettyAttr(attr))
 }
 
 func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum int) {
