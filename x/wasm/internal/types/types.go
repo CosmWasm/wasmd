@@ -45,6 +45,16 @@ type ContractInfo struct {
 	Creator sdk.AccAddress  `json:"creator"`
 	Label   string          `json:"label"`
 	InitMsg json.RawMessage `json:"init_msg"`
+	// never show this in query results, just use for sorting
+	Created CreatedAt `json:"-"`
+}
+
+// CreatedAt can be used to sort contracts
+type CreatedAt struct {
+	// BlockHeight is the block the contract was created at
+	BlockHeight int64
+	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
+	TxIndex uint64
 }
 
 // NewParams initializes params for a contract instance
