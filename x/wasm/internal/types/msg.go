@@ -93,7 +93,7 @@ type MsgInstantiateContract struct {
 	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
 	Label     string          `json:"label" yaml:"label"`
-	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
+	InitMsg   json.RawMessage `json:"init_msg,omitempty" yaml:"init_msg"`
 	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
 }
 

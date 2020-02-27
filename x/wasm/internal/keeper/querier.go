@@ -65,11 +65,14 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 	info := keeper.GetContractInfo(ctx, addr)
+	if info == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, bech)
+	}
+
 	infoWithAddress := ContractInfoWithAddress{
 		Address:      addr,
 		ContractInfo: info,
 	}
-
 	bz, err := json.MarshalIndent(infoWithAddress, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
