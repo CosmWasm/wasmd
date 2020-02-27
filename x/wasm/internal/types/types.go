@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
-	kv "github.com/tendermint/tendermint/libs/kv"
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,23 +88,23 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 	}
 }
 
+const CustomEventType = "wasm"
+const AttributeKeyContractAddr = "contract_address"
+
 // CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
-	// TODO: bring in events
+func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
 	var events []sdk.Event
 	if len(wasmResult.Log) > 0 {
-		var attrs []kv.Pair
+		// we always tag with the contract address issuing this event
+		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
 		for _, l := range wasmResult.Log {
-			attr := kv.Pair{
-				Key:   []byte(l.Key),
-				Value: []byte(l.Value),
+			// and reserve the contract_address key for our use (not contract)
+			if l.Key != AttributeKeyContractAddr {
+				attr := sdk.NewAttribute(l.Key, l.Value)
+				attrs = append(attrs, attr)
 			}
-			attrs = append(attrs, attr)
 		}
-		events = sdk.Events{{
-			Type:       "wasm",
-			Attributes: attrs,
-		}}
+		events = []sdk.Event{sdk.NewEvent(CustomEventType, attrs...)}
 	}
 	return sdk.Result{
 		Data:   []byte(wasmResult.Data),

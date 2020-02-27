@@ -106,6 +106,6 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 		),
 	)
 
-	res.Events = append(res.Events, ctx.EventManager().Events()...)
+	res.Events = ctx.EventManager().Events()
 	return &res, nil
 }

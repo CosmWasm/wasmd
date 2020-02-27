@@ -17,6 +17,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/libs/kv"
 
 	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
 )
@@ -169,6 +170,8 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
+	// this should be standard x/wasm init event, nothing from contract
+	assert.Equal(t, 0, len(res.Events), prettyEvents(res.Events))
 
 	assertCodeList(t, q, data.ctx, 1)
 	assertCodeBytes(t, q, data.ctx, 1, testContract)
@@ -220,6 +223,8 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
+	// this should be standard x/wasm init event, plus a bank send event, with no custom contract events
+	assert.Equal(t, 2, len(res.Events), prettyEvents(res.Events))
 
 	// ensure bob doesn't exist
 	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
@@ -244,6 +249,8 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
+	// this should be standard x/wasm init event, plus a bank send event, plus a special event from the contract
+	assert.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
 
 	// ensure bob now exists and got both payments released
 	bobAcct = data.acctKeeper.GetAccount(data.ctx, bob)
@@ -347,6 +354,34 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	// 	Beneficiary: bob.String(),
 	// 	Funder:      creator.String(),
 	// })
+}
+
+type prettyEvent struct {
+	Type string
+	Attr []sdk.Attribute
+}
+
+func prettyEvents(evts sdk.Events) string {
+	res := make([]prettyEvent, len(evts))
+	for i, e := range evts {
+		res[i] = prettyEvent{
+			Type: e.Type,
+			Attr: prettyAttrs(e.Attributes),
+		}
+	}
+	bz, err := json.MarshalIndent(res, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(bz)
+}
+
+func prettyAttrs(attrs []kv.Pair) []sdk.Attribute {
+	pretty := make([]sdk.Attribute, len(attrs))
+	for i, a := range attrs {
+		pretty[i] = sdk.NewAttribute(string(a.Key), string(a.Value))
+	}
+	return pretty
 }
 
 func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum int) {

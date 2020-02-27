@@ -19,8 +19,9 @@ lru_size = 0
 
 A number of events are returned to allow good indexing of the transactions from smart contracts.
 
-Every call to Init or Execute will be tagged with the info on the contract that was executed and who executed it.
-It should look something like this (with different addresses). The module is always wasm.
+Every call to Instantiate or Execute will be tagged with the info on the contract that was executed and who executed it.
+It should look something like this (with different addresses). The module is always `wasm`, and `code_id` is only present
+when Instantiating a contract, so you can subscribe to new instances, it is omitted on Execute:
 
 ```json
 {
@@ -78,15 +79,20 @@ This is actually not very ergonomic, as the "sender" (account that sent the fund
 events, and this may cause confusion, especially if the sender moves funds to the contract and the contract to another recipient in the
 same transaction.
 
-Finally, the contract itself can emit a "custom event". One per contract, so if one contract calls a second contract, you may receive
-one event for the original contract and one for the re-invoked contract. They are all tagged with the contract address that emitted this
-event (which the contract cannot override). Here is an example from the escrow contract successfully releasing funds to the destination
-address.
+Finally, the contract itself can emit a "custom event" on Execute only (not on Init).
+There is one event per contract, so if one contract calls a second contract, you may receive
+one event for the original contract and one for the re-invoked contract. All attributes from the contract are passed through verbatim,
+and we add a `contract_address` attribute that contains the actual contract that emitted that event.
+Here is an example from the escrow contract successfully releasing funds to the destination address:
 
 ```json
 {
     "Type": "wasm",
     "Attr": [
+        {
+            "key": "contract_address",
+            "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+        },
         {
             "key": "action",
             "value": "release"
