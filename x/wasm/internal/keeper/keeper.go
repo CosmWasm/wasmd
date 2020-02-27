@@ -151,9 +151,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 
 	// persist instance
-
-	instance := types.NewContractInfo(codeID, creator, initMsg, label, types.NewCreatedAt(ctx))
-	// 0x02 | contractAddress (sdk.AccAddress) -> Instance
+	createdAt := types.NewCreatedAt(ctx)
+	instance := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 
 	return contractAddress, nil

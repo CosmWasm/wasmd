@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -100,6 +101,16 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 		}
 		return false
 	})
+
+	// now we sort them by CreatedAt
+	sort.Slice(contracts, func(i, j int) bool {
+		return contracts[i].ContractInfo.Created.LessThan(contracts[j].ContractInfo.Created)
+	})
+	// and remove that info for the final json (yes, the json:"-" tag doesn't work)
+	for i := range contracts {
+		contracts[i].Created = nil
+	}
+
 	bz, err := json.MarshalIndent(contracts, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())

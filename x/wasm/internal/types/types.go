@@ -44,9 +44,10 @@ type ContractInfo struct {
 	CodeID  uint64          `json:"code_id"`
 	Creator sdk.AccAddress  `json:"creator"`
 	Label   string          `json:"label"`
-	InitMsg json.RawMessage `json:"init_msg"`
+	InitMsg json.RawMessage `json:"init_msg,omitempty"`
 	// never show this in query results, just use for sorting
-	Created CreatedAt `json:"-"`
+	// (Note: when using json tag "-" amino refused to serialize it...)
+	Created *CreatedAt `json:"created,omitempty"`
 }
 
 // CreatedAt can be used to sort contracts
@@ -57,22 +58,33 @@ type CreatedAt struct {
 	TxIndex uint64
 }
 
+// LessThan can be used to sort
+func (a *CreatedAt) LessThan(b *CreatedAt) bool {
+	if a == nil {
+		return true
+	}
+	if b == nil {
+		return false
+	}
+	return a.BlockHeight < b.BlockHeight || (a.BlockHeight == b.BlockHeight && a.TxIndex < b.TxIndex)
+}
+
 // NewCreatedAt gets a timestamp from the context
-func NewCreatedAt(ctx sdk.Context) CreatedAt {
+func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 	// we must safely handle nil gas meters
 	var index uint64
 	meter := ctx.BlockGasMeter()
 	if meter != nil {
 		index = meter.GasConsumed()
 	}
-	return CreatedAt{
+	return &CreatedAt{
 		BlockHeight: ctx.BlockHeight(),
 		TxIndex:     index,
 	}
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt CreatedAt) ContractInfo {
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
 	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,
