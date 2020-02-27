@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
+	kv "github.com/tendermint/tendermint/libs/kv"
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,8 +49,8 @@ type ContractInfo struct {
 }
 
 // NewParams initializes params for a contract instance
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Params {
-	return wasmTypes.Params{
+func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
+	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
 			Time:    ctx.BlockTime().Unix(),
@@ -90,9 +91,25 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 
 // CosmosResult converts from a Wasm Result type
 func CosmosResult(wasmResult wasmTypes.Result) sdk.Result {
+	// TODO: bring in events
+	var events []sdk.Event
+	if len(wasmResult.Log) > 0 {
+		var attrs []kv.Pair
+		for _, l := range wasmResult.Log {
+			attr := kv.Pair{
+				Key:   []byte(l.Key),
+				Value: []byte(l.Value),
+			}
+			attrs = append(attrs, attr)
+		}
+		events = sdk.Events{{
+			Type:       "wasm",
+			Attributes: attrs,
+		}}
+	}
 	return sdk.Result{
-		Data: []byte(wasmResult.Data),
-		Log:  wasmResult.Log,
+		Data:   []byte(wasmResult.Data),
+		Events: events,
 	}
 }
 

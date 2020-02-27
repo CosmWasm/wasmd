@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"encoding/base64"
-
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +15,7 @@ func ToOpaqueMsg(cdc *codec.Codec, msg sdk.Msg) (*wasmTypes.OpaqueMsg, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	res := &wasmTypes.OpaqueMsg{
-		Data: base64.StdEncoding.EncodeToString(opaqueBz),
+		Data: opaqueBz,
 	}
 	return res, nil
 }
@@ -26,22 +24,15 @@ func ToOpaqueMsg(cdc *codec.Codec, msg sdk.Msg) (*wasmTypes.OpaqueMsg, error) {
 // it then decodes to an sdk.Msg using amino json encoding.
 func ParseOpaqueMsg(cdc *codec.Codec, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error) {
 	// until more is changes, format is amino json encoding, wrapped base64
-	bz, err := base64.StdEncoding.DecodeString(msg.Data)
-	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrTxDecode, err.Error())
-	}
 	var sdkmsg sdk.Msg
-	err = cdc.UnmarshalJSON(bz, &sdkmsg)
+	err := cdc.UnmarshalJSON(msg.Data, &sdkmsg)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	return sdkmsg, nil
 }
 
-func EncodeCosmosMsgContract(raw string) string {
-	return base64.StdEncoding.EncodeToString([]byte(raw))
-}
-
-func DecodeCosmosMsgContract(encoded string) ([]byte, error) {
-	return base64.StdEncoding.DecodeString(encoded)
+// TODO: remove
+func EncodeCosmosMsgContract(raw string) []byte {
+	return []byte(raw)
 }
