@@ -92,7 +92,7 @@ func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 type MsgInstantiateContract struct {
 	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
-	Label     string          `json:"string" yaml:"string"`
+	Label     string          `json:"label" yaml:"label"`
 	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
 	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
 }
