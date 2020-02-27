@@ -33,7 +33,7 @@ when Instantiating a contract, so you can subscribe to new instances, it is omit
         },
         {
             "key": "signer",
-            "value": "cosmos1qua29gv7fqy46q6rnwn66mw35shu7rq80p2hth"
+            "value": "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
         },
         {
             "key": "code_id",
@@ -44,40 +44,42 @@ when Instantiating a contract, so you can subscribe to new instances, it is omit
             "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
         }
     ]
-}
-```
+}```
 
 If any funds were transferred to the contract as part of the message, or if the contract released funds as part of it's executions,
-it will receive the typical events associated with sending tokens from bank:
+it will receive the typical events associated with sending tokens from bank. In this case, we instantiate the contract and
+provide a initial balance in the same `MsgInstantiateContract`. We see the following events in addition to the above one:
 
 ```json
-{
-    "Type": "transfer",
-    "Attr": [
-        {
-            "key": "recipient",
-            "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5 /* this is who got the funds */"
-        },
-        {
-            "key": "amount",
-            "value": "100000denom"
-        }
-    ]
+[
+    {
+        "Type": "transfer",
+        "Attr": [
+            {
+                "key": "recipient",
+                "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+            },
+            {
+                "key": "amount",
+                "value": "100000denom"
+            }
+        ]
     },
     {
-    "Type": "message",
-    "Attr": [
-        {
-            "key": "sender",
-            "value": "cosmos18kwmngcpvrdl8dwmwjgncfwskxs3wtge2tgpdr /* this is who sent the funds */"
-        }
-    ]
-}
+        "Type": "message",
+        "Attr": [
+            {
+                "key": "sender",
+                "value": "cosmos1ffnqn02ft2psvyv4dyr56nnv6plllf9pm2kpmv"
+            }
+        ]
+    }
+]
 ```
 
 This is actually not very ergonomic, as the "sender" (account that sent the funds) is separated from the actual transfer as two separate
 events, and this may cause confusion, especially if the sender moves funds to the contract and the contract to another recipient in the
-same transaction.
+same transaction. However, this format comes from `x/bank`, so we would have make a few more changes to our cosmos-sdk fork to simplify this.
 
 Finally, the contract itself can emit a "custom event" on Execute only (not on Init).
 There is one event per contract, so if one contract calls a second contract, you may receive
@@ -99,7 +101,7 @@ Here is an example from the escrow contract successfully releasing funds to the 
         },
         {
             "key": "destination",
-            "value": "cosmos1nrskytrh6ce26zk8zqgh6gtmzrc22kd95ljkqp"
+            "value": "cosmos14k7v7ms4jxkk2etmg9gljxjm4ru3qjdugfsflq"
         }
     ]
 }
@@ -108,11 +110,88 @@ Here is an example from the escrow contract successfully releasing funds to the 
 ### Pulling this all together
 
 We will invoke an escrow contract to release to the designated beneficiary.
-We send `5000denom` along with the `MsgExecuteContract` and the contract releases `` to the beneficiary.
-We will see all the following events:
+The escrow was previously loaded with `100000denom` (from the above example).
+In this transaction, we send `5000denom` along with the `MsgExecuteContract`
+and the contract releases the entire funds (`105000denom`) to the beneficiary.
+
+We will see all the following events, where you should be able to reconstruct the actions
+(remember there are two events for each transfer). We see (1) the initial transfer of funds
+to the contract, (2) the contract custom event that it released funds (3) the transfer of funds
+from the contract to the beneficiary and (4) the generic x/wasm event stating that the contract
+was executed (which always appears, while 2 is optional and has information as reliable as the contract):
 
 ```json
-"TODO"
+[
+    {
+        "Type": "transfer",
+        "Attr": [
+            {
+                "key": "recipient",
+                "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+            },
+            {
+                "key": "amount",
+                "value": "5000denom"
+            }
+        ]
+    },
+    {
+        "Type": "message",
+        "Attr": [
+            {
+                "key": "sender",
+                "value": "cosmos1zm074khx32hqy20hlshlsd423n07pwlu9cpt37"
+            }
+        ]
+    },
+    {
+        "Type": "wasm",
+        "Attr": [
+            {
+                "key": "contract_address",
+                "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+            },
+            {
+                "key": "action",
+                "value": "release"
+            },
+            {
+                "key": "destination",
+                "value": "cosmos14k7v7ms4jxkk2etmg9gljxjm4ru3qjdugfsflq"
+            }
+        ]
+    },
+    {
+        "Type": "transfer",
+        "Attr": [
+            {
+                "key": "recipient",
+                "value": "cosmos14k7v7ms4jxkk2etmg9gljxjm4ru3qjdugfsflq"
+            },
+            {
+                "key": "amount",
+                "value": "105000denom"
+            }
+        ]
+    },
+    {
+        "Type": "message",
+        "Attr": [
+            {
+                "key": "module",
+                "value": "wasm"
+            },
+            {
+                "key": "signer",
+                "value": "cosmos1zm074khx32hqy20hlshlsd423n07pwlu9cpt37"
+            },
+            {
+                "key": "contract_address",
+                "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+            }
+        ]
+    }
+]
 ```
 
 ## Messages
