@@ -200,8 +200,8 @@ TODO
 
 ## CLI
 
-TODO
+TODO - working, but not the nicest interface (json + bash = bleh). Use to upload, but I suggest to focus on frontend / js tooling
 
 ## Rest
 
-TODO
+TODO - main supported interface, under rapid change
