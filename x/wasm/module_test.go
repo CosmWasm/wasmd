@@ -226,13 +226,10 @@ func TestHandleExecute(t *testing.T) {
 	contractAddr := sdk.AccAddress(res.Data)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 	// this should be standard x/wasm init event, plus a bank send event (2), with no custom contract events
-	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
+	require.Equal(t, 2, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "transfer", res.Events[0].Type)
-	// second part of bank transfer event... FIXME
 	assert.Equal(t, "message", res.Events[1].Type)
-	assertAttribute(t, "sender", creator.String(), res.Events[1].Attributes[0])
-	assert.Equal(t, "message", res.Events[2].Type)
-	assertAttribute(t, "module", "wasm", res.Events[2].Attributes[0])
+	assertAttribute(t, "module", "wasm", res.Events[1].Attributes[0])
 
 	// ensure bob doesn't exist
 	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
@@ -258,20 +255,23 @@ func TestHandleExecute(t *testing.T) {
 	res, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
 	// this should be standard x/wasm init event, plus 2 bank send event, plus a special event from the contract
-	require.Equal(t, 5, len(res.Events), prettyEvents(res.Events))
+	require.Equal(t, 4, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "transfer", res.Events[0].Type)
-	// second part of bank transfer event... FIXME
-	assert.Equal(t, "message", res.Events[1].Type)
-	assertAttribute(t, "sender", fred.String(), res.Events[1].Attributes[0])
+	assertAttribute(t, "recipient", contractAddr.String(), res.Events[0].Attributes[0])
+	assertAttribute(t, "sender", fred.String(), res.Events[0].Attributes[1])
+	assertAttribute(t, "amount", "5000denom", res.Events[0].Attributes[2])
 	// custom contract event
-	assert.Equal(t, "wasm", res.Events[2].Type)
-	assertAttribute(t, "contract_address", contractAddr.String(), res.Events[2].Attributes[0])
-	assertAttribute(t, "action", "release", res.Events[2].Attributes[1])
+	assert.Equal(t, "wasm", res.Events[1].Type)
+	assertAttribute(t, "contract_address", contractAddr.String(), res.Events[1].Attributes[0])
+	assertAttribute(t, "action", "release", res.Events[1].Attributes[1])
 	// second transfer (this without conflicting message)
-	assert.Equal(t, "transfer", res.Events[3].Type)
+	assert.Equal(t, "transfer", res.Events[2].Type)
+	assertAttribute(t, "recipient", bob.String(), res.Events[2].Attributes[0])
+	assertAttribute(t, "sender", contractAddr.String(), res.Events[2].Attributes[1])
+	assertAttribute(t, "amount", "105000denom", res.Events[2].Attributes[2])
 	// finally, standard x/wasm tag
-	assert.Equal(t, "message", res.Events[4].Type)
-	assertAttribute(t, "module", "wasm", res.Events[4].Attributes[0])
+	assert.Equal(t, "message", res.Events[3].Type)
+	assertAttribute(t, "module", "wasm", res.Events[3].Attributes[0])
 
 	// ensure bob now exists and got both payments released
 	bobAcct = data.acctKeeper.GetAccount(data.ctx, bob)
