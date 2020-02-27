@@ -173,7 +173,7 @@ func TestHandleInstantiate(t *testing.T) {
 	assertCodeList(t, q, data.ctx, 1)
 	assertCodeBytes(t, q, data.ctx, 1, testContract)
 
-	assertContractList(t, q, data.ctx, []string{contractAddr.String()})
+	assertContractList(t, q, data.ctx, 1, []string{contractAddr.String()})
 	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
 	assertContractState(t, q, data.ctx, contractAddr, state{
 		Verifier:    []byte(fred),
@@ -260,7 +260,7 @@ func TestHandleExecute(t *testing.T) {
 	assertCodeList(t, q, data.ctx, 1)
 	assertCodeBytes(t, q, data.ctx, 1, testContract)
 
-	assertContractList(t, q, data.ctx, []string{contractAddr.String()})
+	assertContractList(t, q, data.ctx, 1, []string{contractAddr.String()})
 	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
 	assertContractState(t, q, data.ctx, contractAddr, state{
 		Verifier:    []byte(fred),
@@ -382,8 +382,8 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 	assert.Equal(t, expectedBytes, res.Code)
 }
 
-func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []string) {
-	bz, sdkerr := q(ctx, []string{QueryListContracts}, abci.RequestQuery{})
+func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, addrs []string) {
+	bz, sdkerr := q(ctx, []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
 	if len(bz) == 0 {
@@ -391,11 +391,16 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, addrs []st
 		return
 	}
 
-	var res []string
+	var res []ContractInfoWithAddress
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 
-	assert.Equal(t, addrs, res)
+	var hasAddrs = make([]string, len(res))
+	for i, r := range res {
+		hasAddrs[i] = r.Address.String()
+	}
+
+	assert.Equal(t, hasAddrs, addrs)
 }
 
 func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.AccAddress, expected state) {
