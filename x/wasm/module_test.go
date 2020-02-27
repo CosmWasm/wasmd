@@ -260,6 +260,9 @@ func TestHandleExecute(t *testing.T) {
 	// this should be standard x/wasm init event, plus 2 bank send event, plus a special event from the contract
 	require.Equal(t, 5, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "transfer", res.Events[0].Type)
+	assertAttribute(t, "recipient", contractAddr.String(), res.Events[0].Attributes[0])
+	assertAttribute(t, "sender", fred.String(), res.Events[0].Attributes[1])
+	assertAttribute(t, "amount", "5000denom", res.Events[0].Attributes[2])
 	// second part of bank transfer event... FIXME
 	assert.Equal(t, "message", res.Events[1].Type)
 	assertAttribute(t, "sender", fred.String(), res.Events[1].Attributes[0])
@@ -269,6 +272,9 @@ func TestHandleExecute(t *testing.T) {
 	assertAttribute(t, "action", "release", res.Events[2].Attributes[1])
 	// second transfer (this without conflicting message)
 	assert.Equal(t, "transfer", res.Events[3].Type)
+	assertAttribute(t, "recipient", bob.String(), res.Events[3].Attributes[0])
+	assertAttribute(t, "sender", contractAddr.String(), res.Events[3].Attributes[1])
+	assertAttribute(t, "amount", "105000denom", res.Events[3].Attributes[2])
 	// finally, standard x/wasm tag
 	assert.Equal(t, "message", res.Events[4].Type)
 	assertAttribute(t, "module", "wasm", res.Events[4].Attributes[0])
