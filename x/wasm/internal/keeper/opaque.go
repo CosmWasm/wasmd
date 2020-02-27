@@ -7,21 +7,22 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// ToOpaqueMsg encodes the msg using amino json encoding.
-// Then it wraps it in base64 to make a string to include in OpaqueMsg
-func ToOpaqueMsg(cdc *codec.Codec, msg sdk.Msg) (*wasmTypes.OpaqueMsg, error) {
+// ToCosmosMsg encodes an sdk msg using amino json encoding.
+// Then wraps it as an opaque message
+func ToCosmosMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
 	opaqueBz, err := cdc.MarshalJSON(msg)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	res := &wasmTypes.OpaqueMsg{
-		Data: opaqueBz,
+	res := wasmTypes.CosmosMsg{
+		Opaque: &wasmTypes.OpaqueMsg{
+			Data: opaqueBz,
+		},
 	}
 	return res, nil
 }
 
-// ParseOpaqueMsg parses msg.Data as a base64 string
-// it then decodes to an sdk.Msg using amino json encoding.
+// ParseOpaqueMsg decodes msg.Data to an sdk.Msg using amino json encoding.
 func ParseOpaqueMsg(cdc *codec.Codec, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error) {
 	// until more is changes, format is amino json encoding, wrapped base64
 	var sdkmsg sdk.Msg
@@ -30,9 +31,4 @@ func ParseOpaqueMsg(cdc *codec.Codec, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	return sdkmsg, nil
-}
-
-// TODO: remove
-func EncodeCosmosMsgContract(raw string) []byte {
-	return []byte(raw)
 }
