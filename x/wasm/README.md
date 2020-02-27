@@ -44,7 +44,8 @@ when Instantiating a contract, so you can subscribe to new instances, it is omit
             "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
         }
     ]
-}```
+}
+```
 
 If any funds were transferred to the contract as part of the message, or if the contract released funds as part of it's executions,
 it will receive the typical events associated with sending tokens from bank. In this case, we instantiate the contract and
