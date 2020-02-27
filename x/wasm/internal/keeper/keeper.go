@@ -420,12 +420,8 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg 
 	if err != nil {
 		return err
 	}
-	// redispatch all events, except for type sdk.EventTypeMessage (we just want our original type)
-	for _, evt := range res.Events {
-		if evt.Type != sdk.EventTypeMessage {
-			ctx.EventManager().EmitEvent(evt)
-		}
-	}
+	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
+	ctx.EventManager().EmitEvents(res.Events)
 
 	return nil
 }
