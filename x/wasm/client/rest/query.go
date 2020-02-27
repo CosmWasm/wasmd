@@ -41,7 +41,7 @@ func listCodesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, json.RawMessage(res))
 	}
 }
 
@@ -106,7 +106,7 @@ func listContractsByCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, json.RawMessage(res))
 	}
 }
 
@@ -130,7 +130,7 @@ func queryContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, json.RawMessage(res))
 	}
 }
 
