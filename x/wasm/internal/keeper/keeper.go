@@ -81,9 +81,9 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	contractInfo := types.NewCodeInfo(codeHash, creator, source, builder)
+	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
 	// 0x01 | codeID (uint64) -> ContractInfo
-	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(contractInfo))
+	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 
 	return codeID, nil
 }
@@ -151,7 +151,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 
 	// persist instance
-	instance := types.NewContractInfo(codeID, creator, initMsg, label)
+
+	instance := types.NewContractInfo(codeID, creator, initMsg, label, types.NewCreatedAt(ctx))
 	// 0x02 | contractAddress (sdk.AccAddress) -> Instance
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 

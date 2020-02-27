@@ -57,6 +57,31 @@ type CreatedAt struct {
 	TxIndex uint64
 }
 
+// NewCreatedAt gets a timestamp from the context
+func NewCreatedAt(ctx sdk.Context) CreatedAt {
+	// we must safely handle nil gas meters
+	var index uint64
+	meter := ctx.BlockGasMeter()
+	if meter != nil {
+		index = meter.GasConsumed()
+	}
+	return CreatedAt{
+		BlockHeight: ctx.BlockHeight(),
+		TxIndex:     index,
+	}
+}
+
+// NewContractInfo creates a new instance of a given WASM contract info
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt CreatedAt) ContractInfo {
+	return ContractInfo{
+		CodeID:  codeID,
+		Creator: creator,
+		InitMsg: initMsg,
+		Label:   label,
+		Created: createdAt,
+	}
+}
+
 // NewParams initializes params for a contract instance
 func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
 	return wasmTypes.Env{
@@ -86,16 +111,6 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 		wasmCoins = append(wasmCoins, wasmCoin)
 	}
 	return wasmCoins
-}
-
-// NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string) ContractInfo {
-	return ContractInfo{
-		CodeID:  codeID,
-		Creator: creator,
-		InitMsg: initMsg,
-		Label:   label,
-	}
 }
 
 const CustomEventType = "wasm"
