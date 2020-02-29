@@ -67,7 +67,7 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 	}
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, bech)
+		return []byte("null"), nil
 	}
 	// redact the Created field (just used for sorting, not part of public API)
 	info.Created = nil
