@@ -444,7 +444,8 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedBytes, res.Code)
+	assert.Equal(t, expectedBytes, res.Data)
+	assert.Equal(t, codeID, res.ID)
 }
 
 func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, addrs []string) {

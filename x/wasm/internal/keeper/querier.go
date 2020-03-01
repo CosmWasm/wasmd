@@ -156,7 +156,9 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 }
 
 type GetCodeResponse struct {
-	Code []byte `json:"code" yaml:"code"`
+	ListCodeResponse
+	// Data is the entire wasm bytecode
+	Data []byte `json:"data" yaml:"data"`
 }
 
 func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
@@ -165,12 +167,25 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "invalid codeID: "+err.Error())
 	}
 
+	res := keeper.GetCodeInfo(ctx, codeID)
+	if res == nil {
+		// nil, nil leads to 404 in rest handler
+		return nil, nil
+	}
+	info := ListCodeResponse{
+		ID:       codeID,
+		Creator:  res.Creator,
+		DataHash: res.CodeHash,
+		Source:   res.Source,
+		Builder:  res.Builder,
+	}
+
 	code, err := keeper.GetByteCode(ctx, codeID)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "loading wasm code")
 	}
 
-	bz, err := json.MarshalIndent(GetCodeResponse{code}, "", "  ")
+	bz, err := json.MarshalIndent(GetCodeResponse{info, code}, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -180,7 +195,7 @@ func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper 
 type ListCodeResponse struct {
 	ID       uint64           `json:"id"`
 	Creator  sdk.AccAddress   `json:"creator"`
-	CodeHash tmbytes.HexBytes `json:"code_hash"`
+	DataHash tmbytes.HexBytes `json:"data_hash"`
 	Source   string           `json:"source"`
 	Builder  string           `json:"builder"`
 }
@@ -198,7 +213,7 @@ func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 		info = append(info, ListCodeResponse{
 			ID:       i,
 			Creator:  res.Creator,
-			CodeHash: res.CodeHash,
+			DataHash: res.CodeHash,
 			Source:   res.Source,
 			Builder:  res.Builder,
 		})

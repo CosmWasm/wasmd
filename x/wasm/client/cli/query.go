@@ -81,7 +81,6 @@ func GetCmdQueryCode(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			if len(res) == 0 {
 				return fmt.Errorf("contract not found")
 			}
@@ -91,12 +90,12 @@ func GetCmdQueryCode(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			if len(code.Code) == 0 {
+			if len(code.Data) == 0 {
 				return fmt.Errorf("contract not found")
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], code.Code, 0644)
+			return ioutil.WriteFile(args[1], code.Data, 0644)
 		},
 	}
 }
