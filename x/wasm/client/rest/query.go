@@ -64,25 +64,13 @@ func queryCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-
 		if len(res) == 0 {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
-			return
-		}
-		var code keeper.GetCodeResponse
-		err = json.Unmarshal(res, &code)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		if len(code.Code) == 0 {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, "contract not found")
+			rest.WriteErrorResponse(w, http.StatusNotFound, "contract not found")
 			return
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, code)
+		rest.PostProcessResponse(w, cliCtx, json.RawMessage(res))
 	}
 }
 
