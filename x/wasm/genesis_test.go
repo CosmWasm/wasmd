@@ -71,7 +71,7 @@ func TestInitGenesis(t *testing.T) {
 		Sender:       creator,
 		WASMByteCode: testContract,
 		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
-		Builder:      "cosmwasm-opt:0.5.2",
+		Builder:      "confio/cosmwasm-opt:0.7.0",
 	}
 	err = msg.ValidateBasic()
 	require.NoError(t, err)

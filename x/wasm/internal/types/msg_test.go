@@ -1,7 +1,6 @@
 package types
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 
@@ -26,9 +25,12 @@ func TestBuilderRegexp(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			ok, err := regexp.MatchString(BuildTagRegexp, tc.example)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.valid, ok)
+			err := validateBuilder(tc.example)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
 		})
 
 	}
