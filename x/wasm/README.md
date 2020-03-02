@@ -21,7 +21,9 @@ A number of events are returned to allow good indexing of the transactions from 
 
 Every call to Instantiate or Execute will be tagged with the info on the contract that was executed and who executed it.
 It should look something like this (with different addresses). The module is always `wasm`, and `code_id` is only present
-when Instantiating a contract, so you can subscribe to new instances, it is omitted on Execute:
+when Instantiating a contract, so you can subscribe to new instances, it is omitted on Execute. There is also an `action` tag
+which is auto-added by the Cosmos SDK and has a value of either `store-code`, `instantiate` or `execute` depending on which message
+was sent:
 
 ```json
 {
@@ -30,6 +32,10 @@ when Instantiating a contract, so you can subscribe to new instances, it is omit
         {
             "key": "module",
             "value": "wasm"
+        },
+        {
+            "key": "action",
+            "value": "instantiate"
         },
         {
             "key": "signer",
@@ -61,26 +67,17 @@ provide a initial balance in the same `MsgInstantiateContract`. We see the follo
                 "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
             },
             {
-                "key": "amount",
-                "value": "100000denom"
-            }
-        ]
-    },
-    {
-        "Type": "message",
-        "Attr": [
-            {
                 "key": "sender",
                 "value": "cosmos1ffnqn02ft2psvyv4dyr56nnv6plllf9pm2kpmv"
+            },
+            {
+                "key": "amount",
+                "value": "100000denom"
             }
         ]
     }
 ]
 ```
-
-This is actually not very ergonomic, as the "sender" (account that sent the funds) is separated from the actual transfer as two separate
-events, and this may cause confusion, especially if the sender moves funds to the contract and the contract to another recipient in the
-same transaction. However, this format comes from `x/bank`, so we would have make a few more changes to our cosmos-sdk fork to simplify this.
 
 Finally, the contract itself can emit a "custom event" on Execute only (not on Init).
 There is one event per contract, so if one contract calls a second contract, you may receive
@@ -131,17 +128,12 @@ was executed (which always appears, while 2 is optional and has information as r
                 "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
             },
             {
-                "key": "amount",
-                "value": "5000denom"
-            }
-        ]
-    },
-    {
-        "Type": "message",
-        "Attr": [
-            {
                 "key": "sender",
                 "value": "cosmos1zm074khx32hqy20hlshlsd423n07pwlu9cpt37"
+            },
+            {
+                "key": "amount",
+                "value": "5000denom"
             }
         ]
     },
@@ -170,6 +162,10 @@ was executed (which always appears, while 2 is optional and has information as r
                 "value": "cosmos14k7v7ms4jxkk2etmg9gljxjm4ru3qjdugfsflq"
             },
             {
+                "key": "sender",
+                "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+            },
+            {
                 "key": "amount",
                 "value": "105000denom"
             }
@@ -183,6 +179,10 @@ was executed (which always appears, while 2 is optional and has information as r
                 "value": "wasm"
             },
             {
+                "key": "action",
+                "value": "execute"
+            },
+            {
                 "key": "signer",
                 "value": "cosmos1zm074khx32hqy20hlshlsd423n07pwlu9cpt37"
             },
@@ -194,6 +194,11 @@ was executed (which always appears, while 2 is optional and has information as r
     }
 ]
 ```
+
+A note on this format. This is what we return from our module. However, it seems to me that many events with the same `Type`
+get merged together somewhere along the stack, so in this case, you *may* end up with one "transfer" event with the info for
+both transfers. Double check when evaluating the event logs, I will document better with more experience, especially when I
+find out the entire path for the events.
 
 ## Messages
 
