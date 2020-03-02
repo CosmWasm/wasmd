@@ -17,7 +17,7 @@ func TestBuilderRegexp(t *testing.T) {
 		"normal":                {"fedora/httpd:version1.0", true},
 		"another valid org":     {"confio/js-builder-1:test", true},
 		"no org name":           {"cosmwasm-opt:0.6.3", false},
-		"invalid trailing char": {"cosmwasm-opt-:0.6.3", false},
+		"invalid trailing char": {"someone/cosmwasm-opt-:0.6.3", false},
 		"invalid leading char":  {"confio/.builder-1:manual", false},
 		"multiple orgs":         {"confio/assembly-script/optimizer:v0.9.1", true},
 		"too long":              {"over-128-character-limit/some-long-sub-path/and-yet-another-long-name/testtesttesttesttesttesttest/foobarfoobar/foobarfoobar:randomstringrandomstringrandomstringrandomstring", false},
