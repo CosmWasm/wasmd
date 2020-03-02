@@ -15,8 +15,10 @@ const (
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
 
-	// BuildTagRegexp is a docker image regexp. We remove support for non-standard registries for simplicity.
-	// https://docs.docker.com/engine/reference/commandline/tag/#extended-description
+	// BuildTagRegexp is a docker image regexp.
+	// We only support max 128 characters, with at least one organization name (subset of all legal names).
+	//
+	// Details from https://docs.docker.com/engine/reference/commandline/tag/#extended-description :
 	//
 	// An image name is made up of slash-separated name components (optionally prefixed by a registry hostname).
 	// Name components may contain lowercase characters, digits and separators.
@@ -24,7 +26,9 @@ const (
 	//
 	// A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits, underscores, periods and dashes.
 	// A tag name may not start with a period or a dash and may contain a maximum of 128 characters.
-	BuildTagRegexp = "^[a-z0-9][a-z0-9._-]*[a-z0-9](/[a-z0-9][a-z0-9._-]*[a-z0-9])*:[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$"
+	BuildTagRegexp = "^[a-z0-9][a-z0-9._-]*[a-z0-9](/[a-z0-9][a-z0-9._-]*[a-z0-9])+:[a-zA-Z0-9_][a-zA-Z0-9_.-]*$"
+
+	MaxBuildTagSize = 128
 )
 
 type MsgStoreCode struct {
@@ -71,14 +75,7 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		}
 	}
 
-	if msg.Builder != "" {
-		ok, err := regexp.MatchString(BuildTagRegexp, msg.Builder)
-		if err != nil || !ok {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid tag supplied for builder")
-		}
-	}
-
-	return nil
+	return validateBuilder(msg.Builder)
 }
 
 func (msg MsgStoreCode) GetSignBytes() []byte {
@@ -87,6 +84,21 @@ func (msg MsgStoreCode) GetSignBytes() []byte {
 
 func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
+}
+
+func validateBuilder(buildTag string) error {
+	if len(buildTag) > MaxBuildTagSize {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "builder tag longer than 128 characters")
+	}
+
+	if buildTag != "" {
+		ok, err := regexp.MatchString(BuildTagRegexp, buildTag)
+		if err != nil || !ok {
+			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid tag supplied for builder")
+		}
+	}
+
+	return nil
 }
 
 type MsgInstantiateContract struct {
