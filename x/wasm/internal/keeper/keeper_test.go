@@ -48,6 +48,37 @@ func TestCreate(t *testing.T) {
 	require.Equal(t, wasmCode, storedCode)
 }
 
+func TestCreateDuplicate(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	// create one copy
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), contractID)
+
+	// create second copy
+	duplicateID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), duplicateID)
+
+	// and verify both content is proper
+	storedCode, err := keeper.GetByteCode(ctx, contractID)
+	require.NoError(t, err)
+	require.Equal(t, wasmCode, storedCode)
+	storedCode, err = keeper.GetByteCode(ctx, duplicateID)
+	require.NoError(t, err)
+	require.Equal(t, wasmCode, storedCode)
+}
+
 func TestCreateWithSimulation(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -62,12 +93,21 @@ func TestCreateWithSimulation(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	// create this once in simulation mode
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.57.2")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
+
+	// then try to create it in non-simulation mode (should not fail)
+	ctx, accKeeper, keeper = CreateTestInput(t, false, tempDir)
+	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.7.2")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), contractID)
+
 	// and verify content
-	_, err = keeper.GetByteCode(ctx, contractID)
-	require.Error(t, err, os.ErrNotExist)
+	code, err := keeper.GetByteCode(ctx, contractID)
+	require.NoError(t, err)
+	require.Equal(t, code, wasmCode)
 }
 
 func TestIsSimulationMode(t *testing.T) {

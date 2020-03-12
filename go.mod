@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
-	github.com/confio/go-cosmwasm v0.7.0
+	github.com/confio/go-cosmwasm v0.7.1
 	github.com/cosmos/cosmos-sdk v0.38.1
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/gorilla/mux v1.7.3
