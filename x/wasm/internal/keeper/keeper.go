@@ -67,17 +67,10 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	var codeHash []byte
-	if isSimulationMode(ctx) {
-		// https://github.com/cosmwasm/wasmd/issues/42
-		// any sha256 hash is good enough
-		codeHash = make([]byte, 32)
-	} else {
-		codeHash, err = k.wasmer.Create(wasmCode)
-		if err != nil {
-			// return 0, sdkerrors.Wrap(err, "cosmwasm create")
-			return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
-		}
+	codeHash, err := k.wasmer.Create(wasmCode)
+	if err != nil {
+		// return 0, sdkerrors.Wrap(err, "cosmwasm create")
+		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
