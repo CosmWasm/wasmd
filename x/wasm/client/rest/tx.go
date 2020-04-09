@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 )
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {

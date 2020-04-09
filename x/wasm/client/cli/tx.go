@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	wasmUtils "github.com/cosmwasm/wasmd/x/wasm/client/utils"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 )
 
 const (
