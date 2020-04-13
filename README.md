@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 **Note**: Requires [Go 1.14+](https://golang.org/dl/)
 
-**Compatibility**: Last merge from `cosmos/gaia` was `680bb196d6c5ece0c78875dff0175fdd780711ac` (Mar 16, 2020)
+**Compatibility**: Last merge from `cosmos/gaia` was `3f4572d3d74c99584f44eb4a0ee06bd340d48867` (Apr 11, 2020)
 
 The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
 
@@ -108,7 +108,6 @@ docker run --rm -it \
 
 ## Contributors
 
-<<<<<<< HEAD
 Much thanks to all who have contributed to this project, from this app, to the `cosmwasm` framework, to example contracts and documentation.
 Or even testing the app and bringing up critical issues. The following have helped bring this project to life:
 
@@ -130,6 +129,3 @@ Or even testing the app and bringing up critical issues. The following have help
 * Valery Litvin [litvintech](https://github.com/litvintech)
 
 Sorry if I forgot you from this list, just contact me or add yourself in a PR :)
-=======
-This Cosmos-SDK project is not related to the [React-Cosmos](https://github.com/react-cosmos/react-cosmos) project (yet). Many thanks to Evan Coury and Ovidiu (@skidding) for this Github organization name. As per our agreement, this disambiguation notice will stay here.
->>>>>>> 680bb19

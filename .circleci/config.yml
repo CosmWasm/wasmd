@@ -92,18 +92,12 @@ jobs:
           paths:
             - "."
 
-  integration-tests:
+  test-sim-multi-seed-long:
     executor: golang
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-      - run:
-          name: Test CLI integration
-          command: |
-            export BUILDDIR=`pwd`/build
-            make test-build
+      - make:
+          target: test-sim-multi-seed-long
+          description: "Test Gaia multi-seed simulation (long-lived)"
 
   test-cover:
     executor: golang
@@ -236,25 +230,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             sudo apt-get install -y ruby
-<<<<<<< HEAD
-            bash -x ./contrib/gitian-build.sh all
-            for os in darwin linux windows; do
-              cp gitian-build-${os}/result/gaia-${os}-res.yml .
-              rm -rf gitian-build-${os}/
-            done
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-darwin-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-linux-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-windows-res.yml
-=======
             bash -x ./contrib/gitian-build.sh multi
             cp gitian-build-multi/result/gaia-multi-res.yml .
             rm -rf gitian-build-multi/
       - store_artifacts:
-          path: /go/src/github.com/cosmos/gaia/gaia-multi-res.yml
->>>>>>> 680bb19
+          path: /go/src/github.com/cosmwasm/wasmd/gaia-multi-res.yml
 
 # FIXME: The `setup-contract-tests-data` make target is broken as it completely
 # overrides the .wasmd directory.
@@ -294,15 +274,39 @@ workflows:
                 - /.*/
           requires:
             - setup-dependencies
+      # - macos-ci:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
+      # - deploy-docs:
+      #     context: gaia-docs-deployment-staging
+      #     filters:
+      #       branches:
+      #         only:
+      #           - docs-update
+      # - deploy-docs:
+      #     context: gaia-docs-deployment
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
       - setup-dependencies:
           # filters here are needed to enable this job also for tags
           filters:
             tags:
               only:
                 - /^v.*/
-      # - integration-tests:
+      # - test-sim-multi-seed-long:
       #     requires:
       #       - setup-dependencies
+      #     # These filters ensure that the long sim only runs during release
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only:
+      #           - /^v.*/
       - test-cover:
           requires:
             - setup-dependencies

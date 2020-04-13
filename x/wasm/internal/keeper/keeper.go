@@ -188,7 +188,9 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return sdk.Result{}, err
 	}
 
-	return value, nil
+	return sdk.Result{
+		Data: value.Data,
+	}, nil
 }
 
 // QuerySmart queries the smart contract itself.
@@ -413,8 +415,13 @@ func (k Keeper) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg 
 	if err != nil {
 		return err
 	}
+
 	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	ctx.EventManager().EmitEvents(res.Events)
+	for _, abciEv := range res.Events {
+		// TODO: figure out how to avoid this mangling back and forth between the abci/sdk event types
+		ev := sdk.Event{Type: abciEv.Type, Attributes: abciEv.Attributes}
+		ctx.EventManager().EmitEvent(ev)
+	}
 
 	return nil
 }

@@ -130,9 +130,14 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
-// CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
-	var events []sdk.Event
+type WasmResult struct {
+	Data   []byte
+	Events sdk.Events
+}
+
+// WasmResult converts from a Wasm Result type
+func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) WasmResult {
+	var events sdk.Events
 	if len(wasmResult.Log) > 0 {
 		// we always tag with the contract address issuing this event
 		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
@@ -143,9 +148,9 @@ func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.
 				attrs = append(attrs, attr)
 			}
 		}
-		events = []sdk.Event{sdk.NewEvent(CustomEventType, attrs...)}
+		events = sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 	}
-	return sdk.Result{
+	return WasmResult{
 		Data:   []byte(wasmResult.Data),
 		Events: events,
 	}

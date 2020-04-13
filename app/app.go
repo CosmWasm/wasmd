@@ -149,7 +149,7 @@ func NewWasmApp(
 		gov.StoreKey, params.StoreKey, evidence.StoreKey, upgrade.StoreKey,
 		wasm.StoreKey,
 	)
-	tKeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
+	tKeys := sdk.NewTransientStoreKeys(params.TStoreKey)
 
 	app := &WasmApp{
 		BaseApp:        bApp,
