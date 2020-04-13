@@ -17,11 +17,17 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
 
+## Supported Systems
+
+The supported systems are limited by the dlls created in [`go-cosmwasm`](https://github.com/CosmWasm/go-cosmwasm). In particular, **we only support MacOS and Linux**. Even for Linux, we only support `glibc 2.12+`. This includes all known supported distributions using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19). **We do not currently support `muslc` systems, such as Alpine Linux**, which is popular in docker distributions.
+
+There is some work done in `go-cosmwasm` to extend support, but it is rather tricky with Rust build flags.
+
 ## Stability
 
 **This is alpha software, do not run on a production system.** Notably, we currently provide **no migration path** not even "dump state and restart" to move to future versions. At **beta** we will begin to offer migrations and better backwards compatibility guarantees.
 
-With the `v0.6.0` tag, we are entering semver. That means anything with `v0.6.x` tags is compatible. We will have a series of minor version updates prior to `v1.0.0`, where we offer strong backwards compatibility guarantees. In particular, work has begun in the `cosmwasm` library on `v0.7`, which will change many internal APIs, in order to allow adding other languages for writing smart contracts. We hope to stabilize much of this well before `v1`, but we are still in the process of learning from real-world use-cases
+With the `v0.6.0` tag, we are entering semver. That means anything with `v0.6.x` tags is compatible with each other, and everything with `v0.7.x` tags is compatible with each other. We will have a series of minor version updates prior to `v1.0.0`, where we offer strong backwards compatibility guarantees. In particular, work has begun in the `cosmwasm` library on `v0.8`, which will change many internal APIs, in order to allow adding other languages for writing smart contracts. We hope to stabilize much of this well before `v1`, but we are still in the process of learning from real-world use-cases
 
 ## Encoding
 
