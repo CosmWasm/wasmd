@@ -8,6 +8,7 @@ import (
 	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 )
 
 const defaultLRUCacheSize = uint64(0)
@@ -95,7 +96,8 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 }
 
 // NewParams initializes params for a contract instance
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
+func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account, k bank.ViewKeeper) wasmTypes.Env {
+	contractAddr := contractAcct.GetAddress()
 	return wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
@@ -107,8 +109,8 @@ func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contr
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
-			Balance: NewWasmCoins(contractAcct.GetCoins()),
+			Address: wasmTypes.CanonicalAddress(contractAddr),
+			Balance: NewWasmCoins(k.GetAllBalances(ctx, contractAddr)),
 		},
 	}
 }

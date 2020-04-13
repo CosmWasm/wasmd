@@ -3,20 +3,19 @@ version: 2.1
 executors:
   golang:
     docker:
-      - image: circleci/golang:1.13
+      - image: circleci/golang:1.14
     working_directory: /go/src/github.com/cosmwasm/wasmd
   mac:
     macos:
       xcode: "10.3.0"
     working_directory: /Users/distiller/project/src/github.com/cosmwasm/wasmd
     environment:
-      GO_VERSION: "1.13"
+      GO_VERSION: "1.14"
   docs:
     docker:
       - image: tendermintdev/jq_curl
     environment:
       AWS_REGION: us-east-1
-
 
 commands:
   make:
@@ -169,7 +168,7 @@ jobs:
       GOPATH: /home/circleci/.go_workspace/
       GOOS: linux
       GOARCH: amd64
-      GO_VERSION: "1.13"
+      GO_VERSION: "1.14"
     parallelism: 1
     steps:
       - checkout
@@ -184,7 +183,7 @@ jobs:
             popd
             set -x
             make clean localnet-start
-            ./contrib/localnet-blocks-test.sh 40 5 10 localhost
+            ./contrib/localnet-blocks-test.sh 100 5 50 localhost
 
 
 
@@ -237,6 +236,7 @@ jobs:
           no_output_timeout: 20m
           command: |
             sudo apt-get install -y ruby
+<<<<<<< HEAD
             bash -x ./contrib/gitian-build.sh all
             for os in darwin linux windows; do
               cp gitian-build-${os}/result/gaia-${os}-res.yml .
@@ -248,6 +248,13 @@ jobs:
           path: /go/src/github.com/cosmwasm/wasmd/gaia-linux-res.yml
       - store_artifacts:
           path: /go/src/github.com/cosmwasm/wasmd/gaia-windows-res.yml
+=======
+            bash -x ./contrib/gitian-build.sh multi
+            cp gitian-build-multi/result/gaia-multi-res.yml .
+            rm -rf gitian-build-multi/
+      - store_artifacts:
+          path: /go/src/github.com/cosmos/gaia/gaia-multi-res.yml
+>>>>>>> 680bb19
 
 # FIXME: The `setup-contract-tests-data` make target is broken as it completely
 # overrides the .wasmd directory.

@@ -65,6 +65,10 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
 # The below include contains the tools target.
 include contrib/devtools/Makefile
 
+###############################################################################
+###                              Documentation                              ###
+###############################################################################
+
 all: install lint test
 
 build: go.sum
@@ -90,9 +94,28 @@ install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
 
+go-mod-cache: go.sum
+	@echo "--> Download go modules to local cache"
+	@go mod download
 
-########################################
-### Documentation
+go.sum: go.mod
+	@echo "--> Ensure dependencies have not been modified"
+	@go mod verify
+
+draw-deps:
+	@# requires brew install graphviz or apt-get install graphviz
+	go get github.com/RobotsAndPencils/goviz
+	@goviz -i ./cmd/gaiad -d 2 | dot -Tpng -o dependency-graph.png
+
+clean:
+	rm -rf snapcraft-local.yaml build/
+
+distclean: clean
+	rm -rf vendor/
+
+###############################################################################
+###                                 Devdoc                                  ###
+###############################################################################
 
 build-docs:
 	@cd docs && \
@@ -111,33 +134,15 @@ sync-docs:
 	aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION_ID} --profile terraform --path "/*" ;
 .PHONY: sync-docs
 
-########################################
-### Tools & dependencies
 
-go-mod-cache: go.sum
-	@echo "--> Download go modules to local cache"
-	@go mod download
+###############################################################################
+###                           Tests & Simulation                            ###
+###############################################################################
 
-go.sum: go.mod
-	@echo "--> Ensure dependencies have not been modified"
-	@go mod verify
-
-draw-deps:
-	@# requires brew install graphviz or apt-get install graphviz
-	go get github.com/RobotsAndPencils/goviz
-	@goviz -i ./cmd/wasmd -d 2 | dot -Tpng -o dependency-graph.png
-
-clean:
-	rm -rf snapcraft-local.yaml build/
-
-distclean: clean
-	rm -rf vendor/
-
-########################################
-### Testing
-
+include sims.mk
 
 test: test-unit test-build
+
 test-all: check test-race test-cover
 
 test-unit:
@@ -152,8 +157,15 @@ test-cover:
 test-build: build
 	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags=cli_test -v
 
+benchmark:
+	@go test -mod=readonly -bench=. ./...
 
-lint: golangci-lint
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+lint:
 	golangci-lint run
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 	go mod verify
@@ -163,12 +175,9 @@ format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 
-benchmark:
-	@go test -mod=readonly -bench=. ./...
-
-
-########################################
-### Local validator nodes using docker and docker-compose
+###############################################################################
+###                                Localnet                                 ###
+###############################################################################
 
 build-docker-wasmdnode:
 	$(MAKE) -C networks/local
@@ -204,9 +213,6 @@ run-lcd-contract-tests:
 contract-tests: setup-transactions
 	@echo "Running Gaia LCD for contract tests"
 	dredd && pkill wasmd
-
-# include simulations
-include sims.mk
 
 .PHONY: all build-linux install install-debug \
 	go-mod-cache draw-deps clean build \

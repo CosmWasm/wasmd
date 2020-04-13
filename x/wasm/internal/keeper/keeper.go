@@ -118,7 +118,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	// prepare params for contract instantiate call
-	params := types.NewParams(ctx, creator, deposit, contractAccount)
+	params := types.NewParams(ctx, creator, deposit, contractAccount, k.bankKeeper)
 
 	// create prefixed data store
 	// 0x03 | contractAddress (sdk.AccAddress)
@@ -167,7 +167,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
 
-	params := types.NewParams(ctx, caller, coins, contractAccount)
+	params := types.NewParams(ctx, caller, coins, contractAccount, k.bankKeeper)
 
 	gas := gasForContract(ctx)
 	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, gas)

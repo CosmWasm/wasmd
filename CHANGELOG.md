@@ -37,19 +37,58 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
-* (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
-* (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
+* (wasmd)[\#2](https://github.com/cosmos/gaia/pull/22)  Improve wasm contract queries (all, raw, smart)
+* (wasmd) [\#119](https://github.com/cosmos/gaia/pull/119) Add support for the `--inter-block-cache` CLI
 flag and configuration.
-* (wasmcli) [\#132](https://github.com/cosmwasm/wasmd/pull/132) Add `tx decode` command to decode
+* (wasmcli) [\#132](https://github.com/cosmos/gaia/pull/132) Add `tx decode` command to decode
 Base64 encoded transactions.
-* (modules) [\#190](https://github.com/cosmwasm/wasmd/pull/190) Introduce use of the `x/evidence` module.
-* (wasmd) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add debug commands to wasmd: 
-    - `pubkey`: decode pubkey from base64, hex or bech32
-    - `addr`: convert a address between hex and bech32
-    - `raw-bytes` convert raw-bytes to hex
-* (wasmcli) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
 * (wasmd) [\#9](https://github.com/cosmwasm/wasmd/pull/9) Allow gzip data in tx body on Create 
- 
+* (modules) [\#190](https://github.com/cosmos/gaia/pull/190) Introduce use of the `x/evidence` module.
+* (gaiad) [\#191](https://github.com/cosmos/gaia/pull/191) Add debug commands to gaiad:
+  * `pubkey`: decode pubkey from base64, hex or bech32
+  * `addr`: convert a address between hex and bech32
+  * `raw-bytes` convert raw-bytes to hex
+* (gaiacli) [\#191](https://github.com/cosmos/gaia/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
+* (modules) [\#196](https://github.com/cosmos/gaia/pull/196) Integrate the `x/upgrade` module.
+
+### Client Breaking Changes
+
+* [\#164](https://github.com/cosmos/gaia/pull/164) [\#212](https://github.com/cosmos/gaia/pull/212) The LevelDB-based
+keybase implementation has been replaced with a 99 designs Keyring library-backed implementation. Keys created and stored
+with previous `gaia` releases need to be migrated through the `gaiacli keys migrate` command.
+
+## [v2.0.7] - 2020-03-11
+
+### Improvements
+
+* (sdk) Bump SDK version to [v0.37.8](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.8).
+
+## [v2.0.6] - 2020-02-10
+
+### Improvements
+
+* (sdk) Bump SDK version to [v0.37.7](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.7).
+
+## [v2.0.5] - 2020-01-21
+
+### Improvements
+
+* (sdk) Bump SDK version to [v0.37.6](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.6).
+* (tendermint) Bump Tendermint version to [v0.32.9](https://github.com/tendermint/tendermint/releases/tag/v0.32.9).
+
+## [v2.0.4] - 2020-01-09
+
+### Improvements
+
+* (sdk) Bump SDK version to [v0.37.5](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.5).
+* (tendermint) Bump Tendermint version to [v0.32.8](https://github.com/tendermint/tendermint/releases/tag/v0.32.8).
+
+### Bug Fixes
+
+* (cli) Fixed `gaiacli query txs` to use `events` instead of `tags`. Events take the form of `'{eventType}.{eventAttribute}={value}'`. Please
+  see the [events doc](https://github.com/cosmos/cosmos-sdk/blob/master/docs/core/events.md#events-1)
+  for further documentation.
+
 ## [v2.0.3] - 2019-11-04
 
 ### Improvements
@@ -144,9 +183,22 @@ not rely on the `x/supply` keeper to get module account addresses for blacklisti
 
 <!-- Release links -->
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/cosmwasm/wasmd/compare/v2.0.3...HEAD
 [v2.0.3]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.3
 [v2.0.2]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.2
 [v2.0.1]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.1
 [v2.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.0
 [v1.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v1.0.0
+=======
+[Unreleased]: https://github.com/cosmos/gaia/compare/v2.0.7...HEAD
+[v2.0.7]: https://github.com/cosmos/gaia/releases/tag/v2.0.7
+[v2.0.6]: https://github.com/cosmos/gaia/releases/tag/v2.0.6
+[v2.0.5]: https://github.com/cosmos/gaia/releases/tag/v2.0.5
+[v2.0.4]: https://github.com/cosmos/gaia/releases/tag/v2.0.4
+[v2.0.3]: https://github.com/cosmos/gaia/releases/tag/v2.0.3
+[v2.0.2]: https://github.com/cosmos/gaia/releases/tag/v2.0.2
+[v2.0.1]: https://github.com/cosmos/gaia/releases/tag/v2.0.1
+[v2.0.0]: https://github.com/cosmos/gaia/releases/tag/v2.0.0
+[v1.0.0]: https://github.com/cosmos/gaia/releases/tag/v1.0.0
+>>>>>>> 680bb19
