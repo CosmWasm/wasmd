@@ -15,6 +15,8 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 **Compatibility**: Last merge from `cosmos/gaia` was `090c545347b03e59415a18107a0a279c703c8f40` (Jan 23, 2020)
 
+The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
+
 ## Stability
 
 **This is alpha software, do not run on a production system.** Notably, we currently provide **no migration path** not even "dump state and restart" to move to future versions. At **beta** we will begin to offer migrations and better backwards compatibility guarantees.
