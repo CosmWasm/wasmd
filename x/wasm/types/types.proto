@@ -1,0 +1,46 @@
+syntax = "proto3";
+package wasmd.x.wasmd.v1;
+
+option go_package = "github.com/cosmwasm/wasmd/x/wasmd/types";
+
+import "third_party/proto/gogoproto/gogo.proto";
+
+message MsgStoreCode{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // WASMByteCode can be raw or gzip compressed
+    bytes wasm_byte_code = 2 [(gogoproto.moretags) = "yaml:\"wasm_byte_code\""];
+    // Source is a valid absolute HTTPS URI to the contract's source code, optional
+    string source = 3;
+    // Builder is a valid docker image name with tag, optional
+    string builder = 4;
+}
+
+message MsgInstantiateContract{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 code = 2 [(gogoproto.moretags) = "yaml:\"code_id\"",
+                    (gogoproto.moretags) = "json:\"code_id\""
+                    ];
+    string label = 3;
+    bytes init_msg = 4 [(gogoproto.customtype) = "json.RawBytes"];
+//    repeated cosmos_sdk.v1.Coin init_funds = 5 [
+//                                           (gogoproto.nullable)     = false,
+//                                           (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+//                                           ];
+}
+
+message MsgExecuteContract{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes init_msg = 3 [(gogoproto.customtype) = "json.RawMessage"];
+//    repeated cosmos_sdk.v1.Coin init_funds = 5 [
+//                                               (gogoproto.nullable)     = false,
+//                                               (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+//                                               ];
+}
+
