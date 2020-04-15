@@ -11,9 +11,11 @@ This repository hosts `Wasmd`, the first implementation of a cosmos zone with wa
 
 This code was forked from the `cosmos/gaia` repository and the majority of the codebase is the same as `gaia`.
 
-**Note**: Requires [Go 1.13+](https://golang.org/dl/)
+**Note**: Requires [Go 1.14+](https://golang.org/dl/)
 
-**Compatibility**: Last merge from `cosmos/gaia` was `090c545347b03e59415a18107a0a279c703c8f40` (Jan 23, 2020)
+**Compatibility**: Last merge from `cosmos/gaia` was `3f4572d3d74c99584f44eb4a0ee06bd340d48867` (Apr 11, 2020)
+
+The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
 
 ## Stability
 

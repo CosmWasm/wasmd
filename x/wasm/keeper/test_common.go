@@ -64,6 +64,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	)
 
 	bk := bank.NewBaseKeeper(
+		cdc,
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
 		nil,
