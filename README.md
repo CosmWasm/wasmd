@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository and the majority of the c
 
 **Note**: Requires [Go 1.14+](https://golang.org/dl/)
 
-**Compatibility**: Last merge from `cosmos/gaia` was `3f4572d3d74c99584f44eb4a0ee06bd340d48867` (Apr 11, 2020)
+**Compatibility**: Last merge from `cosmos/gaia` was `20a071cf84b965d0892c5a216b32c44963a83173` (Apr 27, 2020)
 
 The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
 

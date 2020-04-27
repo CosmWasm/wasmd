@@ -100,7 +100,7 @@ var (
 var _ simapp.App = (*WasmApp)(nil)
 
 // WasmApp extended ABCI application
-type GaiaApp struct {
+type WasmApp struct {
 	*baseapp.BaseApp
 	cdc *codec.Codec
 
@@ -129,7 +129,7 @@ type GaiaApp struct {
 	ibcKeeper        *ibc.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	evidenceKeeper   evidence.Keeper
 	transferKeeper   transfer.Keeper
-	wasmKeeper     wasm.Keeper
+	wasmKeeper       wasm.Keeper
 
 	// make scoped keepers public for test purposes
 	scopedIBCKeeper      capability.ScopedKeeper
