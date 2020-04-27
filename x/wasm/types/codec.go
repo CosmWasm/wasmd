@@ -12,12 +12,16 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/execute", nil)
 }
 
-// ModuleCdc generic sealed codec to be used throughout module
-var ModuleCdc *codec.Codec
+var (
+	amino = codec.New()
+
+	// ModuleCdc references the global x/wasm module codec.
+
+	ModuleCdc = codec.NewHybridCodec(amino)
+)
 
 func init() {
-	cdc := codec.New()
-	RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	ModuleCdc = cdc.Seal()
+	RegisterCodec(amino)
+	codec.RegisterCrypto(amino)
+	amino.Seal()
 }
