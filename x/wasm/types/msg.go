@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"net/url"
 	"regexp"
 
@@ -91,14 +90,6 @@ func validateBuilder(buildTag string) error {
 	return nil
 }
 
-type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Code      uint64          `json:"code_id" yaml:"code_id"`
-	Label     string          `json:"label" yaml:"label"`
-	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
-	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
-}
-
 func (msg MsgInstantiateContract) Route() string {
 	return RouterKey
 }
@@ -134,13 +125,6 @@ func (msg MsgInstantiateContract) GetSignBytes() []byte {
 
 func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
-}
-
-type MsgExecuteContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Contract  sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Msg       json.RawMessage `json:"msg" yaml:"msg"`
-	SentFunds sdk.Coins       `json:"sent_funds" yaml:"sent_funds"`
 }
 
 func (msg MsgExecuteContract) Route() string {

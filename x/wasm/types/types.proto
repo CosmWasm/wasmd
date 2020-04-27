@@ -24,8 +24,7 @@ message MsgInstantiateContract{
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 code = 2 [(gogoproto.moretags) = "yaml:\"code_id\""];
     string label = 3;
-    bytes init_msg = 4 [(gogoproto.nullable)     = false,
-                       (gogoproto.customtype) = "encoding/json.RawMessage"];
+    bytes init_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
     repeated cosmos_sdk.v1.Coin init_funds = 5 [
                                            (gogoproto.nullable)     = false,
                                            (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
@@ -37,8 +36,7 @@ message MsgExecuteContract{
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    bytes msg = 3 [(gogoproto.nullable)     = false,
-                  (gogoproto.customtype) = "encoding/json.RawMessage"];
+    bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
     repeated cosmos_sdk.v1.Coin sent_funds = 5 [
                                                (gogoproto.nullable)     = false,
                                                (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
