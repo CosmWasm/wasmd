@@ -23,16 +23,6 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client/debug"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
 	"github.com/cosmwasm/wasmd/app"
 )
 
@@ -70,11 +60,7 @@ func main() {
 	rootCmd.AddCommand(genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics))
 	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc, appCodec, app.DefaultNodeHome, app.DefaultCLIHome))
 	rootCmd.AddCommand(flags.NewCompletionCmd(rootCmd, true))
-<<<<<<< HEAD:cmd/wasmd/main.go
 	// rootCmd.AddCommand(testnetCmd(ctx, cdc, app.ModuleBasics, auth.GenesisAccountIterator{}))
-=======
-	rootCmd.AddCommand(testnetCmd(ctx, cdc, app.ModuleBasics, bank.GenesisBalancesIterator{}))
->>>>>>> 680bb19:cmd/gaiad/main.go
 	rootCmd.AddCommand(replayCmd())
 	rootCmd.AddCommand(debug.Cmd(cdc))
 
@@ -118,11 +104,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, *abci.ConsensusParams, error) {
 
 	if height != -1 {
-<<<<<<< HEAD:cmd/wasmd/main.go
-		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), nil)
-=======
-		gapp := app.NewGaiaApp(logger, db, traceStore, false, uint(1), map[int64]bool{}, "")
->>>>>>> 680bb19:cmd/gaiad/main.go
+		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), nil, "")
 		err := gapp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, nil, err
@@ -131,10 +113,6 @@ func exportAppStateAndTMValidators(
 		return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-<<<<<<< HEAD:cmd/wasmd/main.go
-	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), nil)
-=======
-	gapp := app.NewGaiaApp(logger, db, traceStore, true, uint(1), map[int64]bool{}, "")
->>>>>>> 680bb19:cmd/gaiad/main.go
+	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), nil, "")
 	return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
