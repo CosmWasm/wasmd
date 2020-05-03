@@ -43,3 +43,34 @@ message MsgExecuteContract{
                                                ];
 }
 
+// CodeInfo is data for the uploaded contract WASM code
+message CodeInfo {
+    option (gogoproto.goproto_getters) = false;
+
+    bytes code_hash = 1;
+    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string source = 3;
+    string builder =4;
+}
+
+// ContractInfo stores a WASM contract instance
+message ContractInfo {
+    option (gogoproto.goproto_getters) = false;
+
+    uint64 code_id = 1;
+    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string label = 3;
+    bytes init_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    // never show this in query results, just use for sorting
+    // (Note: when using json tag "-" amino refused to serialize it...)
+    //TODO
+    CreatedAt created = 5;
+}
+
+// CreatedAt can be used to sort contracts
+message CreatedAt {
+    // BlockHeight is the block the contract was created at
+    int64 block_height =1;
+    // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
+    uint64 tx_index =2;
+}

@@ -3,24 +3,23 @@ package wasm
 import (
 	"encoding/json"
 	"fmt"
+	wasmTypes "github.com/confio/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmwasm/wasmd/x/wasm/keeper"
+	"github.com/stretchr/testify/assert"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/kv"
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/kv"
-
-	"github.com/cosmwasm/wasmd/x/wasm/keeper"
 )
 
 type testData struct {
@@ -497,7 +496,7 @@ func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, addr sdk.A
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 
-	assert.Equal(t, codeID, res.CodeID)
+	assert.Equal(t, codeID, res.CodeId)
 	assert.Equal(t, creator, res.Creator)
 }
 

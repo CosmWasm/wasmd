@@ -241,7 +241,7 @@ func NewWasmApp(
 	}
 	wasmConfig := wasmWrap.Wasm
 
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
+	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig)
 
 	// register the proposal types
 	govRouter := gov.NewRouter()

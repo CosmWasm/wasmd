@@ -78,7 +78,7 @@ func CreateTestInput(t *testing.T, tempDir string) (sdk.Context, auth.AccountKee
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bankKeeper, router, tempDir, wasmConfig)
+	keeper := NewKeeper(appCodec, keyContract, accountKeeper, bankKeeper, router, tempDir, wasmConfig)
 
 	return ctx, accountKeeper, bankKeeper, keeper
 }
