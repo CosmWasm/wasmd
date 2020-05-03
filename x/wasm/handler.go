@@ -60,22 +60,23 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 		return nil, err
 	}
 
-	codeID, err := k.Create(ctx, msg.Sender, msg.WASMByteCode, msg.Source, msg.Builder)
+	codeID, err := k.Create(ctx, msg.Sender, msg.WasmByteCode, msg.Source, msg.Builder)
 	if err != nil {
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
-		sdk.EventTypeMessage,
-		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
+			sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
+			sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+		),
+	})
 
 	return &sdk.Result{
 		Data:   []byte(fmt.Sprintf("%d", codeID)),
-		Events: append(events, ourEvent),
+		Events: ctx.EventManager().ABCIEvents(),
 	}, nil
 }
 
@@ -85,18 +86,18 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", msg.Code)),
 		sdk.NewAttribute(AttributeKeyContract, contractAddr.String()),
-	)
+	),
+	})
 
 	return &sdk.Result{
 		Data:   contractAddr,
-		Events: append(events, ourEvent),
+		Events: ctx.EventManager().ABCIEvents(),
 	}, nil
 }
 
@@ -106,14 +107,14 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
+	ctx.EventManager().EmitEvents(sdk.Events{sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
-	)
+	),
+	})
 
-	res.Events = append(events, ourEvent)
+	res.Events = ctx.EventManager().ABCIEvents()
 	return &res, nil
 }

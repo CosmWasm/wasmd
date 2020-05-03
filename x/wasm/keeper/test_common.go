@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/tendermint/tendermint/libs/log"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -9,11 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
 	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/types"
@@ -36,50 +37,48 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
-func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context, auth.AccountKeeper, Keeper) {
+func CreateTestInput(t *testing.T, tempDir string) (sdk.Context, auth.AccountKeeper, bank.Keeper, Keeper) {
 	keyContract := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
+	keyBank := sdk.NewKVStoreKey(bank.ModuleName)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyContract, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBank, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
-	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
+	require.NoError(t, ms.LoadLatestVersion())
 
+	isCheckTx := false
 	ctx := sdk.NewContext(ms, abci.Header{}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
+	appCodec := codecstd.NewAppCodec(cdc)
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
+	blacklistedAddrs := make(map[string]bool)
+	maccPerms := make(map[string][]string)
 
-	accountKeeper := auth.NewAccountKeeper(
-		cdc,    // amino codec
-		keyAcc, // target store
-		pk.Subspace(auth.DefaultParamspace),
-		auth.ProtoBaseAccount, // prototype
-	)
+	paramsKeeper := params.NewKeeper(appCodec, keyParams, tkeyParams)
+	accountKeeper := auth.NewAccountKeeper(appCodec, keyAcc, paramsKeeper.Subspace(auth.DefaultParamspace), auth.ProtoBaseAccount, maccPerms)
+	bankKeeper := bank.NewBaseKeeper(appCodec, keyBank, accountKeeper, paramsKeeper.Subspace(bank.DefaultParamspace), blacklistedAddrs)
+	bankKeeper.SetSendEnabled(ctx, true)
 
-	bk := bank.NewBaseKeeper(
-		cdc,
-		accountKeeper,
-		pk.Subspace(bank.DefaultParamspace),
-		nil,
-	)
-	bk.SetSendEnabled(ctx, true)
+	//accountKeeper := app.AccountKeeper
+	//bankKeeper := app.BankKeeper
+	bankKeeper.SetSendEnabled(ctx, true)
 
 	// TODO: register more than bank.send
 	router := baseapp.NewRouter()
-	h := bank.NewHandler(bk)
+	h := bank.NewHandler(bankKeeper)
 	router.AddRoute(bank.RouterKey, h)
 
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig)
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bankKeeper, router, tempDir, wasmConfig)
 
-	return ctx, accountKeeper, keeper
+	return ctx, accountKeeper, bankKeeper, keeper
 }
