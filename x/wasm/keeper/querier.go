@@ -91,7 +91,7 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 
 	var contracts []ContractInfoWithAddress
 	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
-		if info.CodeID == codeID {
+		if info.CodeId == codeID {
 			// remove init message on list
 			info.InitMsg = nil
 			// and add the address

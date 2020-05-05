@@ -60,7 +60,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr,
-			ContractInfo:    contract,
+			ContractInfo:    &contract,
 			ContractState:   state,
 		})
 

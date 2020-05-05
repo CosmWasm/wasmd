@@ -9,7 +9,7 @@ import (
 
 // ToCosmosMsg encodes an sdk msg using amino json encoding.
 // Then wraps it as an opaque message
-func ToCosmosMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
+func ToCosmosMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
 	opaqueBz, err := cdc.MarshalJSON(msg)
 	if err != nil {
 		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
@@ -23,7 +23,7 @@ func ToCosmosMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
 }
 
 // ParseOpaqueMsg decodes msg.Data to an sdk.Msg using amino json encoding.
-func ParseOpaqueMsg(cdc *codec.Codec, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error) {
+func ParseOpaqueMsg(cdc codec.Marshaler, msg *wasmTypes.OpaqueMsg) (sdk.Msg, error) {
 	// until more is changes, format is amino json encoding, wrapped base64
 	var sdkmsg sdk.Msg
 	err := cdc.UnmarshalJSON(msg.Data, &sdkmsg)

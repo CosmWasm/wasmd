@@ -85,7 +85,6 @@ func InitializeLCD(
 
 	db := dbm.NewMemDB()
 	gapp := app.NewWasmApp(logger, db, nil, true, 0, map[int64]bool{}, "", baseapp.SetPruning(store.PruneNothing))
-	cdc = app.MakeCodec()
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
 	if err != nil {
