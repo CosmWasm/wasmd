@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	wasm "github.com/confio/go-cosmwasm"
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasm "github.com/CosmWasm/go-cosmwasm"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"

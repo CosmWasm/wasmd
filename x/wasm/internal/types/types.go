@@ -5,7 +5,7 @@ import (
 
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )

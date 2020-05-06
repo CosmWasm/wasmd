@@ -3,8 +3,8 @@ module github.com/cosmwasm/wasmd
 go 1.13
 
 require (
+	github.com/CosmWasm/go-cosmwasm v0.7.3-0.20200506091810-b5d72f383001
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
-	github.com/confio/go-cosmwasm v0.7.2
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/golang/mock v1.4.3 // indirect
 	github.com/gorilla/mux v1.7.4
@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.3
-	github.com/tendermint/tm-db v0.5.0
+	github.com/tendermint/tm-db v0.5.1
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 )
 
