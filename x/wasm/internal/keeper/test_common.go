@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -74,7 +76,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	)
 	bk.SetSendEnabled(ctx, true)
 
-	// TODO: register more than bank.send
+	// TODO: register slashing (and more?)
 	router := baseapp.NewRouter()
 	h := bank.NewHandler(bk)
 	router.AddRoute(bank.RouterKey, h)
@@ -83,6 +85,53 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
 	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig)
+	// add wasm handler so we can loop-back (contracts calling contracts)
+	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
 	return ctx, accountKeeper, keeper
+}
+
+// TestHandler returns a wasm handler for tests (to avoid circular imports)
+func TestHandler(k Keeper) sdk.Handler {
+	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		switch msg := msg.(type) {
+		case wasmTypes.MsgInstantiateContract:
+			return handleInstantiate(ctx, k, &msg)
+		case *wasmTypes.MsgInstantiateContract:
+			return handleInstantiate(ctx, k, msg)
+
+		case wasmTypes.MsgExecuteContract:
+			return handleExecute(ctx, k, &msg)
+		case *wasmTypes.MsgExecuteContract:
+			return handleExecute(ctx, k, msg)
+
+		default:
+			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+		}
+	}
+}
+
+func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmTypes.MsgInstantiateContract) (*sdk.Result, error) {
+	contractAddr, err := k.Instantiate(ctx, msg.Code, msg.Sender, msg.InitMsg, msg.Label, msg.InitFunds)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdk.Result{
+		Data:   contractAddr,
+		Events: ctx.EventManager().Events(),
+	}, nil
+}
+
+func handleExecute(ctx sdk.Context, k Keeper, msg *wasmTypes.MsgExecuteContract) (*sdk.Result, error) {
+	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.Msg, msg.SentFunds)
+	if err != nil {
+		return nil, err
+	}
+
+	res.Events = ctx.EventManager().Events()
+	return &res, nil
 }

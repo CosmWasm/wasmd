@@ -167,8 +167,6 @@ func fromMaskRawMsg(cdc *codec.Codec, msg json.RawMessage) (sdk.Msg, error) {
 }
 
 func TestMaskReflectContractSend(t *testing.T) {
-	// TODO
-	t.Skip("this causes a panic in the rust code!")
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
