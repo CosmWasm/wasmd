@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -91,7 +91,7 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 
 	var contracts []ContractInfoWithAddress
 	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
-		if info.CodeID == codeID {
+		if info.CodeId == codeID {
 			// remove init message on list
 			info.InitMsg = nil
 			// and add the address

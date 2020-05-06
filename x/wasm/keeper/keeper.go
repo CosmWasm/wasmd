@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/tendermint/tendermint/crypto"
 
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 )
 
 // GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
@@ -31,7 +31,7 @@ const MaxGas = 900_000_000
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
-	cdc           *codec.Codec
+	cdc           codec.Marshaler
 	accountKeeper auth.AccountKeeper
 	bankKeeper    bank.Keeper
 
@@ -43,7 +43,7 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new contract Keeper instance
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
+func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
 	router sdk.Router, homeDir string, wasmConfig types.WasmConfig) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
@@ -237,7 +237,7 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 	var contract types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
 
-	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
+	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeId))
 	if contractInfoBz == nil {
 		return types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract info")
 	}
@@ -259,7 +259,7 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	return &contract
 }
 
-func (k Keeper) setContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract types.ContractInfo) {
+func (k Keeper) setContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract *types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
 }

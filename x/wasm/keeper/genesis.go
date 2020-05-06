@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	// "github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
@@ -60,7 +60,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr,
-			ContractInfo:    contract,
+			ContractInfo:    &contract,
 			ContractState:   state,
 		})
 

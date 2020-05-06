@@ -9,7 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -19,12 +19,12 @@ func TestQueryContractState(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+	ctx, accKeeper, bankKeeper, keeper := CreateTestInput(t, tempDir)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
@@ -147,12 +147,12 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+	ctx, accKeeper, bankKeeper, keeper := CreateTestInput(t, tempDir)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)

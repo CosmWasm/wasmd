@@ -18,8 +18,8 @@ func TestInitGenesis(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, topUp)
 
 	h := data.module.NewHandler()
 	q := data.module.NewQuerierHandler()
@@ -27,7 +27,7 @@ func TestInitGenesis(t *testing.T) {
 	t.Log("fail with invalid source url")
 	msg := MsgStoreCode{
 		Sender:       creator,
-		WASMByteCode: testContract,
+		WasmByteCode: testContract,
 		Source:       "someinvalidurl",
 		Builder:      "",
 	}
@@ -41,7 +41,7 @@ func TestInitGenesis(t *testing.T) {
 	t.Log("fail with relative source url")
 	msg = MsgStoreCode{
 		Sender:       creator,
-		WASMByteCode: testContract,
+		WasmByteCode: testContract,
 		Source:       "./testdata/escrow.wasm",
 		Builder:      "",
 	}
@@ -55,7 +55,7 @@ func TestInitGenesis(t *testing.T) {
 	t.Log("fail with invalid build tag")
 	msg = MsgStoreCode{
 		Sender:       creator,
-		WASMByteCode: testContract,
+		WasmByteCode: testContract,
 		Source:       "",
 		Builder:      "somerandombuildtag-0.6.2",
 	}
@@ -69,7 +69,7 @@ func TestInitGenesis(t *testing.T) {
 	t.Log("no error with valid source and build tag")
 	msg = MsgStoreCode{
 		Sender:       creator,
-		WASMByteCode: testContract,
+		WasmByteCode: testContract,
 		Source:       "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
 		Builder:      "confio/cosmwasm-opt:0.7.0",
 	}

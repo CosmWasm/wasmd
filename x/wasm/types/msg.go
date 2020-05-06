@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"net/url"
 	"regexp"
 
@@ -31,16 +30,6 @@ const (
 	MaxBuildTagSize = 128
 )
 
-type MsgStoreCode struct {
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
-	// WASMByteCode can be raw or gzip compressed
-	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
-	// Source is a valid absolute HTTPS URI to the contract's source code, optional
-	Source string `json:"source" yaml:"source"`
-	// Builder is a valid docker image name with tag, optional
-	Builder string `json:"builder" yaml:"builder"`
-}
-
 func (msg MsgStoreCode) Route() string {
 	return RouterKey
 }
@@ -54,11 +43,11 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		return err
 	}
 
-	if len(msg.WASMByteCode) == 0 {
+	if len(msg.WasmByteCode) == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
 	}
 
-	if len(msg.WASMByteCode) > MaxWasmSize {
+	if len(msg.WasmByteCode) > MaxWasmSize {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
 	}
 
@@ -101,14 +90,6 @@ func validateBuilder(buildTag string) error {
 	return nil
 }
 
-type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Code      uint64          `json:"code_id" yaml:"code_id"`
-	Label     string          `json:"label" yaml:"label"`
-	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
-	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
-}
-
 func (msg MsgInstantiateContract) Route() string {
 	return RouterKey
 }
@@ -144,13 +125,6 @@ func (msg MsgInstantiateContract) GetSignBytes() []byte {
 
 func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
-}
-
-type MsgExecuteContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Contract  sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Msg       json.RawMessage `json:"msg" yaml:"msg"`
-	SentFunds sdk.Coins       `json:"sent_funds" yaml:"sent_funds"`
 }
 
 func (msg MsgExecuteContract) Route() string {

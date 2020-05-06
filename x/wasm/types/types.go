@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/confio/go-cosmwasm/types"
@@ -22,41 +20,14 @@ type Model struct {
 	Value []byte `json:"val"`
 }
 
-// CodeInfo is data for the uploaded contract WASM code
-type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
-	Source   string         `json:"source"`
-	Builder  string         `json:"builder"`
-}
-
 // NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
-	return CodeInfo{
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) *CodeInfo {
+	return &CodeInfo{
 		CodeHash: codeHash,
 		Creator:  creator,
 		Source:   source,
 		Builder:  builder,
 	}
-}
-
-// ContractInfo stores a WASM contract instance
-type ContractInfo struct {
-	CodeID  uint64          `json:"code_id"`
-	Creator sdk.AccAddress  `json:"creator"`
-	Label   string          `json:"label"`
-	InitMsg json.RawMessage `json:"init_msg,omitempty"`
-	// never show this in query results, just use for sorting
-	// (Note: when using json tag "-" amino refused to serialize it...)
-	Created *CreatedAt `json:"created,omitempty"`
-}
-
-// CreatedAt can be used to sort contracts
-type CreatedAt struct {
-	// BlockHeight is the block the contract was created at
-	BlockHeight int64
-	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
-	TxIndex uint64
 }
 
 // LessThan can be used to sort
@@ -85,9 +56,9 @@ func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
-	return ContractInfo{
-		CodeID:  codeID,
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) *ContractInfo {
+	return &ContractInfo{
+		CodeId:  codeID,
 		Creator: creator,
 		InitMsg: initMsg,
 		Label:   label,
