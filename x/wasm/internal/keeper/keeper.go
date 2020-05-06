@@ -37,7 +37,7 @@ type Keeper struct {
 	router sdk.Router
 
 	wasmer    wasm.Wasmer
-	querier   QueryHandler
+	queryMods QueryModules
 	messenger MessageHandler
 	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
@@ -52,7 +52,11 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 	}
 
 	messenger := MessageHandler{
-		router: router,
+		router:   router,
+		encoders: DefaultEncoders(),
+	}
+	queryMods := QueryModules{
+		Bank: bankKeeper,
 	}
 
 	return Keeper{
@@ -62,7 +66,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		messenger:     messenger,
-		querier:       QueryHandler{}, // TODO: not empty
+		queryMods:     queryMods,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
 }
@@ -131,9 +135,15 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Modules: k.queryMods,
+	}
+
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, k.querier, gas)
+	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, querier, gas)
 	if err != nil {
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 		// return contractAddress, sdkerrors.Wrap(err, "cosmwasm instantiate")
@@ -175,8 +185,14 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 	params := types.NewParams(ctx, caller, coins, contractAccount)
 
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Modules: k.queryMods,
+	}
+
 	gas := gasForContract(ctx)
-	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, k.querier, gas)
+	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
 	if execErr != nil {
 		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -205,7 +221,12 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	if err != nil {
 		return nil, err
 	}
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, k.querier, gasForContract(ctx))
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Modules: k.queryMods,
+	}
+	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, querier, gasForContract(ctx))
 	if qErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrQueryFailed, qErr.Error())
 	}
