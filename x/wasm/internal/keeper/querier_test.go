@@ -85,7 +85,7 @@ func TestQueryContractState(t *testing.T) {
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
 			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
-			expSmartRes: anyAddr.String(),
+			expSmartRes: fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String()),
 		},
 		"query smart invalid request": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},

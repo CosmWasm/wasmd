@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -51,7 +52,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
-	ctx := sdk.NewContext(ms, abci.Header{}, isCheckTx, log.NewNopLogger())
+	ctx := sdk.NewContext(ms, abci.Header{
+		Height: 1234567,
+		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
+	}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
 
 	pk := params.NewKeeper(cdc, keyParams, tkeyParams)

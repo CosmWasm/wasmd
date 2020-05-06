@@ -63,10 +63,12 @@ func NoCustomMsg(msg json.RawMessage) (sdk.Msg, error) {
 }
 
 func EncodeStakingMsg(msg *wasmTypes.StakingMsg) (sdk.Msg, error) {
+	// TODO
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Staking variant not supported")
 }
 
 func EncodeWasmMsg(msg *wasmTypes.WasmMsg) (sdk.Msg, error) {
+	// TODO
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Wasm variant not supported")
 	//	} else if msg.Contract != nil {
 	//		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)

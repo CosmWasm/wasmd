@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -96,7 +95,7 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 
 // NewParams initializes params for a contract instance
 func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
-	return wasmTypes.Env{
+	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
 			Time:    ctx.BlockTime().Unix(),
@@ -110,6 +109,7 @@ func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contr
 			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
 		},
 	}
+	return env
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
