@@ -31,4 +31,7 @@ var (
 
 	// ErrQueryFailed error for rust smart query contract failure
 	ErrQueryFailed = sdkErrors.Register(DefaultCodespace, 8, "query wasm contract failed")
+
+	// ErrInvalidMsg error when we cannot process the error returned from the contract
+	ErrInvalidMsg = sdkErrors.Register(DefaultCodespace, 9, "invalid CosmosMsg from the contract")
 )
