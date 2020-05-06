@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
+
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -87,21 +89,22 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 		return sdkMsg, nil
 	}
 	if msg.Instantiate != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Wasm.Instantiate variant not supported")
+		coins, err := convertWasmCoinToSdkCoin(msg.Instantiate.Send)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkMsg := types.MsgInstantiateContract{
+			Sender: sender,
+			Code:   msg.Instantiate.CodeID,
+			// TODO: add this to CosmWasm
+			Label:     fmt.Sprintf("Auto-created by %s", sender),
+			InitMsg:   msg.Instantiate.Msg,
+			InitFunds: coins,
+		}
+		return sdkMsg, nil
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
-	//lse if msg.Contract != nil {
-	//		targetAddr, stderr := sdk.AccAddressFromBech32(msg.Contract.ContractAddr)
-	//		if stderr != nil {
-	//			return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Contract.ContractAddr)
-	//		}
-	//		sentFunds, err := convertWasmCoinToSdkCoin(msg.Contract.Send)
-	//		if err != nil {
-	//			return err
-	//		}
-	//		// TODO: special case?
-	//		_, err = k.Execute(ctx, targetAddr, contractAddr, msg.Contract.Msg, sentFunds)
-	//		return err // may be nil
 }
 
 func (h MessageHandler) Dispatch(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
