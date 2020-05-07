@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/tendermint/tendermint/crypto"
 
@@ -106,15 +105,15 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	}
 
 	// deposit initial contract funds
-	var contractAccount exported.Account
 	if !deposit.IsZero() {
 		sdkerr := k.bankKeeper.SendCoins(ctx, creator, contractAddress, deposit)
 		if sdkerr != nil {
 			return nil, sdkerr
 		}
-		contractAccount = k.accountKeeper.GetAccount(ctx, contractAddress)
 	} else {
-		contractAccount = k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		// create an empty account (so we don't have issues later)
+		// TODO: can we remove this?
+		contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
 		k.accountKeeper.SetAccount(ctx, contractAccount)
 	}
 
@@ -128,7 +127,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	// prepare params for contract instantiate call
-	params := types.NewParams(ctx, creator, deposit, contractAccount)
+	params := types.NewEnv(ctx, creator, deposit, contractAddress)
 
 	// create prefixed data store
 	// 0x03 | contractAddress (sdk.AccAddress)
@@ -146,7 +145,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, querier, gas)
 	if err != nil {
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
-		// return contractAddress, sdkerrors.Wrap(err, "cosmwasm instantiate")
 	}
 	consumeGas(ctx, res.GasUsed)
 
@@ -154,7 +152,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	value := types.CosmosResult(*res, contractAddress)
 	ctx.EventManager().EmitEvents(value.Events)
 
-	err = k.dispatchMessages(ctx, contractAccount, res.Messages)
+	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
 		return nil, err
 	}
@@ -181,9 +179,8 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 			return sdk.Result{}, sdkerr
 		}
 	}
-	contractAccount := k.accountKeeper.GetAccount(ctx, contractAddress)
 
-	params := types.NewParams(ctx, caller, coins, contractAccount)
+	params := types.NewEnv(ctx, caller, coins, contractAddress)
 
 	// prepare querier
 	querier := QueryHandler{
@@ -204,8 +201,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	ctx.EventManager().EmitEvents(value.Events)
 	value.Events = nil
 
-	// TODO: capture events here as well
-	err = k.dispatchMessages(ctx, contractAccount, res.Messages)
+	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
 		return sdk.Result{}, err
 	}
@@ -338,9 +334,9 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	return k.wasmer.GetCode(codeInfo.CodeHash)
 }
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contract exported.Account, msgs []wasmTypes.CosmosMsg) error {
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmTypes.CosmosMsg) error {
 	for _, msg := range msgs {
-		if err := k.messenger.Dispatch(ctx, contract, msg); err != nil {
+		if err := k.messenger.Dispatch(ctx, contractAddr, msg); err != nil {
 			return err
 		}
 	}

@@ -7,7 +7,6 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
@@ -107,9 +106,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
-func (h MessageHandler) Dispatch(ctx sdk.Context, contract exported.Account, msg wasmTypes.CosmosMsg) error {
-	// maybe use this instead for the arg?
-	contractAddr := contract.GetAddress()
+func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
 	var sdkMsg sdk.Msg
 	var err error
 	switch {

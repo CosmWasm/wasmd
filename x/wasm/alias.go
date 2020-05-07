@@ -37,7 +37,7 @@ var (
 	GetContractAddressKey     = types.GetContractAddressKey
 	GetContractStorePrefixKey = types.GetContractStorePrefixKey
 	NewCodeInfo               = types.NewCodeInfo
-	NewParams                 = types.NewParams
+	NewParams                 = types.NewEnv
 	NewWasmCoins              = types.NewWasmCoins
 	NewContractInfo           = types.NewContractInfo
 	CosmosResult              = types.CosmosResult

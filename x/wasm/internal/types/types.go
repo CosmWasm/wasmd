@@ -6,7 +6,6 @@ import (
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
 const defaultLRUCacheSize = uint64(0)
@@ -93,8 +92,8 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 	}
 }
 
-// NewParams initializes params for a contract instance
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
+// NewEnv initializes the environment for a contract instance
+func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
 	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
@@ -106,7 +105,7 @@ func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contr
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
+			Address: wasmTypes.CanonicalAddress(contractAddr),
 		},
 	}
 	return env
