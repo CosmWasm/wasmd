@@ -33,8 +33,6 @@ type Keeper struct {
 	accountKeeper auth.AccountKeeper
 	bankKeeper    bank.Keeper
 
-	router sdk.Router
-
 	wasmer    wasm.Wasmer
 	queryMods QueryModules
 	messenger MessageHandler
@@ -43,20 +41,20 @@ type Keeper struct {
 }
 
 // NewKeeper creates a new contract Keeper instance
+// If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
-	router sdk.Router, homeDir string, wasmConfig types.WasmConfig) Keeper {
+	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, customEncoders *MessageEncoders) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
 	}
 
-	messenger := MessageHandler{
-		router:   router,
-		encoders: DefaultEncoders(),
+	if customEncoders == nil {
+		customEncoders = &MessageEncoders{}
 	}
-	queryMods := QueryModules{
-		Bank: bankKeeper,
-	}
+	messenger := NewMessageHandler(router, *customEncoders)
+	// TODO: make this configurable also
+	queryMods := DefaultQueryModules(bankKeeper)
 
 	return Keeper{
 		storeKey:      storeKey,

@@ -21,6 +21,12 @@ type QueryModules struct {
 	Bank bank.ViewKeeper
 }
 
+func DefaultQueryModules(bank bank.ViewKeeper) QueryModules {
+	return QueryModules{
+		Bank: bank,
+	}
+}
+
 //type QueryPlugins struct {
 //	Bank    func(msg *wasmTypes.BankQuery) ([]byte, error)
 //	Custom  func(msg json.RawMessage) ([]byte, error)

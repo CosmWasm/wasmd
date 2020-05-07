@@ -39,7 +39,8 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
-func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context, auth.AccountKeeper, Keeper) {
+// encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
+func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, encoders *MessageEncoders) (sdk.Context, auth.AccountKeeper, Keeper) {
 	keyContract := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
@@ -84,7 +85,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string) (sdk.Context,
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig)
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig, encoders)
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 

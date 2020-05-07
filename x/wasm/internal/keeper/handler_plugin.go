@@ -16,6 +16,14 @@ type MessageHandler struct {
 	encoders MessageEncoders
 }
 
+func NewMessageHandler(router sdk.Router, customEncoders MessageEncoders) MessageHandler {
+	encoders := DefaultEncoders().Merge(customEncoders)
+	return MessageHandler{
+		router:   router,
+		encoders: encoders,
+	}
+}
+
 type MessageEncoders struct {
 	Bank    func(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, error)
 	Custom  func(sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error)
@@ -30,6 +38,22 @@ func DefaultEncoders() MessageEncoders {
 		Staking: EncodeStakingMsg,
 		Wasm:    EncodeWasmMsg,
 	}
+}
+
+func (e MessageEncoders) Merge(o MessageEncoders) MessageEncoders {
+	if o.Bank != nil {
+		e.Bank = o.Bank
+	}
+	if o.Custom != nil {
+		e.Custom = o.Custom
+	}
+	if o.Staking != nil {
+		e.Staking = o.Staking
+	}
+	if o.Wasm != nil {
+		e.Wasm = o.Wasm
+	}
+	return e
 }
 
 func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, error) {
