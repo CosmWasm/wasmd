@@ -33,6 +33,7 @@ func MakeTestCodec() *codec.Codec {
 	// cdc.RegisterConcrete(&auth.BaseAccount{}, "test/wasm/BaseAccount", nil)
 	auth.AppModuleBasic{}.RegisterCodec(cdc)
 	bank.AppModuleBasic{}.RegisterCodec(cdc)
+	wasmTypes.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 
