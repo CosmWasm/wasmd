@@ -16,7 +16,7 @@ type MessageHandler struct {
 	encoders MessageEncoders
 }
 
-func NewMessageHandler(router sdk.Router, customEncoders MessageEncoders) MessageHandler {
+func NewMessageHandler(router sdk.Router, customEncoders *MessageEncoders) MessageHandler {
 	encoders := DefaultEncoders().Merge(customEncoders)
 	return MessageHandler{
 		router:   router,
@@ -40,7 +40,10 @@ func DefaultEncoders() MessageEncoders {
 	}
 }
 
-func (e MessageEncoders) Merge(o MessageEncoders) MessageEncoders {
+func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
+	if o == nil {
+		return e
+	}
 	if o.Bank != nil {
 		e.Bank = o.Bank
 	}

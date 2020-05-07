@@ -33,9 +33,9 @@ type Keeper struct {
 	accountKeeper auth.AccountKeeper
 	bankKeeper    bank.Keeper
 
-	wasmer    wasm.Wasmer
-	queryMods QueryModules
-	messenger MessageHandler
+	wasmer       wasm.Wasmer
+	queryPlugins QueryPlugins
+	messenger    MessageHandler
 	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 }
@@ -43,18 +43,14 @@ type Keeper struct {
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
-	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, customEncoders *MessageEncoders) Keeper {
+	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
 	}
 
-	if customEncoders == nil {
-		customEncoders = &MessageEncoders{}
-	}
-	messenger := NewMessageHandler(router, *customEncoders)
-	// TODO: make this configurable also
-	queryMods := DefaultQueryModules(bankKeeper)
+	messenger := NewMessageHandler(router, customEncoders)
+	queryPlugins := DefaultQueryPlugins(bankKeeper).Merge(customPlugins)
 
 	return Keeper{
 		storeKey:      storeKey,
@@ -63,7 +59,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		messenger:     messenger,
-		queryMods:     queryMods,
+		queryPlugins:  queryPlugins,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
 }
@@ -135,7 +131,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	// prepare querier
 	querier := QueryHandler{
 		Ctx:     ctx,
-		Modules: k.queryMods,
+		Plugins: k.queryPlugins,
 	}
 
 	// instantiate wasm contract
@@ -183,7 +179,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	// prepare querier
 	querier := QueryHandler{
 		Ctx:     ctx,
-		Modules: k.queryMods,
+		Plugins: k.queryPlugins,
 	}
 
 	gas := gasForContract(ctx)
@@ -218,7 +214,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	// prepare querier
 	querier := QueryHandler{
 		Ctx:     ctx,
-		Modules: k.queryMods,
+		Plugins: k.queryPlugins,
 	}
 	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, req, prefixStore, cosmwasmAPI, querier, gasForContract(ctx))
 	if qErr != nil {

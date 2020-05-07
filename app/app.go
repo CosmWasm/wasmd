@@ -224,8 +224,9 @@ func NewWasmApp(
 	}
 	wasmConfig := wasmWrap.Wasm
 
-	// The last argument can contain custom message handlers, if we want to allow any custom messages
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig, nil)
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, wasmRouter, wasmDir, wasmConfig, nil, nil)
 
 	// create evidence keeper with evidence router
 	evidenceKeeper := evidence.NewKeeper(

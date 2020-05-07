@@ -23,7 +23,7 @@ func TestNewKeeper(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	_, _, keeper := CreateTestInput(t, false, tempDir, nil)
+	_, _, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 	require.NotNil(t, keeper)
 }
 
@@ -31,7 +31,7 @@ func TestCreate(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -52,7 +52,7 @@ func TestCreateDuplicate(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -83,7 +83,7 @@ func TestCreateWithSimulation(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 	ctx = ctx.WithBlockHeader(abci.Header{Height: 1}).
 		WithGasMeter(stypes.NewInfiniteGasMeter())
 
@@ -99,7 +99,7 @@ func TestCreateWithSimulation(t *testing.T) {
 	require.Equal(t, uint64(1), contractID)
 
 	// then try to create it in non-simulation mode (should not fail)
-	ctx, accKeeper, keeper = CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper = CreateTestInput(t, false, tempDir, nil, nil)
 	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/cosmwasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.7.2")
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
@@ -139,7 +139,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -162,7 +162,7 @@ func TestInstantiate(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -206,7 +206,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -227,7 +227,7 @@ func TestExecute(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -304,7 +304,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
@@ -319,7 +319,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -352,7 +352,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -395,7 +395,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))

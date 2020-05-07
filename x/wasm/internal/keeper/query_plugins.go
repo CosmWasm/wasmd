@@ -10,33 +10,17 @@ import (
 
 type QueryHandler struct {
 	Ctx     sdk.Context
-	Modules QueryModules
+	Plugins QueryPlugins
 }
 
 var _ wasmTypes.Querier = QueryHandler{}
 
-// Fill out more modules
-// Rethink interfaces
-type QueryModules struct {
-	Bank bank.ViewKeeper
-}
-
-func DefaultQueryModules(bank bank.ViewKeeper) QueryModules {
-	return QueryModules{
-		Bank: bank,
-	}
-}
-
-//type QueryPlugins struct {
-//	Bank    func(msg *wasmTypes.BankQuery) ([]byte, error)
-//	Custom  func(msg json.RawMessage) ([]byte, error)
-//	Staking func(msg *wasmTypes.StakingQuery) ([]byte, error)
-//	Wasm    func(msg *wasmTypes.WasmQuery) ([]byte, error)
-//}
-
 func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	if request.Bank != nil {
-		return q.QueryBank(request.Bank)
+		if q.Plugins.Bank == nil {
+			return nil, wasmTypes.UnsupportedRequest{"bank"}
+		}
+		return q.Plugins.Bank(q.Ctx, request.Bank)
 	}
 	// TODO: below
 	if request.Custom != nil {
@@ -51,34 +35,69 @@ func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	return nil, wasmTypes.Unknown{}
 }
 
-func (q QueryHandler) QueryBank(request *wasmTypes.BankQuery) ([]byte, error) {
-	if request.AllBalances != nil {
-		addr, err := sdk.AccAddressFromBech32(request.AllBalances.Address)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.AllBalances.Address)
-		}
-		coins := q.Modules.Bank.GetCoins(q.Ctx, addr)
-		res := wasmTypes.AllBalancesResponse{
-			Amount: convertSdkCoinToWasmCoin(coins),
-		}
-		return json.Marshal(res)
+type QueryPlugins struct {
+	Bank    func(ctx sdk.Context, msg *wasmTypes.BankQuery) ([]byte, error)
+	Custom  func(ctx sdk.Context, msg json.RawMessage) ([]byte, error)
+	Staking func(ctx sdk.Context, msg *wasmTypes.StakingQuery) ([]byte, error)
+	Wasm    func(ctx sdk.Context, msg *wasmTypes.WasmQuery) ([]byte, error)
+}
+
+func DefaultQueryPlugins(bank bank.ViewKeeper) QueryPlugins {
+	return QueryPlugins{
+		Bank: BankQuerier(bank),
 	}
-	if request.Balance != nil {
-		addr, err := sdk.AccAddressFromBech32(request.Balance.Address)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Balance.Address)
-		}
-		coins := q.Modules.Bank.GetCoins(q.Ctx, addr)
-		amount := coins.AmountOf(request.Balance.Denom)
-		res := wasmTypes.BalanceResponse{
-			Amount: wasmTypes.Coin{
-				Denom:  request.Balance.Denom,
-				Amount: amount.String(),
-			},
-		}
-		return json.Marshal(res)
+}
+
+func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
+	// only update if this is non-nil and then only set values
+	if o == nil {
+		return e
 	}
-	return nil, wasmTypes.UnsupportedRequest{"unknown BankQuery variant"}
+	if o.Bank != nil {
+		e.Bank = o.Bank
+	}
+	if o.Custom != nil {
+		e.Custom = o.Custom
+	}
+	if o.Staking != nil {
+		e.Staking = o.Staking
+	}
+	if o.Wasm != nil {
+		e.Wasm = o.Wasm
+	}
+	return e
+}
+
+func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error) {
+		if request.AllBalances != nil {
+			addr, err := sdk.AccAddressFromBech32(request.AllBalances.Address)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.AllBalances.Address)
+			}
+			coins := bank.GetCoins(ctx, addr)
+			res := wasmTypes.AllBalancesResponse{
+				Amount: convertSdkCoinToWasmCoin(coins),
+			}
+			return json.Marshal(res)
+		}
+		if request.Balance != nil {
+			addr, err := sdk.AccAddressFromBech32(request.Balance.Address)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Balance.Address)
+			}
+			coins := bank.GetCoins(ctx, addr)
+			amount := coins.AmountOf(request.Balance.Denom)
+			res := wasmTypes.BalanceResponse{
+				Amount: wasmTypes.Coin{
+					Denom:  request.Balance.Denom,
+					Amount: amount.String(),
+				},
+			}
+			return json.Marshal(res)
+		}
+		return nil, wasmTypes.UnsupportedRequest{"unknown BankQuery variant"}
+	}
 }
 
 func convertSdkCoinToWasmCoin(coins []sdk.Coin) wasmTypes.Coins {

@@ -37,7 +37,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()))
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()), nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -120,7 +120,7 @@ func TestMaskReflectCustom(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()))
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()), nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
