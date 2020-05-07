@@ -6,6 +6,7 @@ import (
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,6 +21,7 @@ import (
 
 // MaskInitMsg is {}
 
+// MaskHandleMsg is used to encode handle messages
 type MaskHandleMsg struct {
 	Reflect *reflectPayload `json:"reflect_msg,omitempty"`
 	Change  *ownerPayload   `json:"change_owner,omitempty"`
@@ -31,6 +33,20 @@ type ownerPayload struct {
 
 type reflectPayload struct {
 	Msgs []wasmTypes.CosmosMsg `json:"msgs"`
+}
+
+// MaskQueryMsg is used to encode query messages
+type MaskQueryMsg struct {
+	Owner         *struct{} `json:"owner,omitempty"`
+	ReflectCustom *Text     `json:"reflect_custom,omitempty"`
+}
+
+type Text struct {
+	Text string `json:"text"`
+}
+
+type OwnerResponse struct {
+	Owner string `json:"owner,omitempty"`
 }
 
 func TestMaskReflectContractSend(t *testing.T) {
@@ -116,11 +132,11 @@ func TestMaskReflectContractSend(t *testing.T) {
 
 }
 
-func TestMaskReflectCustom(t *testing.T) {
+func TestMaskReflectCustomMsg(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()), nil)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()), maskPlugins())
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -211,6 +227,57 @@ func TestMaskReflectCustom(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bob, deposit)
 }
 
+func TestMaskReflectCustomQuery(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, maskEncoders(MakeTestCodec()), maskPlugins())
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	// upload code
+	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract and gives it tokens
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, []byte("{}"), "mask contract 1", contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// let's perform a normal query of state
+	ownerQuery := MaskQueryMsg{
+		Owner: &struct{}{},
+	}
+	ownerQueryBz, err := json.Marshal(ownerQuery)
+	require.NoError(t, err)
+	ownerRes, err := keeper.QuerySmart(ctx, contractAddr, ownerQueryBz)
+	require.NoError(t, err)
+	var res OwnerResponse
+	err = json.Unmarshal(ownerRes, &res)
+	require.NoError(t, err)
+	assert.Equal(t, res.Owner, creator.String())
+
+	// and now making use of the custom querier callbacks
+	customQuery := MaskQueryMsg{
+		ReflectCustom: &Text{
+			Text: "all Caps noW",
+		},
+	}
+	customQueryBz, err := json.Marshal(customQuery)
+	require.NoError(t, err)
+	custom, err := keeper.QuerySmart(ctx, contractAddr, customQueryBz)
+	require.NoError(t, err)
+	var resp customQueryResponse
+	err = json.Unmarshal(custom, &resp)
+	require.NoError(t, err)
+	assert.Equal(t, resp.Msg, "ALL CAPS NOW")
+}
+
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
@@ -249,7 +316,7 @@ func toMaskRawMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
 	return res, nil
 }
 
-// maskEncoders needs to be registered in test setup to handle custom callbacks
+// maskEncoders needs to be registered in test setup to handle custom message callbacks
 func maskEncoders(cdc *codec.Codec) *MessageEncoders {
 	return &MessageEncoders{
 		Custom: fromMaskRawMsg(cdc),
@@ -278,4 +345,36 @@ func fromMaskRawMsg(cdc *codec.Codec) func(_sender sdk.AccAddress, msg json.RawM
 		}
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 	}
+}
+
+type maskCustomQuery struct {
+	Ping    *struct{} `json:"ping,omitempty"`
+	Capital *Text     `json:"capital,omitempty"`
+}
+
+type customQueryResponse struct {
+	Msg string `json:"msg"`
+}
+
+// maskPlugins needs to be registered in test setup to handle custom query callbacks
+func maskPlugins() *QueryPlugins {
+	return &QueryPlugins{
+		Custom: performCustomQuery,
+	}
+}
+
+func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) {
+	var custom maskCustomQuery
+	err := json.Unmarshal(request, &custom)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+	}
+	if custom.Capital != nil {
+		msg := strings.ToUpper(custom.Capital.Text)
+		return json.Marshal(customQueryResponse{Msg: msg})
+	}
+	if custom.Ping != nil {
+		return json.Marshal(customQueryResponse{Msg: "pong"})
+	}
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }
