@@ -138,6 +138,10 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 	gas := gasForContract(ctx)
 	res, err := k.wasmer.Instantiate(codeInfo.CodeHash, params, initMsg, prefixStore, cosmwasmAPI, querier, gas)
 	if err != nil {
+		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
+		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
+		// this contract died due to gas limit in Storage
+		consumeGas(ctx, GasMultiplier)
 		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
@@ -185,7 +189,10 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	gas := gasForContract(ctx)
 	res, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
 	if execErr != nil {
-		// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
+		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
+		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
+		// this contract died due to gas limit in Storage
+		consumeGas(ctx, GasMultiplier)
 		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
