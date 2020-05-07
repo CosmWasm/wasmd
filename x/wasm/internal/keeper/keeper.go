@@ -50,18 +50,18 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 	}
 
 	messenger := NewMessageHandler(router, customEncoders)
-	queryPlugins := DefaultQueryPlugins(bankKeeper).Merge(customPlugins)
 
-	return Keeper{
+	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		messenger:     messenger,
-		queryPlugins:  queryPlugins,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
+	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, keeper).Merge(customPlugins)
+	return keeper
 }
 
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract

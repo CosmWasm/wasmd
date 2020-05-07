@@ -17,34 +17,33 @@ var _ wasmTypes.Querier = QueryHandler{}
 
 func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	if request.Bank != nil {
-		if q.Plugins.Bank == nil {
-			return nil, wasmTypes.UnsupportedRequest{"bank"}
-		}
 		return q.Plugins.Bank(q.Ctx, request.Bank)
 	}
-	// TODO: below
 	if request.Custom != nil {
-		return nil, wasmTypes.UnsupportedRequest{"custom"}
+		return q.Plugins.Custom(q.Ctx, request.Custom)
 	}
 	if request.Staking != nil {
-		return nil, wasmTypes.UnsupportedRequest{"staking"}
+		return q.Plugins.Staking(q.Ctx, request.Staking)
 	}
 	if request.Wasm != nil {
-		return nil, wasmTypes.UnsupportedRequest{"wasm"}
+		return q.Plugins.Wasm(q.Ctx, request.Wasm)
 	}
 	return nil, wasmTypes.Unknown{}
 }
 
 type QueryPlugins struct {
-	Bank    func(ctx sdk.Context, msg *wasmTypes.BankQuery) ([]byte, error)
-	Custom  func(ctx sdk.Context, msg json.RawMessage) ([]byte, error)
-	Staking func(ctx sdk.Context, msg *wasmTypes.StakingQuery) ([]byte, error)
-	Wasm    func(ctx sdk.Context, msg *wasmTypes.WasmQuery) ([]byte, error)
+	Bank    func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error)
+	Custom  func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
+	Staking func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error)
+	Wasm    func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bank.ViewKeeper) QueryPlugins {
+func DefaultQueryPlugins(bank bank.ViewKeeper, wasm Keeper) QueryPlugins {
 	return QueryPlugins{
-		Bank: BankQuerier(bank),
+		Bank:    BankQuerier(bank),
+		Custom:  NoCustomQuerier,
+		Staking: NoStakingQuerier,
+		Wasm:    WasmQuerier(wasm),
 	}
 }
 
@@ -97,6 +96,36 @@ func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.
 			return json.Marshal(res)
 		}
 		return nil, wasmTypes.UnsupportedRequest{"unknown BankQuery variant"}
+	}
+}
+
+func NoCustomQuerier(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
+	return nil, wasmTypes.UnsupportedRequest{"custom"}
+}
+
+func NoStakingQuerier(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
+	return nil, wasmTypes.UnsupportedRequest{"staking"}
+}
+
+func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+		if request.Smart != nil {
+			addr, err := sdk.AccAddressFromBech32(request.Smart.ContractAddr)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Smart.ContractAddr)
+			}
+			return wasm.QuerySmart(ctx, addr, request.Smart.Msg)
+		}
+		if request.Raw != nil {
+			addr, err := sdk.AccAddressFromBech32(request.Raw.ContractAddr)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Raw.ContractAddr)
+			}
+			models := wasm.QueryRaw(ctx, addr, request.Raw.Key)
+			// TODO: do we want to change the return value?
+			return json.Marshal(models)
+		}
+		return nil, wasmTypes.UnsupportedRequest{"unknown WasmQuery variant"}
 	}
 }
 
