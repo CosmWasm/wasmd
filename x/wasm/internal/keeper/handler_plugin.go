@@ -66,6 +66,20 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	return e
 }
 
+func (e MessageEncoders) Encode(contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) ([]sdk.Msg, error) {
+	switch {
+	case msg.Bank != nil:
+		return e.Bank(contractAddr, msg.Bank)
+	case msg.Custom != nil:
+		return e.Custom(contractAddr, msg.Custom)
+	case msg.Staking != nil:
+		return e.Staking(contractAddr, msg.Staking)
+	case msg.Wasm != nil:
+		return e.Wasm(contractAddr, msg.Wasm)
+	}
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
+}
+
 func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, error) {
 	if msg.Send == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Bank")
@@ -123,7 +137,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Redelegate.DstValidator)
 		}
-		coin, err := convertWasmCoinToSdkCoin(msg.Delegate.Amount)
+		coin, err := convertWasmCoinToSdkCoin(msg.Redelegate.Amount)
 		if err != nil {
 			return nil, err
 		}
@@ -216,18 +230,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 }
 
 func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
-	var sdkMsgs []sdk.Msg
-	var err error
-	switch {
-	case msg.Bank != nil:
-		sdkMsgs, err = h.encoders.Bank(contractAddr, msg.Bank)
-	case msg.Custom != nil:
-		sdkMsgs, err = h.encoders.Custom(contractAddr, msg.Custom)
-	case msg.Staking != nil:
-		sdkMsgs, err = h.encoders.Staking(contractAddr, msg.Staking)
-	case msg.Wasm != nil:
-		sdkMsgs, err = h.encoders.Wasm(contractAddr, msg.Wasm)
-	}
+	sdkMsgs, err := h.encoders.Encode(contractAddr, msg)
 	if err != nil {
 		return err
 	}
