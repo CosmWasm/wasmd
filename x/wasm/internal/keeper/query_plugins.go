@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 )
 
 type QueryHandler struct {
@@ -31,18 +32,20 @@ func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	return nil, wasmTypes.Unknown{}
 }
 
+type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
+
 type QueryPlugins struct {
 	Bank    func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error)
-	Custom  func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
+	Custom  CustomQuerier
 	Staking func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error)
 	Wasm    func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bank.ViewKeeper, wasm Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank bank.ViewKeeper, staking staking.Keeper, wasm Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:    BankQuerier(bank),
 		Custom:  NoCustomQuerier,
-		Staking: NoStakingQuerier,
+		Staking: StakingQuerier(staking),
 		Wasm:    WasmQuerier(wasm),
 	}
 }
@@ -103,8 +106,72 @@ func NoCustomQuerier(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return nil, wasmTypes.UnsupportedRequest{"custom"}
 }
 
-func NoStakingQuerier(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
-	return nil, wasmTypes.UnsupportedRequest{"staking"}
+func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
+		if request.Validators != nil {
+			validators := keeper.GetBondedValidatorsByPower(ctx)
+			wasmVals := make([]wasmTypes.Validator, len(validators))
+			for i, v := range validators {
+				wasmVals[i] = wasmTypes.Validator{
+					Address:       v.OperatorAddress.String(),
+					Commission:    decToWasm(v.Commission.Rate),
+					MaxCommission: decToWasm(v.Commission.MaxRate),
+					MaxChangeRate: decToWasm(v.Commission.MaxChangeRate),
+				}
+			}
+			res := wasmTypes.ValidatorsResponse{
+				Validators: wasmVals,
+			}
+			return json.Marshal(res)
+		}
+		if request.Delegations != nil {
+			delegator, err := sdk.AccAddressFromBech32(request.Delegations.Delegator)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegations.Delegator)
+			}
+			var validator sdk.ValAddress
+			validator, err = sdk.ValAddressFromBech32(request.Delegations.Validator)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegations.Validator)
+			}
+
+			// get delegations
+			var sdkDels []staking.Delegation
+			if len(validator) == 0 {
+				sdkDels = keeper.GetAllDelegatorDelegations(ctx, delegator)
+			} else {
+				d, found := keeper.GetDelegation(ctx, delegator, validator)
+				if found {
+					sdkDels = []staking.Delegation{d}
+				}
+			}
+
+			// convert them
+			delegations := make([]wasmTypes.Delegation, len(sdkDels))
+			for i, d := range sdkDels {
+				// shares to funds (amount, acc rewards)
+				// Validator.tokens * del.Shares / Validator.Shares ???
+
+				// Accumulated Rewards???
+
+				// can relegate? other query for redelegations?
+				// keeper.GetRedelegation
+
+				delegations[i] = wasmTypes.Delegation{
+					Delegator: d.DelegatorAddress.String(),
+					Validator: d.ValidatorAddress.String(),
+					// TODO: Amount
+					// TODO: AccumulatedRewards
+					CanRedelegate: true,
+				}
+			}
+			res := wasmTypes.DelegationsResponse{
+				Delegations: delegations,
+			}
+			return json.Marshal(res)
+		}
+		return nil, wasmTypes.UnsupportedRequest{"unknown Staking variant"}
+	}
 }
 
 func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
@@ -139,4 +206,16 @@ func convertSdkCoinToWasmCoin(coins []sdk.Coin) wasmTypes.Coins {
 		converted = append(converted, c)
 	}
 	return converted
+}
+
+// TODO: move this into go-cosmwasm, so it stays close to the definitions
+var WasmDecMultiplier int64 = 1_000_000
+
+// Take the bigDec type and fit it into the wasm uint64 type (
+func decToWasm(dec sdk.Dec) uint64 {
+	mul := dec.MulInt64(WasmDecMultiplier).TruncateInt64()
+	if mul < 0 {
+		panic("Try to conver negative value to uint64")
+	}
+	return uint64(mul)
 }

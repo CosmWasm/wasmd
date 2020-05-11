@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"path/filepath"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
@@ -43,6 +44,7 @@ type Keeper struct {
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
+	stakingKeeper staking.Keeper,
 	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), wasmConfig.CacheSize)
 	if err != nil {
@@ -60,7 +62,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		messenger:     messenger,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
-	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, keeper).Merge(customPlugins)
+	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, keeper).Merge(customPlugins)
 	return keeper
 }
 

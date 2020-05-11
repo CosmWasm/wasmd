@@ -3,12 +3,12 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )

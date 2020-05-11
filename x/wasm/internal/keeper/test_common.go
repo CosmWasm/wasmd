@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	"testing"
 	"time"
 
@@ -44,6 +46,8 @@ func MakeTestCodec() *codec.Codec {
 func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, auth.AccountKeeper, Keeper) {
 	keyContract := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
+	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
+	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 
@@ -71,22 +75,33 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, encoders *Mes
 		auth.ProtoBaseAccount, // prototype
 	)
 
-	bk := bank.NewBaseKeeper(
+	bankKeeper := bank.NewBaseKeeper(
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
 		nil,
 	)
-	bk.SetSendEnabled(ctx, true)
+	bankKeeper.SetSendEnabled(ctx, true)
 
-	// TODO: register slashing (and more?)
+	maccPerms := map[string][]string{
+		//mint.ModuleName:           {supply.Minter},
+		staking.BondedPoolName:    {supply.Burner, supply.Staking},
+		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
+		//gov.ModuleName:            {supply.Burner},
+	}
+
+	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
+	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace))
+
 	router := baseapp.NewRouter()
-	h := bank.NewHandler(bk)
-	router.AddRoute(bank.RouterKey, h)
+	bh := bank.NewHandler(bankKeeper)
+	router.AddRoute(bank.RouterKey, bh)
+	sh := staking.NewHandler(stakingKeeper)
+	router.AddRoute(staking.RouterKey, sh)
 
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bk, router, tempDir, wasmConfig, encoders, queriers)
+	keeper := NewKeeper(cdc, keyContract, accountKeeper, bankKeeper, stakingKeeper, router, tempDir, wasmConfig, encoders, queriers)
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
