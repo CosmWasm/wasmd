@@ -25,11 +25,16 @@ func NewMessageHandler(router sdk.Router, customEncoders *MessageEncoders) Messa
 	}
 }
 
+type BankEncoder func(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, error)
+type CustomEncoder func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
+type StakingEncoder func(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.Msg, error)
+type WasmEncoder func(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, error)
+
 type MessageEncoders struct {
-	Bank    func(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, error)
-	Custom  func(sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error)
-	Staking func(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg, error)
-	Wasm    func(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, error)
+	Bank    BankEncoder
+	Custom  CustomEncoder
+	Staking StakingEncoder
+	Wasm    WasmEncoder
 }
 
 func DefaultEncoders() MessageEncoders {
@@ -60,7 +65,7 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	return e
 }
 
-func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, error) {
+func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, error) {
 	if msg.Send == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Bank")
 	}
@@ -79,19 +84,19 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, erro
 	if err != nil {
 		return nil, err
 	}
-	sendMsg := bank.MsgSend{
+	sdkMsg := bank.MsgSend{
 		FromAddress: fromAddr,
 		ToAddress:   toAddr,
 		Amount:      toSend,
 	}
-	return sendMsg, nil
+	return []sdk.Msg{sdkMsg}, nil
 }
 
-func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
+func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Custom variant not supported")
 }
 
-func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg, error) {
+func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.Msg, error) {
 	if msg.Delegate != nil {
 		validator, err := sdk.ValAddressFromBech32(msg.Delegate.Validator)
 		if err != nil {
@@ -101,11 +106,12 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg
 		if err != nil {
 			return nil, err
 		}
-		return staking.MsgDelegate{
+		sdkMsg := staking.MsgDelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
-		}, nil
+		}
+		return []sdk.Msg{sdkMsg}, nil
 	}
 	if msg.Redelegate != nil {
 		src, err := sdk.ValAddressFromBech32(msg.Redelegate.SrcValidator)
@@ -120,12 +126,13 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg
 		if err != nil {
 			return nil, err
 		}
-		return staking.MsgBeginRedelegate{
+		sdkMsg := staking.MsgBeginRedelegate{
 			DelegatorAddress:    sender,
 			ValidatorSrcAddress: src,
 			ValidatorDstAddress: dst,
 			Amount:              coin,
-		}, nil
+		}
+		return []sdk.Msg{sdkMsg}, nil
 	}
 	if msg.Undelegate != nil {
 		validator, err := sdk.ValAddressFromBech32(msg.Undelegate.Validator)
@@ -136,11 +143,12 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg
 		if err != nil {
 			return nil, err
 		}
-		return staking.MsgUndelegate{
+		sdkMsg := staking.MsgUndelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
-		}, nil
+		}
+		return []sdk.Msg{sdkMsg}, nil
 	}
 	if msg.Withdraw != nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Withdraw not supported")
@@ -150,7 +158,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 }
 
-func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, error) {
+func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, error) {
 	if msg.Execute != nil {
 		contractAddr, err := sdk.AccAddressFromBech32(msg.Execute.ContractAddr)
 		if err != nil {
@@ -167,7 +175,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 			Msg:       msg.Execute.Msg,
 			SentFunds: coins,
 		}
-		return sdkMsg, nil
+		return []sdk.Msg{sdkMsg}, nil
 	}
 	if msg.Instantiate != nil {
 		coins, err := convertWasmCoinsToSdkCoins(msg.Instantiate.Send)
@@ -183,32 +191,33 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 			InitMsg:   msg.Instantiate.Msg,
 			InitFunds: coins,
 		}
-		return sdkMsg, nil
+		return []sdk.Msg{sdkMsg}, nil
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
 func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
-	var sdkMsg sdk.Msg
+	var sdkMsgs []sdk.Msg
 	var err error
 	switch {
 	case msg.Bank != nil:
-		sdkMsg, err = h.encoders.Bank(contractAddr, msg.Bank)
+		sdkMsgs, err = h.encoders.Bank(contractAddr, msg.Bank)
 	case msg.Custom != nil:
-		sdkMsg, err = h.encoders.Custom(contractAddr, msg.Custom)
+		sdkMsgs, err = h.encoders.Custom(contractAddr, msg.Custom)
 	case msg.Staking != nil:
-		sdkMsg, err = h.encoders.Staking(contractAddr, msg.Staking)
+		sdkMsgs, err = h.encoders.Staking(contractAddr, msg.Staking)
 	case msg.Wasm != nil:
-		sdkMsg, err = h.encoders.Wasm(contractAddr, msg.Wasm)
+		sdkMsgs, err = h.encoders.Wasm(contractAddr, msg.Wasm)
 	}
 	if err != nil {
 		return err
 	}
-	// (msg=nil, err=nil) is a no-op, ignore the message (eg. send with no tokens)
-	if sdkMsg == nil {
-		return nil
+	for _, sdkMsg := range sdkMsgs {
+		if err := h.handleSdkMessage(ctx, contractAddr, sdkMsg); err != nil {
+			return err
+		}
 	}
-	return h.handleSdkMessage(ctx, contractAddr, sdkMsg)
+	return nil
 }
 
 func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {

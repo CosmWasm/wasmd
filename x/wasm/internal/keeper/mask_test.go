@@ -325,8 +325,8 @@ func maskEncoders(cdc *codec.Codec) *MessageEncoders {
 
 // fromMaskRawMsg decodes msg.Data to an sdk.Msg using amino json encoding.
 // this needs to be registered on the Encoders
-func fromMaskRawMsg(cdc *codec.Codec) func(_sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
-	return func(_sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
+func fromMaskRawMsg(cdc *codec.Codec) CustomEncoder {
+	return func(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 		var custom maskCustomMsg
 		err := json.Unmarshal(msg, &custom)
 		if err != nil {
@@ -338,7 +338,7 @@ func fromMaskRawMsg(cdc *codec.Codec) func(_sender sdk.AccAddress, msg json.RawM
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
-			return sdkMsg, nil
+			return []sdk.Msg{sdkMsg}, nil
 		}
 		if custom.Debug != "" {
 			return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
