@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -79,7 +80,7 @@ func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.
 			}
 			coins := bank.GetCoins(ctx, addr)
 			res := wasmTypes.AllBalancesResponse{
-				Amount: convertSdkCoinToWasmCoin(coins),
+				Amount: convertSdkCoinsToWasmCoins(coins),
 			}
 			return json.Marshal(res)
 		}
@@ -135,35 +136,9 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegations.Validator)
 			}
 
-			// get delegations
-			var sdkDels []staking.Delegation
-			if len(validator) == 0 {
-				sdkDels = keeper.GetAllDelegatorDelegations(ctx, delegator)
-			} else {
-				d, found := keeper.GetDelegation(ctx, delegator, validator)
-				if found {
-					sdkDels = []staking.Delegation{d}
-				}
-			}
-
-			// convert them
-			delegations := make([]wasmTypes.Delegation, len(sdkDels))
-			for i, d := range sdkDels {
-				// shares to funds (amount, acc rewards)
-				// Validator.tokens * del.Shares / Validator.Shares ???
-
-				// Accumulated Rewards???
-
-				// can relegate? other query for redelegations?
-				// keeper.GetRedelegation
-
-				delegations[i] = wasmTypes.Delegation{
-					Delegator: d.DelegatorAddress.String(),
-					Validator: d.ValidatorAddress.String(),
-					// TODO: Amount
-					// TODO: AccumulatedRewards
-					CanRedelegate: true,
-				}
+			delegations, err := calculateDelegations(ctx, keeper, delegator, validator)
+			if err != nil {
+				return nil, err
 			}
 			res := wasmTypes.DelegationsResponse{
 				Delegations: delegations,
@@ -172,6 +147,50 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 		}
 		return nil, wasmTypes.UnsupportedRequest{"unknown Staking variant"}
 	}
+}
+
+// calculateDelegations does all queries needed to get validation info
+// delegator must be set, if validator is not set, get all delegations by delegator
+func calculateDelegations(ctx sdk.Context, keeper staking.Keeper, delegator sdk.AccAddress, validator sdk.ValAddress) (wasmTypes.Delegations, error) {
+	// get delegations (either by validator, or over all validators)
+	var sdkDels []staking.Delegation
+	if len(validator) == 0 {
+		sdkDels = keeper.GetAllDelegatorDelegations(ctx, delegator)
+	} else {
+		d, found := keeper.GetDelegation(ctx, delegator, validator)
+		if found {
+			sdkDels = []staking.Delegation{d}
+		}
+	}
+
+	// convert them to the cosmwasm format, pulling in extra info as needed
+	delegations := make([]wasmTypes.Delegation, len(sdkDels))
+	for i, d := range sdkDels {
+		// shares to amount logic comes from here:
+		// https://github.com/cosmos/cosmos-sdk/blob/v0.38.3/x/staking/keeper/querier.go#L404
+		val, found := keeper.GetValidator(ctx, d.ValidatorAddress)
+		if !found {
+			return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
+		}
+		bondDenom := keeper.BondDenom(ctx)
+		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(d.Shares).TruncateInt())
+
+		// Accumulated Rewards???
+
+		// can relegate? other query for redelegations?
+		// keeper.GetRedelegation
+
+		delegations[i] = wasmTypes.Delegation{
+			Delegator: d.DelegatorAddress.String(),
+			Validator: d.ValidatorAddress.String(),
+			Amount:    convertSdkCoinToWasmCoin(amount),
+			// TODO: AccumulatedRewards
+			AccumulatedRewards: wasmTypes.NewCoin(0, bondDenom),
+			// TODO: Determine redelegate
+			CanRedelegate: false,
+		}
+	}
+	return delegations, nil
 }
 
 func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
@@ -196,16 +215,19 @@ func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery
 	}
 }
 
-func convertSdkCoinToWasmCoin(coins []sdk.Coin) wasmTypes.Coins {
-	var converted wasmTypes.Coins
-	for _, coin := range coins {
-		c := wasmTypes.Coin{
-			Denom:  coin.Denom,
-			Amount: coin.Amount.String(),
-		}
-		converted = append(converted, c)
+func convertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmTypes.Coins {
+	converted := make(wasmTypes.Coins, len(coins))
+	for i, c := range coins {
+		converted[i] = convertSdkCoinToWasmCoin(c)
 	}
 	return converted
+}
+
+func convertSdkCoinToWasmCoin(coin sdk.Coin) wasmTypes.Coin {
+	return wasmTypes.Coin{
+		Denom:  coin.Denom,
+		Amount: coin.Amount.String(),
+	}
 }
 
 // TODO: move this into go-cosmwasm, so it stays close to the definitions
