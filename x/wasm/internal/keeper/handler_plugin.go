@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -151,10 +152,28 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		return []sdk.Msg{sdkMsg}, nil
 	}
 	if msg.Withdraw != nil {
-		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Withdraw not supported")
+		var err error
+		rcpt := sender
+		if len(msg.Withdraw.Recipient) != 0 {
+			rcpt, err = sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
+			}
+		}
+		validator, err := sdk.ValAddressFromBech32(msg.Withdraw.Validator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
+		}
+		setMsg := distribution.MsgSetWithdrawAddress{
+			DelegatorAddress: sender,
+			WithdrawAddress:  rcpt,
+		}
+		withdrawMsg := distribution.MsgWithdrawDelegatorReward{
+			DelegatorAddress: sender,
+			ValidatorAddress: validator,
+		}
+		return []sdk.Msg{setMsg, withdrawMsg}, nil
 	}
-
-	// TODO
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 }
 
