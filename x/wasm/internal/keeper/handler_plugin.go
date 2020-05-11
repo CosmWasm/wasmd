@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
@@ -74,7 +75,7 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) (sdk.Msg, erro
 	if stderr != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Send.ToAddress)
 	}
-	toSend, err := convertWasmCoinToSdkCoin(msg.Send.Amount)
+	toSend, err := convertWasmCoinsToSdkCoins(msg.Send.Amount)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +92,62 @@ func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) (sdk.Msg, error) {
 }
 
 func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) (sdk.Msg, error) {
+	if msg.Delegate != nil {
+		validator, err := sdk.ValAddressFromBech32(msg.Delegate.Validator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Delegate.Validator)
+		}
+		coin, err := convertWasmCoinToSdkCoin(msg.Delegate.Amount)
+		if err != nil {
+			return nil, err
+		}
+		return staking.MsgDelegate{
+			DelegatorAddress: sender,
+			ValidatorAddress: validator,
+			Amount:           coin,
+		}, nil
+	}
+	if msg.Redelegate != nil {
+		src, err := sdk.ValAddressFromBech32(msg.Redelegate.SrcValidator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Redelegate.SrcValidator)
+		}
+		dst, err := sdk.ValAddressFromBech32(msg.Redelegate.DstValidator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Redelegate.DstValidator)
+		}
+		coin, err := convertWasmCoinToSdkCoin(msg.Delegate.Amount)
+		if err != nil {
+			return nil, err
+		}
+		return staking.MsgBeginRedelegate{
+			DelegatorAddress:    sender,
+			ValidatorSrcAddress: src,
+			ValidatorDstAddress: dst,
+			Amount:              coin,
+		}, nil
+	}
+	if msg.Undelegate != nil {
+		validator, err := sdk.ValAddressFromBech32(msg.Undelegate.Validator)
+		if err != nil {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Undelegate.Validator)
+		}
+		coin, err := convertWasmCoinToSdkCoin(msg.Undelegate.Amount)
+		if err != nil {
+			return nil, err
+		}
+		return staking.MsgUndelegate{
+			DelegatorAddress: sender,
+			ValidatorAddress: validator,
+			Amount:           coin,
+		}, nil
+	}
+	if msg.Withdraw != nil {
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Withdraw not supported")
+	}
+
 	// TODO
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Staking variant not supported")
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 }
 
 func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, error) {
@@ -101,7 +156,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Execute.ContractAddr)
 		}
-		coins, err := convertWasmCoinToSdkCoin(msg.Execute.Send)
+		coins, err := convertWasmCoinsToSdkCoins(msg.Execute.Send)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +170,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) (sdk.Msg, erro
 		return sdkMsg, nil
 	}
 	if msg.Instantiate != nil {
-		coins, err := convertWasmCoinToSdkCoin(msg.Instantiate.Send)
+		coins, err := convertWasmCoinsToSdkCoins(msg.Instantiate.Send)
 		if err != nil {
 			return nil, err
 		}
@@ -179,18 +234,25 @@ func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Addre
 	return nil
 }
 
-func convertWasmCoinToSdkCoin(coins []wasmTypes.Coin) (sdk.Coins, error) {
+func convertWasmCoinsToSdkCoins(coins []wasmTypes.Coin) (sdk.Coins, error) {
 	var toSend sdk.Coins
 	for _, coin := range coins {
-		amount, ok := sdk.NewIntFromString(coin.Amount)
-		if !ok {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
-		}
-		c := sdk.Coin{
-			Denom:  coin.Denom,
-			Amount: amount,
+		c, err := convertWasmCoinToSdkCoin(coin)
+		if err != nil {
+			return nil, err
 		}
 		toSend = append(toSend, c)
 	}
 	return toSend, nil
+}
+
+func convertWasmCoinToSdkCoin(coin wasmTypes.Coin) (sdk.Coin, error) {
+	amount, ok := sdk.NewIntFromString(coin.Amount)
+	if !ok {
+		return sdk.Coin{}, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
+	}
+	return sdk.Coin{
+		Denom:  coin.Denom,
+		Amount: amount,
+	}, nil
 }
