@@ -19,7 +19,7 @@ func TestQueryContractState(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -85,7 +85,7 @@ func TestQueryContractState(t *testing.T) {
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
 			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
-			expSmartRes: anyAddr.String(),
+			expSmartRes: fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String()),
 		},
 		"query smart invalid request": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
@@ -147,7 +147,7 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir)
+	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))

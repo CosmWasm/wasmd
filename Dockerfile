@@ -21,7 +21,8 @@ RUN make install
 
 # Install libgo_cosmwasm.so to a shared directory where it is readable by all users
 # See https://github.com/CosmWasm/wasmd/issues/43#issuecomment-608366314
-RUN cp /go/pkg/mod/github.com/confio/go-cosmwasm@v*/api/libgo_cosmwasm.so /lib/x86_64-linux-gnu
+# Note that CosmWasm gets turned into !cosm!wasm in the pkg/mod cache
+RUN cp /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*/api/libgo_cosmwasm.so /lib/x86_64-linux-gnu
 
 COPY docker/* /opt/
 RUN chmod +x /opt/*.sh

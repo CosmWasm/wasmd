@@ -2,12 +2,10 @@ package types
 
 import (
 	"encoding/json"
-
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
-	wasmTypes "github.com/confio/go-cosmwasm/types"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/exported"
 )
 
 const defaultLRUCacheSize = uint64(0)
@@ -94,23 +92,23 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 	}
 }
 
-// NewParams initializes params for a contract instance
-func NewParams(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAcct auth.Account) wasmTypes.Env {
-	return wasmTypes.Env{
+// NewEnv initializes the environment for a contract instance
+func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
+	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:  ctx.BlockHeight(),
 			Time:    ctx.BlockTime().Unix(),
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Signer:    wasmTypes.CanonicalAddress(creator),
+			Sender:    wasmTypes.CanonicalAddress(creator),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAcct.GetAddress()),
-			Balance: NewWasmCoins(contractAcct.GetCoins()),
+			Address: wasmTypes.CanonicalAddress(contractAddr),
 		},
 	}
+	return env
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
