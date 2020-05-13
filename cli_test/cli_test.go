@@ -18,14 +18,13 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
-
-	"github.com/cosmwasm/wasmd/app"
-
 	"github.com/cosmos/cosmos-sdk/tests"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
+
+	"github.com/CosmWasm/wasmd/app"
 )
 
 func TestGaiaCLIKeysAddMultisig(t *testing.T) {

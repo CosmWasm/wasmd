@@ -3,8 +3,8 @@ package keeper
 import (
 	"bytes"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	// "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )

@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/gorilla/mux"
