@@ -94,10 +94,17 @@ func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, labe
 
 // NewEnv initializes the environment for a contract instance
 func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
+	// safety checks before casting below
+	if ctx.BlockHeight() < 0 {
+		panic("Block height must never be negative")
+	}
+	if ctx.BlockTime().Unix() < 0 {
+		panic("Block (unix) time must never be negative ")
+	}
 	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
-			Height:  ctx.BlockHeight(),
-			Time:    ctx.BlockTime().Unix(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(ctx.BlockTime().Unix()),
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{

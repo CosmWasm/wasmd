@@ -115,9 +115,9 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 			for i, v := range validators {
 				wasmVals[i] = wasmTypes.Validator{
 					Address:       v.OperatorAddress.String(),
-					Commission:    decToWasm(v.Commission.Rate),
-					MaxCommission: decToWasm(v.Commission.MaxRate),
-					MaxChangeRate: decToWasm(v.Commission.MaxChangeRate),
+					Commission:    v.Commission.Rate.String(),
+					MaxCommission: v.Commission.MaxRate.String(),
+					MaxChangeRate: v.Commission.MaxChangeRate.String(),
 				}
 			}
 			res := wasmTypes.ValidatorsResponse{
@@ -228,16 +228,4 @@ func convertSdkCoinToWasmCoin(coin sdk.Coin) wasmTypes.Coin {
 		Denom:  coin.Denom,
 		Amount: coin.Amount.String(),
 	}
-}
-
-// TODO: move this into go-cosmwasm, so it stays close to the definitions
-var WasmDecMultiplier int64 = 1_000_000
-
-// Take the bigDec type and fit it into the wasm uint64 type (
-func decToWasm(dec sdk.Dec) uint64 {
-	mul := dec.MulInt64(WasmDecMultiplier).TruncateInt64()
-	if mul < 0 {
-		panic("Try to conver negative value to uint64")
-	}
-	return uint64(mul)
 }
