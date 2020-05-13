@@ -21,7 +21,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 const flagLRUCacheSize = "lru_size"

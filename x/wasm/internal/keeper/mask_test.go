@@ -3,7 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"io/ioutil"
 	"os"
 	"strings"

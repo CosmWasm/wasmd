@@ -36,7 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 
-	"github.com/cosmwasm/wasmd/x/wasm"
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 const appName = "WasmApp"
