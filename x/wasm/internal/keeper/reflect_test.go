@@ -62,7 +62,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	_, _, bob := keyPubAddr()
 
 	// upload mask code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	maskID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
@@ -239,7 +239,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 
 	// upload code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
