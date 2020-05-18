@@ -34,7 +34,8 @@ func setupTest(t *testing.T) (testData, func()) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 
-	ctx, acctKeeper, _, keeper := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	acctKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 	data := testData{
 		module:     NewAppModule(keeper),
 		ctx:        ctx,

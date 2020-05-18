@@ -124,9 +124,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	distKeeper.SetParams(ctx, distribution.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
-	distKeeper.SetFeePool(ctx, distribution.FeePool{
-		CommunityPool: sdk.DecCoins{{Denom: "stake", Amount: sdk.MustNewDecFromStr("123")}},
-	})
+	// set genesis items required for distribution
+	distKeeper.SetFeePool(ctx, distribution.InitialFeePool())
 
 	// total supply to track this
 	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
@@ -137,6 +136,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		mod := supply.NewEmptyModuleAccount(name, perms...)
 		if name == staking.NotBondedPoolName {
 			err = mod.SetCoins(totalSupply)
+			require.NoError(t, err)
+		} else if name == distribution.ModuleName {
+			// some big pot to pay out
+			err = mod.SetCoins(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
 			require.NoError(t, err)
 		}
 		supplyKeeper.SetModuleAccount(ctx, mod)

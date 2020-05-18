@@ -235,7 +235,6 @@ func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, m
 		return err
 	}
 	for _, sdkMsg := range sdkMsgs {
-		fmt.Printf("dispatch sdk: %#v\n", sdkMsg)
 		if err := h.handleSdkMessage(ctx, contractAddr, sdkMsg); err != nil {
 			return err
 		}
