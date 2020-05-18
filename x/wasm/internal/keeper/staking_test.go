@@ -84,56 +84,6 @@ type InvestmentResponse struct {
 	MinWithdrawl string `json:"min_withdrawl"`
 }
 
-// adds a few validators and returns a list of validators that are registered
-func addValidator(ctx sdk.Context, stakingKeeper staking.Keeper, accountKeeper auth.AccountKeeper, value sdk.Coin) sdk.ValAddress {
-	_, pub, accAddr := keyPubAddr()
-
-	addr := sdk.ValAddress(accAddr)
-
-	owner := createFakeFundedAccount(ctx, accountKeeper, sdk.Coins{value})
-
-	msg := staking.MsgCreateValidator{
-		Description: types.Description{
-			Moniker: "Validator power",
-		},
-		Commission: types.CommissionRates{
-			Rate:          sdk.MustNewDecFromStr("0.1"),
-			MaxRate:       sdk.MustNewDecFromStr("0.2"),
-			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
-		},
-		MinSelfDelegation: sdk.OneInt(),
-		DelegatorAddress:  owner,
-		ValidatorAddress:  addr,
-		PubKey:            pub,
-		Value:             value,
-	}
-
-	h := staking.NewHandler(stakingKeeper)
-	_, err := h(ctx, msg)
-	if err != nil {
-		panic(err)
-	}
-	return addr
-
-	//// make it a bonded validator with power stake
-	//val := types.NewValidator(addr, pub, types.Description{Moniker: fmt.Sprintf("Validator power %s", power)})
-	//val.Status = sdk.Bonded
-	//val, _ = val.AddTokensFromDel(power)
-	//// store it
-	//stakingKeeper.SetValidator(ctx, val)
-	//stakingKeeper.SetValidatorByPowerIndex(ctx, val)
-	//return addr
-}
-
-// this will commit the current set, update the block height and set historic info
-// basically, letting two blocks pass
-func commitValidators(ctx sdk.Context, stakingKeeper staking.Keeper) sdk.Context {
-	staking.EndBlocker(ctx, stakingKeeper)
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	staking.BeginBlocker(ctx, stakingKeeper)
-	return ctx
-}
-
 func TestInitializeStaking(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -142,7 +92,7 @@ func TestInitializeStaking(t *testing.T) {
 	accKeeper, stakingKeeper, keeper := keepers.AccountKeeper, keepers.StakingKeeper, keepers.WasmKeeper
 
 	valAddr := addValidator(ctx, stakingKeeper, accKeeper, sdk.NewInt64Coin("stake", 1234567))
-	ctx = commitValidators(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, stakingKeeper)
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
@@ -218,7 +168,7 @@ func initializeStaking(t *testing.T) initInfo {
 	accKeeper, stakingKeeper, keeper := keepers.AccountKeeper, keepers.StakingKeeper, keepers.WasmKeeper
 
 	valAddr := addValidator(ctx, stakingKeeper, accKeeper, sdk.NewInt64Coin("stake", 1000000))
-	ctx = commitValidators(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, stakingKeeper)
 
 	// set some baseline - this seems to be needed
 	keepers.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distribution.ValidatorHistoricalRewards{
@@ -344,7 +294,7 @@ func TestUnbonding(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 5)
+	ctx = nextBlock(ctx, stakingKeeper)
 
 	// now unbond 30k - note that 3k (10%) goes to the owner as a tax, 27k unbonded and available as claims
 	unbond := StakingHandleMsg{
@@ -414,22 +364,9 @@ func TestReinvest(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
-	distKeeper.Hooks().AfterDelegationModified(ctx, contractAddr, valAddr)
-	staking.EndBlocker(ctx, stakingKeeper)
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-
-	// allocate some rewards
-	vali := stakingKeeper.Validator(ctx, valAddr)
+	ctx = nextBlock(ctx, stakingKeeper)
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
-	reward, err := sdk.NewDecFromStr("240000")
-	require.NoError(t, err)
-	payout := sdk.DecCoins{{Denom: "stake", Amount: reward}}
-	distKeeper.AllocateTokensToValidator(ctx, vali, payout)
-
-	//rewards, err := distKeeper.WithdrawDelegationRewards(ctx, contractAddr, valAddr)
-	//require.NoError(t, err)
-	//require.Equal(t, 1, len(rewards), "%s", rewards)
-	//assert.Equal(t, sdk.NewInt(36000), rewards[0].Amount, "%s", rewards)
+	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
 	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
@@ -465,6 +402,58 @@ func TestReinvest(t *testing.T) {
 	assertBalance(t, ctx, keeper, contractAddr, initInfo.creator, "0")
 	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
 	assertSupply(t, ctx, keeper, contractAddr, "200000", sdk.NewInt64Coin("stake", 236000))
+}
+
+// adds a few validators and returns a list of validators that are registered
+func addValidator(ctx sdk.Context, stakingKeeper staking.Keeper, accountKeeper auth.AccountKeeper, value sdk.Coin) sdk.ValAddress {
+	_, pub, accAddr := keyPubAddr()
+
+	addr := sdk.ValAddress(accAddr)
+
+	owner := createFakeFundedAccount(ctx, accountKeeper, sdk.Coins{value})
+
+	msg := staking.MsgCreateValidator{
+		Description: types.Description{
+			Moniker: "Validator power",
+		},
+		Commission: types.CommissionRates{
+			Rate:          sdk.MustNewDecFromStr("0.1"),
+			MaxRate:       sdk.MustNewDecFromStr("0.2"),
+			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		},
+		MinSelfDelegation: sdk.OneInt(),
+		DelegatorAddress:  owner,
+		ValidatorAddress:  addr,
+		PubKey:            pub,
+		Value:             value,
+	}
+
+	h := staking.NewHandler(stakingKeeper)
+	_, err := h(ctx, msg)
+	if err != nil {
+		panic(err)
+	}
+	return addr
+}
+
+// this will commit the current set, update the block height and set historic info
+// basically, letting two blocks pass
+func nextBlock(ctx sdk.Context, stakingKeeper staking.Keeper) sdk.Context {
+	staking.EndBlocker(ctx, stakingKeeper)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	staking.BeginBlocker(ctx, stakingKeeper)
+	return ctx
+}
+
+func setValidatorRewards(ctx sdk.Context, stakingKeeper staking.Keeper, distKeeper distribution.Keeper, valAddr sdk.ValAddress, reward string) {
+	// allocate some rewards
+	vali := stakingKeeper.Validator(ctx, valAddr)
+	amount, err := sdk.NewDecFromStr(reward)
+	if err != nil {
+		panic(err)
+	}
+	payout := sdk.DecCoins{{Denom: "stake", Amount: amount}}
+	distKeeper.AllocateTokensToValidator(ctx, vali, payout)
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
