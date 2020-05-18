@@ -267,10 +267,82 @@ func TestBonding(t *testing.T) {
 	finalPower := val.GetDelegatorShares()
 	assert.Equal(t, sdk.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
 
+	// check the delegation itself
+	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.True(t, found)
+	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("80000"))
+
 	// check we have the desired balance
 	assertBalance(t, ctx, keeper, contractAddr, bob, "80000")
 	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
 	assertSupply(t, ctx, keeper, contractAddr, "80000", sdk.NewInt64Coin("stake", 80000))
+}
+
+func TestUnbonding(t *testing.T) {
+	initInfo := initializeStaking(t)
+	defer initInfo.cleanup()
+	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	initPower := val.GetDelegatorShares()
+
+	// bob has 160k, putting 80k into the contract
+	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 160000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
+	bob := createFakeFundedAccount(ctx, accKeeper, full)
+
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// update height a bit
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 5)
+
+	// now unbond 30k - note that 3k (10%) goes to the owner as a tax, 27k unbonded and available as claims
+	unbond := StakingHandleMsg{
+		Unbond: &unbondPayload{
+			Amount: "30000",
+		},
+	}
+	unbondBz, err := json.Marshal(unbond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, unbondBz, nil)
+	require.NoError(t, err)
+
+	// check some account values - the money is on neither account (cuz it is bonded)
+	// Note: why is this immediate? just test setup?
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, bob, funds)
+
+	// make sure the proper number of tokens have been bonded (80k - 27k = 53k)
+	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	finalPower := val.GetDelegatorShares()
+	assert.Equal(t, sdk.NewInt(53000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
+
+	// check the delegation itself
+	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.True(t, found)
+	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("53000"))
+
+	// check there is unbonding in progress
+	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	require.True(t, found)
+	require.Equal(t, 1, len(un.Entries))
+	assert.Equal(t, "27000", un.Entries[0].Balance.String())
+
+	// check we have the desired balance
+	assertBalance(t, ctx, keeper, contractAddr, bob, "50000")
+	assertBalance(t, ctx, keeper, contractAddr, initInfo.creator, "3000")
+	assertClaims(t, ctx, keeper, contractAddr, bob, "27000")
+	assertSupply(t, ctx, keeper, contractAddr, "53000", sdk.NewInt64Coin("stake", 53000))
+
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
@@ -317,164 +389,3 @@ func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Acc
 	assert.Equal(t, expectedIssued, invest.TokenSupply)
 	assert.Equal(t, expectedBonded, invest.StakedTokens)
 }
-
-//func TestMaskReflectCustomMsg(t *testing.T) {
-//	tempDir, err := ioutil.TempDir("", "wasm")
-//	require.NoError(t, err)
-//	defer os.RemoveAll(tempDir)
-//	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
-//
-//	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-//	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-//	bob := createFakeFundedAccount(ctx, accKeeper, deposit)
-//	_, _, fred := keyPubAddr()
-//
-//	// upload code
-//	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-//	require.NoError(t, err)
-//	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
-//	require.NoError(t, err)
-//	require.Equal(t, uint64(1), codeID)
-//
-//	// creator instantiates a contract and gives it tokens
-//	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-//	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, []byte("{}"), "mask contract 1", contractStart)
-//	require.NoError(t, err)
-//	require.NotEmpty(t, contractAddr)
-//
-//	// set owner to bob
-//	transfer := MaskHandleMsg{
-//		Change: &ownerPayload{
-//			Owner: bob,
-//		},
-//	}
-//	transferBz, err := json.Marshal(transfer)
-//	require.NoError(t, err)
-//	_, err = keeper.Execute(ctx, contractAddr, creator, transferBz, nil)
-//	require.NoError(t, err)
-//
-//	// check some account values
-//	checkAccount(t, ctx, accKeeper, contractAddr, contractStart)
-//	checkAccount(t, ctx, accKeeper, bob, deposit)
-//	checkAccount(t, ctx, accKeeper, fred, nil)
-//
-//	// bob can send contract's tokens to fred (using SendMsg)
-//	msgs := []wasmTypes.CosmosMsg{{
-//		Bank: &wasmTypes.BankMsg{
-//			Send: &wasmTypes.SendMsg{
-//				FromAddress: contractAddr.String(),
-//				ToAddress:   fred.String(),
-//				Amount: []wasmTypes.Coin{{
-//					Denom:  "denom",
-//					Amount: "15000",
-//				}},
-//			},
-//		},
-//	}}
-//	reflectSend := MaskHandleMsg{
-//		Reflect: &reflectPayload{
-//			Msgs: msgs,
-//		},
-//	}
-//	reflectSendBz, err := json.Marshal(reflectSend)
-//	require.NoError(t, err)
-//	_, err = keeper.Execute(ctx, contractAddr, bob, reflectSendBz, nil)
-//	require.NoError(t, err)
-//
-//	// fred got coins
-//	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
-//	// contract lost them
-//	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
-//	checkAccount(t, ctx, accKeeper, bob, deposit)
-//
-//	// construct an opaque message
-//	var sdkSendMsg sdk.Msg = &bank.MsgSend{
-//		FromAddress: contractAddr,
-//		ToAddress:   fred,
-//		Amount:      sdk.NewCoins(sdk.NewInt64Coin("denom", 23000)),
-//	}
-//	opaque, err := toMaskRawMsg(keeper.cdc, sdkSendMsg)
-//	require.NoError(t, err)
-//	reflectOpaque := MaskHandleMsg{
-//		Reflect: &reflectPayload{
-//			Msgs: []wasmTypes.CosmosMsg{opaque},
-//		},
-//	}
-//	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
-//	require.NoError(t, err)
-//
-//	_, err = keeper.Execute(ctx, contractAddr, bob, reflectOpaqueBz, nil)
-//	require.NoError(t, err)
-//
-//	// fred got more coins
-//	checkAccount(t, ctx, accKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
-//	// contract lost them
-//	checkAccount(t, ctx, accKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
-//	checkAccount(t, ctx, accKeeper, bob, deposit)
-//}
-//
-//func TestMaskReflectCustomQuery(t *testing.T) {
-//	tempDir, err := ioutil.TempDir("", "wasm")
-//	require.NoError(t, err)
-//	defer os.RemoveAll(tempDir)
-//	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
-//
-//	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-//	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-//
-//	// upload code
-//	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-//	require.NoError(t, err)
-//	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
-//	require.NoError(t, err)
-//	require.Equal(t, uint64(1), codeID)
-//
-//	// creator instantiates a contract and gives it tokens
-//	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-//	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, []byte("{}"), "mask contract 1", contractStart)
-//	require.NoError(t, err)
-//	require.NotEmpty(t, contractAddr)
-//
-//	// let's perform a normal query of state
-//	ownerQuery := MaskQueryMsg{
-//		Owner: &struct{}{},
-//	}
-//	ownerQueryBz, err := json.Marshal(ownerQuery)
-//	require.NoError(t, err)
-//	ownerRes, err := keeper.QuerySmart(ctx, contractAddr, ownerQueryBz)
-//	require.NoError(t, err)
-//	var res OwnerResponse
-//	err = json.Unmarshal(ownerRes, &res)
-//	require.NoError(t, err)
-//	assert.Equal(t, res.Owner, creator.String())
-//
-//	// and now making use of the custom querier callbacks
-//	customQuery := MaskQueryMsg{
-//		ReflectCustom: &Text{
-//			Text: "all Caps noW",
-//		},
-//	}
-//	customQueryBz, err := json.Marshal(customQuery)
-//	require.NoError(t, err)
-//	custom, err := keeper.QuerySmart(ctx, contractAddr, customQueryBz)
-//	require.NoError(t, err)
-//	var resp customQueryResponse
-//	err = json.Unmarshal(custom, &resp)
-//	require.NoError(t, err)
-//	assert.Equal(t, resp.Msg, "ALL CAPS NOW")
-//}
-
-//func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
-//	acct := accKeeper.GetAccount(ctx, addr)
-//	if expected == nil {
-//		assert.Nil(t, acct)
-//	} else {
-//		assert.NotNil(t, acct)
-//		if expected.Empty() {
-//			// there is confusion between nil and empty slice... let's just treat them the same
-//			assert.True(t, acct.GetCoins().Empty())
-//		} else {
-//			assert.Equal(t, acct.GetCoins(), expected)
-//		}
-//	}
-//}
