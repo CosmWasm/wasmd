@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -85,35 +85,67 @@ type InvestmentResponse struct {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidators(ctx sdk.Context, stakingKeeper staking.Keeper, powers []sdk.Int) []sdk.ValAddress {
-	var addrs = make([]sdk.ValAddress, len(powers))
-	for i, power := range powers {
-		addrs[i] = addValidator(ctx, stakingKeeper, power)
+func addValidator(ctx sdk.Context, stakingKeeper staking.Keeper, accountKeeper auth.AccountKeeper, value sdk.Coin) sdk.ValAddress {
+	_, pub, accAddr := keyPubAddr()
+
+	addr := sdk.ValAddress(accAddr)
+
+	owner := createFakeFundedAccount(ctx, accountKeeper, sdk.Coins{value})
+
+	msg := staking.MsgCreateValidator{
+		Description: types.Description{
+			Moniker: "Validator power",
+		},
+		Commission: types.CommissionRates{
+			Rate:          sdk.MustNewDecFromStr("0"),
+			MaxRate:       sdk.MustNewDecFromStr("0.1"),
+			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		},
+		MinSelfDelegation: sdk.NewInt(10),
+		DelegatorAddress:  owner,
+		ValidatorAddress:  addr,
+		PubKey:            pub,
+		Value:             value,
 	}
-	return addrs
+
+	h := staking.NewHandler(stakingKeeper)
+	_, err := h(ctx, msg)
+	if err != nil {
+		panic(err)
+	}
+	return addr
+
+	//// make it a bonded validator with power stake
+	//val := types.NewValidator(addr, pub, types.Description{Moniker: fmt.Sprintf("Validator power %s", power)})
+	//val.Status = sdk.Bonded
+	//val, _ = val.AddTokensFromDel(power)
+	//// store it
+	//stakingKeeper.SetValidator(ctx, val)
+	//stakingKeeper.SetValidatorByPowerIndex(ctx, val)
+	//return addr
 }
 
-// adds a few validators and returns a list of validators that are registered
-func addValidator(ctx sdk.Context, stakingKeeper staking.Keeper, power sdk.Int) sdk.ValAddress {
-	_, pub, accAddr := keyPubAddr()
-	addr := sdk.ValAddress(accAddr)
-	// make it a bonded validator with power stake
-	val := types.NewValidator(addr, pub, types.Description{Moniker: fmt.Sprintf("Validator power %s", power)})
-	val.Status = sdk.Bonded
-	val, _ = val.AddTokensFromDel(power)
-	// store it
-	stakingKeeper.SetValidator(ctx, val)
-	stakingKeeper.SetValidatorByPowerIndex(ctx, val)
-	return addr
+// this will commit the current set, update the block height and set historic info
+// basically, letting two blocks pass
+func commitValidators(ctx sdk.Context, stakingKeeper staking.Keeper) sdk.Context {
+	stakingKeeper.BlockValidatorUpdates(ctx)
+	// update 2
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 2)
+	stakingKeeper.TrackHistoricalInfo(ctx)
+	stakingKeeper.BlockValidatorUpdates(ctx)
+	// and one more for us
+	return ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 }
 
 func TestInitializeStaking(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, stakingKeeper, keeper := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, stakingKeeper, keeper := keepers.AccountKeeper, keepers.StakingKeeper, keepers.WasmKeeper
 
-	valAddr := addValidator(ctx, stakingKeeper, sdk.NewInt(1234567))
+	valAddr := addValidator(ctx, stakingKeeper, accKeeper, sdk.NewInt64Coin("stake", 1234567))
+	ctx = commitValidators(ctx, stakingKeeper)
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
@@ -176,6 +208,7 @@ type initInfo struct {
 	ctx           sdk.Context
 	accKeeper     auth.AccountKeeper
 	stakingKeeper staking.Keeper
+	distKeeper    distribution.Keeper
 	wasmKeeper    Keeper
 
 	cleanup func()
@@ -184,12 +217,22 @@ type initInfo struct {
 func initializeStaking(t *testing.T) initInfo {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
-	ctx, accKeeper, stakingKeeper, keeper := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, stakingKeeper, keeper := keepers.AccountKeeper, keepers.StakingKeeper, keepers.WasmKeeper
 
-	valAddr := addValidator(ctx, stakingKeeper, sdk.NewInt(1234567))
+	valAddr := addValidator(ctx, stakingKeeper, accKeeper, sdk.NewInt64Coin("stake", 1234567))
+	ctx = commitValidators(ctx, stakingKeeper)
+
+	// set some baseline - this seems to be needed
+	keepers.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distribution.ValidatorHistoricalRewards{
+		CumulativeRewardRatio: sdk.DecCoins{},
+		ReferenceCount:        1,
+	})
+
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
+	assert.Equal(t, v.Status, sdk.Bonded)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -225,6 +268,7 @@ func initializeStaking(t *testing.T) initInfo {
 		accKeeper:     accKeeper,
 		stakingKeeper: stakingKeeper,
 		wasmKeeper:    keeper,
+		distKeeper:    keepers.DistKeeper,
 		cleanup:       func() { os.RemoveAll(tempDir) },
 	}
 }
@@ -342,7 +386,88 @@ func TestUnbonding(t *testing.T) {
 	assertBalance(t, ctx, keeper, contractAddr, initInfo.creator, "3000")
 	assertClaims(t, ctx, keeper, contractAddr, bob, "27000")
 	assertSupply(t, ctx, keeper, contractAddr, "53000", sdk.NewInt64Coin("stake", 53000))
+}
 
+func TestReinvest(t *testing.T) {
+	initInfo := initializeStaking(t)
+	defer initInfo.cleanup()
+	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+	distKeeper := initInfo.distKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	initPower := val.GetDelegatorShares()
+
+	// bob has 160k, putting 80k into the contract
+	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 160000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
+	bob := createFakeFundedAccount(ctx, accKeeper, full)
+
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// update height a bit and set some fake rewards (40k rewards for 80k invested)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 400)
+	distKeeper.Hooks().AfterDelegationModified(ctx, contractAddr, valAddr)
+	stakingKeeper.TrackHistoricalInfo(ctx)
+
+	// set outstanding rewards
+	reward, err := sdk.NewDecFromStr("40000")
+	require.NoError(t, err)
+	payout := sdk.DecCoins{{Denom: "stake", Amount: reward}}
+	distKeeper.SetValidatorOutstandingRewards(ctx, valAddr, payout)
+	distKeeper.SetValidatorAccumulatedCommission(ctx, valAddr, sdk.DecCoins{})
+	distKeeper.SetValidatorCurrentRewards(ctx, valAddr, distribution.ValidatorCurrentRewards{Rewards: payout, Period: 1})
+
+	// DEBUG
+	// check the delegation itself
+	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.True(t, found)
+	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("80000"))
+	// check other info
+	found = distKeeper.HasDelegatorStartingInfo(ctx, valAddr, contractAddr)
+	require.True(t, found)
+
+	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
+	reinvest := StakingHandleMsg{
+		Reinvest: &struct{}{},
+	}
+	reinvestBz, err := json.Marshal(reinvest)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, reinvestBz, nil)
+	require.NoError(t, err)
+
+	// check some account values - the money is on neither account (cuz it is bonded)
+	// Note: why is this immediate? just test setup?
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, bob, funds)
+
+	// check the delegation itself
+	d, found = stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.True(t, found)
+	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("120000"))
+
+	// make sure the proper number of tokens have been bonded (80k + 40k = 120k)
+	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	finalPower := val.GetDelegatorShares()
+	assert.Equal(t, sdk.NewInt(120000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
+
+	// check there is no unbonding in progress
+	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	assert.False(t, found, "%#v", un)
+
+	// check we have the desired balance
+	assertBalance(t, ctx, keeper, contractAddr, bob, "80000")
+	assertBalance(t, ctx, keeper, contractAddr, initInfo.creator, "0")
+	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
+	assertSupply(t, ctx, keeper, contractAddr, "80000", sdk.NewInt64Coin("stake", 120000))
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {

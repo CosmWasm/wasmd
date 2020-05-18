@@ -54,8 +54,16 @@ var TestingStakeParams = staking.Params{
 	BondDenom:         "stake",
 }
 
+type TestKeepers struct {
+	AccountKeeper auth.AccountKeeper
+	StakingKeeper staking.Keeper
+	WasmKeeper    Keeper
+	DistKeeper    distribution.Keeper
+	SupplyKeeper  supply.Keeper
+}
+
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, auth.AccountKeeper, staking.Keeper, Keeper) {
+func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
 	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
@@ -111,7 +119,14 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
+
 	distKeeper := distribution.NewKeeper(cdc, keyDistro, pk.Subspace(distribution.DefaultParamspace), stakingKeeper, supplyKeeper, auth.FeeCollectorName, nil)
+	distKeeper.SetParams(ctx, distribution.DefaultParams())
+	stakingKeeper.SetHooks(distKeeper.Hooks())
+
+	distKeeper.SetFeePool(ctx, distribution.FeePool{
+		CommunityPool: sdk.DecCoins{{Denom: "stake", Amount: sdk.MustNewDecFromStr("123")}},
+	})
 
 	// total supply to track this
 	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
@@ -146,7 +161,14 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
-	return ctx, accountKeeper, stakingKeeper, keeper
+	keepers := TestKeepers{
+		AccountKeeper: accountKeeper,
+		SupplyKeeper:  supplyKeeper,
+		StakingKeeper: stakingKeeper,
+		DistKeeper:    distKeeper,
+		WasmKeeper:    keeper,
+	}
+	return ctx, keepers
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
