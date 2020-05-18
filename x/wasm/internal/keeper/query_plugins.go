@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -109,8 +108,16 @@ func NoCustomQuerier(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 
 func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
+		if request.BondedDenom != nil {
+			denom := keeper.BondDenom(ctx)
+			res := wasmTypes.BondedDenomResponse{
+				Denom: denom,
+			}
+			return json.Marshal(res)
+		}
 		if request.Validators != nil {
 			validators := keeper.GetBondedValidatorsByPower(ctx)
+			//validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmTypes.Validator, len(validators))
 			for i, v := range validators {
 				wasmVals[i] = wasmTypes.Validator{

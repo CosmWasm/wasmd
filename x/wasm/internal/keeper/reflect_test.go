@@ -55,14 +55,15 @@ func TestMaskReflectContractSend(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 	_, _, bob := keyPubAddr()
 
 	// upload mask code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	maskID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
@@ -138,7 +139,8 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -146,7 +148,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
@@ -233,13 +235,14 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, keeper := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), maskPlugins())
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
 
 	// upload code
-	maskCode, err := ioutil.ReadFile("./testdata/mask.wasm")
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, creator, maskCode, "", "")
 	require.NoError(t, err)
