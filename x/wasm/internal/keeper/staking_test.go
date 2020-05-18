@@ -75,7 +75,7 @@ type TokenInfoResponse struct {
 
 type InvestmentResponse struct {
 	TokenSupply  string         `json:"token_supply"`
-	StakedTokens string         `json:"staked_tokens"`
+	StakedTokens sdk.Coin       `json:"staked_tokens"`
 	NominalValue sdk.Dec        `json:"nominal_value"`
 	Owner        sdk.AccAddress `json:"owner"`
 	Validator    sdk.ValAddress `json:"validator"`
@@ -245,6 +245,11 @@ func TestBonding(t *testing.T) {
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
 	bob := createFakeFundedAccount(ctx, accKeeper, full)
 
+	// check contract state before
+	assertBalance(t, ctx, keeper, contractAddr, bob, "0")
+	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
+	assertSupply(t, ctx, keeper, contractAddr, "0", sdk.NewInt64Coin("stake", 0))
+
 	bond := StakingHandleMsg{
 		Bond: &struct{}{},
 	}
@@ -261,6 +266,56 @@ func TestBonding(t *testing.T) {
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
 	assert.Equal(t, sdk.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
+
+	// check we have the desired balance
+	assertBalance(t, ctx, keeper, contractAddr, bob, "80000")
+	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
+	assertSupply(t, ctx, keeper, contractAddr, "80000", sdk.NewInt64Coin("stake", 80000))
+}
+
+func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+	query := StakingQueryMsg{
+		Balance: &addressQuery{
+			Address: addr,
+		},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+	res, err := keeper.QuerySmart(ctx, contract, queryBz)
+	require.NoError(t, err)
+	var balance BalanceResponse
+	err = json.Unmarshal(res, &balance)
+	require.NoError(t, err)
+	assert.Equal(t, expected, balance.Balance)
+}
+
+func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+	query := StakingQueryMsg{
+		Claims: &addressQuery{
+			Address: addr,
+		},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+	res, err := keeper.QuerySmart(ctx, contract, queryBz)
+	require.NoError(t, err)
+	var claims ClaimsResponse
+	err = json.Unmarshal(res, &claims)
+	require.NoError(t, err)
+	assert.Equal(t, expected, claims.Claims)
+}
+
+func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
+	query := StakingQueryMsg{Investment: &struct{}{}}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+	res, err := keeper.QuerySmart(ctx, contract, queryBz)
+	require.NoError(t, err)
+	var invest InvestmentResponse
+	err = json.Unmarshal(res, &invest)
+	require.NoError(t, err)
+	assert.Equal(t, expectedIssued, invest.TokenSupply)
+	assert.Equal(t, expectedBonded, invest.StakedTokens)
 }
 
 //func TestMaskReflectCustomMsg(t *testing.T) {
