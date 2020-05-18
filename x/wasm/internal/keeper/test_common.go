@@ -2,10 +2,13 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/supply"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,11 +18,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
@@ -42,9 +42,17 @@ func MakeTestCodec() *codec.Codec {
 	return cdc
 }
 
+var TestingStakeParams = staking.Params{
+	UnbondingTime:     100,
+	MaxValidators:     10,
+	MaxEntries:        10,
+	HistoricalEntries: 10,
+	BondDenom:         "stake",
+}
+
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, auth.AccountKeeper, Keeper) {
-	keyContract := sdk.NewKVStoreKey(types.StoreKey)
+func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, auth.AccountKeeper, staking.Keeper, Keeper) {
+	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
@@ -56,6 +64,8 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	ms.MountStoreWithDB(keyContract, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
@@ -91,6 +101,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace))
+	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
 	router := baseapp.NewRouter()
 	bh := bank.NewHandler(bankKeeper)
@@ -105,7 +116,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
-	return ctx, accountKeeper, keeper
+	return ctx, accountKeeper, stakingKeeper, keeper
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
