@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"testing"
 	"time"
 
@@ -35,6 +36,9 @@ func MakeTestCodec() *codec.Codec {
 	// cdc.RegisterConcrete(&auth.BaseAccount{}, "test/wasm/BaseAccount", nil)
 	auth.AppModuleBasic{}.RegisterCodec(cdc)
 	bank.AppModuleBasic{}.RegisterCodec(cdc)
+	supply.AppModuleBasic{}.RegisterCodec(cdc)
+	staking.AppModuleBasic{}.RegisterCodec(cdc)
+	distribution.AppModuleBasic{}.RegisterCodec(cdc)
 	wasmTypes.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
@@ -56,6 +60,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
 	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
+	keyDistro := sdk.NewKVStoreKey(distribution.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
 
@@ -66,6 +71,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyDistro, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
@@ -92,7 +98,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	)
 	bankKeeper.SetSendEnabled(ctx, true)
 
+	// this is also used to initialize module accounts (so nil is meaningful here)
 	maccPerms := map[string][]string{
+		auth.FeeCollectorName:   nil,
+		distribution.ModuleName: nil,
 		//mint.ModuleName:           {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
@@ -102,12 +111,33 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
+	distKeeper := distribution.NewKeeper(cdc, keyDistro, pk.Subspace(distribution.DefaultParamspace), stakingKeeper, supplyKeeper, auth.FeeCollectorName, nil)
+
+	// total supply to track this
+	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
+	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
+
+	// set up initial accounts
+	for name, perms := range maccPerms {
+		mod := supply.NewEmptyModuleAccount(name, perms...)
+		if name == staking.NotBondedPoolName {
+			err = mod.SetCoins(totalSupply)
+			require.NoError(t, err)
+		}
+		supplyKeeper.SetModuleAccount(ctx, mod)
+	}
+
+	stakeAddr := supply.NewModuleAddress(staking.BondedPoolName)
+	moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
+	require.NotNil(t, moduleAcct)
 
 	router := baseapp.NewRouter()
 	bh := bank.NewHandler(bankKeeper)
 	router.AddRoute(bank.RouterKey, bh)
 	sh := staking.NewHandler(stakingKeeper)
 	router.AddRoute(staking.RouterKey, sh)
+	dh := distribution.NewHandler(distKeeper)
+	router.AddRoute(distribution.RouterKey, dh)
 
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()

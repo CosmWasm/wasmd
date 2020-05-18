@@ -3,8 +3,10 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -109,9 +111,12 @@ func TestInitializeStaking(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	ctx, accKeeper, stakingKeeper, keeper := CreateTestInput(t, false, tempDir, SupportedFeatures, maskEncoders(MakeTestCodec()), nil)
+	ctx, accKeeper, stakingKeeper, keeper := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
 
 	valAddr := addValidator(ctx, stakingKeeper, sdk.NewInt(1234567))
+	v, found := stakingKeeper.GetValidator(ctx, valAddr)
+	assert.True(t, found)
+	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -157,6 +162,105 @@ func TestInitializeStaking(t *testing.T) {
 
 	_, err = keeper.Instantiate(ctx, stakingID, creator, badBz, "missing validator", nil)
 	require.Error(t, err)
+
+	// no changes to bonding shares
+	val, _ := stakingKeeper.GetValidator(ctx, valAddr)
+	assert.Equal(t, val.GetDelegatorShares(), sdk.NewDec(1234567))
+}
+
+type initInfo struct {
+	valAddr      sdk.ValAddress
+	creator      sdk.AccAddress
+	contractAddr sdk.AccAddress
+
+	ctx           sdk.Context
+	accKeeper     auth.AccountKeeper
+	stakingKeeper staking.Keeper
+	wasmKeeper    Keeper
+
+	cleanup func()
+}
+
+func initializeStaking(t *testing.T) initInfo {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	ctx, accKeeper, stakingKeeper, keeper := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+
+	valAddr := addValidator(ctx, stakingKeeper, sdk.NewInt(1234567))
+	v, found := stakingKeeper.GetValidator(ctx, valAddr)
+	assert.True(t, found)
+	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	// upload staking derivates code
+	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	require.NoError(t, err)
+	stakingID, err := keeper.Create(ctx, creator, stakingCode, "", "")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), stakingID)
+
+	// register to a valid address
+	initMsg := StakingInitMsg{
+		Name:         "Staking Derivatives",
+		Symbol:       "DRV",
+		Decimals:     0,
+		Validator:    valAddr,
+		ExitTax:      sdk.MustNewDecFromStr("0.10"),
+		MinWithdrawl: "100",
+	}
+	initBz, err := json.Marshal(&initMsg)
+	require.NoError(t, err)
+
+	stakingAddr, err := keeper.Instantiate(ctx, stakingID, creator, initBz, "staking derivates - DRV", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, stakingAddr)
+
+	return initInfo{
+		valAddr:       valAddr,
+		creator:       creator,
+		contractAddr:  stakingAddr,
+		ctx:           ctx,
+		accKeeper:     accKeeper,
+		stakingKeeper: stakingKeeper,
+		wasmKeeper:    keeper,
+		cleanup:       func() { os.RemoveAll(tempDir) },
+	}
+}
+
+func TestBonding(t *testing.T) {
+	initInfo := initializeStaking(t)
+	defer initInfo.cleanup()
+	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	initPower := val.GetDelegatorShares()
+
+	// bob has 160k, putting 80k into the contract
+	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 160000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
+	bob := createFakeFundedAccount(ctx, accKeeper, full)
+
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// check some account values - the money is on neither account (cuz it is bonded)
+	checkAccount(t, ctx, accKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, bob, funds)
+
+	// make sure the proper number of tokens have been bonded
+	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	finalPower := val.GetDelegatorShares()
+	assert.Equal(t, sdk.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
 }
 
 //func TestMaskReflectCustomMsg(t *testing.T) {
