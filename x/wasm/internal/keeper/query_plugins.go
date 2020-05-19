@@ -132,23 +132,38 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 			}
 			return json.Marshal(res)
 		}
-		if request.Delegations != nil {
-			delegator, err := sdk.AccAddressFromBech32(request.Delegations.Delegator)
+		if request.AllDelegations != nil {
+			delegator, err := sdk.AccAddressFromBech32(request.AllDelegations.Delegator)
 			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegations.Delegator)
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.AllDelegations.Delegator)
 			}
-			var validator sdk.ValAddress
-			validator, err = sdk.ValAddressFromBech32(request.Delegations.Validator)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegations.Validator)
-			}
-
-			delegations, err := calculateDelegations(ctx, keeper, delegator, validator)
+			sdkDels := keeper.GetAllDelegatorDelegations(ctx, delegator)
+			delegations, err := sdkToDelegations(ctx, keeper, sdkDels)
 			if err != nil {
 				return nil, err
 			}
-			res := wasmTypes.DelegationsResponse{
+			res := wasmTypes.AllDelegationsResponse{
 				Delegations: delegations,
+			}
+			return json.Marshal(res)
+		}
+		if request.Delegation != nil {
+			delegator, err := sdk.AccAddressFromBech32(request.Delegation.Delegator)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegation.Delegator)
+			}
+			validator, err := sdk.ValAddressFromBech32(request.Delegation.Validator)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Delegation.Validator)
+			}
+
+			var res wasmTypes.DelegationResponse
+			d, found := keeper.GetDelegation(ctx, delegator, validator)
+			if found {
+				res.Delegation, err = sdkToFullDelegation(ctx, keeper, d)
+				if err != nil {
+					return nil, err
+				}
 			}
 			return json.Marshal(res)
 		}
@@ -156,30 +171,17 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 	}
 }
 
-// calculateDelegations does all queries needed to get validation info
-// delegator must be set, if validator is not set, get all delegations by delegator
-func calculateDelegations(ctx sdk.Context, keeper staking.Keeper, delegator sdk.AccAddress, validator sdk.ValAddress) (wasmTypes.Delegations, error) {
-	// get delegations (either by validator, or over all validators)
-	var sdkDels []staking.Delegation
-	if len(validator) == 0 {
-		sdkDels = keeper.GetAllDelegatorDelegations(ctx, delegator)
-	} else {
-		d, found := keeper.GetDelegation(ctx, delegator, validator)
-		if found {
-			sdkDels = []staking.Delegation{d}
-		}
-	}
+func sdkToDelegations(ctx sdk.Context, keeper staking.Keeper, delegations []staking.Delegation) (wasmTypes.Delegations, error) {
+	result := make([]wasmTypes.Delegation, len(delegations))
+	bondDenom := keeper.BondDenom(ctx)
 
-	// convert them to the cosmwasm format, pulling in extra info as needed
-	delegations := make([]wasmTypes.Delegation, len(sdkDels))
-	for i, d := range sdkDels {
+	for i, d := range delegations {
 		// shares to amount logic comes from here:
 		// https://github.com/cosmos/cosmos-sdk/blob/v0.38.3/x/staking/keeper/querier.go#L404
 		val, found := keeper.GetValidator(ctx, d.ValidatorAddress)
 		if !found {
 			return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
 		}
-		bondDenom := keeper.BondDenom(ctx)
 		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(d.Shares).TruncateInt())
 
 		// Accumulated Rewards???
@@ -187,17 +189,35 @@ func calculateDelegations(ctx sdk.Context, keeper staking.Keeper, delegator sdk.
 		// can relegate? other query for redelegations?
 		// keeper.GetRedelegation
 
-		delegations[i] = wasmTypes.Delegation{
+		result[i] = wasmTypes.Delegation{
 			Delegator: d.DelegatorAddress.String(),
 			Validator: d.ValidatorAddress.String(),
 			Amount:    convertSdkCoinToWasmCoin(amount),
-			// TODO: AccumulatedRewards
-			AccumulatedRewards: wasmTypes.NewCoin(0, bondDenom),
-			// TODO: Determine redelegate
-			CanRedelegate: false,
 		}
 	}
-	return delegations, nil
+	return result, nil
+}
+
+func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation staking.Delegation) (*wasmTypes.FullDelegation, error) {
+	val, found := keeper.GetValidator(ctx, delegation.ValidatorAddress)
+	if !found {
+		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
+	}
+	bondDenom := keeper.BondDenom(ctx)
+	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
+
+	// can relegate? other query for redelegations?
+	// keeper.GetRedelegation
+
+	return &wasmTypes.FullDelegation{
+		Delegator: delegation.DelegatorAddress.String(),
+		Validator: delegation.ValidatorAddress.String(),
+		Amount:    convertSdkCoinToWasmCoin(amount),
+		// TODO: AccumulatedRewards
+		AccumulatedRewards: wasmTypes.NewCoin(0, bondDenom),
+		// TODO: Determine redelegate
+		CanRedelegate: wasmTypes.NewCoin(0, bondDenom),
+	}, nil
 }
 
 func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
