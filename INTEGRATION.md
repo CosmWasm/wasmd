@@ -101,7 +101,22 @@ it should be pretty straight forward.
 
 ### Extending the Contract Interface
 
-If you want to let the contracts access 
+If you want to let the contracts access your native modules, the first
+step is to define a set of Messages and Queries that you want to expose,
+and then add them as `CosmosMsg::Custom` and `QueryRequest::Custom`
+variants. You can see an example of the [bindings for Terra](https://github.com/CosmWasm/terra-contracts/tree/master/packages/bindings).
+
+Once you have those bindings, use them to build a 
+[simple contact using much of the API](https://github.com/CosmWasm/terra-contracts/tree/master/contracts/maker).
+Don't worry too much about the details, this should be usable, but mainly
+you will want to upload it to your chain and use for integration tests
+with your native Cosmos SDK modules. Once that is solid, then add more
+and more complex contracts.
+
+You will then likely want to add a `mocks` package so you can provide
+mocks for the functionality of your native modules when unit testing
+the contracts (provide static data for exchange rates when your contracts
+query it). You can see an example of [mocks for Terra contracts](https://github.com/CosmWasm/terra-contracts/tree/master/packages/mocks) 
 
 ### Calling into the SDK
 
@@ -109,7 +124,10 @@ Before I show how this works, I want to remind you, if you have copied `x/wasm`,
 please **do not make these changes to `x/wasm`**.
 
 We will add a new module, eg. `x/contracts`, that will contain custom
-bindings between CosmWasm contracts and our native 
+bindings between CosmWasm contracts and your native modules.
 
+TODO
 
 ### Wiring it all together
+
+TODO
