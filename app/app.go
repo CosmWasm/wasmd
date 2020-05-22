@@ -211,24 +211,6 @@ func NewWasmApp(
 	)
 	app.upgradeKeeper = upgrade.NewKeeper(skipUpgradeHeights, keys[upgrade.StoreKey], app.cdc)
 
-	// just re-use the full router - do we want to limit this more?
-	var wasmRouter = bApp.Router()
-	// better way to get this dir???
-	homeDir := viper.GetString(cli.HomeFlag)
-	wasmDir := filepath.Join(homeDir, "wasm")
-
-	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
-	err := viper.Unmarshal(&wasmWrap)
-	if err != nil {
-		panic("error while reading wasm config: " + err.Error())
-	}
-	wasmConfig := wasmWrap.Wasm
-
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	supportedFeatures := "staking"
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
-
 	// create evidence keeper with evidence router
 	evidenceKeeper := evidence.NewKeeper(
 		app.cdc, keys[evidence.StoreKey], app.subspaces[evidence.ModuleName], &stakingKeeper, app.slashingKeeper,
@@ -256,6 +238,24 @@ func NewWasmApp(
 	app.stakingKeeper = *stakingKeeper.SetHooks(
 		staking.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
+
+	// just re-use the full router - do we want to limit this more?
+	var wasmRouter = bApp.Router()
+	// better way to get this dir???
+	homeDir := viper.GetString(cli.HomeFlag)
+	wasmDir := filepath.Join(homeDir, "wasm")
+
+	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
+	err := viper.Unmarshal(&wasmWrap)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+	wasmConfig := wasmWrap.Wasm
+
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	supportedFeatures := "staking"
+	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
