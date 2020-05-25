@@ -77,7 +77,7 @@ in your application, alongside all your custom logic.
 
 Once you have gotten this integration working and are happy with the
 flexibility it offers you, you will probably start wishing for deeper
-integration with your custom SDK modules. "It sure it nice to have custom
+integration with your custom SDK modules. "It sure is nice to have custom
 tokens with a bonding curve from my native token, but I would love
 to trade them on the exchange I wrote as a Go module. Or maybe use them
 to add options to the exchange."
@@ -116,7 +116,20 @@ and more complex contracts.
 You will then likely want to add a `mocks` package so you can provide
 mocks for the functionality of your native modules when unit testing
 the contracts (provide static data for exchange rates when your contracts
-query it). You can see an example of [mocks for Terra contracts](https://github.com/CosmWasm/terra-contracts/tree/master/packages/mocks) 
+query it). You can see an example of [mocks for Terra contracts](https://github.com/CosmWasm/terra-contracts/tree/master/packages/mocks).
+
+What these three steps provide is basically a chain-specific extension to the CosmWasm contract SDK.
+Any CosmWasm contract can import you library (bindings and mocks) and easily get started using
+your custom, chain-specific extensions just as easily as using the standard CosmWasm interfaces.
+What is left is actually wiring them up in your chain so they work as desired.
+
+Note, in order to ensure that no one tries to run the contracts on an unsupported chain,
+you will want to include a `requires_XYZ` directive in your `bindings` library, this will
+mean that only blockchain apps that explicitly declare their support for the `XYZ` extensions
+(please rename XYZ to your project name) will allow the contract to be uploaded, and others
+get error messages upon upload, not while running a critical feature later on.
+You just need to add [a line like this](https://github.com/CosmWasm/terra-contracts/blob/master/packages/bindings/src/lib.rs#L13-L16)
+to your binding library to add the requirement to any contract that imports your `bindings` lib.
 
 ### Calling into the SDK
 
@@ -124,10 +137,43 @@ Before I show how this works, I want to remind you, if you have copied `x/wasm`,
 please **do not make these changes to `x/wasm`**.
 
 We will add a new module, eg. `x/contracts`, that will contain custom
-bindings between CosmWasm contracts and your native modules.
+bindings between CosmWasm contracts and your native modules. There are two entry points
+for you to use. The first is 
+[`CustomQuerier`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/query_plugins.go#L35),
+which allows you to handle your custom queries. The second is 
+[`CustomEncoder`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/handler_plugin.go#L30)
+which allows you to convert the `CosmosMsg::Custom(YourMessage)` types to `[]sdk.Msg` to be dispatched.
 
-TODO
+Writing stubs for these is rather simple. You can look at the `reflect_test.go` file to see this in action.
+In particular, here [we define a `CustomQuerier`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/reflect_test.go#L355-L385),
+and here [we define a `CustomHandler`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/reflect_test.go#L303-L353).
+This code is responsible to take `json.RawMessage` from the raw bytes serialized from your custom types in rust and parse it into
+Go structs. Then take these go structs and properly convert them for your custom SDK modules.
+
+You can look at the implementations for the `staking` module to see how to build these for non-trivial
+cases, including passing in the `Keeper` via a closure. Here we 
+[encode staking messages](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/handler_plugin.go#L114-L192).
+Note that withdraw returns 2 messages, which is an option you can use if needed to translate into native messages.
+When we [handle staking queries](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/query_plugins.go#L109-L172)
+we take in a `Keeper in the closure` and dispatch the custom `QueryRequest` from the contract to the native `Keeper` interface,
+then encodes a response. When defining the return types, note that for proper parsing in the Rust contract, you 
+should properly name the JSON fields and use the `omitempty` keyword if Rust expects `Option<T>`. You must also use
+`omitempty` and pointers for all fields that correspond to a Rust `enum`, so exactly one field is serialized.
 
 ### Wiring it all together
 
-TODO
+Once you have writen and tested these custom callbacks for your module, you need to enable it in your application.
+The first step is to write an integration test with a contract compiled with your custom SDK to ensure it works properly,
+then you need to configure this in `app.go`.
+
+For the test cases, you must 
+[define the supported feature set](https://github.com/CosmWasm/wasmd/blob/ade03a1d39a9b8882e9a1ce80572d39d57bb9bc3/x/wasm/internal/keeper/reflect_test.go#L52)
+to include your custom name (remember `requires_XYZ` above?). Then, when creating `TestInput`, 
+you can [pass in your custom encoder and querier](https://github.com/CosmWasm/wasmd/blob/ade03a1d39a9b8882e9a1ce80572d39d57bb9bc3/x/wasm/internal/keeper/reflect_test.go#L52).
+Run a few tests with your compiled contract, ideally exercising the majority of the interfaces to ensure that all parsing between the contract and
+the SDK is implemented properly.
+
+Once you have tested this and are happy with the results, you can wire it up in `app.go`.
+Just edit [the default `NewKeeper` constructor](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/app/app.go#L257-L258)
+to have the proper `supportedFeatures` and pass in the `CustomEncoder` and `CustomQuerier` as the last two arguments to `NewKeeper`.
+Now you can compile your chain and upload your custom contracts on it.
