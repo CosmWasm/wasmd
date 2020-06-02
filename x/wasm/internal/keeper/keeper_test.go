@@ -195,7 +195,7 @@ func TestInstantiate(t *testing.T) {
 	gasBefore := ctx.GasMeter().GasConsumed()
 
 	// create with no balance is also legal
-	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, "demo contract 1", nil)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -228,7 +228,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.NoError(t, err)
 
 	const nonExistingCodeID = 9999
-	addr, err := keeper.Instantiate(ctx, nonExistingCodeID, creator, initMsgBz, "demo contract 2", nil)
+	addr, err := keeper.Instantiate(ctx, nonExistingCodeID, creator, nil, initMsgBz, "demo contract 2", nil)
 	require.True(t, types.ErrNotFound.Is(err), err)
 	require.Nil(t, addr)
 }
@@ -259,7 +259,7 @@ func TestExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, "demo contract 3", deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
@@ -353,7 +353,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, "demo contract 4", deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 4", deposit)
 	require.NoError(t, err)
 
 	// let's make sure we get a reasonable error, no panic/crash
@@ -387,7 +387,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, "demo contract 5", deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 5", deposit)
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling
@@ -429,7 +429,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	addr, err := keeper.Instantiate(ctx, contractID, creator, initMsgBz, "demo contract 6", deposit)
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 6", deposit)
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling

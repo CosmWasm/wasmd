@@ -102,7 +102,9 @@ func validateBuilder(buildTag string) error {
 }
 
 type MsgInstantiateContract struct {
-	Sender    sdk.AccAddress  `json:"sender" yaml:"sender"`
+	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
+	// Admin is an optional address that can execute migrations
+	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
 	Label     string          `json:"label" yaml:"label"`
 	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
@@ -135,6 +137,13 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	if msg.InitFunds.IsAnyNegative() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
 	}
+
+	if len(msg.Admin) != 0 {
+		if err := sdk.VerifyAddressFormat(msg.Admin); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -180,5 +189,41 @@ func (msg MsgExecuteContract) GetSignBytes() []byte {
 }
 
 func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+type MsgMigrateContract struct {
+	Sender   sdk.AccAddress  `json:"sender" yaml:"sender"`
+	Contract sdk.AccAddress  `json:"contract" yaml:"contract"`
+	Code     uint64          `json:"code_id" yaml:"code_id"`
+	Msg      json.RawMessage `json:"msg" yaml:"msg"` // TODO: Rename to parameters? this is passed to the contract's migration method and can contain custom parameters
+}
+
+func (msg MsgMigrateContract) Route() string {
+	return RouterKey
+}
+
+func (msg MsgMigrateContract) Type() string {
+	return "migrate"
+}
+
+func (msg MsgMigrateContract) ValidateBasic() error {
+	if msg.Code == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	return nil
+}
+
+func (msg MsgMigrateContract) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

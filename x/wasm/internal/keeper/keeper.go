@@ -92,7 +92,7 @@ func isSimulationMode(ctx sdk.Context) bool {
 }
 
 // Instantiate creates an instance of a WASM contract
-func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, error) {
+func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, error) {
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
 	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
@@ -155,7 +155,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator sdk.AccAddre
 
 	// persist instance
 	createdAt := types.NewCreatedAt(ctx)
-	instance := types.NewContractInfo(codeID, creator, initMsg, label, createdAt)
+	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 
 	return contractAddress, nil
@@ -202,6 +202,49 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	return value, nil
+}
+
+// Migrate allows to upgrade a contract to a new code with data migration.
+func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) error {
+	contractInfo := k.GetContractInfo(ctx, contractAddress)
+	if contractInfo == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "unknown contract")
+	}
+	if contractInfo.Admin == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported")
+	}
+	if !contractInfo.Admin.Equals(caller) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+	}
+	newCodeInfo := k.GetCodeInfo(ctx, newCodeID)
+	if newCodeInfo == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
+	}
+
+	var deposit sdk.Coins // todo: does it make sense to pass nil value here?
+	params := types.NewEnv(ctx, caller, deposit, contractAddress)
+
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+
+	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	gas := gasForContract(ctx)
+	res, execErr := k.wasmer.Migrate(newCodeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
+	if execErr != nil {
+		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
+		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
+		// this contract died due to gas limit in Storage
+		consumeGas(ctx, GasMultiplier)
+		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	consumeGas(ctx, res.GasUsed)
+	contractInfo.CodeID = newCodeID
+	k.setContractInfo(ctx, contractAddress, *contractInfo)
+	return nil
 }
 
 // QuerySmart queries the smart contract itself.
