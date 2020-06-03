@@ -234,15 +234,11 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	gas := gasForContract(ctx)
-	res, err := k.wasmer.Migrate(newCodeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gas)
+	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	consumeGas(ctx, gasUsed)
 	if err != nil {
-		// TODO: wasmer doesn't return wasm gas used on error. we should consume it (for error on metering failure)
-		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
-		// this contract died due to gas limit in Storage
-		consumeGas(ctx, GasMultiplier)
-		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, err.Error())
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
-	consumeGas(ctx, res.GasUsed)
 
 	// emit all events from this contract migration itself
 	value := types.CosmosResult(*res, contractAddress)

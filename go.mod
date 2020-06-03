@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200603082939-5454cf9c526a
+	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200603124627-0af410d57fa1
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/golang/mock v1.4.3 // indirect
@@ -32,6 +32,3 @@ replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.
 
 // this include a few extra debug helpers on top of cosmos v0.38.3 but original also works fine
 replace github.com/cosmos/cosmos-sdk => github.com/confio/cosmos-sdk v0.38.7
-
-// temporary redirect until Migrate method is available in CosmWasm repo
-replace github.com/CosmWasm/go-cosmwasm => github.com/alpe/go-cosmwasm v0.8.1-0.20200603082939-5454cf9c526a

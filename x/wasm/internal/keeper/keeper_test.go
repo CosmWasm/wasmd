@@ -498,6 +498,11 @@ func TestMigrate(t *testing.T) {
 			caller: creator,
 			codeID: newContractID,
 		},
+		"all good with admin set": {
+			admin:  fred,
+			caller: fred,
+			codeID: newContractID,
+		},
 		"prevent migration when admin was not set on instantiate": {
 			caller: creator,
 			codeID: originalContractID,
@@ -523,12 +528,11 @@ func TestMigrate(t *testing.T) {
 			expErr:               sdkerrors.ErrInvalidRequest,
 		},
 		"fail when migration caused error": {
-			admin:                creator,
-			caller:               creator,
-			overrideContractAddr: anyAddr,
-			codeID:               originalContractID,
-			migrateMsg:           bytes.Repeat([]byte{0x1}, 7), // condition hard coded in stub: >6 = error
-			expErr:               sdkerrors.ErrInvalidRequest,
+			admin:      creator,
+			caller:     creator,
+			codeID:     originalContractID,
+			migrateMsg: bytes.Repeat([]byte{0x1}, 7), // condition hard coded in stub: >6 = error
+			expErr:     types.ErrMigrationFailed,
 		},
 	}
 	var (
