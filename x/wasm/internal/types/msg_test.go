@@ -209,7 +209,76 @@ func TestInstantiateContractValidation(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestMsgUpdateAdministrator(t *testing.T) {
+	badAddress, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20))
+	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20))
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+
+	specs := map[string]struct {
+		src    MsgUpdateAdministrator
+		expErr bool
+	}{
+		"all good": {
+			src: MsgUpdateAdministrator{
+				Sender:   goodAddress,
+				NewAdmin: otherGoodAddress,
+				Contract: anotherGoodAddress,
+			},
+		},
+		"new admin optional": {
+			src: MsgUpdateAdministrator{
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+			},
+		},
+		"bad sender": {
+			src: MsgUpdateAdministrator{
+				Sender:   badAddress,
+				NewAdmin: otherGoodAddress,
+				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad new admin": {
+			src: MsgUpdateAdministrator{
+				Sender:   goodAddress,
+				NewAdmin: badAddress,
+				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad contract addr": {
+			src: MsgUpdateAdministrator{
+				Sender:   goodAddress,
+				NewAdmin: otherGoodAddress,
+				Contract: badAddress,
+			},
+			expErr: true,
+		},
+		"new admin same as old admin": {
+			src: MsgUpdateAdministrator{
+				Sender:   goodAddress,
+				NewAdmin: goodAddress,
+				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestMsgMigrateContract(t *testing.T) {
