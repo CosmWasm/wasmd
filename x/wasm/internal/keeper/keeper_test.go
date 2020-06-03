@@ -472,6 +472,7 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 	newContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
 	require.NoError(t, err)
+	require.NotEqual(t, originalContractID, newContractID)
 
 	_, _, anyAddr := keyPubAddr()
 	initMsg := InitMsg{
@@ -554,7 +555,7 @@ func TestMigrate(t *testing.T) {
 				return
 			}
 			gasAfter := ctx.GasMeter().GasConsumed()
-			assert.Greater(t, gasAfter-gasBefore, builtIntoGoCosmWasmStubGas)
+			assert.Greater(t, gasAfter-gasBefore, builtIntoGoCosmWasmStubGas/GasMultiplier)
 			assert.Equal(t, builtIntoGoCosmWasmStubData, res.Data)
 			cInfo := keeper.GetContractInfo(ctx, addr)
 			assert.Equal(t, spec.codeID, cInfo.CodeID)
