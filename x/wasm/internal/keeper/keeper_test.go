@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -449,6 +451,116 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	// this should throw out of gas exception (panic)
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
 	require.True(t, false, "We must panic before this line")
+}
+
+func TestMigrate(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	require.NoError(t, err)
+	newContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	require.NoError(t, err)
+
+	_, _, anyAddr := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: anyAddr,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+	specs := map[string]struct {
+		admin                sdk.AccAddress
+		overrideContractAddr sdk.AccAddress
+		caller               sdk.AccAddress
+		codeID               uint64
+		migrateMsg           []byte
+		expErr               *sdkerrors.Error
+	}{
+		"all good with same code id": {
+			admin:  creator,
+			caller: creator,
+			codeID: originalContractID,
+		},
+		"all good with new code id": {
+			admin:  creator,
+			caller: creator,
+			codeID: newContractID,
+		},
+		"prevent migration when admin was not set on instantiate": {
+			caller: creator,
+			codeID: originalContractID,
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"prevent migration when not admin": {
+			caller: creator,
+			admin:  fred,
+			codeID: originalContractID,
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"fail with non existing code id": {
+			admin:  creator,
+			caller: creator,
+			codeID: 99999,
+			expErr: sdkerrors.ErrInvalidRequest,
+		},
+		"fail with non existing contract addr": {
+			admin:                creator,
+			caller:               creator,
+			overrideContractAddr: anyAddr,
+			codeID:               originalContractID,
+			expErr:               sdkerrors.ErrInvalidRequest,
+		},
+		"fail when migration caused error": {
+			admin:                creator,
+			caller:               creator,
+			overrideContractAddr: anyAddr,
+			codeID:               originalContractID,
+			migrateMsg:           bytes.Repeat([]byte{0x1}, 7), // condition hard coded in stub: >6 = error
+			expErr:               sdkerrors.ErrInvalidRequest,
+		},
+	}
+	var (
+		builtIntoGoCosmWasmStubGas  = sdk.Gas(10000)
+		builtIntoGoCosmWasmStubData = []byte(("my-migration-response-data"))
+	)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+			addr, err := keeper.Instantiate(ctx, originalContractID, creator, spec.admin, initMsgBz, "demo contract", nil)
+			require.NoError(t, err)
+			if spec.overrideContractAddr != nil {
+				addr = spec.overrideContractAddr
+			}
+			gasBefore := ctx.GasMeter().GasConsumed()
+			res, err := keeper.Migrate(ctx, addr, spec.caller, spec.codeID, spec.migrateMsg)
+			require.True(t, spec.expErr.Is(err), "expected %v but got %+v", spec.expErr, err)
+			if spec.expErr != nil {
+				return
+			}
+			gasAfter := ctx.GasMeter().GasConsumed()
+			assert.Greater(t, gasAfter-gasBefore, builtIntoGoCosmWasmStubGas)
+			assert.Equal(t, builtIntoGoCosmWasmStubData, res.Data)
+			cInfo := keeper.GetContractInfo(ctx, addr)
+			assert.Equal(t, spec.codeID, cInfo.CodeID)
+			assert.Equal(t, originalContractID, cInfo.PreviousCodeID)
+			assert.Equal(t, types.NewCreatedAt(ctx), cInfo.LastUpdated)
+			// TODO: check contract store was updated by migration code (impl also in contract)
+			// TODO: check any messages dispatched proper
+			// TODO: check events?
+		})
+	}
 }
 
 type InitMsg struct {

@@ -124,7 +124,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 }
 
 func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {
-	res, err := k.Migrate(ctx, msg.Contract, msg.Sender, msg.Code, msg.Msg)
+	res, err := k.Migrate(ctx, msg.Contract, msg.Sender, msg.Code, msg.MigrateMsg)
 	if err != nil {
 		return nil, err
 	}

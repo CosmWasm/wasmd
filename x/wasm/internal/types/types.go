@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -47,6 +48,15 @@ type ContractInfo struct {
 	// never show this in query results, just use for sorting
 	// (Note: when using json tag "-" amino refused to serialize it...)
 	Created *CreatedAt `json:"created,omitempty"`
+	// TODO: type CreatedAt is not an accurate name. how about renaming to BlockPosition?
+	LastUpdated    *CreatedAt `json:"last_updated,omitempty"`
+	PreviousCodeID uint64     `json:"previous_code_id,omitempty"`
+}
+
+func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
+	c.PreviousCodeID = c.CodeID
+	c.CodeID = newCodeID
+	c.LastUpdated = NewCreatedAt(ctx)
 }
 
 // CreatedAt can be used to sort contracts

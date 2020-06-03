@@ -193,10 +193,10 @@ func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
 }
 
 type MsgMigrateContract struct {
-	Sender   sdk.AccAddress  `json:"sender" yaml:"sender"`
-	Contract sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Code     uint64          `json:"code_id" yaml:"code_id"`
-	Msg      json.RawMessage `json:"msg" yaml:"msg"` // TODO: Rename to parameters? this is passed to the contract's migration method and can contain custom parameters
+	Sender     sdk.AccAddress  `json:"sender" yaml:"sender"`
+	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
+	Code       uint64          `json:"code_id" yaml:"code_id"`
+	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
 }
 
 func (msg MsgMigrateContract) Route() string {
