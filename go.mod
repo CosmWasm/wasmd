@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200602140023-88c36fb31530
+	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200603082939-5454cf9c526a
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/golang/mock v1.4.3 // indirect
@@ -25,7 +25,7 @@ require (
 	github.com/tendermint/tm-db v0.5.1
 	go.etcd.io/bbolt v1.3.4 // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
-	golang.org/x/sys v0.0.0-20200602100848-8d3cce7afc34 // indirect
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
 )
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
@@ -34,4 +34,4 @@ replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.
 replace github.com/cosmos/cosmos-sdk => github.com/confio/cosmos-sdk v0.38.7
 
 // temporary redirect until Migrate method is available in CosmWasm repo
-replace github.com/CosmWasm/go-cosmwasm => github.com/alpe/go-cosmwasm v0.8.1-0.20200602140023-88c36fb31530
+replace github.com/CosmWasm/go-cosmwasm => github.com/alpe/go-cosmwasm v0.8.1-0.20200603082939-5454cf9c526a

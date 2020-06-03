@@ -124,7 +124,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 }
 
 func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {
-	err := k.Migrate(ctx, msg.Contract, msg.Sender, msg.Code, msg.Msg)
+	res, err := k.Migrate(ctx, msg.Contract, msg.Sender, msg.Code, msg.Msg)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +136,6 @@ func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.R
 		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
 		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
 	)
-
-	return &sdk.Result{Data: msg.Contract, Events: append(events, ourEvent)}, nil
+	res.Events = append(events, ourEvent)
+	return res, nil
 }

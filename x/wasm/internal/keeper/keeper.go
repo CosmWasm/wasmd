@@ -205,20 +205,20 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 }
 
 // Migrate allows to upgrade a contract to a new code with data migration.
-func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) error {
+func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) (*sdk.Result, error) {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "unknown contract")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "unknown contract")
 	}
 	if contractInfo.Admin == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported by this contract")
 	}
 	if !contractInfo.Admin.Equals(caller) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
 	newCodeInfo := k.GetCodeInfo(ctx, newCodeID)
 	if newCodeInfo == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
 	var deposit sdk.Coins // todo: does it make sense to pass nil value here?
@@ -239,12 +239,18 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		// Note: OutOfGas panics (from storage) are caught by go-cosmwasm, subtract one more gas to check if
 		// this contract died due to gas limit in Storage
 		consumeGas(ctx, GasMultiplier)
-		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	consumeGas(ctx, res.GasUsed)
+
+	// emit all events from this contract migration itself
+	value := types.CosmosResult(*res, contractAddress)
+	ctx.EventManager().EmitEvents(value.Events)
+	value.Events = nil
+
 	contractInfo.CodeID = newCodeID
 	k.setContractInfo(ctx, contractAddress, *contractInfo)
-	return nil
+	return &value, nil
 }
 
 // QuerySmart queries the smart contract itself.
