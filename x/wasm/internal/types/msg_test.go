@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -209,4 +210,80 @@ func TestInstantiateContractValidation(t *testing.T) {
 		})
 	}
 
+}
+
+func TestMsgMigrateContract(t *testing.T) {
+	badAddress, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20))
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+
+	specs := map[string]struct {
+		src    MsgMigrateContract
+		expErr bool
+	}{
+		"all good": {
+			src: MsgMigrateContract{
+				Sender:     goodAddress,
+				Contract:   anotherGoodAddress,
+				Code:       1,
+				MigrateMsg: []byte{1},
+			},
+		},
+		"MigrateMsg optional": {
+			src: MsgMigrateContract{
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+				Code:     1,
+			},
+		},
+		"bad sender": {
+			src: MsgMigrateContract{
+				Sender:   badAddress,
+				Contract: anotherGoodAddress,
+				Code:     1,
+			},
+			expErr: true,
+		},
+		"empty sender": {
+			src: MsgMigrateContract{
+				Contract: anotherGoodAddress,
+				Code:     1,
+			},
+			expErr: true,
+		},
+		"empty code": {
+			src: MsgMigrateContract{
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad contract addr": {
+			src: MsgMigrateContract{
+				Sender:   goodAddress,
+				Contract: badAddress,
+				Code:     1,
+			},
+			expErr: true,
+		},
+		"empty contract addr": {
+			src: MsgMigrateContract{
+				Sender: goodAddress,
+				Code:   1,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
