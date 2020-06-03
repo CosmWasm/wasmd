@@ -22,8 +22,8 @@ type StakingInitMsg struct {
 	Decimals  uint8          `json:"decimals"`
 	Validator sdk.ValAddress `json:"validator"`
 	ExitTax   sdk.Dec        `json:"exit_tax"`
-	// MinWithdrawl is uint128 encoded as a string (use sdk.Int?)
-	MinWithdrawl string `json:"min_withdrawl"`
+	// MinWithdrawal is uint128 encoded as a string (use sdk.Int?)
+	MinWithdrawl string `json:"min_withdrawal"`
 }
 
 // StakingHandleMsg is used to encode handle messages
