@@ -50,7 +50,8 @@ Base64 encoded transactions.
     - `raw-bytes` convert raw-bytes to hex
 * (wasmcli) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
 * (wasmd) [\#9](https://github.com/cosmwasm/wasmd/pull/9) Allow gzip data in tx body on Create 
-* (wasmd)[\#124](https://github.com/CosmWasm/wasmd/pull/124) Update contract admin
+* (wasmd) [\#124](https://github.com/CosmWasm/wasmd/pull/124) Update contract admin
+* (wasmd) [\#131](https://github.com/CosmWasm/wasmd/pull/131) Implement REST server support for new messages
 
 ## [v2.0.3] - 2019-11-04
 
