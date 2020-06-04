@@ -32,6 +32,10 @@ func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
 	return nil, wasmTypes.Unknown{}
 }
 
+func (q QueryHandler) GasConsumed() uint64 {
+	return q.Ctx.GasMeter().GasConsumed()
+}
+
 type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
 
 type QueryPlugins struct {
