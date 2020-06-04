@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
@@ -104,9 +105,9 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [code_id_int64] [json_encoded_init_args]",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args] [optional-admin_address]",
 		Short: "Instantiate a wasm contract",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
@@ -131,6 +132,14 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			initMsg := args[1]
 
+			var adminAddr sdk.AccAddress
+			if len(args[3]) != 0 {
+				adminAddr, err = sdk.AccAddressFromBech32(args[3])
+				if err != nil {
+					return sdkerrors.Wrap(err, "admin")
+				}
+			}
+
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgInstantiateContract{
 				Sender:    cliCtx.GetFromAddress(),
@@ -138,6 +147,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 				Label:     label,
 				InitFunds: amount,
 				InitMsg:   []byte(initMsg),
+				Admin:     adminAddr,
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
