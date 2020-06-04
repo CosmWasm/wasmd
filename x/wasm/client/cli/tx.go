@@ -28,6 +28,7 @@ const (
 	flagSource  = "source"
 	flagBuilder = "builder"
 	flagLabel   = "label"
+	flagAdmin   = "admin"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -107,7 +108,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [code_id_int64] [json_encoded_init_args] [optional-admin_address]",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args]",
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -134,9 +135,10 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			initMsg := args[1]
 
+			adminStr := viper.GetString(flagAdmin)
 			var adminAddr sdk.AccAddress
-			if len(args[3]) != 0 {
-				adminAddr, err = sdk.AccAddressFromBech32(args[3])
+			if len(adminStr) != 0 {
+				adminAddr, err = sdk.AccAddressFromBech32(adminStr)
 				if err != nil {
 					return sdkerrors.Wrap(err, "admin")
 				}
@@ -157,6 +159,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
+	cmd.Flags().String(flagAdmin, "", "address of an admin")
 	return cmd
 }
 

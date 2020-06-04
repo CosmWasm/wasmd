@@ -66,7 +66,7 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				return sdkerrors.Wrap(err, "contract")
 			}
 			var newAdmin sdk.AccAddress
-			if len(args[1]) != 0 {
+			if len(args) > 1 && len(args[1]) != 0 {
 				newAdmin, err = sdk.AccAddressFromBech32(args[1])
 				if err != nil {
 					return sdkerrors.Wrap(err, "new admin")
