@@ -43,6 +43,8 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		StoreCodeCmd(cdc),
 		InstantiateContractCmd(cdc),
 		ExecuteContractCmd(cdc),
+		MigrateContractCmd(cdc),
+		UpdateContractAdminCmd(cdc),
 	)...)
 	return txCmd
 }
