@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -41,11 +42,21 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 type ContractInfo struct {
 	CodeID  uint64          `json:"code_id"`
 	Creator sdk.AccAddress  `json:"creator"`
+	Admin   sdk.AccAddress  `json:"admin,omitempty"`
 	Label   string          `json:"label"`
 	InitMsg json.RawMessage `json:"init_msg,omitempty"`
 	// never show this in query results, just use for sorting
 	// (Note: when using json tag "-" amino refused to serialize it...)
 	Created *CreatedAt `json:"created,omitempty"`
+	// TODO: type CreatedAt is not an accurate name. how about renaming to BlockPosition?
+	LastUpdated    *CreatedAt `json:"last_updated,omitempty"`
+	PreviousCodeID uint64     `json:"previous_code_id,omitempty"`
+}
+
+func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
+	c.PreviousCodeID = c.CodeID
+	c.CodeID = newCodeID
+	c.LastUpdated = NewCreatedAt(ctx)
 }
 
 // CreatedAt can be used to sort contracts
@@ -82,10 +93,11 @@ func NewCreatedAt(ctx sdk.Context) *CreatedAt {
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
+func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
 	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,
+		Admin:   admin,
 		InitMsg: initMsg,
 		Label:   label,
 		Created: createdAt,

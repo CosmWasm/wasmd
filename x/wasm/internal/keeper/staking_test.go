@@ -119,7 +119,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.Instantiate(ctx, stakingID, creator, initBz, "staking derivates - DRV", nil)
+	stakingAddr, err := keeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -139,7 +139,7 @@ func TestInitializeStaking(t *testing.T) {
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, err = keeper.Instantiate(ctx, stakingID, creator, badBz, "missing validator", nil)
+	_, err = keeper.Instantiate(ctx, stakingID, creator, nil, badBz, "missing validator", nil)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -203,7 +203,7 @@ func initializeStaking(t *testing.T) initInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, err := keeper.Instantiate(ctx, stakingID, creator, initBz, "staking derivates - DRV", nil)
+	stakingAddr, err := keeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
