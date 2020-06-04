@@ -98,7 +98,7 @@ type (
 	Model                   = types.Model
 	CodeInfo                = types.CodeInfo
 	ContractInfo            = types.ContractInfo
-	CreatedAt               = types.CreatedAt
+	CreatedAt               = types.AbsoluteTxPosition
 	WasmConfig              = types.WasmConfig
 	MessageHandler          = keeper.MessageHandler
 	BankEncoder             = keeper.BankEncoder
