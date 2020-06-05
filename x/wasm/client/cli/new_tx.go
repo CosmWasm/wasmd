@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"errors"
 	"strconv"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -12,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // MigrateContractCmd will migrate a contract to a new code version
@@ -53,7 +55,7 @@ func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 // UpdateContractAdminCmd sets or clears an admin for a contract
 func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-contract-admin [contract_addr_bech32] [optional_new_admin_addr_bech32]",
+		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
 		Short: "Set new admin for a contract. Can be empty to prevent further migrations",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -71,6 +73,12 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				if err != nil {
 					return sdkerrors.Wrap(err, "new admin")
 				}
+			} else {
+				// safety net to not accidentally clear an admin
+				clearAdmin := viper.GetBool(flagNoAdmin)
+				if !clearAdmin {
+					return errors.New("new admin address required or no admin flag")
+				}
 			}
 
 			msg := types.MsgUpdateAdministrator{
@@ -81,5 +89,6 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
+	cmd.Flags().Bool(flagNoAdmin, false, "Remove admin which disables future admin updates and migrations")
 	return cmd
 }

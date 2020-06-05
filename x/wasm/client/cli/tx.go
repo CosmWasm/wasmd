@@ -29,6 +29,7 @@ const (
 	flagBuilder = "builder"
 	flagLabel   = "label"
 	flagAdmin   = "admin"
+	flagNoAdmin = "no-admin"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -159,7 +160,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	return cmd
 }
 
