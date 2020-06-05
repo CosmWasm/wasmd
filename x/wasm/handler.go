@@ -149,7 +149,7 @@ func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdminist
 	if err := k.UpdateContractAdmin(ctx, msg.Contract, msg.Sender, msg.NewAdmin); err != nil {
 		return nil, err
 	}
-	events := filterMessageEvents(ctx.EventManager())
+	events := ctx.EventManager().Events()
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
@@ -157,7 +157,6 @@ func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdminist
 		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
 	)
 	return &sdk.Result{
-		//Data:   , TODO: anything to return here?
 		Events: append(events, ourEvent),
 	}, nil
 }
