@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	// "github.com/cosmos/cosmos-sdk/x/supply/exported"
 )
 
@@ -17,7 +18,7 @@ var (
 
 	// ModuleCdc references the global x/wasm module codec.
 
-	ModuleCdc = codec.NewHybridCodec(amino)
+	ModuleCdc = codec.NewHybridCodec(amino, types.NewInterfaceRegistry())
 )
 
 func init() {

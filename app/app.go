@@ -5,17 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/spf13/viper"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	dbm "github.com/tendermint/tm-db"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,6 +33,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	"github.com/spf13/viper"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmwasm/wasmd/x/wasm"
 )
@@ -155,9 +152,7 @@ func NewWasmApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
 
-	// TODO: Remove cdc in favor of appCodec once all modules are migrated.
-	cdc := codecstd.MakeCodec(ModuleBasics)
-	appCodec := codecstd.NewAppCodec(cdc)
+	appCodec, cdc := MakeCodecs()
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, auth.DefaultTxDecoder(cdc), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -262,12 +257,12 @@ func NewWasmApp(
 
 	// Create IBC Keeper
 	app.ibcKeeper = ibc.NewKeeper(
-		app.cdc, keys[ibc.StoreKey], app.stakingKeeper, scopedIBCKeeper,
+		app.cdc, appCodec, keys[ibc.StoreKey], app.stakingKeeper, scopedIBCKeeper,
 	)
 
 	// Create Transfer Keepers
 	app.transferKeeper = transfer.NewKeeper(
-		app.cdc, keys[transfer.StoreKey],
+		appCodec, keys[transfer.StoreKey],
 		app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper,
 		app.accountKeeper, app.bankKeeper,
 		scopedTransferKeeper,
@@ -295,7 +290,7 @@ func NewWasmApp(
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(appCodec, app.accountKeeper),
 		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
-		capability.NewAppModule(*app.capabilityKeeper),
+		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
@@ -304,7 +299,7 @@ func NewWasmApp(
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		wasm.NewAppModule(app.wasmKeeper),
-		evidence.NewAppModule(appCodec, app.evidenceKeeper),
+		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.ibcKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,

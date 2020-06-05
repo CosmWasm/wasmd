@@ -1,23 +1,23 @@
 package keeper
 
 import (
-	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/tendermint/tendermint/libs/log"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-
-	wasmTypes "github.com/cosmwasm/wasmd/x/wasm/types"
 )
 
 const flagLRUCacheSize = "lru_size"
@@ -56,7 +56,9 @@ func CreateTestInput(t *testing.T, tempDir string) (sdk.Context, auth.AccountKee
 	isCheckTx := false
 	ctx := sdk.NewContext(ms, abci.Header{}, isCheckTx, log.NewNopLogger())
 	cdc := MakeTestCodec()
-	appCodec := codecstd.NewAppCodec(cdc)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	sdk.RegisterInterfaces(interfaceRegistry)
+	appCodec := std.NewAppCodec(cdc, interfaceRegistry)
 
 	blacklistedAddrs := make(map[string]bool)
 	maccPerms := make(map[string][]string)

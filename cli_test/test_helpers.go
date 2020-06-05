@@ -29,8 +29,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
 )
 
 const (
@@ -103,7 +101,7 @@ func NewFixtures(t *testing.T) *Fixtures {
 		require.NoError(t, err)
 	}
 
-	cdc := codecstd.MakeCodec(app.ModuleBasics)
+	_, cdc := app.MakeCodecs()
 
 	return &Fixtures{
 		T:             t,
@@ -127,12 +125,11 @@ func (f Fixtures) GenesisFile() string {
 
 // GenesisFile returns the application's genesis state
 func (f Fixtures) GenesisState() simapp.GenesisState {
-	cdc := codec.New()
 	genDoc, err := tmtypes.GenesisDocFromFile(f.GenesisFile())
 	require.NoError(f.T, err)
 
 	var appState simapp.GenesisState
-	require.NoError(f.T, cdc.UnmarshalJSON(genDoc.AppState, &appState))
+	require.NoError(f.T, f.cdc.UnmarshalJSON(genDoc.AppState, &appState))
 	return appState
 }
 
@@ -457,9 +454,7 @@ func (f *Fixtures) QueryAccount(address sdk.AccAddress, flags ...string) auth.Ba
 	require.NoError(f.T, err, "out %v, err %v", out, err)
 	value := initRes["value"]
 	var acc auth.BaseAccount
-	cdc := codec.New()
-	codec.RegisterCrypto(cdc)
-	err = cdc.UnmarshalJSON(value, &acc)
+	err = f.cdc.UnmarshalJSON(value, &acc)
 	require.NoError(f.T, err, "value %v, err %v", string(value), err)
 	return acc
 }

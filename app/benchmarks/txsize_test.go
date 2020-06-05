@@ -5,7 +5,6 @@ import (
 
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	codecstd "github.com/cosmos/cosmos-sdk/codec/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -17,7 +16,7 @@ import (
 // This is due to secp256k1 signatures not being constant size.
 // nolint: vet
 func ExampleTxSendSize() {
-	cdc := codecstd.MakeCodec(app.ModuleBasics)
+	_, cdc := app.MakeCodecs()
 
 	var gas uint64 = 1
 
