@@ -227,3 +227,43 @@ func (msg MsgMigrateContract) GetSignBytes() []byte {
 func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
+
+type MsgUpdateAdministrator struct {
+	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
+	NewAdmin sdk.AccAddress `json:"new_admin,omitempty" yaml:"new_admin"`
+	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+}
+
+func (msg MsgUpdateAdministrator) Route() string {
+	return RouterKey
+}
+
+func (msg MsgUpdateAdministrator) Type() string {
+	return "update-contract-admin"
+}
+
+func (msg MsgUpdateAdministrator) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	if len(msg.NewAdmin) != 0 {
+		if err := sdk.VerifyAddressFormat(msg.NewAdmin); err != nil {
+			return sdkerrors.Wrap(err, "new admin")
+		}
+		if msg.Sender.Equals(msg.NewAdmin) {
+			return sdkerrors.Wrap(ErrInvalidMsg, "new admin is the same as the old")
+		}
+	}
+	return nil
+}
+
+func (msg MsgUpdateAdministrator) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgUpdateAdministrator) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
