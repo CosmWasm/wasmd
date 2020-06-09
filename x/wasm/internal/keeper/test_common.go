@@ -2,15 +2,31 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"testing"
 	"time"
+
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/capability"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
+	transfer "github.com/cosmos/cosmos-sdk/x/ibc/20-transfer"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	"github.com/cosmos/cosmos-sdk/x/slashing"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -20,30 +36,37 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/supply"
-
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 const flagLRUCacheSize = "lru_size"
 const flagQueryGasLimit = "query_gas_limit"
 
-func MakeTestCodec() *codec.Codec {
-	var cdc = codec.New()
+var ModuleBasics = module.NewBasicManager(
+	auth.AppModuleBasic{},
+	bank.AppModuleBasic{},
+	capability.AppModuleBasic{},
+	staking.AppModuleBasic{},
+	mint.AppModuleBasic{},
+	distribution.AppModuleBasic{},
+	gov.NewAppModuleBasic(
+		paramsclient.ProposalHandler, distribution.ProposalHandler, upgradeclient.ProposalHandler,
+	),
+	params.AppModuleBasic{},
+	crisis.AppModuleBasic{},
+	slashing.AppModuleBasic{},
+	ibc.AppModuleBasic{},
+	upgrade.AppModuleBasic{},
+	evidence.AppModuleBasic{},
+	transfer.AppModuleBasic{},
+)
 
-	// Register AppAccount
-	// cdc.RegisterInterface((*authexported.Account)(nil), nil)
-	// cdc.RegisterConcrete(&auth.BaseAccount{}, "test/wasm/BaseAccount", nil)
-	auth.AppModuleBasic{}.RegisterCodec(cdc)
-	bank.AppModuleBasic{}.RegisterCodec(cdc)
-	supply.AppModuleBasic{}.RegisterCodec(cdc)
-	staking.AppModuleBasic{}.RegisterCodec(cdc)
-	distribution.AppModuleBasic{}.RegisterCodec(cdc)
-	wasmTypes.RegisterCodec(cdc)
-	sdk.RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-
-	return cdc
+func MakeTestCodec() (*std.Codec, *codec.Codec) {
+	cdc := std.MakeCodec(ModuleBasics)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	sdk.RegisterInterfaces(interfaceRegistry)
+	ModuleBasics.RegisterInterfaceModules(interfaceRegistry)
+	appCodec := std.NewAppCodec(cdc, interfaceRegistry)
+	return appCodec, cdc
 }
 
 var TestingStakeParams = staking.Params{
@@ -59,15 +82,15 @@ type TestKeepers struct {
 	StakingKeeper staking.Keeper
 	WasmKeeper    Keeper
 	DistKeeper    distribution.Keeper
-	SupplyKeeper  supply.Keeper
+	BankKeeper    bank.Keeper
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
 	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(auth.StoreKey)
+	keyBank := sdk.NewKVStoreKey(bank.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(staking.StoreKey)
-	keySupply := sdk.NewKVStoreKey(supply.StoreKey)
 	keyDistro := sdk.NewKVStoreKey(distribution.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
@@ -76,9 +99,9 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyContract, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyAcc, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyBank, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyStaking, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistro, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
@@ -88,39 +111,40 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
-	cdc := MakeTestCodec()
+	appCodec, _ := MakeTestCodec()
 
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
+	pk := params.NewKeeper(appCodec, keyParams, tkeyParams)
 
+	maccPerms := map[string][]string{ // module account permissions
+		auth.FeeCollectorName:           nil,
+		distribution.ModuleName:         nil,
+		mint.ModuleName:                 {auth.Minter},
+		staking.BondedPoolName:          {auth.Burner, auth.Staking},
+		staking.NotBondedPoolName:       {auth.Burner, auth.Staking},
+		gov.ModuleName:                  {auth.Burner},
+		transfer.GetModuleAccountName(): {auth.Minter, auth.Burner},
+	}
 	accountKeeper := auth.NewAccountKeeper(
-		cdc,    // amino codec
+		appCodec,
 		keyAcc, // target store
 		pk.Subspace(auth.DefaultParamspace),
 		auth.ProtoBaseAccount, // prototype
+		maccPerms,
 	)
 
 	bankKeeper := bank.NewBaseKeeper(
+		appCodec,
+		keyBank,
 		accountKeeper,
 		pk.Subspace(bank.DefaultParamspace),
 		nil,
 	)
 	bankKeeper.SetSendEnabled(ctx, true)
 
-	// this is also used to initialize module accounts (so nil is meaningful here)
-	maccPerms := map[string][]string{
-		auth.FeeCollectorName:   nil,
-		distribution.ModuleName: nil,
-		//mint.ModuleName:           {supply.Minter},
-		staking.BondedPoolName:    {supply.Burner, supply.Staking},
-		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		//gov.ModuleName:            {supply.Burner},
-	}
-
-	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
-	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, pk.Subspace(staking.DefaultParamspace))
+	stakingKeeper := staking.NewKeeper(appCodec, keyStaking, accountKeeper, bankKeeper, pk.Subspace(staking.DefaultParamspace))
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
-	distKeeper := distribution.NewKeeper(cdc, keyDistro, pk.Subspace(distribution.DefaultParamspace), stakingKeeper, supplyKeeper, auth.FeeCollectorName, nil)
+	distKeeper := distribution.NewKeeper(appCodec, keyDistro, pk.Subspace(distribution.DefaultParamspace), accountKeeper, bankKeeper, stakingKeeper, auth.FeeCollectorName, nil)
 	distKeeper.SetParams(ctx, distribution.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
@@ -128,26 +152,25 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	distKeeper.SetFeePool(ctx, distribution.InitialFeePool())
 
 	// total supply to track this
-	totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
-	supplyKeeper.SetSupply(ctx, supply.NewSupply(totalSupply))
+	//totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
 
-	// set up initial accounts
-	for name, perms := range maccPerms {
-		mod := supply.NewEmptyModuleAccount(name, perms...)
-		if name == staking.NotBondedPoolName {
-			err = mod.SetCoins(totalSupply)
-			require.NoError(t, err)
-		} else if name == distribution.ModuleName {
-			// some big pot to pay out
-			err = mod.SetCoins(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
-			require.NoError(t, err)
-		}
-		supplyKeeper.SetModuleAccount(ctx, mod)
-	}
-
-	stakeAddr := supply.NewModuleAddress(staking.BondedPoolName)
-	moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
-	require.NotNil(t, moduleAcct)
+	//// set up initial accounts
+	//for name, perms := range maccPerms {
+	//	mod := auth.NewEmptyModuleAccount(name, perms...)
+	//	if name == staking.NotBondedPoolName {
+	//		err = mod.SetCoins(totalSupply)
+	//		require.NoError(t, err)
+	//	} else if name == distribution.ModuleName {
+	//		// some big pot to pay out
+	//		err = mod.SetCoins(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
+	//		require.NoError(t, err)
+	//	}
+	//	auth.SetModuleAccount(ctx, mod)
+	//}
+	//
+	//stakeAddr := supply.NewModuleAddress(staking.BondedPoolName)
+	//moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
+	//require.NotNil(t, moduleAcct)
 
 	router := baseapp.NewRouter()
 	bh := bank.NewHandler(bankKeeper)
@@ -160,16 +183,16 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	// Load default wasm config
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	keeper := NewKeeper(cdc, keyContract, accountKeeper, bankKeeper, stakingKeeper, router, tempDir, wasmConfig, supportedFeatures, encoders, queriers)
+	keeper := NewKeeper(appCodec, keyContract, accountKeeper, bankKeeper, stakingKeeper, router, tempDir, wasmConfig, supportedFeatures, encoders, queriers)
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
 	keepers := TestKeepers{
 		AccountKeeper: accountKeeper,
-		SupplyKeeper:  supplyKeeper,
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
 		WasmKeeper:    keeper,
+		BankKeeper:    bankKeeper,
 	}
 	return ctx, keepers
 }
@@ -205,7 +228,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmTypes.MsgInstantiateC
 
 	return &sdk.Result{
 		Data:   contractAddr,
-		Events: ctx.EventManager().Events(),
+		Events: ctx.EventManager().Events().ToABCIEvents(),
 	}, nil
 }
 
@@ -215,6 +238,6 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *wasmTypes.MsgExecuteContract)
 		return nil, err
 	}
 
-	res.Events = ctx.EventManager().Events()
+	res.Events = ctx.EventManager().Events().ToABCIEvents()
 	return &res, nil
 }

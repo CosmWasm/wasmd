@@ -259,8 +259,13 @@ func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Addre
 	if err != nil {
 		return err
 	}
+
+	events := make(sdk.Events, len(res.Events))
+	for i := range res.Events {
+		events[i] = sdk.Event(res.Events[i])
+	}
 	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	ctx.EventManager().EmitEvents(res.Events)
+	ctx.EventManager().EmitEvents(events)
 
 	return nil
 }

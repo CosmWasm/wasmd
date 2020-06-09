@@ -7,7 +7,7 @@
 우선 `wasmd` 인스턴스를 중지하세요. 이후 소프트웨어를 업그레이드하세요:
 
 ```bash
-cd $GOPATH/src/github.com/cosmwasm/wasmd
+cd $GOPATH/src/github.com/CosmWasm/wasmd
 git fetch --all && git checkout <new_version>
 make install
 ```
@@ -16,7 +16,7 @@ make install
 *참고*: 이번 단계에서 문제가 발생하는 경우, 최신 스테이블 버전의 Go가 설치되어있는지 확인하세요.
 :::
 
-최신 퍼블릭 테스트넷에 필요한 버전 정보를 확인하기 위해서는 [테스트넷 리포](https://github.com/cosmos/testnets)를 참고하시고, 각 릴리즈에 대한 자세한 정보는 [Gaia 릴리즈 페이지](https://github.com/cosmwasm/wasmd/releases)를 참고하세요.
+최신 퍼블릭 테스트넷에 필요한 버전 정보를 확인하기 위해서는 [테스트넷 리포](https://github.com/cosmos/testnets)를 참고하시고, 각 릴리즈에 대한 자세한 정보는 [Gaia 릴리즈 페이지](https://github.com/CosmWasm/wasmd/releases)를 참고하세요.
 
 이제 풀노드가 깔끔하게 업그레이드되었습니다.
 

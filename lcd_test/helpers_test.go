@@ -13,13 +13,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clientkeys "github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/crypto/keys"
-	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	authcutils "github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	bankrest "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	distrrest "github.com/cosmos/cosmos-sdk/x/distribution/client/rest"
@@ -187,10 +187,10 @@ func getTransactions(t *testing.T, port string, events ...string) *sdk.SearchTxs
 // ICS 1 - Keys
 // ----------------------------------------------------------------------
 // GET /keys List of accounts stored locally
-func getKeys(t *testing.T, port string) []keys.KeyOutput {
+func getKeys(t *testing.T, port string) []keyring.KeyOutput {
 	res, body := Request(t, port, "GET", "/keys", nil)
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var m []keys.KeyOutput
+	var m []keyring.KeyOutput
 	err := cdc.UnmarshalJSON([]byte(body), &m)
 	require.Nil(t, err)
 
@@ -198,7 +198,7 @@ func getKeys(t *testing.T, port string) []keys.KeyOutput {
 }
 
 // POST /keys Create a new account locally
-func doKeysPost(t *testing.T, port, name, password, mnemonic string, account int, index int) keys.KeyOutput {
+func doKeysPost(t *testing.T, port, name, password, mnemonic string, account int, index int) keyring.KeyOutput {
 	pk := clientkeys.NewAddNewKey(name, password, mnemonic, account, index)
 	req, err := cdc.MarshalJSON(pk)
 	require.NoError(t, err)
@@ -206,7 +206,7 @@ func doKeysPost(t *testing.T, port, name, password, mnemonic string, account int
 	res, body := Request(t, port, "POST", "/keys", req)
 
 	require.Equal(t, http.StatusOK, res.StatusCode, body)
-	var resp keys.KeyOutput
+	var resp keyring.KeyOutput
 	err = cdc.UnmarshalJSON([]byte(body), &resp)
 	require.Nil(t, err, body)
 
@@ -220,6 +220,15 @@ func getAccount(t *testing.T, port string, addr sdk.AccAddress) (acc authexporte
 	require.Nil(t, cdc.UnmarshalJSON(extractResultFromResponse(t, []byte(body)), &acc))
 
 	return acc
+}
+
+// GET /bank/balances/{address} Get the account balances
+func getBalances(t *testing.T, port string, addr sdk.AccAddress) (balances sdk.Coins) {
+	res, body := Request(t, port, "GET", fmt.Sprintf("/bank/balances/%s", addr), nil)
+	require.Equal(t, http.StatusOK, res.StatusCode, body)
+	require.Nil(t, cdc.UnmarshalJSON(extractResultFromResponse(t, []byte(body)), &balances))
+
+	return balances
 }
 
 // ----------------------------------------------------------------------
@@ -240,7 +249,7 @@ func doBroadcast(t *testing.T, port string, tx auth.StdTx) (*http.Response, stri
 // the tx and broadcasts it.
 func doTransfer(
 	t *testing.T, port, name, memo string, addr sdk.AccAddress, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) (sdk.AccAddress, sdk.TxResponse) {
 
 	resp, body, recvAddr := doTransferWithGas(t, port, name, memo, addr, "", 1.0, false, true, fees, kb)
@@ -260,14 +269,14 @@ func doTransfer(
 func doTransferWithGas(
 	t *testing.T, port, name, memo string, addr sdk.AccAddress,
 	gas string, gasAdjustment float64, simulate, broadcast bool, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) (resp *http.Response, body string, receiveAddr sdk.AccAddress) {
 
 	// create receive address
-	kb2 := crkeys.NewInMemory()
+	kb2 := keyring.NewInMemory()
 
-	receiveInfo, _, err := kb2.CreateMnemonic(
-		"receive_address", crkeys.English, clientkeys.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
+	receiveInfo, _, err := kb2.NewMnemonic(
+		"receive_address", keyring.English, clientkeys.DefaultKeyPass, hd.Secp256k1,
 	)
 	require.Nil(t, err)
 
@@ -307,15 +316,15 @@ func doTransferWithGas(
 func doTransferWithGasAccAuto(
 	t *testing.T, port, name, memo string, addr sdk.AccAddress,
 	gas string, gasAdjustment float64, simulate, broadcast bool, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) (resp *http.Response, body string, receiveAddr sdk.AccAddress) {
 
 	// create receive address
-	kb2 := crkeys.NewInMemory()
+	kb2 := keyring.NewInMemory()
 	acc := getAccount(t, port, addr)
 
-	receiveInfo, _, err := kb2.CreateMnemonic(
-		"receive_address", crkeys.English, clientkeys.DefaultKeyPass, crkeys.SigningAlgo("secp256k1"),
+	receiveInfo, _, err := kb2.NewMnemonic(
+		"receive_address", keyring.English, clientkeys.DefaultKeyPass, hd.Secp256k1,
 	)
 	require.Nil(t, err)
 
@@ -349,7 +358,7 @@ func doTransferWithGasAccAuto(
 // and broadcasts it.
 func signAndBroadcastGenTx(
 	t *testing.T, port, name, genTx string, acc authexported.Account,
-	gasAdjustment float64, simulate bool, kb crkeys.Keybase,
+	gasAdjustment float64, simulate bool, kb keyring.Keyring,
 ) (resp *http.Response, body string) {
 
 	chainID := viper.GetString(flags.FlagChainID)
@@ -359,7 +368,7 @@ func signAndBroadcastGenTx(
 	require.Nil(t, err)
 
 	txbldr := auth.NewTxBuilder(
-		authcutils.GetTxEncoder(cdc),
+		authclient.GetTxEncoder(cdc),
 		acc.GetAccountNumber(),
 		acc.GetSequence(),
 		tx.Fee.Gas,
@@ -385,7 +394,7 @@ func signAndBroadcastGenTx(
 func doDelegate(
 	t *testing.T, port, name string, delAddr sdk.AccAddress,
 	valAddr sdk.ValAddress, amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, delAddr)
@@ -423,7 +432,7 @@ func doDelegate(
 func doUndelegate(
 	t *testing.T, port, name string, delAddr sdk.AccAddress,
 	valAddr sdk.ValAddress, amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, delAddr)
@@ -460,7 +469,7 @@ func doUndelegate(
 func doBeginRedelegation(
 	t *testing.T, port, name string, delAddr sdk.AccAddress, valSrcAddr,
 	valDstAddr sdk.ValAddress, amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, delAddr)
@@ -674,7 +683,7 @@ func getValidatorUnbondingDelegations(t *testing.T, port string, validatorAddr s
 func doSubmitProposal(
 	t *testing.T, port, name string, proposerAddr sdk.AccAddress,
 	amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, proposerAddr)
@@ -713,7 +722,7 @@ func doSubmitProposal(
 func doSubmitParamChangeProposal(
 	t *testing.T, port, name string, proposerAddr sdk.AccAddress,
 	amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, proposerAddr)
@@ -753,7 +762,7 @@ func doSubmitParamChangeProposal(
 func doSubmitCommunityPoolSpendProposal(
 	t *testing.T, port, name string, proposerAddr sdk.AccAddress,
 	amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, proposerAddr)
@@ -848,7 +857,7 @@ func getProposalsFilterStatus(t *testing.T, port string, status gov.ProposalStat
 func doDeposit(
 	t *testing.T, port, name string, proposerAddr sdk.AccAddress,
 	proposalID uint64, amount sdk.Int, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	acc := getAccount(t, port, proposerAddr)
@@ -906,7 +915,7 @@ func getTally(t *testing.T, port string, proposalID uint64) gov.TallyResult {
 func doVote(
 	t *testing.T, port, name string, proposerAddr sdk.AccAddress,
 	proposalID uint64, option string, fees sdk.Coins,
-	kb crkeys.Keybase,
+	kb keyring.Keyring,
 ) sdk.TxResponse {
 
 	// get the account to get the sequence

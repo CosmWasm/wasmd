@@ -38,18 +38,18 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Features
 * (wasmd) [\#122](https://github.com/CosmWasm/wasmd/pull/122]) Migrate contract backend functionality with go-cosmwasm stub impl
-* (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
-* (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
+* (wasmd)[\#2](https://github.com/CosmWasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
+* (wasmd) [\#119](https://github.com/CosmWasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
 flag and configuration.
-* (wasmcli) [\#132](https://github.com/cosmwasm/wasmd/pull/132) Add `tx decode` command to decode
+* (wasmcli) [\#132](https://github.com/CosmWasm/wasmd/pull/132) Add `tx decode` command to decode
 Base64 encoded transactions.
-* (modules) [\#190](https://github.com/cosmwasm/wasmd/pull/190) Introduce use of the `x/evidence` module.
-* (wasmd) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add debug commands to wasmd: 
+* (modules) [\#190](https://github.com/CosmWasm/wasmd/pull/190) Introduce use of the `x/evidence` module.
+* (wasmd) [\#191](https://github.com/CosmWasm/wasmd/pull/191) Add debug commands to wasmd: 
     - `pubkey`: decode pubkey from base64, hex or bech32
     - `addr`: convert a address between hex and bech32
     - `raw-bytes` convert raw-bytes to hex
-* (wasmcli) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
-* (wasmd) [\#9](https://github.com/cosmwasm/wasmd/pull/9) Allow gzip data in tx body on Create 
+* (wasmcli) [\#191](https://github.com/CosmWasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
+* (wasmd) [\#9](https://github.com/CosmWasm/wasmd/pull/9) Allow gzip data in tx body on Create 
 * (wasmd) [\#124](https://github.com/CosmWasm/wasmd/pull/124) Update contract admin
 * (wasmd) [\#131](https://github.com/CosmWasm/wasmd/pull/131) Implement REST server support for new messages
 
@@ -71,11 +71,11 @@ Base64 encoded transactions.
 
 ### Features
 
-* (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--halt-time` CLI flag and configuration.
+* (wasmd) [\#119](https://github.com/CosmWasm/wasmd/pull/119) Add support for the `--halt-time` CLI flag and configuration.
 
 ### Improvements
 
-* [\#119](https://github.com/cosmwasm/wasmd/pull/119) Refactor and upgrade Circle CI
+* [\#119](https://github.com/CosmWasm/wasmd/pull/119) Refactor and upgrade Circle CI
 configuration.
 * (sdk) Update SDK version to v0.37.1
 
@@ -83,7 +83,7 @@ configuration.
 
 ### Bug Fixes
 
-* [\#104](https://github.com/cosmwasm/wasmd/issues/104) Fix `ModuleAccountAddrs` to
+* [\#104](https://github.com/CosmWasm/wasmd/issues/104) Fix `ModuleAccountAddrs` to
 not rely on the `x/supply` keeper to get module account addresses for blacklisting.
 
 ### State Machine Breaking Changes
@@ -147,9 +147,9 @@ not rely on the `x/supply` keeper to get module account addresses for blacklisti
 
 <!-- Release links -->
 
-[Unreleased]: https://github.com/cosmwasm/wasmd/compare/v2.0.3...HEAD
-[v2.0.3]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.3
-[v2.0.2]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.2
-[v2.0.1]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.1
-[v2.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.0
-[v1.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v1.0.0
+[Unreleased]: https://github.com/CosmWasm/wasmd/compare/v2.0.3...HEAD
+[v2.0.3]: https://github.com/CosmWasm/wasmd/releases/tag/v2.0.3
+[v2.0.2]: https://github.com/CosmWasm/wasmd/releases/tag/v2.0.2
+[v2.0.1]: https://github.com/CosmWasm/wasmd/releases/tag/v2.0.1
+[v2.0.0]: https://github.com/CosmWasm/wasmd/releases/tag/v2.0.0
+[v1.0.0]: https://github.com/CosmWasm/wasmd/releases/tag/v1.0.0

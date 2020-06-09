@@ -74,14 +74,14 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	return e
 }
 
-func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error) {
+func BankQuerier(bankKeeper bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmTypes.BankQuery) ([]byte, error) {
 		if request.AllBalances != nil {
 			addr, err := sdk.AccAddressFromBech32(request.AllBalances.Address)
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.AllBalances.Address)
 			}
-			coins := bank.GetCoins(ctx, addr)
+			coins := bankKeeper.GetAllBalances(ctx, addr)
 			res := wasmTypes.AllBalancesResponse{
 				Amount: convertSdkCoinsToWasmCoins(coins),
 			}
@@ -92,7 +92,7 @@ func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Balance.Address)
 			}
-			coins := bank.GetCoins(ctx, addr)
+			coins := bankKeeper.GetAllBalances(ctx, addr)
 			amount := coins.AmountOf(request.Balance.Denom)
 			res := wasmTypes.BalanceResponse{
 				Amount: wasmTypes.Coin{

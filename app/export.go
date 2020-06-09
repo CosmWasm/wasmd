@@ -15,7 +15,7 @@ import (
 
 // ExportAppStateAndValidators export the state of gaia for a genesis file
 func (app *WasmApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteList []string,
-) (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+) (appState json.RawMessage, validators []tmtypes.GenesisValidator, cp *abci.ConsensusParams, err error) {
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContext(true, abci.Header{Height: app.LastBlockHeight()})
 
@@ -23,13 +23,13 @@ func (app *WasmApp) ExportAppStateAndValidators(forZeroHeight bool, jailWhiteLis
 		app.prepForZeroHeightGenesis(ctx, jailWhiteList)
 	}
 
-	genState := app.mm.ExportGenesis(ctx)
+	genState := app.mm.ExportGenesis(ctx, app.cdc)
 	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	validators = staking.WriteValidators(ctx, app.stakingKeeper)
-	return appState, validators, nil
+	return appState, validators, app.BaseApp.GetConsensusParams(ctx), nil
 }
 
 // prepare for fresh start at zero height
@@ -90,7 +90,7 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailWhiteList []st
 	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val staking.ValidatorI) (stop bool) {
 
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		scraps := app.distrKeeper.GetValidatorOutstandingRewards(ctx, val.GetOperator())
+		scraps := app.distrKeeper.GetValidatorOutstandingRewards(ctx, val.GetOperator()).Rewards
 		feePool := app.distrKeeper.GetFeePool(ctx)
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.distrKeeper.SetFeePool(ctx, feePool)

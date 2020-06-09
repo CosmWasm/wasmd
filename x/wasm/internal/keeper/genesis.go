@@ -25,7 +25,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	for _, contract := range data.Contracts {
-		keeper.setContractInfo(ctx, contract.ContractAddress, &contract.ContractInfo)
+		keeper.setContractInfo(ctx, contract.ContractAddress, contract.ContractInfo)
 		keeper.setContractState(ctx, contract.ContractAddress, contract.ContractState)
 	}
 
@@ -60,7 +60,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr,
-			ContractInfo:    contract,
+			ContractInfo:    &contract,
 			ContractState:   state,
 		})
 

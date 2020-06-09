@@ -18,17 +18,17 @@ source ~/.bash_profile
 
 ### 바이너리 설치하기
 
-다음은 최신 Gaia 버전을 설치하는 것입니다. 필요에 따라 `git checkout`을 통해 올바른 [릴리즈 버전](https://github.com/cosmwasm/wasmd/releases)이 설치되어있는지 확인하세요.
+다음은 최신 Gaia 버전을 설치하는 것입니다. 필요에 따라 `git checkout`을 통해 올바른 [릴리즈 버전](https://github.com/CosmWasm/wasmd/releases)이 설치되어있는지 확인하세요.
 
 ```bash
-git clone -b <latest-release-tag> https://github.com/cosmwasm/wasmd
+git clone -b <latest-release-tag> https://github.com/CosmWasm/wasmd
 cd gaia && make install
 ```
 
 만약 다음과 같은 에러 메시지로 명령어가 실패하는 경우, 이미 `LDFLAGS`를 설정하셨을 수 있습니다.
 
 ```
-# github.com/cosmwasm/wasmd/cmd/wasmd
+# github.com/CosmWasm/wasmd/cmd/wasmd
 flag provided but not defined: -L
 usage: link [options] main.o
 ...
