@@ -151,26 +151,14 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distribution.InitialFeePool())
 
-	// total supply to track this
-	//totalSupply := sdk.NewCoins(sdk.NewInt64Coin("stake", 100000000))
-
-	//// set up initial accounts
-	//for name, perms := range maccPerms {
-	//	mod := auth.NewEmptyModuleAccount(name, perms...)
-	//	if name == staking.NotBondedPoolName {
-	//		err = mod.SetCoins(totalSupply)
-	//		require.NoError(t, err)
-	//	} else if name == distribution.ModuleName {
-	//		// some big pot to pay out
-	//		err = mod.SetCoins(sdk.NewCoins(sdk.NewInt64Coin("stake", 500000)))
-	//		require.NoError(t, err)
-	//	}
-	//	auth.SetModuleAccount(ctx, mod)
-	//}
-	//
-	//stakeAddr := supply.NewModuleAddress(staking.BondedPoolName)
-	//moduleAcct := accountKeeper.GetAccount(ctx, stakeAddr)
-	//require.NotNil(t, moduleAcct)
+	// set some funds ot pay out validatores, based on code from:
+	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
+	distrAcc := distKeeper.GetDistributionAccount(ctx)
+	err = bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
+		sdk.NewCoin("stake", sdk.NewInt(2000000)),
+	))
+	require.NoError(t, err)
+	accountKeeper.SetModuleAccount(ctx, distrAcc)
 
 	router := baseapp.NewRouter()
 	bh := bank.NewHandler(bankKeeper)
