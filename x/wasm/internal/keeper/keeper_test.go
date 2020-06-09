@@ -297,7 +297,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x7fa1), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x7f9e), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -310,7 +310,7 @@ func TestExecute(t *testing.T) {
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
 
-	t.Logf("Duration: %v (31728 gas)\n", diff)
+	t.Logf("Duration: %v (%d gas)\n", diff, gasAfter-gasBefore)
 }
 
 func TestExecuteWithNonExistingAddress(t *testing.T) {

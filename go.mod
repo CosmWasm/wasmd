@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200604114456-1b2359bb7eb9
+	github.com/CosmWasm/go-cosmwasm v0.8.2-0.20200608192602-082a8c18f964
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/golang/mock v1.4.3 // indirect
