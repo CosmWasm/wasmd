@@ -3,20 +3,19 @@ version: 2.1
 executors:
   golang:
     docker:
-      - image: circleci/golang:1.13
-    working_directory: /go/src/github.com/cosmwasm/wasmd
+      - image: circleci/golang:1.14
+    working_directory: /go/src/github.com/CosmWasm/wasmd
   mac:
     macos:
       xcode: "10.3.0"
-    working_directory: /Users/distiller/project/src/github.com/cosmwasm/wasmd
+    working_directory: /Users/distiller/project/src/github.com/CosmWasm/wasmd
     environment:
-      GO_VERSION: "1.13"
+      GO_VERSION: "1.14"
   docs:
     docker:
       - image: tendermintdev/jq_curl
     environment:
       AWS_REGION: us-east-1
-
 
 commands:
   make:
@@ -93,18 +92,12 @@ jobs:
           paths:
             - "."
 
-  integration-tests:
+  test-sim-multi-seed-long:
     executor: golang
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-      - run:
-          name: Test CLI integration
-          command: |
-            export BUILDDIR=`pwd`/build
-            make test-build
+      - make:
+          target: test-sim-multi-seed-long
+          description: "Test Gaia multi-seed simulation (long-lived)"
 
   test-cover:
     executor: golang
@@ -162,14 +155,14 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
   localnet:
-    working_directory: /home/circleci/.go_workspace/src/github.com/cosmwasm/wasmd
+    working_directory: /home/circleci/.go_workspace/src/github.com/CosmWasm/wasmd
     machine:
       image: circleci/classic:latest
     environment:
       GOPATH: /home/circleci/.go_workspace/
       GOOS: linux
       GOARCH: amd64
-      GO_VERSION: "1.13"
+      GO_VERSION: "1.14"
     parallelism: 1
     steps:
       - checkout
@@ -184,7 +177,7 @@ jobs:
             popd
             set -x
             make clean localnet-start
-            ./contrib/localnet-blocks-test.sh 40 5 10 localhost
+            ./contrib/localnet-blocks-test.sh 100 5 50 localhost
 
 
 
@@ -237,17 +230,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             sudo apt-get install -y ruby
-            bash -x ./contrib/gitian-build.sh all
-            for os in darwin linux windows; do
-              cp gitian-build-${os}/result/gaia-${os}-res.yml .
-              rm -rf gitian-build-${os}/
-            done
+            bash -x ./contrib/gitian-build.sh multi
+            cp gitian-build-multi/result/gaia-multi-res.yml .
+            rm -rf gitian-build-multi/
       - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-darwin-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-linux-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-windows-res.yml
+          path: /go/src/github.com/CosmWasm/wasmd/gaia-multi-res.yml
 
 # FIXME: The `setup-contract-tests-data` make target is broken as it completely
 # overrides the .wasmd directory.
@@ -292,15 +279,39 @@ workflows:
                 - /.*/
           requires:
             - setup-dependencies
+      # - macos-ci:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
+      # - deploy-docs:
+      #     context: gaia-docs-deployment-staging
+      #     filters:
+      #       branches:
+      #         only:
+      #           - docs-update
+      # - deploy-docs:
+      #     context: gaia-docs-deployment
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
       - setup-dependencies:
           # filters here are needed to enable this job also for tags
           filters:
             tags:
               only:
                 - /^v.*/
-      # - integration-tests:
+      # - test-sim-multi-seed-long:
       #     requires:
       #       - setup-dependencies
+      #     # These filters ensure that the long sim only runs during release
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only:
+      #           - /^v.*/
       - test-cover:
           requires:
             - setup-dependencies

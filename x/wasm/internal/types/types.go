@@ -1,11 +1,8 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
-
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -26,14 +23,6 @@ func (m Model) ValidateBasic() error {
 		return sdkerrors.Wrap(ErrEmpty, "key")
 	}
 	return nil
-}
-
-// CodeInfo is data for the uploaded contract WASM code
-type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
-	Source   string         `json:"source"`
-	Builder  string         `json:"builder"`
 }
 
 func (c CodeInfo) ValidateBasic() error {
@@ -61,21 +50,6 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 		Builder:  builder,
 	}
 }
-
-// ContractInfo stores a WASM contract instance
-type ContractInfo struct {
-	CodeID  uint64          `json:"code_id"`
-	Creator sdk.AccAddress  `json:"creator"`
-	Admin   sdk.AccAddress  `json:"admin,omitempty"`
-	Label   string          `json:"label"`
-	InitMsg json.RawMessage `json:"init_msg,omitempty"`
-	// never show this in query results, just use for sorting
-	// (Note: when using json tag "-" amino refused to serialize it...)
-	Created        *AbsoluteTxPosition `json:"created,omitempty"`
-	LastUpdated    *AbsoluteTxPosition `json:"last_updated,omitempty"`
-	PreviousCodeID uint64              `json:"previous_code_id,omitempty"`
-}
-
 func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
 	c.PreviousCodeID = c.CodeID
 	c.CodeID = newCodeID
@@ -107,14 +81,6 @@ func (c *ContractInfo) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "last updated")
 	}
 	return nil
-}
-
-// AbsoluteTxPosition can be used to sort contracts
-type AbsoluteTxPosition struct {
-	// BlockHeight is the block the contract was created at
-	BlockHeight int64
-	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
-	TxIndex uint64
 }
 
 // LessThan can be used to sort
@@ -205,21 +171,22 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
-// ParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
-func ParseEvents(logs []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk.Events {
-	if len(logs) == 0 {
-		return nil
-	}
-	// we always tag with the contract address issuing this event
-	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
-	for _, l := range logs {
-		// and reserve the contract_address key for our use (not contract)
-		if l.Key != AttributeKeyContractAddr {
-			attr := sdk.NewAttribute(l.Key, l.Value)
-			attrs = append(attrs, attr)
+// CosmosResult converts from a Wasm Result type
+func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) ([]byte, sdk.Events) {
+	var events sdk.Events
+	if len(wasmResult.Log) > 0 {
+		// we always tag with the contract address issuing this event
+		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
+		for _, l := range wasmResult.Log {
+			// and reserve the contract_address key for our use (not contract)
+			if l.Key != AttributeKeyContractAddr {
+				attr := sdk.NewAttribute(l.Key, l.Value)
+				attrs = append(attrs, attr)
+			}
 		}
+		events = sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 	}
-	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
+	return []byte(wasmResult.Data), events
 }
 
 // WasmConfig is the extra config required for wasm

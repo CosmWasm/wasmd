@@ -1,0 +1,97 @@
+syntax = "proto3";
+package wasmd.x.wasmd.v1;
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
+
+import "third_party/proto/gogoproto/gogo.proto";
+import "types/types.proto";
+
+message MsgStoreCode{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // WASMByteCode can be raw or gzip compressed
+    bytes wasm_byte_code = 2 [(gogoproto.customname) = "WASMByteCode", (gogoproto.moretags) = "yaml:\"wasm_byte_code\""];
+    // Source is a valid absolute HTTPS URI to the contract's source code, optional
+    string source = 3;
+    // Builder is a valid docker image name with tag, optional
+    string builder = 4;
+}
+
+message MsgInstantiateContract{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // Admin is an optional address that can execute migrations
+    bytes admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 code = 3 [(gogoproto.moretags) = "yaml:\"code_id\""];
+    string label = 4;
+    bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    repeated cosmos_sdk.v1.Coin init_funds = 6 [
+                                           (gogoproto.nullable)     = false,
+                                           (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+                                           ];
+}
+
+message MsgExecuteContract{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    repeated cosmos_sdk.v1.Coin sent_funds = 5 [
+                                               (gogoproto.nullable)     = false,
+                                               (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+                                               ];
+}
+
+message MsgMigrateContract{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 code = 3 [(gogoproto.moretags) = "yaml:\"code_id\""];
+    bytes migrate_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+}
+
+message MsgUpdateAdministrator{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes new_admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+
+// CodeInfo is data for the uploaded contract WASM code
+message CodeInfo {
+    option (gogoproto.goproto_getters) = false;
+
+    bytes code_hash = 1;
+    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string source = 3;
+    string builder =4;
+}
+
+// ContractInfo stores a WASM contract instance
+message ContractInfo {
+    option (gogoproto.goproto_getters) = false;
+
+    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes admin = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string label = 4;
+    bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    // never show this in query results, just use for sorting
+    // (Note: when using json tag "-" amino refused to serialize it...)
+    AbsoluteTxPosition created = 6;
+    AbsoluteTxPosition last_updated = 7;
+    uint64 previous_code_id = 8 [(gogoproto.customname) = "PreviousCodeID"];
+}
+
+// AbsoluteTxPosition can be used to sort contracts
+message AbsoluteTxPosition {
+    // BlockHeight is the block the contract was created at
+    int64 block_height =1;
+    // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
+    uint64 tx_index =2;
+}
