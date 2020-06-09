@@ -372,6 +372,9 @@ func TestReinvest(t *testing.T) {
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
+	// update height a bit to solidify the delegation
+	ctx = nextBlock(ctx, stakingKeeper)
+
 	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
 		Reinvest: &struct{}{},
