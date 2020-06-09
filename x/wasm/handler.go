@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	cosmwasmtypes "github.com/enigmampc/EnigmaBlockchain/go-cosmwasm/types"
+	cosmwasmtypes "github.com/CosmWasm/go-cosmwasm/types"
 )
 
 const (
