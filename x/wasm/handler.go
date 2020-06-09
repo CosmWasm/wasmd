@@ -5,6 +5,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"encoding/json"
+	
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmwasmtypes "github.com/CosmWasm/go-cosmwasm/types"
 )
 
 const (
@@ -125,6 +130,22 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 	)
 
 	res.Events = append(events, ourEvent)
+	
+	var resp cosmwasmtypes.CosmosResponse
+	err = json.Unmarshal(res.Data, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Ok.Log) > 0 {
+		wasmEvent := sdk.NewEvent(sdk.EventTypeMessage)
+
+		for _, v := range resp.Ok.Log {
+			wasmEvent.AppendAttributes(sdk.NewAttribute(v.Key, v.Value))
+		}
+		res.Events = append(res.Events, wasmEvent)
+	}
+	
 	return &res, nil
 }
 
