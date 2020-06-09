@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -41,15 +42,24 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 type ContractInfo struct {
 	CodeID  uint64          `json:"code_id"`
 	Creator sdk.AccAddress  `json:"creator"`
+	Admin   sdk.AccAddress  `json:"admin,omitempty"`
 	Label   string          `json:"label"`
 	InitMsg json.RawMessage `json:"init_msg,omitempty"`
 	// never show this in query results, just use for sorting
 	// (Note: when using json tag "-" amino refused to serialize it...)
-	Created *CreatedAt `json:"created,omitempty"`
+	Created        *AbsoluteTxPosition `json:"created,omitempty"`
+	LastUpdated    *AbsoluteTxPosition `json:"last_updated,omitempty"`
+	PreviousCodeID uint64              `json:"previous_code_id,omitempty"`
 }
 
-// CreatedAt can be used to sort contracts
-type CreatedAt struct {
+func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
+	c.PreviousCodeID = c.CodeID
+	c.CodeID = newCodeID
+	c.LastUpdated = NewCreatedAt(ctx)
+}
+
+// AbsoluteTxPosition can be used to sort contracts
+type AbsoluteTxPosition struct {
 	// BlockHeight is the block the contract was created at
 	BlockHeight int64
 	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
@@ -57,7 +67,7 @@ type CreatedAt struct {
 }
 
 // LessThan can be used to sort
-func (a *CreatedAt) LessThan(b *CreatedAt) bool {
+func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 	if a == nil {
 		return true
 	}
@@ -68,24 +78,25 @@ func (a *CreatedAt) LessThan(b *CreatedAt) bool {
 }
 
 // NewCreatedAt gets a timestamp from the context
-func NewCreatedAt(ctx sdk.Context) *CreatedAt {
+func NewCreatedAt(ctx sdk.Context) *AbsoluteTxPosition {
 	// we must safely handle nil gas meters
 	var index uint64
 	meter := ctx.BlockGasMeter()
 	if meter != nil {
 		index = meter.GasConsumed()
 	}
-	return &CreatedAt{
+	return &AbsoluteTxPosition{
 		BlockHeight: ctx.BlockHeight(),
 		TxIndex:     index,
 	}
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *CreatedAt) ContractInfo {
+func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, createdAt *AbsoluteTxPosition) ContractInfo {
 	return ContractInfo{
 		CodeID:  codeID,
 		Creator: creator,
+		Admin:   admin,
 		InitMsg: initMsg,
 		Label:   label,
 		Created: createdAt,

@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.13
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.8.1
+	github.com/CosmWasm/go-cosmwasm v0.8.1-0.20200604114456-1b2359bb7eb9
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3
 	github.com/golang/mock v1.4.3 // indirect
@@ -23,7 +23,9 @@ require (
 	github.com/tendermint/go-amino v0.15.1
 	github.com/tendermint/tendermint v0.33.3
 	github.com/tendermint/tm-db v0.5.1
+	go.etcd.io/bbolt v1.3.4 // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
 )
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4

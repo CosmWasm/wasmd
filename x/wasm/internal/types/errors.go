@@ -34,4 +34,7 @@ var (
 
 	// ErrInvalidMsg error when we cannot process the error returned from the contract
 	ErrInvalidMsg = sdkErrors.Register(DefaultCodespace, 9, "invalid CosmosMsg from the contract")
+
+	// ErrMigrationFailed error for rust execution contract failure
+	ErrMigrationFailed = sdkErrors.Register(DefaultCodespace, 10, "migrate wasm contract failed")
 )
