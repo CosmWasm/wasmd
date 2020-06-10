@@ -1,1 +1,39 @@
-package wasmd
+# docker build . -t wasm-alpine -f ./Dockerfile.alpine
+# docker run --rm -it wasm-alpine /bin/sh
+FROM cosmwasm/go-ext-builder:0.8.1-alpine-combi AS builder
+
+ENV GO_COSMWASM="v0.8.2-0.20200610171315-1776973f496a"
+
+# copy all code into /code
+WORKDIR /code
+COPY . /code
+
+# download all deps
+RUN go mod download
+RUN ls -ld /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*
+
+# build go-cosmwasm *.a and install it
+WORKDIR /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}
+RUN cargo build --release --features backtraces --example muslc
+RUN cp /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
+
+# build the go wasm binary
+WORKDIR /code
+
+# other build flags... netgo,ledger,...
+# also all the other link flags
+#ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
+#		  -X github.com/cosmos/cosmos-sdk/version.ServerName=wasmd \
+#		  -X github.com/cosmos/cosmos-sdk/version.ClientName=wasmcli \
+#		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+#		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+#		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+# TODO: debug this before enabling
+
+#RUN go build -tags muslc,netgo -trimpath -mod=readonly -o build/wasmd ./cmd/wasmd
+#
+#FROM alpine:3.12
+#
+#COPY --from=builder /code/build/wasmd /usr/bin/wasmd
+#CMD ["/usr/bin/wasmd help"]
