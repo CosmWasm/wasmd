@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/tests/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/client/testutil"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -26,7 +27,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 
@@ -335,7 +335,6 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	success, stdout, stderr := f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--gas=auto", "-y")
 	require.NotEmpty(t, stderr)
 	require.True(t, success)
-	cdc := app.MakeCodec()
 	sendResp := sdk.TxResponse{}
 	err := cdc.UnmarshalJSON([]byte(stdout), &sendResp)
 	require.Nil(t, err)
@@ -343,8 +342,7 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Check state has changed accordingly
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	f.Cleanup()
 }
@@ -980,23 +978,23 @@ func TestCLIMultisignInsufficientCosigners(t *testing.T) {
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign, not enough signatures
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{fooSignatureFile.Name()})
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{fooSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.False(t, success)
 
 	// Broadcast the transaction
-	success, stdOut, _ := f.TxBroadcast(signedTxFile.Name())
+	success, stdOut, _ := testutil.TxBroadcast(f, signedTxFile.Name())
 	require.Contains(t, stdOut, "signature verification failed")
 	require.True(t, success)
 
@@ -1011,8 +1009,6 @@ func TestGaiaCLIEncode(t *testing.T) {
 	// start wasmd server
 	proc := f.GDStart()
 	defer proc.Stop(false)
-
-	cdc := app.MakeCodec()
 
 	// Build a testing transaction and write it to disk
 	barAddr := f.KeyAddress(keyBar)
@@ -1038,135 +1034,141 @@ func TestGaiaCLIEncode(t *testing.T) {
 
 	// Check that the transaction decodes as epxceted
 	var decodedTx auth.StdTx
-	require.Nil(t, cdc.UnmarshalBinaryLengthPrefixed(decodedBytes, &decodedTx))
+	require.Nil(t, cdc.UnmarshalBinaryBare(decodedBytes, &decodedTx))
 	require.Equal(t, "deadbeef", decodedTx.Memo)
 }
 
-func TestGaiaCLIMultisignSortSignatures(t *testing.T) {
+func TestCLIMultisignSortSignatures(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
 	// start wasmd server with minimum fees
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooBarBazAddr := f.KeyAddress(keyFooBarBaz)
-	barAddr := f.KeyAddress(keyBar)
+	fooBarBazAddr := f.KeyAddress(cli.KeyFooBarBaz)
+	barAddr := f.KeyAddress(cli.KeyBar)
 
 	// Send some tokens from one account to the other
-	success, _, _ := f.TxSend(keyFoo, fooBarBazAddr, sdk.NewInt64Coin(denom, 10), "-y")
+	success, _, _ := bankcli.TxSend(f, cli.KeyFoo, fooBarBazAddr, sdk.NewInt64Coin(cli.Denom, 10), "-y")
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	fooBarBazAcc := f.QueryAccount(fooBarBazAddr)
-	require.Equal(t, int64(10), fooBarBazAcc.GetCoins().AmountOf(denom).Int64())
+	require.Equal(t, int64(10), bankcli.QueryBalances(f, fooBarBazAddr).AmountOf(cli.Denom).Int64())
 
 	// Test generate sendTx with multisig
-	success, stdout, _ := f.TxSend(fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(denom, 5), "--generate-only")
+	success, stdout, _ := bankcli.TxSend(f, fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(cli.Denom, 5), "--generate-only")
 	require.True(t, success)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with foo's key
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with baz's key
-	success, stdout, _ = f.TxSign(keyBaz, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
+	success, stdout, _ = testutil.TxSign(f, cli.KeyBaz, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
 	require.True(t, success)
 
 	// Write the output to disk
-	bazSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(bazSignatureFile.Name())
+	bazSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign, keys in different order
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
 		bazSignatureFile.Name(), fooSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Broadcast the transaction
-	success, _, _ = f.TxBroadcast(signedTxFile.Name())
+	success, _, _ = testutil.TxBroadcast(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Cleanup testing directories
 	f.Cleanup()
 }
 
-func TestGaiaCLIMultisign(t *testing.T) {
+func TestCLIMultisign(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
-	// start wasmd server with minimum fees
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	// start simd server with minimum fees
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooBarBazAddr := f.KeyAddress(keyFooBarBaz)
-	bazAddr := f.KeyAddress(keyBaz)
+	fooBarBazAddr := f.KeyAddress(cli.KeyFooBarBaz)
+	bazAddr := f.KeyAddress(cli.KeyBaz)
 
 	// Send some tokens from one account to the other
-	success, _, _ := f.TxSend(keyFoo, fooBarBazAddr, sdk.NewInt64Coin(denom, 10), "-y")
+	success, _, _ := bankcli.TxSend(f, cli.KeyFoo, fooBarBazAddr, sdk.NewInt64Coin(cli.Denom, 10), "-y")
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	fooBarBazAcc := f.QueryAccount(fooBarBazAddr)
-	require.Equal(t, int64(10), fooBarBazAcc.GetCoins().AmountOf(denom).Int64())
+	require.Equal(t, int64(10), bankcli.QueryBalances(f, fooBarBazAddr).AmountOf(cli.Denom).Int64())
 
 	// Test generate sendTx with multisig
-	success, stdout, stderr := f.TxSend(fooBarBazAddr.String(), bazAddr, sdk.NewInt64Coin(denom, 10), "--generate-only")
+	success, stdout, stderr := bankcli.TxSend(f, fooBarBazAddr.String(), bazAddr, sdk.NewInt64Coin(cli.Denom, 10), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with foo's key
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with bar's key
-	success, stdout, _ = f.TxSign(keyBar, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
+	success, stdout, _ = testutil.TxSign(f, cli.KeyBar, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
 	require.True(t, success)
 
 	// Write the output to disk
-	barSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(barSignatureFile.Name())
+	barSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{
+
+	// Does not work in offline mode
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
+		fooSignatureFile.Name(), barSignatureFile.Name()}, "--offline")
+	require.Contains(t, "couldn't verify signature", stdout)
+	require.False(t, success)
+
+	// Success multisign
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
 		fooSignatureFile.Name(), barSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures", "-y")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Broadcast the transaction
-	success, _, _ = f.TxBroadcast(signedTxFile.Name())
+	success, _, _ = testutil.TxBroadcast(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Cleanup testing directories
@@ -1281,15 +1283,21 @@ func TestGaiadAddGenesisAccount(t *testing.T) {
 
 	f.AddGenesisAccount(f.KeyAddress(keyFoo), startCoins)
 	f.AddGenesisAccount(f.KeyAddress(keyBar), bazCoins)
+
 	genesisState := f.GenesisState()
 
-	cdc := app.MakeCodec()
-	accounts := auth.GetGenesisStateFromAppState(cdc, genesisState).Accounts
+	accounts := auth.GetGenesisStateFromAppState(appCodec, genesisState).Accounts
+	balances := bank.GetGenesisStateFromAppState(cdc, genesisState).Balances
+	balancesSet := make(map[string]sdk.Coins)
+
+	for _, b := range balances {
+		balancesSet[b.GetAddress().String()] = b.Coins
+	}
 
 	require.Equal(t, accounts[0].GetAddress(), f.KeyAddress(keyFoo))
 	require.Equal(t, accounts[1].GetAddress(), f.KeyAddress(keyBar))
-	require.True(t, accounts[0].GetCoins().IsEqual(startCoins))
-	require.True(t, accounts[1].GetCoins().IsEqual(bazCoins))
+	require.True(t, balancesSet[accounts[0].GetAddress().String()].IsEqual(startCoins))
+	require.True(t, balancesSet[accounts[1].GetAddress().String()].IsEqual(bazCoins))
 
 	// Cleanup testing directories
 	f.Cleanup()
