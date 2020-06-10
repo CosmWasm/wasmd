@@ -2,7 +2,11 @@
 # docker run --rm -it wasm-alpine /bin/sh
 FROM cosmwasm/go-ext-builder:0.8.1-alpine-combi AS builder
 
-ENV GO_COSMWASM="v0.8.2-0.20200610171315-1776973f496a"
+RUN apk add git
+# without this, build with LEDGER_ENABLED=false
+RUN apk add libusb-dev linux-headers
+
+ENV GO_COSMWASM="v0.8.2-0.20200610212608-c0f4fd4f6b74"
 
 # copy all code into /code
 WORKDIR /code
@@ -29,11 +33,10 @@ WORKDIR /code
 #		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 #		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
-# TODO: debug this before enabling
+RUN BUILD_TAGS=muslc make build
 
-#RUN go build -tags muslc,netgo -trimpath -mod=readonly -o build/wasmd ./cmd/wasmd
-#
-#FROM alpine:3.12
-#
-#COPY --from=builder /code/build/wasmd /usr/bin/wasmd
-#CMD ["/usr/bin/wasmd help"]
+# TODO: try scratch
+FROM alpine:3.12
+
+COPY --from=builder /code/build/wasmd /usr/bin/wasmd
+CMD ["/usr/bin/wasmd help"]
