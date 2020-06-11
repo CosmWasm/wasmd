@@ -618,7 +618,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	addr, err := keeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
+	contractAddr, err := keeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
 	require.NoError(t, err)
 
 	migMsg := struct {
@@ -626,20 +626,79 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	}{Payout: myPayoutAddr}
 	migMsgBz, err := json.Marshal(migMsg)
 	require.NoError(t, err)
-
-	res, err := keeper.Migrate(ctx, addr, fred, burnerContractID, migMsgBz)
+	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
+	res, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
 	dataBz, err := base64.StdEncoding.DecodeString(string(res.Data))
 	require.NoError(t, err)
 	assert.Equal(t, "burnt", string(dataBz))
+	assert.Equal(t, "", res.Log)
+	type dict map[string]interface{}
+	expEvents := []dict{
+		{
+			"Type": "wasm",
+			"Attr": []dict{
+				{"contract_address": contractAddr},
+				{"action": "burn"},
+				{"payout": myPayoutAddr},
+			},
+		},
+		{
+			"Type": "transfer",
+			"Attr": []dict{
+				{"recipient": myPayoutAddr},
+				{"sender": contractAddr},
+				{"amount": "100000denom"},
+			},
+		},
+		{
+			"Type": "message",
+			"Attr": []dict{
+				{"sender": contractAddr},
+			},
+		},
+		{
+			"Type": "message",
+			"Attr": []dict{
+				{"module": "bank"},
+			},
+		},
+	}
+	expJsonEvts := string(mustMarshal(t, expEvents))
+	assert.JSONEq(t, expJsonEvts, prettyEvents(t, ctx.EventManager().Events()))
 
 	// all persistent data cleared
-	m := keeper.QueryRaw(ctx, addr, []byte("config"))
+	m := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 	require.Len(t, m, 0)
 
 	// and all deposit tokens sent to myPayoutAddr
 	balance := accKeeper.GetAccount(ctx, myPayoutAddr).GetCoins()
 	assert.Equal(t, deposit, balance)
+}
+
+func prettyEvents(t *testing.T, events sdk.Events) string {
+	t.Helper()
+	type prettyEvent struct {
+		Type string
+		Attr []map[string]string
+	}
+
+	r := make([]prettyEvent, len(events))
+	for i, e := range events {
+		attr := make([]map[string]string, len(e.Attributes))
+		for j, a := range e.Attributes {
+			attr[j] = map[string]string{string(a.Key): string(a.Value)}
+		}
+		r[i] = prettyEvent{Type: e.Type, Attr: attr}
+	}
+	return string(mustMarshal(t, r))
+}
+
+func mustMarshal(t *testing.T, r interface{}) []byte {
+	t.Helper()
+	bz, err := json.Marshal(r)
+	require.NoError(t, err)
+	return bz
 }
 
 func TestUpdateContractAdmin(t *testing.T) {
