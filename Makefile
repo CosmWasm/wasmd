@@ -90,9 +90,28 @@ install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
 
+go-mod-cache: go.sum
+	@echo "--> Download go modules to local cache"
+	@go mod download
 
-########################################
-### Documentation
+go.sum: go.mod
+	@echo "--> Ensure dependencies have not been modified"
+	@go mod verify
+
+draw-deps:
+	@# requires brew install graphviz or apt-get install graphviz
+	go get github.com/RobotsAndPencils/goviz
+	@goviz -i ./cmd/gaiad -d 2 | dot -Tpng -o dependency-graph.png
+
+clean:
+	rm -rf snapcraft-local.yaml build/
+
+distclean: clean
+	rm -rf vendor/
+
+###############################################################################
+###                                 Devdoc                                  ###
+###############################################################################
 
 build-docs:
 	@cd docs && \
@@ -111,33 +130,15 @@ sync-docs:
 	aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION_ID} --profile terraform --path "/*" ;
 .PHONY: sync-docs
 
-########################################
-### Tools & dependencies
 
-go-mod-cache: go.sum
-	@echo "--> Download go modules to local cache"
-	@go mod download
+###############################################################################
+###                           Tests & Simulation                            ###
+###############################################################################
 
-go.sum: go.mod
-	@echo "--> Ensure dependencies have not been modified"
-	@go mod verify
-
-draw-deps:
-	@# requires brew install graphviz or apt-get install graphviz
-	go get github.com/RobotsAndPencils/goviz
-	@goviz -i ./cmd/wasmd -d 2 | dot -Tpng -o dependency-graph.png
-
-clean:
-	rm -rf snapcraft-local.yaml build/
-
-distclean: clean
-	rm -rf vendor/
-
-########################################
-### Testing
-
+include sims.mk
 
 test: test-unit test-build
+
 test-all: check test-race test-cover
 
 test-unit:
@@ -152,23 +153,46 @@ test-cover:
 test-build: build
 	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags=cli_test -v
 
+benchmark:
+	@go test -mod=readonly -bench=. ./...
 
-lint: golangci-lint
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+lint:
 	golangci-lint run
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
 
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/cosmos/cosmos-sdk
 
-benchmark:
-	@go test -mod=readonly -bench=. ./...
 
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
 
-########################################
-### Local validator nodes using docker and docker-compose
+proto-all: proto-gen proto-lint proto-check-breaking
+
+proto-gen:
+	@./scripts/protocgen.sh
+
+proto-lint:
+	@buf check lint --error-format=json
+
+proto-check-breaking:
+	@buf check breaking --against-input '.git#branch=master'
+
+TM_URL           = https://raw.githubusercontent.com/tendermint/tendermint/v0.33.1
+GOGO_PROTO_URL   = https://raw.githubusercontent.com/regen-network/protobuf/cosmosSDK_PROTO_TYPES     = third_party/proto/cosmos-sdk/types
+COSMOS_PROTO_URL = https://raw.githubusercontent.com/regen-network/cosmos-proto/master
+
+###############################################################################
+###                                Localnet                                 ###
+###############################################################################
 
 build-docker-wasmdnode:
 	$(MAKE) -C networks/local
@@ -205,10 +229,10 @@ contract-tests: setup-transactions
 	@echo "Running Gaia LCD for contract tests"
 	dredd && pkill wasmd
 
-# include simulations
-include sims.mk
-
-.PHONY: all build-linux install install-debug \
+.PHONY: all build-linux install format lint \
 	go-mod-cache draw-deps clean build \
 	setup-transactions setup-contract-tests-data start-gaia run-lcd-contract-tests contract-tests \
-	test test-all test-build test-cover test-unit test-race
+	test test-all test-build test-cover test-unit test-race \
+	benchmark \
+	build-docker-gaiadnode localnet-start localnet-stop \
+	docker-single-node

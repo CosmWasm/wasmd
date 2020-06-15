@@ -31,7 +31,7 @@ const MaxGas = 900_000_000
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
-	cdc           *codec.Codec
+	cdc           codec.Marshaler
 	accountKeeper auth.AccountKeeper
 	bankKeeper    bank.Keeper
 
@@ -44,7 +44,7 @@ type Keeper struct {
 
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
+func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
 	stakingKeeper staking.Keeper,
 	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, supportedFeatures string, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.CacheSize)
@@ -82,7 +82,7 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
 	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
 	// 0x01 | codeID (uint64) -> ContractInfo
-	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
+	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(&codeInfo))
 
 	return codeID, nil
 }
@@ -141,8 +141,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	}
 
 	// emit all events from this contract itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
+	_, events := types.CosmosResult(*res, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
@@ -152,7 +152,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	// persist instance
 	createdAt := types.NewCreatedAt(ctx)
 	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
+	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
 
 	return contractAddress, nil
 }
@@ -188,16 +188,15 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// emit all events from this contract itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
-	value.Events = nil
+	data, events := types.CosmosResult(*res, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
 		return sdk.Result{}, err
 	}
 
-	return value, nil
+	return sdk.Result{Data: data}, nil
 }
 
 // Migrate allows to upgrade a contract to a new code with data migration.
@@ -236,9 +235,8 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// emit all events from this contract migration itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
-	value.Events = nil
+	data, events := types.CosmosResult(*res, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	contractInfo.UpdateCodeID(ctx, newCodeID)
 	k.setContractInfo(ctx, contractAddress, contractInfo)
@@ -247,7 +245,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	return &value, nil
+	return &sdk.Result{Data: data}, nil
 }
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. New admin can be nil to disable further migrations/ updates.

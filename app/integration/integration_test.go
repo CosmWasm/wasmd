@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/stretchr/testify/require"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authExported "github.com/cosmos/cosmos-sdk/x/auth/exported"
@@ -64,26 +62,28 @@ type signer struct {
 }
 
 func genAccountsWithKey(t *testing.T, coins sdk.Coins, n int) ([]*auth.BaseAccount, []signer) {
-	accts := make([]*auth.BaseAccount, n)
-	keys := make([]signer, n)
-
-	for i := range accts {
-		priv, pub, addr := maskKeyPubAddr()
-		baseAcct := auth.NewBaseAccountWithAddress(addr)
-		err := baseAcct.SetCoins(coins)
-		require.NoError(t, err)
-		baseAcct.SetPubKey(pub)
-		baseAcct.SetAccountNumber(uint64(i + 1))
-		baseAcct.SetSequence(1)
-		accts[i] = &baseAcct
-		keys[i] = signer{
-			priv:    priv,
-			acctNum: baseAcct.GetAccountNumber(),
-			seq:     baseAcct.GetSequence(),
-		}
-	}
-
-	return accts, keys
+	//accts := make([]*auth.BaseAccount, n)
+	//keys := make([]signer, n)
+	//
+	//for i := range accts {
+	//	priv, pub, addr := maskKeyPubAddr()
+	//	baseAcct := auth.NewBaseAccountWithAddress(addr)
+	//	err := baseAcct.SetCoins(coins)
+	//	require.NoError(t, err)
+	//	baseAcct.SetPubKey(pub)
+	//	baseAcct.SetAccountNumber(uint64(i + 1))
+	//	baseAcct.SetSequence(1)
+	//	accts[i] = &baseAcct
+	//	keys[i] = signer{
+	//		priv:    priv,
+	//		acctNum: baseAcct.GetAccountNumber(),
+	//		seq:     baseAcct.GetSequence(),
+	//	}
+	//}
+	//
+	//return accts, keys
+	t.Fatal("not implemented")
+	return nil, nil
 }
 
 var maskKeyCounter uint64 = 0

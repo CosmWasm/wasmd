@@ -2,20 +2,20 @@
 
 [![CircleCI](https://circleci.com/gh/cosmwasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/cosmwasm/wasmd/tree/master)
 [![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
-[![Go Report Card](https://goreportcard.com/badge/github.com/cosmwasm/wasmd)](https://goreportcard.com/report/github.com/cosmwasm/wasmd)
-[![license](https://img.shields.io/github/license/cosmwasm/wasmd.svg)](https://github.com/cosmwasm/wasmd/blob/master/LICENSE)
-[![LoC](https://tokei.rs/b1/github/cosmwasm/wasmd)](https://github.com/cosmwasm/wasmd)
-<!-- [![GolangCI](https://golangci.com/badges/github.com/cosmwasm/wasmd.svg)](https://golangci.com/r/github.com/cosmwasm/wasmd) -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
+[![license](https://img.shields.io/github/license/cosmwasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
+[![LoC](https://tokei.rs/b1/github/cosmwasm/wasmd)](https://github.com/CosmWasm/wasmd)
+<!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
 
 This code was forked from the `cosmos/gaia` repository and the majority of the codebase is the same as `gaia`.
 
-**Note**: Requires [Go 1.13+](https://golang.org/dl/)
+**Note**: Requires [Go 1.14+](https://golang.org/dl/)
 
-**Compatibility**: Last merge from `cosmos/gaia` was `090c545347b03e59415a18107a0a279c703c8f40` (Jan 23, 2020)
+**Compatibility**: Last merge from `cosmos/gaia` was `20a071cf84b965d0892c5a216b32c44963a83173` (Apr 27, 2020)
 
-The `v0.7.2` release is based on `cosmos-sdk` `v0.38.3` and should be used in any public networks (as that fixed a security issue).
+`cosmos-sdk` was updated to `goz-phase-3` (`ba70f4d4d`)
 
 ## Supported Systems
 
@@ -30,7 +30,7 @@ There is some work done in `go-cosmwasm` to extend support, but it is rather tri
 With the `v0.6.0` tag, we are entering semver. That means anything with `v0.6.x` tags is compatible with each other, and everything with `v0.7.x` tags is compatible with each other. We will have a series of minor version updates prior to `v1.0.0`, where we offer strong backwards compatibility guarantees. In particular, work has begun in the `cosmwasm` library on `v0.8`, which will change many internal APIs, in order to allow adding other languages for writing smart contracts. We hope to stabilize much of this well before `v1`, but we are still in the process of learning from real-world use-cases
 
 ## Encoding
-
+The used cosmos-sdk version is in transition migrating from amino encoding to protobuf for state. So are we now.
 We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for your use case.
 
 ## Quick Start
@@ -39,7 +39,7 @@ We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the m
 make install
 make test
 ```
-if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/cosmwasm/wasmd/issues/31#issuecomment-577058321).
+if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
 To set up a single node testnet, [look at the deployment documentation](./docs/deploy-testnet.md).
 

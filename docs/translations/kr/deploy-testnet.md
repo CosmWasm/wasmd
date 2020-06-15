@@ -73,7 +73,7 @@ wasmd start
 
 ```bash
 # Work from the SDK repo
-cd $GOPATH/src/github.com/cosmwasm/wasmd
+cd $GOPATH/src/github.com/CosmWasm/wasmd
 
 # Build the linux binary in ./build
 make build-linux

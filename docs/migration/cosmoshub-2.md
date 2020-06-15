@@ -24,19 +24,19 @@ protocol changes, and application structural changes that favor developer ergono
 and application development.
 
 First and foremost, the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) and the
-[Gaia](https://github.com/cosmwasm/wasmd) application have been split into separate
+[Gaia](https://github.com/CosmWasm/wasmd) application have been split into separate
 repositories. This allows for both the Cosmos SDK and Gaia to evolve naturally
-and independently. Thus, any future [releases](https://github.com/cosmwasm/wasmd/releases)
+and independently. Thus, any future [releases](https://github.com/CosmWasm/wasmd/releases)
 of Gaia going forward, including this one, will be built and tagged from this
 repository not the Cosmos SDK.
 
 Since the Cosmos SDK and Gaia have now been split into separate repositories, their
 versioning will also naturally diverge. In an attempt to decrease community confusion and strive for
 semantic versioning, the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) will continue
-on its current versioning path (i.e. v0.36.x ) and the [Gaia](https://github.com/cosmwasm/wasmd)
+on its current versioning path (i.e. v0.36.x ) and the [Gaia](https://github.com/CosmWasm/wasmd)
 application will become v2.0.x.
 
-__[Gaia](https://github.com/cosmwasm/wasmd) application v2.0.3 is
+__[Gaia](https://github.com/CosmWasm/wasmd) application v2.0.3 is
 what full node operators will upgrade to and run in this next major upgrade__.
 
 ## Major Updates
@@ -123,12 +123,12 @@ __Note__: It is assumed you are currently operating a full-node running v0.34.6+
    ```
 
 4. At this point you now have a valid exported genesis state! All further steps now require
-v2.0.3 of [Gaia](https://github.com/cosmwasm/wasmd).
+v2.0.3 of [Gaia](https://github.com/CosmWasm/wasmd).
 
    **NOTE**: Go [1.13+](https://golang.org/dl/) is required!
 
    ```shell
-   $ git clone https://github.com/cosmwasm/wasmd.git; git checkout v2.0.3; make install
+   $ git clone https://github.com/CosmWasm/wasmd.git; git checkout v2.0.3; make install
    ```
 
 5. Verify you are currently running the correct version (v2.0.3) of the _Gaia_:
@@ -206,7 +206,7 @@ single parameter, `max_validators`, that we're upgrading based on [proposal 10](
 2. Anyone running signing infrastructure(wallets and exchanges) should be conscious that the `type:`
    field on `StdTx` will have changed from `"type":"auth/StdTx","value":...` to  `"type":"cosmos-sdk/StdTx","value":...`
 3. As mentioned in the notes and SDK CHANGELOG, many queries to cosmos cli are wrapped with `height` fields now.
-4. We highly recommend standing up a [testnet](https://github.com/cosmwasm/wasmd/blob/master/docs/deploy-testnet.md)
+4. We highly recommend standing up a [testnet](https://github.com/CosmWasm/wasmd/blob/master/docs/deploy-testnet.md)
    with the `gaia-2.0` release or joining the gaia-13006 testnet. More info for joining the testnet can be
    found in the [riot validator room](https://riot.im/app/#/room/#cosmos-validators:matrix.org).
 5. We expect that developers with iOS or Android based apps may have to notify their users of downtime

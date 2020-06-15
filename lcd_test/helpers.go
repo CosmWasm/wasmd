@@ -12,28 +12,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
-	"github.com/cosmos/cosmos-sdk/codec"
-	crkeys "github.com/cosmos/cosmos-sdk/crypto/keys"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/tests"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/supply"
-
 	tmcfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -44,13 +22,43 @@ import (
 	"github.com/tendermint/tendermint/p2p"
 	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmrpc "github.com/tendermint/tendermint/rpc/lib/server"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/client/lcd"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/cosmos/cosmos-sdk/tests"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
+	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/crisis"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	"github.com/CosmWasm/wasmd/app"
 )
+
+var (
+	appCodec, cdc = app.MakeCodecs()
+)
+
+func init() {
+	authclient.Codec = appCodec
+}
 
 // TODO: Make InitializeTestLCD safe to call in multiple tests at the same time
 
@@ -58,8 +66,9 @@ import (
 // their respective sockets where nValidators is the total number of validators
 // and initAddrs are the accounts to initialize with some stake tokens. It
 // returns a cleanup function, a set of validator public keys, and a port.
-func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, portExt ...string) (
-	cleanup func(), valConsPubKeys []crypto.PubKey, valOperAddrs []sdk.ValAddress, port string, err error) {
+func InitializeLCD(
+	nValidators int, initAddrs []sdk.AccAddress, minting bool, portExt ...string,
+) (cleanup func(), valConsPubKeys []crypto.PubKey, valOperAddrs []sdk.ValAddress, port string, err error) {
 
 	config, err := GetConfig()
 	if err != nil {
@@ -73,8 +82,7 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	logger = log.NewFilter(logger, log.AllowError())
 
 	db := dbm.NewMemDB()
-	gapp := app.NewWasmApp(logger, db, nil, true, 0, nil, baseapp.SetPruning(store.PruneNothing))
-	cdc = app.MakeCodec()
+	gapp := app.NewWasmApp(logger, db, nil, true, 0, map[int64]bool{}, "", baseapp.SetPruning(store.PruneNothing))
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
 	if err != nil {
@@ -158,13 +166,19 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 	var (
 		genTxs      []auth.StdTx
 		genAccounts []authexported.GenesisAccount
+		genBalances []bank.Balance
 	)
+
 	totalSupply := sdk.ZeroInt()
 
+	var pubKey crypto.PubKey
 	for i := 0; i < nValidators; i++ {
 		operPrivKey := secp256k1.GenPrivKey()
 		operAddr := operPrivKey.PubKey().Address()
-		pubKey := privVal.GetPubKey()
+		pubKey, err = privVal.GetPubKey()
+		if err != nil {
+			return
+		}
 
 		power := int64(100)
 		if i > 0 {
@@ -194,7 +208,7 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 			return
 		}
 
-		transaction := auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, []auth.StdSignature{{Signature: sig, PubKey: operPrivKey.PubKey()}}, "")
+		transaction := auth.NewStdTx([]sdk.Msg{msg}, auth.StdFee{}, []auth.StdSignature{{Signature: sig, PubKey: operPrivKey.PubKey().Bytes()}}, "")
 		genTxs = append(genTxs, transaction)
 		valConsPubKeys = append(valConsPubKeys, pubKey)
 		valOperAddrs = append(valOperAddrs, sdk.ValAddress(operAddr))
@@ -203,8 +217,9 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 		accTokens := sdk.TokensFromConsensusPower(150)
 		totalSupply = totalSupply.Add(accTokens)
 
-		account.Coins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, accTokens))
-		genAccounts = append(genAccounts, &account)
+		coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, accTokens))
+		genBalances = append(genBalances, bank.Balance{Address: account.GetAddress(), Coins: coins})
+		genAccounts = append(genAccounts, account)
 	}
 
 	genesisState := app.NewDefaultGenesisState()
@@ -222,42 +237,36 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 	for _, addr := range initAddrs {
 		accAuth := auth.NewBaseAccountWithAddress(addr)
 		accTokens := sdk.TokensFromConsensusPower(100)
-		accAuth.Coins = sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, accTokens)}
 		totalSupply = totalSupply.Add(accTokens)
 
-		genAccounts = append(genAccounts, &accAuth)
+		coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, accTokens))
+		genBalances = append(genBalances, bank.Balance{Address: accAuth.GetAddress(), Coins: coins})
+		genAccounts = append(genAccounts, accAuth)
 	}
 
 	// auth genesis state: params and genesis accounts
-	authDataBz := genesisState[auth.ModuleName]
 	var authGenState auth.GenesisState
-	cdc.MustUnmarshalJSON(authDataBz, &authGenState)
+	cdc.MustUnmarshalJSON(genesisState[auth.ModuleName], &authGenState)
 	authGenState.Accounts = genAccounts
 	genesisState[auth.ModuleName] = cdc.MustMarshalJSON(authGenState)
 
-	stakingDataBz := genesisState[staking.ModuleName]
+	var bankGenState bank.GenesisState
+	cdc.MustUnmarshalJSON(genesisState[bank.ModuleName], &bankGenState)
+	bankGenState.Balances = genBalances
+	genesisState[bank.ModuleName] = cdc.MustMarshalJSON(bankGenState)
+
 	var stakingData staking.GenesisState
-	cdc.MustUnmarshalJSON(stakingDataBz, &stakingData)
+	cdc.MustUnmarshalJSON(genesisState[staking.ModuleName], &stakingData)
 	genesisState[staking.ModuleName] = cdc.MustMarshalJSON(stakingData)
 
 	// distr data
-	distrDataBz := genesisState[distr.ModuleName]
 	var distrData distr.GenesisState
-	cdc.MustUnmarshalJSON(distrDataBz, &distrData)
+	cdc.MustUnmarshalJSON(genesisState[distr.ModuleName], &distrData)
 
-	commPoolAmt := sdk.NewInt(10)
+	// TODO: Fix this so that there are 10 tokens in the module account
+	commPoolAmt := sdk.NewInt(0)
 	distrData.FeePool.CommunityPool = sdk.DecCoins{sdk.NewDecCoin(sdk.DefaultBondDenom, commPoolAmt)}
-	distrDataBz = cdc.MustMarshalJSON(distrData)
-	genesisState[distr.ModuleName] = distrDataBz
-
-	// supply data
-	supplyDataBz := genesisState[supply.ModuleName]
-	var supplyData supply.GenesisState
-	cdc.MustUnmarshalJSON(supplyDataBz, &supplyData)
-
-	supplyData.Supply = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, totalSupply.Add(commPoolAmt)))
-	supplyDataBz = cdc.MustMarshalJSON(supplyData)
-	genesisState[supply.ModuleName] = supplyDataBz
+	genesisState[distr.ModuleName] = cdc.MustMarshalJSON(distrData)
 
 	// mint genesis (none set within genesisState)
 	mintData := mint.DefaultGenesisState()
@@ -268,18 +277,17 @@ func defaultGenesis(config *tmcfg.Config, nValidators int, initAddrs []sdk.AccAd
 	} else {
 		mintData.Params.InflationMax = inflationMin
 	}
+
 	mintData.Minter.Inflation = inflationMin
 	mintData.Params.InflationMin = inflationMin
-	mintDataBz := cdc.MustMarshalJSON(mintData)
-	genesisState[mint.ModuleName] = mintDataBz
+	genesisState[mint.ModuleName] = cdc.MustMarshalJSON(mintData)
 
 	// initialize crisis data
-	crisisDataBz := genesisState[crisis.ModuleName]
 	var crisisData crisis.GenesisState
-	cdc.MustUnmarshalJSON(crisisDataBz, &crisisData)
+	cdc.MustUnmarshalJSON(genesisState[crisis.ModuleName], &crisisData)
+
 	crisisData.ConstantFee = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
-	crisisDataBz = cdc.MustMarshalJSON(crisisData)
-	genesisState[crisis.ModuleName] = crisisDataBz
+	genesisState[crisis.ModuleName] = cdc.MustMarshalJSON(crisisData)
 
 	//// double check inflation is set according to the minting boolean flag
 	if minting {
@@ -367,21 +375,16 @@ func registerRoutes(rs *lcd.RestServer) {
 	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
 }
 
-var cdc = codec.New()
-
-func init() {
-	ctypes.RegisterAmino(cdc)
-}
-
 // CreateAddr adds an address to the key store and returns an address and seed.
 // It also requires that the key could be created.
-func CreateAddr(name string, kb crkeys.Keybase) (sdk.AccAddress, string, error) {
+func CreateAddr(name string, kb keyring.Keyring) (sdk.AccAddress, string, error) {
 	var (
 		err  error
-		info crkeys.Info
+		info keyring.Info
 		seed string
 	)
-	info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
+
+	info, seed, err = kb.NewMnemonic(name, keyring.English, keys.DefaultKeyPass, hd.Secp256k1)
 	if err != nil {
 		return nil, "", err
 	}
@@ -390,10 +393,10 @@ func CreateAddr(name string, kb crkeys.Keybase) (sdk.AccAddress, string, error) 
 
 // CreateAddrs adds multiple address to the key store and returns the addresses and associated seeds in lexographical order by address.
 // It also requires that the keys could be created.
-func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds, names []string, errs []error) {
+func CreateAddrs(kb keyring.Keyring, numAddrs int) (addrs []sdk.AccAddress, seeds, names []string, errs []error) {
 	var (
 		err  error
-		info crkeys.Info
+		info keyring.Info
 		seed string
 	)
 
@@ -401,7 +404,7 @@ func CreateAddrs(kb crkeys.Keybase, numAddrs int) (addrs []sdk.AccAddress, seeds
 
 	for i := 0; i < numAddrs; i++ {
 		name := fmt.Sprintf("test%d", i)
-		info, seed, err = kb.CreateMnemonic(name, crkeys.English, keys.DefaultKeyPass, crkeys.Secp256k1)
+		info, seed, err = kb.NewMnemonic(name, keyring.English, keys.DefaultKeyPass, hd.Secp256k1)
 		if err != nil {
 			errs = append(errs, err)
 		}

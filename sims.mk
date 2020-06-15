@@ -4,7 +4,7 @@
 ### Simulations
 
 BINDIR ?= $(GOPATH)/bin
-SIMAPP = github.com/cosmwasm/wasmd/app
+SIMAPP = github.com/CosmWasm/wasmd/app
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."

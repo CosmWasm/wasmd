@@ -11,7 +11,7 @@ RUN apt install -y curl git build-essential
 RUN apt install -y vim
 
 # Set working directory for the build
-WORKDIR /go/src/github.com/cosmwasm/wasmd
+WORKDIR /go/src/github.com/CosmWasm/wasmd
 
 # Add source files
 COPY . .

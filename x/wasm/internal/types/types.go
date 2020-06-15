@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -20,14 +18,6 @@ type Model struct {
 	Value []byte `json:"val"`
 }
 
-// CodeInfo is data for the uploaded contract WASM code
-type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
-	Source   string         `json:"source"`
-	Builder  string         `json:"builder"`
-}
-
 // NewCodeInfo fills a new Contract struct
 func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
 	return CodeInfo{
@@ -37,33 +27,10 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 		Builder:  builder,
 	}
 }
-
-// ContractInfo stores a WASM contract instance
-type ContractInfo struct {
-	CodeID  uint64          `json:"code_id"`
-	Creator sdk.AccAddress  `json:"creator"`
-	Admin   sdk.AccAddress  `json:"admin,omitempty"`
-	Label   string          `json:"label"`
-	InitMsg json.RawMessage `json:"init_msg,omitempty"`
-	// never show this in query results, just use for sorting
-	// (Note: when using json tag "-" amino refused to serialize it...)
-	Created        *AbsoluteTxPosition `json:"created,omitempty"`
-	LastUpdated    *AbsoluteTxPosition `json:"last_updated,omitempty"`
-	PreviousCodeID uint64              `json:"previous_code_id,omitempty"`
-}
-
 func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
 	c.PreviousCodeID = c.CodeID
 	c.CodeID = newCodeID
 	c.LastUpdated = NewCreatedAt(ctx)
-}
-
-// AbsoluteTxPosition can be used to sort contracts
-type AbsoluteTxPosition struct {
-	// BlockHeight is the block the contract was created at
-	BlockHeight int64
-	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
-	TxIndex uint64
 }
 
 // LessThan can be used to sort
@@ -145,8 +112,8 @@ const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
 // CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
-	var events []sdk.Event
+func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) ([]byte, sdk.Events) {
+	var events sdk.Events
 	if len(wasmResult.Log) > 0 {
 		// we always tag with the contract address issuing this event
 		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
@@ -157,12 +124,9 @@ func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.
 				attrs = append(attrs, attr)
 			}
 		}
-		events = []sdk.Event{sdk.NewEvent(CustomEventType, attrs...)}
+		events = sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 	}
-	return sdk.Result{
-		Data:   []byte(wasmResult.Data),
-		Events: events,
-	}
+	return []byte(wasmResult.Data), events
 }
 
 // WasmConfig is the extra config required for wasm

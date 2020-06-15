@@ -16,7 +16,8 @@ import (
 // This is due to secp256k1 signatures not being constant size.
 // nolint: vet
 func ExampleTxSendSize() {
-	cdc := app.MakeCodec()
+	_, cdc := app.MakeCodecs()
+
 	var gas uint64 = 1
 
 	priv1 := secp256k1.GenPrivKeySecp256k1([]byte{0})

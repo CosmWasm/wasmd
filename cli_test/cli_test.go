@@ -13,19 +13,33 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/tests/cli"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/testutil"
+	"github.com/cosmos/cosmos-sdk/x/bank"
+	bankcli "github.com/cosmos/cosmos-sdk/x/bank/client/testutil"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/tests"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 
 	"github.com/CosmWasm/wasmd/app"
 )
+
+var (
+	appCodec, cdc = app.MakeCodecs()
+)
+
+func init() {
+	authclient.Codec = appCodec
+}
 
 func TestGaiaCLIKeysAddMultisig(t *testing.T) {
 	t.Parallel()
@@ -34,9 +48,13 @@ func TestGaiaCLIKeysAddMultisig(t *testing.T) {
 	// key names order does not matter
 	f.KeysAdd("msig1", "--multisig-threshold=2",
 		fmt.Sprintf("--multisig=%s,%s", keyBar, keyBaz))
+	ke1Address1 := f.KeysShow("msig1").Address
+	f.KeysDelete("msig1")
+
 	f.KeysAdd("msig2", "--multisig-threshold=2",
 		fmt.Sprintf("--multisig=%s,%s", keyBaz, keyBar))
-	require.Equal(t, f.KeysShow("msig1").Address, f.KeysShow("msig2").Address)
+	require.Equal(t, ke1Address1, f.KeysShow("msig2").Address)
+	f.KeysDelete("msig2")
 
 	f.KeysAdd("msig3", "--multisig-threshold=2",
 		fmt.Sprintf("--multisig=%s,%s", keyBar, keyBaz),
@@ -170,8 +188,7 @@ func TestGaiaCLIFeesDeduction(t *testing.T) {
 	fooAddr := f.KeyAddress(keyFoo)
 	barAddr := f.KeyAddress(keyBar)
 
-	fooAcc := f.QueryAccount(fooAddr)
-	fooAmt := fooAcc.GetCoins().AmountOf(fooDenom)
+	fooAmt := f.QueryBalances(fooAddr).AmountOf(fooDenom)
 
 	// test simulation
 	success, _, _ := f.TxSend(
@@ -183,23 +200,21 @@ func TestGaiaCLIFeesDeduction(t *testing.T) {
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// ensure state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, fooAmt.Int64(), fooAcc.GetCoins().AmountOf(fooDenom).Int64())
+	require.Equal(t, fooAmt.Int64(), f.QueryBalances(fooAddr).AmountOf(fooDenom).Int64())
 
 	// insufficient funds (coins + fees) tx fails
 	largeCoins := sdk.TokensFromConsensusPower(10000000)
 	success, stdOut, _ := f.TxSend(
 		keyFoo, barAddr, sdk.NewCoin(fooDenom, largeCoins),
 		fmt.Sprintf("--fees=%s", sdk.NewInt64Coin(feeDenom, 2)), "-y")
-	require.Contains(t, stdOut, "insufficient account funds")
+	require.Contains(t, stdOut, "insufficient funds")
 	require.True(t, success)
 
 	// Wait for a block
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// ensure state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, fooAmt.Int64(), fooAcc.GetCoins().AmountOf(fooDenom).Int64())
+	require.Equal(t, fooAmt.Int64(), f.QueryBalances(fooAddr).AmountOf(fooDenom).Int64())
 
 	// test success (transfer = coins + fees)
 	success, _, _ = f.TxSend(
@@ -222,23 +237,27 @@ func TestGaiaCLISend(t *testing.T) {
 	fooAddr := f.KeyAddress(keyFoo)
 	barAddr := f.KeyAddress(keyBar)
 
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(denom))
+
+	sendTokens := sdk.TokensFromConsensusPower(10)
+
+	// It does not allow to send in offline mode
+	success, _, stdErr := f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "-y", "--offline")
+	require.Contains(t, stdErr, "no RPC client is defined in offline mode")
+	require.False(f.T, success)
+	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Send some tokens from one account to the other
-	sendTokens := sdk.TokensFromConsensusPower(10)
 	f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "-y")
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	barAcc := f.QueryAccount(barAddr)
-	require.Equal(t, sendTokens, barAcc.GetCoins().AmountOf(denom))
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens, f.QueryBalances(barAddr).AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Test --dry-run
-	success, _, _ := f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--dry-run")
+	success, _, _ = f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--dry-run")
 	require.True(t, success)
 
 	// Test --generate-only
@@ -247,34 +266,29 @@ func TestGaiaCLISend(t *testing.T) {
 	)
 	require.Empty(t, stderr)
 	require.True(t, success)
-	msg := unmarshalStdTx(f.T, stdout)
+	msg := f.unmarshalStdTx(f.T, stdout)
 	require.NotZero(t, msg.Fee.Gas)
 	require.Len(t, msg.Msgs, 1)
 	require.Len(t, msg.GetSignatures(), 0)
 
 	// Check state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// test autosequencing
 	f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "-y")
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	barAcc = f.QueryAccount(barAddr)
-	require.Equal(t, sendTokens.MulRaw(2), barAcc.GetCoins().AmountOf(denom))
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens.MulRaw(2)), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens.MulRaw(2), f.QueryBalances(barAddr).AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens.MulRaw(2)), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// test memo
 	f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--memo='testmemo'", "-y")
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	barAcc = f.QueryAccount(barAddr)
-	require.Equal(t, sendTokens.MulRaw(3), barAcc.GetCoins().AmountOf(denom))
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens.MulRaw(3)), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens.MulRaw(3), f.QueryBalances(barAddr).AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens.MulRaw(3)), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	f.Cleanup()
 }
@@ -290,9 +304,8 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	fooAddr := f.KeyAddress(keyFoo)
 	barAddr := f.KeyAddress(keyBar)
 
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Test failure with auto gas disabled and very little gas set by hand
 	sendTokens := sdk.TokensFromConsensusPower(10)
@@ -301,16 +314,14 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	require.True(t, success)
 
 	// Check state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Test failure with negative gas
 	success, _, _ = f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--gas=-100", "-y")
 	require.False(t, success)
 
 	// Check state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Test failure with 0 gas
 	success, stdOut, _ = f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--gas=0", "-y")
@@ -318,14 +329,12 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	require.True(t, success)
 
 	// Check state didn't change
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Enable auto gas
 	success, stdout, stderr := f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "--gas=auto", "-y")
 	require.NotEmpty(t, stderr)
 	require.True(t, success)
-	cdc := app.MakeCodec()
 	sendResp := sdk.TxResponse{}
 	err := cdc.UnmarshalJSON([]byte(stdout), &sendResp)
 	require.Nil(t, err)
@@ -333,8 +342,7 @@ func TestGaiaCLIGasAuto(t *testing.T) {
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Check state has changed accordingly
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(sendTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens.Sub(sendTokens), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	f.Cleanup()
 }
@@ -356,22 +364,21 @@ func TestGaiaCLICreateValidator(t *testing.T) {
 	f.TxSend(keyFoo, barAddr, sdk.NewCoin(denom, sendTokens), "-y")
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
-	barAcc := f.QueryAccount(barAddr)
-	require.Equal(t, sendTokens, barAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens, f.QueryBalances(barAddr).AmountOf(denom))
 
 	// Generate a create validator transaction and ensure correctness
 	success, stdout, stderr := f.TxStakingCreateValidator(barAddr.String(), consPubKey, sdk.NewInt64Coin(denom, 2), "--generate-only")
-
 	require.True(f.T, success)
 	require.Empty(f.T, stderr)
-	msg := unmarshalStdTx(f.T, stdout)
+
+	msg := f.unmarshalStdTx(f.T, stdout)
 	require.NotZero(t, msg.Fee.Gas)
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
 
 	// Test --dry-run
 	newValTokens := sdk.TokensFromConsensusPower(2)
-	success, _, _ = f.TxStakingCreateValidator(keyBar, consPubKey, sdk.NewCoin(denom, newValTokens), "--dry-run")
+	success, _, _ = f.TxStakingCreateValidator(barAddr.String(), consPubKey, sdk.NewCoin(denom, newValTokens), "--dry-run")
 	require.True(t, success)
 
 	// Create the validator
@@ -379,8 +386,7 @@ func TestGaiaCLICreateValidator(t *testing.T) {
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure funds were deducted properly
-	barAcc = f.QueryAccount(barAddr)
-	require.Equal(t, sendTokens.Sub(newValTokens), barAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens.Sub(newValTokens), f.QueryBalances(barAddr).AmountOf(denom))
 
 	// Ensure that validator state is as expected
 	validator := f.QueryStakingValidator(barVal)
@@ -415,7 +421,6 @@ func TestGaiaCLICreateValidator(t *testing.T) {
 func TestGaiaCLIQueryRewards(t *testing.T) {
 	t.Parallel()
 	f := InitFixtures(t)
-	cdc := app.MakeCodec()
 
 	genesisState := f.GenesisState()
 	inflationMin := sdk.MustNewDecFromStr("1.0")
@@ -476,9 +481,8 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 
 	fooAddr := f.KeyAddress(keyFoo)
 
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(sdk.DefaultBondDenom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(sdk.DefaultBondDenom))
 
 	proposalsQuery := f.QueryGovProposals()
 	require.Empty(t, proposalsQuery)
@@ -489,7 +493,7 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 		fooAddr.String(), "Text", "Test", "test", sdk.NewCoin(denom, proposalTokens), "--generate-only", "-y")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg := unmarshalStdTx(t, stdout)
+	msg := f.unmarshalStdTx(t, stdout)
 	require.NotZero(t, msg.Fee.Gas)
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
@@ -507,8 +511,7 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 	require.Len(t, searchResult.Txs, 1)
 
 	// Ensure deposit was deducted
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(proposalTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens.Sub(proposalTokens), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Ensure propsal is directly queryable
 	proposal1 := f.QueryGovProposal(1)
@@ -528,7 +531,7 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 	success, stdout, stderr = f.TxGovDeposit(1, fooAddr.String(), sdk.NewCoin(denom, depositTokens), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg = unmarshalStdTx(t, stdout)
+	msg = f.unmarshalStdTx(t, stdout)
 	require.NotZero(t, msg.Fee.Gas)
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
@@ -551,8 +554,7 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 	require.Len(t, searchResult.Txs, 1)
 
 	// Ensure account has expected amount of funds
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(proposalTokens.Add(depositTokens)), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens.Sub(proposalTokens.Add(depositTokens)), f.QueryBalances(fooAddr).AmountOf(denom))
 
 	// Fetch the proposal and ensure it is now in the voting period
 	proposal1 = f.QueryGovProposal(1)
@@ -563,7 +565,7 @@ func TestGaiaCLISubmitProposal(t *testing.T) {
 	success, stdout, stderr = f.TxGovVote(1, gov.OptionYes, fooAddr.String(), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg = unmarshalStdTx(t, stdout)
+	msg = f.unmarshalStdTx(t, stdout)
 	require.NotZero(t, msg.Fee.Gas)
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
@@ -615,9 +617,8 @@ func TestGaiaCLISubmitParamChangeProposal(t *testing.T) {
 	defer proc.Stop(false)
 
 	fooAddr := f.KeyAddress(keyFoo)
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(sdk.DefaultBondDenom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(sdk.DefaultBondDenom))
 
 	// write proposal to file
 	proposalTokens := sdk.TokensFromConsensusPower(5)
@@ -631,12 +632,7 @@ func TestGaiaCLISubmitParamChangeProposal(t *testing.T) {
       "value": 105
     }
   ],
-  "deposit": [
-    {
-      "denom": "stake",
-      "amount": "%s"
-    }
-  ]
+  "deposit": "%sstake"
 }
 `, proposalTokens.String())
 
@@ -651,8 +647,7 @@ func TestGaiaCLISubmitParamChangeProposal(t *testing.T) {
 	require.Len(t, txsPage.Txs, 1)
 
 	// ensure deposit was deducted
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(proposalTokens).String(), fooAcc.GetCoins().AmountOf(sdk.DefaultBondDenom).String())
+	require.Equal(t, startTokens.Sub(proposalTokens).String(), f.QueryBalances(fooAddr).AmountOf(sdk.DefaultBondDenom).String())
 
 	// ensure proposal is directly queryable
 	proposal1 := f.QueryGovProposal(1)
@@ -676,7 +671,6 @@ func TestGaiaCLISubmitCommunityPoolSpendProposal(t *testing.T) {
 	f := InitFixtures(t)
 
 	// create some inflation
-	cdc := app.MakeCodec()
 	genesisState := f.GenesisState()
 	inflationMin := sdk.MustNewDecFromStr("1.0")
 	var mintData mint.GenesisState
@@ -698,9 +692,8 @@ func TestGaiaCLISubmitCommunityPoolSpendProposal(t *testing.T) {
 	defer proc.Stop(false)
 
 	fooAddr := f.KeyAddress(keyFoo)
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(sdk.DefaultBondDenom))
+	require.Equal(t, startTokens, f.QueryBalances(fooAddr).AmountOf(sdk.DefaultBondDenom))
 
 	tests.WaitForNextNBlocksTM(3, f.Port)
 
@@ -710,20 +703,10 @@ func TestGaiaCLISubmitCommunityPoolSpendProposal(t *testing.T) {
   "title": "Community Pool Spend",
   "description": "Spend from community pool",
   "recipient": "%s",
-  "amount": [
-    {
-      "denom": "%s",
-      "amount": "1"
-    }
-  ],
-  "deposit": [
-    {
-      "denom": "%s",
-      "amount": "%s"
-    }
-  ]
+  "amount": "1%s",
+  "deposit": "%s%s"
 }
-`, fooAddr, sdk.DefaultBondDenom, sdk.DefaultBondDenom, proposalTokens.String())
+`, fooAddr, sdk.DefaultBondDenom, proposalTokens.String(), sdk.DefaultBondDenom)
 	proposalFile := WriteToNewTempFile(t, proposal)
 
 	// create the param change proposal
@@ -735,8 +718,7 @@ func TestGaiaCLISubmitCommunityPoolSpendProposal(t *testing.T) {
 	require.Len(t, txsPage.Txs, 1)
 
 	// ensure deposit was deducted
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, startTokens.Sub(proposalTokens).String(), fooAcc.GetCoins().AmountOf(sdk.DefaultBondDenom).String())
+	require.Equal(t, startTokens.Sub(proposalTokens).String(), f.QueryBalances(fooAddr).AmountOf(sdk.DefaultBondDenom).String())
 
 	// ensure proposal is directly queryable
 	proposal1 := f.QueryGovProposal(1)
@@ -756,6 +738,10 @@ func TestGaiaCLISubmitCommunityPoolSpendProposal(t *testing.T) {
 }
 
 func TestGaiaCLIQueryTxPagination(t *testing.T) {
+	// Skip until https://github.com/tendermint/tendermint/issues/4432 has been
+	// resolved and included in a release.
+	t.SkipNow()
+
 	t.Parallel()
 	f := InitFixtures(t)
 
@@ -793,7 +779,11 @@ func TestGaiaCLIQueryTxPagination(t *testing.T) {
 	// perPage = 50
 	txsPageFull := f.QueryTxs(1, 50, fmt.Sprintf("message.sender=%s", fooAddr))
 	require.Len(t, txsPageFull.Txs, 30)
-	require.Equal(t, txsPageFull.Txs, append(txsPage1.Txs, txsPage2.Txs...))
+
+	expected := txsPageFull.Txs
+	got := append(txsPage1.Txs, txsPage2.Txs...)
+
+	require.Equal(t, expected, got)
 
 	// perPage = 0
 	f.QueryTxsInvalid(errors.New("ERROR: page must greater than 0"), 0, 50, fmt.Sprintf("message.sender=%s", fooAddr))
@@ -805,185 +795,206 @@ func TestGaiaCLIQueryTxPagination(t *testing.T) {
 	f.Cleanup()
 }
 
-func TestGaiaCLIValidateSignatures(t *testing.T) {
+func TestCLIValidateSignatures(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
-	// start wasmd server
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	// start simd server
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooAddr := f.KeyAddress(keyFoo)
-	barAddr := f.KeyAddress(keyBar)
+	f.ValidateGenesis()
+
+	fooAddr := f.KeyAddress(cli.KeyFoo)
+	barAddr := f.KeyAddress(cli.KeyBar)
 
 	// generate sendTx with default gas
-	success, stdout, stderr := f.TxSend(fooAddr.String(), barAddr, sdk.NewInt64Coin(denom, 10), "--generate-only")
+	success, stdout, stderr := bankcli.TxSend(f, fooAddr.String(), barAddr, sdk.NewInt64Coin("stake", 10), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
 
 	// write  unsigned tx to file
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// validate we can successfully sign
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name())
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name())
 	require.True(t, success)
-	stdTx := unmarshalStdTx(t, stdout)
+
+	stdTx := cli.UnmarshalStdTx(t, f.Cdc, stdout)
+
 	require.Equal(t, len(stdTx.Msgs), 1)
 	require.Equal(t, 1, len(stdTx.GetSignatures()))
 	require.Equal(t, fooAddr.String(), stdTx.GetSigners()[0].String())
 
 	// write signed tx to file
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// validate signatures
-	success, _, _ = f.TxSign(keyFoo, signedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// modify the transaction
 	stdTx.Memo = "MODIFIED-ORIGINAL-TX-BAD"
-	bz := marshalStdTx(t, stdTx)
-	modSignedTxFile := WriteToNewTempFile(t, string(bz))
-	defer os.Remove(modSignedTxFile.Name())
+	bz := cli.MarshalStdTx(t, f.Cdc, stdTx)
+	modSignedTxFile, cleanup := tests.WriteToNewTempFile(t, string(bz))
+	t.Cleanup(cleanup)
 
 	// validate signature validation failure due to different transaction sig bytes
-	success, _, _ = f.TxSign(keyFoo, modSignedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, modSignedTxFile.Name())
 	require.False(t, success)
 
+	// Cleanup testing directories
 	f.Cleanup()
 }
 
-func TestGaiaCLISendGenerateSignAndBroadcast(t *testing.T) {
+func TestCLISendGenerateSignAndBroadcast(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
-	// start wasmd server
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	// start simd server
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooAddr := f.KeyAddress(keyFoo)
-	barAddr := f.KeyAddress(keyBar)
+	fooAddr := f.KeyAddress(cli.KeyFoo)
+	barAddr := f.KeyAddress(cli.KeyBar)
 
 	// Test generate sendTx with default gas
 	sendTokens := sdk.TokensFromConsensusPower(10)
-	success, stdout, stderr := f.TxSend(fooAddr.String(), barAddr, sdk.NewCoin(denom, sendTokens), "--generate-only")
+	success, stdout, stderr := bankcli.TxSend(f, fooAddr.String(), barAddr, sdk.NewCoin(cli.Denom, sendTokens), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg := unmarshalStdTx(t, stdout)
+	msg := cli.UnmarshalStdTx(t, f.Cdc, stdout)
 	require.Equal(t, msg.Fee.Gas, uint64(flags.DefaultGasLimit))
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
 
 	// Test generate sendTx with --gas=$amount
-	success, stdout, stderr = f.TxSend(fooAddr.String(), barAddr, sdk.NewCoin(denom, sendTokens), "--gas=100", "--generate-only")
+	success, stdout, stderr = bankcli.TxSend(f, fooAddr.String(), barAddr, sdk.NewCoin(cli.Denom, sendTokens), "--gas=100", "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg = unmarshalStdTx(t, stdout)
+
+	msg = cli.UnmarshalStdTx(t, f.Cdc, stdout)
 	require.Equal(t, msg.Fee.Gas, uint64(100))
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 0, len(msg.GetSignatures()))
 
 	// Test generate sendTx, estimate gas
-	success, stdout, stderr = f.TxSend(fooAddr.String(), barAddr, sdk.NewCoin(denom, sendTokens), "--generate-only")
+	success, stdout, stderr = bankcli.TxSend(f, fooAddr.String(), barAddr, sdk.NewCoin(cli.Denom, sendTokens), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
-	msg = unmarshalStdTx(t, stdout)
+	msg = cli.UnmarshalStdTx(t, f.Cdc, stdout)
 	require.True(t, msg.Fee.Gas > 0)
 	require.Equal(t, len(msg.Msgs), 1)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
-	// Test sign --validate-signatures
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--validate-signatures")
+	// Test validate-signatures
+	success, stdout, _ = testutil.TxValidateSignatures(f, unsignedTxFile.Name())
 	require.False(t, success)
 	require.Equal(t, fmt.Sprintf("Signers:\n  0: %v\n\nSignatures:\n\n", fooAddr.String()), stdout)
 
 	// Test sign
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name())
+
+	// Does not work in offline mode
+	success, stdout, stderr = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--offline")
+	require.Contains(t, stderr, "required flag(s) \"account-number\", \"sequence\" not set")
+	require.False(t, success)
+
+	// But works offline if we set account number and sequence
+	success, _, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--offline", "--account-number", "1", "--sequence", "1")
 	require.True(t, success)
-	msg = unmarshalStdTx(t, stdout)
+
+	// Sign transaction
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name())
+	require.True(t, success)
+	msg = cli.UnmarshalStdTx(t, f.Cdc, stdout)
 	require.Equal(t, len(msg.Msgs), 1)
 	require.Equal(t, 1, len(msg.GetSignatures()))
 	require.Equal(t, fooAddr.String(), msg.GetSigners()[0].String())
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
-	// Test sign --validate-signatures
-	success, stdout, _ = f.TxSign(keyFoo, signedTxFile.Name(), "--validate-signatures")
+	// Test validate-signatures
+	success, stdout, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 	require.Equal(t, fmt.Sprintf("Signers:\n  0: %v\n\nSignatures:\n  0: %v\t\t\t[OK]\n\n", fooAddr.String(),
 		fooAddr.String()), stdout)
 
 	// Ensure foo has right amount of funds
-	fooAcc := f.QueryAccount(fooAddr)
 	startTokens := sdk.TokensFromConsensusPower(50)
-	require.Equal(t, startTokens, fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, startTokens, bankcli.QueryBalances(f, fooAddr).AmountOf(cli.Denom))
 
 	// Test broadcast
-	success, stdout, _ = f.TxBroadcast(signedTxFile.Name())
+
+	// Does not work in offline mode
+	success, _, stderr = testutil.TxBroadcast(f, signedTxFile.Name(), "--offline")
+	require.Contains(t, stderr, "cannot broadcast tx during offline mode")
+	require.False(t, success)
+	tests.WaitForNextNBlocksTM(1, f.Port)
+
+	success, stdout, _ = testutil.TxBroadcast(f, signedTxFile.Name())
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account state
-	barAcc := f.QueryAccount(barAddr)
-	fooAcc = f.QueryAccount(fooAddr)
-	require.Equal(t, sendTokens, barAcc.GetCoins().AmountOf(denom))
-	require.Equal(t, startTokens.Sub(sendTokens), fooAcc.GetCoins().AmountOf(denom))
+	require.Equal(t, sendTokens, bankcli.QueryBalances(f, barAddr).AmountOf(cli.Denom))
+	require.Equal(t, startTokens.Sub(sendTokens), bankcli.QueryBalances(f, fooAddr).AmountOf(cli.Denom))
 
 	f.Cleanup()
 }
 
-func TestGaiaCLIMultisignInsufficientCosigners(t *testing.T) {
+func TestCLIMultisignInsufficientCosigners(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
-	// start wasmd server with minimum fees
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	// start simd server with minimum fees
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooBarBazAddr := f.KeyAddress(keyFooBarBaz)
-	barAddr := f.KeyAddress(keyBar)
+	fooBarBazAddr := f.KeyAddress(cli.KeyFooBarBaz)
+	barAddr := f.KeyAddress(cli.KeyBar)
 
 	// Send some tokens from one account to the other
-	success, _, _ := f.TxSend(keyFoo, fooBarBazAddr, sdk.NewInt64Coin(denom, 10), "-y")
+	success, _, _ := bankcli.TxSend(f, cli.KeyFoo, fooBarBazAddr, sdk.NewInt64Coin(cli.Denom, 10), "-y")
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Test generate sendTx with multisig
-	success, stdout, _ := f.TxSend(fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(denom, 5), "--generate-only")
+	success, stdout, _ := bankcli.TxSend(f, fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(cli.Denom, 5), "--generate-only")
 	require.True(t, success)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with foo's key
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign, not enough signatures
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{fooSignatureFile.Name()})
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{fooSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.False(t, success)
 
 	// Broadcast the transaction
-	success, stdOut, _ := f.TxBroadcast(signedTxFile.Name())
+	success, stdOut, _ := testutil.TxBroadcast(f, signedTxFile.Name())
 	require.Contains(t, stdOut, "signature verification failed")
 	require.True(t, success)
 
@@ -998,8 +1009,6 @@ func TestGaiaCLIEncode(t *testing.T) {
 	// start wasmd server
 	proc := f.GDStart()
 	defer proc.Stop(false)
-
-	cdc := app.MakeCodec()
 
 	// Build a testing transaction and write it to disk
 	barAddr := f.KeyAddress(keyBar)
@@ -1025,135 +1034,141 @@ func TestGaiaCLIEncode(t *testing.T) {
 
 	// Check that the transaction decodes as epxceted
 	var decodedTx auth.StdTx
-	require.Nil(t, cdc.UnmarshalBinaryLengthPrefixed(decodedBytes, &decodedTx))
+	require.Nil(t, cdc.UnmarshalBinaryBare(decodedBytes, &decodedTx))
 	require.Equal(t, "deadbeef", decodedTx.Memo)
 }
 
-func TestGaiaCLIMultisignSortSignatures(t *testing.T) {
+func TestCLIMultisignSortSignatures(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
 	// start wasmd server with minimum fees
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooBarBazAddr := f.KeyAddress(keyFooBarBaz)
-	barAddr := f.KeyAddress(keyBar)
+	fooBarBazAddr := f.KeyAddress(cli.KeyFooBarBaz)
+	barAddr := f.KeyAddress(cli.KeyBar)
 
 	// Send some tokens from one account to the other
-	success, _, _ := f.TxSend(keyFoo, fooBarBazAddr, sdk.NewInt64Coin(denom, 10), "-y")
+	success, _, _ := bankcli.TxSend(f, cli.KeyFoo, fooBarBazAddr, sdk.NewInt64Coin(cli.Denom, 10), "-y")
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	fooBarBazAcc := f.QueryAccount(fooBarBazAddr)
-	require.Equal(t, int64(10), fooBarBazAcc.GetCoins().AmountOf(denom).Int64())
+	require.Equal(t, int64(10), bankcli.QueryBalances(f, fooBarBazAddr).AmountOf(cli.Denom).Int64())
 
 	// Test generate sendTx with multisig
-	success, stdout, _ := f.TxSend(fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(denom, 5), "--generate-only")
+	success, stdout, _ := bankcli.TxSend(f, fooBarBazAddr.String(), barAddr, sdk.NewInt64Coin(cli.Denom, 5), "--generate-only")
 	require.True(t, success)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with foo's key
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with baz's key
-	success, stdout, _ = f.TxSign(keyBaz, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
+	success, stdout, _ = testutil.TxSign(f, cli.KeyBaz, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String())
 	require.True(t, success)
 
 	// Write the output to disk
-	bazSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(bazSignatureFile.Name())
+	bazSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign, keys in different order
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
 		bazSignatureFile.Name(), fooSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Broadcast the transaction
-	success, _, _ = f.TxBroadcast(signedTxFile.Name())
+	success, _, _ = testutil.TxBroadcast(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Cleanup testing directories
 	f.Cleanup()
 }
 
-func TestGaiaCLIMultisign(t *testing.T) {
+func TestCLIMultisign(t *testing.T) {
 	t.Parallel()
-	f := InitFixtures(t)
+	f := cli.InitFixtures(t)
 
-	// start wasmd server with minimum fees
-	proc := f.GDStart()
-	defer proc.Stop(false)
+	// start simd server with minimum fees
+	proc := f.SDStart()
+	t.Cleanup(func() { proc.Stop(false) })
 
-	fooBarBazAddr := f.KeyAddress(keyFooBarBaz)
-	bazAddr := f.KeyAddress(keyBaz)
+	fooBarBazAddr := f.KeyAddress(cli.KeyFooBarBaz)
+	bazAddr := f.KeyAddress(cli.KeyBaz)
 
 	// Send some tokens from one account to the other
-	success, _, _ := f.TxSend(keyFoo, fooBarBazAddr, sdk.NewInt64Coin(denom, 10), "-y")
+	success, _, _ := bankcli.TxSend(f, cli.KeyFoo, fooBarBazAddr, sdk.NewInt64Coin(cli.Denom, 10), "-y")
 	require.True(t, success)
 	tests.WaitForNextNBlocksTM(1, f.Port)
 
 	// Ensure account balances match expected
-	fooBarBazAcc := f.QueryAccount(fooBarBazAddr)
-	require.Equal(t, int64(10), fooBarBazAcc.GetCoins().AmountOf(denom).Int64())
+	require.Equal(t, int64(10), bankcli.QueryBalances(f, fooBarBazAddr).AmountOf(cli.Denom).Int64())
 
 	// Test generate sendTx with multisig
-	success, stdout, stderr := f.TxSend(fooBarBazAddr.String(), bazAddr, sdk.NewInt64Coin(denom, 10), "--generate-only")
+	success, stdout, stderr := bankcli.TxSend(f, fooBarBazAddr.String(), bazAddr, sdk.NewInt64Coin(cli.Denom, 10), "--generate-only")
 	require.True(t, success)
 	require.Empty(t, stderr)
 
 	// Write the output to disk
-	unsignedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(unsignedTxFile.Name())
+	unsignedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with foo's key
-	success, stdout, _ = f.TxSign(keyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
+	success, stdout, _ = testutil.TxSign(f, cli.KeyFoo, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
 	require.True(t, success)
 
 	// Write the output to disk
-	fooSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(fooSignatureFile.Name())
+	fooSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Sign with bar's key
-	success, stdout, _ = f.TxSign(keyBar, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
+	success, stdout, _ = testutil.TxSign(f, cli.KeyBar, unsignedTxFile.Name(), "--multisig", fooBarBazAddr.String(), "-y")
 	require.True(t, success)
 
 	// Write the output to disk
-	barSignatureFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(barSignatureFile.Name())
+	barSignatureFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Multisign
-	success, stdout, _ = f.TxMultisign(unsignedTxFile.Name(), keyFooBarBaz, []string{
+
+	// Does not work in offline mode
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
+		fooSignatureFile.Name(), barSignatureFile.Name()}, "--offline")
+	require.Contains(t, "couldn't verify signature", stdout)
+	require.False(t, success)
+
+	// Success multisign
+	success, stdout, _ = testutil.TxMultisign(f, unsignedTxFile.Name(), cli.KeyFooBarBaz, []string{
 		fooSignatureFile.Name(), barSignatureFile.Name()})
 	require.True(t, success)
 
 	// Write the output to disk
-	signedTxFile := WriteToNewTempFile(t, stdout)
-	defer os.Remove(signedTxFile.Name())
+	signedTxFile, cleanup := tests.WriteToNewTempFile(t, stdout)
+	t.Cleanup(cleanup)
 
 	// Validate the multisignature
-	success, _, _ = f.TxSign(keyFooBarBaz, signedTxFile.Name(), "--validate-signatures", "-y")
+	success, _, _ = testutil.TxValidateSignatures(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Broadcast the transaction
-	success, _, _ = f.TxBroadcast(signedTxFile.Name())
+	success, _, _ = testutil.TxBroadcast(f, signedTxFile.Name())
 	require.True(t, success)
 
 	// Cleanup testing directories
@@ -1268,15 +1283,21 @@ func TestGaiadAddGenesisAccount(t *testing.T) {
 
 	f.AddGenesisAccount(f.KeyAddress(keyFoo), startCoins)
 	f.AddGenesisAccount(f.KeyAddress(keyBar), bazCoins)
+
 	genesisState := f.GenesisState()
 
-	cdc := app.MakeCodec()
-	accounts := auth.GetGenesisStateFromAppState(cdc, genesisState).Accounts
+	accounts := auth.GetGenesisStateFromAppState(appCodec, genesisState).Accounts
+	balances := bank.GetGenesisStateFromAppState(cdc, genesisState).Balances
+	balancesSet := make(map[string]sdk.Coins)
+
+	for _, b := range balances {
+		balancesSet[b.GetAddress().String()] = b.Coins
+	}
 
 	require.Equal(t, accounts[0].GetAddress(), f.KeyAddress(keyFoo))
 	require.Equal(t, accounts[1].GetAddress(), f.KeyAddress(keyBar))
-	require.True(t, accounts[0].GetCoins().IsEqual(startCoins))
-	require.True(t, accounts[1].GetCoins().IsEqual(bazCoins))
+	require.True(t, balancesSet[accounts[0].GetAddress().String()].IsEqual(startCoins))
+	require.True(t, balancesSet[accounts[1].GetAddress().String()].IsEqual(bazCoins))
 
 	// Cleanup testing directories
 	f.Cleanup()
@@ -1314,4 +1335,25 @@ func TestValidateGenesis(t *testing.T) {
 
 	// Cleanup testing directories
 	f.Cleanup()
+}
+
+func TestGaiaCLIStatus(t *testing.T) {
+	t.Parallel()
+	f := InitFixtures(t)
+
+	// start gaiad server with minimum fees
+	minGasPrice, _ := sdk.NewDecFromStr("0.000006")
+	fees := fmt.Sprintf(
+		"--minimum-gas-prices=%s,%s",
+		sdk.NewDecCoinFromDec(feeDenom, minGasPrice),
+		sdk.NewDecCoinFromDec(fee2Denom, minGasPrice),
+	)
+	proc := f.GDStart(fees)
+	t.Cleanup(func() { proc.Stop(false) })
+
+	tests.WaitForNextNBlocksTM(1, f.Port)
+	_, stdout, stderr := f.Status()
+	require.Empty(t, stderr)
+	status := coretypes.ResultStatus{}
+	require.NoError(t, f.cdc.UnmarshalJSON([]byte(stdout), &status))
 }

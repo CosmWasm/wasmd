@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	// "github.com/cosmos/cosmos-sdk/x/supply/exported"
 )
 
@@ -14,12 +15,16 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgUpdateAdministrator{}, "wasm/update-contract-admin", nil)
 }
 
-// ModuleCdc generic sealed codec to be used throughout module
-var ModuleCdc *codec.Codec
+var (
+	amino = codec.New()
+
+	// ModuleCdc references the global x/wasm module codec.
+
+	ModuleCdc = codec.NewHybridCodec(amino, types.NewInterfaceRegistry())
+)
 
 func init() {
-	cdc := codec.New()
-	RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	ModuleCdc = cdc.Seal()
+	RegisterCodec(amino)
+	codec.RegisterCrypto(amino)
+	amino.Seal()
 }
