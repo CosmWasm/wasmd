@@ -202,9 +202,9 @@ jobs:
           name: Push application Docker image to docker hub
           command: |
             if [ "${CIRCLE_BRANCH}" = "master" ]; then
-              docker tag "cosmwasm/wasmd-demo:${CIRCLE_SHA1}" cosmwasm/wasmd-demo:latest
+              docker tag "cosmwasm/wasmd:${CIRCLE_SHA1}" cosmwasm/wasmd:latest
               docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
-              docker push cosmwasm/wasmd-demo:latest
+              docker push cosmwasm/wasmd:latest
               docker logout
             fi
 
@@ -274,9 +274,14 @@ workflows:
   version: 2
   test-suite:
     jobs:
+      # this is now a slow process... let's only run on master
       - docker-image:
           requires:
             - setup-dependencies
+          filters:
+            branches:
+              only:
+                - master
       - docker-tagged:
           filters:
             tags:

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if test -n "$1"; then
     # need -R not -r to copy hidden files
