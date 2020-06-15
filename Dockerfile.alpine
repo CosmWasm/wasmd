@@ -1,12 +1,12 @@
 # docker build . -t wasm-alpine -f ./Dockerfile.alpine
 # docker run --rm -it wasm-alpine /bin/sh
-FROM cosmwasm/go-ext-builder:0.8.1-alpine-combi AS builder
+FROM cosmwasm/go-ext-builder:0.8.2-alpine AS builder
 
 RUN apk add git
 # without this, build with LEDGER_ENABLED=false
 RUN apk add libusb-dev linux-headers
 
-ENV GO_COSMWASM="v0.8.2-0.20200610212608-c0f4fd4f6b74"
+ENV GO_COSMWASM="v0.8.2-0.20200615215318-6f82d95b1cb6"
 
 # copy all code into /code
 WORKDIR /code
@@ -35,8 +35,21 @@ WORKDIR /code
 
 RUN BUILD_TAGS=muslc make build
 
-# TODO: try scratch
 FROM alpine:3.12
 
 COPY --from=builder /code/build/wasmd /usr/bin/wasmd
-CMD ["/usr/bin/wasmd help"]
+COPY --from=builder /code/build/wasmcli /usr/bin/wasmcli
+
+COPY docker/* /opt/
+RUN chmod +x /opt/*.sh
+
+WORKDIR /opt
+
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
+
+CMD ["/usr/bin/wasmd version"]

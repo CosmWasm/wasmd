@@ -197,12 +197,12 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build Docker artifact - demo
-          command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_SHA1}" .
+          command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" . -f Dockerfile.alpine
       - run:
           name: Push application Docker image to docker hub
           command: |
             if [ "${CIRCLE_BRANCH}" = "master" ]; then
-              docker tag "cosmwasm/wasmd-demo:${CIRCLE_SHA1}" cosmwasm/wasmd-demo:latest
+              docker tag "cosmwasm/wasmd:${CIRCLE_SHA1}" cosmwasm/wasmd:latest
               docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
               docker push cosmwasm/wasmd-demo:latest
               docker logout

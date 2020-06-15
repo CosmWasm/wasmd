@@ -90,7 +90,6 @@ install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
 
-
 ########################################
 ### Documentation
 
