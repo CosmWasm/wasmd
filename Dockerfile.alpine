@@ -20,20 +20,14 @@ ENV GO_COSMWASM="v0.8.2-0.20200615221537-0fc920db0349"
 # build go-cosmwasm *.a and install it
 WORKDIR /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}
 RUN cargo build --release --features backtraces --example muslc
-RUN cp /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
+RUN mv /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}/target/release/examples/libmuslc.a /lib/libgo_cosmwasm_muslc.a
+# I got errors from go mod verify (called from make build) if I didn't clean this up
+RUN rm -rf /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}/target
 
 # build the go wasm binary
 WORKDIR /code
 
-# other build flags... netgo,ledger,...
-# also all the other link flags
-#ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
-#		  -X github.com/cosmos/cosmos-sdk/version.ServerName=wasmd \
-#		  -X github.com/cosmos/cosmos-sdk/version.ClientName=wasmcli \
-#		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-#		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-#		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
-
+# force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN BUILD_TAGS=muslc make build
 
 FROM alpine:3.12
