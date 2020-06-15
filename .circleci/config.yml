@@ -197,7 +197,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build Docker artifact - demo
-          command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" . -f Dockerfile.alpine
+          command: docker build --pull -t "cosmwasm/wasmd-demo:${CIRCLE_SHA1}" .
       - run:
           name: Push application Docker image to docker hub
           command: |
@@ -274,9 +274,14 @@ workflows:
   version: 2
   test-suite:
     jobs:
+      # this is now a slow process... let's only run on master
       - docker-image:
           requires:
             - setup-dependencies
+          filters:
+            branches:
+              only:
+                - master
       - docker-tagged:
           filters:
             tags:
