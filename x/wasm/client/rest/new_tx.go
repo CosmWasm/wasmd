@@ -19,7 +19,7 @@ func registerNewTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 type migrateContractReq struct {
 	BaseReq    rest.BaseReq   `json:"base_req" yaml:"base_req"`
 	Admin      sdk.AccAddress `json:"admin,omitempty" yaml:"admin"`
-	codeID     uint64         `json:"code_id" yaml:"code_id"`
+	CodeID     uint64         `json:"code_id" yaml:"code_id"`
 	MigrateMsg []byte         `json:"migrate_msg,omitempty" yaml:"migrate_msg"`
 }
 type updateContractAdministrateReq struct {
@@ -84,7 +84,7 @@ func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		msg := types.MsgMigrateContract{
 			Sender:     cliCtx.GetFromAddress(),
 			Contract:   contractAddress,
-			Code:       req.codeID,
+			Code:       req.CodeID,
 			MigrateMsg: req.MigrateMsg,
 		}
 		if err = msg.ValidateBasic(); err != nil {
