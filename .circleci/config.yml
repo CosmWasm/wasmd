@@ -204,7 +204,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" = "master" ]; then
               docker tag "cosmwasm/wasmd:${CIRCLE_SHA1}" cosmwasm/wasmd:latest
               docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
-              docker push cosmwasm/wasmd-demo:latest
+              docker push cosmwasm/wasmd:latest
               docker logout
             fi
 
