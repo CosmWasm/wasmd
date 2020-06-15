@@ -87,11 +87,6 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	return codeID, nil
 }
 
-// returns true when simulation mode used by gas=auto queries
-func isSimulationMode(ctx sdk.Context) bool {
-	return ctx.GasMeter().Limit() == 0 && ctx.BlockHeight() != 0
-}
-
 // Instantiate creates an instance of a WASM contract
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, error) {
 	// create contract address
@@ -369,7 +364,10 @@ func (k Keeper) setContractState(ctx sdk.Context, contractAddress sdk.AccAddress
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	for _, model := range models {
-		prefixStore.Set([]byte(model.Key), []byte(model.Value))
+		if model.Value == nil {
+			model.Value = []byte{}
+		}
+		prefixStore.Set(model.Key, model.Value)
 	}
 }
 

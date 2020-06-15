@@ -385,6 +385,9 @@ func CreateAddr(name string, kb keyring.Keyring) (sdk.AccAddress, string, error)
 	)
 
 	info, seed, err = kb.NewMnemonic(name, keyring.English, keys.DefaultKeyPass, hd.Secp256k1)
+	if err != nil {
+		return nil, "", err
+	}
 	return sdk.AccAddress(info.GetPubKey().Address()), seed, err
 }
 
