@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.13
 
 require (
-    // Note: update ENV GO_COSMWASM in Dockerfile.alpine when updating this
+    // Note: update ENV GO_COSMWASM in Dockerfile when updating this
 	github.com/CosmWasm/go-cosmwasm v0.8.2-0.20200615221537-0fc920db0349
 	github.com/btcsuite/btcd v0.0.0-20190807005414-4063feeff79a // indirect
 	github.com/cosmos/cosmos-sdk v0.38.3

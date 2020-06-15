@@ -49,13 +49,14 @@ If you want to deploy a whole cluster, [look at the network scripts](./networks/
 
 We provide a docker image to help with test setups. There are two modes to use it
 
-Build:  `docker build  -t cosmwasm/wasmd:manual .`  or pull from dockerhub
+Build: `docker build -t cosmwasm/wasmd:latest .`  or pull from dockerhub
 
 ### Dev server
 
 Bring up a local node with a test account containing tokens
 
-This is just designed for local testing/CI - DO NOT USE IN PRODUCTION
+This is just designed for local testing/CI - do not use these scripts in production.
+Very likely you will assign tokens to accounts whose mnemonics are public on github.
 
 ```sh
 docker volume rm -f wasmd_data
