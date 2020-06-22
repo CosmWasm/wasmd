@@ -46,7 +46,8 @@ var (
 	NewContractInfo           = types.NewContractInfo
 	NewEnv                    = types.NewEnv
 	NewWasmCoins              = types.NewWasmCoins
-	CosmosResult              = types.CosmosResult
+	ParseEvents               = types.ParseEvents
+	ResultFromData            = types.ResultFromData
 	DefaultWasmConfig         = types.DefaultWasmConfig
 	InitGenesis               = keeper.InitGenesis
 	ExportGenesis             = keeper.ExportGenesis

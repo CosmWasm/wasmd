@@ -238,11 +238,6 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
-	if err != nil {
-		return nil, err
-	}
-
 	contractInfo.UpdateCodeID(ctx, newCodeID)
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 
