@@ -141,8 +141,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	}
 
 	// emit all events from this contract itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
@@ -158,17 +158,17 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 }
 
 // Execute executes the contract instance
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (sdk.Result, error) {
+func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
-		return sdk.Result{}, err
+		return nil, err
 	}
 
 	// add more funds
 	if !coins.IsZero() {
 		sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
 		if sdkerr != nil {
-			return sdk.Result{}, sdkerr
+			return nil, sdkerr
 		}
 	}
 
@@ -184,20 +184,19 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	res, gasUsed, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
-		return sdk.Result{}, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	// emit all events from this contract itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
-	value.Events = nil
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
-		return sdk.Result{}, err
+		return nil, err
 	}
 
-	return value, nil
+	return types.ResultFromData(res.Data), nil
 }
 
 // Migrate allows to upgrade a contract to a new code with data migration.
@@ -235,10 +234,14 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
 
-	// emit all events from this contract migration itself
-	value := types.CosmosResult(*res, contractAddress)
-	ctx.EventManager().EmitEvents(value.Events)
-	value.Events = nil
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddress)
+	ctx.EventManager().EmitEvents(events)
+
+	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
+	if err != nil {
+		return nil, err
+	}
 
 	contractInfo.UpdateCodeID(ctx, newCodeID)
 	k.setContractInfo(ctx, contractAddress, contractInfo)
@@ -247,7 +250,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	return &value, nil
+	return types.ResultFromData(res.Data), nil
 }
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. New admin can be nil to disable further migrations/ updates.

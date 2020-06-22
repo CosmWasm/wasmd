@@ -144,24 +144,26 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
 const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
-// CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) sdk.Result {
-	var events []sdk.Event
-	if len(wasmResult.Log) > 0 {
-		// we always tag with the contract address issuing this event
-		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
-		for _, l := range wasmResult.Log {
-			// and reserve the contract_address key for our use (not contract)
-			if l.Key != AttributeKeyContractAddr {
-				attr := sdk.NewAttribute(l.Key, l.Value)
-				attrs = append(attrs, attr)
-			}
-		}
-		events = []sdk.Event{sdk.NewEvent(CustomEventType, attrs...)}
+// ParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
+func ParseEvents(logs []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk.Events {
+	if len(logs) == 0 {
+		return nil
 	}
-	return sdk.Result{
-		Data:   []byte(wasmResult.Data),
-		Events: events,
+	// we always tag with the contract address issuing this event
+	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
+	for _, l := range logs {
+		// and reserve the contract_address key for our use (not contract)
+		if l.Key != AttributeKeyContractAddr {
+			attr := sdk.NewAttribute(l.Key, l.Value)
+			attrs = append(attrs, attr)
+		}
+	}
+	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
+}
+
+func ResultFromData(data string) *sdk.Result {
+	return &sdk.Result{
+		Data: []byte(data),
 	}
 }
 
