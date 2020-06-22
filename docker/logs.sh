@@ -1,3 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
 tail -f /root/log/wasmd.log

@@ -1,5 +1,5 @@
-#!/bin/bash
-set -o errexit -o nounset -o pipefail
+#!/bin/sh
+#set -o errexit -o nounset -o pipefail
 
 PASSWORD=${PASSWORD:-1234567890}
 STAKE=${STAKE_TOKEN:-ustake}

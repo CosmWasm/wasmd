@@ -227,5 +227,5 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *wasmTypes.MsgExecuteContract)
 	}
 
 	res.Events = ctx.EventManager().Events().ToABCIEvents()
-	return &res, nil
+	return res, nil
 }
