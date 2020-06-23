@@ -2,6 +2,8 @@ package wasm
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/gogo/protobuf/grpc"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
-	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -34,6 +35,10 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 	RegisterCodec(cdc)
 }
 
+func (AppModule) RegisterQueryService(server grpc.Server) {
+	// TODO: implement
+}
+
 // DefaultGenesis returns default genesis state as raw bytes for the wasm
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
@@ -51,18 +56,18 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, bz json.RawMessag
 }
 
 // RegisterRESTRoutes registers the REST routes for the wasm module.
-func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
-	rest.RegisterRoutes(ctx, rtr)
+func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router) {
+	rest.RegisterRoutes(cliCtx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
-func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetTxCmd(cdc)
+func (AppModuleBasic) GetTxCmd(cliCtx client.Context) *cobra.Command {
+	return cli.GetTxCmd(cliCtx)
 }
 
 // GetQueryCmd returns no root query command for the wasm module.
-func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetQueryCmd(cdc)
+func (AppModuleBasic) GetQueryCmd(cliCtx client.Context) *cobra.Command {
+	return cli.GetQueryCmd(cliCtx)
 }
 
 //____________________________________________________________________________
@@ -89,9 +94,9 @@ func (AppModule) Name() string {
 // RegisterInvariants registers the wasm module invariants.
 func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the wasm module.
-func (AppModule) Route() string {
-	return RouterKey
+// Route returns the message route and handler for the wasm module.
+func (am AppModule) Route() sdk.Route {
+	return sdk.NewRoute(RouterKey, am.NewHandler())
 }
 
 // NewHandler returns an sdk.Handler for the wasm module.

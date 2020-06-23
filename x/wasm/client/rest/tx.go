@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
@@ -14,7 +14,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
-func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/code", storeCodeHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/code/{codeId}", instantiateContractHandlerFn(cliCtx)).Methods("POST")
 	r.HandleFunc("/wasm/contract/{contractAddr}", executeContractHandlerFn(cliCtx)).Methods("POST")
@@ -41,7 +41,7 @@ type executeContractReq struct {
 	Amount  sdk.Coins    `json:"coins" yaml:"coins"`
 }
 
-func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func storeCodeHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req storeCodeReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -78,7 +78,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 		// build and sign the transaction, then broadcast to Tendermint
-		msg := types.MsgStoreCode{
+		msg := &types.MsgStoreCode{
 			Sender:       fromAddr,
 			WASMByteCode: wasm,
 		}
@@ -93,7 +93,7 @@ func storeCodeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req instantiateContractReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -113,7 +113,7 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgInstantiateContract{
+		msg := &types.MsgInstantiateContract{
 			Sender:    cliCtx.GetFromAddress(),
 			Code:      codeID,
 			InitFunds: req.Deposit,
@@ -131,7 +131,7 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func executeContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req executeContractReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -150,7 +150,7 @@ func executeContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgExecuteContract{
+		msg := &types.MsgExecuteContract{
 			Sender:    cliCtx.GetFromAddress(),
 			Contract:  contractAddress,
 			Msg:       req.ExecMsg,
