@@ -8,9 +8,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type MessageHandler struct {
@@ -99,7 +99,7 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, er
 	if err != nil {
 		return nil, err
 	}
-	sdkMsg := bank.MsgSend{
+	sdkMsg := &banktypes.MsgSend{
 		FromAddress: fromAddr,
 		ToAddress:   toAddr,
 		Amount:      toSend,
@@ -121,7 +121,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgDelegate{
+		sdkMsg := &stakingtypes.MsgDelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
@@ -141,7 +141,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgBeginRedelegate{
+		sdkMsg := &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    sender,
 			ValidatorSrcAddress: src,
 			ValidatorDstAddress: dst,
@@ -158,7 +158,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgUndelegate{
+		sdkMsg := &stakingtypes.MsgUndelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
@@ -178,11 +178,11 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
 		}
-		setMsg := distribution.MsgSetWithdrawAddress{
+		setMsg := &distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: sender,
 			WithdrawAddress:  rcpt,
 		}
-		withdrawMsg := distribution.MsgWithdrawDelegatorReward{
+		withdrawMsg := &distributiontypes.MsgWithdrawDelegatorReward{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 		}
@@ -202,7 +202,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			return nil, err
 		}
 
-		sdkMsg := types.MsgExecuteContract{
+		sdkMsg := &types.MsgExecuteContract{
 			Sender:    sender,
 			Contract:  contractAddr,
 			Msg:       msg.Execute.Msg,
@@ -216,7 +216,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			return nil, err
 		}
 
-		sdkMsg := types.MsgInstantiateContract{
+		sdkMsg := &types.MsgInstantiateContract{
 			Sender: sender,
 			Code:   msg.Instantiate.CodeID,
 			// TODO: add this to CosmWasm
