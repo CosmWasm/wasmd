@@ -3,27 +3,16 @@ package cli
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"strconv"
-
 	flag "github.com/spf13/pflag"
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
-func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
+func GetQueryCmd(cliCtx client.Context) *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the wasm module",
@@ -31,238 +20,239 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	queryCmd.AddCommand(flags.GetCommands(
-		GetCmdListCode(cdc),
-		GetCmdListContractByCode(cdc),
-		GetCmdQueryCode(cdc),
-		GetCmdGetContractInfo(cdc),
-		GetCmdGetContractState(cdc),
-	)...)
+	// TODO: this requires a large change below to define a grpc QueryClient type
+	//queryCmd.AddCommand(flags.GetCommands(
+	//	GetCmdListCode(cliCtx),
+	//	GetCmdListContractByCode(cliCtx),
+	//	GetCmdQueryCode(cliCtx),
+	//	GetCmdGetContractInfo(cliCtx),
+	//	GetCmdGetContractState(cliCtx),
+	//)...)
 	return queryCmd
 }
 
-// GetCmdListCode lists all wasm code uploaded
-func GetCmdListCode(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "list-code",
-		Short: "List all wasm bytecode on the chain",
-		Long:  "List all wasm bytecode on the chain",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListCode)
-			res, _, err := cliCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-}
-
-// GetCmdListContractByCode lists all wasm code uploaded for given code id
-func GetCmdListContractByCode(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "list-contract-by-code [code_id]",
-		Short: "List wasm all bytecode on the chain for given code id",
-		Long:  "List wasm all bytecode on the chain for given code id",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			codeID, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryListContractByCode, codeID)
-			res, _, err := cliCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-}
-
-// GetCmdQueryCode returns the bytecode for a given contract
-func GetCmdQueryCode(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "code [code_id] [output filename]",
-		Short: "Downloads wasm bytecode for given code id",
-		Long:  "Downloads wasm bytecode for given code id",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			codeID, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryGetCode, codeID)
-			res, _, err := cliCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			if len(res) == 0 {
-				return fmt.Errorf("contract not found")
-			}
-			var code keeper.GetCodeResponse
-			err = json.Unmarshal(res, &code)
-			if err != nil {
-				return err
-			}
-
-			if len(code.Data) == 0 {
-				return fmt.Errorf("contract not found")
-			}
-
-			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], code.Data, 0644)
-		},
-	}
-}
-
-// GetCmdGetContractInfo gets details about a given contract
-func GetCmdGetContractInfo(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "contract [bech32_address]",
-		Short: "Prints out metadata of a contract given its address",
-		Long:  "Prints out metadata of a contract given its address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			addr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContract, addr.String())
-			res, _, err := cliCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-}
-
-// GetCmdGetContractState dumps full internal state of a given contract
-func GetCmdGetContractState(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        "contract-state",
-		Short:                      "Querying commands for the wasm module",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-	cmd.AddCommand(flags.GetCommands(
-		GetCmdGetContractStateAll(cdc),
-		GetCmdGetContractStateRaw(cdc),
-		GetCmdGetContractStateSmart(cdc),
-	)...)
-	return cmd
-
-}
-
-func GetCmdGetContractStateAll(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
-		Use:   "all [bech32_address]",
-		Short: "Prints out all internal state of a contract given its address",
-		Long:  "Prints out all internal state of a contract given its address",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			addr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll)
-			res, _, err := cliCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-}
-
-func GetCmdGetContractStateRaw(cdc *codec.Codec) *cobra.Command {
-	decoder := newArgDecoder(hex.DecodeString)
-	cmd := &cobra.Command{
-		Use:   "raw [bech32_address] [key]",
-		Short: "Prints out internal state for key of a contract given its address",
-		Long:  "Prints out internal state for of a contract given its address",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(_ *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			addr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-			queryData, err := decoder.DecodeString(args[1])
-			if err != nil {
-				return err
-			}
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
-			res, _, err := cliCtx.QueryWithData(route, queryData)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
-	return cmd
-}
-
-func GetCmdGetContractStateSmart(cdc *codec.Codec) *cobra.Command {
-	decoder := newArgDecoder(asciiDecodeString)
-
-	cmd := &cobra.Command{
-		Use:   "smart [bech32_address] [query]",
-		Short: "Calls contract with given address  with query data and prints the returned result",
-		Long:  "Calls contract with given address  with query data and prints the returned result",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(_ *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			addr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-			key := args[1]
-			if key == "" {
-				return errors.New("key must not be empty")
-			}
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateSmart)
-
-			queryData, err := decoder.DecodeString(args[1])
-			if err != nil {
-				return fmt.Errorf("decode query: %s", err)
-			}
-			res, _, err := cliCtx.QueryWithData(route, queryData)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
-		},
-	}
-	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
-	return cmd
-}
+//// GetCmdListCode lists all wasm code uploaded
+//func GetCmdListCode(cliCtx client.Context) *cobra.Command {
+//	return &cobra.Command{
+//		Use:   "list-code",
+//		Short: "List all wasm bytecode on the chain",
+//		Long:  "List all wasm bytecode on the chain",
+//		Args:  cobra.ExactArgs(0),
+//		RunE: func(cmd *cobra.Command, args []string) error {
+//			queryClient := types.NewQueryClient(cliCtx.Init())
+//
+//			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListCode)
+//			res, _, err := cliCtx.Query(route)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//}
+//
+//// GetCmdListContractByCode lists all wasm code uploaded for given code id
+//func GetCmdListContractByCode(cliCtx client.Context) *cobra.Command {
+//	return &cobra.Command{
+//		Use:   "list-contract-by-code [code_id]",
+//		Short: "List wasm all bytecode on the chain for given code id",
+//		Long:  "List wasm all bytecode on the chain for given code id",
+//		Args:  cobra.ExactArgs(1),
+//		RunE: func(cmd *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			codeID, err := strconv.ParseUint(args[0], 10, 64)
+//			if err != nil {
+//				return err
+//			}
+//
+//			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryListContractByCode, codeID)
+//			res, _, err := cliCtx.Query(route)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//}
+//
+//// GetCmdQueryCode returns the bytecode for a given contract
+//func GetCmdQueryCode(cliCtx client.Context) *cobra.Command {
+//	return &cobra.Command{
+//		Use:   "code [code_id] [output filename]",
+//		Short: "Downloads wasm bytecode for given code id",
+//		Long:  "Downloads wasm bytecode for given code id",
+//		Args:  cobra.ExactArgs(2),
+//		RunE: func(cmd *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			codeID, err := strconv.ParseUint(args[0], 10, 64)
+//			if err != nil {
+//				return err
+//			}
+//
+//			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryGetCode, codeID)
+//			res, _, err := cliCtx.Query(route)
+//			if err != nil {
+//				return err
+//			}
+//			if len(res) == 0 {
+//				return fmt.Errorf("contract not found")
+//			}
+//			var code keeper.GetCodeResponse
+//			err = json.Unmarshal(res, &code)
+//			if err != nil {
+//				return err
+//			}
+//
+//			if len(code.Data) == 0 {
+//				return fmt.Errorf("contract not found")
+//			}
+//
+//			fmt.Printf("Downloading wasm code to %s\n", args[1])
+//			return ioutil.WriteFile(args[1], code.Data, 0644)
+//		},
+//	}
+//}
+//
+//// GetCmdGetContractInfo gets details about a given contract
+//func GetCmdGetContractInfo(cliCtx client.Context) *cobra.Command {
+//	return &cobra.Command{
+//		Use:   "contract [bech32_address]",
+//		Short: "Prints out metadata of a contract given its address",
+//		Long:  "Prints out metadata of a contract given its address",
+//		Args:  cobra.ExactArgs(1),
+//		RunE: func(cmd *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			addr, err := sdk.AccAddressFromBech32(args[0])
+//			if err != nil {
+//				return err
+//			}
+//
+//			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContract, addr.String())
+//			res, _, err := cliCtx.Query(route)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//}
+//
+//// GetCmdGetContractState dumps full internal state of a given contract
+//func GetCmdGetContractState(cliCtx client.Context) *cobra.Command {
+//	cmd := &cobra.Command{
+//		Use:                        "contract-state",
+//		Short:                      "Querying commands for the wasm module",
+//		DisableFlagParsing:         true,
+//		SuggestionsMinimumDistance: 2,
+//		RunE:                       client.ValidateCmd,
+//	}
+//	cmd.AddCommand(flags.GetCommands(
+//		GetCmdGetContractStateAll(cliCtx),
+//		GetCmdGetContractStateRaw(cliCtx),
+//		GetCmdGetContractStateSmart(cliCtx),
+//	)...)
+//	return cmd
+//
+//}
+//
+//func GetCmdGetContractStateAll(cliCtx client.Context) *cobra.Command {
+//	return &cobra.Command{
+//		Use:   "all [bech32_address]",
+//		Short: "Prints out all internal state of a contract given its address",
+//		Long:  "Prints out all internal state of a contract given its address",
+//		Args:  cobra.ExactArgs(1),
+//		RunE: func(cmd *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			addr, err := sdk.AccAddressFromBech32(args[0])
+//			if err != nil {
+//				return err
+//			}
+//
+//			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll)
+//			res, _, err := cliCtx.Query(route)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//}
+//
+//func GetCmdGetContractStateRaw(cliCtx client.Context) *cobra.Command {
+//	decoder := newArgDecoder(hex.DecodeString)
+//	cmd := &cobra.Command{
+//		Use:   "raw [bech32_address] [key]",
+//		Short: "Prints out internal state for key of a contract given its address",
+//		Long:  "Prints out internal state for of a contract given its address",
+//		Args:  cobra.ExactArgs(2),
+//		RunE: func(_ *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			addr, err := sdk.AccAddressFromBech32(args[0])
+//			if err != nil {
+//				return err
+//			}
+//			queryData, err := decoder.DecodeString(args[1])
+//			if err != nil {
+//				return err
+//			}
+//			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
+//			res, _, err := cliCtx.QueryWithData(route, queryData)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
+//	return cmd
+//}
+//
+//func GetCmdGetContractStateSmart(cliCtx client.Context) *cobra.Command {
+//	decoder := newArgDecoder(asciiDecodeString)
+//
+//	cmd := &cobra.Command{
+//		Use:   "smart [bech32_address] [query]",
+//		Short: "Calls contract with given address  with query data and prints the returned result",
+//		Long:  "Calls contract with given address  with query data and prints the returned result",
+//		Args:  cobra.ExactArgs(2),
+//		RunE: func(_ *cobra.Command, args []string) error {
+//			cliCtx := context.NewCLIContext().WithCodec(cliCtx)
+//
+//			addr, err := sdk.AccAddressFromBech32(args[0])
+//			if err != nil {
+//				return err
+//			}
+//			key := args[1]
+//			if key == "" {
+//				return errors.New("key must not be empty")
+//			}
+//			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateSmart)
+//
+//			queryData, err := decoder.DecodeString(args[1])
+//			if err != nil {
+//				return fmt.Errorf("decode query: %s", err)
+//			}
+//			res, _, err := cliCtx.QueryWithData(route, queryData)
+//			if err != nil {
+//				return err
+//			}
+//			fmt.Println(string(res))
+//			return nil
+//		},
+//	}
+//	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
+//	return cmd
+//}
 
 type argumentDecoder struct {
 	// dec is the default decoder

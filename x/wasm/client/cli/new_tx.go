@@ -3,29 +3,26 @@ package cli
 import (
 	"bufio"
 	"errors"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"strconv"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // MigrateContractCmd will migrate a contract to a new code version
-func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
+func MigrateContractCmd(cliCtx client.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
 		Short: "Migrate a wasm contract to a new code version",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			cliCtx = cliCtx.WithInput(inBuf)
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -40,28 +37,27 @@ func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			migrateMsg := args[2]
 
-			msg := types.MsgMigrateContract{
+			msg := &types.MsgMigrateContract{
 				Sender:     cliCtx.GetFromAddress(),
 				Contract:   contractAddr,
 				Code:       codeID,
 				MigrateMsg: []byte(migrateMsg),
 			}
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTx(cliCtx, msg)
 		},
 	}
 	return cmd
 }
 
 // UpdateContractAdminCmd sets or clears an admin for a contract
-func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
+func UpdateContractAdminCmd(cliCtx client.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
 		Short: "Set new admin for a contract. Can be empty to prevent further migrations",
 		Args:  cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			cliCtx = cliCtx.WithInput(inBuf)
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -81,12 +77,12 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				}
 			}
 
-			msg := types.MsgUpdateAdministrator{
+			msg := &types.MsgUpdateAdministrator{
 				Sender:   cliCtx.GetFromAddress(),
 				Contract: contractAddr,
 				NewAdmin: newAdmin,
 			}
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTx(cliCtx, msg)
 		},
 	}
 	cmd.Flags().Bool(flagNoAdmin, false, "Remove admin which disables future admin updates and migrations")
