@@ -16,6 +16,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/pkg/errors"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc-transfer/types"
 	"github.com/tendermint/tendermint/crypto"
 )
 
@@ -41,6 +43,9 @@ type Keeper struct {
 	cdc           codec.Marshaler
 	accountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
+	channelKeeper ibctypes.ChannelKeeper
+	portKeeper    ibctypes.PortKeeper
+	scopedKeeper  capabilitykeeper.ScopedKeeper
 
 	wasmer       wasm.Wasmer
 	queryPlugins QueryPlugins
