@@ -2,8 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -12,11 +11,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 // MaskInitMsg is {}
@@ -286,7 +289,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	assert.Equal(t, resp.Msg, "ALL CAPS NOW")
 }
 
-func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, bankKeeper bank.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)
@@ -342,7 +345,7 @@ func fromMaskRawMsg(cdc *codec.Codec) CustomEncoder {
 		}
 		if custom.Raw != nil {
 			var sdkMsg sdk.Msg
-			err := cdc.UnmarshalJSON(custom.Raw, &sdkMsg)
+			err := sdkMsg.Unmarshal(custom.Raw)
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}

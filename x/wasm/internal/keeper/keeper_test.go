@@ -14,8 +14,8 @@ import (
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -786,7 +786,7 @@ type InitMsg struct {
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
 
-func createFakeFundedAccount(t *testing.T, ctx sdk.Context, am auth.AccountKeeper, bank bank.Keeper, coins sdk.Coins) sdk.AccAddress {
+func createFakeFundedAccount(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)

@@ -6,11 +6,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
@@ -155,11 +157,11 @@ type initInfo struct {
 	contractAddr sdk.AccAddress
 
 	ctx           sdk.Context
-	accKeeper     auth.AccountKeeper
-	stakingKeeper staking.Keeper
-	distKeeper    distribution.Keeper
+	accKeeper     authkeeper.AccountKeeper
+	stakingKeeper stakingkeeper.Keeper
+	distKeeper    distrkeeper.Keeper
 	wasmKeeper    Keeper
-	bankKeeper    bank.Keeper
+	bankKeeper    bankkeeper.Keeper
 
 	cleanup func()
 }
@@ -174,7 +176,7 @@ func initializeStaking(t *testing.T) initInfo {
 	ctx = nextBlock(ctx, stakingKeeper)
 
 	// set some baseline - this seems to be needed
-	k.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distribution.ValidatorHistoricalRewards{
+	k.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distributiontypes.ValidatorHistoricalRewards{
 		CumulativeRewardRatio: sdk.DecCoins{},
 		ReferenceCount:        1,
 	})
@@ -412,18 +414,18 @@ func TestReinvest(t *testing.T) {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper staking.Keeper, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper, value sdk.Coin) sdk.ValAddress {
+func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, value sdk.Coin) sdk.ValAddress {
 	_, pub, accAddr := keyPubAddr()
 
 	addr := sdk.ValAddress(accAddr)
 
 	owner := createFakeFundedAccount(t, ctx, accountKeeper, bankKeeper, sdk.Coins{value})
 
-	msg := staking.MsgCreateValidator{
-		Description: types.Description{
+	msg := &stakingtypes.MsgCreateValidator{
+		Description: stakingtypes.Description{
 			Moniker: "Validator power",
 		},
-		Commission: types.CommissionRates{
+		Commission: stakingtypes.CommissionRates{
 			Rate:          sdk.MustNewDecFromStr("0.1"),
 			MaxRate:       sdk.MustNewDecFromStr("0.2"),
 			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
@@ -443,14 +445,14 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper staking.Keeper, a
 
 // this will commit the current set, update the block height and set historic info
 // basically, letting two blocks pass
-func nextBlock(ctx sdk.Context, stakingKeeper staking.Keeper) sdk.Context {
+func nextBlock(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper) sdk.Context {
 	staking.EndBlocker(ctx, stakingKeeper)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	staking.BeginBlocker(ctx, stakingKeeper)
 	return ctx
 }
 
-func setValidatorRewards(ctx sdk.Context, stakingKeeper staking.Keeper, distKeeper distribution.Keeper, valAddr sdk.ValAddress, reward string) {
+func setValidatorRewards(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, distKeeper distrkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
 	// allocate some rewards
 	vali := stakingKeeper.Validator(ctx, valAddr)
 	amount, err := sdk.NewDecFromStr(reward)
