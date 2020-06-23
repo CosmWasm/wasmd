@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/gogo/protobuf/proto"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -11,12 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -58,8 +56,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	_, amino := MakeTestCodec()
-	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(amino), nil)
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(), nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -143,8 +140,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	_, cdc := MakeTestCodec()
-	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(cdc), maskPlugins())
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(), maskPlugins())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -211,12 +207,12 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
 
 	// construct an opaque message
-	var sdkSendMsg sdk.Msg = &bank.MsgSend{
+	var sdkSendMsg sdk.Msg = &banktypes.MsgSend{
 		FromAddress: contractAddr,
 		ToAddress:   fred,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("denom", 23000)),
 	}
-	opaque, err := toMaskRawMsg(cdc, sdkSendMsg)
+	opaque, err := toMaskRawMsg(sdkSendMsg)
 	require.NoError(t, err)
 	reflectOpaque := MaskHandleMsg{
 		Reflect: &reflectPayload{
@@ -240,8 +236,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	_, cdc := MakeTestCodec()
-	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(cdc), maskPlugins())
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(), maskPlugins())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -313,30 +308,31 @@ type maskCustomMsg struct {
 
 // toMaskRawMsg encodes an sdk msg using amino json encoding.
 // Then wraps it as an opaque message
-func toMaskRawMsg(cdc *codec.Codec, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
-	rawBz, err := cdc.MarshalJSON(msg)
-	if err != nil {
-		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
-	}
-	customMsg, err := json.Marshal(maskCustomMsg{
-		Raw: rawBz,
-	})
-	res := wasmTypes.CosmosMsg{
-		Custom: customMsg,
-	}
-	return res, nil
+func toMaskRawMsg( /*cdc *codec.Codec, */ msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
+	return wasmTypes.CosmosMsg{}, sdkerrors.Wrapf(types.ErrInvalidMsg, "toMaskRawMsg not yet implemented")
+	//rawBz, err := cdc.MarshalJSON(msg)
+	//if err != nil {
+	//	return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	//}
+	//customMsg, err := json.Marshal(maskCustomMsg{
+	//	Raw: rawBz,
+	//})
+	//res := wasmTypes.CosmosMsg{
+	//	Custom: customMsg,
+	//}
+	//return res, nil
 }
 
 // maskEncoders needs to be registered in test setup to handle custom message callbacks
-func maskEncoders(cdc *codec.Codec) *MessageEncoders {
+func maskEncoders( /* TODO */ ) *MessageEncoders {
 	return &MessageEncoders{
-		Custom: fromMaskRawMsg(cdc),
+		Custom: fromMaskRawMsg( /* TODO */ ),
 	}
 }
 
 // fromMaskRawMsg decodes msg.Data to an sdk.Msg using amino json encoding.
 // this needs to be registered on the Encoders
-func fromMaskRawMsg(cdc *codec.Codec) CustomEncoder {
+func fromMaskRawMsg( /* TODO */ ) CustomEncoder {
 	return func(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 		var custom maskCustomMsg
 		err := json.Unmarshal(msg, &custom)
@@ -344,12 +340,13 @@ func fromMaskRawMsg(cdc *codec.Codec) CustomEncoder {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
-			var sdkMsg sdk.Msg
-			err := sdkMsg.Unmarshal(custom.Raw)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
-			}
-			return []sdk.Msg{sdkMsg}, nil
+			return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Raw Message not yet implemented")
+			//var sdkMsg sdk.Msg
+			//err := sdkMsg.Unmarshal(custom.Raw)
+			//if err != nil {
+			//	return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+			//}
+			//return []sdk.Msg{sdkMsg}, nil
 		}
 		if custom.Debug != "" {
 			return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
