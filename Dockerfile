@@ -10,11 +10,6 @@ RUN apk add libusb-dev linux-headers
 WORKDIR /code
 COPY . /code
 
-# try this one out
-RUN BUILD_TAGS=muslc make view
-
-RUN false
-
 # download all deps
 RUN go mod download
 # TODO: how to use this instead of hardcoding GO_COSMWASM
