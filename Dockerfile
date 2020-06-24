@@ -1,5 +1,5 @@
-# docker build . -t cosmwasm/wasm:latest
-# docker run --rm -it cosmwasm/wasm:latest /bin/sh
+# docker build . -t cosmwasm/wasmd:latest
+# docker run --rm -it cosmwasm/wasmd:latest /bin/sh
 FROM cosmwasm/go-ext-builder:0.8.2-alpine AS builder
 
 RUN apk add git
