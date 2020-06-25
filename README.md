@@ -126,7 +126,7 @@ Or even testing the app and bringing up critical issues. The following have help
 * Cory Levinson [clevinson](https://github.com/clevinson)
 * Sahith Narahari [sahith-narahari](https://github.com/sahith-narahari)
 * Jehan Tremback [jtremback](https://github.com/jtremback)
-* Shane [shanev](https://github.com/shanev)
+* Shane Vitarana [shanev](https://github.com/shanev)
 * Billy Rennekamp [okwme](https://github.com/okwme)
 * Westaking [westaking](https://github.com/westaking)
 * Marko [marbar3778](https://github.com/marbar3778)
