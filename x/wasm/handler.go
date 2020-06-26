@@ -39,10 +39,15 @@ func NewHandler(k Keeper) sdk.Handler {
 		case MsgMigrateContract:
 			return handleMigration(ctx, k, &msg)
 
-		case *MsgUpdateAdministrator:
+		case *MsgUpdateAdmin:
 			return handleUpdateContractAdmin(ctx, k, msg)
-		case MsgUpdateAdministrator:
+		case MsgUpdateAdmin:
 			return handleUpdateContractAdmin(ctx, k, &msg)
+
+		case *MsgClearAdmin:
+			return handleClearContractAdmin(ctx, k, msg)
+		case MsgClearAdmin:
+			return handleClearContractAdmin(ctx, k, &msg)
 
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
@@ -145,8 +150,24 @@ func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.R
 	return res, nil
 }
 
-func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdministrator) (*sdk.Result, error) {
+func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdmin) (*sdk.Result, error) {
 	if err := k.UpdateContractAdmin(ctx, msg.Contract, msg.Sender, msg.NewAdmin); err != nil {
+		return nil, err
+	}
+	events := ctx.EventManager().Events()
+	ourEvent := sdk.NewEvent(
+		sdk.EventTypeMessage,
+		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
+		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
+		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
+	)
+	return &sdk.Result{
+		Events: append(events, ourEvent),
+	}, nil
+}
+
+func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*sdk.Result, error) {
+	if err := k.ClearContractAdmin(ctx, msg.Contract, msg.Sender); err != nil {
 		return nil, err
 	}
 	events := ctx.EventManager().Events()
