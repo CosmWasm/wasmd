@@ -81,7 +81,7 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				}
 			}
 
-			msg := types.MsgUpdateAdministrator{
+			msg := types.MsgUpdateAdmin{
 				Sender:   cliCtx.GetFromAddress(),
 				Contract: contractAddr,
 				NewAdmin: newAdmin,

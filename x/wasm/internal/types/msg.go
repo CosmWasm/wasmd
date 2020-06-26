@@ -228,21 +228,21 @@ func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-type MsgUpdateAdministrator struct {
+type MsgUpdateAdmin struct {
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
 	NewAdmin sdk.AccAddress `json:"new_admin,omitempty" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
-func (msg MsgUpdateAdministrator) Route() string {
+func (msg MsgUpdateAdmin) Route() string {
 	return RouterKey
 }
 
-func (msg MsgUpdateAdministrator) Type() string {
+func (msg MsgUpdateAdmin) Type() string {
 	return "update-contract-admin"
 }
 
-func (msg MsgUpdateAdministrator) ValidateBasic() error {
+func (msg MsgUpdateAdmin) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return sdkerrors.Wrap(err, "sender")
 	}
@@ -260,10 +260,10 @@ func (msg MsgUpdateAdministrator) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgUpdateAdministrator) GetSignBytes() []byte {
+func (msg MsgUpdateAdmin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgUpdateAdministrator) GetSigners() []sdk.AccAddress {
+func (msg MsgUpdateAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

@@ -220,24 +220,24 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
 
 	specs := map[string]struct {
-		src    MsgUpdateAdministrator
+		src    MsgUpdateAdmin
 		expErr bool
 	}{
 		"all good": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: anotherGoodAddress,
 			},
 		},
 		"new admin optional": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				Contract: anotherGoodAddress,
 			},
 		},
 		"bad sender": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   badAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: anotherGoodAddress,
@@ -245,7 +245,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"bad new admin": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: badAddress,
 				Contract: anotherGoodAddress,
@@ -253,7 +253,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"bad contract addr": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: badAddress,
@@ -261,7 +261,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"new admin same as old admin": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: goodAddress,
 				Contract: anotherGoodAddress,

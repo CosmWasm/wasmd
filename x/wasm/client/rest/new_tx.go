@@ -47,7 +47,7 @@ func setContractAdminHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgUpdateAdministrator{
+		msg := types.MsgUpdateAdmin{
 			Sender:   cliCtx.GetFromAddress(),
 			NewAdmin: req.Admin,
 			Contract: contractAddress,
