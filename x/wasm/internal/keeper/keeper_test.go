@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"io/ioutil"
@@ -402,8 +401,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
 	assert.Error(t, err)
 	// make sure gas ran out
-	// TODO: wasmer doesn't return gas used on error. we should consume it (for error on metering failure)
-	// require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
+	require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
@@ -629,9 +627,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	res, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	dataBz, err := base64.StdEncoding.DecodeString(string(res.Data))
-	require.NoError(t, err)
-	assert.Equal(t, "burnt 1 keys", string(dataBz))
+	assert.Equal(t, "burnt 1 keys", string(res.Data))
 	assert.Equal(t, "", res.Log)
 	type dict map[string]interface{}
 	expEvents := []dict{

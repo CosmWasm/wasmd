@@ -47,7 +47,6 @@ var (
 	NewEnv                    = types.NewEnv
 	NewWasmCoins              = types.NewWasmCoins
 	ParseEvents               = types.ParseEvents
-	ResultFromData            = types.ResultFromData
 	DefaultWasmConfig         = types.DefaultWasmConfig
 	InitGenesis               = keeper.InitGenesis
 	ExportGenesis             = keeper.ExportGenesis

@@ -209,7 +209,9 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, err
 	}
 
-	return types.ResultFromData(res.Data), nil
+	return &sdk.Result{
+		Data: res.Data,
+	}, nil
 }
 
 // Migrate allows to upgrade a contract to a new code with data migration.
@@ -260,7 +262,9 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	return types.ResultFromData(res.Data), nil
+	return &sdk.Result{
+		Data: res.Data,
+	}, nil
 }
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
