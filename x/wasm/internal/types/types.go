@@ -161,12 +161,6 @@ func ParseEvents(logs []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk
 	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 }
 
-func ResultFromData(data string) *sdk.Result {
-	return &sdk.Result{
-		Data: []byte(data),
-	}
-}
-
 // WasmConfig is the extra config required for wasm
 type WasmConfig struct {
 	SmartQueryGasLimit uint64 `mapstructure:"query_gas_limit"`
