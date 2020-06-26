@@ -228,42 +228,71 @@ func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-type MsgUpdateAdministrator struct {
+type MsgUpdateAdmin struct {
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
-	NewAdmin sdk.AccAddress `json:"new_admin,omitempty" yaml:"new_admin"`
+	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
-func (msg MsgUpdateAdministrator) Route() string {
+func (msg MsgUpdateAdmin) Route() string {
 	return RouterKey
 }
 
-func (msg MsgUpdateAdministrator) Type() string {
+func (msg MsgUpdateAdmin) Type() string {
 	return "update-contract-admin"
 }
 
-func (msg MsgUpdateAdministrator) ValidateBasic() error {
+func (msg MsgUpdateAdmin) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return sdkerrors.Wrap(err, "sender")
 	}
 	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if len(msg.NewAdmin) != 0 {
-		if err := sdk.VerifyAddressFormat(msg.NewAdmin); err != nil {
-			return sdkerrors.Wrap(err, "new admin")
-		}
-		if msg.Sender.Equals(msg.NewAdmin) {
-			return sdkerrors.Wrap(ErrInvalidMsg, "new admin is the same as the old")
-		}
+	if err := sdk.VerifyAddressFormat(msg.NewAdmin); err != nil {
+		return sdkerrors.Wrap(err, "new admin")
+	}
+	if msg.Sender.Equals(msg.NewAdmin) {
+		return sdkerrors.Wrap(ErrInvalidMsg, "new admin is the same as the old")
 	}
 	return nil
 }
 
-func (msg MsgUpdateAdministrator) GetSignBytes() []byte {
+func (msg MsgUpdateAdmin) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgUpdateAdministrator) GetSigners() []sdk.AccAddress {
+func (msg MsgUpdateAdmin) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.Sender}
+}
+
+type MsgClearAdmin struct {
+	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
+	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+}
+
+func (msg MsgClearAdmin) Route() string {
+	return RouterKey
+}
+
+func (msg MsgClearAdmin) Type() string {
+	return "clear-contract-admin"
+}
+
+func (msg MsgClearAdmin) ValidateBasic() error {
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	return nil
+}
+
+func (msg MsgClearAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }

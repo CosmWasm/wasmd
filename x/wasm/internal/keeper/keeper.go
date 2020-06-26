@@ -263,7 +263,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return types.ResultFromData(res.Data), nil
 }
 
-// UpdateContractAdmin sets the admin value on the ContractInfo. New admin can be nil to disable further migrations/ updates.
+// UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
 func (k Keeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -276,6 +276,23 @@ func (k Keeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddr
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
 	contractInfo.Admin = newAdmin
+	k.setContractInfo(ctx, contractAddress, contractInfo)
+	return nil
+}
+
+// ClearContractAdmin sets the admin value on the ContractInfo to nil, to disable further migrations/ updates.
+func (k Keeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
+	contractInfo := k.GetContractInfo(ctx, contractAddress)
+	if contractInfo == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
+	}
+	if contractInfo.Admin == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported by this contract")
+	}
+	if !contractInfo.Admin.Equals(caller) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+	}
+	contractInfo.Admin = nil
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 	return nil
 }

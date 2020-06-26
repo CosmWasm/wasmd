@@ -220,24 +220,25 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
 
 	specs := map[string]struct {
-		src    MsgUpdateAdministrator
+		src    MsgUpdateAdmin
 		expErr bool
 	}{
 		"all good": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: anotherGoodAddress,
 			},
 		},
-		"new admin optional": {
-			src: MsgUpdateAdministrator{
+		"new admin required": {
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				Contract: anotherGoodAddress,
 			},
+			expErr: true,
 		},
 		"bad sender": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   badAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: anotherGoodAddress,
@@ -245,7 +246,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"bad new admin": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: badAddress,
 				Contract: anotherGoodAddress,
@@ -253,7 +254,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"bad contract addr": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: otherGoodAddress,
 				Contract: badAddress,
@@ -261,10 +262,60 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 			expErr: true,
 		},
 		"new admin same as old admin": {
-			src: MsgUpdateAdministrator{
+			src: MsgUpdateAdmin{
 				Sender:   goodAddress,
 				NewAdmin: goodAddress,
 				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgClearAdministrator(t *testing.T) {
+	badAddress, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20))
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+
+	specs := map[string]struct {
+		src    MsgClearAdmin
+		expErr bool
+	}{
+		"all good": {
+			src: MsgClearAdmin{
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+			},
+		},
+		"bad sender": {
+			src: MsgClearAdmin{
+				Sender:   badAddress,
+				Contract: anotherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad contract addr": {
+			src: MsgClearAdmin{
+				Sender:   goodAddress,
+				Contract: badAddress,
+			},
+			expErr: true,
+		},
+		"contract missing": {
+			src: MsgClearAdmin{
+				Sender: goodAddress,
 			},
 			expErr: true,
 		},

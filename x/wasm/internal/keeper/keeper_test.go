@@ -738,11 +738,6 @@ func TestUpdateContractAdmin(t *testing.T) {
 			newAdmin:  anyAddr,
 			caller:    fred,
 		},
-		"all good with new admin empty": {
-			instAdmin: fred,
-			newAdmin:  nil,
-			caller:    fred,
-		},
 		"prevent update when admin was not set on instantiate": {
 			caller:   creator,
 			newAdmin: fred,
@@ -751,6 +746,77 @@ func TestUpdateContractAdmin(t *testing.T) {
 		"prevent updates from non admin address": {
 			instAdmin: creator,
 			newAdmin:  fred,
+			caller:    fred,
+			expErr:    sdkerrors.ErrUnauthorized,
+		},
+		"fail with non existing contract addr": {
+			instAdmin:            creator,
+			newAdmin:             anyAddr,
+			caller:               creator,
+			overrideContractAddr: anyAddr,
+			expErr:               sdkerrors.ErrInvalidRequest,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			require.NotNil(t, spec.newAdmin)
+			addr, err := keeper.Instantiate(ctx, originalContractID, creator, spec.instAdmin, initMsgBz, "demo contract", nil)
+			require.NoError(t, err)
+			if spec.overrideContractAddr != nil {
+				addr = spec.overrideContractAddr
+			}
+			err = keeper.UpdateContractAdmin(ctx, addr, spec.caller, spec.newAdmin)
+			require.True(t, spec.expErr.Is(err), "expected %v but got %+v", spec.expErr, err)
+			if spec.expErr != nil {
+				return
+			}
+			cInfo := keeper.GetContractInfo(ctx, addr)
+			assert.Equal(t, spec.newAdmin, cInfo.Admin)
+		})
+	}
+}
+
+func TestClearContractAdmin(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(ctx, accKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	require.NoError(t, err)
+
+	_, _, anyAddr := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: anyAddr,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+	specs := map[string]struct {
+		instAdmin            sdk.AccAddress
+		overrideContractAddr sdk.AccAddress
+		caller               sdk.AccAddress
+		expErr               *sdkerrors.Error
+	}{
+		"all good when called by proper admin": {
+			instAdmin: fred,
+			caller:    fred,
+		},
+		"prevent update when admin was not set on instantiate": {
+			caller: creator,
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"prevent updates from non admin address": {
+			instAdmin: creator,
 			caller:    fred,
 			expErr:    sdkerrors.ErrUnauthorized,
 		},
@@ -768,13 +834,13 @@ func TestUpdateContractAdmin(t *testing.T) {
 			if spec.overrideContractAddr != nil {
 				addr = spec.overrideContractAddr
 			}
-			err = keeper.UpdateContractAdmin(ctx, addr, spec.caller, spec.newAdmin)
+			err = keeper.ClearContractAdmin(ctx, addr, spec.caller)
 			require.True(t, spec.expErr.Is(err), "expected %v but got %+v", spec.expErr, err)
 			if spec.expErr != nil {
 				return
 			}
 			cInfo := keeper.GetContractInfo(ctx, addr)
-			assert.Equal(t, spec.newAdmin, cInfo.Admin)
+			assert.Empty(t, cInfo.Admin)
 		})
 	}
 }

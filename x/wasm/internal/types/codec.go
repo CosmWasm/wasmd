@@ -11,7 +11,8 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/instantiate", nil)
 	cdc.RegisterConcrete(&MsgExecuteContract{}, "wasm/execute", nil)
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/migrate", nil)
-	cdc.RegisterConcrete(&MsgUpdateAdministrator{}, "wasm/update-contract-admin", nil)
+	cdc.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/update-contract-admin", nil)
+	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/clear-contract-admin", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module
