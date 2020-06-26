@@ -230,7 +230,7 @@ func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 
 type MsgUpdateAdmin struct {
 	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
-	NewAdmin sdk.AccAddress `json:"new_admin,omitempty" yaml:"new_admin"`
+	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
