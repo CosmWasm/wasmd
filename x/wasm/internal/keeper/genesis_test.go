@@ -20,7 +20,8 @@ import (
 )
 
 func TestGenesisExportImport(t *testing.T) {
-	srcKeeper, srcCtx := setupKeeper(t)
+	srcKeeper, srcCtx, srcCleanup := setupKeeper(t)
+	defer srcCleanup()
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
@@ -48,7 +49,8 @@ func TestGenesisExportImport(t *testing.T) {
 	genesisState := ExportGenesis(srcCtx, srcKeeper)
 
 	// re-import
-	dstKeeper, dstCtx := setupKeeper(t)
+	dstKeeper, dstCtx, dstCleanup := setupKeeper(t)
+	defer dstCleanup()
 	InitGenesis(dstCtx, dstKeeper, genesisState)
 
 	// compare whole DB
@@ -65,10 +67,11 @@ func TestGenesisExportImport(t *testing.T) {
 	require.False(t, dstIT.Valid())
 }
 
-func setupKeeper(t *testing.T) (Keeper, sdk.Context) {
+func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	cleanup := func() { os.RemoveAll(tempDir) }
+	//t.Cleanup(cleanup) todo: add with Go 1.14
 
 	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	db := dbm.NewMemDB()
@@ -85,5 +88,5 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context) {
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
 	srcKeeper := NewKeeper(cdc, keyContract, auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
-	return srcKeeper, ctx
+	return srcKeeper, ctx, cleanup
 }
