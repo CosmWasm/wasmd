@@ -24,8 +24,9 @@ func TestGenesisExportImport(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
+	// store some test data
 	f := fuzz.New().Funcs(FuzzAddr, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel)
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 25; i++ {
 		var (
 			codeInfo    types.CodeInfo
 			contract    types.ContractInfo
@@ -57,7 +58,7 @@ func TestGenesisExportImport(t *testing.T) {
 	for i := 0; srcIT.Valid(); i++ {
 		require.True(t, dstIT.Valid(), "destination DB has less elements than source. Missing: %q", srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-		require.Equal(t, srcIT.Value(), dstIT.Value(), i)
+		require.Equal(t, srcIT.Value(), dstIT.Value(), "element (%d): %s", i, srcIT.Key())
 		srcIT.Next()
 		dstIT.Next()
 	}
