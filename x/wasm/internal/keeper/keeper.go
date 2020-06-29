@@ -485,6 +485,23 @@ func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
+// peekAutoIncrementID reads the current value without incrementing it.
+func (k Keeper) peekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(lastIDKey)
+	id := uint64(1)
+	if bz != nil {
+		id = binary.BigEndian.Uint64(bz)
+	}
+	return id
+}
+
+func (k Keeper) setAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := sdk.Uint64ToBigEndian(val)
+	store.Set(lastIDKey, bz)
+}
+
 func addrFromUint64(id uint64) sdk.AccAddress {
 	addr := make([]byte, 20)
 	addr[0] = 'C'

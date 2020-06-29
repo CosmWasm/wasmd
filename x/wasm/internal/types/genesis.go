@@ -2,10 +2,16 @@ package types
 
 import sdk "github.com/cosmos/cosmos-sdk/types"
 
+type Sequence struct {
+	IDKey []byte `json:"id_key"`
+	Value uint64 `json:"value"`
+}
+
 // GenesisState is the struct representation of the export genesis
 type GenesisState struct {
 	Codes     []Code     `json:"codes"`
 	Contracts []Contract `json:"contracts"`
+	Sequences []Sequence `json:"sequences"`
 }
 
 // Code struct encompasses CodeInfo and CodeBytes

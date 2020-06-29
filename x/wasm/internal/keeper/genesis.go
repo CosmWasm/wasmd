@@ -29,6 +29,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		keeper.setContractState(ctx, contract.ContractAddress, contract.ContractState)
 	}
 
+	for _, seq := range data.Sequences {
+		keeper.setAutoIncrementID(ctx, seq.IDKey, seq.Value)
+	}
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -66,6 +69,14 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 		return false
 	})
+
+	// types.KeyLastCodeID is updated via keeper create
+	for _, k := range [][]byte{types.KeyLastInstanceID} {
+		genState.Sequences = append(genState.Sequences, types.Sequence{
+			IDKey: k,
+			Value: keeper.peekAutoIncrementID(ctx, k),
+		})
+	}
 
 	return genState
 }
