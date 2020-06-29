@@ -15,7 +15,7 @@ RUN go mod download
 # TODO: how to use this instead of hardcoding GO_COSMWASM
 RUN basename $(ls -d /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*)
 
-ENV GO_COSMWASM="v0.9.0-beta"
+ENV GO_COSMWASM="v0.9.1"
 
 # build go-cosmwasm *.a and install it
 WORKDIR /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@${GO_COSMWASM}

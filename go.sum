@@ -15,6 +15,8 @@ github.com/CosmWasm/go-cosmwasm v0.9.0-beta h1:yV8VRaD7K8bgBhtVeF4J8fIOLQ1sSGrFi
 github.com/CosmWasm/go-cosmwasm v0.9.0-beta/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
 github.com/CosmWasm/go-cosmwasm v0.9.0 h1:756YkHBlv6+IuovwyFkc4dTXau3D5HNSQpSmGlz//7k=
 github.com/CosmWasm/go-cosmwasm v0.9.0/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
+github.com/CosmWasm/go-cosmwasm v0.9.1 h1:w5s2o7H3cmNexct9yv8F6OLXwgxbdfVApwam7DibPqI=
+github.com/CosmWasm/go-cosmwasm v0.9.1/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
