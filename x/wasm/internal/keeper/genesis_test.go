@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"crypto/sha256"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -42,7 +43,7 @@ func TestGenesisExportImport(t *testing.T) {
 		contract.CodeID = codeID
 		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
 		srcKeeper.setContractInfo(srcCtx, contractAddr, &contract)
-		srcKeeper.setContractState(srcCtx, contractAddr, stateModels)
+		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
 
 	// export
@@ -65,6 +66,166 @@ func TestGenesisExportImport(t *testing.T) {
 		dstIT.Next()
 	}
 	require.False(t, dstIT.Valid())
+}
+
+func TestFailFastImport(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+	codeHash := sha256.Sum256(wasmCode)
+	anyAddress := make([]byte, 20)
+
+	specs := map[string]struct {
+		src        types.GenesisState
+		expSuccess bool
+	}{
+		"happy path: code info correct": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeInfo: wasmTypes.CodeInfo{
+						CodeHash: codeHash[:],
+						Creator:  anyAddress,
+					},
+					CodesBytes: wasmCode,
+				}},
+				Contracts: nil,
+			},
+			expSuccess: true,
+		},
+		"prevent code hash mismatch": {src: types.GenesisState{
+			Codes: []types.Code{{
+				CodeInfo: wasmTypes.CodeInfo{
+					CodeHash: make([]byte, len(codeHash)),
+					Creator:  anyAddress,
+				},
+				CodesBytes: wasmCode,
+			}},
+			Contracts: nil,
+		}},
+		"happy path: code info and contract do match": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeInfo: wasmTypes.CodeInfo{
+						CodeHash: codeHash[:],
+						Creator:  anyAddress,
+					},
+					CodesBytes: wasmCode,
+				}},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					},
+				},
+			},
+			expSuccess: true,
+		},
+		"prevent contracts that points to non existing codeID": {
+			src: types.GenesisState{
+				Contracts: []types.Contract{
+					{
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					},
+				},
+			},
+		},
+		"prevent duplicate contracts": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeInfo: wasmTypes.CodeInfo{
+						CodeHash: codeHash[:],
+						Creator:  anyAddress,
+					},
+					CodesBytes: wasmCode,
+				}},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					}, {
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					},
+				},
+			},
+		},
+		"prevent duplicate contract model": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeInfo: wasmTypes.CodeInfo{
+						CodeHash: codeHash[:],
+						Creator:  anyAddress,
+					},
+					CodesBytes: wasmCode,
+				}},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+						ContractState: []types.Model{
+							{
+								Key:   []byte{0x1},
+								Value: []byte("foo"),
+							},
+							{
+								Key:   []byte{0x1},
+								Value: []byte("bar"),
+							},
+						},
+					},
+				},
+			},
+		},
+		"prevent duplicate sequences": {
+			src: types.GenesisState{
+				Sequences: []types.Sequence{
+					{IDKey: []byte("foo"), Value: 1},
+					{IDKey: []byte("foo"), Value: 9999},
+				},
+			},
+		},
+	}
+
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			keeper, ctx, cleanup := setupKeeper(t)
+			defer cleanup()
+
+			require.NoError(t, types.ValidateGenesis(spec.src))
+			if spec.expSuccess {
+				InitGenesis(ctx, keeper, spec.src)
+				return
+			}
+			require.Panics(t, func() {
+				InitGenesis(ctx, keeper, spec.src)
+			})
+		})
+	}
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {

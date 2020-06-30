@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -20,12 +21,35 @@ type Model struct {
 	Value []byte `json:"val"`
 }
 
+func (m Model) ValidateBasic() error {
+	if len(m.Key) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "key")
+	}
+	return nil
+}
+
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
 	CodeHash []byte         `json:"code_hash"`
 	Creator  sdk.AccAddress `json:"creator"`
 	Source   string         `json:"source"`
 	Builder  string         `json:"builder"`
+}
+
+func (c CodeInfo) ValidateBasic() error {
+	if len(c.CodeHash) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "code hash")
+	}
+	if err := sdk.VerifyAddressFormat(c.Creator); err != nil {
+		return sdkerrors.Wrap(err, "creator")
+	}
+	if err := validateSourceURL(c.Source); err != nil {
+		return sdkerrors.Wrap(err, "source")
+	}
+	if err := validateBuilder(c.Builder); err != nil {
+		return sdkerrors.Wrap(err, "builder")
+	}
+	return nil
 }
 
 // NewCodeInfo fills a new Contract struct
@@ -56,6 +80,24 @@ func (c *ContractInfo) UpdateCodeID(ctx sdk.Context, newCodeID uint64) {
 	c.PreviousCodeID = c.CodeID
 	c.CodeID = newCodeID
 	c.LastUpdated = NewCreatedAt(ctx)
+}
+
+func (c *ContractInfo) ValidateBasic() error {
+	if c.CodeID == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "code id")
+	}
+	if err := sdk.VerifyAddressFormat(c.Creator); err != nil {
+		return sdkerrors.Wrap(err, "creator")
+	}
+	if c.Admin != nil {
+		if err := sdk.VerifyAddressFormat(c.Admin); err != nil {
+			return sdkerrors.Wrap(err, "admin")
+		}
+	}
+	if err := validateLabel(c.Label); err != nil {
+		return sdkerrors.Wrap(err, "label")
+	}
+	return nil
 }
 
 // AbsoluteTxPosition can be used to sort contracts

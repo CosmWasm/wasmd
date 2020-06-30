@@ -25,12 +25,11 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	for _, contract := range data.Contracts {
-		keeper.setContractInfo(ctx, contract.ContractAddress, &contract.ContractInfo)
-		keeper.setContractState(ctx, contract.ContractAddress, contract.ContractState)
+		keeper.importContract(ctx, contract.ContractAddress, &contract.ContractInfo, contract.ContractState)
 	}
 
 	for _, seq := range data.Sequences {
-		keeper.setAutoIncrementID(ctx, seq.IDKey, seq.Value)
+		keeper.importAutoIncrementID(ctx, seq.IDKey, seq.Value)
 	}
 }
 

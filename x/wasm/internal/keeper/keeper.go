@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -374,6 +375,11 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	return &contract
 }
 
+func (k Keeper) containsContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetContractAddressKey(contractAddress))
+}
+
 func (k Keeper) setContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract *types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
@@ -398,12 +404,15 @@ func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress
 	return prefixStore.Iterator(nil, nil)
 }
 
-func (k Keeper) setContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) {
+func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) {
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	for _, model := range models {
 		if model.Value == nil {
 			model.Value = []byte{}
+		}
+		if prefixStore.Has(model.Key) {
+			panic(fmt.Sprintf("duplicate key: %x", model.Key))
 		}
 		prefixStore.Set(model.Key, model.Value)
 	}
@@ -418,6 +427,11 @@ func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
 	}
 	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
 	return &codeInfo
+}
+
+func (k Keeper) containsCodeInfo(ctx sdk.Context, codeID uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetCodeKey(codeID))
 }
 
 func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
@@ -496,10 +510,24 @@ func (k Keeper) peekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-func (k Keeper) setAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) {
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) {
 	store := ctx.KVStore(k.storeKey)
+	if store.Has(lastIDKey) {
+		panic(fmt.Sprintf("duplicate autoincrement id: %s", string(lastIDKey)))
+	}
 	bz := sdk.Uint64ToBigEndian(val)
 	store.Set(lastIDKey, bz)
+}
+
+func (k Keeper) importContract(ctx sdk.Context, address sdk.AccAddress, c *types.ContractInfo, state []types.Model) {
+	if !k.containsCodeInfo(ctx, c.CodeID) {
+		panic(fmt.Sprintf("unknown code id: %d", c.CodeID))
+	}
+	if k.containsContractInfo(ctx, address) {
+		panic(fmt.Sprintf("duplicate contract: %s", address))
+	}
+	k.setContractInfo(ctx, address, c)
+	k.importContractState(ctx, address, state)
 }
 
 func addrFromUint64(id uint64) sdk.AccAddress {

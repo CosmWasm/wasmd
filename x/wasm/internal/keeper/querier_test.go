@@ -48,7 +48,7 @@ func TestQueryContractState(t *testing.T) {
 		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
-	keeper.setContractState(ctx, addr, contractModel)
+	keeper.importContractState(ctx, addr, contractModel)
 
 	// this gets us full error, not redacted sdk.Error
 	q := NewQuerier(keeper)
