@@ -124,11 +124,42 @@ func TestFailFastImport(t *testing.T) {
 			},
 			expSuccess: true,
 		},
+		"happy path: code info with two contracts": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeInfo: wasmTypes.CodeInfo{
+						CodeHash: codeHash[:],
+						Creator:  anyAddress,
+					},
+					CodesBytes: wasmCode,
+				}},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					}, {
+						ContractAddress: addrFromUint64(2<<32 + 1),
+						ContractInfo: wasmTypes.ContractInfo{
+							CodeID:  1,
+							Creator: anyAddress,
+							Label:   "any",
+							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
+						},
+					},
+				},
+			},
+			expSuccess: true,
+		},
 		"prevent contracts that points to non existing codeID": {
 			src: types.GenesisState{
 				Contracts: []types.Contract{
 					{
-						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractAddress: contractAddress(1, 1),
 						ContractInfo: wasmTypes.ContractInfo{
 							CodeID:  1,
 							Creator: anyAddress,
@@ -150,7 +181,7 @@ func TestFailFastImport(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractAddress: contractAddress(1, 1),
 						ContractInfo: wasmTypes.ContractInfo{
 							CodeID:  1,
 							Creator: anyAddress,
@@ -158,7 +189,7 @@ func TestFailFastImport(t *testing.T) {
 							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
 						},
 					}, {
-						ContractAddress: addrFromUint64(1<<32 + 1),
+						ContractAddress: contractAddress(1, 1),
 						ContractInfo: wasmTypes.ContractInfo{
 							CodeID:  1,
 							Creator: anyAddress,
@@ -217,13 +248,12 @@ func TestFailFastImport(t *testing.T) {
 			defer cleanup()
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
+			got := InitGenesis(ctx, keeper, spec.src)
 			if spec.expSuccess {
-				InitGenesis(ctx, keeper, spec.src)
+				require.NoError(t, got)
 				return
 			}
-			require.Panics(t, func() {
-				InitGenesis(ctx, keeper, spec.src)
-			})
+			require.Error(t, got)
 		})
 	}
 }

@@ -97,6 +97,12 @@ func (c *ContractInfo) ValidateBasic() error {
 	if err := validateLabel(c.Label); err != nil {
 		return sdkerrors.Wrap(err, "label")
 	}
+	if err := c.Created.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "created")
+	}
+	if err := c.LastUpdated.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "last updated")
+	}
 	return nil
 }
 
@@ -117,6 +123,16 @@ func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 		return false
 	}
 	return a.BlockHeight < b.BlockHeight || (a.BlockHeight == b.BlockHeight && a.TxIndex < b.TxIndex)
+}
+
+func (a *AbsoluteTxPosition) ValidateBasic() error {
+	if a == nil {
+		return nil
+	}
+	if a.BlockHeight < 0 {
+		return sdkerrors.Wrap(ErrInvalid, "height")
+	}
+	return nil
 }
 
 // NewCreatedAt gets a timestamp from the context

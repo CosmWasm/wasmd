@@ -5,6 +5,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	// "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
@@ -12,25 +13,33 @@ import (
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
-	for _, code := range data.Codes {
+func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) error {
+	for i, code := range data.Codes {
 		newId, err := keeper.Create(ctx, code.CodeInfo.Creator, code.CodesBytes, code.CodeInfo.Source, code.CodeInfo.Builder)
 		if err != nil {
-			panic(err)
+			return sdkerrors.Wrapf(err, "code number %d", i)
+
 		}
 		newInfo := keeper.GetCodeInfo(ctx, newId)
 		if !bytes.Equal(code.CodeInfo.CodeHash, newInfo.CodeHash) {
-			panic("code hashes not same")
+			return sdkerrors.Wrap(types.ErrInvalid, "code hashes not same")
 		}
 	}
 
-	for _, contract := range data.Contracts {
-		keeper.importContract(ctx, contract.ContractAddress, &contract.ContractInfo, contract.ContractState)
+	for i, contract := range data.Contracts {
+		err := keeper.importContract(ctx, contract.ContractAddress, &contract.ContractInfo, contract.ContractState)
+		if err != nil {
+			return sdkerrors.Wrapf(err, "contract number %d", i)
+		}
 	}
 
-	for _, seq := range data.Sequences {
-		keeper.importAutoIncrementID(ctx, seq.IDKey, seq.Value)
+	for i, seq := range data.Sequences {
+		err := keeper.importAutoIncrementID(ctx, seq.IDKey, seq.Value)
+		if err != nil {
+			return sdkerrors.Wrapf(err, "sequence number %d", i)
+		}
 	}
+	return nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

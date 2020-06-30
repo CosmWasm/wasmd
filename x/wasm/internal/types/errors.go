@@ -46,4 +46,7 @@ var (
 
 	// ErrInvalid error for content that is invalid in this context
 	ErrInvalid = sdkErrors.Register(DefaultCodespace, 13, "invalid")
+
+	// ErrDuplicate error for content that exsists
+	ErrDuplicate = sdkErrors.Register(DefaultCodespace, 14, "duplicate")
 )
