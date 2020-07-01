@@ -43,6 +43,7 @@ func CodeFixture(mutators ...func(*Code)) Code {
 	anyAddress := make([]byte, 20)
 
 	fixture := Code{
+		CodeID: 1,
 		CodeInfo: CodeInfo{
 			CodeHash: codeHash[:],
 			Creator:  anyAddress,

@@ -1,5 +1,6 @@
 package types
 
+import "C"
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -45,11 +46,15 @@ func (s GenesisState) ValidateBasic() error {
 
 // Code struct encompasses CodeInfo and CodeBytes
 type Code struct {
+	CodeID     uint64   `json:"code_id"`
 	CodeInfo   CodeInfo `json:"code_info"`
 	CodesBytes []byte   `json:"code_bytes"`
 }
 
 func (c Code) ValidateBasic() error {
+	if c.CodeID == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "code id")
+	}
 	if err := c.CodeInfo.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "code info")
 	}

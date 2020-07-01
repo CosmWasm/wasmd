@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/binary"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -32,9 +34,13 @@ var (
 )
 
 // GetCodeKey constructs the key for retreiving the ID for the WASM code
-func GetCodeKey(contractID uint64) []byte {
-	contractIDBz := sdk.Uint64ToBigEndian(contractID)
+func GetCodeKey(codeID uint64) []byte {
+	contractIDBz := sdk.Uint64ToBigEndian(codeID)
 	return append(CodeKeyPrefix, contractIDBz...)
+}
+
+func decodeCodeKey(src []byte) uint64 {
+	return binary.BigEndian.Uint64(src[len(CodeKeyPrefix):])
 }
 
 // GetContractAddressKey returns the key for the WASM contract instance
