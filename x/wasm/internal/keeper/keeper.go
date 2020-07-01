@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/pkg/errors"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -374,6 +375,11 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	return &contract
 }
 
+func (k Keeper) containsContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetContractAddressKey(contractAddress))
+}
+
 func (k Keeper) setContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract *types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
@@ -398,15 +404,19 @@ func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress
 	return prefixStore.Iterator(nil, nil)
 }
 
-func (k Keeper) setContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) {
+func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) error {
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	for _, model := range models {
 		if model.Value == nil {
 			model.Value = []byte{}
 		}
+		if prefixStore.Has(model.Key) {
+			return sdkerrors.Wrapf(types.ErrDuplicate, "duplicate key: %x", model.Key)
+		}
 		prefixStore.Set(model.Key, model.Value)
 	}
+	return nil
 }
 
 func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
@@ -418,6 +428,11 @@ func (k Keeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
 	}
 	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
 	return &codeInfo
+}
+
+func (k Keeper) containsCodeInfo(ctx sdk.Context, codeID uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetCodeKey(codeID))
 }
 
 func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
@@ -457,10 +472,15 @@ func consumeGas(ctx sdk.Context, gas uint64) {
 // generates a contract address from codeID + instanceID
 func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
 	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
+	return contractAddress(codeID, instanceID)
+}
+
+func contractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
 	// overflow 32 bits. This is highly improbable, but something that could be refactored.
 	contractID := codeID<<32 + instanceID
 	return addrFromUint64(contractID)
+
 }
 
 func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {
@@ -496,10 +516,25 @@ func (k Keeper) peekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-func (k Keeper) setAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) {
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) error {
 	store := ctx.KVStore(k.storeKey)
+	if store.Has(lastIDKey) {
+		return sdkerrors.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(lastIDKey))
+	}
 	bz := sdk.Uint64ToBigEndian(val)
 	store.Set(lastIDKey, bz)
+	return nil
+}
+
+func (k Keeper) importContract(ctx sdk.Context, address sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
+	if !k.containsCodeInfo(ctx, c.CodeID) {
+		return errors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
+	}
+	if k.containsContractInfo(ctx, address) {
+		return errors.Wrapf(types.ErrDuplicate, "contract: %s", address)
+	}
+	k.setContractInfo(ctx, address, c)
+	return k.importContractState(ctx, address, state)
 }
 
 func addrFromUint64(id uint64) sdk.AccAddress {

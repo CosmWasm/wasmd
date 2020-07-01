@@ -114,7 +114,9 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+	if err := InitGenesis(ctx, am.keeper, genesisState); err != nil {
+		panic(err)
+	}
 	return []abci.ValidatorUpdate{}
 }
 

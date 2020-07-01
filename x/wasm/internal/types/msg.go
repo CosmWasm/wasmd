@@ -2,33 +2,9 @@ package types
 
 import (
 	"encoding/json"
-	"net/url"
-	"regexp"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-)
-
-const (
-	MaxWasmSize = 500 * 1024
-
-	// MaxLabelSize is the longest label that can be used when Instantiating a contract
-	MaxLabelSize = 128
-
-	// BuildTagRegexp is a docker image regexp.
-	// We only support max 128 characters, with at least one organization name (subset of all legal names).
-	//
-	// Details from https://docs.docker.com/engine/reference/commandline/tag/#extended-description :
-	//
-	// An image name is made up of slash-separated name components (optionally prefixed by a registry hostname).
-	// Name components may contain lowercase characters, digits and separators.
-	// A separator is defined as a period, one or two underscores, or one or more dashes. A name component may not start or end with a separator.
-	//
-	// A tag name must be valid ASCII and may contain lowercase and uppercase letters, digits, underscores, periods and dashes.
-	// A tag name may not start with a period or a dash and may contain a maximum of 128 characters.
-	BuildTagRegexp = "^[a-z0-9][a-z0-9._-]*[a-z0-9](/[a-z0-9][a-z0-9._-]*[a-z0-9])+:[a-zA-Z0-9_][a-zA-Z0-9_.-]*$"
-
-	MaxBuildTagSize = 128
 )
 
 type MsgStoreCode struct {
@@ -54,28 +30,18 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		return err
 	}
 
-	if len(msg.WASMByteCode) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty wasm code")
+	if err := validateWasmCode(msg.WASMByteCode); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
-	if len(msg.WASMByteCode) > MaxWasmSize {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "wasm code too large")
+	if err := validateSourceURL(msg.Source); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "source %s", err.Error())
 	}
 
-	if msg.Source != "" {
-		u, err := url.Parse(msg.Source)
-		if err != nil {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be a valid url")
-		}
-		if !u.IsAbs() {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source should be an absolute url")
-		}
-		if u.Scheme != "https" {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "source must use https")
-		}
+	if err := validateBuilder(msg.Builder); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "builder %s", err.Error())
 	}
-
-	return validateBuilder(msg.Builder)
+	return nil
 }
 
 func (msg MsgStoreCode) GetSignBytes() []byte {
@@ -84,21 +50,6 @@ func (msg MsgStoreCode) GetSignBytes() []byte {
 
 func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
-}
-
-func validateBuilder(buildTag string) error {
-	if len(buildTag) > MaxBuildTagSize {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "builder tag longer than 128 characters")
-	}
-
-	if buildTag != "" {
-		ok, err := regexp.MatchString(BuildTagRegexp, buildTag)
-		if err != nil || !ok {
-			return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "invalid tag supplied for builder")
-		}
-	}
-
-	return nil
 }
 
 type MsgInstantiateContract struct {
@@ -127,11 +78,9 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	if msg.Code == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
-	if msg.Label == "" {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
-	}
-	if len(msg.Label) > MaxLabelSize {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label cannot be longer than 128 characters")
+
+	if err := validateLabel(msg.Label); err != nil {
+		return err
 	}
 
 	if msg.InitFunds.IsAnyNegative() {
@@ -143,7 +92,6 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 			return err
 		}
 	}
-
 	return nil
 }
 
