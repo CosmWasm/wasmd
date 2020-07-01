@@ -378,9 +378,9 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())
 
-	cdc := MakeTestCodec()
+	appCodec, _ := MakeTestCodec()
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	srcKeeper := NewKeeper(cdc, keyContract, auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	srcKeeper := NewKeeper(appCodec, keyContract, auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	return srcKeeper, ctx, cleanup
 }

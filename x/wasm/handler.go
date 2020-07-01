@@ -135,7 +135,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 	events = append(events, custom.ToABCIEvents()...)
 
 	res.Events = events
-	return &res, nil
+	return res, nil
 }
 
 func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {

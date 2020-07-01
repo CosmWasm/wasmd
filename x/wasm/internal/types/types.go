@@ -1,10 +1,10 @@
 package types
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 const defaultLRUCacheSize = uint64(0)
@@ -172,21 +172,25 @@ const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
 // CosmosResult converts from a Wasm Result type
-func CosmosResult(wasmResult wasmTypes.Result, contractAddr sdk.AccAddress) ([]byte, sdk.Events) {
-	var events sdk.Events
-	if len(wasmResult.Log) > 0 {
-		// we always tag with the contract address issuing this event
-		attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
-		for _, l := range wasmResult.Log {
-			// and reserve the contract_address key for our use (not contract)
-			if l.Key != AttributeKeyContractAddr {
-				attr := sdk.NewAttribute(l.Key, l.Value)
-				attrs = append(attrs, attr)
-			}
-		}
-		events = sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
+func CosmosResult(wasmResult wasmTypes.HandleResponse, contractAddr sdk.AccAddress) ([]byte, sdk.Events) {
+	return wasmResult.Data, ParseEvents(wasmResult.Log, contractAddr)
+}
+
+// ParseEvents converts wasm type LogAttribute to cosmos sdk events
+func ParseEvents(log []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk.Events {
+	if len(log) == 0 {
+		return nil
 	}
-	return []byte(wasmResult.Data), events
+	// we always tag with the contract address issuing this event
+	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
+	for _, l := range log {
+		// and reserve the contract_address key for our use (not contract)
+		if l.Key != AttributeKeyContractAddr {
+			attr := sdk.NewAttribute(l.Key, l.Value)
+			attrs = append(attrs, attr)
+		}
+	}
+	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 }
 
 // WasmConfig is the extra config required for wasm

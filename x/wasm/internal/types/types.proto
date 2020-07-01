@@ -54,11 +54,18 @@ message MsgMigrateContract{
     bytes migrate_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
 }
 
-message MsgUpdateAdministrator{
+message MsgUpdateAdmin{
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes new_admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+
+message MsgClearAdmin{
+    option (gogoproto.goproto_getters) = false;
+
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 

@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -142,7 +140,7 @@ func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-func (msg MsgUpdateAdministrator) Route() string {
+func (msg MsgUpdateAdmin) Route() string {
 	return RouterKey
 }
 
@@ -172,11 +170,6 @@ func (msg MsgUpdateAdmin) GetSignBytes() []byte {
 
 func (msg MsgUpdateAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
-}
-
-type MsgClearAdmin struct {
-	Sender   sdk.AccAddress `json:"sender" yaml:"sender"`
-	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
 func (msg MsgClearAdmin) Route() string {

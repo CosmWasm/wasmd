@@ -117,7 +117,7 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 		return sdkerrors.Wrapf(types.ErrDuplicate, "duplicate code: %d", codeID)
 	}
 	// 0x01 | codeID (uint64) -> ContractInfo
-	store.Set(key, k.cdc.MustMarshalBinaryBare(codeInfo))
+	store.Set(key, k.cdc.MustMarshalBinaryBare(&codeInfo))
 	return nil
 }
 
@@ -177,7 +177,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	}
 
 	// emit all events from this contract itself
-	_, events := types.CosmosResult(*res, contractAddress)
+	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
@@ -234,9 +234,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, err
 	}
 
-	return &sdk.Result{
-		Data: res.Data,
-	}, nil
+	return &sdk.Result{Data: data}, nil
 }
 
 // Migrate allows to upgrade a contract to a new code with data migration.
@@ -277,7 +275,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// emit all events from this contract migration itself
-	data, events := types.CosmosResult(*res, contractAddress)
+	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
 	contractInfo.UpdateCodeID(ctx, newCodeID)
@@ -287,7 +285,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	return &sdk.Result{Data: data}, nil
+	return &sdk.Result{Data: res.Data}, nil
 }
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)

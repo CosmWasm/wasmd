@@ -211,7 +211,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 	}
 }
 
-func TestMsgUpdateAdministrator(t *testing.T) {
+func TestMsgUpdateAdmin(t *testing.T) {
 	badAddress, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
 	// proper address size
