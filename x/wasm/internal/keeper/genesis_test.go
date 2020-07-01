@@ -101,7 +101,7 @@ func TestFailFastImport(t *testing.T) {
 			}},
 			Contracts: nil,
 		}},
-		"happy path: code info and contract do match": {
+		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
 					CodeInfo: wasmTypes.CodeInfo{
@@ -112,13 +112,8 @@ func TestFailFastImport(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: addrFromUint64(1<<32 + 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractAddress: contractAddress(1, 1),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
 			},
@@ -135,21 +130,11 @@ func TestFailFastImport(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: addrFromUint64(1<<32 + 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractAddress: contractAddress(1, 1),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					}, {
-						ContractAddress: addrFromUint64(2<<32 + 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractAddress: contractAddress(2, 1),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
 			},
@@ -160,17 +145,12 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
 			},
 		},
-		"prevent duplicate contracts": {
+		"prevent duplicate contract address": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
 					CodeInfo: wasmTypes.CodeInfo{
@@ -182,25 +162,15 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					}, {
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
 			},
 		},
-		"prevent duplicate contract model": {
+		"prevent duplicate contract model keys": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
 					CodeInfo: wasmTypes.CodeInfo{
@@ -211,13 +181,8 @@ func TestFailFastImport(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: addrFromUint64(1<<32 + 1),
-						ContractInfo: wasmTypes.ContractInfo{
-							CodeID:  1,
-							Creator: anyAddress,
-							Label:   "any",
-							Created: &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
-						},
+						ContractAddress: contractAddress(1, 1),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 						ContractState: []types.Model{
 							{
 								Key:   []byte{0x1},

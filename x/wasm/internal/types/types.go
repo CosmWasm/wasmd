@@ -97,6 +97,9 @@ func (c *ContractInfo) ValidateBasic() error {
 	if err := validateLabel(c.Label); err != nil {
 		return sdkerrors.Wrap(err, "label")
 	}
+	if c.Created == nil {
+		return sdkerrors.Wrap(ErrEmpty, "created")
+	}
 	if err := c.Created.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "created")
 	}
