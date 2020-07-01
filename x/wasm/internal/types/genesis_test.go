@@ -53,6 +53,12 @@ func TestCodeValidateBasic(t *testing.T) {
 		expError   bool
 	}{
 		"all good": {srcMutator: func(_ *Code) {}},
+		"code id invalid": {
+			srcMutator: func(c *Code) {
+				c.CodeID = 0
+			},
+			expError: true,
+		},
 		"codeinfo invalid": {
 			srcMutator: func(c *Code) {
 				c.CodeInfo.CodeHash = nil
