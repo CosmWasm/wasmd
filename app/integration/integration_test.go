@@ -7,21 +7,17 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authExported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/tendermint/tendermint/crypto"
-
-	// "github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // CreateTestApp will create a new wasmd application and provide money to every address
 // listed there
-func CreateTestApp(t *testing.T, accounts []*auth.BaseAccount) *app.WasmApp {
+func CreateTestApp(t *testing.T, accounts []*authtypes.BaseAccount) *app.WasmApp {
 	fmt.Printf("%#v\n", accounts[1])
-	genAccounts := make([]authExported.GenesisAccount, len(accounts))
+	genAccounts := make([]authtypes.GenesisAccount, len(accounts))
 	for i, acct := range accounts {
 		genAccounts[i] = acct
 	}
@@ -39,12 +35,12 @@ func TestSendWithApp(t *testing.T) {
 	wasm := CreateTestApp(t, accts)
 
 	// TODO: check account balance first
-	msg := bank.MsgSend{
+	msg := banktypes.MsgSend{
 		FromAddress: accts[0].Address,
 		ToAddress:   accts[1].Address,
 		Amount:      sdk.NewCoins(sdk.NewInt64Coin("stake", 20)),
 	}
-	_ = sign(t, wasm, msg, &keys[0], true)
+	_ = sign(t, wasm, &msg, &keys[0], true)
 }
 
 func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) *sdk.Result {
@@ -61,13 +57,13 @@ type signer struct {
 	acctNum uint64
 }
 
-func genAccountsWithKey(t *testing.T, coins sdk.Coins, n int) ([]*auth.BaseAccount, []signer) {
-	//accts := make([]*auth.BaseAccount, n)
+func genAccountsWithKey(t *testing.T, coins sdk.Coins, n int) ([]*authtypes.BaseAccount, []signer) {
+	//accts := make([]*authtypes.BaseAccount, n)
 	//keys := make([]signer, n)
 	//
 	//for i := range accts {
 	//	priv, pub, addr := maskKeyPubAddr()
-	//	baseAcct := auth.NewBaseAccountWithAddress(addr)
+	//	baseAcct := authtypes.NewBaseAccountWithAddress(addr)
 	//	err := baseAcct.SetCoins(coins)
 	//	require.NoError(t, err)
 	//	baseAcct.SetPubKey(pub)

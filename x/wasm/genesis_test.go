@@ -21,7 +21,7 @@ func TestInitGenesis(t *testing.T) {
 	creator := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, deposit.Add(deposit...))
 	fred := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, topUp)
 
-	h := data.module.NewHandler()
+	h := data.module.Route().Handler()
 	q := data.module.NewQuerierHandler()
 
 	t.Log("fail with invalid source url")
@@ -35,7 +35,7 @@ func TestInitGenesis(t *testing.T) {
 	err := msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("fail with relative source url")
@@ -49,7 +49,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("fail with invalid build tag")
@@ -63,7 +63,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("no error with valid source and build tag")
@@ -76,7 +76,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.NoError(t, err)
 
-	res, err := h(data.ctx, msg)
+	res, err := h(data.ctx, &msg)
 	require.NoError(t, err)
 	require.Equal(t, res.Data, []byte("1"))
 
@@ -94,7 +94,7 @@ func TestInitGenesis(t *testing.T) {
 		InitMsg:   initMsgBz,
 		InitFunds: deposit,
 	}
-	res, err = h(data.ctx, initCmd)
+	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 
@@ -104,7 +104,7 @@ func TestInitGenesis(t *testing.T) {
 		Msg:       []byte(`{"release":{}}`),
 		SentFunds: topUp,
 	}
-	res, err = h(data.ctx, execCmd)
+	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
 
 	// ensure all contract state is as after init

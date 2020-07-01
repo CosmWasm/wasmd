@@ -1,29 +1,24 @@
 package cli
 
 import (
-	"bufio"
 	"strconv"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	"github.com/spf13/cobra"
 )
 
 // MigrateContractCmd will migrate a contract to a new code version
-func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
+func MigrateContractCmd(clientCtx client.Context) *cobra.Command {
+	return &cobra.Command{
 		Use:   "migrate [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
 		Short: "Migrate a wasm contract to a new code version",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -39,27 +34,24 @@ func MigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 			migrateMsg := args[2]
 
 			msg := types.MsgMigrateContract{
-				Sender:     cliCtx.GetFromAddress(),
+				Sender:     clientCtx.GetFromAddress(),
 				Contract:   contractAddr,
 				Code:       codeID,
 				MigrateMsg: []byte(migrateMsg),
 			}
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
-	return cmd
 }
 
 // UpdateContractAdminCmd sets an new admin for a contract
-func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
+func UpdateContractAdminCmd(clientCtx client.Context) *cobra.Command {
+	return &cobra.Command{
 		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
 		Short: "Set new admin for a contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -71,26 +63,23 @@ func UpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.MsgUpdateAdmin{
-				Sender:   cliCtx.GetFromAddress(),
+				Sender:   clientCtx.GetFromAddress(),
 				Contract: contractAddr,
 				NewAdmin: newAdmin,
 			}
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
-	return cmd
 }
 
 // ClearContractAdminCmd clears an admin for a contract
-func ClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
+func ClearContractAdminCmd(clientCtx client.Context) *cobra.Command {
+	return &cobra.Command{
 		Use:   "clear-contract-admin [contract_addr_bech32]",
 		Short: "Clears admin for a contract to prevent further migrations",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(authclient.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -98,11 +87,10 @@ func ClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			msg := types.MsgClearAdmin{
-				Sender:   cliCtx.GetFromAddress(),
+				Sender:   clientCtx.GetFromAddress(),
 				Contract: contractAddr,
 			}
-			return authclient.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
-	return cmd
 }

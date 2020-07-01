@@ -32,7 +32,7 @@ func TestBlackListedAddrs(t *testing.T) {
 	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, "")
 
 	for acc := range maccPerms {
-		require.Equal(t, !allowedReceivingModAcc[acc], gapp.bankKeeper.BlacklistedAddr(gapp.accountKeeper.GetModuleAddress(acc)))
+		require.Equal(t, !allowedReceivingModAcc[acc], gapp.bankKeeper.BlockedAddr(gapp.accountKeeper.GetModuleAddress(acc)))
 	}
 }
 

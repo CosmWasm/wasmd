@@ -20,35 +20,23 @@ func NewHandler(k Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case MsgStoreCode:
-			return handleStoreCode(ctx, k, &msg)
 		case *MsgStoreCode:
 			return handleStoreCode(ctx, k, msg)
 
-		case MsgInstantiateContract:
-			return handleInstantiate(ctx, k, &msg)
 		case *MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
 
-		case MsgExecuteContract:
-			return handleExecute(ctx, k, &msg)
 		case *MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
 
 		case *MsgMigrateContract:
 			return handleMigration(ctx, k, msg)
-		case MsgMigrateContract:
-			return handleMigration(ctx, k, &msg)
 
 		case *MsgUpdateAdmin:
 			return handleUpdateContractAdmin(ctx, k, msg)
-		case MsgUpdateAdmin:
-			return handleUpdateContractAdmin(ctx, k, &msg)
 
 		case *MsgClearAdmin:
 			return handleClearContractAdmin(ctx, k, msg)
-		case MsgClearAdmin:
-			return handleClearContractAdmin(ctx, k, &msg)
 
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)

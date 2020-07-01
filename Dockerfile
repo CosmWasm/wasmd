@@ -48,10 +48,3 @@ EXPOSE 26656
 EXPOSE 26657
 
 CMD ["/usr/bin/wasmd version"]
-# copy all code into /code
-WORKDIR /code
-COPY . /code
-# download all deps
-RUN go mod download
-# TODO: how to use this instead of hardcoding GO_COSMWASM
-RUN basename $(ls -d /go/pkg/mod/github.com/\!cosm\!wasm/go-cosmwasm@v*)

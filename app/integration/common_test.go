@@ -12,8 +12,7 @@ import (
 	wasmd "github.com/CosmWasm/wasmd/app"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -55,16 +54,16 @@ func Setup(isCheckTx bool) *wasmd.WasmApp {
 
 // SetupWithGenesisAccounts initializes a new wasmd.WasmApp with the passed in
 // genesis accounts.
-func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *wasmd.WasmApp {
+func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
 	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, "")
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := wasmd.NewDefaultGenesisState()
 
-	authGenesis := auth.NewGenesisState(auth.DefaultParams(), genAccs)
+	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisStateBz := app.Codec().MustMarshalJSON(authGenesis)
-	genesisState[auth.ModuleName] = genesisStateBz
+	genesisState[authtypes.ModuleName] = genesisStateBz
 
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 	if err != nil {
@@ -124,27 +123,27 @@ func SignAndDeliver(
 }
 
 // GenTx generates a signed mock transaction.
-func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums []uint64, seq []uint64, priv ...crypto.PrivKey) auth.StdTx {
-	fee := auth.StdFee{
+func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums []uint64, seq []uint64, priv ...crypto.PrivKey) authtypes.StdTx {
+	fee := authtypes.StdFee{
 		Amount: feeAmt,
 		Gas:    gas,
 	}
 
-	sigs := make([]auth.StdSignature, len(priv))
+	sigs := make([]authtypes.StdSignature, len(priv))
 
 	memo := "Test tx"
 	for i, p := range priv {
 		// use a empty chainID for ease of testing
-		sig, err := p.Sign(auth.StdSignBytes(chainID, accnums[i], seq[i], fee, msgs, memo))
+		sig, err := p.Sign(authtypes.StdSignBytes(chainID, accnums[i], seq[i], fee, msgs, memo))
 		if err != nil {
 			panic(err)
 		}
 
-		sigs[i] = auth.StdSignature{
+		sigs[i] = authtypes.StdSignature{
 			PubKey:    p.PubKey().Bytes(),
 			Signature: sig,
 		}
 	}
 
-	return auth.NewStdTx(msgs, fee, sigs, memo)
+	return authtypes.NewStdTx(msgs, fee, sigs, memo)
 }

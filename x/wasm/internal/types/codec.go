@@ -3,7 +3,8 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	// "github.com/cosmos/cosmos-sdk/x/supply/exported"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // RegisterCodec registers the account types and interface
@@ -16,6 +17,18 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/clear-contract-admin", nil)
 }
 
+func RegisterInterfaces(registry types.InterfaceRegistry) {
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&MsgStoreCode{},
+		&MsgInstantiateContract{},
+		&MsgExecuteContract{},
+		&MsgMigrateContract{},
+		&MsgUpdateAdmin{},
+		&MsgClearAdmin{},
+	)
+}
+
 var (
 	amino = codec.New()
 
@@ -26,6 +39,6 @@ var (
 
 func init() {
 	RegisterCodec(amino)
-	codec.RegisterCrypto(amino)
+	cryptocodec.RegisterCrypto(amino)
 	amino.Seal()
 }

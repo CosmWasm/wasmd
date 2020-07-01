@@ -12,8 +12,8 @@ import (
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -378,9 +378,9 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())
 
-	appCodec, _ := MakeTestCodec()
+	appCodec := MakeTestCodec()
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	srcKeeper := NewKeeper(appCodec, keyContract, auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	srcKeeper := NewKeeper(appCodec, keyContract, authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	return srcKeeper, ctx, cleanup
 }
