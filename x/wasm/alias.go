@@ -66,6 +66,7 @@ var (
 	MakeTestCodec             = keeper.MakeTestCodec
 	CreateTestInput           = keeper.CreateTestInput
 	TestHandler               = keeper.TestHandler
+	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
@@ -84,6 +85,7 @@ var (
 	CodeKeyPrefix        = types.CodeKeyPrefix
 	ContractKeyPrefix    = types.ContractKeyPrefix
 	ContractStorePrefix  = types.ContractStorePrefix
+	EnabledProposalTypes = types.EnabledProposalTypes
 )
 
 type (

@@ -49,6 +49,7 @@ type Keeper struct {
 	messenger    MessageHandler
 	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
+	authZSchema   AuthorizationSchema
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -71,6 +72,7 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		bankKeeper:    bankKeeper,
 		messenger:     messenger,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
+		authZSchema:   DefaultAuthorizationSchema{},
 	}
 	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, keeper).Merge(customPlugins)
 	return keeper
@@ -294,34 +296,23 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
 func (k Keeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
-	contractInfo := k.GetContractInfo(ctx, contractAddress)
-	if contractInfo == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
-	}
-	if contractInfo.Admin == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported by this contract")
-	}
-	if !contractInfo.Admin.Equals(caller) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
-	}
-	contractInfo.Admin = newAdmin
-	k.setContractInfo(ctx, contractAddress, contractInfo)
-	return nil
+	return k.setContractAdmin(ctx, contractAddress, caller, newAdmin, k.authZSchema)
 }
 
 // ClearContractAdmin sets the admin value on the ContractInfo to nil, to disable further migrations/ updates.
 func (k Keeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
+	return k.setContractAdmin(ctx, contractAddress, caller, nil, k.authZSchema)
+}
+
+func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress, authZ AuthorizationSchema) error {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if contractInfo.Admin == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "migration not supported by this contract")
-	}
-	if !contractInfo.Admin.Equals(caller) {
+	if !authZ.CanModifyContractAdmin(*contractInfo, caller) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
 	}
-	contractInfo.Admin = nil
+	contractInfo.Admin = newAdmin
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 	return nil
 }
