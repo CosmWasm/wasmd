@@ -201,7 +201,9 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 		if err != nil {
 			return nil, err
 		}
-
+		if msg.sender != nil {
+			sender = msg.sender
+		}
 		sdkMsg := types.MsgExecuteContract{
 			Sender:    sender,
 			Contract:  contractAddr,
