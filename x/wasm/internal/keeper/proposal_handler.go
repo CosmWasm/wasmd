@@ -63,6 +63,10 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 }
 
 func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
 	contractAddr, err := k.Instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds)
 	if err != nil {
 		return err
@@ -80,6 +84,10 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 }
 
 func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
 	var caller sdk.AccAddress
 	res, err := k.migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
@@ -97,6 +105,10 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 }
 
 func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
 	var caller sdk.AccAddress
 	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
 		return err
@@ -113,6 +125,10 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminCon
 }
 
 func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
 	var caller sdk.AccAddress
 	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
