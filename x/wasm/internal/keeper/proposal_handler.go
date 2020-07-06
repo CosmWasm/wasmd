@@ -47,7 +47,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 		return err
 	}
 
-	codeID, err := k.Create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder)
+	codeID, err := k.create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 }
 
 func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateContractProposal) error {
-	contractAddr, err := k.Instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds)
+	contractAddr, err := k.instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 
 func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractProposal) error {
 	var caller sdk.AccAddress
-	res, err := k.Migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg)
+	res, err := k.migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 
 func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationSchema{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, types.OnlyAddress.With(p.NewAdmin), GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminCon
 
 func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationSchema{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, types.AllowNobody, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(

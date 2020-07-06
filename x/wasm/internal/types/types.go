@@ -30,10 +30,11 @@ func (m Model) ValidateBasic() error {
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
-	Source   string         `json:"source"`
-	Builder  string         `json:"builder"`
+	CodeHash          []byte         `json:"code_hash"`
+	Creator           sdk.AccAddress `json:"creator"`
+	Source            string         `json:"source"`
+	Builder           string         `json:"builder"`
+	InstantiateConfig AccessConfig   `json:"instantiate_config"`
 }
 
 func (c CodeInfo) ValidateBasic() error {
@@ -53,20 +54,22 @@ func (c CodeInfo) ValidateBasic() error {
 }
 
 // NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string, accessType AccessType) CodeInfo {
 	return CodeInfo{
-		CodeHash: codeHash,
-		Creator:  creator,
-		Source:   source,
-		Builder:  builder,
+		CodeHash:          codeHash,
+		Creator:           creator,
+		Source:            source,
+		Builder:           builder,
+		InstantiateConfig: accessType.With(creator),
 	}
 }
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
-	CodeID  uint64          `json:"code_id"`
-	Creator sdk.AccAddress  `json:"creator"`
-	Admin   sdk.AccAddress  `json:"admin,omitempty"`
+	CodeID       uint64         `json:"code_id"`
+	Creator      sdk.AccAddress `json:"creator"`
+	ModifyConfig AccessConfig   `json:"modify_config"`
+	//Admin   sdk.AccAddress  `json:"admin,omitempty"`
 	Label   string          `json:"label"`
 	InitMsg json.RawMessage `json:"init_msg,omitempty"`
 	// never show this in query results, just use for sorting
@@ -89,11 +92,7 @@ func (c *ContractInfo) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(c.Creator); err != nil {
 		return sdkerrors.Wrap(err, "creator")
 	}
-	if c.Admin != nil {
-		if err := sdk.VerifyAddressFormat(c.Admin); err != nil {
-			return sdkerrors.Wrap(err, "admin")
-		}
-	}
+	// todo: validate InstantiateConfig. Should "Nobody" be allowed to prevent future instances?
 	if err := validateLabel(c.Label); err != nil {
 		return sdkerrors.Wrap(err, "label")
 	}
@@ -153,14 +152,14 @@ func NewCreatedAt(ctx sdk.Context) *AbsoluteTxPosition {
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, createdAt *AbsoluteTxPosition) ContractInfo {
+func NewContractInfo(codeID uint64, creator sdk.AccAddress, initMsg []byte, label string, createdAt *AbsoluteTxPosition, accessConfig AccessConfig) ContractInfo {
 	return ContractInfo{
-		CodeID:  codeID,
-		Creator: creator,
-		Admin:   admin,
-		InitMsg: initMsg,
-		Label:   label,
-		Created: createdAt,
+		CodeID:       codeID,
+		Creator:      creator,
+		InitMsg:      initMsg,
+		Label:        label,
+		Created:      createdAt,
+		ModifyConfig: accessConfig,
 	}
 }
 
