@@ -83,8 +83,8 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 		return err
 	}
 
-	if msg.InitFunds.IsAnyNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
+	if !msg.InitFunds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
 	}
 
 	if len(msg.Admin) != 0 {

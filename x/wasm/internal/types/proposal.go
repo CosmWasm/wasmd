@@ -18,7 +18,7 @@ const (
 	ProposalTypeClearAdmin               = "ClearAdmin"
 )
 
-var EnabledProposalTypes = map[string]struct{}{
+var DefaultEnabledProposals = map[string]struct{}{
 	ProposalTypeStoreCode:                {},
 	ProposalTypeStoreInstantiateContract: {},
 	ProposalTypeMigrateContract:          {},
@@ -26,22 +26,22 @@ var EnabledProposalTypes = map[string]struct{}{
 	ProposalTypeClearAdmin:               {},
 }
 
-type GovProposal struct {
+type WasmProposal struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
 }
 
 // GetTitle returns the title of a parameter change proposal.
-func (p GovProposal) GetTitle() string { return p.Title }
+func (p WasmProposal) GetTitle() string { return p.Title }
 
 // GetDescription returns the description of a parameter change proposal.
-func (p GovProposal) GetDescription() string { return p.Description }
+func (p WasmProposal) GetDescription() string { return p.Description }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
-func (p GovProposal) ProposalRoute() string { return RouterKey }
+func (p WasmProposal) ProposalRoute() string { return RouterKey }
 
 // ValidateBasic validates the proposal
-func (p GovProposal) ValidateBasic() error {
+func (p WasmProposal) ValidateBasic() error {
 	if len(strings.TrimSpace(p.Title)) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
 	}
@@ -59,7 +59,7 @@ func (p GovProposal) ValidateBasic() error {
 }
 
 type StoreCodeProposal struct {
-	GovProposal
+	WasmProposal
 	// Creator is the address that "owns" the code object
 	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
 	// WASMByteCode can be raw or gzip compressed
@@ -75,7 +75,7 @@ func (p StoreCodeProposal) ProposalType() string { return ProposalTypeStoreCode 
 
 // ValidateBasic validates the proposal
 func (p StoreCodeProposal) ValidateBasic() error {
-	if err := p.GovProposal.ValidateBasic(); err != nil {
+	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	return nil
@@ -95,7 +95,7 @@ func (p StoreCodeProposal) String() string {
 }
 
 type InstantiateContractProposal struct {
-	GovProposal
+	WasmProposal
 	// Creator is the address that pays the init funds
 	Creator sdk.AccAddress `json:"sender" yaml:"sender"`
 	// Admin is an optional address that can execute migrations
@@ -113,7 +113,7 @@ func (p InstantiateContractProposal) ProposalType() string {
 
 // ValidateBasic validates the proposal
 func (p InstantiateContractProposal) ValidateBasic() error {
-	if err := p.GovProposal.ValidateBasic(); err != nil {
+	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(p.Creator); err != nil {
@@ -128,8 +128,8 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return err
 	}
 
-	if p.InitFunds.IsAnyNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative InitFunds")
+	if !p.InitFunds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
 	}
 
 	if len(p.Admin) != 0 {
@@ -155,7 +155,7 @@ func (p InstantiateContractProposal) String() string {
 }
 
 type MigrateContractProposal struct {
-	GovProposal
+	WasmProposal
 	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
 	Code       uint64          `json:"code_id" yaml:"code_id"`
 	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
@@ -166,7 +166,7 @@ func (p MigrateContractProposal) ProposalType() string { return ProposalTypeMigr
 
 // ValidateBasic validates the proposal
 func (p MigrateContractProposal) ValidateBasic() error {
-	if err := p.GovProposal.ValidateBasic(); err != nil {
+	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	if p.Code == 0 {
@@ -192,7 +192,7 @@ func (p MigrateContractProposal) String() string {
 }
 
 type UpdateAdminContractProposal struct {
-	GovProposal
+	WasmProposal
 	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
@@ -202,7 +202,7 @@ func (p UpdateAdminContractProposal) ProposalType() string { return ProposalType
 
 // ValidateBasic validates the proposal
 func (p UpdateAdminContractProposal) ValidateBasic() error {
-	if err := p.GovProposal.ValidateBasic(); err != nil {
+	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
@@ -229,9 +229,8 @@ func (p UpdateAdminContractProposal) String() string {
 }
 
 type ClearAdminContractProposal struct {
-	GovProposal
+	WasmProposal
 
-	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
@@ -240,7 +239,7 @@ func (p ClearAdminContractProposal) ProposalType() string { return ProposalTypeC
 
 // ValidateBasic validates the proposal
 func (p ClearAdminContractProposal) ValidateBasic() error {
-	if err := p.GovProposal.ValidateBasic(); err != nil {
+	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {

@@ -251,8 +251,8 @@ func NewWasmApp(
 	supportedFeatures := "staking"
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
 
-	if len(wasm.EnabledProposalTypes) != 0 { // todo: how to pass configuration? this is default to All gov proposals
-		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, wasm.EnabledProposalTypes))
+	if len(wasm.DefaultEnabledProposals) != 0 {
+		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, wasm.DefaultEnabledProposals))
 	}
 
 	app.govKeeper = gov.NewKeeper(

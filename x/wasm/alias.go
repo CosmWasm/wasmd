@@ -69,23 +69,23 @@ var (
 	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
 
 	// variable aliases
-	ModuleCdc            = types.ModuleCdc
-	DefaultCodespace     = types.DefaultCodespace
-	ErrCreateFailed      = types.ErrCreateFailed
-	ErrAccountExists     = types.ErrAccountExists
-	ErrInstantiateFailed = types.ErrInstantiateFailed
-	ErrExecuteFailed     = types.ErrExecuteFailed
-	ErrGasLimit          = types.ErrGasLimit
-	ErrInvalidGenesis    = types.ErrInvalidGenesis
-	ErrNotFound          = types.ErrNotFound
-	ErrQueryFailed       = types.ErrQueryFailed
-	ErrInvalidMsg        = types.ErrInvalidMsg
-	KeyLastCodeID        = types.KeyLastCodeID
-	KeyLastInstanceID    = types.KeyLastInstanceID
-	CodeKeyPrefix        = types.CodeKeyPrefix
-	ContractKeyPrefix    = types.ContractKeyPrefix
-	ContractStorePrefix  = types.ContractStorePrefix
-	EnabledProposalTypes = types.EnabledProposalTypes
+	ModuleCdc               = types.ModuleCdc
+	DefaultCodespace        = types.DefaultCodespace
+	ErrCreateFailed         = types.ErrCreateFailed
+	ErrAccountExists        = types.ErrAccountExists
+	ErrInstantiateFailed    = types.ErrInstantiateFailed
+	ErrExecuteFailed        = types.ErrExecuteFailed
+	ErrGasLimit             = types.ErrGasLimit
+	ErrInvalidGenesis       = types.ErrInvalidGenesis
+	ErrNotFound             = types.ErrNotFound
+	ErrQueryFailed          = types.ErrQueryFailed
+	ErrInvalidMsg           = types.ErrInvalidMsg
+	KeyLastCodeID           = types.KeyLastCodeID
+	KeyLastInstanceID       = types.KeyLastInstanceID
+	CodeKeyPrefix           = types.CodeKeyPrefix
+	ContractKeyPrefix       = types.ContractKeyPrefix
+	ContractStorePrefix     = types.ContractStorePrefix
+	DefaultEnabledProposals = types.DefaultEnabledProposals
 )
 
 type (

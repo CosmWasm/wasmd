@@ -81,7 +81,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 
 func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractProposal) error {
 	var caller sdk.AccAddress
-	res, err := k.Migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg)
+	res, err := k.migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 
 func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationSchema{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminCon
 
 func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationSchema{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(
