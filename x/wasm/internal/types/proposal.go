@@ -78,6 +78,22 @@ func (p StoreCodeProposal) ValidateBasic() error {
 	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
+	if err := sdk.VerifyAddressFormat(p.Creator); err != nil {
+		return err
+	}
+
+	if err := validateWasmCode(p.WASMByteCode); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+	}
+
+	if err := validateSourceURL(p.Source); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "source %s", err.Error())
+	}
+
+	if err := validateBuilder(p.Builder); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "builder %s", err.Error())
+	}
+
 	return nil
 }
 

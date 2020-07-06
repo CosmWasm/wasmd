@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
-	// "github.com/cosmos/cosmos-sdk/x/supply/exported"
 )
 
 // RegisterCodec registers the account types and interface
@@ -13,6 +12,12 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/migrate", nil)
 	cdc.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/update-contract-admin", nil)
 	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/clear-contract-admin", nil)
+
+	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/store-proposal", nil)
+	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/instantiate-proposal", nil)
+	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/migrate-proposal", nil)
+	cdc.RegisterConcrete(&UpdateAdminContractProposal{}, "wasm/update-admin-proposal", nil)
+	cdc.RegisterConcrete(&ClearAdminContractProposal{}, "wasm/clear-admin-proposal", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module
