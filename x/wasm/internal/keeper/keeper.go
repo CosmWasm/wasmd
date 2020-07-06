@@ -94,13 +94,13 @@ func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 }
 
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
-	return k.create(ctx, creator, wasmCode, source, builder, k.authZPolicy)
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig) (codeID uint64, err error) {
+	return k.create(ctx, creator, wasmCode, source, builder, instantiateAccess, k.authZPolicy)
 }
 
-func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, authZ AuthorizationPolicy) (codeID uint64, err error) {
+func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
 	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
-		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
@@ -115,7 +115,11 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder, k.getInstantiateAccessConfig(ctx))
+	if instantiateAccess == nil {
+		defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
+		instantiateAccess = &defaultAccessConfig
+	}
+	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder, *instantiateAccess)
 	// 0x01 | codeID (uint64) -> ContractInfo
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 
@@ -182,7 +186,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)
 
 	if !authZ.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
 	// prepare params for contract instantiate call
@@ -219,11 +223,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	// persist instance
 	createdAt := types.NewCreatedAt(ctx)
 
-	modifyConfig := types.AllowNobody // TODO: How about default to creator?
-	if admin != nil {
-		modifyConfig = types.OnlyAddress.With(admin)
-	}
-	instance := types.NewContractInfo(codeID, creator, initMsg, label, createdAt, modifyConfig)
+	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 
 	return contractAddress, nil
@@ -287,8 +287,8 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if contractInfo == nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if !authZ.CanModifyContract(contractInfo.ModifyConfig, caller) {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+	if !authZ.CanModifyContract(contractInfo.Admin, caller) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not migrate")
 	}
 
 	newCodeInfo := k.GetCodeInfo(ctx, newCodeID)
@@ -332,23 +332,23 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
 func (k Keeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
-	return k.setContractAdmin(ctx, contractAddress, caller, types.OnlyAddress.With(newAdmin), k.authZPolicy)
+	return k.setContractAdmin(ctx, contractAddress, caller, newAdmin, k.authZPolicy)
 }
 
 // ClearContractAdmin sets the admin value on the ContractInfo to nil, to disable further migrations/ updates.
 func (k Keeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
-	return k.setContractAdmin(ctx, contractAddress, caller, types.AllowNobody, k.authZPolicy)
+	return k.setContractAdmin(ctx, contractAddress, caller, nil, k.authZPolicy)
 }
 
-func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newModifyConfig types.AccessConfig, authZ AuthorizationPolicy) error {
+func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
-	if !authZ.CanModifyContract(contractInfo.ModifyConfig, caller) {
-		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "no permission")
+	if !authZ.CanModifyContract(contractInfo.Admin, caller) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
-	contractInfo.ModifyConfig = newModifyConfig
+	contractInfo.Admin = newAdmin
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 	return nil
 }

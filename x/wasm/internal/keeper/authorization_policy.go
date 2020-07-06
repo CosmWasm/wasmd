@@ -8,7 +8,7 @@ import (
 type AuthorizationPolicy interface {
 	CanCreateCode(c types.AccessConfig, creator sdk.AccAddress) bool
 	CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool
-	CanModifyContract(c types.AccessConfig, actor sdk.AccAddress) bool
+	CanModifyContract(admin, actor sdk.AccAddress) bool
 }
 
 type DefaultAuthorizationPolicy struct {
@@ -22,8 +22,8 @@ func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessCo
 	return config.Allowed(actor)
 }
 
-func (p DefaultAuthorizationPolicy) CanModifyContract(config types.AccessConfig, actor sdk.AccAddress) bool {
-	return config.Allowed(actor)
+func (p DefaultAuthorizationPolicy) CanModifyContract(admin, actor sdk.AccAddress) bool {
+	return admin != nil && admin.Equals(actor)
 }
 
 type GovAuthorizationPolicy struct {
@@ -37,6 +37,6 @@ func (p GovAuthorizationPolicy) CanInstantiateContract(types.AccessConfig, sdk.A
 	return true
 }
 
-func (p GovAuthorizationPolicy) CanModifyContract(types.AccessConfig, sdk.AccAddress) bool {
+func (p GovAuthorizationPolicy) CanModifyContract(sdk.AccAddress, sdk.AccAddress) bool {
 	return true
 }

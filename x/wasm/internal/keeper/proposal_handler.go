@@ -47,7 +47,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 		return err
 	}
 
-	codeID, err := k.create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder, GovAuthorizationPolicy{})
+	codeID, err := k.create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 
 func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, types.OnlyAddress.With(p.NewAdmin), GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
@@ -114,7 +114,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminCon
 
 func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminContractProposal) error {
 	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, types.AllowNobody, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(

@@ -68,6 +68,8 @@ type StoreCodeProposal struct {
 	Source string `json:"source" yaml:"source"`
 	// Builder is a valid docker image name with tag, optional
 	Builder string `json:"builder" yaml:"builder"`
+
+	InstantiatePermission *AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
 
 // ProposalType returns the type
@@ -78,6 +80,12 @@ func (p StoreCodeProposal) ValidateBasic() error {
 	if err := p.GovProposal.ValidateBasic(); err != nil {
 		return err
 	}
+	if p.InstantiatePermission != nil {
+		if err := p.InstantiatePermission.ValidateBasic(); err != nil {
+			return sdkerrors.Wrap(err, "instantiate permission")
+		}
+	}
+	// todo: validate everything
 	return nil
 }
 
