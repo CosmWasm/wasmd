@@ -16,8 +16,8 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/store-proposal", nil)
 	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/instantiate-proposal", nil)
 	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/migrate-proposal", nil)
-	cdc.RegisterConcrete(&UpdateAdminContractProposal{}, "wasm/update-admin-proposal", nil)
-	cdc.RegisterConcrete(&ClearAdminContractProposal{}, "wasm/clear-admin-proposal", nil)
+	cdc.RegisterConcrete(&UpdateAdminProposal{}, "wasm/update-admin-proposal", nil)
+	cdc.RegisterConcrete(&ClearAdminProposal{}, "wasm/clear-admin-proposal", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

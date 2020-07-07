@@ -42,13 +42,18 @@ func (p WasmProposal) ProposalRoute() string { return RouterKey }
 
 // ValidateBasic validates the proposal
 func (p WasmProposal) ValidateBasic() error {
-	if len(strings.TrimSpace(p.Title)) == 0 {
+	if strings.TrimSpace(p.Title) != p.Title {
+		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title must not start/end with white spaces")
+	}
+	if len(p.Title) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
 	}
 	if len(p.Title) > govtypes.MaxTitleLength {
 		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govtypes.MaxTitleLength)
 	}
-
+	if strings.TrimSpace(p.Description) != p.Description {
+		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
+	}
 	if len(p.Description) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")
 	}
@@ -99,15 +104,14 @@ func (p StoreCodeProposal) ValidateBasic() error {
 
 // String implements the Stringer interface.
 func (p StoreCodeProposal) String() string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf(`Store Code Proposal:
+	return fmt.Sprintf(`Store Code Proposal:
   Title:       %s
   Description: %s
-  Changes:
-`, p.Title, p.Description))
-	// todo: print all data
-	return b.String()
+  Creator:     %s
+  WasmCode:    %X
+  Source:      %s
+  Builder:     %s
+`, p.Title, p.Description, p.Creator, p.WASMByteCode, p.Source, p.Builder)
 }
 
 type InstantiateContractProposal struct {
@@ -159,15 +163,17 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 
 // String implements the Stringer interface.
 func (p InstantiateContractProposal) String() string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf(`Instantiate Code Proposal:
+	return fmt.Sprintf(`Instantiate Code Proposal:
   Title:       %s
   Description: %s
-  Changes:
-`, p.Title, p.Description))
-	// todo: print all data
-	return b.String()
+  Creator:     %s
+  Admin:       %s
+  Code id:     %d
+  Label:       %s
+  InitMsg:     %q
+  InitFunds:   %s
+`, p.Title, p.Description, p.Creator, p.Admin, p.Code, p.Label, p.InitMsg, p.InitFunds)
+
 }
 
 type MigrateContractProposal struct {
@@ -175,6 +181,8 @@ type MigrateContractProposal struct {
 	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
 	Code       uint64          `json:"code_id" yaml:"code_id"`
 	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
+	// Sender is the role that is passed to the contract's environment
+	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
 // ProposalType returns the type
@@ -191,33 +199,37 @@ func (p MigrateContractProposal) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
+	if err := sdk.VerifyAddressFormat(p.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
 	return nil
 }
 
 // String implements the Stringer interface.
 func (p MigrateContractProposal) String() string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf(`Migrate Code Proposal:
+	return fmt.Sprintf(`Migrate Contract Proposal:
   Title:       %s
   Description: %s
-  Changes:
-`, p.Title, p.Description))
-	// todo: print all data
-	return b.String()
+  Contract:    %s
+  Code id:     %d
+  Sender:      %s
+  MigrateMsg   %q
+`, p.Title, p.Description, p.Contract, p.Code, p.Sender, p.MigrateMsg)
 }
 
-type UpdateAdminContractProposal struct {
+type UpdateAdminProposal struct {
 	WasmProposal
 	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	// Sender is the role that is passed to the contract's environment
+	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
 // ProposalType returns the type
-func (p UpdateAdminContractProposal) ProposalType() string { return ProposalTypeUpdateAdmin }
+func (p UpdateAdminProposal) ProposalType() string { return ProposalTypeUpdateAdmin }
 
 // ValidateBasic validates the proposal
-func (p UpdateAdminContractProposal) ValidateBasic() error {
+func (p UpdateAdminProposal) ValidateBasic() error {
 	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
@@ -227,52 +239,54 @@ func (p UpdateAdminContractProposal) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(p.NewAdmin); err != nil {
 		return sdkerrors.Wrap(err, "new admin")
 	}
-
+	if err := sdk.VerifyAddressFormat(p.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
 	return nil
 }
 
 // String implements the Stringer interface.
-func (p UpdateAdminContractProposal) String() string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf(`Update Code Admin Proposal:
+func (p UpdateAdminProposal) String() string {
+	return fmt.Sprintf(`Update Contract Admin Proposal:
   Title:       %s
   Description: %s
-  Changes:
-`, p.Title, p.Description))
-	// todo: print all data
-	return b.String()
+  Contract:    %s
+  Sender:      %s
+  New Admin:   %s
+`, p.Title, p.Description, p.Contract, p.Sender, p.NewAdmin)
 }
 
-type ClearAdminContractProposal struct {
+type ClearAdminProposal struct {
 	WasmProposal
 
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	// Sender is the role that is passed to the contract's environment
+	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
 // ProposalType returns the type
-func (p ClearAdminContractProposal) ProposalType() string { return ProposalTypeClearAdmin }
+func (p ClearAdminProposal) ProposalType() string { return ProposalTypeClearAdmin }
 
 // ValidateBasic validates the proposal
-func (p ClearAdminContractProposal) ValidateBasic() error {
+func (p ClearAdminProposal) ValidateBasic() error {
 	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
+	if err := sdk.VerifyAddressFormat(p.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
 	return nil
 }
 
 // String implements the Stringer interface.
-func (p ClearAdminContractProposal) String() string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf(`Clear Code Admin Proposal:
+func (p ClearAdminProposal) String() string {
+	return fmt.Sprintf(`Clear Contract Admin Proposal:
   Title:       %s
   Description: %s
-  Changes:
-`, p.Title, p.Description))
-	// todo: print all data
-	return b.String()
+  Contract:    %s
+  Sender:      %s
+`, p.Title, p.Description, p.Contract, p.Sender)
 }

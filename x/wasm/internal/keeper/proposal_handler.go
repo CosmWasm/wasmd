@@ -32,9 +32,9 @@ func NewWasmProposalHandler(k Keeper, enabledTypes map[string]struct{}) govtypes
 			return handleInstantiateProposal(ctx, k, *c)
 		case *types.MigrateContractProposal:
 			return handleMigrateProposal(ctx, k, *c)
-		case *types.UpdateAdminContractProposal:
+		case *types.UpdateAdminProposal:
 			return handleUpdateAdminProposal(ctx, k, *c)
-		case *types.ClearAdminContractProposal:
+		case *types.ClearAdminProposal:
 			return handleClearAdminProposal(ctx, k, *c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
@@ -88,8 +88,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 		return err
 	}
 
-	var caller sdk.AccAddress
-	res, err := k.migrate(ctx, p.Contract, caller, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
+	res, err := k.migrate(ctx, p.Contract, p.Sender, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -104,13 +103,12 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 	return nil
 }
 
-func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminContractProposal) error {
+func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 
-	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, p.Sender, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
@@ -124,13 +122,12 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminCon
 	return nil
 }
 
-func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminContractProposal) error {
+func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 
-	var caller sdk.AccAddress
-	if err := k.setContractAdmin(ctx, p.Contract, caller, nil, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, p.Sender, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(
