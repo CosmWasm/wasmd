@@ -2,9 +2,12 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/x/distribution"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -39,6 +42,7 @@ func MakeTestCodec() *codec.Codec {
 	supply.AppModuleBasic{}.RegisterCodec(cdc)
 	staking.AppModuleBasic{}.RegisterCodec(cdc)
 	distribution.AppModuleBasic{}.RegisterCodec(cdc)
+	gov.RegisterCodec(cdc)
 	wasmTypes.RegisterCodec(cdc)
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
@@ -60,6 +64,8 @@ type TestKeepers struct {
 	WasmKeeper    Keeper
 	DistKeeper    distribution.Keeper
 	SupplyKeeper  supply.Keeper
+	GovKeeper     gov.Keeper
+	BankKeeper    bank.Keeper
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -71,6 +77,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	keyDistro := sdk.NewKVStoreKey(distribution.StoreKey)
 	keyParams := sdk.NewKVStoreKey(params.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(params.TStoreKey)
+	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -81,6 +88,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	ms.MountStoreWithDB(keySupply, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyDistro, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyGov, sdk.StoreTypeIAVL, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
 
@@ -113,7 +121,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		//mint.ModuleName:           {supply.Minter},
 		staking.BondedPoolName:    {supply.Burner, supply.Staking},
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
-		//gov.ModuleName:            {supply.Burner},
+		gov.ModuleName:            {supply.Burner},
 	}
 
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
@@ -164,12 +172,27 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	router.AddRoute(wasmTypes.RouterKey, TestHandler(keeper))
 
+	govRouter := gov.NewRouter().
+		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(wasmTypes.RouterKey, NewWasmProposalHandler(keeper, wasmTypes.DefaultEnabledProposals))
+
+	govKeeper := gov.NewKeeper(
+		cdc, keyGov, pk.Subspace(govtypes.DefaultParamspace).WithKeyTable(gov.ParamKeyTable()), supplyKeeper, stakingKeeper, govRouter,
+	)
+
+	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
+	govKeeper.SetDepositParams(ctx, govtypes.DefaultDepositParams())
+	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
+	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
+
 	keepers := TestKeepers{
 		AccountKeeper: accountKeeper,
 		SupplyKeeper:  supplyKeeper,
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
 		WasmKeeper:    keeper,
+		GovKeeper:     govKeeper,
+		BankKeeper:    bankKeeper,
 	}
 	return ctx, keepers
 }
