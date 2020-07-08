@@ -15,6 +15,8 @@ type MsgStoreCode struct {
 	Source string `json:"source" yaml:"source"`
 	// Builder is a valid docker image name with tag, optional
 	Builder string `json:"builder" yaml:"builder"`
+	// InstantiatePermission to apply on contract creation, optional
+	InstantiatePermission *AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
 
 func (msg MsgStoreCode) Route() string {
@@ -40,6 +42,11 @@ func (msg MsgStoreCode) ValidateBasic() error {
 
 	if err := validateBuilder(msg.Builder); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "builder %s", err.Error())
+	}
+	if msg.InstantiatePermission != nil {
+		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
+			return sdkerrors.Wrap(err, "instantiate permission")
+		}
 	}
 	return nil
 }

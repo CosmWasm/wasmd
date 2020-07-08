@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -25,6 +27,8 @@ const (
 	Everybody   AccessType = 3
 )
 
+var AllAccessTypes = []AccessType{Nobody, OnlyAddress, Everybody}
+
 func (a AccessType) With(addr sdk.AccAddress) AccessConfig {
 	switch a {
 	case Nobody:
@@ -41,8 +45,12 @@ func (a AccessType) With(addr sdk.AccAddress) AccessConfig {
 }
 
 type AccessConfig struct {
-	Type    AccessType     `json:"type"`
-	Address sdk.AccAddress `json:"address"`
+	Type    AccessType     `json:"type" yaml:"type"`
+	Address sdk.AccAddress `json:"address" yaml:"address"`
+}
+
+func (a AccessConfig) Equals(o AccessConfig) bool {
+	return a.Type == o.Type && a.Address.Equals(o.Address)
 }
 
 var (
@@ -51,12 +59,47 @@ var (
 	AllowNobody         = AccessConfig{Type: Nobody}
 )
 
-// ParamKeyTable type declaration for parameters
+// Params defines the set of wasm parameters.
+type Params struct {
+	UploadAccess                 AccessConfig `json:"upload_access" yaml:"upload_access"`
+	InstantiateDefaultPermission AccessType   `json:"instantiate_default_permission" yaml:"instantiate_default_permission"`
+}
+
+// ParamKeyTable returns the parameter key table.
 func ParamKeyTable() params.KeyTable {
-	return params.NewKeyTable(
-		params.NewParamSetPair(ParamStoreKeyUploadAccess, AllowEverybody, validateAccessConfig),
-		params.NewParamSetPair(ParamStoreKeyInstantiateAccess, Everybody, validateAccessType),
-	)
+	return params.NewKeyTable().RegisterParamSet(&Params{})
+}
+
+// DefaultParams returns default wasm parameters
+func DefaultParams() Params {
+	return Params{
+		UploadAccess:                 AllowEverybody,
+		InstantiateDefaultPermission: Everybody,
+	}
+}
+
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}
+
+// ParamSetPairs returns the parameter set pairs.
+func (p *Params) ParamSetPairs() params.ParamSetPairs {
+	return params.ParamSetPairs{
+		params.NewParamSetPair(ParamStoreKeyUploadAccess, &p.UploadAccess, validateAccessConfig),
+		params.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
+	}
+}
+
+// ValidateBasic performs basic validation on wasm parameters
+func (p Params) ValidateBasic() error {
+	if err := validateAccessType(p.InstantiateDefaultPermission); err != nil {
+		return errors.Wrap(err, "instantiate default permission")
+	}
+	if err := validateAccessConfig(p.UploadAccess); err != nil {
+		return errors.Wrap(err, "upload access")
+	}
+	return nil
 }
 
 func validateAccessConfig(i interface{}) error {
@@ -75,8 +118,12 @@ func validateAccessType(i interface{}) error {
 	if v == Undefined {
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	}
-	// TODO: should we prevent Nobody here?
-	return nil
+	for i := range AllAccessTypes {
+		if AllAccessTypes[i] == v {
+			return nil
+		}
+	}
+	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %d", v)
 }
 
 func (v AccessConfig) ValidateBasic() error {
@@ -87,10 +134,11 @@ func (v AccessConfig) ValidateBasic() error {
 		if len(v.Address) != 0 {
 			return sdkerrors.Wrap(ErrInvalid, "address not allowed for this type")
 		}
+		return nil
 	case OnlyAddress:
 		return sdk.VerifyAddressFormat(v.Address)
 	}
-	return sdkerrors.Wrap(ErrInvalid, "unknown type")
+	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %d", v.Type)
 }
 
 func (v AccessConfig) Allowed(actor sdk.AccAddress) bool {

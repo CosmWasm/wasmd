@@ -90,6 +90,7 @@ func TestValidateWasmProposal(t *testing.T) {
 
 func TestValidateStoreCodeProposal(t *testing.T) {
 	var (
+		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, sdk.AddrLen)
 		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
 	)
 
@@ -100,6 +101,13 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		"all good": {
 			src: StoreCodeProposalFixture(),
 		},
+		"with instantiate permission": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				accessConfig := OnlyAddress.With(anyAddress)
+				p.InstantiatePermission = &accessConfig
+			}),
+		},
+
 		"without source": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				p.Source = ""
@@ -144,6 +152,12 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		"builder invalid": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				p.Builder = "not a builder"
+			}),
+			expErr: true,
+		},
+		"with invalid instantiate permission": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.InstantiatePermission = &AccessConfig{}
 			}),
 			expErr: true,
 		},

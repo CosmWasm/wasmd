@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	DefaultParamspace             = types.DefaultParamspace
 	ModuleName                    = types.ModuleName
 	StoreKey                      = types.StoreKey
 	TStoreKey                     = types.TStoreKey
@@ -48,6 +49,7 @@ var (
 	NewWasmCoins              = types.NewWasmCoins
 	ParseEvents               = types.ParseEvents
 	DefaultWasmConfig         = types.DefaultWasmConfig
+	DefaultParams             = types.DefaultParams
 	InitGenesis               = keeper.InitGenesis
 	ExportGenesis             = keeper.ExportGenesis
 	NewMessageHandler         = keeper.NewMessageHandler

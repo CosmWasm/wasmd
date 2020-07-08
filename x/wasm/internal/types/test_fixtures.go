@@ -17,6 +17,7 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	)
 
 	fixture := GenesisState{
+		Params:    DefaultParams(),
 		Codes:     make([]Code, numCodes),
 		Contracts: make([]Contract, numContracts),
 		Sequences: make([]Sequence, numSequences),

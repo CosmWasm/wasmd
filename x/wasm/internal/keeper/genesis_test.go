@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/require"
@@ -22,13 +23,13 @@ import (
 )
 
 func TestGenesisExportImport(t *testing.T) {
-	srcKeeper, srcCtx, srcCleanup := setupKeeper(t)
+	srcKeeper, srcCtx, srcStoreKeys, srcCleanup := setupKeeper(t)
 	defer srcCleanup()
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
 	// store some test data
-	f := fuzz.New().Funcs(FuzzAddr, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel)
+	f := fuzz.New().Funcs(FuzzAddr, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel, FuzzAccessType, FuzzAccessConfig)
 	for i := 0; i < 25; i++ {
 		var (
 			codeInfo    types.CodeInfo
@@ -39,13 +40,16 @@ func TestGenesisExportImport(t *testing.T) {
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
 
-		codeID, err := srcKeeper.Create(srcCtx, codeInfo.Creator, wasmCode, codeInfo.Source, codeInfo.Builder)
+		codeID, err := srcKeeper.Create(srcCtx, codeInfo.Creator, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		contract.CodeID = codeID
 		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
 		srcKeeper.setContractInfo(srcCtx, contractAddr, &contract)
 		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
+	var wasmParams types.Params
+	f.Fuzz(&wasmParams)
+	srcKeeper.setParams(srcCtx, wasmParams)
 
 	// export
 	genesisState := ExportGenesis(srcCtx, srcKeeper)
@@ -62,23 +66,25 @@ func TestGenesisExportImport(t *testing.T) {
 	})
 
 	// re-import
-	dstKeeper, dstCtx, dstCleanup := setupKeeper(t)
+	dstKeeper, dstCtx, dstStoreKeys, dstCleanup := setupKeeper(t)
 	defer dstCleanup()
 
 	InitGenesis(dstCtx, dstKeeper, genesisState)
 
 	// compare whole DB
-	srcIT := srcCtx.KVStore(srcKeeper.storeKey).Iterator(nil, nil)
-	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
+	for j := range srcStoreKeys {
+		srcIT := srcCtx.KVStore(srcStoreKeys[j]).Iterator(nil, nil)
+		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
-	for i := 0; srcIT.Valid(); i++ {
-		require.True(t, dstIT.Valid(), "destination DB has less elements than source. Missing: %q", srcIT.Key())
-		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-		require.Equal(t, srcIT.Value(), dstIT.Value(), "element (%d): %s", i, srcIT.Key())
-		srcIT.Next()
-		dstIT.Next()
+		for i := 0; srcIT.Valid(); i++ {
+			require.True(t, dstIT.Valid(), "destination DB has less elements than source. Missing: %q", srcIT.Key())
+			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
+			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %s", srcStoreKeys[j].Name(), i, srcIT.Key())
+			srcIT.Next()
+			dstIT.Next()
+		}
+		require.False(t, dstIT.Valid())
 	}
-	require.False(t, dstIT.Valid())
 }
 
 func TestFailFastImport(t *testing.T) {
@@ -101,11 +107,11 @@ func TestFailFastImport(t *testing.T) {
 					},
 					CodesBytes: wasmCode,
 				}},
-				Contracts: nil,
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
 					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
+				Params: types.DefaultParams(),
 			},
 			expSuccess: true,
 		},
@@ -126,11 +132,11 @@ func TestFailFastImport(t *testing.T) {
 					},
 					CodesBytes: wasmCode,
 				}},
-				Contracts: nil,
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 10},
 					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
+				Params: types.DefaultParams(),
 			},
 			expSuccess: true,
 		},
@@ -156,6 +162,7 @@ func TestFailFastImport(t *testing.T) {
 					{IDKey: types.KeyLastCodeID, Value: 3},
 					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
+				Params: types.DefaultParams(),
 			},
 			expSuccess: true,
 		},
@@ -168,7 +175,7 @@ func TestFailFastImport(t *testing.T) {
 				},
 				CodesBytes: wasmCode,
 			}},
-			Contracts: nil,
+			Params: types.DefaultParams(),
 		}},
 		"prevent duplicate codeIDs": {src: types.GenesisState{
 			Codes: []types.Code{
@@ -189,6 +196,7 @@ func TestFailFastImport(t *testing.T) {
 					CodesBytes: wasmCode,
 				},
 			},
+			Params: types.DefaultParams(),
 		}},
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
@@ -210,6 +218,7 @@ func TestFailFastImport(t *testing.T) {
 					{IDKey: types.KeyLastCodeID, Value: 2},
 					{IDKey: types.KeyLastInstanceID, Value: 2},
 				},
+				Params: types.DefaultParams(),
 			},
 			expSuccess: true,
 		},
@@ -236,6 +245,7 @@ func TestFailFastImport(t *testing.T) {
 					{IDKey: types.KeyLastCodeID, Value: 2},
 					{IDKey: types.KeyLastInstanceID, Value: 3},
 				},
+				Params: types.DefaultParams(),
 			},
 			expSuccess: true,
 		},
@@ -247,6 +257,7 @@ func TestFailFastImport(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 		"prevent duplicate contract address": {
@@ -268,6 +279,7 @@ func TestFailFastImport(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
 					},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 		"prevent duplicate contract model keys": {
@@ -296,6 +308,7 @@ func TestFailFastImport(t *testing.T) {
 						},
 					},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 		"prevent duplicate sequences": {
@@ -304,6 +317,7 @@ func TestFailFastImport(t *testing.T) {
 					{IDKey: []byte("foo"), Value: 1},
 					{IDKey: []byte("foo"), Value: 9999},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 		"prevent code id seq init value == max codeID used": {
@@ -319,6 +333,7 @@ func TestFailFastImport(t *testing.T) {
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 1},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 		"prevent contract id seq init value == count contracts": {
@@ -341,13 +356,14 @@ func TestFailFastImport(t *testing.T) {
 					{IDKey: types.KeyLastCodeID, Value: 2},
 					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
+				Params: types.DefaultParams(),
 			},
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keeper, ctx, cleanup := setupKeeper(t)
+			keeper, ctx, _, cleanup := setupKeeper(t)
 			defer cleanup()
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
@@ -361,26 +377,34 @@ func TestFailFastImport(t *testing.T) {
 	}
 }
 
-func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {
+func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
+	t.Helper()
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	cleanup := func() { os.RemoveAll(tempDir) }
 	//t.Cleanup(cleanup) todo: add with Go 1.14
+	var (
+		keyParams  = sdk.NewKVStoreKey(params.StoreKey)
+		tkeyParams = sdk.NewTransientStoreKey(params.TStoreKey)
+		keyWasm    = sdk.NewKVStoreKey(wasmTypes.StoreKey)
+	)
 
-	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyContract, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, abci.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())
-
 	cdc := MakeTestCodec()
+	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
 	wasmConfig := wasmTypes.DefaultWasmConfig()
+	srcKeeper := NewKeeper(cdc, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	srcKeeper.setParams(ctx, wasmTypes.DefaultParams())
 
-	srcKeeper := NewKeeper(cdc, keyContract, auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
-	return srcKeeper, ctx, cleanup
+	return srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup
 }

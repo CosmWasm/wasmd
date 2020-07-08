@@ -30,7 +30,7 @@ func TestQueryContractState(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -159,7 +159,7 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()

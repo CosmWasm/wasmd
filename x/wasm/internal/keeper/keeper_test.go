@@ -44,13 +44,63 @@ func TestCreate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
 	storedCode, err := keeper.GetByteCode(ctx, contractID)
 	require.NoError(t, err)
 	require.Equal(t, wasmCode, storedCode)
+}
+
+func TestCreateWithParamPermissions(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+	otherAddr := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		srcPermission types.AccessConfig
+		expError      *sdkerrors.Error
+	}{
+		"default": {
+			srcPermission: types.DefaultUploadAccess,
+		},
+		"everybody": {
+			srcPermission: types.AllowEverybody,
+		},
+		"nobody": {
+			srcPermission: types.AllowNobody,
+			expError:      sdkerrors.ErrUnauthorized,
+		},
+		"onlyAddress with matching address": {
+			srcPermission: types.OnlyAddress.With(creator),
+		},
+		"onlyAddress with non matching address": {
+			srcPermission: types.OnlyAddress.With(otherAddr),
+			expError:      sdkerrors.ErrUnauthorized,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			params := types.DefaultParams()
+			params.UploadAccess = spec.srcPermission
+			keeper.setParams(ctx, params)
+			_, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+			require.True(t, spec.expError.Is(err), err)
+			if spec.expError != nil {
+				return
+			}
+		})
+	}
 }
 
 func TestCreateDuplicate(t *testing.T) {
@@ -67,12 +117,12 @@ func TestCreateDuplicate(t *testing.T) {
 	require.NoError(t, err)
 
 	// create one copy
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// create second copy
-	duplicateID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2")
+	duplicateID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), duplicateID)
 
@@ -102,14 +152,14 @@ func TestCreateWithSimulation(t *testing.T) {
 	require.NoError(t, err)
 
 	// create this once in simulation mode
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.57.2")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.57.2", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// then try to create it in non-simulation mode (should not fail)
 	ctx, keepers = CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
 	accKeeper, keeper = keepers.AccountKeeper, keepers.WasmKeeper
-	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.7.2")
+	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.7.2", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
@@ -157,7 +207,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -181,7 +231,7 @@ func TestInstantiate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -202,7 +252,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11536), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11542), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, addr)
@@ -250,7 +300,7 @@ func TestExecute(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -297,7 +347,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11bef), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11bfb), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -344,7 +394,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -378,7 +428,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -419,7 +469,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -466,9 +516,9 @@ func TestMigrate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	newContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	newContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 	require.NotEqual(t, originalContractID, newContractID)
 
@@ -601,9 +651,9 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	burnerCode, err := ioutil.ReadFile("./testdata/burner.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	burnerContractID, err := keeper.Create(ctx, creator, burnerCode, "", "")
+	burnerContractID, err := keeper.Create(ctx, creator, burnerCode, "", "", nil)
 	require.NoError(t, err)
 	require.NotEqual(t, originalContractID, burnerContractID)
 
@@ -712,7 +762,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
@@ -787,7 +837,7 @@ func TestClearContractAdmin(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "")
+	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
