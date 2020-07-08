@@ -53,6 +53,59 @@ func TestCreate(t *testing.T) {
 	require.Equal(t, wasmCode, storedCode)
 }
 
+func TestCreateStoresInstantiatePermission(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+	var (
+		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+		myAddr  = bytes.Repeat([]byte{1}, sdk.AddrLen)
+	)
+
+	specs := map[string]struct {
+		srcPermission types.AccessType
+		expInstConf   types.AccessConfig
+	}{
+		"default": {
+			srcPermission: types.DefaultParams().DefaultInstantiatePermission,
+			expInstConf:   types.AllowEverybody,
+		},
+		"everybody": {
+			srcPermission: types.Everybody,
+			expInstConf:   types.AllowEverybody,
+		},
+		"nobody": {
+			srcPermission: types.Nobody,
+			expInstConf:   types.AllowNobody,
+		},
+		"onlyAddress with matching address": {
+			srcPermission: types.OnlyAddress,
+			expInstConf:   types.AccessConfig{Type: types.OnlyAddress, Address: myAddr},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "wasm")
+			require.NoError(t, err)
+			defer os.RemoveAll(tempDir)
+
+			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+			keeper.setParams(ctx, types.Params{
+				UploadAccess:                 types.AllowEverybody,
+				DefaultInstantiatePermission: spec.srcPermission,
+			})
+			fundAccounts(ctx, accKeeper, myAddr, deposit)
+
+			codeID, err := keeper.Create(ctx, myAddr, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+			require.NoError(t, err)
+
+			codeInfo := keeper.GetCodeInfo(ctx, codeID)
+			require.NotNil(t, codeInfo)
+			assert.True(t, spec.expInstConf.Equals(codeInfo.InstantiateConfig), "got %#v", codeInfo.InstantiateConfig)
+		})
+	}
+}
+
 func TestCreateWithParamPermissions(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -261,6 +314,70 @@ func TestInstantiate(t *testing.T) {
 	assert.Equal(t, info.CodeID, contractID)
 	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
 	assert.Equal(t, info.Label, "demo contract 1")
+}
+
+func TestInstantiateWithPermissions(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	var (
+		deposit   = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+		myAddr    = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		otherAddr = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		anyAddr   = bytes.Repeat([]byte{3}, sdk.AddrLen)
+	)
+
+	initMsg := InitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: anyAddr,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		srcPermission types.AccessConfig
+		srcActor      sdk.AccAddress
+		expError      *sdkerrors.Error
+	}{
+		"default": {
+			srcPermission: types.DefaultUploadAccess,
+			srcActor:      anyAddr,
+		},
+		"everybody": {
+			srcPermission: types.AllowEverybody,
+			srcActor:      anyAddr,
+		},
+		"nobody": {
+			srcPermission: types.AllowNobody,
+			srcActor:      myAddr,
+			expError:      sdkerrors.ErrUnauthorized,
+		},
+		"onlyAddress with matching address": {
+			srcPermission: types.OnlyAddress.With(myAddr),
+			srcActor:      myAddr,
+		},
+		"onlyAddress with non matching address": {
+			srcPermission: types.OnlyAddress.With(otherAddr),
+			expError:      sdkerrors.ErrUnauthorized,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "wasm")
+			require.NoError(t, err)
+			defer os.RemoveAll(tempDir)
+
+			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+			fundAccounts(ctx, accKeeper, spec.srcActor, deposit)
+
+			contractID, err := keeper.Create(ctx, myAddr, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", &spec.srcPermission)
+			require.NoError(t, err)
+
+			_, err = keeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsgBz, "demo contract 1", nil)
+			assert.True(t, spec.expError.Is(err), "got %+v", err)
+		})
+	}
 }
 
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
@@ -898,11 +1015,14 @@ type InitMsg struct {
 
 func createFakeFundedAccount(ctx sdk.Context, am auth.AccountKeeper, coins sdk.Coins) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
+	fundAccounts(ctx, am, addr, coins)
+	return addr
+}
+
+func fundAccounts(ctx sdk.Context, am auth.AccountKeeper, addr sdk.AccAddress, coins sdk.Coins) {
 	baseAcct := auth.NewBaseAccountWithAddress(addr)
 	_ = baseAcct.SetCoins(coins)
 	am.SetAccount(ctx, &baseAcct)
-
-	return addr
 }
 
 var keyCounter uint64 = 0

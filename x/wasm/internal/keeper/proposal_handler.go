@@ -67,7 +67,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 		return err
 	}
 
-	contractAddr, err := k.Instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds)
+	contractAddr, err := k.instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}

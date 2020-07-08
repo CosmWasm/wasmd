@@ -37,6 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
+* (wasmd) [\#163](https://github.com/CosmWasm/wasmd/issues/163) Control who can instantiate code
 * (wasmd) [\#164](https://github.com/CosmWasm/wasmd/issues/164) Control who can upload code
 * (wasmd) [\#173](https://github.com/CosmWasm/wasmd/issues/173) Gov proposal types and handler
 * (wasmd) [\#122](https://github.com/CosmWasm/wasmd/pull/122]) Migrate contract backend functionality with go-cosmwasm stub impl
