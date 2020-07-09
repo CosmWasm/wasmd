@@ -107,13 +107,6 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		auth.ProtoBaseAccount, // prototype
 	)
 
-	bankKeeper := bank.NewBaseKeeper(
-		accountKeeper,
-		paramsKeeper.Subspace(bank.DefaultParamspace),
-		nil,
-	)
-	bankKeeper.SetSendEnabled(ctx, true)
-
 	// this is also used to initialize module accounts (so nil is meaningful here)
 	maccPerms := map[string][]string{
 		auth.FeeCollectorName:   nil,
@@ -123,6 +116,16 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		staking.NotBondedPoolName: {supply.Burner, supply.Staking},
 		gov.ModuleName:            {supply.Burner},
 	}
+	blockedAddr := make(map[string]bool, len(maccPerms))
+	for acc := range maccPerms {
+		blockedAddr[supply.NewModuleAddress(acc).String()] = true
+	}
+	bankKeeper := bank.NewBaseKeeper(
+		accountKeeper,
+		paramsKeeper.Subspace(bank.DefaultParamspace),
+		blockedAddr,
+	)
+	bankKeeper.SetSendEnabled(ctx, true)
 
 	supplyKeeper := supply.NewKeeper(cdc, keySupply, accountKeeper, bankKeeper, maccPerms)
 	stakingKeeper := staking.NewKeeper(cdc, keyStaking, supplyKeeper, paramsKeeper.Subspace(staking.DefaultParamspace))

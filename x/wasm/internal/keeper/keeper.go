@@ -179,6 +179,9 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// deposit initial contract funds
 	if !deposit.IsZero() {
+		if k.bankKeeper.BlacklistedAddr(creator) {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "blocked address can not be used")
+		}
 		sdkerr := k.bankKeeper.SendCoins(ctx, creator, contractAddress, deposit)
 		if sdkerr != nil {
 			return nil, sdkerr
@@ -253,6 +256,10 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 	// add more funds
 	if !coins.IsZero() {
+		if k.bankKeeper.BlacklistedAddr(caller) {
+			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "blocked address can not be used")
+		}
+
 		sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
 		if sdkerr != nil {
 			return nil, sdkerr
