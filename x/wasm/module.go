@@ -37,7 +37,9 @@ func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
 // DefaultGenesis returns default genesis state as raw bytes for the wasm
 // module.
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return ModuleCdc.MustMarshalJSON(&GenesisState{})
+	return ModuleCdc.MustMarshalJSON(&GenesisState{
+		Params: DefaultParams(),
+	})
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.

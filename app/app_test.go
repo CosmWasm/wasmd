@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
@@ -38,6 +39,7 @@ func TestBlackListedAddrs(t *testing.T) {
 
 func setGenesis(gapp *WasmApp) error {
 	genesisState := simapp.NewDefaultGenesisState()
+	genesisState[wasm.ModuleName] = wasm.AppModuleBasic{}.DefaultGenesis()
 	stateBytes, err := codec.MarshalJSONIndent(gapp.Codec(), genesisState)
 	if err != nil {
 		return err

@@ -28,6 +28,7 @@ require (
 	go.etcd.io/bbolt v1.3.4 // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4

@@ -11,6 +11,7 @@ func FuzzAddr(m *sdk.AccAddress, c fuzz.Continue) {
 	*m = make([]byte, 20)
 	c.Read(*m)
 }
+
 func FuzzAbsoluteTxPosition(m *types.AbsoluteTxPosition, c fuzz.Continue) {
 	m.BlockHeight = int64(c.RandUint64()) // can't be negative
 	m.TxIndex = c.RandUint64()
@@ -28,7 +29,18 @@ func FuzzContractInfo(m *types.ContractInfo, c fuzz.Continue) {
 	c.Fuzz(&m.LastUpdated)
 	m.PreviousCodeID = c.RandUint64()
 }
+
 func FuzzStateModel(m *types.Model, c fuzz.Continue) {
 	m.Key = tmBytes.HexBytes(c.RandString())
 	c.Fuzz(&m.Value)
+}
+
+func FuzzAccessType(m *types.AccessType, c fuzz.Continue) {
+	*m = types.AllAccessTypes[c.Int()%len(types.AllAccessTypes)]
+}
+func FuzzAccessConfig(m *types.AccessConfig, c fuzz.Continue) {
+	FuzzAccessType(&m.Type, c)
+	var add sdk.AccAddress
+	FuzzAddr(&add, c)
+	*m = m.Type.With(add)
 }

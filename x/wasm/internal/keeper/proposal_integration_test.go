@@ -11,6 +11,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	})
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -84,7 +85,7 @@ func TestInstantiateProposal(t *testing.T) {
 	})
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -153,7 +154,7 @@ func TestMigrateProposal(t *testing.T) {
 	}
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -187,7 +188,7 @@ func TestAdminProposals(t *testing.T) {
 	}{
 		"update with different admin": {
 			state: types.ContractInfoFixture(),
-			srcProposal: &types.UpdateAdminProposal{
+			srcProposal: types.UpdateAdminProposal{
 				WasmProposal: types.WasmProposal{
 					Title:       "Foo",
 					Description: "Bar",
@@ -202,7 +203,7 @@ func TestAdminProposals(t *testing.T) {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
 				info.Admin = nil
 			}),
-			srcProposal: &types.UpdateAdminProposal{
+			srcProposal: types.UpdateAdminProposal{
 				WasmProposal: types.WasmProposal{
 					Title:       "Foo",
 					Description: "Bar",
@@ -215,7 +216,7 @@ func TestAdminProposals(t *testing.T) {
 		},
 		"clear admin": {
 			state: types.ContractInfoFixture(),
-			srcProposal: &types.ClearAdminProposal{
+			srcProposal: types.ClearAdminProposal{
 				WasmProposal: types.WasmProposal{
 					Title:       "Foo",
 					Description: "Bar",
@@ -229,7 +230,7 @@ func TestAdminProposals(t *testing.T) {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
 				info.Admin = nil
 			}),
-			srcProposal: &types.ClearAdminProposal{
+			srcProposal: types.ClearAdminProposal{
 				WasmProposal: types.WasmProposal{
 					Title:       "Foo",
 					Description: "Bar",
@@ -265,6 +266,80 @@ func TestAdminProposals(t *testing.T) {
 			cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 			require.NotNil(t, cInfo)
 			assert.Equal(t, spec.expAdmin, cInfo.Admin)
+		})
+	}
+}
+
+func TestUpdateParamsProposal(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
+
+	var (
+		cdc                                   = keepers.WasmKeeper.cdc
+		myAddress              sdk.AccAddress = make([]byte, sdk.AddrLen)
+		oneAddressAccessConfig                = types.OnlyAddress.With(myAddress)
+	)
+
+	specs := map[string]struct {
+		src                params.ParamChange
+		expUploadConfig    types.AccessConfig
+		expInstantiateType types.AccessType
+	}{
+		"update upload permission param": {
+			src: params.ParamChange{
+				Subspace: types.DefaultParamspace,
+				Key:      string(types.ParamStoreKeyUploadAccess),
+				Value:    string(cdc.MustMarshalJSON(&types.AllowNobody)),
+			},
+			expUploadConfig:    types.AllowNobody,
+			expInstantiateType: types.Everybody,
+		},
+		"update upload permission param with address": {
+			src: params.ParamChange{
+				Subspace: types.DefaultParamspace,
+				Key:      string(types.ParamStoreKeyUploadAccess),
+				Value:    string(cdc.MustMarshalJSON(&oneAddressAccessConfig)),
+			},
+			expUploadConfig:    oneAddressAccessConfig,
+			expInstantiateType: types.Everybody,
+		},
+		"update instantiate param": {
+			src: params.ParamChange{
+				Subspace: types.DefaultParamspace,
+				Key:      string(types.ParamStoreKeyInstantiateAccess),
+				Value:    string(cdc.MustMarshalJSON(types.Nobody)),
+			},
+			expUploadConfig:    types.AllowEverybody,
+			expInstantiateType: types.Nobody,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			wasmKeeper.setParams(ctx, types.DefaultParams())
+
+			proposal := params.ParameterChangeProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				Changes:     []params.ParamChange{spec.src},
+			}
+
+			// when stored
+			storedProposal, err := govKeeper.SubmitProposal(ctx, proposal)
+			require.NoError(t, err)
+
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			err = handler(ctx, storedProposal.Content)
+			require.NoError(t, err)
+
+			// then
+			assert.True(t, spec.expUploadConfig.Equals(wasmKeeper.getUploadAccessConfig(ctx)),
+				"got %#v not %#v", wasmKeeper.getUploadAccessConfig(ctx), spec.expUploadConfig)
+			assert.Equal(t, spec.expInstantiateType, wasmKeeper.getInstantiateAccessConfig(ctx))
 		})
 	}
 }

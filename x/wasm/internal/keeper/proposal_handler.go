@@ -26,16 +26,16 @@ func NewWasmProposalHandler(k Keeper, enabledTypes map[string]struct{}) govtypes
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unsupported wasm proposal content type: %q", content.ProposalType())
 		}
 		switch c := content.(type) {
-		case *types.StoreCodeProposal:
-			return handleStoreCodeProposal(ctx, k, *c)
-		case *types.InstantiateContractProposal:
-			return handleInstantiateProposal(ctx, k, *c)
-		case *types.MigrateContractProposal:
-			return handleMigrateProposal(ctx, k, *c)
-		case *types.UpdateAdminProposal:
-			return handleUpdateAdminProposal(ctx, k, *c)
-		case *types.ClearAdminProposal:
-			return handleClearAdminProposal(ctx, k, *c)
+		case types.StoreCodeProposal:
+			return handleStoreCodeProposal(ctx, k, c)
+		case types.InstantiateContractProposal:
+			return handleInstantiateProposal(ctx, k, c)
+		case types.MigrateContractProposal:
+			return handleMigrateProposal(ctx, k, c)
+		case types.UpdateAdminProposal:
+			return handleUpdateAdminProposal(ctx, k, c)
+		case types.ClearAdminProposal:
+			return handleClearAdminProposal(ctx, k, c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
@@ -47,7 +47,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 		return err
 	}
 
-	codeID, err := k.Create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder)
+	codeID, err := k.create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}

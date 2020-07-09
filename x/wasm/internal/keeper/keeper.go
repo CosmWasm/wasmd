@@ -5,20 +5,21 @@ import (
 	"encoding/binary"
 	"path/filepath"
 
+	"github.com/cosmos/cosmos-sdk/x/params/subspace"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/tendermint/tendermint/crypto"
-
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 // GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
@@ -50,11 +51,12 @@ type Keeper struct {
 	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	authZPolicy   AuthorizationPolicy
+	paramSpace    subspace.Subspace
 }
 
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
-func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
+func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, paramSpace params.Subspace, accountKeeper auth.AccountKeeper, bankKeeper bank.Keeper,
 	stakingKeeper staking.Keeper,
 	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, supportedFeatures string, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.CacheSize)
@@ -62,7 +64,10 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		panic(err)
 	}
 
-	messenger := NewMessageHandler(router, customEncoders)
+	// set KeyTable if it has not already been set
+	if !paramSpace.HasKeyTable() {
+		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
+	}
 
 	keeper := Keeper{
 		storeKey:      storeKey,
@@ -70,16 +75,47 @@ func NewKeeper(cdc *codec.Codec, storeKey sdk.StoreKey, accountKeeper auth.Accou
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
-		messenger:     messenger,
+		messenger:     NewMessageHandler(router, customEncoders),
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 		authZPolicy:   DefaultAuthorizationPolicy{},
+		paramSpace:    paramSpace,
 	}
 	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, keeper).Merge(customPlugins)
 	return keeper
 }
 
+func (k Keeper) getUploadAccessConfig(ctx sdk.Context) types.AccessConfig {
+	var a types.AccessConfig
+	k.paramSpace.Get(ctx, types.ParamStoreKeyUploadAccess, &a)
+	return a
+}
+
+func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
+	var a types.AccessType
+	k.paramSpace.Get(ctx, types.ParamStoreKeyInstantiateAccess, &a)
+	return a
+}
+
+// GetParams returns the total set of wasm parameters.
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+	var params types.Params
+	k.paramSpace.GetParamSet(ctx, &params)
+	return params
+}
+
+func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
+	k.paramSpace.SetParamSet(ctx, &ps)
+}
+
 // Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string) (codeID uint64, err error) {
+func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig) (codeID uint64, err error) {
+	return k.create(ctx, creator, wasmCode, source, builder, instantiateAccess, k.authZPolicy)
+}
+
+func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
+	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
+		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
+	}
 	wasmCode, err = uncompress(wasmCode)
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
@@ -93,7 +129,11 @@ func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder)
+	if instantiateAccess == nil {
+		defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
+		instantiateAccess = &defaultAccessConfig
+	}
+	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder, *instantiateAccess)
 	// 0x01 | codeID (uint64) -> ContractInfo
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(codeInfo))
 

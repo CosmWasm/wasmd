@@ -30,10 +30,11 @@ func (m Model) ValidateBasic() error {
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash []byte         `json:"code_hash"`
-	Creator  sdk.AccAddress `json:"creator"`
-	Source   string         `json:"source"`
-	Builder  string         `json:"builder"`
+	CodeHash          []byte         `json:"code_hash"`
+	Creator           sdk.AccAddress `json:"creator"`
+	Source            string         `json:"source"`
+	Builder           string         `json:"builder"`
+	InstantiateConfig AccessConfig   `json:"instantiate_config"`
 }
 
 func (c CodeInfo) ValidateBasic() error {
@@ -53,12 +54,13 @@ func (c CodeInfo) ValidateBasic() error {
 }
 
 // NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string) CodeInfo {
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string, instantiatePermission AccessConfig) CodeInfo {
 	return CodeInfo{
-		CodeHash: codeHash,
-		Creator:  creator,
-		Source:   source,
-		Builder:  builder,
+		CodeHash:          codeHash,
+		Creator:           creator,
+		Source:            source,
+		Builder:           builder,
+		InstantiateConfig: instantiatePermission,
 	}
 }
 
