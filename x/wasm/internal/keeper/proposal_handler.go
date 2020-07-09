@@ -108,7 +108,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminPro
 		return err
 	}
 
-	if err := k.setContractAdmin(ctx, p.Contract, p.Sender, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, nil, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
@@ -127,7 +127,7 @@ func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminPropo
 		return err
 	}
 
-	if err := k.setContractAdmin(ctx, p.Contract, p.Sender, nil, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, p.Contract, nil, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(

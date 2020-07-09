@@ -176,7 +176,6 @@ func TestMigrateProposal(t *testing.T) {
 
 func TestAdminProposals(t *testing.T) {
 	var (
-		anyAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
 		contractAddr                = contractAddress(1, 1)
 	)
@@ -196,7 +195,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 				NewAdmin: otherAddress,
 			},
 			expAdmin: otherAddress,
@@ -211,7 +209,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 				NewAdmin: otherAddress,
 			},
 			expAdmin: otherAddress,
@@ -224,7 +221,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 			},
 			expAdmin: nil,
 		},
@@ -238,7 +234,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 			},
 			expAdmin: nil,
 		},

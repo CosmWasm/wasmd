@@ -370,18 +370,6 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
-		"sender missing": {
-			src: UpdateAdminProposalFixture(func(p *UpdateAdminProposal) {
-				p.Sender = nil
-			}),
-			expErr: true,
-		},
-		"sender invalid": {
-			src: UpdateAdminProposalFixture(func(p *UpdateAdminProposal) {
-				p.Sender = invalidAddress
-			}),
-			expErr: true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -422,18 +410,6 @@ func TestValidateClearAdminProposal(t *testing.T) {
 		"contract invalid": {
 			src: ClearAdminProposalFixture(func(p *ClearAdminProposal) {
 				p.Contract = invalidAddress
-			}),
-			expErr: true,
-		},
-		"sender missing": {
-			src: ClearAdminProposalFixture(func(p *ClearAdminProposal) {
-				p.Sender = nil
-			}),
-			expErr: true,
-		},
-		"sender invalid": {
-			src: ClearAdminProposalFixture(func(p *ClearAdminProposal) {
-				p.Sender = invalidAddress
 			}),
 			expErr: true,
 		},
@@ -526,7 +502,6 @@ func TestProposalStrings(t *testing.T) {
   Title:       Foo
   Description: Bar
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
-  Sender:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   New Admin:   cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 `,
 		},
@@ -536,7 +511,6 @@ func TestProposalStrings(t *testing.T) {
   Title:       Foo
   Description: Bar
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
-  Sender:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 `,
 		},
 	}

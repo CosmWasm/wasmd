@@ -194,7 +194,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetCodeKey(codeID))
 	if bz == nil {
-		return nil, sdkerrors.Wrap(types.ErrNotFound, "contract")
+		return nil, sdkerrors.Wrap(types.ErrNotFound, "code")
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshalBinaryBare(bz, &codeInfo)

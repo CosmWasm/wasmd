@@ -26,6 +26,19 @@ var DefaultEnabledProposals = map[string]struct{}{
 	ProposalTypeClearAdmin:               {},
 }
 
+func init() { // register new content types with the sdk
+	govtypes.RegisterProposalType(ProposalTypeStoreCode)
+	govtypes.RegisterProposalType(ProposalTypeStoreInstantiateContract)
+	govtypes.RegisterProposalType(ProposalTypeMigrateContract)
+	govtypes.RegisterProposalType(ProposalTypeUpdateAdmin)
+	govtypes.RegisterProposalType(ProposalTypeClearAdmin)
+	govtypes.RegisterProposalTypeCodec(StoreCodeProposal{}, "wasm/store-proposal")
+	govtypes.RegisterProposalTypeCodec(InstantiateContractProposal{}, "wasm/instantiate-proposal")
+	govtypes.RegisterProposalTypeCodec(MigrateContractProposal{}, "wasm/migrate-proposal")
+	govtypes.RegisterProposalTypeCodec(UpdateAdminProposal{}, "wasm/update-admin-proposal")
+	govtypes.RegisterProposalTypeCodec(ClearAdminProposal{}, "wasm/clear-admin-proposal")
+}
+
 type WasmProposal struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
@@ -227,8 +240,6 @@ type UpdateAdminProposal struct {
 	WasmProposal
 	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
-	// Sender is the role that is passed to the contract's environment
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
 // ProposalType returns the type
@@ -245,9 +256,6 @@ func (p UpdateAdminProposal) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(p.NewAdmin); err != nil {
 		return sdkerrors.Wrap(err, "new admin")
 	}
-	if err := sdk.VerifyAddressFormat(p.Sender); err != nil {
-		return sdkerrors.Wrap(err, "sender")
-	}
 	return nil
 }
 
@@ -257,17 +265,14 @@ func (p UpdateAdminProposal) String() string {
   Title:       %s
   Description: %s
   Contract:    %s
-  Sender:      %s
   New Admin:   %s
-`, p.Title, p.Description, p.Contract, p.Sender, p.NewAdmin)
+`, p.Title, p.Description, p.Contract, p.NewAdmin)
 }
 
 type ClearAdminProposal struct {
 	WasmProposal
 
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
-	// Sender is the role that is passed to the contract's environment
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 }
 
 // ProposalType returns the type
@@ -281,9 +286,6 @@ func (p ClearAdminProposal) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err := sdk.VerifyAddressFormat(p.Sender); err != nil {
-		return sdkerrors.Wrap(err, "sender")
-	}
 	return nil
 }
 
@@ -293,6 +295,5 @@ func (p ClearAdminProposal) String() string {
   Title:       %s
   Description: %s
   Contract:    %s
-  Sender:      %s
-`, p.Title, p.Description, p.Contract, p.Sender)
+`, p.Title, p.Description, p.Contract)
 }

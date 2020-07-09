@@ -23,13 +23,18 @@ import (
 )
 
 const (
-	flagTo      = "to"
-	flagAmount  = "amount"
-	flagSource  = "source"
-	flagBuilder = "builder"
-	flagLabel   = "label"
-	flagAdmin   = "admin"
-	flagNoAdmin = "no-admin"
+	flagTo                     = "to"
+	flagAmount                 = "amount"
+	flagSource                 = "source"
+	flagBuilder                = "builder"
+	flagLabel                  = "label"
+	flagAdmin                  = "admin"
+	flagNoAdmin                = "no-admin"
+	flagCreator                = "creator"
+	flagSender                 = "sender"
+	flagInstantiateByEverybody = "instantiate-everybody"
+	flagInstantiateByAddress   = "instantiate-only-address"
+	flagProposalType           = "type"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -63,37 +68,11 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
-			// parse coins trying to be sent
-			wasm, err := ioutil.ReadFile(args[0])
+			msg, err := parseStoreCodeArgs(args, cliCtx)
 			if err != nil {
 				return err
 			}
-
-			source := viper.GetString(flagSource)
-
-			builder := viper.GetString(flagBuilder)
-
-			// gzip the wasm file
-			if wasmUtils.IsWasm(wasm) {
-				wasm, err = wasmUtils.GzipIt(wasm)
-
-				if err != nil {
-					return err
-				}
-			} else if !wasmUtils.IsGzip(wasm) {
-				return fmt.Errorf("invalid input file. Use wasm binary or gzip")
-			}
-
-			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.MsgStoreCode{
-				Sender:       cliCtx.GetFromAddress(),
-				WASMByteCode: wasm,
-				Source:       source,
-				Builder:      builder,
-			}
-			err = msg.ValidateBasic()
-
-			if err != nil {
+			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
@@ -103,57 +82,69 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
 	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
+	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 
 	return cmd
+}
+
+func parseStoreCodeArgs(args []string, cliCtx context.CLIContext) (types.MsgStoreCode, error) {
+	wasm, err := ioutil.ReadFile(args[0])
+	if err != nil {
+		return types.MsgStoreCode{}, err
+	}
+
+	// gzip the wasm file
+	if wasmUtils.IsWasm(wasm) {
+		wasm, err = wasmUtils.GzipIt(wasm)
+
+		if err != nil {
+			return types.MsgStoreCode{}, err
+		}
+	} else if !wasmUtils.IsGzip(wasm) {
+		return types.MsgStoreCode{}, fmt.Errorf("invalid input file. Use wasm binary or gzip")
+	}
+
+	var perm *types.AccessConfig
+	if onlyAddrStr := viper.GetString(flagInstantiateByAddress); onlyAddrStr != "" {
+		allowedAddr, err := sdk.AccAddressFromBech32(onlyAddrStr)
+		if err != nil {
+			return types.MsgStoreCode{}, sdkerrors.Wrap(err, flagInstantiateByAddress)
+		}
+		x := types.OnlyAddress.With(allowedAddr)
+		perm = &x
+	} else if everybody := viper.GetBool(flagInstantiateByEverybody); everybody {
+		perm = &types.AllowEverybody
+	}
+
+	// build and sign the transaction, then broadcast to Tendermint
+	msg := types.MsgStoreCode{
+		Sender:                cliCtx.GetFromAddress(),
+		WASMByteCode:          wasm,
+		Source:                viper.GetString(flagSource),
+		Builder:               viper.GetString(flagBuilder),
+		InstantiatePermission: perm,
+	}
+	return msg, nil
 }
 
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [code_id_int64] [json_encoded_init_args]",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address]",
 		Short: "Instantiate a wasm contract",
-		Args:  cobra.RangeArgs(2, 3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inBuf := bufio.NewReader(cmd.InOrStdin())
 			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
 
-			// get the id of the code to instantiate
-			codeID, err := strconv.ParseUint(args[0], 10, 64)
+			msg, err := parseInstantiateArgs(args, cliCtx)
 			if err != nil {
 				return err
 			}
-
-			amounstStr := viper.GetString(flagAmount)
-			amount, err := sdk.ParseCoins(amounstStr)
-			if err != nil {
+			if err := msg.ValidateBasic(); err != nil {
 				return err
-			}
-
-			label := viper.GetString(flagLabel)
-			if label == "" {
-				return fmt.Errorf("Label is required on all contracts")
-			}
-
-			initMsg := args[1]
-
-			adminStr := viper.GetString(flagAdmin)
-			var adminAddr sdk.AccAddress
-			if len(adminStr) != 0 {
-				adminAddr, err = sdk.AccAddressFromBech32(adminStr)
-				if err != nil {
-					return sdkerrors.Wrap(err, "admin")
-				}
-			}
-
-			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.MsgInstantiateContract{
-				Sender:    cliCtx.GetFromAddress(),
-				Code:      codeID,
-				Label:     label,
-				InitFunds: amount,
-				InitMsg:   []byte(initMsg),
-				Admin:     adminAddr,
 			}
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
@@ -163,6 +154,47 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	return cmd
+}
+
+func parseInstantiateArgs(args []string, cliCtx context.CLIContext) (types.MsgInstantiateContract, error) {
+	// get the id of the code to instantiate
+	codeID, err := strconv.ParseUint(args[0], 10, 64)
+	if err != nil {
+		return types.MsgInstantiateContract{}, err
+	}
+
+	amounstStr := viper.GetString(flagAmount)
+	amount, err := sdk.ParseCoins(amounstStr)
+	if err != nil {
+		return types.MsgInstantiateContract{}, err
+	}
+
+	label := viper.GetString(flagLabel)
+	if label == "" {
+		return types.MsgInstantiateContract{}, fmt.Errorf("Label is required on all contracts")
+	}
+
+	initMsg := args[1]
+
+	adminStr := viper.GetString(flagAdmin)
+	var adminAddr sdk.AccAddress
+	if len(adminStr) != 0 {
+		adminAddr, err = sdk.AccAddressFromBech32(adminStr)
+		if err != nil {
+			return types.MsgInstantiateContract{}, sdkerrors.Wrap(err, "admin")
+		}
+	}
+
+	// build and sign the transaction, then broadcast to Tendermint
+	msg := types.MsgInstantiateContract{
+		Sender:    cliCtx.GetFromAddress(),
+		Code:      codeID,
+		Label:     label,
+		InitFunds: amount,
+		InitMsg:   []byte(initMsg),
+		Admin:     adminAddr,
+	}
+	return msg, nil
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
