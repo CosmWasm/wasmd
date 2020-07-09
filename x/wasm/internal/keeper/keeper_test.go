@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/supply"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -44,7 +45,7 @@ func TestCreate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -96,7 +97,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 			})
 			fundAccounts(ctx, accKeeper, myAddr, deposit)
 
-			codeID, err := keeper.Create(ctx, myAddr, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+			codeID, err := keeper.Create(ctx, myAddr, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 			require.NoError(t, err)
 
 			codeInfo := keeper.GetCodeInfo(ctx, codeID)
@@ -147,7 +148,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 			params := types.DefaultParams()
 			params.UploadAccess = spec.srcPermission
 			keeper.setParams(ctx, params)
-			_, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+			_, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
 				return
@@ -170,12 +171,12 @@ func TestCreateDuplicate(t *testing.T) {
 	require.NoError(t, err)
 
 	// create one copy
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// create second copy
-	duplicateID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "cosmwasm-opt:0.5.2", nil)
+	duplicateID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), duplicateID)
 
@@ -205,14 +206,14 @@ func TestCreateWithSimulation(t *testing.T) {
 	require.NoError(t, err)
 
 	// create this once in simulation mode
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.57.2", nil)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// then try to create it in non-simulation mode (should not fail)
 	ctx, keepers = CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
 	accKeeper, keeper = keepers.AccountKeeper, keepers.WasmKeeper
-	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "confio/cosmwasm-opt:0.7.2", nil)
+	contractID, err = keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "any/builder:tag", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
@@ -314,6 +315,68 @@ func TestInstantiate(t *testing.T) {
 	assert.Equal(t, info.CodeID, contractID)
 	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
 	assert.Equal(t, info.Label, "demo contract 1")
+}
+
+func TestInstantiateWithDeposit(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	var (
+		bob  = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		fred = bytes.Repeat([]byte{2}, sdk.AddrLen)
+
+		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+		initMsg = InitMsg{Verifier: fred, Beneficiary: bob}
+	)
+
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		srcActor sdk.AccAddress
+		expError bool
+		fundAddr bool
+	}{
+		"address with funds": {
+			srcActor: bob,
+			fundAddr: true,
+		},
+		"address without funds": {
+			srcActor: bob,
+			expError: true,
+		},
+		"blocked address": {
+			srcActor: supply.NewModuleAddress(auth.FeeCollectorName),
+			fundAddr: true,
+			expError: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "wasm")
+			require.NoError(t, err)
+			defer os.RemoveAll(tempDir)
+			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+			if spec.fundAddr {
+				fundAccounts(ctx, accKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
+			}
+			contractID, err := keeper.Create(ctx, spec.srcActor, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
+			require.NoError(t, err)
+
+			// when
+			addr, err := keeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsgBz, "my label", deposit)
+			// then
+			if spec.expError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			contractAccount := accKeeper.GetAccount(ctx, addr)
+			assert.Equal(t, deposit, contractAccount.GetCoins())
+		})
+	}
 }
 
 func TestInstantiateWithPermissions(t *testing.T) {
@@ -478,6 +541,82 @@ func TestExecute(t *testing.T) {
 	assert.Equal(t, sdk.Coins(nil), contractAcct.GetCoins())
 
 	t.Logf("Duration: %v (%d gas)\n", diff, gasAfter-gasBefore)
+}
+
+func TestExecuteWithDeposit(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	var (
+		bob         = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		fred        = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		blockedAddr = supply.NewModuleAddress(auth.FeeCollectorName)
+		deposit     = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	)
+
+	specs := map[string]struct {
+		srcActor    sdk.AccAddress
+		beneficiary sdk.AccAddress
+		expError    bool
+		fundAddr    bool
+	}{
+		"actor with funds": {
+			srcActor:    bob,
+			fundAddr:    true,
+			beneficiary: fred,
+		},
+		"actor without funds": {
+			srcActor:    bob,
+			beneficiary: fred,
+			expError:    true,
+		},
+		"blocked address as actor": {
+			srcActor:    blockedAddr,
+			fundAddr:    true,
+			beneficiary: fred,
+			expError:    true,
+		},
+		"blocked address as beneficiary": {
+			srcActor:    bob,
+			fundAddr:    true,
+			beneficiary: blockedAddr,
+			expError:    true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "wasm")
+			require.NoError(t, err)
+			defer os.RemoveAll(tempDir)
+			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+			if spec.fundAddr {
+				fundAccounts(ctx, accKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
+			}
+			codeID, err := keeper.Create(ctx, spec.srcActor, wasmCode, "https://example.com/escrow.wasm", "", nil)
+			require.NoError(t, err)
+
+			initMsg := InitMsg{Verifier: spec.srcActor, Beneficiary: spec.beneficiary}
+			initMsgBz, err := json.Marshal(initMsg)
+			require.NoError(t, err)
+
+			contractAddr, err := keeper.Instantiate(ctx, codeID, spec.srcActor, nil, initMsgBz, "my label", nil)
+			require.NoError(t, err)
+
+			// when
+			_, err = keeper.Execute(ctx, contractAddr, spec.srcActor, []byte(`{"release":{}}`), deposit)
+
+			// then
+			if spec.expError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			beneficiaryAccount := accKeeper.GetAccount(ctx, spec.beneficiary)
+			assert.Equal(t, deposit, beneficiaryAccount.GetCoins())
+		})
+	}
 }
 
 func TestExecuteWithNonExistingAddress(t *testing.T) {
