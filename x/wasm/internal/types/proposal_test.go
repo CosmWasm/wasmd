@@ -394,6 +394,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 		})
 	}
 }
+
 func TestValidateClearAdminProposal(t *testing.T) {
 	var (
 		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)

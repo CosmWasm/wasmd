@@ -23,53 +23,53 @@ func TestValidateParams(t *testing.T) {
 		"all good with nobody": {
 			src: Params{
 				UploadAccess:                 AllowNobody,
-				InstantiateDefaultPermission: Nobody,
+				DefaultInstantiatePermission: Nobody,
 			},
 		},
 		"all good with everybody": {
 			src: Params{
 				UploadAccess:                 AllowEverybody,
-				InstantiateDefaultPermission: Everybody,
+				DefaultInstantiatePermission: Everybody,
 			},
 		},
 		"all good with only address": {
 			src: Params{
 				UploadAccess:                 OnlyAddress.With(anyAddress),
-				InstantiateDefaultPermission: OnlyAddress,
+				DefaultInstantiatePermission: OnlyAddress,
 			},
 		},
 		"reject empty type in instantiate permission": {
 			src: Params{
 				UploadAccess:                 AllowNobody,
-				InstantiateDefaultPermission: 0,
+				DefaultInstantiatePermission: 0,
 			},
 			expErr: true,
 		},
 		"reject unknown type in instantiate": {
 			src: Params{
 				UploadAccess:                 AllowNobody,
-				InstantiateDefaultPermission: 4,
+				DefaultInstantiatePermission: 4,
 			},
 			expErr: true,
 		},
 		"reject invalid address in only address": {
 			src: Params{
 				UploadAccess:                 AccessConfig{Type: OnlyAddress, Address: invalidAddress},
-				InstantiateDefaultPermission: OnlyAddress,
+				DefaultInstantiatePermission: OnlyAddress,
 			},
 			expErr: true,
 		},
 		"reject AccessConfig Everybody with obsolete address": {
 			src: Params{
 				UploadAccess:                 AccessConfig{Type: Everybody, Address: anyAddress},
-				InstantiateDefaultPermission: OnlyAddress,
+				DefaultInstantiatePermission: OnlyAddress,
 			},
 			expErr: true,
 		},
 		"reject AccessConfig Nobody with obsolete address": {
 			src: Params{
 				UploadAccess:                 AccessConfig{Type: Nobody, Address: anyAddress},
-				InstantiateDefaultPermission: OnlyAddress,
+				DefaultInstantiatePermission: OnlyAddress,
 			},
 			expErr: true,
 		},

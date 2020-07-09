@@ -62,7 +62,7 @@ var (
 // Params defines the set of wasm parameters.
 type Params struct {
 	UploadAccess                 AccessConfig `json:"upload_access" yaml:"upload_access"`
-	InstantiateDefaultPermission AccessType   `json:"instantiate_default_permission" yaml:"instantiate_default_permission"`
+	DefaultInstantiatePermission AccessType   `json:"instantiate_default_permission" yaml:"instantiate_default_permission"`
 }
 
 // ParamKeyTable returns the parameter key table.
@@ -74,7 +74,7 @@ func ParamKeyTable() params.KeyTable {
 func DefaultParams() Params {
 	return Params{
 		UploadAccess:                 AllowEverybody,
-		InstantiateDefaultPermission: Everybody,
+		DefaultInstantiatePermission: Everybody,
 	}
 }
 
@@ -87,13 +87,13 @@ func (p Params) String() string {
 func (p *Params) ParamSetPairs() params.ParamSetPairs {
 	return params.ParamSetPairs{
 		params.NewParamSetPair(ParamStoreKeyUploadAccess, &p.UploadAccess, validateAccessConfig),
-		params.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
+		params.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.DefaultInstantiatePermission, validateAccessType),
 	}
 }
 
 // ValidateBasic performs basic validation on wasm parameters
 func (p Params) ValidateBasic() error {
-	if err := validateAccessType(p.InstantiateDefaultPermission); err != nil {
+	if err := validateAccessType(p.DefaultInstantiatePermission); err != nil {
 		return errors.Wrap(err, "instantiate default permission")
 	}
 	if err := validateAccessConfig(p.UploadAccess); err != nil {
