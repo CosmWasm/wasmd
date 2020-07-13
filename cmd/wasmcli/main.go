@@ -17,7 +17,6 @@ import (
 	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -127,17 +126,12 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	// add modules' tx commands
 	app.ModuleBasics.AddTxCommands(txCmd, cdc)
 
-	//wasmGovCmds := []*cobra.Command{}
-
 	// remove auth and bank commands as they're mounted under the root tx command
 	var cmdsToRemove []*cobra.Command
+
 	for _, cmd := range txCmd.Commands() {
 		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName {
 			cmdsToRemove = append(cmdsToRemove, cmd)
-			continue
-		}
-		if cmd.Use == gov.ModuleName {
-			//cmd.AddCommand(wasmGovCmds...)
 		}
 	}
 

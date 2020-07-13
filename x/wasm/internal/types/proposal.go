@@ -99,7 +99,7 @@ func (p StoreCodeProposal) ValidateBasic() error {
 		return err
 	}
 	if err := sdk.VerifyAddressFormat(p.Creator); err != nil {
-		return err
+		return sdkerrors.Wrap(err, "creator")
 	}
 
 	if err := validateWasmCode(p.WASMByteCode); err != nil {
