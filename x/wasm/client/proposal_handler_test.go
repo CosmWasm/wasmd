@@ -112,7 +112,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"title":       "Test Proposal",
 				"description": "My proposal",
 				"type":        "instantiate",
-				"sender":      "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				"creator":     "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"admin":       "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"code_id":     "1",
 				"label":       "https://example.com/",

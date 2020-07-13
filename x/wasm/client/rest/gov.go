@@ -16,10 +16,10 @@ import (
 type StoreCodeProposalJsonReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	Title       string `json:"title" yaml:"title"`
-	Description string `json:"description" yaml:"description"`
-	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Title       string         `json:"title" yaml:"title"`
+	Description string         `json:"description" yaml:"description"`
+	Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
+	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
 
 	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
 	// WASMByteCode can be raw or gzip compressed
@@ -77,7 +77,7 @@ type InstantiateProposalJsonReq struct {
 	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
 	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
 
-	Creator sdk.AccAddress `json:"sender" yaml:"sender"`
+	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
 	// Admin is an optional address that can execute migrations
 	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`

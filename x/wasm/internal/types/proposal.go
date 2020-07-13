@@ -136,7 +136,7 @@ func (p StoreCodeProposal) String() string {
 type InstantiateContractProposal struct {
 	WasmProposal
 	// Creator is the address that pays the init funds
-	Creator sdk.AccAddress `json:"sender" yaml:"sender"`
+	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
 	// Admin is an optional address that can execute migrations
 	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
