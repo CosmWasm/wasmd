@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -79,15 +80,15 @@ func (p WasmProposal) ValidateBasic() error {
 type StoreCodeProposal struct {
 	WasmProposal
 	// Creator is the address that "owns" the code object
-	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
+	Creator sdk.AccAddress `json:"creator"`
 	// WASMByteCode can be raw or gzip compressed
-	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
+	WASMByteCode []byte `json:"wasm_byte_code"`
 	// Source is a valid absolute HTTPS URI to the contract's source code, optional
-	Source string `json:"source" yaml:"source"`
+	Source string `json:"source"`
 	// Builder is a valid docker image name with tag, optional
-	Builder string `json:"builder" yaml:"builder"`
+	Builder string `json:"builder"`
 	// InstantiatePermission to apply on contract creation, optional
-	InstantiatePermission *AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
+	InstantiatePermission *AccessConfig `json:"instantiate_permission"`
 }
 
 // ProposalType returns the type
@@ -133,16 +134,34 @@ func (p StoreCodeProposal) String() string {
 `, p.Title, p.Description, p.Creator, p.WASMByteCode, p.Source, p.Builder)
 }
 
+func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		WasmProposal          `yaml:",inline"`
+		Creator               sdk.AccAddress `yaml:"creator"`
+		WASMByteCode          string         `yaml:"wasm_byte_code"`
+		Source                string         `yaml:"source"`
+		Builder               string         `yaml:"builder"`
+		InstantiatePermission *AccessConfig  `yaml:"instantiate_permission"`
+	}{
+		WasmProposal:          p.WasmProposal,
+		Creator:               p.Creator,
+		WASMByteCode:          base64.StdEncoding.EncodeToString(p.WASMByteCode),
+		Source:                p.Source,
+		Builder:               p.Builder,
+		InstantiatePermission: p.InstantiatePermission,
+	}, nil
+}
+
 type InstantiateContractProposal struct {
 	WasmProposal
 	// Creator is the address that pays the init funds
-	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
+	Creator sdk.AccAddress `json:"creator"`
 	// Admin is an optional address that can execute migrations
-	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
-	Code      uint64          `json:"code_id" yaml:"code_id"`
-	Label     string          `json:"label" yaml:"label"`
-	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
-	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
+	Admin     sdk.AccAddress  `json:"admin,omitempty"`
+	Code      uint64          `json:"code_id"`
+	Label     string          `json:"label"`
+	InitMsg   json.RawMessage `json:"init_msg"`
+	InitFunds sdk.Coins       `json:"init_funds"`
 }
 
 // ProposalType returns the type
@@ -192,16 +211,35 @@ func (p InstantiateContractProposal) String() string {
   InitMsg:     %q
   InitFunds:   %s
 `, p.Title, p.Description, p.Creator, p.Admin, p.Code, p.Label, p.InitMsg, p.InitFunds)
+}
 
+func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		WasmProposal `yaml:",inline"`
+		Creator      sdk.AccAddress `yaml:"creator"`
+		Admin        sdk.AccAddress `yaml:"admin"`
+		Code         uint64         `yaml:"code_id"`
+		Label        string         `yaml:"label"`
+		InitMsg      string         `yaml:"init_msg"`
+		InitFunds    sdk.Coins      `yaml:"init_funds"`
+	}{
+		WasmProposal: p.WasmProposal,
+		Creator:      p.Creator,
+		Admin:        p.Admin,
+		Code:         p.Code,
+		Label:        p.Label,
+		InitMsg:      string(p.InitMsg),
+		InitFunds:    p.InitFunds,
+	}, nil
 }
 
 type MigrateContractProposal struct {
-	WasmProposal
-	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Code       uint64          `json:"code_id" yaml:"code_id"`
-	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
+	WasmProposal `yaml:",inline"`
+	Contract     sdk.AccAddress  `json:"contract"`
+	Code         uint64          `json:"code_id"`
+	MigrateMsg   json.RawMessage `json:"msg"`
 	// Sender is the role that is passed to the contract's environment
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
+	Sender sdk.AccAddress `json:"sender"`
 }
 
 // ProposalType returns the type
@@ -236,10 +274,26 @@ func (p MigrateContractProposal) String() string {
 `, p.Title, p.Description, p.Contract, p.Code, p.Sender, p.MigrateMsg)
 }
 
+func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		WasmProposal `yaml:",inline"`
+		Contract     sdk.AccAddress `yaml:"contract"`
+		Code         uint64         `yaml:"code_id"`
+		MigrateMsg   string         `yaml:"msg"`
+		Sender       sdk.AccAddress `yaml:"sender"`
+	}{
+		WasmProposal: p.WasmProposal,
+		Contract:     p.Contract,
+		Code:         p.Code,
+		MigrateMsg:   string(p.MigrateMsg),
+		Sender:       p.Sender,
+	}, nil
+}
+
 type UpdateAdminProposal struct {
-	WasmProposal
-	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
-	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	WasmProposal `yaml:",inline"`
+	NewAdmin     sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
+	Contract     sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
 // ProposalType returns the type
@@ -270,7 +324,7 @@ func (p UpdateAdminProposal) String() string {
 }
 
 type ClearAdminProposal struct {
-	WasmProposal
+	WasmProposal `yaml:",inline"`
 
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }

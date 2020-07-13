@@ -10,6 +10,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestValidateWasmProposal(t *testing.T) {
@@ -519,5 +520,99 @@ func TestProposalStrings(t *testing.T) {
 			assert.Equal(t, spec.exp, spec.src.String())
 		})
 	}
+}
 
+func TestProposalYaml(t *testing.T) {
+	specs := map[string]struct {
+		src gov.Content
+		exp string
+	}{
+		"store code": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
+			}),
+			exp: `title: Foo
+description: Bar
+creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+wasm_byte_code: AQIDBAUGBwgJCg==
+source: https://example.com/code
+builder: foo/bar:latest
+instantiate_permission: null
+`,
+		},
+		"instantiate contract": {
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
+				p.InitFunds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
+			}),
+			exp: `title: Foo
+description: Bar
+creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+code_id: 1
+label: testing
+init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+init_funds:
+- denom: foo
+  amount: "1"
+- denom: bar
+  amount: "2"
+`,
+		},
+		"instantiate contract without funds": {
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.InitFunds = nil }),
+			exp: `title: Foo
+description: Bar
+creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+code_id: 1
+label: testing
+init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+init_funds: []
+`,
+		},
+		"instantiate contract without admin": {
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = nil }),
+			exp: `title: Foo
+description: Bar
+creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+admin: ""
+code_id: 1
+label: testing
+init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+init_funds: []
+`,
+		},
+		"migrate contract": {
+			src: MigrateContractProposalFixture(),
+			exp: `title: Foo
+description: Bar
+contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+code_id: 1
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+sender: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+`,
+		},
+		"update admin": {
+			src: UpdateAdminProposalFixture(),
+			exp: `title: Foo
+description: Bar
+new_admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+`,
+		},
+		"clear admin": {
+			src: ClearAdminProposalFixture(),
+			exp: `title: Foo
+description: Bar
+contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+`,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			v, err := yaml.Marshal(&spec.src)
+			require.NoError(t, err)
+			assert.Equal(t, spec.exp, string(v))
+		})
+	}
 }
