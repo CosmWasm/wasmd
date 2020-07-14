@@ -82,7 +82,7 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --admin [address] --title [text] --description [text] --run-as [address]",
+		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
