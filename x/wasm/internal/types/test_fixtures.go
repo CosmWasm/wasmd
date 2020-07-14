@@ -119,7 +119,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) StoreCodePro
 			Title:       "Foo",
 			Description: "Bar",
 		},
-		Creator:      anyValidAddress,
+		RunAs:        anyValidAddress,
 		WASMByteCode: []byte{0x0},
 		Source:       "https://example.com/code",
 		Builder:      "foo/bar:latest",
@@ -152,7 +152,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 			Title:       "Foo",
 			Description: "Bar",
 		},
-		Creator:   anyValidAddress,
+		RunAs:     anyValidAddress,
 		Admin:     anyValidAddress,
 		Code:      1,
 		Label:     "testing",
@@ -192,7 +192,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		Contract:   contractAddr,
 		Code:       1,
 		MigrateMsg: migMsgBz,
-		Sender:     anyValidAddress,
+		RunAs:      anyValidAddress,
 	}
 
 	for _, m := range mutators {

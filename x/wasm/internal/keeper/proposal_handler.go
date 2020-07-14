@@ -47,7 +47,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 		return err
 	}
 
-	codeID, err := k.create(ctx, p.Creator, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
+	codeID, err := k.create(ctx, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.Creator.String()), // todo: creator is not signer. rename attribute?
+		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()), // todo: creator is not signer. rename attribute?
 		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
@@ -67,7 +67,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 		return err
 	}
 
-	contractAddr, err := k.instantiate(ctx, p.Code, p.Creator, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
+	contractAddr, err := k.instantiate(ctx, p.Code, p.RunAs, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.Creator.String()),
+		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
 		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", p.Code)),
 		sdk.NewAttribute(AttributeKeyContract, contractAddr.String()),
 	)
@@ -88,7 +88,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 		return err
 	}
 
-	res, err := k.migrate(ctx, p.Contract, p.Sender, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
+	res, err := k.migrate(ctx, p.Contract, p.RunAs, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.Creator.String()),
+		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
 		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvents(append(res.Events, ourEvent))
@@ -115,7 +115,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminPro
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.Creator.String()),
+		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
 		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
@@ -133,7 +133,7 @@ func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminPropo
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.Creator.String()),
+		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
 		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)

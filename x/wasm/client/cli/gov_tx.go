@@ -19,7 +19,7 @@ import (
 
 func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "wasm-store [wasm file] --source [source] --builder [builder] --title [text] --description [text] --creator [address]",
+		Use:   "wasm-store [wasm file] --source [source] --builder [builder] --title [text] --description [text] --run-as [address]",
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -31,19 +31,19 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(viper.GetString(flagCreator)) == 0 {
-				return errors.New("creator address is required")
+			if len(viper.GetString(flagRunAs)) == 0 {
+				return errors.New("run-as address is required")
 			}
-			creator, err := sdk.AccAddressFromBech32(viper.GetString(flagCreator))
+			runAsAddr, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
 			if err != nil {
-				return errors.Wrap(err, "creator")
+				return errors.Wrap(err, "run-as")
 			}
 			content := types.StoreCodeProposal{
 				WasmProposal: types.WasmProposal{
 					Title:       viper.GetString(cli.FlagTitle),
 					Description: viper.GetString(cli.FlagDescription),
 				},
-				Creator:               creator,
+				RunAs:                 runAsAddr,
 				WASMByteCode:          src.WASMByteCode,
 				Source:                src.Source,
 				Builder:               src.Builder,
@@ -66,7 +66,7 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
 	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
-	cmd.Flags().String(flagCreator, "", "The address that is stored as code creator")
+	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 
@@ -82,7 +82,7 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 
 func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --admin [address] --title [text] --description [text] --creator [address]",
+		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --admin [address] --title [text] --description [text] --run-as [address]",
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -94,10 +94,10 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(viper.GetString(flagCreator)) == 0 {
+			if len(viper.GetString(flagRunAs)) == 0 {
 				return errors.New("creator address is required")
 			}
-			creator, err := sdk.AccAddressFromBech32(viper.GetString(flagCreator))
+			creator, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
 			if err != nil {
 				return errors.Wrap(err, "creator")
 			}
@@ -106,7 +106,7 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 					Title:       viper.GetString(cli.FlagTitle),
 					Description: viper.GetString(cli.FlagDescription),
 				},
-				Creator:   creator,
+				RunAs:     creator,
 				Admin:     src.Admin,
 				Code:      src.Code,
 				Label:     src.Label,
@@ -130,7 +130,7 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
-	cmd.Flags().String(flagCreator, "", "The address that is stored as code creator")
+	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
@@ -157,12 +157,12 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			if len(viper.GetString(flagSender)) == 0 {
-				return errors.New("sender address is required")
+			if len(viper.GetString(flagRunAs)) == 0 {
+				return errors.New("run-as address is required")
 			}
-			sender, err := sdk.AccAddressFromBech32(viper.GetString(flagSender))
+			runAs, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
 			if err != nil {
-				return errors.Wrap(err, "sender")
+				return errors.Wrap(err, "run-as")
 			}
 
 			content := types.MigrateContractProposal{
@@ -173,7 +173,7 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 				Contract:   src.Contract,
 				Code:       src.Code,
 				MigrateMsg: src.MigrateMsg,
-				Sender:     sender,
+				RunAs:      runAs,
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -189,7 +189,7 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
 	}
-	cmd.Flags().String(flagSender, "", "The address that is passed as sender to the contract")
+	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")

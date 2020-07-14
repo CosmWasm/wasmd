@@ -23,15 +23,12 @@ import (
 )
 
 const (
-	flagTo                     = "to"
 	flagAmount                 = "amount"
 	flagSource                 = "source"
 	flagBuilder                = "builder"
 	flagLabel                  = "label"
 	flagAdmin                  = "admin"
-	flagNoAdmin                = "no-admin"
-	flagCreator                = "creator"
-	flagSender                 = "sender"
+	flagRunAs                  = "run-as"
 	flagInstantiateByEverybody = "instantiate-everybody"
 	flagInstantiateByAddress   = "instantiate-only-address"
 	flagProposalType           = "type"

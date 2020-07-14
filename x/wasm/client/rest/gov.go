@@ -21,7 +21,7 @@ type StoreCodeProposalJsonReq struct {
 	Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
 	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
 
-	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
+	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 	// Source is a valid absolute HTTPS URI to the contract's source code, optional
@@ -38,7 +38,7 @@ func (s StoreCodeProposalJsonReq) Content() gov.Content {
 			Title:       s.Title,
 			Description: s.Description,
 		},
-		Creator:               s.Creator,
+		RunAs:                 s.RunAs,
 		WASMByteCode:          s.WASMByteCode,
 		Source:                s.Source,
 		Builder:               s.Builder,
@@ -57,7 +57,7 @@ func (s StoreCodeProposalJsonReq) GetBaseReq() rest.BaseReq {
 
 func StoreCodeProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "store-code",
+		SubRoute: "wasm_store_code",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req StoreCodeProposalJsonReq
 			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -77,7 +77,7 @@ type InstantiateProposalJsonReq struct {
 	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
 	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
 
-	Creator sdk.AccAddress `json:"creator" yaml:"creator"`
+	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
 	// Admin is an optional address that can execute migrations
 	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
@@ -89,7 +89,7 @@ type InstantiateProposalJsonReq struct {
 func (s InstantiateProposalJsonReq) Content() gov.Content {
 	return types.InstantiateContractProposal{
 		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
-		Creator:      s.Creator,
+		RunAs:        s.RunAs,
 		Admin:        s.Admin,
 		Code:         s.Code,
 		Label:        s.Label,
@@ -109,7 +109,7 @@ func (s InstantiateProposalJsonReq) GetBaseReq() rest.BaseReq {
 
 func InstantiateProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "instantiate",
+		SubRoute: "wasm_instantiate",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req InstantiateProposalJsonReq
 			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -132,8 +132,8 @@ type MigrateProposalJsonReq struct {
 	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
 	Code       uint64          `json:"code_id" yaml:"code_id"`
 	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
-	// Sender is the role that is passed to the contract's environment
-	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
+	// RunAs is the role that is passed to the contract's environment
+	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
 }
 
 func (s MigrateProposalJsonReq) Content() gov.Content {
@@ -142,7 +142,7 @@ func (s MigrateProposalJsonReq) Content() gov.Content {
 		Contract:     s.Contract,
 		Code:         s.Code,
 		MigrateMsg:   s.MigrateMsg,
-		Sender:       s.Sender,
+		RunAs:        s.RunAs,
 	}
 }
 func (s MigrateProposalJsonReq) GetProposer() sdk.AccAddress {
@@ -156,7 +156,7 @@ func (s MigrateProposalJsonReq) GetBaseReq() rest.BaseReq {
 }
 func MigrateProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "migrate",
+		SubRoute: "wasm_migrate",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req MigrateProposalJsonReq
 			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -198,7 +198,7 @@ func (s UpdateAdminJsonReq) GetBaseReq() rest.BaseReq {
 }
 func UpdateContractAdminProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "update-admin",
+		SubRoute: "wasm_update_admin",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req UpdateAdminJsonReq
 			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -238,7 +238,7 @@ func (s ClearAdminJsonReq) GetBaseReq() rest.BaseReq {
 }
 func ClearContractAdminProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "clear-admin",
+		SubRoute: "wasm_clear_admin",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req ClearAdminJsonReq
 			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {

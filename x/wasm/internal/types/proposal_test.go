@@ -120,15 +120,15 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
-		"creator missing": {
+		"run_as missing": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Creator = nil
+				p.RunAs = nil
 			}),
 			expErr: true,
 		},
-		"creator invalid": {
+		"run_as invalid": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Creator = invalidAddress
+				p.RunAs = invalidAddress
 			}),
 			expErr: true,
 		},
@@ -208,15 +208,15 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
-		"creator missing": {
+		"run_as missing": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Creator = nil
+				p.RunAs = nil
 			}),
 			expErr: true,
 		},
-		"creator invalid": {
+		"run_as invalid": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Creator = invalidAddress
+				p.RunAs = invalidAddress
 			}),
 			expErr: true,
 		},
@@ -304,15 +304,15 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
-		"sender missing": {
+		"run_as missing": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.Sender = nil
+				p.RunAs = nil
 			}),
 			expErr: true,
 		},
-		"sender invalid": {
+		"run_as invalid": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.Sender = invalidAddress
+				p.RunAs = invalidAddress
 			}),
 			expErr: true,
 		},
@@ -439,7 +439,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Store Code Proposal:
   Title:       Foo
   Description: Bar
-  Creator:     cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   WasmCode:    0102030405060708090A
   Source:      https://example.com/code
   Builder:     foo/bar:latest
@@ -452,7 +452,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Creator:     cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
@@ -465,7 +465,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Creator:     cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
@@ -478,7 +478,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Creator:     cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Admin:       
   Code id:     1
   Label:       testing
@@ -493,7 +493,7 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
   Code id:     1
-  Sender:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   MigrateMsg   "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
 `,
 		},
@@ -533,7 +533,7 @@ func TestProposalYaml(t *testing.T) {
 			}),
 			exp: `title: Foo
 description: Bar
-creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 wasm_byte_code: AQIDBAUGBwgJCg==
 source: https://example.com/code
 builder: foo/bar:latest
@@ -546,7 +546,7 @@ instantiate_permission: null
 			}),
 			exp: `title: Foo
 description: Bar
-creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
@@ -562,7 +562,7 @@ init_funds:
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.InitFunds = nil }),
 			exp: `title: Foo
 description: Bar
-creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
@@ -574,7 +574,7 @@ init_funds: []
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = nil }),
 			exp: `title: Foo
 description: Bar
-creator: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: ""
 code_id: 1
 label: testing
@@ -589,7 +589,7 @@ description: Bar
 contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 code_id: 1
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
-sender: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
+run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 `,
 		},
 		"update admin": {
