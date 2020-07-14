@@ -28,9 +28,6 @@ import (
 // Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 const GasMultiplier = 100
 
-// MaxGas for a contract is 900 million (enforced in rust)
-const MaxGas = 900_000_000
-
 // InstanceCost is how much SDK gas we charge each time we load a WASM instance.
 // Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 const InstanceCost uint64 = 40_000
@@ -528,11 +525,7 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 
 func gasForContract(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
-	remaining := (meter.Limit() - meter.GasConsumed()) * GasMultiplier
-	if remaining > MaxGas {
-		return MaxGas
-	}
-	return remaining
+	return (meter.Limit() - meter.GasConsumed()) * GasMultiplier
 }
 
 func consumeGas(ctx sdk.Context, gas uint64) {

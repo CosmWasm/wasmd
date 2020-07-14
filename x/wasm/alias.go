@@ -24,7 +24,6 @@ const (
 	CustomEventType               = types.CustomEventType
 	AttributeKeyContractAddr      = types.AttributeKeyContractAddr
 	GasMultiplier                 = keeper.GasMultiplier
-	MaxGas                        = keeper.MaxGas
 	QueryListContractByCode       = keeper.QueryListContractByCode
 	QueryGetContract              = keeper.QueryGetContract
 	QueryGetContractState         = keeper.QueryGetContractState
