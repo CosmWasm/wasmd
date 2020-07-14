@@ -30,7 +30,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	var anyAddress sdk.AccAddress = make([]byte, sdk.AddrLen)
 
 	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
-		p.Creator = anyAddress
+		p.RunAs = anyAddress
 		p.WASMByteCode = wasmCode
 		p.Source = "https://example.com/mysource"
 		p.Builder = "foo/bar:v0.0.0"
@@ -80,7 +80,7 @@ func TestInstantiateProposal(t *testing.T) {
 	)
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
 		p.Code = 1
-		p.Creator = oneAddress
+		p.RunAs = oneAddress
 		p.Admin = otherAddress
 		p.Label = "testing"
 	})
@@ -152,7 +152,7 @@ func TestMigrateProposal(t *testing.T) {
 		Code:       2,
 		Contract:   contractAddr,
 		MigrateMsg: migMsgBz,
-		Sender:     otherAddress,
+		RunAs:      otherAddress,
 	}
 
 	// when stored
@@ -176,7 +176,6 @@ func TestMigrateProposal(t *testing.T) {
 
 func TestAdminProposals(t *testing.T) {
 	var (
-		anyAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
 		contractAddr                = contractAddress(1, 1)
 	)
@@ -196,7 +195,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 				NewAdmin: otherAddress,
 			},
 			expAdmin: otherAddress,
@@ -211,7 +209,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 				NewAdmin: otherAddress,
 			},
 			expAdmin: otherAddress,
@@ -224,7 +221,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 			},
 			expAdmin: nil,
 		},
@@ -238,7 +234,6 @@ func TestAdminProposals(t *testing.T) {
 					Description: "Bar",
 				},
 				Contract: contractAddr,
-				Sender:   anyAddress,
 			},
 			expAdmin: nil,
 		},

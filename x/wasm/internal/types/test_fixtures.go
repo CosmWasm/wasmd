@@ -119,7 +119,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) StoreCodePro
 			Title:       "Foo",
 			Description: "Bar",
 		},
-		Creator:      anyValidAddress,
+		RunAs:        anyValidAddress,
 		WASMByteCode: []byte{0x0},
 		Source:       "https://example.com/code",
 		Builder:      "foo/bar:latest",
@@ -152,7 +152,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 			Title:       "Foo",
 			Description: "Bar",
 		},
-		Creator:   anyValidAddress,
+		RunAs:     anyValidAddress,
 		Admin:     anyValidAddress,
 		Code:      1,
 		Label:     "testing",
@@ -192,7 +192,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		Contract:   contractAddr,
 		Code:       1,
 		MigrateMsg: migMsgBz,
-		Sender:     anyValidAddress,
+		RunAs:      anyValidAddress,
 	}
 
 	for _, m := range mutators {
@@ -216,7 +216,6 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) Update
 		},
 		NewAdmin: anyValidAddress,
 		Contract: contractAddr,
-		Sender:   anyValidAddress,
 	}
 	for _, m := range mutators {
 		m(&p)
@@ -225,8 +224,6 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) Update
 }
 
 func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) ClearAdminProposal {
-	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-
 	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 	if err != nil {
 		panic(err)
@@ -238,7 +235,6 @@ func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) ClearAdm
 			Description: "Bar",
 		},
 		Contract: contractAddr,
-		Sender:   anyValidAddress,
 	}
 	for _, m := range mutators {
 		m(&p)
