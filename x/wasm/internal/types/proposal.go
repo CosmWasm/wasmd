@@ -11,29 +11,31 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
+type ProposalType string
+
 const (
-	ProposalTypeStoreCode                = "StoreCode"
-	ProposalTypeStoreInstantiateContract = "InstantiateContract"
-	ProposalTypeMigrateContract          = "MigrateContract"
-	ProposalTypeUpdateAdmin              = "UpdateAdmin"
-	ProposalTypeClearAdmin               = "ClearAdmin"
+	ProposalTypeStoreCode                ProposalType = "StoreCode"
+	ProposalTypeStoreInstantiateContract ProposalType = "InstantiateContract"
+	ProposalTypeMigrateContract          ProposalType = "MigrateContract"
+	ProposalTypeUpdateAdmin              ProposalType = "UpdateAdmin"
+	ProposalTypeClearAdmin               ProposalType = "ClearAdmin"
 )
 
 // DefaultEnabledProposals contains all wasm gov types as keys.
-var DefaultEnabledProposals = map[string]struct{}{
-	ProposalTypeStoreCode:                {},
-	ProposalTypeStoreInstantiateContract: {},
-	ProposalTypeMigrateContract:          {},
-	ProposalTypeUpdateAdmin:              {},
-	ProposalTypeClearAdmin:               {},
+var DefaultEnabledProposals = []ProposalType{
+	ProposalTypeStoreCode,
+	ProposalTypeStoreInstantiateContract,
+	ProposalTypeMigrateContract,
+	ProposalTypeUpdateAdmin,
+	ProposalTypeClearAdmin,
 }
 
 func init() { // register new content types with the sdk
-	govtypes.RegisterProposalType(ProposalTypeStoreCode)
-	govtypes.RegisterProposalType(ProposalTypeStoreInstantiateContract)
-	govtypes.RegisterProposalType(ProposalTypeMigrateContract)
-	govtypes.RegisterProposalType(ProposalTypeUpdateAdmin)
-	govtypes.RegisterProposalType(ProposalTypeClearAdmin)
+	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
+	govtypes.RegisterProposalType(string(ProposalTypeStoreInstantiateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
+	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
 	govtypes.RegisterProposalTypeCodec(StoreCodeProposal{}, "wasm/store-proposal")
 	govtypes.RegisterProposalTypeCodec(InstantiateContractProposal{}, "wasm/instantiate-proposal")
 	govtypes.RegisterProposalTypeCodec(MigrateContractProposal{}, "wasm/migrate-proposal")
@@ -95,7 +97,7 @@ type StoreCodeProposal struct {
 }
 
 // ProposalType returns the type
-func (p StoreCodeProposal) ProposalType() string { return ProposalTypeStoreCode }
+func (p StoreCodeProposal) ProposalType() string { return string(ProposalTypeStoreCode) }
 
 // ValidateBasic validates the proposal
 func (p StoreCodeProposal) ValidateBasic() error {
@@ -170,7 +172,7 @@ type InstantiateContractProposal struct {
 
 // ProposalType returns the type
 func (p InstantiateContractProposal) ProposalType() string {
-	return ProposalTypeStoreInstantiateContract
+	return string(ProposalTypeStoreInstantiateContract)
 }
 
 // ValidateBasic validates the proposal
@@ -248,7 +250,7 @@ type MigrateContractProposal struct {
 }
 
 // ProposalType returns the type
-func (p MigrateContractProposal) ProposalType() string { return ProposalTypeMigrateContract }
+func (p MigrateContractProposal) ProposalType() string { return string(ProposalTypeMigrateContract) }
 
 // ValidateBasic validates the proposal
 func (p MigrateContractProposal) ValidateBasic() error {
@@ -303,7 +305,7 @@ type UpdateAdminProposal struct {
 }
 
 // ProposalType returns the type
-func (p UpdateAdminProposal) ProposalType() string { return ProposalTypeUpdateAdmin }
+func (p UpdateAdminProposal) ProposalType() string { return string(ProposalTypeUpdateAdmin) }
 
 // ValidateBasic validates the proposal
 func (p UpdateAdminProposal) ValidateBasic() error {
@@ -337,7 +339,7 @@ type ClearAdminProposal struct {
 }
 
 // ProposalType returns the type
-func (p ClearAdminProposal) ProposalType() string { return ProposalTypeClearAdmin }
+func (p ClearAdminProposal) ProposalType() string { return string(ProposalTypeClearAdmin) }
 
 // ValidateBasic validates the proposal
 func (p ClearAdminProposal) ValidateBasic() error {

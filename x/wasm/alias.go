@@ -91,6 +91,7 @@ var (
 )
 
 type (
+	ProposalType            = types.ProposalType
 	GenesisState            = types.GenesisState
 	Code                    = types.Code
 	Contract                = types.Contract

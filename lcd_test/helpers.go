@@ -50,6 +50,7 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // TODO: Make InitializeTestLCD safe to call in multiple tests at the same time
@@ -73,7 +74,7 @@ func InitializeLCD(nValidators int, initAddrs []sdk.AccAddress, minting bool, po
 	logger = log.NewFilter(logger, log.AllowError())
 
 	db := dbm.NewMemDB()
-	gapp := app.NewWasmApp(logger, db, nil, true, 0, nil, baseapp.SetPruning(store.PruneNothing))
+	gapp := app.NewWasmApp(logger, db, nil, true, 0, wasm.DefaultEnabledProposals, nil, baseapp.SetPruning(store.PruneNothing))
 	cdc = app.MakeCodec()
 
 	genDoc, valConsPubKeys, valOperAddrs, privVal, err := defaultGenesis(config, nValidators, initAddrs, minting)
