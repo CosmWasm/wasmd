@@ -300,6 +300,7 @@ func TestInstantiate(t *testing.T) {
 	require.NoError(t, err)
 
 	gasBefore := ctx.GasMeter().GasConsumed()
+	fmt.Printf("limit: %d\n", ctx.GasMeter().Limit())
 	fmt.Printf("before: %d\n", gasBefore)
 
 	// create with no balance is also legal
@@ -308,6 +309,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
+	fmt.Printf("limit: %d\n", ctx.GasMeter().Limit())
 	fmt.Printf("after: %d\n", gasAfter)
 	require.Equal(t, uint64(0x11542), gasAfter-gasBefore)
 
