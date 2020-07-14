@@ -19,6 +19,7 @@ const (
 	ProposalTypeClearAdmin               = "ClearAdmin"
 )
 
+// DefaultEnabledProposals contains all wasm gov types as keys.
 var DefaultEnabledProposals = map[string]struct{}{
 	ProposalTypeStoreCode:                {},
 	ProposalTypeStoreInstantiateContract: {},
@@ -40,6 +41,7 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(ClearAdminProposal{}, "wasm/clear-admin-proposal")
 }
 
+// WasmProposal contains common proposal data.
 type WasmProposal struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
@@ -77,6 +79,7 @@ func (p WasmProposal) ValidateBasic() error {
 	return nil
 }
 
+// StoreCodeProposal gov proposal content type to store wasm code.
 type StoreCodeProposal struct {
 	WasmProposal
 	// RunAs is the address that "owns" the code object
@@ -152,6 +155,7 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// InstantiateContractProposal gov proposal content type to instantiate a contract.
 type InstantiateContractProposal struct {
 	WasmProposal
 	// RunAs is the address that pays the init funds
@@ -233,6 +237,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// MigrateContractProposal gov proposal content type to migrate a contract.
 type MigrateContractProposal struct {
 	WasmProposal `yaml:",inline"`
 	Contract     sdk.AccAddress  `json:"contract"`
@@ -290,6 +295,7 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// UpdateAdminProposal gov proposal content type to set an admin for a contract.
 type UpdateAdminProposal struct {
 	WasmProposal `yaml:",inline"`
 	NewAdmin     sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
@@ -323,6 +329,7 @@ func (p UpdateAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract, p.NewAdmin)
 }
 
+// ClearAdminProposal gov proposal content type to clear the admin of a contract.
 type ClearAdminProposal struct {
 	WasmProposal `yaml:",inline"`
 

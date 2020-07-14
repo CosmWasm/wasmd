@@ -252,6 +252,7 @@ func NewWasmApp(
 	supportedFeatures := "staking"
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
 
+	// The gov proposal types can be individually enabled. As default all wasm gov types are supported here.
 	if len(wasm.DefaultEnabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, wasm.DefaultEnabledProposals))
 	}
