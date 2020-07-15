@@ -9,13 +9,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-const ( // TODO: same as in handler
-
-	AttributeKeyContract = "contract_address"
-	AttributeKeyCodeID   = "code_id"
-	AttributeSigner      = "signer"
-)
-
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
 func NewWasmProposalHandler(k Keeper, enabledTypes map[string]struct{}) govtypes.Handler {
 	return func(ctx sdk.Context, content govtypes.Content) error {
@@ -55,8 +48,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()), // todo: creator is not signer. rename attribute?
-		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -75,9 +67,8 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
-		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", p.Code)),
-		sdk.NewAttribute(AttributeKeyContract, contractAddr.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.Code)),
+		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -96,8 +87,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
-		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvents(append(res.Events, ourEvent))
 	return nil
@@ -115,8 +105,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminPro
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
-		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -133,8 +122,7 @@ func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminPropo
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		//sdk.NewAttribute(AttributeSigner, p.RunAs.String()),
-		sdk.NewAttribute(AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
