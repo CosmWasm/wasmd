@@ -3,14 +3,9 @@ package wasm
 import (
 	"fmt"
 
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-)
-
-const (
-	AttributeKeyContract = "contract_address"
-	AttributeKeyCodeID   = "code_id"
-	AttributeSigner      = "signer"
 )
 
 // NewHandler returns a handler for "bank" type messages.
@@ -84,8 +79,8 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
 	)
 
 	return &sdk.Result{
@@ -104,9 +99,9 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyCodeID, fmt.Sprintf("%d", msg.Code)),
-		sdk.NewAttribute(AttributeKeyContract, contractAddr.String()),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.Code)),
+		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
 	)
 
 	return &sdk.Result{
@@ -125,8 +120,8 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 
 	res.Events = append(events, ourEvent)
@@ -143,8 +138,8 @@ func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.R
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 	res.Events = append(events, ourEvent)
 	return res, nil
@@ -158,8 +153,8 @@ func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdmin) (
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 	return &sdk.Result{
 		Events: append(events, ourEvent),
@@ -174,8 +169,8 @@ func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*s
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(AttributeSigner, msg.Sender.String()),
-		sdk.NewAttribute(AttributeKeyContract, msg.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 	return &sdk.Result{
 		Events: append(events, ourEvent),
