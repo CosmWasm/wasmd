@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/json"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,14 +43,14 @@ func TestValidateParams(t *testing.T) {
 		"reject empty type in instantiate permission": {
 			src: Params{
 				UploadAccess:                 AllowNobody,
-				DefaultInstantiatePermission: 0,
+				DefaultInstantiatePermission: "",
 			},
 			expErr: true,
 		},
 		"reject unknown type in instantiate": {
 			src: Params{
 				UploadAccess:                 AllowNobody,
-				DefaultInstantiatePermission: 4,
+				DefaultInstantiatePermission: "Undefined",
 			},
 			expErr: true,
 		},
@@ -84,5 +86,44 @@ func TestValidateParams(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestAccessTypeMarshalJson(t *testing.T) {
+	specs := map[string]struct {
+		src AccessType
+		exp string
+	}{
+		"Undefined":   {src: Undefined, exp: `"Undefined"`},
+		"Nobody":      {src: Nobody, exp: `"Nobody"`},
+		"OnlyAddress": {src: OnlyAddress, exp: `"OnlyAddress"`},
+		"Everybody":   {src: Everybody, exp: `"Everybody"`},
+		"unknown":     {src: "", exp: `"Undefined"`},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := json.Marshal(spec.src)
+			require.NoError(t, err)
+			assert.Equal(t, []byte(spec.exp), got)
+		})
+	}
+}
+func TestAccessTypeUnMarshalJson(t *testing.T) {
+	specs := map[string]struct {
+		src string
+		exp AccessType
+	}{
+		"Undefined":   {src: `"Undefined"`, exp: Undefined},
+		"Nobody":      {src: `"Nobody"`, exp: Nobody},
+		"OnlyAddress": {src: `"OnlyAddress"`, exp: OnlyAddress},
+		"Everybody":   {src: `"Everybody"`, exp: Everybody},
+		"unknown":     {src: `""`, exp: Undefined},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			var got AccessType
+			err := json.Unmarshal([]byte(spec.src), &got)
+			require.NoError(t, err)
+			assert.Equal(t, spec.exp, got)
+		})
+	}
 }

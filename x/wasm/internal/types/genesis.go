@@ -21,9 +21,9 @@ func (s Sequence) ValidateBasic() error {
 // GenesisState is the struct representation of the export genesis
 type GenesisState struct {
 	Params    Params     `json:"params"`
-	Codes     []Code     `json:"codes"`
-	Contracts []Contract `json:"contracts"`
-	Sequences []Sequence `json:"sequences"`
+	Codes     []Code     `json:"codes,omitempty"`
+	Contracts []Contract `json:"contracts,omitempty"`
+	Sequences []Sequence `json:"sequences,omitempty"`
 }
 
 func (s GenesisState) ValidateBasic() error {
