@@ -11,28 +11,34 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
+type ProposalType string
+
 const (
-	ProposalTypeStoreCode                = "StoreCode"
-	ProposalTypeStoreInstantiateContract = "InstantiateContract"
-	ProposalTypeMigrateContract          = "MigrateContract"
-	ProposalTypeUpdateAdmin              = "UpdateAdmin"
-	ProposalTypeClearAdmin               = "ClearAdmin"
+	ProposalTypeStoreCode                ProposalType = "StoreCode"
+	ProposalTypeStoreInstantiateContract ProposalType = "InstantiateContract"
+	ProposalTypeMigrateContract          ProposalType = "MigrateContract"
+	ProposalTypeUpdateAdmin              ProposalType = "UpdateAdmin"
+	ProposalTypeClearAdmin               ProposalType = "ClearAdmin"
 )
 
-var DefaultEnabledProposals = map[string]struct{}{
-	ProposalTypeStoreCode:                {},
-	ProposalTypeStoreInstantiateContract: {},
-	ProposalTypeMigrateContract:          {},
-	ProposalTypeUpdateAdmin:              {},
-	ProposalTypeClearAdmin:               {},
+// DisableAllProposals contains no wasm gov types.
+var DisableAllProposals []ProposalType
+
+// EnableAllProposals contains all wasm gov types as keys.
+var EnableAllProposals = []ProposalType{
+	ProposalTypeStoreCode,
+	ProposalTypeStoreInstantiateContract,
+	ProposalTypeMigrateContract,
+	ProposalTypeUpdateAdmin,
+	ProposalTypeClearAdmin,
 }
 
 func init() { // register new content types with the sdk
-	govtypes.RegisterProposalType(ProposalTypeStoreCode)
-	govtypes.RegisterProposalType(ProposalTypeStoreInstantiateContract)
-	govtypes.RegisterProposalType(ProposalTypeMigrateContract)
-	govtypes.RegisterProposalType(ProposalTypeUpdateAdmin)
-	govtypes.RegisterProposalType(ProposalTypeClearAdmin)
+	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
+	govtypes.RegisterProposalType(string(ProposalTypeStoreInstantiateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
+	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
 	govtypes.RegisterProposalTypeCodec(StoreCodeProposal{}, "wasm/store-proposal")
 	govtypes.RegisterProposalTypeCodec(InstantiateContractProposal{}, "wasm/instantiate-proposal")
 	govtypes.RegisterProposalTypeCodec(MigrateContractProposal{}, "wasm/migrate-proposal")
@@ -40,6 +46,7 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(ClearAdminProposal{}, "wasm/clear-admin-proposal")
 }
 
+// WasmProposal contains common proposal data.
 type WasmProposal struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
@@ -77,6 +84,7 @@ func (p WasmProposal) ValidateBasic() error {
 	return nil
 }
 
+// StoreCodeProposal gov proposal content type to store wasm code.
 type StoreCodeProposal struct {
 	WasmProposal
 	// RunAs is the address that "owns" the code object
@@ -92,7 +100,7 @@ type StoreCodeProposal struct {
 }
 
 // ProposalType returns the type
-func (p StoreCodeProposal) ProposalType() string { return ProposalTypeStoreCode }
+func (p StoreCodeProposal) ProposalType() string { return string(ProposalTypeStoreCode) }
 
 // ValidateBasic validates the proposal
 func (p StoreCodeProposal) ValidateBasic() error {
@@ -152,6 +160,7 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// InstantiateContractProposal gov proposal content type to instantiate a contract.
 type InstantiateContractProposal struct {
 	WasmProposal
 	// RunAs is the address that pays the init funds
@@ -166,7 +175,7 @@ type InstantiateContractProposal struct {
 
 // ProposalType returns the type
 func (p InstantiateContractProposal) ProposalType() string {
-	return ProposalTypeStoreInstantiateContract
+	return string(ProposalTypeStoreInstantiateContract)
 }
 
 // ValidateBasic validates the proposal
@@ -233,6 +242,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// MigrateContractProposal gov proposal content type to migrate a contract.
 type MigrateContractProposal struct {
 	WasmProposal `yaml:",inline"`
 	Contract     sdk.AccAddress  `json:"contract"`
@@ -243,7 +253,7 @@ type MigrateContractProposal struct {
 }
 
 // ProposalType returns the type
-func (p MigrateContractProposal) ProposalType() string { return ProposalTypeMigrateContract }
+func (p MigrateContractProposal) ProposalType() string { return string(ProposalTypeMigrateContract) }
 
 // ValidateBasic validates the proposal
 func (p MigrateContractProposal) ValidateBasic() error {
@@ -290,6 +300,7 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+// UpdateAdminProposal gov proposal content type to set an admin for a contract.
 type UpdateAdminProposal struct {
 	WasmProposal `yaml:",inline"`
 	NewAdmin     sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
@@ -297,7 +308,7 @@ type UpdateAdminProposal struct {
 }
 
 // ProposalType returns the type
-func (p UpdateAdminProposal) ProposalType() string { return ProposalTypeUpdateAdmin }
+func (p UpdateAdminProposal) ProposalType() string { return string(ProposalTypeUpdateAdmin) }
 
 // ValidateBasic validates the proposal
 func (p UpdateAdminProposal) ValidateBasic() error {
@@ -323,6 +334,7 @@ func (p UpdateAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract, p.NewAdmin)
 }
 
+// ClearAdminProposal gov proposal content type to clear the admin of a contract.
 type ClearAdminProposal struct {
 	WasmProposal `yaml:",inline"`
 
@@ -330,7 +342,7 @@ type ClearAdminProposal struct {
 }
 
 // ProposalType returns the type
-func (p ClearAdminProposal) ProposalType() string { return ProposalTypeClearAdmin }
+func (p ClearAdminProposal) ProposalType() string { return string(ProposalTypeClearAdmin) }
 
 // ValidateBasic validates the proposal
 func (p ClearAdminProposal) ValidateBasic() error {

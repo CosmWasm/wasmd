@@ -17,7 +17,11 @@ const ( // TODO: same as in handler
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
-func NewWasmProposalHandler(k Keeper, enabledTypes map[string]struct{}) govtypes.Handler {
+func NewWasmProposalHandler(k Keeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
+	for i := range enabledProposalTypes {
+		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
+	}
 	return func(ctx sdk.Context, content govtypes.Content) error {
 		if content == nil {
 			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "content must not be empty")

@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // Profile with:
@@ -27,7 +27,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, interBlockCacheOpt())
+	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, wasm.EnableAllProposals, map[int64]bool{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -66,7 +66,7 @@ func BenchmarkInvariants(b *testing.B) {
 		}
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, interBlockCacheOpt())
+	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, wasm.EnableAllProposals, map[int64]bool{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(

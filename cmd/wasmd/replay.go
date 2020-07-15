@@ -7,22 +7,20 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/store"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	cpm "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/proxy"
 	tmsm "github.com/tendermint/tendermint/state"
 	tmstore "github.com/tendermint/tendermint/store"
 	tm "github.com/tendermint/tendermint/types"
-
-	"github.com/CosmWasm/wasmd/app"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func replayCmd() *cobra.Command {
@@ -94,9 +92,8 @@ func replayTxs(rootDir string) error {
 	fmt.Fprintln(os.Stderr, "Creating application")
 	gapp := app.NewWasmApp(
 		// TODO: do we want to set skipUpgradeHieghts here?
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1), nil,
-		baseapp.SetPruning(store.PruneEverything), // nothing
-	)
+		ctx.Logger, appDB, traceStoreWriter, true, uint(1), wasm.EnableAllProposals, nil,
+		baseapp.SetPruning(store.PruneEverything))
 
 	// Genesis
 	var genDocPath = filepath.Join(configDir, "genesis.json")

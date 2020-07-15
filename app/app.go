@@ -137,10 +137,9 @@ type WasmWrapper struct {
 }
 
 // NewWasmApp returns a reference to an initialized WasmApp.
-func NewWasmApp(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
-	invCheckPeriod uint, skipUpgradeHeights map[int64]bool, baseAppOptions ...func(*bam.BaseApp),
-) *WasmApp {
+func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
+	invCheckPeriod uint, enabledProposals []wasm.ProposalType, skipUpgradeHeights map[int64]bool,
+	baseAppOptions ...func(*bam.BaseApp)) *WasmApp {
 
 	cdc := MakeCodec()
 
@@ -252,8 +251,9 @@ func NewWasmApp(
 	supportedFeatures := "staking"
 	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
 
-	if len(wasm.DefaultEnabledProposals) != 0 {
-		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, wasm.DefaultEnabledProposals))
+	// The gov proposal types can be individually enabled
+	if len(enabledProposals) != 0 {
+		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, enabledProposals))
 	}
 
 	app.govKeeper = gov.NewKeeper(

@@ -181,7 +181,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	govRouter := gov.NewRouter().
 		AddRoute(params.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
-		AddRoute(wasmtypes.RouterKey, NewWasmProposalHandler(keeper, wasmtypes.DefaultEnabledProposals))
+		AddRoute(wasmtypes.RouterKey, NewWasmProposalHandler(keeper, wasmtypes.EnableAllProposals))
 
 	govKeeper := gov.NewKeeper(
 		cdc, keyGov, paramsKeeper.Subspace(govtypes.DefaultParamspace).WithKeyTable(gov.ParamKeyTable()), supplyKeeper, stakingKeeper, govRouter,
