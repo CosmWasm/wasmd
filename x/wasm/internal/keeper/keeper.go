@@ -28,8 +28,10 @@ import (
 // Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 const GasMultiplier = 100
 
-// MaxGas for a contract is 900 million (enforced in rust)
-const MaxGas = 900_000_000
+// MaxGas for a contract is 10 billion wasmer gas (enforced in rust to prevent overflow)
+// The limit for v0.9.3 is defined here: https://github.com/CosmWasm/cosmwasm/blob/v0.9.3/packages/vm/src/backends/singlepass.rs#L15-L23
+// (this will be increased in future releases)
+const MaxGas = 10_000_000_000
 
 // InstanceCost is how much SDK gas we charge each time we load a WASM instance.
 // Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
