@@ -21,8 +21,11 @@ const (
 	ProposalTypeClearAdmin               ProposalType = "ClearAdmin"
 )
 
-// DefaultEnabledProposals contains all wasm gov types as keys.
-var DefaultEnabledProposals = []ProposalType{
+// DisableAllProposals contains no wasm gov types.
+var DisableAllProposals []ProposalType
+
+// EnableAllProposals contains all wasm gov types as keys.
+var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
 	ProposalTypeStoreInstantiateContract,
 	ProposalTypeMigrateContract,

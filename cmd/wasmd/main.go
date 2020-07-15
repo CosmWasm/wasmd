@@ -86,7 +86,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	}
 
 	return app.NewWasmApp(logger, db, traceStore, true, invCheckPeriod,
-		wasm.DefaultEnabledProposals, skipUpgradeHeights,
+		wasm.EnableAllProposals, skipUpgradeHeights,
 		baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
@@ -99,7 +99,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), wasm.DefaultEnabledProposals, nil)
+		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), wasm.EnableAllProposals, nil)
 		err := gapp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -107,6 +107,6 @@ func exportAppStateAndTMValidators(
 		return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), wasm.DefaultEnabledProposals, nil)
+	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), wasm.EnableAllProposals, nil)
 	return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
