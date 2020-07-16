@@ -6,7 +6,7 @@ STAKE=${STAKE_TOKEN:-ustake}
 FEE=${FEE_TOKEN:-ucosm}
 
 wasmgovd init --chain-id=testing testing
-sed -i "s/permission\": \"Everybody\"/permission\": \"Nobody\"/" "$HOME"/.wasmgovd/config/genesis.json
+sed -i 's/permission": "Everybody"/permission": "Nobody"/'  "$HOME"/.wasmgovd/config/genesis.json
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$STAKE\"/" "$HOME"/.wasmgovd/config/genesis.json
 if ! wasmcli keys show validator; then
