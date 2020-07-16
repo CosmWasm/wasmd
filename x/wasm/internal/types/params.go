@@ -18,16 +18,20 @@ const (
 var ParamStoreKeyUploadAccess = []byte("uploadAccess")
 var ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
 
-type AccessType uint8
+type AccessType string
 
 const (
-	Undefined   AccessType = 0
-	Nobody      AccessType = 1
-	OnlyAddress AccessType = 2
-	Everybody   AccessType = 3
+	Undefined   AccessType = "Undefined"
+	Nobody      AccessType = "Nobody"
+	OnlyAddress AccessType = "OnlyAddress"
+	Everybody   AccessType = "Everybody"
 )
 
-var AllAccessTypes = []AccessType{Nobody, OnlyAddress, Everybody}
+var AllAccessTypes = map[AccessType]struct{}{
+	Nobody:      {},
+	OnlyAddress: {},
+	Everybody:   {},
+}
 
 func (a AccessType) With(addr sdk.AccAddress) AccessConfig {
 	switch a {
@@ -44,9 +48,26 @@ func (a AccessType) With(addr sdk.AccAddress) AccessConfig {
 	panic("unsupported access type")
 }
 
+func (a *AccessType) UnmarshalText(text []byte) error {
+	s := AccessType(text)
+	if _, ok := AllAccessTypes[s]; ok {
+		*a = s
+		return nil
+	}
+	*a = Undefined
+	return nil
+}
+
+func (a AccessType) MarshalText() ([]byte, error) {
+	if _, ok := AllAccessTypes[a]; ok {
+		return []byte(a), nil
+	}
+	return []byte(Undefined), nil
+}
+
 type AccessConfig struct {
-	Type    AccessType     `json:"type" yaml:"type"`
-	Address sdk.AccAddress `json:"address" yaml:"address"`
+	Type    AccessType     `json:"permission" yaml:"permission"`
+	Address sdk.AccAddress `json:"address,omitempty" yaml:"address"`
 }
 
 func (a AccessConfig) Equals(o AccessConfig) bool {
@@ -61,7 +82,7 @@ var (
 
 // Params defines the set of wasm parameters.
 type Params struct {
-	UploadAccess                 AccessConfig `json:"upload_access" yaml:"upload_access"`
+	UploadAccess                 AccessConfig `json:"code_upload_access" yaml:"code_upload_access"`
 	DefaultInstantiatePermission AccessType   `json:"instantiate_default_permission" yaml:"instantiate_default_permission"`
 }
 
@@ -118,12 +139,10 @@ func validateAccessType(i interface{}) error {
 	if v == Undefined {
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	}
-	for i := range AllAccessTypes {
-		if AllAccessTypes[i] == v {
-			return nil
-		}
+	if _, ok := AllAccessTypes[v]; !ok {
+		return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", v)
 	}
-	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %d", v)
+	return nil
 }
 
 func (v AccessConfig) ValidateBasic() error {
@@ -138,7 +157,7 @@ func (v AccessConfig) ValidateBasic() error {
 	case OnlyAddress:
 		return sdk.VerifyAddressFormat(v.Address)
 	}
-	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %d", v.Type)
+	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", v.Type)
 }
 
 func (v AccessConfig) Allowed(actor sdk.AccAddress) bool {

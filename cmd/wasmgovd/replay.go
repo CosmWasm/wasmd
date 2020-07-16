@@ -92,7 +92,7 @@ func replayTxs(rootDir string) error {
 	fmt.Fprintln(os.Stderr, "Creating application")
 	gapp := app.NewWasmApp(
 		// TODO: do we want to set skipUpgradeHieghts here?
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1), wasm.DisableAllProposals, nil,
+		ctx.Logger, appDB, traceStoreWriter, true, uint(1), wasm.EnableAllProposals, nil,
 		baseapp.SetPruning(store.PruneEverything))
 
 	// Genesis

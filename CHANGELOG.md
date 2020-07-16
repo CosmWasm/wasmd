@@ -37,6 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
+* (wasmd) [\#187](https://github.com/CosmWasm/wasmd/issues/187) Introduce wasmgovd binary
 * (wasmd) [\#178](https://github.com/CosmWasm/wasmd/issues/178) Add cli support for wasm gov proposals
 * (wasmd) [\#163](https://github.com/CosmWasm/wasmd/issues/163) Control who can instantiate code
 * (wasmd) [\#164](https://github.com/CosmWasm/wasmd/issues/164) Control who can upload code
