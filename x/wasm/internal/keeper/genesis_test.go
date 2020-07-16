@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -29,8 +30,8 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// store some test data
-	f := fuzz.New().Funcs(FuzzAddr, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel, FuzzAccessType, FuzzAccessConfig)
-	for i := 0; i < 25; i++ {
+	f := fuzz.New().Funcs(ModelFuzzers...)
+	for i := 0; i < 1; i++ {
 		var (
 			codeInfo    types.CodeInfo
 			contract    types.ContractInfo
@@ -39,7 +40,6 @@ func TestGenesisExportImport(t *testing.T) {
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
-
 		codeID, err := srcKeeper.Create(srcCtx, codeInfo.Creator, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		contract.CodeID = codeID
@@ -52,24 +52,28 @@ func TestGenesisExportImport(t *testing.T) {
 	srcKeeper.setParams(srcCtx, wasmParams)
 
 	// export
-	genesisState := ExportGenesis(srcCtx, srcKeeper)
-
+	exportedState := ExportGenesis(srcCtx, srcKeeper)
 	// order should not matter
-	rand.Shuffle(len(genesisState.Codes), func(i, j int) {
-		genesisState.Codes[i], genesisState.Codes[j] = genesisState.Codes[j], genesisState.Codes[i]
+	rand.Shuffle(len(exportedState.Codes), func(i, j int) {
+		exportedState.Codes[i], exportedState.Codes[j] = exportedState.Codes[j], exportedState.Codes[i]
 	})
-	rand.Shuffle(len(genesisState.Contracts), func(i, j int) {
-		genesisState.Contracts[i], genesisState.Contracts[j] = genesisState.Contracts[j], genesisState.Contracts[i]
+	rand.Shuffle(len(exportedState.Contracts), func(i, j int) {
+		exportedState.Contracts[i], exportedState.Contracts[j] = exportedState.Contracts[j], exportedState.Contracts[i]
 	})
-	rand.Shuffle(len(genesisState.Sequences), func(i, j int) {
-		genesisState.Sequences[i], genesisState.Sequences[j] = genesisState.Sequences[j], genesisState.Sequences[i]
+	rand.Shuffle(len(exportedState.Sequences), func(i, j int) {
+		exportedState.Sequences[i], exportedState.Sequences[j] = exportedState.Sequences[j], exportedState.Sequences[i]
 	})
+	exportedGenesis, err := json.Marshal(exportedState)
+	require.NoError(t, err)
 
 	// re-import
 	dstKeeper, dstCtx, dstStoreKeys, dstCleanup := setupKeeper(t)
 	defer dstCleanup()
 
-	InitGenesis(dstCtx, dstKeeper, genesisState)
+	var importState wasmTypes.GenesisState
+	err = json.Unmarshal(exportedGenesis, &importState)
+	require.NoError(t, err)
+	InitGenesis(dstCtx, dstKeeper, importState)
 
 	// compare whole DB
 	for j := range srcStoreKeys {

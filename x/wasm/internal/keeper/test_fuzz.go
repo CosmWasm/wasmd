@@ -1,11 +1,15 @@
 package keeper
 
 import (
+	"encoding/json"
+
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	fuzz "github.com/google/gofuzz"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 )
+
+var ModelFuzzers = []interface{}{FuzzAddr, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel, FuzzAccessType, FuzzAccessConfig, FuzzContractCodeHistory}
 
 func FuzzAddr(m *sdk.AccAddress, c fuzz.Continue) {
 	*m = make([]byte, 20)
@@ -18,16 +22,29 @@ func FuzzAbsoluteTxPosition(m *types.AbsoluteTxPosition, c fuzz.Continue) {
 }
 
 func FuzzContractInfo(m *types.ContractInfo, c fuzz.Continue) {
-	const maxSize = 1024
 	m.CodeID = c.RandUint64()
 	FuzzAddr(&m.Creator, c)
 	FuzzAddr(&m.Admin, c)
 	m.Label = c.RandString()
-	m.InitMsg = make([]byte, c.RandUint64()%maxSize)
-	c.Read(m.InitMsg)
 	c.Fuzz(&m.Created)
-	c.Fuzz(&m.LastUpdated)
-	m.PreviousCodeID = c.RandUint64()
+	historyElements := c.Int() % 128 // 128 should be enough for tests
+	m.ContractCodeHistory = make([]types.ContractCodeHistoryEntry, historyElements)
+	for i := range m.ContractCodeHistory {
+		c.Fuzz(&m.ContractCodeHistory[i])
+	}
+}
+
+func FuzzContractCodeHistory(m *types.ContractCodeHistoryEntry, c fuzz.Continue) {
+	const maxMsgSize = 128
+	m.CodeID = c.RandUint64()
+	msg := make([]byte, c.RandUint64()%maxMsgSize)
+	c.Read(msg)
+	var err error
+	if m.Msg, err = json.Marshal(msg); err != nil {
+		panic(err)
+	}
+	c.Fuzz(&m.Updated)
+	m.Operation = types.AllCodeHistoryTypes[c.Int()%len(types.AllCodeHistoryTypes)]
 }
 
 func FuzzStateModel(m *types.Model, c fuzz.Continue) {

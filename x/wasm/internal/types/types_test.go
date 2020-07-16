@@ -42,9 +42,6 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			srcMutator: func(c *ContractInfo) { c.Label = strings.Repeat("a", MaxLabelSize+1) },
 			expError:   true,
 		},
-		"init msg empty": {
-			srcMutator: func(c *ContractInfo) { c.InitMsg = nil },
-		},
 		"created nil": {
 			srcMutator: func(c *ContractInfo) { c.Created = nil },
 			expError:   true,
@@ -52,12 +49,6 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"created invalid": {
 			srcMutator: func(c *ContractInfo) { c.Created = &AbsoluteTxPosition{BlockHeight: -1} },
 			expError:   true,
-		},
-		"last updated nil": {
-			srcMutator: func(c *ContractInfo) { c.LastUpdated = nil },
-		},
-		"previous code id empty": {
-			srcMutator: func(c *ContractInfo) { c.PreviousCodeID = 0 },
 		},
 	}
 	for msg, spec := range specs {

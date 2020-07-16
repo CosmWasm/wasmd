@@ -306,15 +306,23 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x1155d), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11740), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, addr)
 	require.NotNil(t, info)
 	assert.Equal(t, info.Creator, creator)
 	assert.Equal(t, info.CodeID, contractID)
-	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
 	assert.Equal(t, info.Label, "demo contract 1")
+
+	exp := []types.ContractCodeHistoryEntry{{
+		Operation: types.InitContractCodeHistoryType,
+		CodeID:    contractID,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+		Msg:       json.RawMessage(initMsgBz),
+	}}
+	assert.Equal(t, exp, info.ContractCodeHistory)
+
 }
 
 func TestInstantiateWithDeposit(t *testing.T) {
@@ -527,7 +535,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11c16), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11c2e), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -772,11 +780,11 @@ func TestMigrate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	originalCodeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	newContractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	newCodeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	require.NotEqual(t, originalContractID, newContractID)
+	require.NotEqual(t, originalCodeID, newCodeID)
 
 	_, _, anyAddr := keyPubAddr()
 	_, _, newVerifierAddr := keyPubAddr()
@@ -805,33 +813,33 @@ func TestMigrate(t *testing.T) {
 		"all good with same code id": {
 			admin:       creator,
 			caller:      creator,
-			codeID:      originalContractID,
+			codeID:      originalCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"all good with different code id": {
 			admin:       creator,
 			caller:      creator,
-			codeID:      newContractID,
+			codeID:      newCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"all good with admin set": {
 			admin:       fred,
 			caller:      fred,
-			codeID:      newContractID,
+			codeID:      newCodeID,
 			migrateMsg:  migMsgBz,
 			expVerifier: newVerifierAddr,
 		},
 		"prevent migration when admin was not set on instantiate": {
 			caller: creator,
-			codeID: originalContractID,
+			codeID: originalCodeID,
 			expErr: sdkerrors.ErrUnauthorized,
 		},
 		"prevent migration when not sent by admin": {
 			caller: creator,
 			admin:  fred,
-			codeID: originalContractID,
+			codeID: originalCodeID,
 			expErr: sdkerrors.ErrUnauthorized,
 		},
 		"fail with non existing code id": {
@@ -844,20 +852,20 @@ func TestMigrate(t *testing.T) {
 			admin:                creator,
 			caller:               creator,
 			overrideContractAddr: anyAddr,
-			codeID:               originalContractID,
+			codeID:               originalCodeID,
 			expErr:               sdkerrors.ErrInvalidRequest,
 		},
 		"fail in contract with invalid migrate msg": {
 			admin:      creator,
 			caller:     creator,
-			codeID:     originalContractID,
+			codeID:     originalCodeID,
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
 			expErr:     types.ErrMigrationFailed,
 		},
 		"fail in contract without migrate msg": {
 			admin:  creator,
 			caller: creator,
-			codeID: originalContractID,
+			codeID: originalCodeID,
 			expErr: types.ErrMigrationFailed,
 		},
 	}
@@ -865,7 +873,7 @@ func TestMigrate(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-			addr, err := keeper.Instantiate(ctx, originalContractID, creator, spec.admin, initMsgBz, "demo contract", nil)
+			addr, err := keeper.Instantiate(ctx, originalCodeID, creator, spec.admin, initMsgBz, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
 				addr = spec.overrideContractAddr
@@ -877,8 +885,19 @@ func TestMigrate(t *testing.T) {
 			}
 			cInfo := keeper.GetContractInfo(ctx, addr)
 			assert.Equal(t, spec.codeID, cInfo.CodeID)
-			assert.Equal(t, originalContractID, cInfo.PreviousCodeID)
-			assert.Equal(t, types.NewCreatedAt(ctx), cInfo.LastUpdated)
+
+			expHistory := []types.ContractCodeHistoryEntry{{
+				Operation: types.InitContractCodeHistoryType,
+				CodeID:    originalCodeID,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       initMsgBz,
+			}, {
+				Operation: types.MigrateContractCodeHistoryType,
+				CodeID:    spec.codeID,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       spec.migrateMsg,
+			}}
+			assert.Equal(t, expHistory, cInfo.ContractCodeHistory)
 
 			m := keeper.QueryRaw(ctx, addr, []byte("config"))
 			require.Len(t, m, 1)
