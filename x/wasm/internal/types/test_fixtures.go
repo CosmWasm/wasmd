@@ -80,7 +80,7 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 	anyAddress := make([]byte, 20)
 	fixture := Contract{
 		ContractAddress: anyAddress,
-		ContractInfo:    ContractInfoFixture(),
+		ContractInfo:    ContractInfoFixture(OnlyGenesisFields),
 		ContractState:   []Model{{Key: []byte("anyKey"), Value: []byte("anyValue")}},
 	}
 
@@ -88,6 +88,11 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 		m(&fixture)
 	}
 	return fixture
+}
+
+func OnlyGenesisFields(info *ContractInfo) {
+	info.Created = nil
+	info.ContractCodeHistory = nil
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {

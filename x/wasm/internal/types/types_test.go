@@ -42,14 +42,6 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			srcMutator: func(c *ContractInfo) { c.Label = strings.Repeat("a", MaxLabelSize+1) },
 			expError:   true,
 		},
-		"created nil": {
-			srcMutator: func(c *ContractInfo) { c.Created = nil },
-			expError:   true,
-		},
-		"created invalid": {
-			srcMutator: func(c *ContractInfo) { c.Created = &AbsoluteTxPosition{BlockHeight: -1} },
-			expError:   true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

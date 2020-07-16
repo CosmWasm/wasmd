@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -17,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -31,7 +34,7 @@ func TestGenesisExportImport(t *testing.T) {
 
 	// store some test data
 	f := fuzz.New().Funcs(ModelFuzzers...)
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 25; i++ {
 		var (
 			codeInfo    types.CodeInfo
 			contract    types.ContractInfo
@@ -65,6 +68,13 @@ func TestGenesisExportImport(t *testing.T) {
 	})
 	exportedGenesis, err := json.Marshal(exportedState)
 	require.NoError(t, err)
+
+	// reset contract history in source DB for comparision with dest DB
+	srcKeeper.ListContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
+		info.ResetFromGenesis(srcCtx)
+		srcKeeper.setContractInfo(srcCtx, address, &info)
+		return false
+	})
 
 	// re-import
 	dstKeeper, dstCtx, dstStoreKeys, dstCleanup := setupKeeper(t)
@@ -215,7 +225,7 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Sequences: []types.Sequence{
@@ -239,10 +249,10 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
 						ContractAddress: contractAddress(1, 2),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Sequences: []types.Sequence{
@@ -258,7 +268,7 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -277,10 +287,10 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -299,7 +309,7 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 						ContractState: []types.Model{
 							{
 								Key:   []byte{0x1},
@@ -353,7 +363,7 @@ func TestFailFastImport(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: contractAddress(1, 1),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Sequences: []types.Sequence{
@@ -379,6 +389,116 @@ func TestFailFastImport(t *testing.T) {
 			require.Error(t, got)
 		})
 	}
+}
+
+func TestExportShouldNotContainContractCodeHistory(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+	var (
+		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+		creator = createFakeFundedAccount(ctx, accKeeper, deposit)
+		anyAddr = make([]byte, sdk.AddrLen)
+	)
+
+	firstCodeID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", &types.AllowEverybody)
+	require.NoError(t, err)
+	secondCodeID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", &types.AllowEverybody)
+	require.NoError(t, err)
+	initMsg := InitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: anyAddr,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	// create instance
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	contractAddr, err := keeper.Instantiate(ctx, firstCodeID, creator, creator, initMsgBz, "demo contract 1", nil)
+	require.NoError(t, err)
+
+	// and migrate to second code id
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = keeper.Migrate(ctx, contractAddr, creator, secondCodeID, initMsgBz)
+	require.NoError(t, err)
+	// and contract contains 2 history elements
+	contractInfo := keeper.GetContractInfo(ctx, contractAddr)
+	require.NotNil(t, contractInfo)
+	require.Len(t, contractInfo.ContractCodeHistory, 2)
+	// when exported
+	state := ExportGenesis(ctx, keeper)
+	require.NoError(t, state.ValidateBasic())
+	require.Len(t, state.Contracts, 1)
+	assert.Len(t, state.Contracts[0].ContractInfo.ContractCodeHistory, 0)
+	assert.Nil(t, state.Contracts[0].ContractInfo.Created)
+}
+
+func TestImportContractWithCodeHistoryReset(t *testing.T) {
+	genesis := `
+{
+	"params":{
+		"code_upload_access": {
+			"permission": "Everybody"
+		},
+		"instantiate_default_permission": "Everybody"
+	},
+  "codes": [
+    {
+      "code_id": 1,
+      "code_info": {
+        "code_hash": "mrFpzGE5s+Qfn9Xe7OikXc0q169m7sMm4ZuV6pVA8Mc=",
+        "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
+        "source": "https://example.com",
+        "builder": "foo/bar:tag",
+        "instantiate_config": {
+          "type": 1,
+          "address": ""
+        }
+      },
+      "code_bytes": %q
+    }
+  ],
+  "contracts": [
+    {
+      "contract_address": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5",
+      "contract_info": {
+        "code_id": 1,
+        "creator": "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x",
+        "admin": "cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn",
+        "label": "ȀĴnZV芢毤"
+      }
+    }
+  ]
+}`
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	keeper, ctx, _, dstCleanup := setupKeeper(t)
+	defer dstCleanup()
+
+	var importState wasmTypes.GenesisState
+	err = json.Unmarshal([]byte(fmt.Sprintf(genesis, base64.StdEncoding.EncodeToString(wasmCode))), &importState)
+	require.NoError(t, err)
+	require.NoError(t, importState.ValidateBasic())
+	InitGenesis(ctx, keeper, importState)
+
+	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
+	require.NoError(t, err)
+	contractInfo := keeper.GetContractInfo(ctx, contractAddr)
+	require.NotNil(t, contractInfo)
+	require.Len(t, contractInfo.ContractCodeHistory, 1)
+	exp := []types.ContractCodeHistoryEntry{{
+		Operation: types.GenesisContractCodeHistoryType,
+		CodeID:    1,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+	},
+	}
+	assert.Equal(t, exp, contractInfo.ContractCodeHistory)
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {

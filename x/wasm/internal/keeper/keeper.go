@@ -606,6 +606,8 @@ func (k Keeper) importContract(ctx sdk.Context, address sdk.AccAddress, c *types
 	if k.containsContractInfo(ctx, address) {
 		return errors.Wrapf(types.ErrDuplicate, "contract: %s", address)
 	}
+
+	c.ResetFromGenesis(ctx)
 	k.setContractInfo(ctx, address, c)
 	return k.importContractState(ctx, address, state)
 }

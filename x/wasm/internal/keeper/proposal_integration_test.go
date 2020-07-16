@@ -179,11 +179,10 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, anyAddress, cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		//	Operation: types.InitContractCodeHistoryType,
-		//	CodeID:    1,
-		//	Updated:   types.NewAbsoluteTxPosition(ctx),
-		//	Msg:       initMsgBz,
-		//}, {
+		Operation: types.GenesisContractCodeHistoryType,
+		CodeID:    1,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+	}, {
 		Operation: types.MigrateContractCodeHistoryType,
 		CodeID:    src.Code,
 		Updated:   types.NewAbsoluteTxPosition(ctx),

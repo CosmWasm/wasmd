@@ -43,7 +43,7 @@ var (
 	GetContractAddressKey     = types.GetContractAddressKey
 	GetContractStorePrefixKey = types.GetContractStorePrefixKey
 	NewCodeInfo               = types.NewCodeInfo
-	NewCreatedAt              = types.NewAbsoluteTxPosition
+	NewAbsoluteTxPosition     = types.NewAbsoluteTxPosition
 	NewContractInfo           = types.NewContractInfo
 	NewEnv                    = types.NewEnv
 	NewWasmCoins              = types.NewWasmCoins
