@@ -63,7 +63,7 @@ type MsgInstantiateContract struct {
 	Sender sdk.AccAddress `json:"sender" yaml:"sender"`
 	// Admin is an optional address that can execute migrations
 	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
-	Code      uint64          `json:"code_id" yaml:"code_id"`
+	CodeID    uint64          `json:"code_id" yaml:"code_id"`
 	Label     string          `json:"label" yaml:"label"`
 	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
 	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
@@ -82,7 +82,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 		return err
 	}
 
-	if msg.Code == 0 {
+	if msg.CodeID == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
 
@@ -150,7 +150,7 @@ func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
 type MsgMigrateContract struct {
 	Sender     sdk.AccAddress  `json:"sender" yaml:"sender"`
 	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
-	Code       uint64          `json:"code_id" yaml:"code_id"`
+	CodeID     uint64          `json:"code_id" yaml:"code_id"`
 	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
 }
 
@@ -163,7 +163,7 @@ func (msg MsgMigrateContract) Type() string {
 }
 
 func (msg MsgMigrateContract) ValidateBasic() error {
-	if msg.Code == 0 {
+	if msg.CodeID == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
 	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {

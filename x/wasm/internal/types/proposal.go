@@ -167,7 +167,7 @@ type InstantiateContractProposal struct {
 	RunAs sdk.AccAddress `json:"run_as"`
 	// Admin is an optional address that can execute migrations
 	Admin     sdk.AccAddress  `json:"admin,omitempty"`
-	Code      uint64          `json:"code_id"`
+	CodeID    uint64          `json:"code_id"`
 	Label     string          `json:"label"`
 	InitMsg   json.RawMessage `json:"init_msg"`
 	InitFunds sdk.Coins       `json:"init_funds"`
@@ -187,7 +187,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "run as")
 	}
 
-	if p.Code == 0 {
+	if p.CodeID == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
@@ -219,7 +219,7 @@ func (p InstantiateContractProposal) String() string {
   Label:       %s
   InitMsg:     %q
   InitFunds:   %s
-`, p.Title, p.Description, p.RunAs, p.Admin, p.Code, p.Label, p.InitMsg, p.InitFunds)
+`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.InitMsg, p.InitFunds)
 }
 
 func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
@@ -227,7 +227,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		WasmProposal `yaml:",inline"`
 		RunAs        sdk.AccAddress `yaml:"run_as"`
 		Admin        sdk.AccAddress `yaml:"admin"`
-		Code         uint64         `yaml:"code_id"`
+		CodeID       uint64         `yaml:"code_id"`
 		Label        string         `yaml:"label"`
 		InitMsg      string         `yaml:"init_msg"`
 		InitFunds    sdk.Coins      `yaml:"init_funds"`
@@ -235,7 +235,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		WasmProposal: p.WasmProposal,
 		RunAs:        p.RunAs,
 		Admin:        p.Admin,
-		Code:         p.Code,
+		CodeID:       p.CodeID,
 		Label:        p.Label,
 		InitMsg:      string(p.InitMsg),
 		InitFunds:    p.InitFunds,
@@ -246,7 +246,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 type MigrateContractProposal struct {
 	WasmProposal `yaml:",inline"`
 	Contract     sdk.AccAddress  `json:"contract"`
-	Code         uint64          `json:"code_id"`
+	CodeID       uint64          `json:"code_id"`
 	MigrateMsg   json.RawMessage `json:"msg"`
 	// RunAs is the address that is passed to the contract's environment as sender
 	RunAs sdk.AccAddress `json:"run_as"`
@@ -260,7 +260,7 @@ func (p MigrateContractProposal) ValidateBasic() error {
 	if err := p.WasmProposal.ValidateBasic(); err != nil {
 		return err
 	}
-	if p.Code == 0 {
+	if p.CodeID == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
 	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
@@ -281,20 +281,20 @@ func (p MigrateContractProposal) String() string {
   Code id:     %d
   Run as:      %s
   MigrateMsg   %q
-`, p.Title, p.Description, p.Contract, p.Code, p.RunAs, p.MigrateMsg)
+`, p.Title, p.Description, p.Contract, p.CodeID, p.RunAs, p.MigrateMsg)
 }
 
 func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 	return struct {
 		WasmProposal `yaml:",inline"`
 		Contract     sdk.AccAddress `yaml:"contract"`
-		Code         uint64         `yaml:"code_id"`
+		CodeID       uint64         `yaml:"code_id"`
 		MigrateMsg   string         `yaml:"msg"`
 		RunAs        sdk.AccAddress `yaml:"run_as"`
 	}{
 		WasmProposal: p.WasmProposal,
 		Contract:     p.Contract,
-		Code:         p.Code,
+		CodeID:       p.CodeID,
 		MigrateMsg:   string(p.MigrateMsg),
 		RunAs:        p.RunAs,
 	}, nil

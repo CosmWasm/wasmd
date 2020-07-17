@@ -79,7 +79,7 @@ func TestInstantiateProposal(t *testing.T) {
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
 	)
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
-		p.Code = 1
+		p.CodeID = 1
 		p.RunAs = oneAddress
 		p.Admin = otherAddress
 		p.Label = "testing"
@@ -149,7 +149,7 @@ func TestMigrateProposal(t *testing.T) {
 			Title:       "Foo",
 			Description: "Bar",
 		},
-		Code:       2,
+		CodeID:     2,
 		Contract:   contractAddr,
 		MigrateMsg: migMsgBz,
 		RunAs:      otherAddress,
