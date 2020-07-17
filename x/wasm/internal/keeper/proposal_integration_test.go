@@ -106,7 +106,7 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.InitContractCodeHistoryType,
-		CodeID:    src.Code,
+		CodeID:    src.CodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       src.InitMsg,
 	}}
@@ -184,7 +184,7 @@ func TestMigrateProposal(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	}, {
 		Operation: types.MigrateContractCodeHistoryType,
-		CodeID:    src.Code,
+		CodeID:    src.CodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       src.MigrateMsg,
 	}}

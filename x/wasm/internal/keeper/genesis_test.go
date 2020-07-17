@@ -70,7 +70,7 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// reset contract history in source DB for comparision with dest DB
-	srcKeeper.ListContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
+	srcKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
 		info.ResetFromGenesis(srcCtx)
 		srcKeeper.setContractInfo(srcCtx, address, &info)
 		return false
@@ -91,7 +91,7 @@ func TestGenesisExportImport(t *testing.T) {
 		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
 		for i := 0; srcIT.Valid(); i++ {
-			require.True(t, dstIT.Valid(), "destination DB has less elements than source. Missing: %q", srcIT.Key())
+			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %s", srcStoreKeys[j].Name(), srcIT.Key())
 			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
 			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %s", srcStoreKeys[j].Name(), i, srcIT.Key())
 			srcIT.Next()

@@ -57,23 +57,20 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 	genState.Params = keeper.GetParams(ctx)
 
-	maxCodeID := keeper.GetNextCodeID(ctx)
-	for i := uint64(1); i < maxCodeID; i++ {
-		if !keeper.containsCodeInfo(ctx, i) {
-			continue
-		}
-		bytecode, err := keeper.GetByteCode(ctx, i)
+	keeper.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
+		bytecode, err := keeper.GetByteCode(ctx, codeID)
 		if err != nil {
 			panic(err)
 		}
 		genState.Codes = append(genState.Codes, types.Code{
-			CodeID:     i,
-			CodeInfo:   *keeper.GetCodeInfo(ctx, i),
+			CodeID:     codeID,
+			CodeInfo:   info,
 			CodesBytes: bytecode,
 		})
-	}
+		return false
+	})
 
-	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, contract types.ContractInfo) bool {
+	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, contract types.ContractInfo) bool {
 		contractStateIterator := keeper.GetContractState(ctx, addr)
 		var state []types.Model
 		for ; contractStateIterator.Valid(); contractStateIterator.Next() {
