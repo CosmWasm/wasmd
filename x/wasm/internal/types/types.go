@@ -51,6 +51,9 @@ func (c CodeInfo) ValidateBasic() error {
 	if err := validateBuilder(c.Builder); err != nil {
 		return sdkerrors.Wrap(err, "builder")
 	}
+	if err := c.InstantiateConfig.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "instantiate config")
+	}
 	return nil
 }
 

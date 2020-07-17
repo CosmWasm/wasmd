@@ -104,9 +104,8 @@ func TestGenesisExportImport(t *testing.T) {
 func TestFailFastImport(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
-	codeHash := sha256.Sum256(wasmCode)
-	anyAddress := make([]byte, 20)
 
+	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
 	specs := map[string]struct {
 		src        types.GenesisState
 		expSuccess bool
@@ -114,11 +113,8 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info correct": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
@@ -132,18 +128,12 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code ids can contain gaps": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}, {
-					CodeID: 3,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     3,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
@@ -157,18 +147,12 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code order does not matter": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 2,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     2,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}, {
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: nil,
@@ -182,11 +166,8 @@ func TestFailFastImport(t *testing.T) {
 		},
 		"prevent code hash mismatch": {src: types.GenesisState{
 			Codes: []types.Code{{
-				CodeID: 1,
-				CodeInfo: wasmTypes.CodeInfo{
-					CodeHash: make([]byte, len(codeHash)),
-					Creator:  anyAddress,
-				},
+				CodeID:     1,
+				CodeInfo:   wasmTypes.CodeInfoFixture(func(i *wasmTypes.CodeInfo) { i.CodeHash = make([]byte, sha256.Size) }),
 				CodesBytes: wasmCode,
 			}},
 			Params: types.DefaultParams(),
@@ -194,19 +175,13 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate codeIDs": {src: types.GenesisState{
 			Codes: []types.Code{
 				{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				},
 				{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				},
 			},
@@ -215,11 +190,8 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
@@ -239,11 +211,8 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info with two contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
@@ -277,11 +246,8 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract address": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
@@ -299,11 +265,8 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract model keys": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
@@ -337,11 +300,8 @@ func TestFailFastImport(t *testing.T) {
 		"prevent code id seq init value == max codeID used": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 2,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     2,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
@@ -353,11 +313,8 @@ func TestFailFastImport(t *testing.T) {
 		"prevent contract id seq init value == count contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID: 1,
-					CodeInfo: wasmTypes.CodeInfo{
-						CodeHash: codeHash[:],
-						Creator:  anyAddress,
-					},
+					CodeID:     1,
+					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
@@ -456,8 +413,8 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
         "source": "https://example.com",
         "builder": "foo/bar:tag",
         "instantiate_config": {
-          "type": 1,
-          "address": ""
+          "permission": "OnlyAddress",
+          "address": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"
         }
       },
       "code_bytes": %q
