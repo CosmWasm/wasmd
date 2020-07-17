@@ -61,16 +61,28 @@ func TestValidateParams(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"reject AccessConfig Everybody with obsolete address": {
+		"reject UploadAccess Everybody with obsolete address": {
 			src: Params{
 				UploadAccess:                 AccessConfig{Type: Everybody, Address: anyAddress},
 				DefaultInstantiatePermission: OnlyAddress,
 			},
 			expErr: true,
 		},
-		"reject AccessConfig Nobody with obsolete address": {
+		"reject UploadAccess Nobody with obsolete address": {
 			src: Params{
 				UploadAccess:                 AccessConfig{Type: Nobody, Address: anyAddress},
+				DefaultInstantiatePermission: OnlyAddress,
+			},
+			expErr: true,
+		},
+		"reject empty UploadAccess": {
+			src: Params{
+				DefaultInstantiatePermission: OnlyAddress,
+			},
+			expErr: true,
+		}, "reject undefined permission in UploadAccess": {
+			src: Params{
+				UploadAccess:                 AccessConfig{Type: Undefined},
 				DefaultInstantiatePermission: OnlyAddress,
 			},
 			expErr: true,

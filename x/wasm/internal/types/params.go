@@ -147,7 +147,7 @@ func validateAccessType(i interface{}) error {
 
 func (v AccessConfig) ValidateBasic() error {
 	switch v.Type {
-	case Undefined:
+	case Undefined, "":
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	case Nobody, Everybody:
 		if len(v.Address) != 0 {

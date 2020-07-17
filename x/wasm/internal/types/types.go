@@ -159,16 +159,6 @@ func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 	return a.BlockHeight < b.BlockHeight || (a.BlockHeight == b.BlockHeight && a.TxIndex < b.TxIndex)
 }
 
-func (a *AbsoluteTxPosition) ValidateBasic() error {
-	if a == nil {
-		return nil
-	}
-	if a.BlockHeight < 0 {
-		return sdkerrors.Wrap(ErrInvalid, "height")
-	}
-	return nil
-}
-
 // NewAbsoluteTxPosition gets a timestamp from the context
 func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
 	// we must safely handle nil gas meters
