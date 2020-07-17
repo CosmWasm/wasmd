@@ -438,24 +438,58 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	keeper, ctx, _, dstCleanup := setupKeeper(t)
 	defer dstCleanup()
 
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 	var importState wasmTypes.GenesisState
 	err = json.Unmarshal([]byte(fmt.Sprintf(genesis, base64.StdEncoding.EncodeToString(wasmCode))), &importState)
 	require.NoError(t, err)
 	require.NoError(t, importState.ValidateBasic())
+
+	// when
 	InitGenesis(ctx, keeper, importState)
 
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
+	// verify wasm code
+	gotWasmCode, err := keeper.GetByteCode(ctx, 1)
 	require.NoError(t, err)
-	contractInfo := keeper.GetContractInfo(ctx, contractAddr)
-	require.NotNil(t, contractInfo)
-	require.Len(t, contractInfo.ContractCodeHistory, 1)
-	exp := []types.ContractCodeHistoryEntry{{
-		Operation: types.GenesisContractCodeHistoryType,
-		CodeID:    1,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-	},
+	assert.Equal(t, wasmCode, gotWasmCode)
+
+	// verify code info
+	gotCodeInfo := keeper.GetCodeInfo(ctx, 1)
+	require.NotNil(t, gotCodeInfo)
+	codeCreatorAddr, _ := sdk.AccAddressFromBech32("cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx")
+	codeHash := sha256.Sum256(wasmCode)
+	expCodeInfo := types.CodeInfo{
+		CodeHash: codeHash[:],
+		Creator:  codeCreatorAddr,
+		Source:   "https://example.com",
+		Builder:  "foo/bar:tag",
+		InstantiateConfig: wasmTypes.AccessConfig{
+			Type:    types.OnlyAddress,
+			Address: codeCreatorAddr,
+		},
 	}
-	assert.Equal(t, exp, contractInfo.ContractCodeHistory)
+	assert.Equal(t, expCodeInfo, *gotCodeInfo)
+
+	// verify contract
+	contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
+	gotContractInfo := keeper.GetContractInfo(ctx, contractAddr)
+	require.NotNil(t, gotContractInfo)
+	contractCreatorAddr, _ := sdk.AccAddressFromBech32("cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x")
+	adminAddr, _ := sdk.AccAddressFromBech32("cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn")
+
+	expContractInfo := types.ContractInfo{
+		CodeID:  1,
+		Creator: contractCreatorAddr,
+		Admin:   adminAddr,
+		Label:   "ȀĴnZV芢毤",
+		Created: &types.AbsoluteTxPosition{BlockHeight: 0, TxIndex: 0},
+		ContractCodeHistory: []types.ContractCodeHistoryEntry{{
+			Operation: types.GenesisContractCodeHistoryType,
+			CodeID:    1,
+			Updated:   types.NewAbsoluteTxPosition(ctx),
+		},
+		},
+	}
+	assert.Equal(t, expContractInfo, *gotContractInfo)
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
