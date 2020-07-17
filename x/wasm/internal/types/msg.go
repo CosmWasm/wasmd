@@ -99,6 +99,9 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 			return err
 		}
 	}
+	if !json.Valid(msg.InitMsg) {
+		return sdkerrors.Wrap(ErrInvalid, "init msg json")
+	}
 	return nil
 }
 
@@ -136,6 +139,9 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 	if !msg.SentFunds.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
 	}
+	if !json.Valid(msg.Msg) {
+		return sdkerrors.Wrap(ErrInvalid, "msg json")
+	}
 	return nil
 }
 
@@ -172,6 +178,10 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 	if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
+	if !json.Valid(msg.MigrateMsg) {
+		return sdkerrors.Wrap(ErrInvalid, "migrate msg json")
+	}
+
 	return nil
 }
 

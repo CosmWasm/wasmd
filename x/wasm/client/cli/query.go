@@ -232,8 +232,8 @@ func GetCmdGetContractStateSmart(cdc *codec.Codec) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "smart [bech32_address] [query]",
-		Short: "Calls contract with given address  with query data and prints the returned result",
-		Long:  "Calls contract with given address  with query data and prints the returned result",
+		Short: "Calls contract with given address with query data and prints the returned result",
+		Long:  "Calls contract with given address with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(_ *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -251,6 +251,9 @@ func GetCmdGetContractStateSmart(cdc *codec.Codec) *cobra.Command {
 			queryData, err := decoder.DecodeString(args[1])
 			if err != nil {
 				return fmt.Errorf("decode query: %s", err)
+			}
+			if !json.Valid(queryData) {
+				return errors.New("query data must be json")
 			}
 			res, _, err := cliCtx.QueryWithData(route, queryData)
 			if err != nil {

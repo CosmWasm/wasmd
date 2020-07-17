@@ -93,6 +93,11 @@ func TestQueryContractState(t *testing.T) {
 			srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
 			expErr:  types.ErrQueryFailed,
 		},
+		"query smart with invalid json": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`not a json string`)},
+			expErr:  types.ErrQueryFailed,
+		},
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:      abci.RequestQuery{Data: []byte("unknown")},
