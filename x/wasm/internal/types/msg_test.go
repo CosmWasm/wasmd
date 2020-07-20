@@ -218,6 +218,98 @@ func TestInstantiateContractValidation(t *testing.T) {
 	}
 }
 
+func TestExecuteContractValidation(t *testing.T) {
+	badAddress, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20))
+
+	cases := map[string]struct {
+		msg   MsgExecuteContract
+		valid bool
+	}{
+		"empty": {
+			msg:   MsgExecuteContract{},
+			valid: false,
+		},
+		"correct minimal": {
+			msg: MsgExecuteContract{
+				Sender:   goodAddress,
+				Contract: goodAddress,
+			},
+			valid: true,
+		},
+		"correct all": {
+			msg: MsgExecuteContract{
+				Sender:    goodAddress,
+				Contract:  goodAddress,
+				Msg:       []byte(`{"some": "data"}`),
+				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+			},
+			valid: true,
+		},
+		"bad sender": {
+			msg: MsgExecuteContract{
+				Sender:   badAddress,
+				Contract: goodAddress,
+				Msg:      []byte(`{"some": "data"}`),
+			},
+			valid: false,
+		},
+		"empty sender": {
+			msg: MsgExecuteContract{
+				Contract: goodAddress,
+				Msg:      []byte(`{"some": "data"}`),
+			},
+			valid: false,
+		},
+		"bad contract": {
+			msg: MsgExecuteContract{
+				Sender:   goodAddress,
+				Contract: badAddress,
+				Msg:      []byte(`{"some": "data"}`),
+			},
+			valid: false,
+		},
+		"empty contract": {
+			msg: MsgExecuteContract{
+				Sender: goodAddress,
+				Msg:    []byte(`{"some": "data"}`),
+			},
+			valid: false,
+		},
+		"negative funds": {
+			msg: MsgExecuteContract{
+				Sender:    goodAddress,
+				Contract:  goodAddress,
+				Msg:       []byte(`{"some": "data"}`),
+				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-1)}},
+			},
+			valid: false,
+		},
+		"duplicate funds": {
+			msg: MsgExecuteContract{
+				Sender:    goodAddress,
+				Contract:  goodAddress,
+				Msg:       []byte(`{"some": "data"}`),
+				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
+			},
+			valid: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestMsgUpdateAdministrator(t *testing.T) {
 	badAddress, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)

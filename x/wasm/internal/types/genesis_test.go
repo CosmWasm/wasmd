@@ -121,6 +121,18 @@ func TestContractValidateBasic(t *testing.T) {
 			},
 			expError: true,
 		},
+		"contract with created set": {
+			srcMutator: func(c *Contract) {
+				c.ContractInfo.Created = &AbsoluteTxPosition{}
+			},
+			expError: true,
+		},
+		"contract with history set": {
+			srcMutator: func(c *Contract) {
+				c.ContractInfo.ContractCodeHistory = []ContractCodeHistoryEntry{{}}
+			},
+			expError: true,
+		},
 		"contract state invalid": {
 			srcMutator: func(c *Contract) {
 				c.ContractState = append(c.ContractState, Model{})

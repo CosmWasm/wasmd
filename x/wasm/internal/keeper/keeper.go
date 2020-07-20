@@ -169,6 +169,7 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, error) {
 	return k.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, k.authZPolicy)
 }
+
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, error) {
 	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: init")
 
@@ -240,7 +241,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	}
 
 	// persist instance
-	createdAt := types.NewCreatedAt(ctx)
+	createdAt := types.NewAbsoluteTxPosition(ctx)
 	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
 
@@ -340,7 +341,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	contractInfo.UpdateCodeID(ctx, newCodeID)
+	contractInfo.AddMigration(ctx, newCodeID, msg)
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 
 	if err := k.dispatchMessages(ctx, contractAddress, res.Messages); err != nil {
@@ -606,6 +607,8 @@ func (k Keeper) importContract(ctx sdk.Context, address sdk.AccAddress, c *types
 	if k.containsContractInfo(ctx, address) {
 		return errors.Wrapf(types.ErrDuplicate, "contract: %s", address)
 	}
+
+	c.ResetFromGenesis(ctx)
 	k.setContractInfo(ctx, address, c)
 	return k.importContractState(ctx, address, state)
 }

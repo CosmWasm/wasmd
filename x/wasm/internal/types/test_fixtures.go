@@ -42,15 +42,10 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 
 func CodeFixture(mutators ...func(*Code)) Code {
 	wasmCode := rand.Bytes(100)
-	codeHash := sha256.Sum256(wasmCode)
-	anyAddress := make([]byte, 20)
 
 	fixture := Code{
-		CodeID: 1,
-		CodeInfo: CodeInfo{
-			CodeHash: codeHash[:],
-			Creator:  anyAddress,
-		},
+		CodeID:     1,
+		CodeInfo:   CodeInfoFixture(WithSHA256CodeHash(wasmCode)),
 		CodesBytes: wasmCode,
 	}
 
@@ -65,10 +60,11 @@ func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
 	codeHash := sha256.Sum256(wasmCode)
 	anyAddress := make([]byte, 20)
 	fixture := CodeInfo{
-		CodeHash: codeHash[:],
-		Creator:  anyAddress,
-		Source:   "https://example.com",
-		Builder:  "my/builder:tag",
+		CodeHash:          codeHash[:],
+		Creator:           anyAddress,
+		Source:            "https://example.com",
+		Builder:           "my/builder:tag",
+		InstantiateConfig: AllowEverybody,
 	}
 	for _, m := range mutators {
 		m(&fixture)
@@ -80,7 +76,7 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 	anyAddress := make([]byte, 20)
 	fixture := Contract{
 		ContractAddress: anyAddress,
-		ContractInfo:    ContractInfoFixture(),
+		ContractInfo:    ContractInfoFixture(OnlyGenesisFields),
 		ContractState:   []Model{{Key: []byte("anyKey"), Value: []byte("anyValue")}},
 	}
 
@@ -88,6 +84,11 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 		m(&fixture)
 	}
 	return fixture
+}
+
+func OnlyGenesisFields(info *ContractInfo) {
+	info.Created = nil
+	info.ContractCodeHistory = nil
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {

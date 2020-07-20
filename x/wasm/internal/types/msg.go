@@ -133,8 +133,8 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 		return err
 	}
 
-	if msg.SentFunds.IsAnyNegative() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "negative SentFunds")
+	if !msg.SentFunds.IsValid() {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
 	}
 	return nil
 }

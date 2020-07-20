@@ -69,11 +69,7 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 	if info == nil {
 		return []byte("null"), nil
 	}
-	// redact the Created field (just used for sorting, not part of public API)
-	info.Created = nil
-	info.LastUpdated = nil
-	info.PreviousCodeID = 0
-
+	redact(info)
 	infoWithAddress := ContractInfoWithAddress{
 		Address:      addr,
 		ContractInfo: info,
@@ -85,6 +81,15 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 	return bz, nil
 }
 
+// redact clears all fields not in the public api
+func redact(info *types.ContractInfo) {
+	info.Created = nil
+	for i := range info.ContractCodeHistory {
+		info.ContractCodeHistory[i].Updated = nil
+		info.ContractCodeHistory[i].Msg = nil
+	}
+}
+
 func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
 	codeID, err := strconv.ParseUint(codeIDstr, 10, 64)
 	if err != nil {
@@ -94,8 +99,6 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 	var contracts []ContractInfoWithAddress
 	keeper.ListContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
 		if info.CodeID == codeID {
-			// remove init message on list
-			info.InitMsg = nil
 			// and add the address
 			infoWithAddress := ContractInfoWithAddress{
 				Address:      addr,
@@ -112,7 +115,7 @@ func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.Request
 	})
 	// and remove that info for the final json (yes, the json:"-" tag doesn't work)
 	for i := range contracts {
-		contracts[i].Created = nil
+		redact(contracts[i].ContractInfo)
 	}
 
 	bz, err := json.MarshalIndent(contracts, "", "  ")

@@ -104,7 +104,14 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, oneAddress, cInfo.Creator)
 	assert.Equal(t, otherAddress, cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
-	assert.Equal(t, src.InitMsg, cInfo.InitMsg)
+	expHistory := []types.ContractCodeHistoryEntry{{
+		Operation: types.InitContractCodeHistoryType,
+		CodeID:    src.Code,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+		Msg:       src.InitMsg,
+	}}
+	assert.Equal(t, expHistory, cInfo.ContractCodeHistory)
+
 }
 
 func TestMigrateProposal(t *testing.T) {
@@ -169,9 +176,20 @@ func TestMigrateProposal(t *testing.T) {
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(2), cInfo.CodeID)
-	assert.Equal(t, uint64(1), cInfo.PreviousCodeID)
 	assert.Equal(t, anyAddress, cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
+	expHistory := []types.ContractCodeHistoryEntry{{
+		Operation: types.GenesisContractCodeHistoryType,
+		CodeID:    1,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+	}, {
+		Operation: types.MigrateContractCodeHistoryType,
+		CodeID:    src.Code,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+		Msg:       src.MigrateMsg,
+	}}
+	assert.Equal(t, expHistory, cInfo.ContractCodeHistory)
+
 }
 
 func TestAdminProposals(t *testing.T) {
