@@ -35,26 +35,23 @@ type ContractInfoWithAddress struct {
 	Address sdk.AccAddress `json:"address"`
 }
 
-// controls error output on querier - set true when testing/debugging
-const debug = false
-
 // NewQuerier creates a new querier
 func NewQuerier(keeper Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		switch path[0] {
 		case QueryGetContract:
-			return queryContractInfo(ctx, path[1], req, keeper)
+			return queryContractInfo(ctx, path[1], keeper)
 		case QueryListContractByCode:
-			return queryContractListByCode(ctx, path[1], req, keeper)
+			return queryContractListByCode(ctx, path[1], keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 			}
 			return queryContractState(ctx, path[1], path[2], req, keeper)
 		case QueryGetCode:
-			return queryCode(ctx, path[1], req, keeper)
+			return queryCode(ctx, path[1], keeper)
 		case QueryListCode:
-			return queryCodeList(ctx, req, keeper)
+			return queryCodeList(ctx, keeper)
 		case QueryContractHistory:
 			return queryContractHistory(ctx, path[1], keeper)
 		default:
@@ -63,7 +60,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryContractInfo(ctx sdk.Context, bech string, keeper Keeper) ([]byte, error) {
 	addr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
@@ -89,7 +86,7 @@ func redact(info *types.ContractInfo) {
 	info.Created = nil
 }
 
-func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryContractListByCode(ctx sdk.Context, codeIDstr string, keeper Keeper) ([]byte, error) {
 	codeID, err := strconv.ParseUint(codeIDstr, 10, 64)
 	if err != nil {
 		return nil, err
@@ -165,7 +162,7 @@ type GetCodeResponse struct {
 	Data []byte `json:"data" yaml:"data"`
 }
 
-func queryCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryCode(ctx sdk.Context, codeIDstr string, keeper Keeper) ([]byte, error) {
 	codeID, err := strconv.ParseUint(codeIDstr, 10, 64)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "invalid codeID: "+err.Error())
@@ -204,7 +201,7 @@ type ListCodeResponse struct {
 	Builder  string           `json:"builder"`
 }
 
-func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, error) {
+func queryCodeList(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var info []ListCodeResponse
 
 	var i uint64
