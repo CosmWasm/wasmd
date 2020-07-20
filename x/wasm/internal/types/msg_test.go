@@ -204,6 +204,23 @@ func TestInstantiateContractValidation(t *testing.T) {
 			},
 			valid: false,
 		},
+		"non json init msg": {
+			msg: MsgInstantiateContract{
+				Sender:  goodAddress,
+				CodeID:  1,
+				Label:   "foo",
+				InitMsg: []byte("invalid-json"),
+			},
+			valid: false,
+		},
+		"empty init msg": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				CodeID: 1,
+				Label:  "foo",
+			},
+			valid: false,
+		},
 	}
 
 	for name, tc := range cases {
@@ -236,6 +253,7 @@ func TestExecuteContractValidation(t *testing.T) {
 			msg: MsgExecuteContract{
 				Sender:   goodAddress,
 				Contract: goodAddress,
+				Msg:      []byte("{}"),
 			},
 			valid: true,
 		},
@@ -293,6 +311,21 @@ func TestExecuteContractValidation(t *testing.T) {
 				Contract:  goodAddress,
 				Msg:       []byte(`{"some": "data"}`),
 				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
+			},
+			valid: false,
+		},
+		"non json msg": {
+			msg: MsgExecuteContract{
+				Sender:   goodAddress,
+				Contract: goodAddress,
+				Msg:      []byte("invalid-json"),
+			},
+			valid: false,
+		},
+		"empty msg": {
+			msg: MsgExecuteContract{
+				Sender:   goodAddress,
+				Contract: goodAddress,
 			},
 			valid: false,
 		},
@@ -447,14 +480,7 @@ func TestMsgMigrateContract(t *testing.T) {
 				Sender:     goodAddress,
 				Contract:   anotherGoodAddress,
 				CodeID:     1,
-				MigrateMsg: []byte{1},
-			},
-		},
-		"MigrateMsg optional": {
-			src: MsgMigrateContract{
-				Sender:   goodAddress,
-				Contract: anotherGoodAddress,
-				CodeID:   1,
+				MigrateMsg: []byte("{}"),
 			},
 		},
 		"bad sender": {
@@ -491,6 +517,23 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender: goodAddress,
 				CodeID: 1,
+			},
+			expErr: true,
+		},
+		"non json migrateMsg": {
+			src: MsgMigrateContract{
+				Sender:     goodAddress,
+				Contract:   anotherGoodAddress,
+				CodeID:     1,
+				MigrateMsg: []byte("invalid json"),
+			},
+			expErr: true,
+		},
+		"empty migrateMsg": {
+			src: MsgMigrateContract{
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+				CodeID:   1,
 			},
 			expErr: true,
 		},
