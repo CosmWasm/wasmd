@@ -27,11 +27,6 @@ func FuzzContractInfo(m *types.ContractInfo, c fuzz.Continue) {
 	FuzzAddr(&m.Admin, c)
 	m.Label = c.RandString()
 	c.Fuzz(&m.Created)
-	historyElements := c.Int() % 128 // 128 should be enough for tests
-	m.ContractCodeHistory = make([]types.ContractCodeHistoryEntry, historyElements)
-	for i := range m.ContractCodeHistory {
-		c.Fuzz(&m.ContractCodeHistory[i])
-	}
 }
 
 func FuzzContractCodeHistory(m *types.ContractCodeHistoryEntry, c fuzz.Continue) {

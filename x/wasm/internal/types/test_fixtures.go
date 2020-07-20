@@ -88,7 +88,6 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 
 func OnlyGenesisFields(info *ContractInfo) {
 	info.Created = nil
-	info.ContractCodeHistory = nil
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {

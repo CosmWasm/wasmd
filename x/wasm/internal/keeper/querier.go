@@ -84,10 +84,6 @@ func queryContractInfo(ctx sdk.Context, bech string, req abci.RequestQuery, keep
 // redact clears all fields not in the public api
 func redact(info *types.ContractInfo) {
 	info.Created = nil
-	for i := range info.ContractCodeHistory {
-		info.ContractCodeHistory[i].Updated = nil
-		info.ContractCodeHistory[i].Msg = nil
-	}
 }
 
 func queryContractListByCode(ctx sdk.Context, codeIDstr string, req abci.RequestQuery, keeper Keeper) ([]byte, error) {

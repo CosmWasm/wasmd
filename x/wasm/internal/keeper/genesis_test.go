@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -39,15 +40,18 @@ func TestGenesisExportImport(t *testing.T) {
 			codeInfo    types.CodeInfo
 			contract    types.ContractInfo
 			stateModels []types.Model
+			history     []types.ContractCodeHistoryEntry
 		)
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
+		f.NilChance(0).Fuzz(&history)
 		codeID, err := srcKeeper.Create(srcCtx, codeInfo.Creator, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		contract.CodeID = codeID
 		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
 		srcKeeper.setContractInfo(srcCtx, contractAddr, &contract)
+		srcKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
 	var wasmParams types.Params
@@ -93,11 +97,17 @@ func TestGenesisExportImport(t *testing.T) {
 		for i := 0; srcIT.Valid(); i++ {
 			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %s", srcStoreKeys[j].Name(), srcIT.Key())
 			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %s", srcStoreKeys[j].Name(), i, srcIT.Key())
+
+			isContractHistory := srcStoreKeys[j].Name() == types.StoreKey && bytes.HasPrefix(srcIT.Key(), types.ContractHistoryStorePrefix)
+			if !isContractHistory { // only skip history entries because we know they are different
+				require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())
+			}
 			srcIT.Next()
 			dstIT.Next()
 		}
-		require.False(t, dstIT.Valid())
+		if !assert.False(t, dstIT.Valid()) {
+			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
+		}
 	}
 }
 
@@ -348,53 +358,6 @@ func TestFailFastImport(t *testing.T) {
 	}
 }
 
-func TestExportShouldNotContainContractCodeHistory(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
-
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
-	require.NoError(t, err)
-	var (
-		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		creator = createFakeFundedAccount(ctx, accKeeper, deposit)
-		anyAddr = make([]byte, sdk.AddrLen)
-	)
-
-	firstCodeID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", &types.AllowEverybody)
-	require.NoError(t, err)
-	secondCodeID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", &types.AllowEverybody)
-	require.NoError(t, err)
-	initMsg := InitMsg{
-		Verifier:    anyAddr,
-		Beneficiary: anyAddr,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	// create instance
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	contractAddr, err := keeper.Instantiate(ctx, firstCodeID, creator, creator, initMsgBz, "demo contract 1", nil)
-	require.NoError(t, err)
-
-	// and migrate to second code id
-	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	_, err = keeper.Migrate(ctx, contractAddr, creator, secondCodeID, initMsgBz)
-	require.NoError(t, err)
-	// and contract contains 2 history elements
-	contractInfo := keeper.GetContractInfo(ctx, contractAddr)
-	require.NotNil(t, contractInfo)
-	require.Len(t, contractInfo.ContractCodeHistory, 2)
-	// when exported
-	state := ExportGenesis(ctx, keeper)
-	require.NoError(t, state.ValidateBasic())
-	require.Len(t, state.Contracts, 1)
-	assert.Len(t, state.Contracts[0].ContractInfo.ContractCodeHistory, 0)
-	assert.Nil(t, state.Contracts[0].ContractInfo.Created)
-}
-
 func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	genesis := `
 {
@@ -482,14 +445,16 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		Admin:   adminAddr,
 		Label:   "ȀĴnZV芢毤",
 		Created: &types.AbsoluteTxPosition{BlockHeight: 0, TxIndex: 0},
-		ContractCodeHistory: []types.ContractCodeHistoryEntry{{
-			Operation: types.GenesisContractCodeHistoryType,
-			CodeID:    1,
-			Updated:   types.NewAbsoluteTxPosition(ctx),
-		},
-		},
 	}
 	assert.Equal(t, expContractInfo, *gotContractInfo)
+
+	expHistory := []types.ContractCodeHistoryEntry{{
+		Operation: types.GenesisContractCodeHistoryType,
+		CodeID:    1,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+	},
+	}
+	assert.Equal(t, expHistory, keeper.getContractHistory(ctx, contractAddr))
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {

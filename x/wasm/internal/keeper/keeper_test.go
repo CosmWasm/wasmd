@@ -285,7 +285,7 @@ func TestInstantiate(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
+	codeID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -301,28 +301,27 @@ func TestInstantiate(t *testing.T) {
 	gasBefore := ctx.GasMeter().GasConsumed()
 
 	// create with no balance is also legal
-	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 1", nil)
+	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x1175b), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x12313), gasAfter-gasBefore)
 
 	// ensure it is stored properly
-	info := keeper.GetContractInfo(ctx, addr)
+	info := keeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, info)
 	assert.Equal(t, info.Creator, creator)
-	assert.Equal(t, info.CodeID, contractID)
+	assert.Equal(t, info.CodeID, codeID)
 	assert.Equal(t, info.Label, "demo contract 1")
 
 	exp := []types.ContractCodeHistoryEntry{{
 		Operation: types.InitContractCodeHistoryType,
-		CodeID:    contractID,
+		CodeID:    codeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       json.RawMessage(initMsgBz),
 	}}
-	assert.Equal(t, exp, info.ContractCodeHistory)
-
+	assert.Equal(t, exp, keeper.getContractHistory(ctx, contractAddr))
 }
 
 func TestInstantiateWithDeposit(t *testing.T) {
@@ -535,7 +534,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11c49), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11aa2), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -873,17 +872,17 @@ func TestMigrate(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-			addr, err := keeper.Instantiate(ctx, originalCodeID, creator, spec.admin, initMsgBz, "demo contract", nil)
+			contractAddr, err := keeper.Instantiate(ctx, originalCodeID, creator, spec.admin, initMsgBz, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
-				addr = spec.overrideContractAddr
+				contractAddr = spec.overrideContractAddr
 			}
-			_, err = keeper.Migrate(ctx, addr, spec.caller, spec.codeID, spec.migrateMsg)
+			_, err = keeper.Migrate(ctx, contractAddr, spec.caller, spec.codeID, spec.migrateMsg)
 			require.True(t, spec.expErr.Is(err), "expected %v but got %+v", spec.expErr, err)
 			if spec.expErr != nil {
 				return
 			}
-			cInfo := keeper.GetContractInfo(ctx, addr)
+			cInfo := keeper.GetContractInfo(ctx, contractAddr)
 			assert.Equal(t, spec.codeID, cInfo.CodeID)
 
 			expHistory := []types.ContractCodeHistoryEntry{{
@@ -897,9 +896,9 @@ func TestMigrate(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       spec.migrateMsg,
 			}}
-			assert.Equal(t, expHistory, cInfo.ContractCodeHistory)
+			assert.Equal(t, expHistory, keeper.getContractHistory(ctx, contractAddr))
 
-			m := keeper.QueryRaw(ctx, addr, []byte("config"))
+			m := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 			require.Len(t, m, 1)
 			var stored map[string][]byte
 			require.NoError(t, json.Unmarshal(m[0].Value, &stored))

@@ -242,9 +242,9 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// persist instance
 	createdAt := types.NewAbsoluteTxPosition(ctx)
-	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
+	instance := types.NewContractInfo(codeID, creator, admin, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(instance))
-
+	k.appendToContractHistory(ctx, contractAddress, instance.InitialHistory(initMsg))
 	return contractAddress, nil
 }
 
@@ -341,7 +341,8 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Log, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	contractInfo.AddMigration(ctx, newCodeID, msg)
+	historyEntry := contractInfo.AddMigration(ctx, newCodeID, msg)
+	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 
 	if err := k.dispatchMessages(ctx, contractAddress, res.Messages); err != nil {
@@ -374,6 +375,27 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 	contractInfo.Admin = newAdmin
 	k.setContractInfo(ctx, contractAddress, contractInfo)
 	return nil
+}
+
+func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
+	var entries []types.ContractCodeHistoryEntry
+	bz := prefixStore.Get(contractAddr)
+	if bz != nil {
+		k.cdc.MustUnmarshalBinaryBare(bz, &entries)
+	}
+	entries = append(entries, newEntries...)
+	prefixStore.Set(contractAddr, k.cdc.MustMarshalBinaryBare(&entries))
+}
+
+func (k Keeper) getContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
+	var entries []types.ContractCodeHistoryEntry
+	bz := prefixStore.Get(contractAddr)
+	if bz != nil {
+		k.cdc.MustUnmarshalBinaryBare(bz, &entries)
+	}
+	return entries
 }
 
 // QuerySmart queries the smart contract itself.
@@ -613,17 +635,18 @@ func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uin
 	return nil
 }
 
-func (k Keeper) importContract(ctx sdk.Context, address sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
+func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return errors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
 	}
-	if k.containsContractInfo(ctx, address) {
-		return errors.Wrapf(types.ErrDuplicate, "contract: %s", address)
+	if k.containsContractInfo(ctx, contractAddr) {
+		return errors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
 	}
 
-	c.ResetFromGenesis(ctx)
-	k.setContractInfo(ctx, address, c)
-	return k.importContractState(ctx, address, state)
+	historyEntry := c.ResetFromGenesis(ctx)
+	k.appendToContractHistory(ctx, contractAddr, historyEntry)
+	k.setContractInfo(ctx, contractAddr, c)
+	return k.importContractState(ctx, contractAddr, state)
 }
 
 func addrFromUint64(id uint64) sdk.AccAddress {

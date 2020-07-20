@@ -214,9 +214,5 @@ func TestListContractByCodeOrdering(t *testing.T) {
 		assert.NotEmpty(t, contract.Address)
 		// ensure these are not shown
 		assert.Nil(t, contract.Created)
-		for _, entry := range contract.ContractCodeHistory {
-			assert.Nil(t, entry.Updated)
-			assert.Nil(t, entry.Msg)
-		}
 	}
 }
