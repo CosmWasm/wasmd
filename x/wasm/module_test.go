@@ -325,7 +325,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Sender:       creator,
 		WASMByteCode: testContract,
 	}
-	res, err := h(data.ctx, &msg)
+	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
 	require.Equal(t, res.Data, []byte("1"))
 
