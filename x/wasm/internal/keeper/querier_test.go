@@ -244,6 +244,7 @@ func TestQueryContractHistory(t *testing.T) {
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.GenesisContractCodeHistoryType,
 				CodeID:    1,
+				Msg:       []byte(`"init message"`),
 			}},
 		},
 		"response with multiple entries": {
@@ -266,12 +267,15 @@ func TestQueryContractHistory(t *testing.T) {
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.InitContractCodeHistoryType,
 				CodeID:    1,
+				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.MigrateContractCodeHistoryType,
 				CodeID:    2,
+				Msg:       []byte(`"migrate message 1"`),
 			}, {
 				Operation: types.MigrateContractCodeHistoryType,
 				CodeID:    3,
+				Msg:       []byte(`"migrate message 2"`),
 			}},
 		},
 		"unknown contract address": {

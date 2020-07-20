@@ -378,13 +378,8 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 }
 
 func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
+	entries := append(k.GetContractHistory(ctx, contractAddr), newEntries...)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
-	var entries []types.ContractCodeHistoryEntry
-	bz := prefixStore.Get(contractAddr)
-	if bz != nil {
-		k.cdc.MustUnmarshalBinaryBare(bz, &entries)
-	}
-	entries = append(entries, newEntries...)
 	prefixStore.Set(contractAddr, k.cdc.MustMarshalBinaryBare(&entries))
 }
 

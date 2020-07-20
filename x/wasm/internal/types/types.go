@@ -77,6 +77,7 @@ const (
 
 var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{InitContractCodeHistoryType, MigrateContractCodeHistoryType}
 
+// ContractCodeHistoryEntry stores code updates to a contract.
 type ContractCodeHistoryEntry struct {
 	Operation ContractCodeHistoryOperationType `json:"operation"`
 	CodeID    uint64                           `json:"code_id"`

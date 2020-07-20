@@ -240,7 +240,6 @@ func queryContractHistory(ctx sdk.Context, bech string, keeper Keeper) ([]byte, 
 	// redact response
 	for i := range entries {
 		entries[i].Updated = nil
-		entries[i].Msg = nil
 	}
 
 	bz, err := json.MarshalIndent(entries, "", "  ")
