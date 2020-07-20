@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -102,12 +103,12 @@ func BankQuerier(bank bank.ViewKeeper) func(ctx sdk.Context, request *wasmTypes.
 			}
 			return json.Marshal(res)
 		}
-		return nil, wasmTypes.UnsupportedRequest{"unknown BankQuery variant"}
+		return nil, wasmTypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
 }
 
-func NoCustomQuerier(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-	return nil, wasmTypes.UnsupportedRequest{"custom"}
+func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
+	return nil, wasmTypes.UnsupportedRequest{Kind: "custom"}
 }
 
 func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
@@ -171,7 +172,7 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 			}
 			return json.Marshal(res)
 		}
-		return nil, wasmTypes.UnsupportedRequest{"unknown Staking variant"}
+		return nil, wasmTypes.UnsupportedRequest{Kind: "unknown Staking variant"}
 	}
 }
 
@@ -242,7 +243,7 @@ func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery
 			// TODO: do we want to change the return value?
 			return json.Marshal(models)
 		}
-		return nil, wasmTypes.UnsupportedRequest{"unknown WasmQuery variant"}
+		return nil, wasmTypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 	}
 }
 

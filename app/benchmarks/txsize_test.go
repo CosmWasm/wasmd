@@ -35,7 +35,7 @@ func ExampleTxSendSize() {
 	if err != nil {
 		return
 	}
-	sigs := []auth.StdSignature{{nil, sig}}
+	sigs := []auth.StdSignature{{Signature: sig}}
 	tx := auth.NewStdTx([]sdk.Msg{msg1}, fee, sigs, "")
 	fmt.Println(len(cdc.MustMarshalBinaryBare([]sdk.Msg{msg1})))
 	fmt.Println(len(cdc.MustMarshalBinaryBare(tx)))
