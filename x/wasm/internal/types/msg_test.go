@@ -146,7 +146,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"correct minimal": {
 			msg: MsgInstantiateContract{
 				Sender:  goodAddress,
-				Code:    1,
+				CodeID:  1,
 				Label:   "foo",
 				InitMsg: []byte("{}"),
 			},
@@ -177,7 +177,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"bad sender minimal": {
 			msg: MsgInstantiateContract{
 				Sender:  badAddress,
-				Code:    1,
+				CodeID:  1,
 				Label:   "foo",
 				InitMsg: []byte("{}"),
 			},
@@ -186,7 +186,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"correct maximal": {
 			msg: MsgInstantiateContract{
 				Sender:    goodAddress,
-				Code:      1,
+				CodeID:    1,
 				Label:     "foo",
 				InitMsg:   []byte(`{"some": "data"}`),
 				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
@@ -196,7 +196,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"negative funds": {
 			msg: MsgInstantiateContract{
 				Sender:  goodAddress,
-				Code:    1,
+				CodeID:  1,
 				Label:   "foo",
 				InitMsg: []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
@@ -354,7 +354,7 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:     goodAddress,
 				Contract:   anotherGoodAddress,
-				Code:       1,
+				CodeID:     1,
 				MigrateMsg: []byte{1},
 			},
 		},
@@ -362,21 +362,21 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:   goodAddress,
 				Contract: anotherGoodAddress,
-				Code:     1,
+				CodeID:   1,
 			},
 		},
 		"bad sender": {
 			src: MsgMigrateContract{
 				Sender:   badAddress,
 				Contract: anotherGoodAddress,
-				Code:     1,
+				CodeID:   1,
 			},
 			expErr: true,
 		},
 		"empty sender": {
 			src: MsgMigrateContract{
 				Contract: anotherGoodAddress,
-				Code:     1,
+				CodeID:   1,
 			},
 			expErr: true,
 		},
@@ -391,14 +391,14 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:   goodAddress,
 				Contract: badAddress,
-				Code:     1,
+				CodeID:   1,
 			},
 			expErr: true,
 		},
 		"empty contract addr": {
 			src: MsgMigrateContract{
 				Sender: goodAddress,
-				Code:   1,
+				CodeID: 1,
 			},
 			expErr: true,
 		},

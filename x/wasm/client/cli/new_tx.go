@@ -55,7 +55,7 @@ func parseMigrateContractArgs(args []string, cliCtx context.CLIContext) (types.M
 	msg := types.MsgMigrateContract{
 		Sender:     cliCtx.GetFromAddress(),
 		Contract:   contractAddr,
-		Code:       codeID,
+		CodeID:     codeID,
 		MigrateMsg: []byte(migrateMsg),
 	}
 	return msg, nil

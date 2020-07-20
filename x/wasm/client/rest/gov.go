@@ -91,7 +91,7 @@ func (s InstantiateProposalJsonReq) Content() gov.Content {
 		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
 		RunAs:        s.RunAs,
 		Admin:        s.Admin,
-		Code:         s.Code,
+		CodeID:       s.Code,
 		Label:        s.Label,
 		InitMsg:      s.InitMsg,
 		InitFunds:    s.InitFunds,
@@ -140,7 +140,7 @@ func (s MigrateProposalJsonReq) Content() gov.Content {
 	return types.MigrateContractProposal{
 		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
 		Contract:     s.Contract,
-		Code:         s.Code,
+		CodeID:       s.Code,
 		MigrateMsg:   s.MigrateMsg,
 		RunAs:        s.RunAs,
 	}

@@ -108,7 +108,7 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 				},
 				RunAs:     creator,
 				Admin:     src.Admin,
-				Code:      src.Code,
+				CodeID:    src.CodeID,
 				Label:     src.Label,
 				InitMsg:   src.InitMsg,
 				InitFunds: src.InitFunds,
@@ -171,7 +171,7 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 					Description: viper.GetString(cli.FlagDescription),
 				},
 				Contract:   src.Contract,
-				Code:       src.Code,
+				CodeID:     src.CodeID,
 				MigrateMsg: src.MigrateMsg,
 				RunAs:      runAs,
 			}

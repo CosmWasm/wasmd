@@ -228,7 +228,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"code id empty": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Code = 0
+				p.CodeID = 0
 			}),
 			expErr: true,
 		},
@@ -300,7 +300,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 		},
 		"code id empty": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.Code = 0
+				p.CodeID = 0
 			}),
 			expErr: true,
 		},

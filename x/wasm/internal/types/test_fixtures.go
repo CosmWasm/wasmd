@@ -154,7 +154,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 		},
 		RunAs:     anyValidAddress,
 		Admin:     anyValidAddress,
-		Code:      1,
+		CodeID:    1,
 		Label:     "testing",
 		InitMsg:   initMsgBz,
 		InitFunds: nil,
@@ -190,7 +190,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 			Description: "Bar",
 		},
 		Contract:   contractAddr,
-		Code:       1,
+		CodeID:     1,
 		MigrateMsg: migMsgBz,
 		RunAs:      anyValidAddress,
 	}

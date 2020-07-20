@@ -115,7 +115,7 @@ func instantiateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		msg := types.MsgInstantiateContract{
 			Sender:    cliCtx.GetFromAddress(),
-			Code:      codeID,
+			CodeID:    codeID,
 			InitFunds: req.Deposit,
 			InitMsg:   req.InitMsg,
 			Admin:     req.Admin,

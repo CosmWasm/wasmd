@@ -63,7 +63,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 		return err
 	}
 
-	contractAddr, err := k.instantiate(ctx, p.Code, p.RunAs, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
+	contractAddr, err := k.instantiate(ctx, p.CodeID, p.RunAs, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.Code)),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
@@ -83,7 +83,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 		return err
 	}
 
-	res, err := k.migrate(ctx, p.Contract, p.RunAs, p.Code, p.MigrateMsg, GovAuthorizationPolicy{})
+	res, err := k.migrate(ctx, p.Contract, p.RunAs, p.CodeID, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}

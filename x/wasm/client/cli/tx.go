@@ -185,7 +185,7 @@ func parseInstantiateArgs(args []string, cliCtx context.CLIContext) (types.MsgIn
 	// build and sign the transaction, then broadcast to Tendermint
 	msg := types.MsgInstantiateContract{
 		Sender:    cliCtx.GetFromAddress(),
-		Code:      codeID,
+		CodeID:    codeID,
 		Label:     label,
 		InitFunds: amount,
 		InitMsg:   []byte(initMsg),

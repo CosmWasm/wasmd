@@ -139,7 +139,7 @@ func TestEncoding(t *testing.T) {
 			output: []sdk.Msg{
 				types.MsgInstantiateContract{
 					Sender: addr1,
-					Code:   7,
+					CodeID: 7,
 					// TODO: fix this
 					Label:     fmt.Sprintf("Auto-created by %s", addr1),
 					InitMsg:   jsonMsg,
