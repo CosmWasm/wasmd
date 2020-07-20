@@ -39,11 +39,11 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
-	govtypes.RegisterProposalTypeCodec(StoreCodeProposal{}, "wasm/store-proposal")
-	govtypes.RegisterProposalTypeCodec(InstantiateContractProposal{}, "wasm/instantiate-proposal")
-	govtypes.RegisterProposalTypeCodec(MigrateContractProposal{}, "wasm/migrate-proposal")
-	govtypes.RegisterProposalTypeCodec(UpdateAdminProposal{}, "wasm/update-admin-proposal")
-	govtypes.RegisterProposalTypeCodec(ClearAdminProposal{}, "wasm/clear-admin-proposal")
+	govtypes.RegisterProposalTypeCodec(StoreCodeProposal{}, "wasm/StoreCodeProposal")
+	govtypes.RegisterProposalTypeCodec(InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
+	govtypes.RegisterProposalTypeCodec(MigrateContractProposal{}, "wasm/MigrateContractProposal")
+	govtypes.RegisterProposalTypeCodec(UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
+	govtypes.RegisterProposalTypeCodec(ClearAdminProposal{}, "wasm/ClearAdminProposal")
 }
 
 // WasmProposal contains common proposal data.
