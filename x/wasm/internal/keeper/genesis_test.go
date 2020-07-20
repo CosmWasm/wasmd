@@ -454,7 +454,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	},
 	}
-	assert.Equal(t, expHistory, keeper.getContractHistory(ctx, contractAddr))
+	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {

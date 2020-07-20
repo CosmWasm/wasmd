@@ -19,6 +19,7 @@ const (
 	QueryGetContractState   = "contract-state"
 	QueryGetCode            = "code"
 	QueryListCode           = "list-code"
+	QueryContractHistory    = "contract-history"
 )
 
 const (
@@ -54,6 +55,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			return queryCode(ctx, path[1], req, keeper)
 		case QueryListCode:
 			return queryCodeList(ctx, req, keeper)
+		case QueryContractHistory:
+			return queryContractHistory(ctx, path[1], keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
@@ -221,6 +224,29 @@ func queryCodeList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byt
 	}
 
 	bz, err := json.MarshalIndent(info, "", "  ")
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+	}
+	return bz, nil
+}
+
+func queryContractHistory(ctx sdk.Context, bech string, keeper Keeper) ([]byte, error) {
+	contractAddr, err := sdk.AccAddressFromBech32(bech)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+	}
+	entries := keeper.GetContractHistory(ctx, contractAddr)
+	if entries == nil {
+		// nil, nil leads to 404 in rest handler
+		return nil, nil
+	}
+	// redact response
+	for i := range entries {
+		entries[i].Updated = nil
+		entries[i].Msg = nil
+	}
+
+	bz, err := json.MarshalIndent(entries, "", "  ")
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}

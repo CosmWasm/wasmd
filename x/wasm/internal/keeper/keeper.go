@@ -388,7 +388,7 @@ func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAdd
 	prefixStore.Set(contractAddr, k.cdc.MustMarshalBinaryBare(&entries))
 }
 
-func (k Keeper) getContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry {
+func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
 	var entries []types.ContractCodeHistoryEntry
 	bz := prefixStore.Get(contractAddr)

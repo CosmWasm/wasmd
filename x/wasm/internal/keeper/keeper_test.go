@@ -321,7 +321,7 @@ func TestInstantiate(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       json.RawMessage(initMsgBz),
 	}}
-	assert.Equal(t, exp, keeper.getContractHistory(ctx, contractAddr))
+	assert.Equal(t, exp, keeper.GetContractHistory(ctx, contractAddr))
 }
 
 func TestInstantiateWithDeposit(t *testing.T) {
@@ -896,7 +896,7 @@ func TestMigrate(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       spec.migrateMsg,
 			}}
-			assert.Equal(t, expHistory, keeper.getContractHistory(ctx, contractAddr))
+			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 
 			m := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 			require.Len(t, m, 1)

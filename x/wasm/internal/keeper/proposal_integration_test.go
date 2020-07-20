@@ -110,7 +110,7 @@ func TestInstantiateProposal(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       src.InitMsg,
 	}}
-	assert.Equal(t, expHistory, wasmKeeper.getContractHistory(ctx, contractAddr))
+	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 }
 
 func TestMigrateProposal(t *testing.T) {
@@ -187,7 +187,7 @@ func TestMigrateProposal(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       src.MigrateMsg,
 	}}
-	assert.Equal(t, expHistory, wasmKeeper.getContractHistory(ctx, contractAddr))
+	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 
 }
 
