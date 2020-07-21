@@ -142,8 +142,8 @@ type WasmApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	accountKeeper    authkeeper.AccountKeeper
-	bankKeeper       bankkeeper.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
+	BankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
 	StakingKeeper    stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
@@ -156,7 +156,7 @@ type WasmApp struct {
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	evidenceKeeper   evidencekeeper.Keeper
 	transferKeeper   ibctransferkeeper.Keeper
-	wasmKeeper       wasm.Keeper
+	WasmKeeper       wasm.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -218,28 +218,28 @@ func NewWasmApp(
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	// add keepers
-	app.accountKeeper = authkeeper.NewAccountKeeper(
+	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey], app.getSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms,
 	)
-	app.bankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec, keys[banktypes.StoreKey], app.accountKeeper, app.getSubspace(banktypes.ModuleName), app.BlockedAddrs(),
+	app.BankKeeper = bankkeeper.NewBaseKeeper(
+		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.getSubspace(banktypes.ModuleName), app.BlockedAddrs(),
 	)
 	stakingKeeper := stakingkeeper.NewKeeper(
-		appCodec, keys[stakingtypes.StoreKey], app.accountKeeper, app.bankKeeper, app.getSubspace(stakingtypes.ModuleName),
+		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.getSubspace(stakingtypes.ModuleName),
 	)
 	app.mintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.getSubspace(minttypes.ModuleName), &stakingKeeper,
-		app.accountKeeper, app.bankKeeper, authtypes.FeeCollectorName,
+		app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
 	)
 	app.distrKeeper = distrkeeper.NewKeeper(
-		appCodec, keys[distrtypes.StoreKey], app.getSubspace(distrtypes.ModuleName), app.accountKeeper, app.bankKeeper,
+		appCodec, keys[distrtypes.StoreKey], app.getSubspace(distrtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, authtypes.FeeCollectorName, app.ModuleAccountAddrs(),
 	)
 	app.slashingKeeper = slashingkeeper.NewKeeper(
 		appCodec, keys[slashingtypes.StoreKey], &stakingKeeper, app.getSubspace(slashingtypes.ModuleName),
 	)
 	app.crisisKeeper = crisiskeeper.NewKeeper(
-		app.getSubspace(crisistypes.ModuleName), invCheckPeriod, app.bankKeeper, authtypes.FeeCollectorName,
+		app.getSubspace(crisistypes.ModuleName), invCheckPeriod, app.BankKeeper, authtypes.FeeCollectorName,
 	)
 	app.upgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homeDir)
 
@@ -250,7 +250,7 @@ func NewWasmApp(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper))
 	app.govKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.getSubspace(govtypes.ModuleName), app.accountKeeper, app.bankKeeper,
+		appCodec, keys[govtypes.StoreKey], app.getSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter,
 	)
 
@@ -271,7 +271,7 @@ func NewWasmApp(
 	app.transferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.accountKeeper, app.bankKeeper, scopedTransferKeeper,
+		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.transferKeeper)
 
@@ -303,30 +303,30 @@ func NewWasmApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"
-	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey],
-		app.accountKeeper, app.bankKeeper, app.StakingKeeper,
+	app.WasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey],
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper,
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper, scopedWasmKeeper,
 		wasmRouter, wasmDir, wasmConfig,
 		supportedFeatures, nil, nil)
 
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		genutil.NewAppModule(app.accountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
-		auth.NewAppModule(appCodec, app.accountKeeper),
-		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
+		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
+		auth.NewAppModule(appCodec, app.AccountKeeper),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
-		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.accountKeeper, app.bankKeeper),
+		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
-		wasm.NewAppModule(app.wasmKeeper),
+		wasm.NewAppModule(app.WasmKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.paramsKeeper),
@@ -366,14 +366,14 @@ func NewWasmApp(
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.accountKeeper),
-		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
-		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.accountKeeper, app.bankKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
+		gov.NewAppModule(appCodec, app.govKeeper, app.AccountKeeper, app.BankKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.AccountKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
@@ -392,7 +392,7 @@ func NewWasmApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(
 		ante.NewAnteHandler(
-			app.accountKeeper, app.bankKeeper, *app.IBCKeeper, ante.DefaultSigVerificationGasConsumer,
+			app.AccountKeeper, app.BankKeeper, *app.IBCKeeper, ante.DefaultSigVerificationGasConsumer,
 			authtypes.LegacyAminoJSONHandler{},
 		),
 	)

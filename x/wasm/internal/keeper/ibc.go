@@ -14,6 +14,11 @@ import (
 // returns a string name of the port or error if we cannot bind it.
 // this will fail if call twice.
 func (k Keeper) bindIbcPort(ctx sdk.Context, contract sdk.AccAddress) (string, error) {
+	// TODO: always set up IBC in tests, so we don't need to disable this
+	if k.portKeeper == nil {
+		return portIDForContract(contract), nil
+	}
+
 	portID := portIDForContract(contract)
 	cap := k.portKeeper.BindPort(ctx, portID)
 	err := k.ClaimCapability(ctx, cap, host.PortPath(portID))
@@ -25,6 +30,11 @@ func (k Keeper) bindIbcPort(ctx sdk.Context, contract sdk.AccAddress) (string, e
 // Returns success if we already registered or just registered and error if we cannot
 // (lack of permissions or someone else has it)
 func (k Keeper) ensureIbcPort(ctx sdk.Context, contract sdk.AccAddress) (string, error) {
+	// TODO: always set up IBC in tests, so we don't need to disable this
+	if k.portKeeper == nil {
+		return portIDForContract(contract), nil
+	}
+
 	portID := portIDForContract(contract)
 	if _, ok := k.scopedKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
 		return portID, nil

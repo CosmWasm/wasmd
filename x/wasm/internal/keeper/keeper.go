@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"path/filepath"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
@@ -194,6 +195,14 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	createdAt := types.NewCreatedAt(ctx)
 	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
+
+	// register IBC port
+	// TODO: we will do some checks if the contract supports IBC, this is just for the stub handler
+	port, err := k.ensureIbcPort(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Bound port: %s\n", port)
 
 	return contractAddress, nil
 }
