@@ -1,10 +1,11 @@
 syntax = "proto3";
-package wasmd.x.wasmd.v1;
+package wasmd.x.wasmd;
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
 
-import "third_party/proto/gogoproto/gogo.proto";
-import "types/types.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/cosmos.proto";
+
 
 message MsgStoreCode{
     option (gogoproto.goproto_getters) = false;
@@ -27,7 +28,7 @@ message MsgInstantiateContract{
     uint64 code = 3 [(gogoproto.jsontag) = "code_id"];
     string label = 4;
     bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    repeated cosmos_sdk.v1.Coin init_funds = 6 [
+    repeated cosmos.Coin init_funds = 6 [
                                            (gogoproto.nullable)     = false,
                                            (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
                                            ];
@@ -39,7 +40,7 @@ message MsgExecuteContract{
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    repeated cosmos_sdk.v1.Coin sent_funds = 5 [
+    repeated cosmos.Coin sent_funds = 5 [
                                                (gogoproto.nullable)     = false,
                                                (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
                                                ];
@@ -101,4 +102,16 @@ message AbsoluteTxPosition {
     int64 block_height =1;
     // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
     uint64 tx_index =2;
+}
+
+message WasmIBCContractPacketData {
+    // the sender address
+    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+// WasmIBCContractPacketAcknowledgement
+message WasmIBCContractPacketAcknowledgement {
+    bool   success = 1;
+    string error   = 2;
+    // testdata
+    string label   = 3;
 }

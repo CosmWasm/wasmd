@@ -29,11 +29,11 @@ var (
 	// todo: NOTE this is simapp: MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
 	encodingConfig = simapp.MakeEncodingConfig()
 	initClientCtx  = client.Context{}.
-		WithJSONMarshaler(encodingConfig.Marshaler).
-		WithTxGenerator(encodingConfig.TxGenerator).
-		WithCodec(encodingConfig.Amino).
-		WithInput(os.Stdin).
-		WithAccountRetriever(types.NewAccountRetriever(encodingConfig.Marshaler))
+			WithJSONMarshaler(encodingConfig.Marshaler).
+			WithTxGenerator(encodingConfig.TxGenerator).
+			WithCodec(encodingConfig.Amino).
+			WithInput(os.Stdin).
+			WithAccountRetriever(types.NewAccountRetriever(encodingConfig.Marshaler))
 )
 
 func init() {

@@ -3,8 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 )
 
@@ -39,4 +41,8 @@ func portIDForContract(contract sdk.AccAddress) string {
 // TODO: make private and inline??
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+}
+
+func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data types.WasmIBCContractPacketData) error {
+	return nil
 }

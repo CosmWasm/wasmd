@@ -277,7 +277,6 @@ func NewWasmApp(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := port.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
-	app.ibcKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -304,6 +303,9 @@ func NewWasmApp(
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"
 	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
+
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper))
+	app.ibcKeeper.SetRouter(ibcRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

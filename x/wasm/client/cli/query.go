@@ -161,9 +161,9 @@ func GetCmdGetContractState(cliCtx client.Context) *cobra.Command {
 	}
 	cmd.AddCommand(
 		flags.GetCommands(
-		GetCmdGetContractStateAll(cliCtx),
-		GetCmdGetContractStateRaw(cliCtx),
-		GetCmdGetContractStateSmart(cliCtx),
+			GetCmdGetContractStateAll(cliCtx),
+			GetCmdGetContractStateRaw(cliCtx),
+			GetCmdGetContractStateSmart(cliCtx),
 		)...,
 	)
 	return cmd
