@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -868,4 +869,31 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
 	return key, pub, addr
+}
+
+func TestOOMKillsInfiniteQueryLoopEithan(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	walletA := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+
+	wasmCode, err := ioutil.ReadFile("./testdata/test-contract/contract.wasm.gz")
+	require.NoError(t, err)
+
+	codeID, err := keeper.Create(ctx, walletA, wasmCode, "", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// init
+
+	contractAddress, _ := keeper.Instantiate(ctx, codeID, walletA, nil, []byte(`{"nop":{}}`), "some label", sdk.NewCoins(sdk.NewInt64Coin("denom", 0)))
+
+	// infinite external query loop
+
+	_, err = keeper.QuerySmart(ctx, contractAddress, []byte(fmt.Sprintf(`{"send_external_query_infinite_loop":{"to":"%s"}}`, contractAddress.String())))
+
+	require.Error(t, err)
 }
