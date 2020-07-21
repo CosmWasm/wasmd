@@ -145,7 +145,7 @@ type WasmApp struct {
 	accountKeeper    authkeeper.AccountKeeper
 	bankKeeper       bankkeeper.Keeper
 	capabilityKeeper *capabilitykeeper.Keeper
-	stakingKeeper    stakingkeeper.Keeper
+	StakingKeeper    stakingkeeper.Keeper
 	slashingKeeper   slashingkeeper.Keeper
 	mintKeeper       mintkeeper.Keeper
 	distrKeeper      distrkeeper.Keeper
@@ -153,7 +153,7 @@ type WasmApp struct {
 	crisisKeeper     crisiskeeper.Keeper
 	upgradeKeeper    upgradekeeper.Keeper
 	paramsKeeper     paramskeeper.Keeper
-	ibcKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	evidenceKeeper   evidencekeeper.Keeper
 	transferKeeper   ibctransferkeeper.Keeper
 	wasmKeeper       wasm.Keeper
@@ -255,22 +255,22 @@ func NewWasmApp(
 	)
 
 	// register the staking hooks
-	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
-	app.stakingKeeper = *stakingKeeper.SetHooks(
+	// NOTE: StakingKeeper above is passed by reference, so that it will contain these hooks
+	app.StakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.distrKeeper.Hooks(), app.slashingKeeper.Hooks()),
 	)
 
 	// Create IBC Keeper
 	// TODO: remove amino codec dependency once Tendermint version is upgraded with
 	// protobuf changes
-	app.ibcKeeper = ibckeeper.NewKeeper(
-		app.cdc, appCodec, keys[ibchost.StoreKey], app.stakingKeeper, scopedIBCKeeper,
+	app.IBCKeeper = ibckeeper.NewKeeper(
+		app.cdc, appCodec, keys[ibchost.StoreKey], app.StakingKeeper, scopedIBCKeeper,
 	)
 
 	// Create Transfer Keepers
 	app.transferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey],
-		app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper,
+		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.accountKeeper, app.bankKeeper, scopedTransferKeeper,
 	)
 	transferModule := transfer.NewAppModule(app.transferKeeper)
@@ -281,10 +281,10 @@ func NewWasmApp(
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
-		appCodec, keys[evidencetypes.StoreKey], &app.stakingKeeper, app.slashingKeeper,
+		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.slashingKeeper,
 	)
 	evidenceRouter := evidencetypes.NewRouter().
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.HandlerClientMisbehaviour(app.ibcKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.HandlerClientMisbehaviour(app.IBCKeeper.ClientKeeper))
 
 	evidenceKeeper.SetRouter(evidenceRouter)
 	app.evidenceKeeper = *evidenceKeeper
@@ -304,31 +304,31 @@ func NewWasmApp(
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"
 	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey],
-		app.accountKeeper, app.bankKeeper, app.stakingKeeper,
-		app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper, scopedWasmKeeper,
+		app.accountKeeper, app.bankKeeper, app.StakingKeeper,
+		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper, scopedWasmKeeper,
 		wasmRouter, wasmDir, wasmConfig,
 		supportedFeatures, nil, nil)
 
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper))
-	app.ibcKeeper.SetRouter(ibcRouter)
+	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.mm = module.NewManager(
-		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
+		genutil.NewAppModule(app.accountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(appCodec, app.accountKeeper),
 		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		crisis.NewAppModule(&app.crisisKeeper),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.accountKeeper, app.bankKeeper),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		wasm.NewAppModule(app.wasmKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
-		ibc.NewAppModule(app.ibcKeeper),
+		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 	)
@@ -371,12 +371,12 @@ func NewWasmApp(
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
-		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
-		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.accountKeeper, app.bankKeeper),
+		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
+		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.StakingKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
-		ibc.NewAppModule(app.ibcKeeper),
+		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 	)
 
@@ -392,7 +392,7 @@ func NewWasmApp(
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(
 		ante.NewAnteHandler(
-			app.accountKeeper, app.bankKeeper, *app.ibcKeeper, ante.DefaultSigVerificationGasConsumer,
+			app.accountKeeper, app.bankKeeper, *app.IBCKeeper, ante.DefaultSigVerificationGasConsumer,
 			authtypes.LegacyAminoJSONHandler{},
 		),
 	)

@@ -95,6 +95,7 @@ type TestKeepers struct {
 	BankKeeper    bankkeeper.Keeper
 }
 
+// TODO: deprecate this one for the testchain version when possible (ibc_helpers_test.go) - seems to be how the sdk wants us to do it
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
 	keyContract := sdk.NewKVStoreKey(wasmTypes.StoreKey)
