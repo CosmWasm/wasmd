@@ -3,7 +3,10 @@ package keeper
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"path/filepath"
+
+	xdebug "runtime/debug"
 
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/pkg/errors"
@@ -336,7 +339,13 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	if err != nil {
 		return nil, err
 	}
+
 	// prepare querier
+	if nil == k.queryPlugins.Wasm {
+		fmt.Println("k.queryPlugins.Wasm is nil: \n" + string(xdebug.Stack()))
+	}
+
+	fmt.Printf("keeper.go/QuerySmart/k.queryPlugins: %v\n", k.queryPlugins)
 	querier := QueryHandler{
 		Ctx:     ctx,
 		Plugins: k.queryPlugins,
