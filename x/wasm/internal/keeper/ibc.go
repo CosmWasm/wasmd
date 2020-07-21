@@ -1,12 +1,12 @@
 package keeper
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 )
 
@@ -32,8 +32,17 @@ func (k Keeper) ensureIbcPort(ctx sdk.Context, contract sdk.AccAddress) (string,
 	return k.bindIbcPort(ctx, contract)
 }
 
+const portIDPrefix = "wasm:"
+
 func portIDForContract(contract sdk.AccAddress) string {
-	return fmt.Sprintf("wasm:%s", contract.String())
+	return portIDPrefix + contract.String()
+}
+
+func ContractFromPortID(portID string) (sdk.AccAddress, error) {
+	if !strings.HasPrefix(portID, portIDPrefix) {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "without prefix")
+	}
+	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }
 
 // ClaimCapability allows the transfer module to claim a capability
@@ -43,6 +52,6 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-func (k Keeper) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet, data types.WasmIBCContractPacketData) error {
+func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data types.WasmIBCContractPacketData) error {
 	return nil
 }

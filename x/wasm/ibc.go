@@ -54,7 +54,11 @@ func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet types.Packet) (*sdk.Res
 	}
 	acknowledgement := WasmIBCContractPacketAcknowledgement{Success: true}
 
-	if err := i.keeper.OnRecvPacket(ctx, packet, data); err != nil {
+	contractAddr, err := ContractFromPortID(packet.DestinationPort)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(err, "contract port id")
+	}
+	if err := i.keeper.OnRecvPacket(ctx, contractAddr, data); err != nil {
 		acknowledgement = WasmIBCContractPacketAcknowledgement{
 			Success: false,
 			Error:   err.Error(),

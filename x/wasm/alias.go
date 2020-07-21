@@ -66,6 +66,7 @@ var (
 	WasmQuerier               = keeper.WasmQuerier
 	CreateTestInput           = keeper.CreateTestInput
 	TestHandler               = keeper.TestHandler
+	ContractFromPortID        = keeper.ContractFromPortID
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
