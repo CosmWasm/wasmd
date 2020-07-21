@@ -1,6 +1,8 @@
 package wasm_test
 
 import (
+	"io/ioutil"
+	"os"
 	"time"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -33,7 +35,9 @@ type TestChain struct {
 	Signers  []tmtypes.PrivValidator
 }
 
-func NewTestChain(clientID string) *TestChain {
+// returns a test chain and a cleanup function.
+// ensure you call defer on the returned function for proper test cleanup
+func NewTestChain(clientID string) (*TestChain, func()) {
 	privVal := tmtypes.NewMockPV()
 
 	pubKey, err := privVal.GetPubKey()
@@ -48,13 +52,20 @@ func NewTestChain(clientID string) *TestChain {
 
 	header := ibctmtypes.CreateTestHeader(clientID, 1, now, valSet, signers)
 
+	// make a temp dir for the wasm files for this chain
+	tempDir, err := ioutil.TempDir("", "wasm")
+	if err != nil {
+		panic(err)
+	}
+	cleanup := func() { os.RemoveAll(tempDir) }
+
 	return &TestChain{
 		ClientID: clientID,
-		App:      integration.Setup(false),
+		App:      integration.Setup(false, tempDir),
 		Header:   header,
 		Vals:     valSet,
 		Signers:  signers,
-	}
+	}, cleanup
 }
 
 // Creates simple context for testing purposes

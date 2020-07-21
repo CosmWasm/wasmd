@@ -28,9 +28,11 @@ const (
 )
 
 // Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
-func Setup(isCheckTx bool) *wasmd.WasmApp {
+// pass a unique temp dir to store wasm files, and remove afterwards (in test code)
+func Setup(isCheckTx bool, tmpDir string) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, "")
+
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, tmpDir)
 	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
