@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"crypto/sha256"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -381,6 +382,6 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, func()) {
 	appCodec := MakeTestCodec()
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
-	srcKeeper := NewKeeper(appCodec, keyContract, authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	srcKeeper := NewKeeper(appCodec, keyContract, authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, nil, nil, capabilitykeeper.ScopedKeeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	return srcKeeper, ctx, cleanup
 }

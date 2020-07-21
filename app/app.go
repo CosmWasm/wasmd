@@ -215,6 +215,7 @@ func NewWasmApp(
 	app.capabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
+	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 
 	// add keepers
 	app.accountKeeper = authkeeper.NewAccountKeeper(
@@ -302,7 +303,11 @@ func NewWasmApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"
-	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
+	app.wasmKeeper = wasm.NewKeeper(appCodec, keys[wasm.StoreKey],
+		app.accountKeeper, app.bankKeeper, app.stakingKeeper,
+		app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper, scopedWasmKeeper,
+		wasmRouter, wasmDir, wasmConfig,
+		supportedFeatures, nil, nil)
 
 	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper))
 	app.ibcKeeper.SetRouter(ibcRouter)

@@ -15,7 +15,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	ibctypes "github.com/cosmos/cosmos-sdk/x/ibc-transfer/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/crypto"
@@ -24,7 +23,7 @@ import (
 // GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
 // SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 // A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
-// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
+// Rough timing of the wasmer gas: 2-3ns/gas
 const GasMultiplier = 100
 
 // MaxGas for a contract is 900 million (enforced in rust)
@@ -43,8 +42,8 @@ type Keeper struct {
 	cdc           codec.Marshaler
 	accountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
-	channelKeeper ibctypes.ChannelKeeper
-	portKeeper    ibctypes.PortKeeper
+	channelKeeper types.ChannelKeeper
+	portKeeper    types.PortKeeper
 	scopedKeeper  capabilitykeeper.ScopedKeeper
 
 	wasmer       wasm.Wasmer
@@ -57,7 +56,7 @@ type Keeper struct {
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper,
-	stakingKeeper stakingkeeper.Keeper,
+	stakingKeeper stakingkeeper.Keeper, channelKeeper types.ChannelKeeper, portKeeper types.PortKeeper, scopedKeeper capabilitykeeper.ScopedKeeper,
 	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, supportedFeatures string, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.CacheSize)
 	if err != nil {
@@ -72,6 +71,9 @@ func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, accountKeeper authkee
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
+		channelKeeper: channelKeeper,
+		portKeeper:    portKeeper,
+		scopedKeeper:  scopedKeeper,
 		messenger:     messenger,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}
