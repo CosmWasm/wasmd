@@ -11,7 +11,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cpm "github.com/otiai10/copy"
 	"github.com/spf13/cobra"
@@ -93,7 +93,7 @@ func replayTxs(rootDir string) error {
 	gapp := app.NewWasmApp(
 		// TODO: do we want to set skipUpgradeHieghts here?
 		ctx.Logger, appDB, traceStoreWriter, true, uint(1), wasm.EnableAllProposals, nil,
-		baseapp.SetPruning(store.PruneEverything))
+		baseapp.SetPruning(storetypes.PruneEverything))
 
 	// Genesis
 	var genDocPath = filepath.Join(configDir, "genesis.json")
@@ -176,7 +176,7 @@ func replayTxs(rootDir string) error {
 
 		t2 := time.Now()
 
-		state, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
+		state, _, err = blockExec.ApplyBlock(state, blockmeta.BlockID, block)
 		if err != nil {
 			return err
 		}
