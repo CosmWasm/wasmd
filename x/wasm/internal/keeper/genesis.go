@@ -82,7 +82,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		}
 		// redact contract info
 		contract.Created = nil
-		contract.ContractCodeHistory = nil
 
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr,

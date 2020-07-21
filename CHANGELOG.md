@@ -37,6 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ## [Unreleased]
 
 ### Features
+* (wasmd) [\#196](https://github.com/CosmWasm/wasmd/issues/196) Move history of contract code migrations to their own prefix store
 * (wasmd) [\#130](https://github.com/CosmWasm/wasmd/issues/130) Full history of contract code migrations
 * (wasmd) [\#187](https://github.com/CosmWasm/wasmd/issues/187) Introduce wasmgovd binary
 * (wasmd) [\#178](https://github.com/CosmWasm/wasmd/issues/178) Add cli support for wasm gov proposals

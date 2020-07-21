@@ -36,6 +36,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		GetCmdListContractByCode(cdc),
 		GetCmdQueryCode(cdc),
 		GetCmdGetContractInfo(cdc),
+		GetCmdGetContractHistory(cdc),
 		GetCmdGetContractState(cdc),
 	)...)
 	return queryCmd
@@ -265,6 +266,32 @@ func GetCmdGetContractStateSmart(cdc *codec.Codec) *cobra.Command {
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
 	return cmd
+}
+
+// GetCmdGetContractHistory prints the code history for a given contract
+func GetCmdGetContractHistory(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "contract-history [bech32_address]",
+		Short: "Prints out the code history for a contract given its address",
+		Long:  "Prints out the code history for a contract given its address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			addr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryContractHistory, addr.String())
+			res, _, err := cliCtx.Query(route)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(res))
+			return nil
+		},
+	}
 }
 
 type argumentDecoder struct {
