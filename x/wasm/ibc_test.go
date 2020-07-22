@@ -1,9 +1,17 @@
 package wasm_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	connectiontypes "github.com/cosmos/cosmos-sdk/x/ibc/03-connection/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
+	commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
+	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,7 +22,7 @@ const (
 	testClientIDB = "testClientIDb"
 
 	testConnection = "testconnectionatob"
-	testPort1      = "bank"
+	testPort1      = "ibc-wasm"
 	testPort2      = "testportid"
 	testChannel1   = "firstchannel"
 	testChannel2   = "secondchannel"
@@ -53,6 +61,71 @@ func (suite *IBCTestSuite) TearDownTest() {
 func (suite *IBCTestSuite) TestBindPorts() {
 	suite.T().Logf("To be implemented")
 }
+
+func (suite *IBCTestSuite) TestReceivePacket() {
+	suite.chainA.CreateClient(suite.chainB)
+	suite.chainA.createConnection(testConnection, testConnection, testClientIDB, testClientIDA, connectiontypes.OPEN)
+	suite.chainA.createChannel(testPort1, testChannel1, testPort2, testChannel2, channeltypes.OPEN, channeltypes.ORDERED, testConnection)
+	suite.chainA.App.IBCKeeper.ChannelKeeper.SetNextSequenceSend(suite.chainA.GetContext(), testPort1, testChannel1, 1)
+
+	capName := host.ChannelCapabilityPath(testPort1, testChannel1)
+	cap, err := suite.chainA.App.ScopedIBCKeeper.NewCapability(suite.chainA.GetContext(), capName)
+	suite.Require().NoError(err)
+	err = suite.chainA.App.ScopedTransferKeeper.ClaimCapability(suite.chainA.GetContext(), cap, capName)
+	suite.Require().NoError(err)
+
+	var (
+		addr1 sdk.AccAddress = make([]byte, sdk.AddrLen)
+	)
+	incomingWasmPacket := wasm.WasmIBCContractPacketData{
+		Sender: addr1,
+		Msg:    []byte("{}"),
+	}
+	payload, err := incomingWasmPacket.Marshal()
+	suite.Require().NoError(err)
+	packet := channeltypes.NewPacket(payload, 1, testPort1, testChannel1, testPort2, testChannel2, 100, 0)
+	msg := channeltypes.NewMsgPacket(packet, []byte{}, 0, addr1)
+	//tx := authtypes.NewStdTx([]sdk.Msg{msg},nil, }
+	//_, r, err := suite.chainA.App.Deliver(&tx)
+	//suite.Require().NoError(err)
+	//suite.T().Log(r.Log)
+}
+
+func queryProof(chain *TestChain, key string) ([]byte, int64) {
+	res := chain.App.Query(abci.RequestQuery{
+		Path:  fmt.Sprintf("store/%s/key", host.StoreKey),
+		Data:  []byte(key),
+		Prove: true,
+	})
+
+	height := res.Height
+	merkleProof := commitmenttypes.MerkleProof{
+		Proof: res.Proof,
+	}
+
+	proof, err := chain.App.Codec().MarshalBinaryBare(&merkleProof)
+	if err != nil {
+		panic(err)
+	}
+	return proof, height
+}
+
+//func NextBlock(chain *TestChain) {
+//	// set the last header to the current header
+//	chain.LastHeader = chain.CreateTMClientHeader()
+//
+//	// increment the current header
+//	chain.CurrentHeader = abci.Header{
+//		Height:  chain.App.LastBlockHeight() + 1,
+//		AppHash: chain.App.LastCommitID().Hash,
+//		// NOTE: the time is increased by the coordinator to maintain time synchrony amongst
+//		// chains.
+//		Time: chain.CurrentHeader.Time,
+//	}
+//
+//	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
+//
+//}
 
 func TestIBCTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTestSuite))
