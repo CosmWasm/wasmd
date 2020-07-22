@@ -3,12 +3,14 @@ package keeper
 import (
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"strings"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 )
 
@@ -85,4 +87,57 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data 
 	// todo send data to contract
 	_, _, _ = codeInfo, prefixStore, params
 	return nil
+}
+
+func (k Keeper) IBCCallContract(
+	ctx sdk.Context,
+	sourcePort,
+	sourceChannel string,
+	sender sdk.AccAddress,
+	receiver sdk.AccAddress,
+	timeoutHeight,
+	timeoutTimestamp uint64,
+	msg json.RawMessage,
+) error {
+	sourceChannelEnd, found := k.channelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
+	if !found {
+		return sdkerrors.Wrap(channeltypes.ErrChannelNotFound, sourceChannel)
+	}
+
+	destinationPort := sourceChannelEnd.GetCounterparty().GetPortID()
+	destinationChannel := sourceChannelEnd.GetCounterparty().GetChannelID()
+
+	// get the next sequence
+	sequence, found := k.channelKeeper.GetNextSequenceSend(ctx, sourcePort, sourceChannel)
+	if !found {
+		return sdkerrors.Wrapf(
+			channeltypes.ErrSequenceSendNotFound,
+			"source port: %s, source channel: %s", sourcePort, sourceChannel,
+		)
+	}
+	channelCap, ok := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
+	if !ok {
+		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
+	}
+
+	packetData := types.WasmIBCContractPacketData{
+		Sender:           sender,
+		DestContractAddr: receiver,
+		Msg:              msg,
+	}
+	// TODO: using json as payload as in ibc-transfer
+	payload := sdk.MustSortJSON(k.cdc.MustMarshalJSON(packetData))
+
+	packet := channeltypes.NewPacket(
+		payload,
+		sequence,
+		sourcePort,
+		sourceChannel,
+		destinationPort,
+		destinationChannel,
+		timeoutHeight,
+		timeoutTimestamp,
+	)
+
+	return k.channelKeeper.SendPacket(ctx, channelCap, packet)
 }

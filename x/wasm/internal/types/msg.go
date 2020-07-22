@@ -197,3 +197,29 @@ func (msg MsgClearAdmin) GetSignBytes() []byte {
 func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
+
+func (msg MsgWasmIBCCall) Route() string {
+	return RouterKey
+}
+
+func (msg MsgWasmIBCCall) Type() string {
+	return "wasm-ibc-call"
+}
+
+func (msg MsgWasmIBCCall) ValidateBasic() error {
+	//if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+	//	return sdkerrors.Wrap(err, "sender")
+	//}
+	//if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
+	//	return sdkerrors.Wrap(err, "contract")
+	//}
+	return nil
+}
+
+func (msg MsgWasmIBCCall) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgWasmIBCCall) GetSigners() []sdk.AccAddress {
+	return nil
+}
