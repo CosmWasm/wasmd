@@ -107,6 +107,7 @@ message AbsoluteTxPosition {
 message WasmIBCContractPacketData {
     // the sender address
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes msg = 2 [(gogoproto.casttype) = "encoding/json.RawMessage"];
 }
 // WasmIBCContractPacketAcknowledgement
 message WasmIBCContractPacketAcknowledgement {

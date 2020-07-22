@@ -65,7 +65,7 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	}
 	codeID := contractID >> 32
 	instanceID := contractID & 0xffffffff
-	return contractAddress(uint64(codeID), uint64(instanceID)), nil
+	return contractAddress(codeID, instanceID), nil
 }
 
 // ClaimCapability allows the transfer module to claim a capability
@@ -76,5 +76,14 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 }
 
 func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data types.WasmIBCContractPacketData) error {
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+	params := types.NewEnv(ctx, data.Sender, nil, contractAddr)
+
+	// todo send data to contract
+	_, _, _ = codeInfo, prefixStore, params
+	panic("alex")
 	return nil
 }
