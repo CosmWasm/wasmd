@@ -198,7 +198,8 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// register IBC port
 	// TODO: we will do some checks if the contract supports IBC, this is just for the stub handler
-	port, err := k.ensureIbcPort(ctx, contractAddress)
+	instanceID := k.peekAutoIncrementID(ctx, types.KeyLastInstanceID) - 1 // todo: quick hack for poc
+	port, err := k.ensureIbcPort(ctx, codeID, instanceID)
 	if err != nil {
 		return nil, err
 	}

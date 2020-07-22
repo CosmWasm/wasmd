@@ -23,22 +23,6 @@ import (
 	"github.com/CosmWasm/wasmd/app/integration"
 )
 
-// This should replace CreateTestInput when possible (likely after CosmWasm 1.0 is merged into this branch)
-func CreateTestApp(t *testing.T) (*app.WasmApp, func()) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	cleanup := func() { os.RemoveAll(tempDir) }
-
-	return integration.Setup(false, tempDir), cleanup
-}
-
-func header(height int64) abci.Header {
-	return abci.Header{
-		Height: height,
-		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC).Add(time.Second * time.Duration(height)),
-	}
-}
-
 func TestBindingPortOnInstantiate(t *testing.T) {
 	app, cleanup := CreateTestApp(t)
 	defer cleanup()
@@ -77,6 +61,22 @@ func TestBindingPortOnInstantiate(t *testing.T) {
 	assert.Equal(t, info.CodeID, contractID)
 	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
 	assert.Equal(t, info.Label, "demo contract 1")
+}
+
+// This should replace CreateTestInput when possible (likely after CosmWasm 1.0 is merged into this branch)
+func CreateTestApp(t *testing.T) (*app.WasmApp, func()) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	cleanup := func() { os.RemoveAll(tempDir) }
+
+	return integration.Setup(false, tempDir), cleanup
+}
+
+func header(height int64) abci.Header {
+	return abci.Header{
+		Height: height,
+		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC).Add(time.Second * time.Duration(height)),
+	}
 }
 
 // copied from keeper_test.go as we are a different package...
