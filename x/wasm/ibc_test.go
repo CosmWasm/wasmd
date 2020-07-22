@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	connectiontypes "github.com/cosmos/cosmos-sdk/x/ibc/03-connection/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	commitmenttypes "github.com/cosmos/cosmos-sdk/x/ibc/23-commitment/types"
@@ -84,7 +83,7 @@ func (suite *IBCTestSuite) TestReceivePacket() {
 	payload, err := incomingWasmPacket.Marshal()
 	suite.Require().NoError(err)
 	packet := channeltypes.NewPacket(payload, 1, testPort1, testChannel1, testPort2, testChannel2, 100, 0)
-	msg := channeltypes.NewMsgPacket(packet, []byte{}, 0, addr1)
+	_ = channeltypes.NewMsgPacket(packet, []byte{}, 0, addr1)
 	//tx := authtypes.NewStdTx([]sdk.Msg{msg},nil, }
 	//_, r, err := suite.chainA.App.Deliver(&tx)
 	//suite.Require().NoError(err)
