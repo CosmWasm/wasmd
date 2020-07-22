@@ -46,7 +46,7 @@ type QueryPlugins struct {
 	Wasm    func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bank.ViewKeeper, staking staking.Keeper, wasm Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank bank.ViewKeeper, staking staking.Keeper, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:    BankQuerier(bank),
 		Custom:  NoCustomQuerier,
@@ -225,7 +225,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation stak
 	}, nil
 }
 
-func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+func WasmQuerier(wasm *Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
 		if request.Smart != nil {
 			addr, err := sdk.AccAddressFromBech32(request.Smart.ContractAddr)
