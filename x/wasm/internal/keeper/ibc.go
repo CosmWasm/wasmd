@@ -84,6 +84,5 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data 
 
 	// todo send data to contract
 	_, _, _ = codeInfo, prefixStore, params
-	panic("alex")
 	return nil
 }
