@@ -19,10 +19,10 @@ import (
 // this will fail if call twice.
 func (k Keeper) bindIbcPort(ctx sdk.Context, portID string) error {
 	// TODO: always set up IBC in tests, so we don't need to disable this
-	if k.portKeeper == nil {
+	if k.PortKeeper == nil {
 		return nil
 	}
-	cap := k.portKeeper.BindPort(ctx, portID)
+	cap := k.PortKeeper.BindPort(ctx, portID)
 	return k.ClaimCapability(ctx, cap, host.PortPath(portID))
 }
 
@@ -32,12 +32,12 @@ func (k Keeper) bindIbcPort(ctx sdk.Context, portID string) error {
 // (lack of permissions or someone else has it)
 func (k Keeper) ensureIbcPort(ctx sdk.Context, codeID, instanceID uint64) (string, error) {
 	// TODO: always set up IBC in tests, so we don't need to disable this
-	if k.portKeeper == nil {
+	if k.PortKeeper == nil {
 		return PortIDForContract(codeID, instanceID), nil
 	}
 
 	portID := PortIDForContract(codeID, instanceID)
-	if _, ok := k.scopedKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
+	if _, ok := k.ScopedKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
 		return portID, nil
 	}
 	return portID, k.bindIbcPort(ctx, portID)
@@ -74,7 +74,7 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 //that IBC module passes to it
 // TODO: make private and inline??
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+	return k.ScopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
 func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data types.WasmIBCContractPacketData) error {
@@ -99,7 +99,7 @@ func (k Keeper) IBCCallContract(
 	timeoutTimestamp uint64,
 	msg json.RawMessage,
 ) error {
-	sourceChannelEnd, found := k.channelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
+	sourceChannelEnd, found := k.ChannelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
 	if !found {
 		return sdkerrors.Wrap(channeltypes.ErrChannelNotFound, sourceChannel)
 	}
@@ -108,14 +108,14 @@ func (k Keeper) IBCCallContract(
 	destinationChannel := sourceChannelEnd.GetCounterparty().GetChannelID()
 
 	// get the next sequence
-	sequence, found := k.channelKeeper.GetNextSequenceSend(ctx, sourcePort, sourceChannel)
+	sequence, found := k.ChannelKeeper.GetNextSequenceSend(ctx, sourcePort, sourceChannel)
 	if !found {
 		return sdkerrors.Wrapf(
 			channeltypes.ErrSequenceSendNotFound,
 			"source port: %s, source channel: %s", sourcePort, sourceChannel,
 		)
 	}
-	channelCap, ok := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
+	channelCap, ok := k.ScopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
 	if !ok {
 		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
@@ -139,5 +139,5 @@ func (k Keeper) IBCCallContract(
 		timeoutTimestamp,
 	)
 
-	return k.channelKeeper.SendPacket(ctx, channelCap, packet)
+	return k.ChannelKeeper.SendPacket(ctx, channelCap, packet)
 }

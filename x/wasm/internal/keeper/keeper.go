@@ -43,9 +43,9 @@ type Keeper struct {
 	cdc           codec.Marshaler
 	accountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
-	channelKeeper types.ChannelKeeper
-	portKeeper    types.PortKeeper
-	scopedKeeper  capabilitykeeper.ScopedKeeper
+	ChannelKeeper types.ChannelKeeper
+	PortKeeper    types.PortKeeper
+	ScopedKeeper  capabilitykeeper.ScopedKeeper
 
 	wasmer       wasm.Wasmer
 	queryPlugins QueryPlugins
@@ -72,9 +72,9 @@ func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, accountKeeper authkee
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
-		channelKeeper: channelKeeper,
-		portKeeper:    portKeeper,
-		scopedKeeper:  scopedKeeper,
+		ChannelKeeper: channelKeeper,
+		PortKeeper:    portKeeper,
+		ScopedKeeper:  scopedKeeper,
 		messenger:     messenger,
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 	}

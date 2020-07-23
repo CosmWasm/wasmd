@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/integration"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 )
 
 func TestBindingPortOnInstantiate(t *testing.T) {
@@ -39,6 +39,11 @@ func TestBindingPortOnInstantiate(t *testing.T) {
 	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "")
 	require.NoError(t, err)
 
+	// ensure the port is not bound
+	portID := wasmkeeper.PortIDForContract(1, 1)
+	_, _, err = app.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, portID)
+	require.Error(t, err)
+
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
 
@@ -49,18 +54,26 @@ func TestBindingPortOnInstantiate(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	// create with no balance is also legal
+	// create with no balance is legal
 	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
 
-	// ensure it is stored properly
-	info := keeper.GetContractInfo(ctx, addr)
-	require.NotNil(t, info)
-	assert.Equal(t, info.Creator, creator)
-	assert.Equal(t, info.CodeID, contractID)
-	assert.Equal(t, info.InitMsg, json.RawMessage(initMsgBz))
-	assert.Equal(t, info.Label, "demo contract 1")
+	// ensure we bound the port
+	owner, _, err := app.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, portID)
+	require.NoError(t, err)
+	require.Equal(t, "wasm", owner)
+
+	// create a second contract should give yet another portID (and different address)
+	addr, err = keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 2", nil)
+	require.NoError(t, err)
+	require.NotEqual(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+
+	portID2 := wasmkeeper.PortIDForContract(1, 2)
+	owner, _, err = app.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, portID2)
+	require.NoError(t, err)
+	require.Equal(t, "wasm", owner)
+
 }
 
 // This should replace CreateTestInput when possible (likely after CosmWasm 1.0 is merged into this branch)
