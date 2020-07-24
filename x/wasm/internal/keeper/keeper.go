@@ -28,7 +28,7 @@ import (
 // Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 //
 // Please not that all gas prices returned to the wasmer engine should have this multiplied
-var GasMultiplier = 100
+var GasMultiplier uint64 = 100
 
 // MaxGas for a contract is 10 billion wasmer gas (enforced in rust to prevent overflow)
 // The limit for v0.9.3 is defined here: https://github.com/CosmWasm/cosmwasm/blob/v0.9.3/packages/vm/src/backends/singlepass.rs#L15-L23
@@ -658,7 +658,7 @@ type MultipiedGasMeter struct {
 	originalMeter sdk.GasMeter
 }
 
-var _ wasmTypes.GasMeter = MultipiedGasMeter{}
+var _ wasm.GasMeter = MultipiedGasMeter{}
 
 func (m MultipiedGasMeter) GasConsumed() sdk.Gas {
 	return m.originalMeter.GasConsumed() * GasMultiplier
