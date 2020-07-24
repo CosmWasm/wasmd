@@ -1,5 +1,0 @@
----
-
-- name: restart wasmd
-  service: name=wasmd state=restarted
-
