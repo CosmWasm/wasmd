@@ -62,9 +62,6 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(ldflags)' -trimpath
 
-# The below include contains the tools target.
-include contrib/devtools/Makefile
-
 all: install lint test
 
 build: go.sum
@@ -91,26 +88,6 @@ endif
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
-
-########################################
-### Documentation
-
-build-docs:
-	@cd docs && \
-	while read p; do \
-		(git checkout $${p} && npm install && VUEPRESS_BASE="/$${p}/" npm run build) ; \
-		mkdir -p ~/output/$${p} ; \
-		cp -r .vuepress/dist/* ~/output/$${p}/ ; \
-		cp ~/output/$${p}/index.html ~/output ; \
-	done < versions ;
-
-sync-docs:
-	cd ~/output && \
-	echo "role_arn = ${DEPLOYMENT_ROLE_ARN}" >> /root/.aws/config ; \
-	echo "CI job = ${CIRCLE_BUILD_URL}" >> version.html ; \
-	aws s3 sync . s3://${WEBSITE_BUCKET} --profile terraform --delete ; \
-	aws cloudfront create-invalidation --distribution-id ${CF_DISTRIBUTION_ID} --profile terraform --path "/*" ;
-.PHONY: sync-docs
 
 ########################################
 ### Tools & dependencies
@@ -153,12 +130,6 @@ test-cover:
 test-build: build
 	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags=cli_test -v
 
-
-lint: golangci-lint
-	golangci-lint run
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
-	go mod verify
-
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
@@ -168,48 +139,6 @@ benchmark:
 	@go test -mod=readonly -bench=. ./...
 
 
-########################################
-### Local validator nodes using docker and docker-compose
-
-build-docker-wasmdnode:
-	$(MAKE) -C networks/local
-
-# Run a 4-node testnet locally
-localnet-start: build-linux localnet-stop
-	@if ! [ -f build/node0/wasmd/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/wasmd:Z tendermint/wasmdnode testnet --v 4 -o . --starting-ip-address 192.168.10.2 ; fi
-	docker-compose up -d
-
-# Stop testnet
-localnet-stop:
-	docker-compose down
-
-setup-contract-tests-data:
-	echo 'Prepare data for the contract tests'
-	rm -rf /tmp/contract_tests ; \
-	mkdir /tmp/contract_tests ; \
-	cp "${GOPATH}/pkg/mod/${SDK_PACK}/client/lcd/swagger-ui/swagger.yaml" /tmp/contract_tests/swagger.yaml ; \
-	./build/wasmd init --home /tmp/contract_tests/.wasmd --chain-id lcd contract-tests ; \
-	tar -xzf lcd_test/testdata/state.tar.gz -C /tmp/contract_tests/
-
-start-gaia: setup-contract-tests-data
-	./build/wasmd --home /tmp/contract_tests/.wasmd start &
-	@sleep 2s
-
-setup-transactions: start-gaia
-	@bash ./lcd_test/testdata/setup.sh
-
-run-lcd-contract-tests:
-	@echo "Running Gaia LCD for contract tests"
-	./build/wasmcli rest-server --laddr tcp://0.0.0.0:8080 --home /tmp/contract_tests/.wasmcli --node http://localhost:26657 --chain-id lcd --trust-node true
-
-contract-tests: setup-transactions
-	@echo "Running Gaia LCD for contract tests"
-	dredd && pkill wasmd
-
-# include simulations
-include sims.mk
-
 .PHONY: all build-linux install install-debug \
-	go-mod-cache draw-deps clean build \
-	setup-transactions setup-contract-tests-data start-gaia run-lcd-contract-tests contract-tests \
+	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race
