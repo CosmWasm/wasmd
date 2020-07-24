@@ -191,11 +191,6 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, err
 	}
 
-	// persist instance
-	createdAt := types.NewCreatedAt(ctx)
-	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
-
 	// register IBC port
 	// TODO: we will do some checks if the contract supports IBC, this is just for the stub handler
 	instanceID := k.peekAutoIncrementID(ctx, types.KeyLastInstanceID) - 1 // todo: quick hack for poc
@@ -204,6 +199,12 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, err
 	}
 	fmt.Printf("Bound port: %s\n", port)
+
+	// persist instance
+	createdAt := types.NewCreatedAt(ctx)
+	instance := types.NewContractInfo(codeID, creator, admin, initMsg, label, createdAt)
+	instance.IBCPortID = port
+	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
 
 	return contractAddress, nil
 }

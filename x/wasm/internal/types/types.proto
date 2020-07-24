@@ -114,6 +114,7 @@ message ContractInfo {
     AbsoluteTxPosition created = 6;
     AbsoluteTxPosition last_updated = 7;
     uint64 previous_code_id = 8 [(gogoproto.customname) = "PreviousCodeID"];
+    string ibc_port_id = 9 [(gogoproto.customname) = "IBCPortID"];
 }
 
 // AbsoluteTxPosition can be used to sort contracts
@@ -122,18 +123,4 @@ message AbsoluteTxPosition {
     int64 block_height =1;
     // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
     uint64 tx_index =2;
-}
-
-message WasmIBCContractPacketData {
-    // the sender address
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    bytes destContractAddr = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-}
-// WasmIBCContractPacketAcknowledgement
-message WasmIBCContractPacketAcknowledgement {
-    bool   success = 1;
-    string error   = 2;
-    // testdata
-    string label   = 3;
 }

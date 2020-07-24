@@ -47,22 +47,13 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 }
 
 func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet types.Packet) (*sdk.Result, []byte, error) {
-	// start calling keeper
-	var data WasmIBCContractPacketData
-	if err := ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
-		return nil, nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal ICS-20 transfer packet data: %s", err.Error())
-	}
-	acknowledgement := WasmIBCContractPacketAcknowledgement{Success: true}
-
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(err, "contract port id")
 	}
-	if err := i.keeper.OnRecvPacket(ctx, contractAddr, data); err != nil {
-		acknowledgement = WasmIBCContractPacketAcknowledgement{
-			Success: false,
-			Error:   err.Error(),
-		}
+	msgBz, err := i.keeper.OnRecvPacket(ctx, contractAddr, packet.Data)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// todo: send proper events
@@ -77,7 +68,7 @@ func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet types.Packet) (*sdk.Res
 
 	return &sdk.Result{
 		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(acknowledgement)), nil
+	}, msgBz, nil
 }
 
 func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet types.Packet, acknowledgement []byte) (*sdk.Result, error) {
