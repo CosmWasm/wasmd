@@ -49,10 +49,6 @@ jobs:
       - run:
           name: "Git garbage collection"
           command: git gc
-      - run:
-          name: "Build tools binaries"
-          command: |
-            make tools
       - save_cache:
           name: "Save go modules cache"
           key: go-mod-v1-{{ checksum "go.sum" }}
