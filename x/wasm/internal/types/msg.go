@@ -16,7 +16,7 @@ type MsgStoreCode struct {
 	// Builder is a valid docker image name with tag, optional
 	Builder string `json:"builder" yaml:"builder"`
 	// InstantiatePermission to apply on contract creation, optional
-	InstantiatePermission *AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
+	InstantiatePermission *AccessConfig `json:"instantiate_permission,omitempty" yaml:"instantiate_permission"`
 }
 
 func (msg MsgStoreCode) Route() string {
