@@ -710,11 +710,18 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
-	// this must fail
+	// ensure we get an out of gas panic
+	defer func() {
+		r := recover()
+		require.NotNil(t, r)
+		_, ok := r.(sdk.ErrorOutOfGas)
+		require.True(t, ok, "%v", r)
+	}()
+
+	// this should throw out of gas exception (panic)
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
-	assert.Error(t, err)
-	// make sure gas ran out
-	require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
+	require.True(t, false, "We must panic before this line")
+
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
@@ -755,16 +762,12 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	defer func() {
 		r := recover()
 		require.NotNil(t, r)
-		// TODO: ensure it is out of gas error
 		_, ok := r.(sdk.ErrorOutOfGas)
 		require.True(t, ok, "%v", r)
 	}()
 
 	// this should throw out of gas exception (panic)
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
-	// these are points for "out of gas", but why not a panic?
-	require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
-	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 

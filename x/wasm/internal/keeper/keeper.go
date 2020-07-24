@@ -28,7 +28,7 @@ import (
 // Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 //
 // Please not that all gas prices returned to the wasmer engine should have this multiplied
-var GasMultiplier uint64 = 100
+const GasMultiplier uint64 = 100
 
 // MaxGas for a contract is 10 billion wasmer gas (enforced in rust to prevent overflow)
 // The limit for v0.9.3 is defined here: https://github.com/CosmWasm/cosmwasm/blob/v0.9.3/packages/vm/src/backends/singlepass.rs#L15-L23
@@ -573,6 +573,10 @@ func gasForContract(ctx sdk.Context) uint64 {
 func consumeGas(ctx sdk.Context, gas uint64) {
 	consumed := gas / GasMultiplier
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
+	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
+	if ctx.GasMeter().IsOutOfGas() {
+		panic(sdk.ErrorOutOfGas{"Wasmer function execution"})
+	}
 }
 
 // generates a contract address from codeID + instanceID
