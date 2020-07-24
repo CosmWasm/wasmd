@@ -306,7 +306,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x12313), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x10c43), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
@@ -534,7 +534,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11aa2), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11617), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -710,11 +710,18 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
-	// this must fail
+	// ensure we get an out of gas panic
+	defer func() {
+		r := recover()
+		require.NotNil(t, r)
+		_, ok := r.(sdk.ErrorOutOfGas)
+		require.True(t, ok, "%v", r)
+	}()
+
+	// this should throw out of gas exception (panic)
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
-	assert.Error(t, err)
-	// make sure gas ran out
-	require.Equal(t, gasLimit, ctx.GasMeter().GasConsumed())
+	require.True(t, false, "We must panic before this line")
+
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
@@ -747,7 +754,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	require.NoError(t, err)
 
 	// make sure we set a limit before calling
-	var gasLimit uint64 = 400_000
+	var gasLimit uint64 = 400_002
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
@@ -755,7 +762,6 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	defer func() {
 		r := recover()
 		require.NotNil(t, r)
-		// TODO: ensure it is out of gas error
 		_, ok := r.(sdk.ErrorOutOfGas)
 		require.True(t, ok, "%v", r)
 	}()

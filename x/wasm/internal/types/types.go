@@ -203,11 +203,11 @@ func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contract
 			ChainID: ctx.ChainID(),
 		},
 		Message: wasmTypes.MessageInfo{
-			Sender:    wasmTypes.CanonicalAddress(creator),
+			Sender:    creator.String(),
 			SentFunds: NewWasmCoins(deposit),
 		},
 		Contract: wasmTypes.ContractInfo{
-			Address: wasmTypes.CanonicalAddress(contractAddr),
+			Address: contractAddr.String(),
 		},
 	}
 	return env

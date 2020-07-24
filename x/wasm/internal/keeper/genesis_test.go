@@ -369,9 +369,9 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	},
   "codes": [
     {
-      "code_id": 1,
+      "code_id": "1",
       "code_info": {
-        "code_hash": "mrFpzGE5s+Qfn9Xe7OikXc0q169m7sMm4ZuV6pVA8Mc=",
+        "code_hash": %q,
         "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
         "source": "https://example.com",
         "builder": "foo/bar:tag",
@@ -387,41 +387,52 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
     {
       "contract_address": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5",
       "contract_info": {
-        "code_id": 1,
+        "code_id": "1",
         "creator": "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x",
         "admin": "cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn",
         "label": "ȀĴnZV芢毤"
       }
     }
+  ],
+  "sequences": [
+  {"id_key": %q, "value": "2"},
+  {"id_key": %q, "value": "2"}
   ]
 }`
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
-	require.NoError(t, err)
-
 	keeper, ctx, _, dstCleanup := setupKeeper(t)
 	defer dstCleanup()
 
-	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	wasmCodeHash := sha256.Sum256(wasmCode)
+	enc64 := base64.StdEncoding.EncodeToString
 	var importState wasmTypes.GenesisState
-	err = json.Unmarshal([]byte(fmt.Sprintf(genesis, base64.StdEncoding.EncodeToString(wasmCode))), &importState)
+	err = keeper.cdc.UnmarshalJSON([]byte(
+		fmt.Sprintf(genesis, enc64(wasmCodeHash[:]), enc64(wasmCode),
+			enc64(append([]byte{0x04}, []byte("lastCodeId")...)),
+			enc64(append([]byte{0x04}, []byte("lastContractId")...))),
+	), &importState)
 	require.NoError(t, err)
 	require.NoError(t, importState.ValidateBasic())
 
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+
 	// when
-	InitGenesis(ctx, keeper, importState)
+	err = InitGenesis(ctx, keeper, importState)
+	require.NoError(t, err)
 
 	// verify wasm code
 	gotWasmCode, err := keeper.GetByteCode(ctx, 1)
 	require.NoError(t, err)
-	assert.Equal(t, wasmCode, gotWasmCode)
+	assert.Equal(t, wasmCode, gotWasmCode, "byte code does not match")
 
 	// verify code info
 	gotCodeInfo := keeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, gotCodeInfo)
 	codeCreatorAddr, _ := sdk.AccAddressFromBech32("cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx")
-	codeHash := sha256.Sum256(wasmCode)
 	expCodeInfo := types.CodeInfo{
-		CodeHash: codeHash[:],
+		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
 		Source:   "https://example.com",
 		Builder:  "foo/bar:tag",
