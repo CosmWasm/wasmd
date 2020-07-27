@@ -40,11 +40,15 @@ import (
 const appName = "WasmApp"
 
 var (
+	// We pull these out so we can set them with LDFLAGS in the Makefile
+	CLIDir = ".wasmcli"
+	NodeDir = ".wasmd"
+
 	// DefaultCLIHome default home directories for wasmcli
-	DefaultCLIHome = os.ExpandEnv("$HOME/.wasmcli")
+	DefaultCLIHome = os.ExpandEnv("$HOME/") + CLIDir
 
 	// DefaultNodeHome default home directories for wasmd
-	DefaultNodeHome = os.ExpandEnv("$HOME/.wasmd")
+	DefaultNodeHome = os.ExpandEnv("$HOME/") + NodeDir
 
 	// ModuleBasics The module BasicManager is in charge of setting up basic,
 	// non-dependant module elements, such as codec registration
