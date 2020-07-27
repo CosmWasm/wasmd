@@ -37,7 +37,10 @@ func TestGasCostOnQuery(t *testing.T) {
 	const (
 		GasNoWork uint64 = InstanceCost + 2_756
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = InstanceCost + 8_464
+		GasWork50 uint64 = InstanceCost + 8_464 // this is a little shy of 50k gas - to keep an eye on the limit
+
+		GasReturnUnhashed uint64 = 647
+		GasReturnHashed   uint64 = 597
 	)
 
 	cases := map[string]struct {
@@ -56,6 +59,29 @@ func TestGasCostOnQuery(t *testing.T) {
 				Work: 50, // 50 rounds of sha256 inside the contract
 			},
 			expectedGas: GasWork50,
+		},
+		"recursion 1, no work": {
+			gasLimit: 400_000,
+			msg: Recurse{
+				Depth: 1,
+			},
+			expectedGas: 2*GasNoWork + GasReturnUnhashed,
+		},
+		"recursion 1, some work": {
+			gasLimit: 400_000,
+			msg: Recurse{
+				Depth: 1,
+				Work:  50,
+			},
+			expectedGas: 2*GasWork50 + GasReturnHashed,
+		},
+		"recursion 4, some work": {
+			gasLimit: 400_000,
+			msg: Recurse{
+				Depth: 4,
+				Work:  50,
+			},
+			expectedGas: 5*GasWork50 + 4*GasReturnHashed,
 		},
 	}
 
