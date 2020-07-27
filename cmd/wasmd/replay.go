@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/server"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -92,7 +91,7 @@ func replayTxs(rootDir string) error {
 	fmt.Fprintln(os.Stderr, "Creating application")
 	gapp := app.NewWasmApp(
 		// TODO: do we want to set skipUpgradeHieghts here?
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1), wasm.DisableAllProposals, nil,
+		ctx.Logger, appDB, traceStoreWriter, true, uint(1), app.GetEnabledProposals(), nil,
 		baseapp.SetPruning(storetypes.PruneEverything))
 
 	// Genesis

@@ -39,6 +39,7 @@ var (
 	// functions aliases
 	RegisterCodec             = types.RegisterCodec
 	ValidateGenesis           = types.ValidateGenesis
+	ConvertToProposals        = types.ConvertToProposals
 	GetCodeKey                = types.GetCodeKey
 	GetContractAddressKey     = types.GetContractAddressKey
 	GetContractStorePrefixKey = types.GetContractStorePrefixKey

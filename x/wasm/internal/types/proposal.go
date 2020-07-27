@@ -33,6 +33,24 @@ var EnableAllProposals = []ProposalType{
 	ProposalTypeClearAdmin,
 }
 
+// ConvertToProposals maps each key to a ProposalType and returns a typed list.
+// If any string is not a valid type (in this file), then return an error
+func ConvertToProposals(keys []string) ([]ProposalType, error) {
+	valid := make(map[string]bool, len(EnableAllProposals))
+	for _, key := range EnableAllProposals {
+		valid[string(key)] = true
+	}
+
+	proposals := make([]ProposalType, len(keys))
+	for i, key := range keys {
+		if _, ok := valid[key]; !ok {
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "'%s' is not a valid ProposalType", key)
+		}
+		proposals[i] = ProposalType(key)
+	}
+	return proposals, nil
+}
+
 func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
 	govtypes.RegisterProposalType(string(ProposalTypeStoreInstantiateContract))
