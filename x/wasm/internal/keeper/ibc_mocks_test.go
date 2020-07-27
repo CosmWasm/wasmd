@@ -1,26 +1,39 @@
 package keeper_test
 
 import (
+	"bytes"
 	"testing"
 
 	cosmwasm "github.com/CosmWasm/go-cosmwasm"
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
+	cosmwasm2 "github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channelexported "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/exported"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/rand"
 )
 
 type mockContract struct {
 	app          *app.WasmApp
 	t            *testing.T
 	contractAddr sdk.AccAddress
+}
+
+func (c *mockContract) AcceptChannel(hash []byte, params cosmwasm2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasm.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.AcceptChannelResponse, uint64, error) {
+	if order != channeltypes.ORDERED {
+		return &cosmwasm2.AcceptChannelResponse{
+			Result: false,
+			Reason: "channel type must be ordered",
+		}, 0, nil
+	}
+	return &cosmwasm2.AcceptChannelResponse{Result: true}, 0, nil
 }
 
 func MockContract(t *testing.T, contractAddr sdk.AccAddress, app *app.WasmApp) *mockContract {
@@ -31,17 +44,36 @@ func MockContract(t *testing.T, contractAddr sdk.AccAddress, app *app.WasmApp) *
 	keeper.MockContracts[contractAddr.String()] = c
 	return c
 }
-
-func (c *mockContract) OnReceive(hash []byte, params wasmTypes.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*keeper.OnReceiveIBCResponse, uint64, error) {
-	panic("mockContract called: implement me")
+func (c *mockContract) OnReceive(hash []byte, params cosmwasm2.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnReceiveIBCResponse, uint64, error) {
+	// real contract would do something with incoming msg
+	// create some random ackknowledgement
+	myAck := rand.Bytes(25)
+	store.Set(hash, append(msg, myAck...))
+	return &cosmwasm2.OnReceiveIBCResponse{Acknowledgement: myAck}, 0, nil
+}
+func (c *mockContract) OnAcknowledgement(hash []byte, params cosmwasm2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasm.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnAcknowledgeIBCResponse, uint64, error) {
+	state := store.Get(hash)
+	require.NotNil(c.t, state)
+	assert.Equal(c.t, state, append(originalData, acknowledgement...))
+	return &cosmwasm2.OnAcknowledgeIBCResponse{}, 0, nil
 }
 
-func (c mockContract) DoIBCCall(ctx sdk.Context, channel string, id string) { // todo: move somewhere else
+func (c *mockContract) OnTimeout(hash []byte, params cosmwasm2.Env, originalData []byte, store prefix.Store, api cosmwasm.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnTimeoutIBCResponse, uint64, error) {
+	state := store.Get(hash)
+	require.NotNil(c.t, state)
+	assert.True(c.t, bytes.HasPrefix(state, originalData))
+	return &cosmwasm2.OnTimeoutIBCResponse{}, 0, nil
+}
+
+func (c mockContract) DoIBCCall(ctx sdk.Context, sourceChannelID string, sourcePortID string) { // todo: move somewhere else
+	// how does contract know where to send package too? channel/portID
+	// can environment have a list of available channel/portIDs or do we check later?
+	// alternative: query for ibc channels/ portids?
+
 	msg := types.MsgWasmIBCCall{
-		SourcePort:       id,
-		SourceChannel:    channel,
+		SourcePort:       sourcePortID,
+		SourceChannel:    sourceChannelID,
 		Sender:           c.contractAddr,
-		DestContractAddr: nil, // remove
 		TimeoutHeight:    110,
 		TimeoutTimestamp: 0,
 		Msg:              []byte("{}"),
@@ -52,14 +84,14 @@ func (c mockContract) DoIBCCall(ctx sdk.Context, channel string, id string) { //
 }
 
 const (
+	protocolVersion          = "1.0"
 	counterpartyPortID       = "otherPortID"
 	counterpartyChannelID    = "otherChannelID"
-	connectionID             = "myConnectionID"
-	channelID                = "myChannelID"
-	protocolVersion          = "1.0"
-	clientID                 = "myClientID"
-	counterpartyClientID     = "otherClientID"
 	counterpartyConnectionID = "otherConnectionID"
+	counterpartyClientID     = "otherClientID"
+	channelID                = "myChannelID"
+	connectionID             = "myConnectionID"
+	clientID                 = "myClientID"
 )
 
 type receivedPackets struct {
@@ -103,4 +135,9 @@ func (m mockChannelKeeper) PacketExecuted(ctx sdk.Context, chanCap *capabilityty
 
 func (m mockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error {
 	panic("implement me")
+}
+
+func (m *mockChannelKeeper) Reset() {
+	m.seq = 0
+	m.received = nil
 }

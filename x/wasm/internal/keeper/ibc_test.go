@@ -104,9 +104,10 @@ func TestRelay(t *testing.T) {
 	// then
 	require.Len(t, mockChannelKeeper.received, 1)
 
-	// when the relayer picks up WasmIBCContractPacketData and returns an ack to
-	// our chain
-	ibcHandler := wasm.NewIBCHandler(wasmApp.WasmKeeper)
+	// new scenario:
+	mockChannelKeeper.Reset()
+	// when we receive an incoming ibc packet
+
 	packet := types.Packet{
 		Sequence:           1,
 		SourcePort:         counterpartyPortID,
@@ -117,12 +118,17 @@ func TestRelay(t *testing.T) {
 		TimeoutHeight:      100,
 		TimeoutTimestamp:   0,
 	}
-	// mockChannelKeeper.received[0].packet.(types.Packet)
-	r, ack, err := ibcHandler.OnRecvPacket(ctx, packet)
+
+	ibcHandler := wasm.NewIBCHandler(wasmApp.WasmKeeper)
+	_, ack, err := ibcHandler.OnRecvPacket(ctx, packet)
 	require.NoError(t, err)
-	_ = r
-	_ = ack
+	require.NotEmpty(t, ack)
+	//
+	res, err := ibcHandler.OnAcknowledgementPacket(ctx, packet, ack)
+	require.NoError(t, err)
+	_ = res
 }
+
 func withCapabilities(t *testing.T, ctx sdk.Context, channelID, portID string, wasmApp *app.WasmApp) {
 	capName := host.ChannelCapabilityPath(portID, channelID)
 	cap, err := wasmApp.ScopedIBCKeeper.NewCapability(ctx, capName)

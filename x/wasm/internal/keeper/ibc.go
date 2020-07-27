@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -80,28 +80,28 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 	return k.ScopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-type OnReceiveIBCResponse struct {
-	Messages []sdk.Msg `json:"messages"` // todo: limit times
-
-	Acknowledgement json.RawMessage
-	// log message to return over abci interface
-	Log []wasmTypes.LogAttribute `json:"log"`
-}
-
 type IBCCallbacks interface {
-	OnReceive(hash []byte, params wasmTypes.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*OnReceiveIBCResponse, uint64, error)
+	// IBC packet lifecycle
+	OnReceive(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnReceiveIBCResponse, uint64, error)
+	OnAcknowledgement(hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnAcknowledgeIBCResponse, uint64, error)
+	OnTimeout(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
+	// IBC channel livecycle
+	AcceptChannel(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
+	//OnConnect(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
+	//OnClose(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
 }
 
 var MockContracts = make(map[string]IBCCallbacks, 0)
 
-func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data []byte) ([]byte, error) {
+func (k Keeper) AcceptChannel(ctx sdk.Context, contractAddr sdk.AccAddress, order channeltypes.Order, version string, connectionHops []string, ibcInfo cosmwasm.IBCInfo) ([]string, error) {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	var sender sdk.AccAddress
-	params := types.NewEnv(ctx, sender, nil, contractAddr)
+	var sender sdk.AccAddress // we don't know the sender
+	params := cosmwasm.NewEnv(ctx, sender, nil, contractAddr)
+	params.IBC = &ibcInfo
 
 	querier := QueryHandler{
 		Ctx:     ctx,
@@ -109,16 +109,42 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data 
 	}
 
 	gas := gasForContract(ctx)
-	var (
-		res     *OnReceiveIBCResponse
-		gasUsed uint64
-		execErr error
-	)
-	if mock, ok := MockContracts[contractAddr.String()]; ok { // hack for testing without wasmer
-		res, gasUsed, execErr = mock.OnReceive(codeInfo.CodeHash, params, data, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
-	} else {
+	mock, ok := MockContracts[contractAddr.String()]
+	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
+	res, gasUsed, execErr := mock.AcceptChannel(codeInfo.CodeHash, params, order, version, connectionHops, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+	if !res.Result { // todo: would it make more sense to let the contract return an error instead?
+		return nil, sdkerrors.Wrap(types.ErrInvalid, res.Reason)
+	}
+	return res.RestrictCounterpartyVersions, nil
+}
+
+func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, payloadData []byte, ibcInfo cosmwasm.IBCInfo) ([]byte, error) {
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	var sender sdk.AccAddress // we don't know the sender
+	params := cosmwasm.NewEnv(ctx, sender, nil, contractAddr)
+	params.IBC = &ibcInfo
+
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+
+	gas := gasForContract(ctx)
+	mock, ok := MockContracts[contractAddr.String()]
+	if !ok { // hack for testing without wasmer
+		panic("not supported")
+	}
+	res, gasUsed, execErr := mock.OnReceive(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -137,16 +163,93 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, data 
 	return res.Acknowledgement, nil
 }
 
-func (k Keeper) IBCCallContract(
-	ctx sdk.Context,
-	sourcePort,
-	sourceChannel string,
-	sender sdk.AccAddress,
-	receiver sdk.AccAddress,
-	timeoutHeight,
-	timeoutTimestamp uint64,
-	msg json.RawMessage,
-) error {
+func (k Keeper) OnAckPacket(ctx sdk.Context, contractAddr sdk.AccAddress, payloadData []byte, acknowledgement []byte, ibcInfo cosmwasm.IBCInfo) error {
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	var sender sdk.AccAddress // we don't know the sender
+	params := cosmwasm.NewEnv(ctx, sender, nil, contractAddr)
+	params.IBC = &ibcInfo
+
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+
+	gas := gasForContract(ctx)
+	mock, ok := MockContracts[contractAddr.String()] // hack for testing without wasmer
+	if !ok {
+		panic("not supported")
+	}
+	res, gasUsed, execErr := mock.OnAcknowledgement(codeInfo.CodeHash, params, payloadData, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddr)
+	ctx.EventManager().EmitEvents(events)
+
+	// hack: use sdk messages here for simplicity
+	for _, m := range res.Messages {
+		if err := k.messenger.handleSdkMessage(ctx, contractAddr, m); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, payloadData []byte, ibcInfo cosmwasm.IBCInfo) error {
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	var sender sdk.AccAddress // we don't know the sender
+	params := cosmwasm.NewEnv(ctx, sender, nil, contractAddr)
+	params.IBC = &ibcInfo
+
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+
+	gas := gasForContract(ctx)
+	mock, ok := MockContracts[contractAddr.String()]
+	if !ok { // hack for testing without wasmer
+		panic("not supported")
+	}
+	res, gasUsed, execErr := mock.OnTimeout(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddr)
+	ctx.EventManager().EmitEvents(events)
+
+	// hack: use sdk messages here for simplicity
+	for _, m := range res.Messages {
+		if err := k.messenger.handleSdkMessage(ctx, contractAddr, m); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k Keeper) IBCCallFromContract(ctx sdk.Context, sourcePort, sourceChannel string, sender sdk.AccAddress, timeoutHeight, timeoutTimestamp uint64, msg json.RawMessage) error {
+	contractInfo := k.GetContractInfo(ctx, sender)
+	if contractInfo == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
+	}
+	if sourcePort != contractInfo.IBCPortID {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "not sender's port")
+	}
+
 	sourceChannelEnd, found := k.ChannelKeeper.GetChannel(ctx, sourcePort, sourceChannel)
 	if !found {
 		return sdkerrors.Wrap(channeltypes.ErrChannelNotFound, sourceChannel)
@@ -168,16 +271,8 @@ func (k Keeper) IBCCallContract(
 		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
-	packetData := types.WasmIBCContractPacketData{
-		Sender:           sender,
-		DestContractAddr: receiver,
-		Msg:              msg,
-	}
-	// TODO: using json as payload as in ibc-transfer
-	payload := sdk.MustSortJSON(k.cdc.MustMarshalJSON(packetData))
-
 	packet := channeltypes.NewPacket(
-		payload,
+		msg,
 		sequence,
 		sourcePort,
 		sourceChannel,
@@ -186,6 +281,5 @@ func (k Keeper) IBCCallContract(
 		timeoutHeight,
 		timeoutTimestamp,
 	)
-
 	return k.ChannelKeeper.SendPacket(ctx, channelCap, packet)
 }

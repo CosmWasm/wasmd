@@ -207,12 +207,10 @@ func (msg MsgWasmIBCCall) Type() string {
 }
 
 func (msg MsgWasmIBCCall) ValidateBasic() error {
-	//if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
-	//	return sdkerrors.Wrap(err, "sender")
-	//}
-	//if err := sdk.VerifyAddressFormat(msg.Contract); err != nil {
-	//	return sdkerrors.Wrap(err, "contract")
-	//}
+	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+
 	return nil
 }
 

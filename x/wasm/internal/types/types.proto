@@ -70,6 +70,7 @@ message MsgClearAdmin{
     bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 
+// MsgWasmIBCCall to call another module. source port/channel must exist and be associated to the contract sending this
 message MsgWasmIBCCall {
     // the port on which the packet will be sent
     string source_port = 1 [(gogoproto.moretags) = "yaml:\"source_port\""];
@@ -77,17 +78,24 @@ message MsgWasmIBCCall {
     string source_channel = 2 [(gogoproto.moretags) = "yaml:\"source_channel\""];
 
     bytes sender = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    bytes destContractAddr = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 
     // Timeout height relative to the current block height.
     // The timeout is disabled when set to 0.
-    uint64 timeout_height = 5 [(gogoproto.moretags) = "yaml:\"timeout_height\""];
+    uint64 timeout_height = 4 [(gogoproto.moretags) = "yaml:\"timeout_height\""];
     // Timeout timestamp (in nanoseconds) relative to the current block timestamp.
     // The timeout is disabled when set to 0.
-    uint64 timeout_timestamp = 6 [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
+    uint64 timeout_timestamp = 5 [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
 
     // Msg is the message to the contract
-    bytes msg = 7 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    bytes msg = 6 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+}
+
+// MsgIBCCloseChannel port and channel need to be owned by the contract
+message MsgIBCCloseChannel {
+    string port = 1 [(gogoproto.moretags) = "yaml:\"dest_port\""];
+    string channel = 2 [(gogoproto.moretags) = "yaml:\"deset_channel\""];
+
+    bytes sender = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 
 // CodeInfo is data for the uploaded contract WASM code

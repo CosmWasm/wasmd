@@ -180,10 +180,7 @@ func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*s
 }
 
 func handleIBCCall(ctx sdk.Context, k Keeper, msg *MsgWasmIBCCall) (*sdk.Result, error) {
-	if err := k.IBCCallContract(ctx, msg.SourcePort, msg.SourceChannel,
-		msg.Sender, msg.DestContractAddr, msg.TimeoutHeight,
-		msg.TimeoutTimestamp, msg.Msg,
-	); err != nil {
+	if err := k.IBCCallFromContract(ctx, msg.SourcePort, msg.SourceChannel, msg.Sender, msg.TimeoutHeight, msg.TimeoutTimestamp, msg.Msg); err != nil {
 		return nil, err
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -45,6 +46,7 @@ type QueryPlugins struct {
 	Custom  CustomQuerier
 	Staking func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error)
 	Wasm    func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
+	IBC     func(ctx sdk.Context, request *cosmwasm.IBCQuery) ([]byte, error)
 }
 
 func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, wasm Keeper) QueryPlugins {
@@ -53,6 +55,7 @@ func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keepe
 		Custom:  NoCustomQuerier,
 		Staking: StakingQuerier(staking),
 		Wasm:    WasmQuerier(wasm),
+		IBC:     IBCQuerier(wasm),
 	}
 }
 
@@ -245,6 +248,12 @@ func WasmQuerier(wasm Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery
 			return json.Marshal(models)
 		}
 		return nil, wasmTypes.UnsupportedRequest{"unknown WasmQuery variant"}
+	}
+}
+
+func IBCQuerier(wasm Keeper) func(ctx sdk.Context, request *cosmwasm.IBCQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *cosmwasm.IBCQuery) ([]byte, error) {
+		panic("not implemented")
 	}
 }
 

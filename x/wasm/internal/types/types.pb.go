@@ -269,21 +269,21 @@ func (m *MsgClearAdmin) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgClearAdmin proto.InternalMessageInfo
 
+// MsgWasmIBCCall to call another module. source port/channel must exist and be associated to the contract sending this
 type MsgWasmIBCCall struct {
 	// the port on which the packet will be sent
 	SourcePort string `protobuf:"bytes,1,opt,name=source_port,json=sourcePort,proto3" json:"source_port,omitempty" yaml:"source_port"`
 	// the channel by which the packet will be sent
-	SourceChannel    string                                        `protobuf:"bytes,2,opt,name=source_channel,json=sourceChannel,proto3" json:"source_channel,omitempty" yaml:"source_channel"`
-	Sender           github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
-	DestContractAddr github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=destContractAddr,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"destContractAddr,omitempty"`
+	SourceChannel string                                        `protobuf:"bytes,2,opt,name=source_channel,json=sourceChannel,proto3" json:"source_channel,omitempty" yaml:"source_channel"`
+	Sender        github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
 	// Timeout height relative to the current block height.
 	// The timeout is disabled when set to 0.
-	TimeoutHeight uint64 `protobuf:"varint,5,opt,name=timeout_height,json=timeoutHeight,proto3" json:"timeout_height,omitempty" yaml:"timeout_height"`
+	TimeoutHeight uint64 `protobuf:"varint,4,opt,name=timeout_height,json=timeoutHeight,proto3" json:"timeout_height,omitempty" yaml:"timeout_height"`
 	// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
 	// The timeout is disabled when set to 0.
-	TimeoutTimestamp uint64 `protobuf:"varint,6,opt,name=timeout_timestamp,json=timeoutTimestamp,proto3" json:"timeout_timestamp,omitempty" yaml:"timeout_timestamp"`
+	TimeoutTimestamp uint64 `protobuf:"varint,5,opt,name=timeout_timestamp,json=timeoutTimestamp,proto3" json:"timeout_timestamp,omitempty" yaml:"timeout_timestamp"`
 	// Msg is the message to the contract
-	Msg encoding_json.RawMessage `protobuf:"bytes,7,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
+	Msg encoding_json.RawMessage `protobuf:"bytes,6,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
 }
 
 func (m *MsgWasmIBCCall) Reset()         { *m = MsgWasmIBCCall{} }
@@ -340,13 +340,6 @@ func (m *MsgWasmIBCCall) GetSender() github_com_cosmos_cosmos_sdk_types.AccAddre
 	return nil
 }
 
-func (m *MsgWasmIBCCall) GetDestContractAddr() github_com_cosmos_cosmos_sdk_types.AccAddress {
-	if m != nil {
-		return m.DestContractAddr
-	}
-	return nil
-}
-
 func (m *MsgWasmIBCCall) GetTimeoutHeight() uint64 {
 	if m != nil {
 		return m.TimeoutHeight
@@ -368,6 +361,67 @@ func (m *MsgWasmIBCCall) GetMsg() encoding_json.RawMessage {
 	return nil
 }
 
+// MsgIBCCloseChannel port and channel need to be owned by the contract
+type MsgIBCCloseChannel struct {
+	Port    string                                        `protobuf:"bytes,1,opt,name=port,proto3" json:"port,omitempty" yaml:"dest_port"`
+	Channel string                                        `protobuf:"bytes,2,opt,name=channel,proto3" json:"channel,omitempty" yaml:"deset_channel"`
+	Sender  github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+}
+
+func (m *MsgIBCCloseChannel) Reset()         { *m = MsgIBCCloseChannel{} }
+func (m *MsgIBCCloseChannel) String() string { return proto.CompactTextString(m) }
+func (*MsgIBCCloseChannel) ProtoMessage()    {}
+func (*MsgIBCCloseChannel) Descriptor() ([]byte, []int) {
+	return fileDescriptor_45de2b3fc8aff6aa, []int{7}
+}
+func (m *MsgIBCCloseChannel) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgIBCCloseChannel) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgIBCCloseChannel.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgIBCCloseChannel) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgIBCCloseChannel.Merge(m, src)
+}
+func (m *MsgIBCCloseChannel) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgIBCCloseChannel) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgIBCCloseChannel.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgIBCCloseChannel proto.InternalMessageInfo
+
+func (m *MsgIBCCloseChannel) GetPort() string {
+	if m != nil {
+		return m.Port
+	}
+	return ""
+}
+
+func (m *MsgIBCCloseChannel) GetChannel() string {
+	if m != nil {
+		return m.Channel
+	}
+	return ""
+}
+
+func (m *MsgIBCCloseChannel) GetSender() github_com_cosmos_cosmos_sdk_types.AccAddress {
+	if m != nil {
+		return m.Sender
+	}
+	return nil
+}
+
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
 	CodeHash []byte                                        `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
@@ -380,7 +434,7 @@ func (m *CodeInfo) Reset()         { *m = CodeInfo{} }
 func (m *CodeInfo) String() string { return proto.CompactTextString(m) }
 func (*CodeInfo) ProtoMessage()    {}
 func (*CodeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_45de2b3fc8aff6aa, []int{7}
+	return fileDescriptor_45de2b3fc8aff6aa, []int{8}
 }
 func (m *CodeInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -428,7 +482,7 @@ func (m *ContractInfo) Reset()         { *m = ContractInfo{} }
 func (m *ContractInfo) String() string { return proto.CompactTextString(m) }
 func (*ContractInfo) ProtoMessage()    {}
 func (*ContractInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_45de2b3fc8aff6aa, []int{8}
+	return fileDescriptor_45de2b3fc8aff6aa, []int{9}
 }
 func (m *ContractInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -469,7 +523,7 @@ func (m *AbsoluteTxPosition) Reset()         { *m = AbsoluteTxPosition{} }
 func (m *AbsoluteTxPosition) String() string { return proto.CompactTextString(m) }
 func (*AbsoluteTxPosition) ProtoMessage()    {}
 func (*AbsoluteTxPosition) Descriptor() ([]byte, []int) {
-	return fileDescriptor_45de2b3fc8aff6aa, []int{9}
+	return fileDescriptor_45de2b3fc8aff6aa, []int{10}
 }
 func (m *AbsoluteTxPosition) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -512,129 +566,6 @@ func (m *AbsoluteTxPosition) GetTxIndex() uint64 {
 	return 0
 }
 
-type WasmIBCContractPacketData struct {
-	// the sender address
-	Sender           github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
-	DestContractAddr github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=destContractAddr,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"destContractAddr,omitempty"`
-	Msg              encoding_json.RawMessage                      `protobuf:"bytes,3,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
-}
-
-func (m *WasmIBCContractPacketData) Reset()         { *m = WasmIBCContractPacketData{} }
-func (m *WasmIBCContractPacketData) String() string { return proto.CompactTextString(m) }
-func (*WasmIBCContractPacketData) ProtoMessage()    {}
-func (*WasmIBCContractPacketData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_45de2b3fc8aff6aa, []int{10}
-}
-func (m *WasmIBCContractPacketData) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *WasmIBCContractPacketData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_WasmIBCContractPacketData.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *WasmIBCContractPacketData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WasmIBCContractPacketData.Merge(m, src)
-}
-func (m *WasmIBCContractPacketData) XXX_Size() int {
-	return m.Size()
-}
-func (m *WasmIBCContractPacketData) XXX_DiscardUnknown() {
-	xxx_messageInfo_WasmIBCContractPacketData.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_WasmIBCContractPacketData proto.InternalMessageInfo
-
-func (m *WasmIBCContractPacketData) GetSender() github_com_cosmos_cosmos_sdk_types.AccAddress {
-	if m != nil {
-		return m.Sender
-	}
-	return nil
-}
-
-func (m *WasmIBCContractPacketData) GetDestContractAddr() github_com_cosmos_cosmos_sdk_types.AccAddress {
-	if m != nil {
-		return m.DestContractAddr
-	}
-	return nil
-}
-
-func (m *WasmIBCContractPacketData) GetMsg() encoding_json.RawMessage {
-	if m != nil {
-		return m.Msg
-	}
-	return nil
-}
-
-// WasmIBCContractPacketAcknowledgement
-type WasmIBCContractPacketAcknowledgement struct {
-	Success bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error   string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	// testdata
-	Label string `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) Reset()         { *m = WasmIBCContractPacketAcknowledgement{} }
-func (m *WasmIBCContractPacketAcknowledgement) String() string { return proto.CompactTextString(m) }
-func (*WasmIBCContractPacketAcknowledgement) ProtoMessage()    {}
-func (*WasmIBCContractPacketAcknowledgement) Descriptor() ([]byte, []int) {
-	return fileDescriptor_45de2b3fc8aff6aa, []int{11}
-}
-func (m *WasmIBCContractPacketAcknowledgement) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *WasmIBCContractPacketAcknowledgement) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_WasmIBCContractPacketAcknowledgement.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *WasmIBCContractPacketAcknowledgement) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WasmIBCContractPacketAcknowledgement.Merge(m, src)
-}
-func (m *WasmIBCContractPacketAcknowledgement) XXX_Size() int {
-	return m.Size()
-}
-func (m *WasmIBCContractPacketAcknowledgement) XXX_DiscardUnknown() {
-	xxx_messageInfo_WasmIBCContractPacketAcknowledgement.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_WasmIBCContractPacketAcknowledgement proto.InternalMessageInfo
-
-func (m *WasmIBCContractPacketAcknowledgement) GetSuccess() bool {
-	if m != nil {
-		return m.Success
-	}
-	return false
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) GetError() string {
-	if m != nil {
-		return m.Error
-	}
-	return ""
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) GetLabel() string {
-	if m != nil {
-		return m.Label
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterType((*MsgStoreCode)(nil), "wasmd.x.wasmd.MsgStoreCode")
 	proto.RegisterType((*MsgInstantiateContract)(nil), "wasmd.x.wasmd.MsgInstantiateContract")
@@ -643,85 +574,81 @@ func init() {
 	proto.RegisterType((*MsgUpdateAdmin)(nil), "wasmd.x.wasmd.MsgUpdateAdmin")
 	proto.RegisterType((*MsgClearAdmin)(nil), "wasmd.x.wasmd.MsgClearAdmin")
 	proto.RegisterType((*MsgWasmIBCCall)(nil), "wasmd.x.wasmd.MsgWasmIBCCall")
+	proto.RegisterType((*MsgIBCCloseChannel)(nil), "wasmd.x.wasmd.MsgIBCCloseChannel")
 	proto.RegisterType((*CodeInfo)(nil), "wasmd.x.wasmd.CodeInfo")
 	proto.RegisterType((*ContractInfo)(nil), "wasmd.x.wasmd.ContractInfo")
 	proto.RegisterType((*AbsoluteTxPosition)(nil), "wasmd.x.wasmd.AbsoluteTxPosition")
-	proto.RegisterType((*WasmIBCContractPacketData)(nil), "wasmd.x.wasmd.WasmIBCContractPacketData")
-	proto.RegisterType((*WasmIBCContractPacketAcknowledgement)(nil), "wasmd.x.wasmd.WasmIBCContractPacketAcknowledgement")
 }
 
 func init() { proto.RegisterFile("x/wasm/internal/types/types.proto", fileDescriptor_45de2b3fc8aff6aa) }
 
 var fileDescriptor_45de2b3fc8aff6aa = []byte{
-	// 1079 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x57, 0x41, 0x6f, 0xe3, 0x44,
-	0x14, 0x6e, 0xea, 0x34, 0x89, 0x27, 0x69, 0x55, 0x86, 0x65, 0x95, 0x2e, 0xab, 0xb8, 0x35, 0x1c,
-	0x7a, 0x69, 0xb2, 0x2c, 0x12, 0x48, 0x0b, 0x48, 0xc4, 0x29, 0xb0, 0x01, 0x19, 0x55, 0xde, 0x45,
-	0x2b, 0x21, 0xad, 0xac, 0x89, 0x67, 0xd6, 0x31, 0xb5, 0x67, 0x22, 0xcf, 0x98, 0xa6, 0x37, 0xb8,
-	0x71, 0x42, 0x1c, 0xf8, 0x01, 0x9c, 0x11, 0x12, 0x3f, 0x82, 0xcb, 0x72, 0xdb, 0x23, 0x27, 0x83,
-	0xd2, 0x1b, 0xc7, 0x4a, 0x5c, 0xf6, 0x84, 0x66, 0x3c, 0x2e, 0x89, 0x76, 0x25, 0x4a, 0x9a, 0x3d,
-	0x70, 0xa9, 0xfd, 0xe6, 0xcd, 0xfb, 0xfa, 0xde, 0x37, 0xef, 0x7d, 0x19, 0x83, 0xbd, 0x69, 0xef,
-	0x04, 0xf1, 0xa4, 0x17, 0x51, 0x41, 0x52, 0x8a, 0xe2, 0x9e, 0x38, 0x9d, 0x10, 0x5e, 0xfc, 0xed,
-	0x4e, 0x52, 0x26, 0x18, 0xdc, 0x94, 0x1b, 0x70, 0x77, 0xda, 0x55, 0xcf, 0x1b, 0xd7, 0x42, 0x16,
-	0x32, 0xe5, 0xe9, 0xc9, 0xb7, 0x62, 0xd3, 0x8d, 0x97, 0x03, 0xc6, 0x13, 0xc6, 0x7b, 0xc5, 0xa3,
-	0x58, 0xb4, 0x7f, 0xad, 0x80, 0x96, 0xcb, 0xc3, 0x7b, 0x82, 0xa5, 0x64, 0xc0, 0x30, 0x81, 0x43,
-	0x50, 0xe3, 0x84, 0x62, 0x92, 0xb6, 0x2b, 0xbb, 0x95, 0xfd, 0x96, 0xf3, 0xc6, 0xd3, 0xdc, 0x3a,
-	0x08, 0x23, 0x31, 0xce, 0x46, 0xdd, 0x80, 0x25, 0xbd, 0x05, 0x90, 0x03, 0x8e, 0x8f, 0x75, 0x22,
-	0xfd, 0x20, 0xe8, 0x63, 0x9c, 0x12, 0xce, 0x3d, 0x0d, 0x00, 0xdf, 0x02, 0x5b, 0x32, 0x1f, 0x7f,
-	0x74, 0x2a, 0x88, 0x1f, 0x30, 0x4c, 0xda, 0xeb, 0x0a, 0x72, 0x7b, 0x96, 0x5b, 0xad, 0x07, 0xfd,
-	0x7b, 0xae, 0x73, 0x2a, 0xd4, 0x3f, 0xf5, 0x5a, 0x72, 0x5f, 0x69, 0xc1, 0xeb, 0xa0, 0xc6, 0x59,
-	0x96, 0x06, 0xa4, 0x6d, 0xec, 0x56, 0xf6, 0x4d, 0x4f, 0x5b, 0xb0, 0x0d, 0xea, 0xa3, 0x2c, 0x8a,
-	0x65, 0x6e, 0x55, 0xe5, 0x28, 0xcd, 0x3b, 0xd5, 0x6f, 0x7e, 0xb0, 0xd6, 0xec, 0xaf, 0x0d, 0x70,
-	0xdd, 0xe5, 0xe1, 0x90, 0x72, 0x81, 0xa8, 0x88, 0x90, 0x84, 0xa3, 0x22, 0x45, 0x81, 0x58, 0x65,
-	0x55, 0x1f, 0x81, 0x0d, 0x84, 0x93, 0x88, 0xea, 0x62, 0x96, 0x40, 0x2a, 0xe2, 0xa1, 0x05, 0xaa,
-	0x8a, 0x14, 0x59, 0x64, 0xd5, 0x69, 0xfe, 0x99, 0x5b, 0x75, 0x69, 0xfb, 0x11, 0xf6, 0x94, 0x03,
-	0x5e, 0x03, 0x1b, 0x31, 0x1a, 0x91, 0x58, 0x57, 0x5b, 0x18, 0xf0, 0x6d, 0xd0, 0x88, 0x68, 0x24,
-	0xfc, 0x84, 0x87, 0xed, 0x0d, 0x95, 0xc2, 0xcd, 0xa7, 0xb9, 0xd5, 0x26, 0x34, 0x60, 0x38, 0xa2,
-	0x61, 0xef, 0x0b, 0xce, 0x68, 0xd7, 0x43, 0x27, 0x2e, 0xe1, 0x1c, 0x85, 0xc4, 0xab, 0xcb, 0xdd,
-	0x2e, 0x0f, 0xe1, 0x43, 0x00, 0x54, 0xe0, 0xa3, 0x8c, 0x62, 0xde, 0xae, 0xed, 0x1a, 0xfb, 0xcd,
-	0xdb, 0xad, 0xae, 0xee, 0x86, 0x01, 0x8b, 0xa8, 0x73, 0xeb, 0x71, 0x6e, 0xad, 0xfd, 0xf8, 0xbb,
-	0xb5, 0x7f, 0x89, 0x7a, 0x64, 0x00, 0xf7, 0x4c, 0x89, 0xf8, 0xa1, 0x04, 0xd4, 0x67, 0xf0, 0xcb,
-	0x3a, 0x80, 0x2e, 0x0f, 0x3f, 0x98, 0x92, 0x20, 0x7b, 0x31, 0xfc, 0xbb, 0xa0, 0x11, 0x68, 0xd8,
-	0xe5, 0x8f, 0xe0, 0x02, 0x02, 0x76, 0x81, 0x21, 0x99, 0x34, 0x2e, 0xc1, 0xa4, 0xdc, 0x28, 0x59,
-	0xe4, 0x84, 0x96, 0x2c, 0x6e, 0xac, 0x86, 0x45, 0x89, 0x38, 0xcf, 0xe2, 0xf7, 0x05, 0x8b, 0x6e,
-	0x14, 0xa6, 0xe8, 0x7f, 0xc1, 0xe2, 0xbf, 0xf6, 0xf2, 0x7b, 0xa0, 0x99, 0x14, 0xd5, 0xa8, 0xc6,
-	0xad, 0x5e, 0x82, 0x6e, 0xa0, 0x03, 0x5c, 0x1e, 0x6a, 0x5a, 0xbe, 0x5a, 0x07, 0x5b, 0x2e, 0x0f,
-	0x3f, 0x9b, 0x60, 0x24, 0x48, 0x5f, 0x0d, 0xd1, 0x0a, 0x29, 0xf9, 0x14, 0x98, 0x94, 0x9c, 0xf8,
-	0x57, 0x1c, 0xee, 0x06, 0x25, 0x27, 0x45, 0x6a, 0xf3, 0x14, 0x1b, 0x57, 0xa6, 0x58, 0x53, 0xf0,
-	0x73, 0x05, 0x6c, 0xba, 0x3c, 0x1c, 0xc4, 0x04, 0xa5, 0x2b, 0x67, 0xe0, 0x85, 0x64, 0x7c, 0x6e,
-	0xa8, 0x43, 0x7b, 0x80, 0x78, 0x32, 0x74, 0x06, 0x03, 0x14, 0x4b, 0x09, 0x6b, 0x16, 0x92, 0xee,
-	0x4f, 0x58, 0x2a, 0x54, 0xde, 0xa6, 0x73, 0xfd, 0x3c, 0xb7, 0xe0, 0x29, 0x4a, 0xe2, 0x3b, 0xf6,
-	0x9c, 0xd3, 0xf6, 0x40, 0x61, 0x1d, 0xb1, 0x54, 0xc0, 0xf7, 0xc1, 0x96, 0xf6, 0x05, 0x63, 0x44,
-	0x29, 0x89, 0xd5, 0x39, 0x99, 0xce, 0xce, 0x79, 0x6e, 0xbd, 0xb2, 0x10, 0xab, 0xfd, 0xb6, 0xb7,
-	0x59, 0x2c, 0x0c, 0x0a, 0x7b, 0x8e, 0x2d, 0xe3, 0xaa, 0x6c, 0x3d, 0x04, 0xdb, 0x98, 0x70, 0x51,
-	0x4e, 0xa7, 0x74, 0xeb, 0xbe, 0x5e, 0x02, 0xf4, 0x19, 0x28, 0x59, 0xab, 0x88, 0x12, 0xc2, 0x32,
-	0xe1, 0x8f, 0x49, 0x14, 0x8e, 0x85, 0x52, 0xfb, 0xea, 0x7c, 0xad, 0x8b, 0x7e, 0xdb, 0xdb, 0xd4,
-	0x0b, 0x77, 0x95, 0x0d, 0x87, 0xe0, 0xa5, 0x72, 0x87, 0x7c, 0x72, 0x81, 0x92, 0x49, 0xbb, 0xa6,
-	0x40, 0x6e, 0x9e, 0xe7, 0x56, 0x7b, 0x11, 0xe4, 0x62, 0x8b, 0xed, 0x6d, 0xeb, 0xb5, 0xfb, 0xe5,
-	0x52, 0xa9, 0x92, 0xf5, 0x4b, 0xaa, 0xa4, 0xfd, 0x53, 0x05, 0x34, 0xe4, 0x6f, 0xf9, 0x90, 0x3e,
-	0x62, 0xf0, 0x55, 0x60, 0x2a, 0x31, 0x18, 0x23, 0x3e, 0x2e, 0x9a, 0x54, 0x36, 0x09, 0x26, 0x77,
-	0x11, 0x1f, 0xc3, 0x4f, 0x40, 0x3d, 0x48, 0x09, 0x12, 0x2c, 0x5d, 0x7e, 0xe6, 0x4a, 0x84, 0xa5,
-	0x6f, 0x0e, 0xdf, 0x56, 0x41, 0xab, 0x24, 0x5f, 0xa5, 0xfc, 0x1a, 0x28, 0xf5, 0x4b, 0x25, 0x5c,
-	0x75, 0xc0, 0x2c, 0xb7, 0x6a, 0xaa, 0xa2, 0x43, 0xaf, 0x26, 0x5d, 0x43, 0xbc, 0xda, 0xd4, 0x2f,
-	0xae, 0x15, 0xc6, 0x15, 0xaf, 0x15, 0x2b, 0xbe, 0x35, 0xbc, 0xa3, 0x8b, 0x24, 0x58, 0xb5, 0x4e,
-	0xf3, 0xf6, 0x5e, 0x77, 0xe1, 0xb2, 0xd9, 0xed, 0x8f, 0x38, 0x8b, 0x33, 0x41, 0xee, 0x4f, 0x8f,
-	0x18, 0x8f, 0x44, 0xc4, 0xa8, 0x57, 0x46, 0xc0, 0x43, 0xd0, 0x8a, 0x11, 0x17, 0x7e, 0xa6, 0x14,
-	0x1b, 0xab, 0xfe, 0xb9, 0x14, 0x42, 0x53, 0x86, 0x15, 0x3a, 0x8f, 0xe1, 0xbb, 0x60, 0x7b, 0x92,
-	0x92, 0x2f, 0x23, 0x96, 0x71, 0xbf, 0x3c, 0x95, 0x86, 0x3a, 0x15, 0x38, 0xcb, 0xad, 0xad, 0x23,
-	0xed, 0xd3, 0xa7, 0xb3, 0x35, 0x99, 0xb7, 0x31, 0x3c, 0x00, 0xcd, 0x68, 0x14, 0x28, 0x31, 0x91,
-	0x81, 0xa6, 0x12, 0x8c, 0xcd, 0x59, 0x6e, 0x99, 0x43, 0x67, 0x20, 0x55, 0x65, 0x78, 0xe8, 0x99,
-	0xd1, 0x28, 0x50, 0xaf, 0x58, 0x37, 0x84, 0x07, 0xe0, 0xb3, 0x59, 0xc1, 0x3d, 0xd0, 0x1a, 0xc5,
-	0x2c, 0x38, 0x2e, 0x07, 0x52, 0xb6, 0x86, 0xe1, 0x35, 0xd5, 0x9a, 0x9e, 0xb9, 0x1d, 0xd0, 0x10,
-	0x53, 0x3f, 0xa2, 0x98, 0x4c, 0x55, 0x53, 0x54, 0xbd, 0xba, 0x98, 0x0e, 0xa5, 0x69, 0xff, 0x55,
-	0x01, 0x3b, 0xa5, 0x0a, 0xea, 0x5e, 0x3b, 0x42, 0xc1, 0x31, 0x11, 0x87, 0x48, 0xa0, 0x55, 0xca,
-	0xf8, 0xf3, 0x84, 0x69, 0x7d, 0x75, 0xc2, 0xf4, 0x1f, 0x6f, 0x4c, 0x76, 0x0c, 0x5e, 0x7f, 0x6e,
-	0xd9, 0xfd, 0xe0, 0x98, 0xb2, 0x93, 0x98, 0xe0, 0x90, 0x24, 0x84, 0x0a, 0x39, 0xa4, 0x3c, 0x0b,
-	0x02, 0xc2, 0xb9, 0xa2, 0xa0, 0xe1, 0x95, 0xa6, 0x6c, 0x69, 0x92, 0xa6, 0x7a, 0xcc, 0x4c, 0xaf,
-	0x30, 0xfe, 0x69, 0x74, 0x63, 0xae, 0xd1, 0x9d, 0x8f, 0x1f, 0xcf, 0x3a, 0x95, 0x27, 0xb3, 0x4e,
-	0xe5, 0x8f, 0x59, 0xa7, 0xf2, 0xdd, 0x59, 0x67, 0xed, 0xc9, 0x59, 0x67, 0xed, 0xb7, 0xb3, 0xce,
-	0xda, 0xe7, 0xb7, 0xe6, 0x0a, 0x1f, 0x30, 0x9e, 0xc8, 0xa4, 0xd4, 0x97, 0x15, 0xee, 0x4d, 0xf5,
-	0x73, 0xf1, 0x13, 0x6b, 0x54, 0x53, 0xdf, 0x48, 0x6f, 0xfe, 0x1d, 0x00, 0x00, 0xff, 0xff, 0xe7,
-	0x3a, 0x54, 0x23, 0x82, 0x0d, 0x00, 0x00,
+	// 1039 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x57, 0x4f, 0x6f, 0xe3, 0x44,
+	0x14, 0xaf, 0xd7, 0x6e, 0xfe, 0x4c, 0xd2, 0xa8, 0x0c, 0xa5, 0xf2, 0x2e, 0xab, 0xb8, 0x0d, 0x97,
+	0x5e, 0x9a, 0x2c, 0x45, 0x02, 0x69, 0x01, 0x69, 0xeb, 0x14, 0xd8, 0x80, 0x8c, 0x2a, 0xef, 0xa2,
+	0x95, 0x90, 0x90, 0x35, 0xf1, 0xcc, 0x3a, 0x66, 0xed, 0x99, 0xc8, 0x33, 0xa1, 0xe9, 0x0d, 0x6e,
+	0x9c, 0x10, 0x12, 0x7c, 0x00, 0xce, 0x08, 0x89, 0x4f, 0xc0, 0x89, 0xcb, 0x72, 0xdb, 0x23, 0x27,
+	0x83, 0xd2, 0x1b, 0xc7, 0x1e, 0xf7, 0x84, 0x66, 0x3c, 0x0e, 0x89, 0x38, 0x10, 0xb5, 0xd9, 0x03,
+	0x97, 0x8c, 0xdf, 0xbc, 0x3f, 0x79, 0xef, 0xf7, 0xde, 0xfc, 0x3c, 0x06, 0xfb, 0xd3, 0xde, 0x19,
+	0xe2, 0x69, 0x2f, 0xa6, 0x82, 0x64, 0x14, 0x25, 0x3d, 0x71, 0x3e, 0x26, 0xbc, 0xf8, 0xed, 0x8e,
+	0x33, 0x26, 0x18, 0xdc, 0x92, 0x06, 0xb8, 0x3b, 0xed, 0xaa, 0xf5, 0xd6, 0x4e, 0xc4, 0x22, 0xa6,
+	0x34, 0x3d, 0xf9, 0x54, 0x18, 0xdd, 0x7a, 0x39, 0x64, 0x3c, 0x65, 0xbc, 0x57, 0x2c, 0xc5, 0x66,
+	0xe7, 0x37, 0x03, 0x34, 0x3d, 0x1e, 0x3d, 0x10, 0x2c, 0x23, 0x7d, 0x86, 0x09, 0x1c, 0x80, 0x0a,
+	0x27, 0x14, 0x93, 0xcc, 0x36, 0xf6, 0x8c, 0x83, 0xa6, 0xfb, 0xfa, 0xf3, 0xdc, 0x39, 0x8c, 0x62,
+	0x31, 0x9a, 0x0c, 0xbb, 0x21, 0x4b, 0x7b, 0x4b, 0x41, 0x0e, 0x39, 0x7e, 0xa2, 0x13, 0x39, 0x0e,
+	0xc3, 0x63, 0x8c, 0x33, 0xc2, 0xb9, 0xaf, 0x03, 0xc0, 0x37, 0x41, 0x4b, 0xe6, 0x13, 0x0c, 0xcf,
+	0x05, 0x09, 0x42, 0x86, 0x89, 0x7d, 0x43, 0x85, 0xdc, 0x9e, 0xe5, 0x4e, 0xf3, 0xd1, 0xf1, 0x03,
+	0xcf, 0x3d, 0x17, 0xea, 0x4f, 0xfd, 0xa6, 0xb4, 0x2b, 0x25, 0xb8, 0x0b, 0x2a, 0x9c, 0x4d, 0xb2,
+	0x90, 0xd8, 0xe6, 0x9e, 0x71, 0x50, 0xf7, 0xb5, 0x04, 0x6d, 0x50, 0x1d, 0x4e, 0xe2, 0x44, 0xe6,
+	0x66, 0x29, 0x45, 0x29, 0xde, 0xb5, 0xbe, 0xfe, 0xc1, 0xd9, 0xe8, 0x7c, 0x65, 0x82, 0x5d, 0x8f,
+	0x47, 0x03, 0xca, 0x05, 0xa2, 0x22, 0x46, 0x32, 0x1c, 0x15, 0x19, 0x0a, 0xc5, 0x3a, 0xab, 0xfa,
+	0x00, 0x6c, 0x22, 0x9c, 0xc6, 0x54, 0x17, 0x73, 0x85, 0x48, 0x85, 0x3f, 0x74, 0x80, 0xa5, 0x40,
+	0x91, 0x45, 0x5a, 0x6e, 0xe3, 0xaf, 0xdc, 0xa9, 0x4a, 0x39, 0x88, 0xb1, 0xaf, 0x14, 0x70, 0x07,
+	0x6c, 0x26, 0x68, 0x48, 0x12, 0x5d, 0x6d, 0x21, 0xc0, 0xb7, 0x40, 0x2d, 0xa6, 0xb1, 0x08, 0x52,
+	0x1e, 0xd9, 0x9b, 0x2a, 0x85, 0xdb, 0xcf, 0x73, 0xc7, 0x26, 0x34, 0x64, 0x38, 0xa6, 0x51, 0xef,
+	0x73, 0xce, 0x68, 0xd7, 0x47, 0x67, 0x1e, 0xe1, 0x1c, 0x45, 0xc4, 0xaf, 0x4a, 0x6b, 0x8f, 0x47,
+	0xf0, 0x33, 0x00, 0x94, 0xe3, 0xe3, 0x09, 0xc5, 0xdc, 0xae, 0xec, 0x99, 0x07, 0x8d, 0xa3, 0x66,
+	0x57, 0x4f, 0x43, 0x9f, 0xc5, 0xd4, 0xbd, 0xf3, 0x34, 0x77, 0x36, 0x7e, 0xfc, 0xc3, 0x39, 0x58,
+	0xa1, 0x1e, 0xe9, 0xc0, 0xfd, 0xba, 0x8c, 0xf8, 0xbe, 0x0c, 0xa8, 0x7b, 0xf0, 0xeb, 0x0d, 0x00,
+	0x3d, 0x1e, 0xbd, 0x37, 0x25, 0xe1, 0xe4, 0xc5, 0xe0, 0xef, 0x81, 0x5a, 0xa8, 0xc3, 0x5e, 0xbd,
+	0x05, 0xf3, 0x10, 0xb0, 0x0b, 0x4c, 0x89, 0xa4, 0xb9, 0x02, 0x92, 0xd2, 0x50, 0xa2, 0xc8, 0x09,
+	0x2d, 0x51, 0xdc, 0x5c, 0x0f, 0x8a, 0x32, 0xe2, 0x22, 0x8a, 0xdf, 0x17, 0x28, 0x7a, 0x71, 0x94,
+	0xa1, 0xff, 0x05, 0x8a, 0xff, 0x39, 0xcb, 0xef, 0x82, 0x46, 0x5a, 0x54, 0xa3, 0x06, 0xd7, 0x5a,
+	0x01, 0x6e, 0xa0, 0x1d, 0x3c, 0x1e, 0x69, 0x58, 0xbe, 0xbc, 0x01, 0x5a, 0x1e, 0x8f, 0x3e, 0x19,
+	0x63, 0x24, 0xc8, 0xb1, 0x3a, 0x44, 0x6b, 0x84, 0xe4, 0x63, 0x50, 0xa7, 0xe4, 0x2c, 0xb8, 0xe6,
+	0xe1, 0xae, 0x51, 0x72, 0x56, 0xa4, 0xb6, 0x08, 0xb1, 0x79, 0x6d, 0x88, 0x35, 0x04, 0x3f, 0x1b,
+	0x60, 0xcb, 0xe3, 0x51, 0x3f, 0x21, 0x28, 0x5b, 0x3b, 0x02, 0x2f, 0x24, 0xe3, 0xef, 0x4c, 0xd5,
+	0xb4, 0x47, 0x88, 0xa7, 0x03, 0xb7, 0xdf, 0x47, 0x89, 0xa4, 0xb0, 0x46, 0x41, 0xe9, 0xc1, 0x98,
+	0x65, 0x42, 0xe5, 0x5d, 0x77, 0x77, 0x2f, 0x73, 0x07, 0x9e, 0xa3, 0x34, 0xb9, 0xdb, 0x59, 0x50,
+	0x76, 0x7c, 0x50, 0x48, 0xa7, 0x2c, 0x13, 0xf0, 0x1e, 0x68, 0x69, 0x5d, 0x38, 0x42, 0x94, 0x92,
+	0x44, 0xf5, 0xa9, 0xee, 0xde, 0xbc, 0xcc, 0x9d, 0x57, 0x96, 0x7c, 0xb5, 0xbe, 0xe3, 0x6f, 0x15,
+	0x1b, 0xfd, 0x42, 0x5e, 0x40, 0xcb, 0xbc, 0x2e, 0x5a, 0xf7, 0x40, 0x4b, 0xc4, 0x29, 0x61, 0x13,
+	0x11, 0x8c, 0x48, 0x1c, 0x8d, 0x84, 0x9a, 0x6a, 0x6b, 0x31, 0x99, 0x65, 0x7d, 0xc7, 0xdf, 0xd2,
+	0x1b, 0xf7, 0x95, 0x0c, 0x07, 0xe0, 0xa5, 0xd2, 0x42, 0xae, 0x5c, 0xa0, 0x74, 0xac, 0x38, 0xdd,
+	0x72, 0x6f, 0x5f, 0xe6, 0x8e, 0xbd, 0x1c, 0x64, 0x6e, 0xd2, 0xf1, 0xb7, 0xf5, 0xde, 0xc3, 0x72,
+	0xab, 0xa4, 0xb1, 0xca, 0x8a, 0x34, 0xd6, 0xf9, 0xc5, 0x50, 0x0c, 0x23, 0x3b, 0x92, 0x30, 0x3e,
+	0x87, 0xe7, 0x00, 0x58, 0x0b, 0x2d, 0xd9, 0xb9, 0xcc, 0x9d, 0xed, 0x22, 0x09, 0x4c, 0xb8, 0xd0,
+	0x0d, 0x51, 0x16, 0xf0, 0x08, 0x54, 0x97, 0x7b, 0x60, 0x5f, 0xe6, 0xce, 0xce, 0xdc, 0x98, 0x88,
+	0x7f, 0x5a, 0x50, 0x1a, 0xae, 0x11, 0xfc, 0xce, 0x4f, 0x06, 0xa8, 0xc9, 0xcb, 0xc2, 0x80, 0x3e,
+	0x66, 0xf0, 0x55, 0x50, 0x57, 0x6c, 0x33, 0x42, 0x7c, 0x54, 0x9c, 0x02, 0x39, 0x85, 0x98, 0xdc,
+	0x47, 0x7c, 0x04, 0x3f, 0x02, 0xd5, 0x30, 0x23, 0x48, 0xb0, 0xec, 0xea, 0x87, 0xba, 0x8c, 0x70,
+	0xe5, 0xab, 0xc9, 0x37, 0x16, 0x68, 0x96, 0x34, 0xae, 0x52, 0x7e, 0x0d, 0x94, 0x04, 0xa9, 0x12,
+	0xb6, 0x5c, 0x30, 0xcb, 0x9d, 0x8a, 0xaa, 0xe8, 0xc4, 0xaf, 0x48, 0xd5, 0x00, 0xaf, 0x37, 0xf5,
+	0xf9, 0xbd, 0xc5, 0xbc, 0xe6, 0xbd, 0x65, 0xcd, 0xd7, 0x92, 0xb7, 0x75, 0x91, 0x04, 0xab, 0xe9,
+	0x6d, 0x1c, 0xed, 0x77, 0x97, 0x6e, 0xb3, 0xdd, 0xe3, 0x21, 0x67, 0xc9, 0x44, 0x90, 0x87, 0xd3,
+	0x53, 0xc6, 0x63, 0x11, 0x33, 0xea, 0x97, 0x1e, 0xf0, 0x04, 0x34, 0x13, 0xc4, 0x45, 0x30, 0x51,
+	0xaf, 0x04, 0x6c, 0x57, 0x57, 0x8d, 0xd0, 0x90, 0x6e, 0xc5, 0x8b, 0x04, 0xc3, 0x77, 0xc0, 0xf6,
+	0x38, 0x23, 0x5f, 0xc4, 0x6c, 0xc2, 0x83, 0xb2, 0x2b, 0x35, 0xd5, 0x15, 0x38, 0xcb, 0x9d, 0xd6,
+	0xa9, 0xd6, 0xe9, 0xee, 0xb4, 0xc6, 0x8b, 0x32, 0x86, 0x87, 0xa0, 0x11, 0x0f, 0x43, 0x75, 0x38,
+	0xa4, 0x63, 0x5d, 0x9d, 0x86, 0xad, 0x59, 0xee, 0xd4, 0x07, 0x6e, 0x5f, 0xd2, 0xd6, 0xe0, 0xc4,
+	0xaf, 0xc7, 0xc3, 0x50, 0x3d, 0x62, 0x3d, 0x10, 0x3e, 0x80, 0xff, 0xce, 0x0a, 0xee, 0x83, 0xe6,
+	0x30, 0x61, 0xe1, 0x93, 0x92, 0x50, 0xe4, 0x68, 0x98, 0x7e, 0x43, 0xed, 0x69, 0xce, 0xb8, 0x09,
+	0x6a, 0x62, 0x1a, 0xc4, 0x14, 0x93, 0xa9, 0x1a, 0x0a, 0xcb, 0xaf, 0x8a, 0xe9, 0x40, 0x8a, 0xee,
+	0x87, 0x4f, 0x67, 0x6d, 0xe3, 0xd9, 0xac, 0x6d, 0xfc, 0x39, 0x6b, 0x1b, 0xdf, 0x5e, 0xb4, 0x37,
+	0x9e, 0x5d, 0xb4, 0x37, 0x7e, 0xbf, 0x68, 0x6f, 0x7c, 0x7a, 0x67, 0xa1, 0xd1, 0x7d, 0xc6, 0x53,
+	0x49, 0xc6, 0xea, 0xa3, 0x02, 0xf7, 0xa6, 0x7a, 0x5d, 0xfe, 0xba, 0x18, 0x56, 0xd4, 0xe7, 0xc1,
+	0x1b, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0xb9, 0x3f, 0xf9, 0x9f, 0x7d, 0x0c, 0x00, 0x00,
 }
 
 func (m *MsgStoreCode) Marshal() (dAtA []byte, err error) {
@@ -1058,24 +985,17 @@ func (m *MsgWasmIBCCall) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Msg)
 		i = encodeVarintTypes(dAtA, i, uint64(len(m.Msg)))
 		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x32
 	}
 	if m.TimeoutTimestamp != 0 {
 		i = encodeVarintTypes(dAtA, i, uint64(m.TimeoutTimestamp))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x28
 	}
 	if m.TimeoutHeight != 0 {
 		i = encodeVarintTypes(dAtA, i, uint64(m.TimeoutHeight))
 		i--
-		dAtA[i] = 0x28
-	}
-	if len(m.DestContractAddr) > 0 {
-		i -= len(m.DestContractAddr)
-		copy(dAtA[i:], m.DestContractAddr)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.DestContractAddr)))
-		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x20
 	}
 	if len(m.Sender) > 0 {
 		i -= len(m.Sender)
@@ -1095,6 +1015,50 @@ func (m *MsgWasmIBCCall) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.SourcePort)
 		copy(dAtA[i:], m.SourcePort)
 		i = encodeVarintTypes(dAtA, i, uint64(len(m.SourcePort)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgIBCCloseChannel) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgIBCCloseChannel) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgIBCCloseChannel) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Channel) > 0 {
+		i -= len(m.Channel)
+		copy(dAtA[i:], m.Channel)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Channel)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Port) > 0 {
+		i -= len(m.Port)
+		copy(dAtA[i:], m.Port)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Port)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1271,97 +1235,6 @@ func (m *AbsoluteTxPosition) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	if m.BlockHeight != 0 {
 		i = encodeVarintTypes(dAtA, i, uint64(m.BlockHeight))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *WasmIBCContractPacketData) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *WasmIBCContractPacketData) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *WasmIBCContractPacketData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Msg) > 0 {
-		i -= len(m.Msg)
-		copy(dAtA[i:], m.Msg)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Msg)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.DestContractAddr) > 0 {
-		i -= len(m.DestContractAddr)
-		copy(dAtA[i:], m.DestContractAddr)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.DestContractAddr)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Sender) > 0 {
-		i -= len(m.Sender)
-		copy(dAtA[i:], m.Sender)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Sender)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Label) > 0 {
-		i -= len(m.Label)
-		copy(dAtA[i:], m.Label)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Label)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Error) > 0 {
-		i -= len(m.Error)
-		copy(dAtA[i:], m.Error)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Error)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Success {
-		i--
-		if m.Success {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
 		i--
 		dAtA[i] = 0x8
 	}
@@ -1545,10 +1418,6 @@ func (m *MsgWasmIBCCall) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(m.DestContractAddr)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
 	if m.TimeoutHeight != 0 {
 		n += 1 + sovTypes(uint64(m.TimeoutHeight))
 	}
@@ -1556,6 +1425,27 @@ func (m *MsgWasmIBCCall) Size() (n int) {
 		n += 1 + sovTypes(uint64(m.TimeoutTimestamp))
 	}
 	l = len(m.Msg)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgIBCCloseChannel) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Port)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	l = len(m.Channel)
+	if l > 0 {
+		n += 1 + l + sovTypes(uint64(l))
+	}
+	l = len(m.Sender)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
@@ -1641,47 +1531,6 @@ func (m *AbsoluteTxPosition) Size() (n int) {
 	}
 	if m.TxIndex != 0 {
 		n += 1 + sovTypes(uint64(m.TxIndex))
-	}
-	return n
-}
-
-func (m *WasmIBCContractPacketData) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Sender)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	l = len(m.DestContractAddr)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	l = len(m.Msg)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	return n
-}
-
-func (m *WasmIBCContractPacketAcknowledgement) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Success {
-		n += 2
-	}
-	l = len(m.Error)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
-	}
-	l = len(m.Label)
-	if l > 0 {
-		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
@@ -2884,40 +2733,6 @@ func (m *MsgWasmIBCCall) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DestContractAddr", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.DestContractAddr = append(m.DestContractAddr[:0], dAtA[iNdEx:postIndex]...)
-			if m.DestContractAddr == nil {
-				m.DestContractAddr = []byte{}
-			}
-			iNdEx = postIndex
-		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TimeoutHeight", wireType)
 			}
@@ -2936,7 +2751,7 @@ func (m *MsgWasmIBCCall) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 6:
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TimeoutTimestamp", wireType)
 			}
@@ -2955,7 +2770,7 @@ func (m *MsgWasmIBCCall) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 7:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
 			}
@@ -2987,6 +2802,157 @@ func (m *MsgWasmIBCCall) Unmarshal(dAtA []byte) error {
 			m.Msg = append(m.Msg[:0], dAtA[iNdEx:postIndex]...)
 			if m.Msg == nil {
 				m.Msg = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgIBCCloseChannel) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTypes
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgIBCCloseChannel: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgIBCCloseChannel: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Port", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Port = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Channel", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Channel = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTypes
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTypes
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTypes
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = append(m.Sender[:0], dAtA[iNdEx:postIndex]...)
+			if m.Sender == nil {
+				m.Sender = []byte{}
 			}
 			iNdEx = postIndex
 		default:
@@ -3594,298 +3560,6 @@ func (m *AbsoluteTxPosition) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *WasmIBCContractPacketData) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: WasmIBCContractPacketData: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WasmIBCContractPacketData: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Sender = append(m.Sender[:0], dAtA[iNdEx:postIndex]...)
-			if m.Sender == nil {
-				m.Sender = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DestContractAddr", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.DestContractAddr = append(m.DestContractAddr[:0], dAtA[iNdEx:postIndex]...)
-			if m.DestContractAddr == nil {
-				m.DestContractAddr = []byte{}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Msg = append(m.Msg[:0], dAtA[iNdEx:postIndex]...)
-			if m.Msg == nil {
-				m.Msg = []byte{}
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTypes(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *WasmIBCContractPacketAcknowledgement) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTypes
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: WasmIBCContractPacketAcknowledgement: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WasmIBCContractPacketAcknowledgement: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Success = bool(v != 0)
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Error = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Label", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTypes
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTypes
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTypes
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Label = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTypes(dAtA[iNdEx:])
