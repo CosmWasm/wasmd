@@ -32,7 +32,7 @@ func TestWasmStoreCode(t *testing.T) {
 		acc           = getAccount(t, port, addr)
 		accnum        = acc.GetAccountNumber()
 		sequence      = acc.GetSequence()
-		gas           = "1000000"
+		gas           = "1200000"
 		simulate      = false
 		gasAdjustment = 1.0
 	)
