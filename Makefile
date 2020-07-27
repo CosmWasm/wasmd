@@ -101,7 +101,6 @@ ifeq ($(OS),Windows_NT)
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmgovd ./cmd/wasmgovd
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli ./cmd/wasmcli
 endif
 
