@@ -73,8 +73,23 @@ coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
 coral_ldflags += $(LDFLAGS)
 coral_ldflags := $(strip $(coral_ldflags))
 
+flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
+				  -X github.com/cosmos/cosmos-sdk/version.ServerName=gaiaflexd \
+				  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiaflex \
+				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+				  -X github.com/CosmWasm/wasmd/app.CLIDir=.gaiaflex \
+				  -X github.com/CosmWasm/wasmd/app.NodeDir=.gaiaflexd \
+				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=cosmos \
+				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+flex_ldflags += $(LDFLAGS)
+flex_ldflags := $(strip $(flex_ldflags))
+
+
 BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(ldflags)' -trimpath
 CORAL_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(coral_ldflags)' -trimpath
+FLEX_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(flex_ldflags)' -trimpath
 
 all: install lint test
 
@@ -95,6 +110,15 @@ ifeq ($(OS),Windows_NT)
 else
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral ./cmd/wasmcli
+endif
+
+build-gaiaflex: go.sum
+ifeq ($(OS),Windows_NT)
+    # wasmd nodes not supported on windows, maybe the cli?
+	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex.exe ./cmd/wasmcli
+else
+	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexd ./cmd/wasmd
+	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex ./cmd/wasmcli
 endif
 
 build-linux: go.sum
