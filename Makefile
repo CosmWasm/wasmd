@@ -67,6 +67,7 @@ coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coral \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
+				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
 				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 coral_ldflags += $(LDFLAGS)
