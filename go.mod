@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.0-alpha2
-	github.com/cosmos/cosmos-sdk v0.39.1-0.20200727105938-302487cdbcc9
+	github.com/cosmos/cosmos-sdk v0.39.1-0.20200727135228-9d00f712e334
 	github.com/golang/mock v1.4.3 // indirect
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/mux v1.7.4
@@ -28,5 +28,3 @@ require (
 )
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
-
-replace github.com/cosmos/cosmos-sdk => github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727124038-6c7f67fa908f
