@@ -629,7 +629,7 @@ func TestConvertToProposals(t *testing.T) {
 		},
 		"multiple proper items": {
 			input:     "StoreCode,InstantiateContract,MigrateContract",
-			proposals: []ProposalType{ProposalTypeStoreCode, ProposalTypeStoreInstantiateContract, ProposalTypeMigrateContract},
+			proposals: []ProposalType{ProposalTypeStoreCode, ProposalTypeInstantiateContract, ProposalTypeMigrateContract},
 		},
 		"empty trailing item": {
 			input:   "StoreCode,",

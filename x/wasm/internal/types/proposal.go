@@ -14,11 +14,11 @@ import (
 type ProposalType string
 
 const (
-	ProposalTypeStoreCode                ProposalType = "StoreCode"
-	ProposalTypeStoreInstantiateContract ProposalType = "InstantiateContract"
-	ProposalTypeMigrateContract          ProposalType = "MigrateContract"
-	ProposalTypeUpdateAdmin              ProposalType = "UpdateAdmin"
-	ProposalTypeClearAdmin               ProposalType = "ClearAdmin"
+	ProposalTypeStoreCode           ProposalType = "StoreCode"
+	ProposalTypeInstantiateContract ProposalType = "InstantiateContract"
+	ProposalTypeMigrateContract     ProposalType = "MigrateContract"
+	ProposalTypeUpdateAdmin         ProposalType = "UpdateAdmin"
+	ProposalTypeClearAdmin          ProposalType = "ClearAdmin"
 )
 
 // DisableAllProposals contains no wasm gov types.
@@ -27,7 +27,7 @@ var DisableAllProposals []ProposalType
 // EnableAllProposals contains all wasm gov types as keys.
 var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
-	ProposalTypeStoreInstantiateContract,
+	ProposalTypeInstantiateContract,
 	ProposalTypeMigrateContract,
 	ProposalTypeUpdateAdmin,
 	ProposalTypeClearAdmin,
@@ -53,7 +53,7 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 
 func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
-	govtypes.RegisterProposalType(string(ProposalTypeStoreInstantiateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
@@ -193,7 +193,7 @@ type InstantiateContractProposal struct {
 
 // ProposalType returns the type
 func (p InstantiateContractProposal) ProposalType() string {
-	return string(ProposalTypeStoreInstantiateContract)
+	return string(ProposalTypeInstantiateContract)
 }
 
 // ValidateBasic validates the proposal
