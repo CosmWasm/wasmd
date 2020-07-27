@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -46,8 +47,9 @@ var (
 	NodeDir      = ".wasmd"
 	Bech32Prefix = sdk.Bech32MainPrefix
 
-	// If EnabledSpecificProposals is "", then we check this to decide to enable all or disable all x/wasm proposals
-	ProposalsEnabled = false
+	// If EnabledSpecificProposals is "", and this is "true", then enable all x/wasm proposals.
+	// If EnabledSpecificProposals is "", and this is not "true", then disable all x/wasm proposals.
+	ProposalsEnabled = "false"
 	// If set to non-empty string it must be comma-separated list of values that are all a subset
 	// of "EnableAllProposals" (takes precedence over ProposalsEnabled)
 	// https://github.com/CosmWasm/wasmd/blob/02a54d33ff2c064f3539ae12d75d027d9c665f05/x/wasm/internal/types/proposal.go#L28-L34
@@ -58,9 +60,11 @@ var (
 // produce a list of enabled proposals to pass into wasmd app.
 func GetEnabledProposals() []wasm.ProposalType {
 	if EnableSpecificProposals == "" {
-		if ProposalsEnabled {
+		if ProposalsEnabled == "true" {
+			fmt.Println("Enabled all proposals")
 			return wasm.EnableAllProposals
 		} else {
+			fmt.Println("Disabled all proposals")
 			return wasm.DisableAllProposals
 		}
 	}
@@ -69,6 +73,7 @@ func GetEnabledProposals() []wasm.ProposalType {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("Enabled proposals: %s\n", proposals)
 	return proposals
 }
 

@@ -69,6 +69,8 @@ coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
 				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
 				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+# we could consider enabling governance override?
+#				  -X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin \
 
 coral_ldflags += $(LDFLAGS)
 coral_ldflags := $(strip $(coral_ldflags))
@@ -78,6 +80,7 @@ flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+				  -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true \
 				  -X github.com/CosmWasm/wasmd/app.CLIDir=.gaiaflex \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.gaiaflexd \
 				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=cosmos \
@@ -85,7 +88,6 @@ flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
 
 flex_ldflags += $(LDFLAGS)
 flex_ldflags := $(strip $(flex_ldflags))
-
 
 BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(ldflags)' -trimpath
 CORAL_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(coral_ldflags)' -trimpath
