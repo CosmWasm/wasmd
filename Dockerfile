@@ -24,8 +24,8 @@ RUN export GO_WASM_DIR=$(go list -f "{{ .Dir }}" -m github.com/CosmWasm/go-cosmw
 FROM cosmwasm/go-ext-builder:0.8.2-alpine AS go-builder
 
 RUN apk add git
-# without this, build with LEDGER_ENABLED=false
-RUN apk add libusb-dev linux-headers
+# NOTE: add these to run with LEDGER_ENABLED=true
+# RUN apk add libusb-dev linux-headers
 
 WORKDIR /code
 COPY . /code/
@@ -33,7 +33,7 @@ COPY . /code/
 COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
-RUN BUILD_TAGS=muslc make build
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
 
 # --------------------------------------------------------
 FROM alpine:3.12
