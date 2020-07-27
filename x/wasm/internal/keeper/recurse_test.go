@@ -34,19 +34,28 @@ type recurseResponse struct {
 }
 
 func TestGasCostOnQuery(t *testing.T) {
+	const (
+		GasNoWork uint64 = InstanceCost + 2_756
+		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+		GasWork50 uint64 = InstanceCost + 8_464
+	)
+
 	cases := map[string]struct {
-		gasLimit uint64
-		msg      Recurse
+		gasLimit    uint64
+		msg         Recurse
+		expectedGas uint64
 	}{
 		"no recursion, no work": {
-			gasLimit: 400_000,
-			msg:      Recurse{},
+			gasLimit:    400_000,
+			msg:         Recurse{},
+			expectedGas: GasNoWork,
 		},
 		"no recursion, some work": {
 			gasLimit: 400_000,
 			msg: Recurse{
-				Work: 5, // 5 rounds of sha256 inside the contract
+				Work: 50, // 50 rounds of sha256 inside the contract
 			},
+			expectedGas: GasWork50,
 		},
 	}
 
@@ -96,12 +105,15 @@ func TestGasCostOnQuery(t *testing.T) {
 			err = json.Unmarshal(data, &resp)
 			require.NoError(t, err)
 
-			// TODO: assert result? - now just that it is 32 byte sha256 hash (or contractAddr if no hash)
+			// assert result is 32 byte sha256 hash (if hashed), or contractAddr if not
 			if recurse.Work == 0 {
 				assert.Equal(t, len(resp.Hashed), len(creator.String()))
 			} else {
 				assert.Equal(t, len(resp.Hashed), 32)
 			}
+
+			// check the gas is what we expected
+			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
 		})
 	}
 }
