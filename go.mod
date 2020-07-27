@@ -28,3 +28,5 @@ require (
 )
 
 replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
+
+replace github.com/cosmos/cosmos-sdk => github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727124038-6c7f67fa908f

@@ -11,6 +11,10 @@ github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d h1:nalkkPQ
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:URdX5+vg25ts3aCh8H5IFZybJYKWhJHYMTnf+ULtoC4=
 github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727094915-7099d16d69ac h1:628XqHTraPrCPpQYJLshofrwxedZJgD8hF4Sl742DuU=
 github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727094915-7099d16d69ac/go.mod h1:soj4C8lIjJLeUQPBqrM+krbXdnF4cDKaaDgg1JIJYRU=
+github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727122521-44d7af28e507 h1:TAwIm8ayVQQiewPhLlUmr674EuDKB+88uD53KktWmR8=
+github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727122521-44d7af28e507/go.mod h1:soj4C8lIjJLeUQPBqrM+krbXdnF4cDKaaDgg1JIJYRU=
+github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727124038-6c7f67fa908f h1:YEbsCrYEuiZOSkJPaFE2IsdfwBc82Ft9qsaJW0YFt74=
+github.com/CosmWasm/cosmos-sdk v0.38.1-0.20200727124038-6c7f67fa908f/go.mod h1:soj4C8lIjJLeUQPBqrM+krbXdnF4cDKaaDgg1JIJYRU=
 github.com/CosmWasm/go-cosmwasm v0.9.1 h1:w5s2o7H3cmNexct9yv8F6OLXwgxbdfVApwam7DibPqI=
 github.com/CosmWasm/go-cosmwasm v0.9.1/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
 github.com/CosmWasm/go-cosmwasm v0.10.0-alpha2 h1:k069wQF0f24w3A52mjR3AK6AfkuvQ5d0Mdu/rpB5nEk=
