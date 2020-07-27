@@ -5,18 +5,6 @@ executors:
     docker:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/cosmwasm/wasmd
-  mac:
-    macos:
-      xcode: "10.3.0"
-    working_directory: /Users/distiller/project/src/github.com/cosmwasm/wasmd
-    environment:
-      GO_VERSION: "1.13"
-  docs:
-    docker:
-      - image: tendermintdev/jq_curl
-    environment:
-      AWS_REGION: us-east-1
-
 
 commands:
   make:
@@ -42,15 +30,6 @@ commands:
           command: |
             export BINDIR=/tmp/bin
             make << parameters.target >>
-  mac_set_env:
-    steps:
-      - run:
-          name: "Set environment"
-          command: |
-            echo 'export PATH=$PATH:$HOME/go/bin' >> $BASH_ENV
-            echo 'export GOPATH=$HOME/project' >> $BASH_ENV
-            echo 'export PATH=$PATH:$HOME/go/bin:$GOPATH/bin' >> $BASH_ENV
-            echo 'export GO111MODULE=on'
 
 jobs:
   setup-dependencies:
@@ -70,10 +49,6 @@ jobs:
       - run:
           name: "Git garbage collection"
           command: git gc
-      - run:
-          name: "Build tools binaries"
-          command: |
-            make tools
       - save_cache:
           name: "Save go modules cache"
           key: go-mod-v1-{{ checksum "go.sum" }}
@@ -84,27 +59,6 @@ jobs:
           key: go-src-v1-{{ .Revision }}
           paths:
             - ".git"
-      - run:
-          command: |
-            mkdir -p /tmp/bin
-            cp -r /go/bin/* /tmp/bin
-      - persist_to_workspace:
-          root: "/tmp/bin"
-          paths:
-            - "."
-
-  integration-tests:
-    executor: golang
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-      - run:
-          name: Test CLI integration
-          command: |
-            export BUILDDIR=`pwd`/build
-            make test-build
 
   test-cover:
     executor: golang
@@ -161,33 +115,6 @@ jobs:
           name: upload
           command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
-  localnet:
-    working_directory: /home/circleci/.go_workspace/src/github.com/cosmwasm/wasmd
-    machine:
-      image: circleci/classic:latest
-    environment:
-      GOPATH: /home/circleci/.go_workspace/
-      GOOS: linux
-      GOARCH: amd64
-      GO_VERSION: "1.13"
-    parallelism: 1
-    steps:
-      - checkout
-      - run:
-          name: Run a localnet and test liveness
-          command: |
-            pushd /tmp
-            wget https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz
-            sudo tar -xvf go$GO_VERSION.linux-amd64.tar.gz
-            sudo rm -rf /usr/local/go
-            sudo mv go /usr/local
-            popd
-            set -x
-            make clean localnet-start
-            ./contrib/localnet-blocks-test.sh 40 5 10 localhost
-
-
-
   docker-image:
     executor: golang
     steps:
@@ -225,51 +152,6 @@ jobs:
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
 
-  reproducible-builds:
-    executor: golang
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Build gaia
-          no_output_timeout: 20m
-          command: |
-            sudo apt-get install -y ruby
-            bash -x ./contrib/gitian-build.sh all
-            for os in darwin linux windows; do
-              cp gitian-build-${os}/result/gaia-${os}-res.yml .
-              rm -rf gitian-build-${os}/
-            done
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-darwin-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-linux-res.yml
-      - store_artifacts:
-          path: /go/src/github.com/cosmwasm/wasmd/gaia-windows-res.yml
-
-# FIXME: The `setup-contract-tests-data` make target is broken as it completely
-# overrides the .wasmd directory.
-#
-#  contract_tests:
-#    executor: golang
-#    steps:
-#      - attach_workspace:
-#          at: /tmp/workspace
-#      - checkout
-#      - setup_remote_docker:
-#          docker_layer_caching: true
-#      - run:
-#          name: Get Node.js and test REST implementation against swagger documentation at  https://cosmos.network/rpc/
-#          command: |
-#            go get github.com/snikch/goodman/cmd/goodman
-#            make build
-#            make build-contract-tests-hooks
-#            make setup-contract-tests-data
-#            export PATH=~/.local/bin:$PATH
-#            ./contrib/get_node.sh && make contract-tests
-
 workflows:
   version: 2
   test-suite:
@@ -298,22 +180,9 @@ workflows:
             tags:
               only:
                 - /^v.*/
-      # - integration-tests:
-      #     requires:
-      #       - setup-dependencies
       - test-cover:
           requires:
             - setup-dependencies
       - upload-coverage:
           requires:
             - test-cover
-      # - reproducible-builds:
-      #     filters:
-      #       branches:
-      #         only:
-      #           - master
-      #     requires:
-      #       - setup-dependencies
-#      - contract_tests:
-#          requires:
-#            - setup-dependencies
