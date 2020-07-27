@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/cosmos/cosmos-sdk/version"
 	"io"
 
 	"github.com/CosmWasm/wasmd/app"
@@ -40,7 +41,7 @@ func main() {
 	ctx := server.NewDefaultContext()
 	cobra.EnableCommandSorting = false
 	rootCmd := &cobra.Command{
-		Use:               "wasmd",
+		Use:               version.ServerName,
 		Short:             "Wasm Daemon (server) with wasm gov proposals disabled\",",
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
