@@ -3,8 +3,6 @@
 FROM cosmwasm/go-ext-builder:0.8.2-alpine AS rust-builder
 
 RUN apk add git
-# without this, build with LEDGER_ENABLED=false
-RUN apk add libusb-dev linux-headers
 
 # copy all code into /code
 WORKDIR /code
