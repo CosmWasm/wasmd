@@ -116,7 +116,6 @@ func TestGasCostOnQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	for name, tc := range cases {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			// external limit has no effect (we get a panic if this is enforced)
 			keeper.queryGasLimit = 1000
@@ -125,26 +124,25 @@ func TestGasCostOnQuery(t *testing.T) {
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
+			// do the query
 			recurse := tc.msg
 			recurse.Contract = contractAddr
 			msg := buildQuery(t, recurse)
-
-			// this should throw out of gas exception (panic)
 			data, err := keeper.QuerySmart(ctx, contractAddr, msg)
 			require.NoError(t, err)
+
+			// check the gas is what we expected
+			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
+
+			// assert result is 32 byte sha256 hash (if hashed), or contractAddr if not
 			var resp recurseResponse
 			err = json.Unmarshal(data, &resp)
 			require.NoError(t, err)
-
-			// assert result is 32 byte sha256 hash (if hashed), or contractAddr if not
 			if recurse.Work == 0 {
 				assert.Equal(t, len(resp.Hashed), len(creator.String()))
 			} else {
 				assert.Equal(t, len(resp.Hashed), 32)
 			}
-
-			// check the gas is what we expected
-			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
 		})
 	}
 }
@@ -221,7 +219,6 @@ func TestGasOnExternalQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	for name, tc := range cases {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			// set the external gas limit (normally from config file)
 			keeper.queryGasLimit = tc.gasLimit
@@ -238,21 +235,10 @@ func TestGasOnExternalQuery(t *testing.T) {
 					// this should run out of gas
 					_, _ = NewQuerier(keeper)(ctx, path, req)
 				})
-				return
-			}
-
-			// otherwise, make sure we get a good success
-			data, err := NewQuerier(keeper)(ctx, path, req)
-			require.NoError(t, err)
-			var resp recurseResponse
-			err = json.Unmarshal(data, &resp)
-			require.NoError(t, err)
-
-			// assert result is 32 byte sha256 hash (if hashed), or contractAddr if not
-			if recurse.Work == 0 {
-				assert.Equal(t, len(resp.Hashed), len(creator.String()))
 			} else {
-				assert.Equal(t, len(resp.Hashed), 32)
+				// otherwise, make sure we get a good success
+				_, err := NewQuerier(keeper)(ctx, path, req)
+				require.NoError(t, err)
 			}
 		})
 	}
