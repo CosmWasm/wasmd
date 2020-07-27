@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -61,19 +60,15 @@ var (
 func GetEnabledProposals() []wasm.ProposalType {
 	if EnableSpecificProposals == "" {
 		if ProposalsEnabled == "true" {
-			fmt.Println("Enabled all proposals")
 			return wasm.EnableAllProposals
-		} else {
-			fmt.Println("Disabled all proposals")
-			return wasm.DisableAllProposals
 		}
+		return wasm.DisableAllProposals
 	}
 	chunks := strings.Split(EnableSpecificProposals, ",")
 	proposals, err := wasm.ConvertToProposals(chunks)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Enabled proposals: %s\n", proposals)
 	return proposals
 }
 
