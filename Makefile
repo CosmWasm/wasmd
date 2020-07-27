@@ -60,19 +60,41 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
+coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
+				  -X github.com/cosmos/cosmos-sdk/version.ServerName=corald \
+				  -X github.com/cosmos/cosmos-sdk/version.ClientName=coral \
+				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coral \
+				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
+				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
+				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+coral_ldflags += $(LDFLAGS)
+coral_ldflags := $(strip $(coral_ldflags))
+
 BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(ldflags)' -trimpath
+CORAL_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(coral_ldflags)' -trimpath
 
 all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmgovd.exe ./cmd/wasmgovd
+    # wasmd nodes not supported on windows, maybe the cli?
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmgovd ./cmd/wasmgovd
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli ./cmd/wasmcli
+endif
+
+build-coral: go.sum
+ifeq ($(OS),Windows_NT)
+    # wasmd nodes not supported on windows, maybe the cli?
+	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral.exe ./cmd/wasmcli
+else
+	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
+	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral ./cmd/wasmcli
 endif
 
 build-linux: go.sum
