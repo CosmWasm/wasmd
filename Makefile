@@ -97,7 +97,7 @@ all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-    # wasmd nodes not supported on windows, maybe the cli?
+	# wasmd nodes not supported on windows, maybe the cli?
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
@@ -107,7 +107,7 @@ endif
 
 build-coral: go.sum
 ifeq ($(OS),Windows_NT)
-    # wasmd nodes not supported on windows, maybe the cli?
+	# wasmd nodes not supported on windows, maybe the cli?
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
@@ -116,7 +116,7 @@ endif
 
 build-gaiaflex: go.sum
 ifeq ($(OS),Windows_NT)
-    # wasmd nodes not supported on windows, maybe the cli?
+	# wasmd nodes not supported on windows, maybe the cli?
 	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexd ./cmd/wasmd
