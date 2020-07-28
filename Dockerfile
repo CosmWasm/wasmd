@@ -40,7 +40,6 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-gaiaflex
 FROM alpine:3.12
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
-COPY --from=go-builder /code/build/wasmgovd /usr/bin/wasmgovd
 COPY --from=go-builder /code/build/wasmcli /usr/bin/wasmcli
 
 # testnet
