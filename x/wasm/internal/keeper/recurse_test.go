@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -225,6 +227,17 @@ func TestGasOnExternalQuery(t *testing.T) {
 	}
 }
 
+type countingWasmQuerier struct {
+	timesCalled     int
+	originalQuerier func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
+}
+
+func (c *countingWasmQuerier) Query(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+	fmt.Println("called custom querier")
+	c.timesCalled++
+	return c.originalQuerier(ctx, request)
+}
+
 func TestLimitRecursiveQueryGas(t *testing.T) {
 	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
 	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)
@@ -243,6 +256,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	cases := map[string]struct {
 		gasLimit       uint64
 		msg            Recurse
+		expectedCalls  int
 		expectedGas    uint64
 		expectOutOfGas bool
 	}{
@@ -252,7 +266,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 0,
 				Work:  2000,
 			},
-			expectedGas: GasWork2k,
+			expectedCalls: 0,
+			expectedGas:   GasWork2k,
 		},
 		"recursion 5, lots of work": {
 			gasLimit: 4_000_000,
@@ -260,18 +275,19 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 5,
 				Work:  2000,
 			},
-			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed),
+			expectedCalls: 5,
+			expectedGas:   GasWork2k + 5*(GasWork2k+GasReturnHashed),
 		},
 		// this is where we expect an error...
 		// it has enough gas to run 4 times and die on the 5th
 		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
-		// TODO: figure out how to asset how deep it went
 		"deep recursion, should die on 5th level": {
 			gasLimit: 1_200_000,
 			msg: Recurse{
-				Depth: 5,
+				Depth: 30,
 				Work:  2000,
 			},
+			expectedCalls:  5,
 			expectOutOfGas: true,
 		},
 	}
@@ -281,12 +297,15 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			// external limit has no effect (we get a panic if this is enforced)
-			keeper.queryGasLimit = 1000
-
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
 			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
+
+			// set custom querier, so we get a proper count
+			querier := &countingWasmQuerier{
+				originalQuerier: keeper.queryPlugins.Wasm,
+			}
+			keeper.queryPlugins.Wasm = querier.Query
 
 			// prepare the query
 			recurse := tc.msg
@@ -298,6 +317,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				require.Panics(t, func() {
 					_, _ = keeper.QuerySmart(ctx, contractAddr, msg)
 				})
+				assert.Equal(t, tc.expectedCalls, querier.timesCalled)
 				return
 			}
 
@@ -305,7 +325,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			_, err := keeper.QuerySmart(ctx, contractAddr, msg)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
-
+			assert.Equal(t, tc.expectedCalls, querier.timesCalled)
 		})
 	}
 }

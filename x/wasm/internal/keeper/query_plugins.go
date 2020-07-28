@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -227,6 +228,8 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation stak
 
 func WasmQuerier(wasm *Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+		fmt.Println("called default querier")
+
 		if request.Smart != nil {
 			addr, err := sdk.AccAddressFromBech32(request.Smart.ContractAddr)
 			if err != nil {
