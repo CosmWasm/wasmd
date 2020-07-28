@@ -126,7 +126,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 		expError      *sdkerrors.Error
 	}{
 		"default": {
-			srcPermission: types.DefaultUploadAccess,
+			srcPermission: types.AllowEverybody,
 		},
 		"everybody": {
 			srcPermission: types.AllowEverybody,
@@ -410,7 +410,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 		expError      *sdkerrors.Error
 	}{
 		"default": {
-			srcPermission: types.DefaultUploadAccess,
+			srcPermission: types.AllowEverybody,
 			srcActor:      anyAddr,
 		},
 		"everybody": {

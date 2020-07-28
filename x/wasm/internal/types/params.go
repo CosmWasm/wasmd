@@ -15,8 +15,10 @@ const (
 	DefaultParamspace = ModuleName
 )
 
-var ParamStoreKeyUploadAccess = []byte("uploadAccess")
-var ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
+var (
+	ParamStoreKeyUploadAccess      = []byte("uploadAccess")
+	ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
+)
 
 type AccessType string
 
@@ -75,9 +77,8 @@ func (a AccessConfig) Equals(o AccessConfig) bool {
 }
 
 var (
-	DefaultUploadAccess = AllowEverybody
-	AllowEverybody      = AccessConfig{Type: Everybody}
-	AllowNobody         = AccessConfig{Type: Nobody}
+	AllowEverybody = AccessConfig{Type: Everybody}
+	AllowNobody    = AccessConfig{Type: Nobody}
 )
 
 // Params defines the set of wasm parameters.
