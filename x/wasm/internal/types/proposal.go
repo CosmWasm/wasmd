@@ -14,11 +14,11 @@ import (
 type ProposalType string
 
 const (
-	ProposalTypeStoreCode                ProposalType = "StoreCode"
-	ProposalTypeStoreInstantiateContract ProposalType = "InstantiateContract"
-	ProposalTypeMigrateContract          ProposalType = "MigrateContract"
-	ProposalTypeUpdateAdmin              ProposalType = "UpdateAdmin"
-	ProposalTypeClearAdmin               ProposalType = "ClearAdmin"
+	ProposalTypeStoreCode           ProposalType = "StoreCode"
+	ProposalTypeInstantiateContract ProposalType = "InstantiateContract"
+	ProposalTypeMigrateContract     ProposalType = "MigrateContract"
+	ProposalTypeUpdateAdmin         ProposalType = "UpdateAdmin"
+	ProposalTypeClearAdmin          ProposalType = "ClearAdmin"
 )
 
 // DisableAllProposals contains no wasm gov types.
@@ -27,15 +27,33 @@ var DisableAllProposals []ProposalType
 // EnableAllProposals contains all wasm gov types as keys.
 var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
-	ProposalTypeStoreInstantiateContract,
+	ProposalTypeInstantiateContract,
 	ProposalTypeMigrateContract,
 	ProposalTypeUpdateAdmin,
 	ProposalTypeClearAdmin,
 }
 
+// ConvertToProposals maps each key to a ProposalType and returns a typed list.
+// If any string is not a valid type (in this file), then return an error
+func ConvertToProposals(keys []string) ([]ProposalType, error) {
+	valid := make(map[string]bool, len(EnableAllProposals))
+	for _, key := range EnableAllProposals {
+		valid[string(key)] = true
+	}
+
+	proposals := make([]ProposalType, len(keys))
+	for i, key := range keys {
+		if _, ok := valid[key]; !ok {
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "'%s' is not a valid ProposalType", key)
+		}
+		proposals[i] = ProposalType(key)
+	}
+	return proposals, nil
+}
+
 func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
-	govtypes.RegisterProposalType(string(ProposalTypeStoreInstantiateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
@@ -175,7 +193,7 @@ type InstantiateContractProposal struct {
 
 // ProposalType returns the type
 func (p InstantiateContractProposal) ProposalType() string {
-	return string(ProposalTypeStoreInstantiateContract)
+	return string(ProposalTypeInstantiateContract)
 }
 
 // ValidateBasic validates the proposal

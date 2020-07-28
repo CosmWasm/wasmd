@@ -616,3 +616,41 @@ contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 		})
 	}
 }
+
+func TestConvertToProposals(t *testing.T) {
+	cases := map[string]struct {
+		input     string
+		isError   bool
+		proposals []ProposalType
+	}{
+		"one proper item": {
+			input:     "UpdateAdmin",
+			proposals: []ProposalType{ProposalTypeUpdateAdmin},
+		},
+		"multiple proper items": {
+			input:     "StoreCode,InstantiateContract,MigrateContract",
+			proposals: []ProposalType{ProposalTypeStoreCode, ProposalTypeInstantiateContract, ProposalTypeMigrateContract},
+		},
+		"empty trailing item": {
+			input:   "StoreCode,",
+			isError: true,
+		},
+		"invalid item": {
+			input:   "StoreCode,InvalidProposalType",
+			isError: true,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			chunks := strings.Split(tc.input, ",")
+			proposals, err := ConvertToProposals(chunks)
+			if tc.isError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, proposals, tc.proposals)
+			}
+		})
+	}
+}

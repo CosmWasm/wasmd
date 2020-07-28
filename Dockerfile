@@ -3,8 +3,6 @@
 FROM cosmwasm/go-ext-builder:0.8.2-alpine AS rust-builder
 
 RUN apk add git
-# without this, build with LEDGER_ENABLED=false
-RUN apk add libusb-dev linux-headers
 
 # copy all code into /code
 WORKDIR /code
@@ -34,19 +32,21 @@ COPY --from=rust-builder /lib/libgo_cosmwasm_muslc.a /lib/libgo_cosmwasm_muslc.a
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
-# we also (temporarily) build the testnet binaries here
+# we also (temporarily?) build the testnet binaries here
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-coral
+RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-gaiaflex
 
 # --------------------------------------------------------
 FROM alpine:3.12
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
-COPY --from=go-builder /code/build/wasmgovd /usr/bin/wasmgovd
 COPY --from=go-builder /code/build/wasmcli /usr/bin/wasmcli
 
 # testnet
 COPY --from=go-builder /code/build/coral /usr/bin/coral
 COPY --from=go-builder /code/build/corald /usr/bin/corald
+COPY --from=go-builder /code/build/gaiaflex /usr/bin/gaiaflex
+COPY --from=go-builder /code/build/gaiaflexd /usr/bin/gaiaflexd
 
 COPY docker/* /opt/
 RUN chmod +x /opt/*.sh

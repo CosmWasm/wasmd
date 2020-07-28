@@ -8,6 +8,7 @@ require (
 	github.com/golang/mock v1.4.3 // indirect
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/mux v1.7.4
+	github.com/magiconair/properties v1.8.1
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/otiai10/copy v1.0.2

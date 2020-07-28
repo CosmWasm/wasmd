@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -90,7 +89,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application
 	}
 
 	return app.NewWasmApp(logger, db, traceStore, true, invCheckPeriod,
-		wasm.DisableAllProposals, skipUpgradeHeights,
+		app.GetEnabledProposals(),
+		skipUpgradeHeights,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
 		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
@@ -103,7 +103,7 @@ func exportAppStateAndTMValidators(
 ) (json.RawMessage, []tmtypes.GenesisValidator, error) {
 
 	if height != -1 {
-		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), wasm.DisableAllProposals, nil)
+		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), app.GetEnabledProposals(), nil)
 		err := gapp.LoadHeight(height)
 		if err != nil {
 			return nil, nil, err
@@ -111,6 +111,6 @@ func exportAppStateAndTMValidators(
 		return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 	}
 
-	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), wasm.DisableAllProposals, nil)
+	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), app.GetEnabledProposals(), nil)
 	return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }
