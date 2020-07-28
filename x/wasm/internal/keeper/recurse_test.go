@@ -243,6 +243,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	cases := map[string]struct {
 		gasLimit       uint64
 		msg            Recurse
+		expectCalls    int
 		expectedGas    uint64
 		expectOutOfGas bool
 	}{
@@ -252,6 +253,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 0,
 				Work:  2000,
 			},
+			expectCalls: 1,
 			expectedGas: GasWork2k,
 		},
 		"recursion 5, lots of work": {
@@ -260,6 +262,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 5,
 				Work:  2000,
 			},
+			expectCalls: 6,
 			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed),
 		},
 		// this is where we expect an error...
@@ -269,9 +272,10 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		"deep recursion, should die on 5th level": {
 			gasLimit: 1_200_000,
 			msg: Recurse{
-				Depth: 5,
+				Depth: 50,
 				Work:  2000,
 			},
+			expectCalls:    6,
 			expectOutOfGas: true,
 		},
 	}
@@ -281,8 +285,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			// external limit has no effect (we get a panic if this is enforced)
-			keeper.queryGasLimit = 1000
+			// reset the counter before test
+			TimesQueryCalled = 0
 
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
@@ -298,6 +302,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				require.Panics(t, func() {
 					_, _ = keeper.QuerySmart(ctx, contractAddr, msg)
 				})
+				assert.Equal(t, tc.expectCalls, TimesQueryCalled)
 				return
 			}
 
@@ -306,6 +311,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
 
+			assert.Equal(t, tc.expectCalls, TimesQueryCalled)
 		})
 	}
 }

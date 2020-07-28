@@ -42,6 +42,9 @@ const InstanceCost uint64 = 40_000
 // CompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
 const CompileCost uint64 = 2
 
+// TODO: remove this - this is just for one test
+var TimesQueryCalled int = 0
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
@@ -398,6 +401,7 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 // QuerySmart queries the smart contract itself.
 func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: query")
+	TimesQueryCalled++
 
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
