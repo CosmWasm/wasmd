@@ -61,7 +61,7 @@ var TestingStakeParams = staking.Params{
 type TestKeepers struct {
 	AccountKeeper auth.AccountKeeper
 	StakingKeeper staking.Keeper
-	WasmKeeper    Keeper
+	WasmKeeper    *Keeper
 	DistKeeper    distribution.Keeper
 	SupplyKeeper  supply.Keeper
 	GovKeeper     gov.Keeper
@@ -205,7 +205,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
-func TestHandler(k Keeper) sdk.Handler {
+func TestHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
@@ -227,7 +227,7 @@ func TestHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k *Keeper, msg *wasmtypes.MsgInstantiateContract) (*sdk.Result, error) {
 	contractAddr, err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Admin, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgInstantiateC
 	}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k *Keeper, msg *wasmtypes.MsgExecuteContract) (*sdk.Result, error) {
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.Msg, msg.SentFunds)
 	if err != nil {
 		return nil, err
