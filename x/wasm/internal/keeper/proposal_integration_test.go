@@ -23,7 +23,10 @@ func TestStoreCodeProposal(t *testing.T) {
 
 	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{UploadAccess: types.AllowNobody, DefaultInstantiatePermission: types.Nobody})
+	wasmParams := wasmKeeper.GetParams(ctx)
+	wasmParams.UploadAccess = types.AllowNobody
+	wasmParams.DefaultInstantiatePermission = types.Nobody
+	wasmKeeper.setParams(ctx, wasmParams)
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
 
@@ -64,7 +67,10 @@ func TestInstantiateProposal(t *testing.T) {
 
 	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{UploadAccess: types.AllowNobody, DefaultInstantiatePermission: types.Nobody})
+	wasmParams := wasmKeeper.GetParams(ctx)
+	wasmParams.UploadAccess = types.AllowNobody
+	wasmParams.DefaultInstantiatePermission = types.Nobody
+	wasmKeeper.setParams(ctx, wasmParams)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
@@ -120,7 +126,10 @@ func TestMigrateProposal(t *testing.T) {
 
 	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{UploadAccess: types.AllowNobody, DefaultInstantiatePermission: types.Nobody})
+	wasmParams := wasmKeeper.GetParams(ctx)
+	wasmParams.UploadAccess = types.AllowNobody
+	wasmParams.DefaultInstantiatePermission = types.Nobody
+	wasmKeeper.setParams(ctx, wasmParams)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
 	require.NoError(t, err)
@@ -262,7 +271,10 @@ func TestAdminProposals(t *testing.T) {
 			defer os.RemoveAll(tempDir)
 			ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
 			govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-			wasmKeeper.setParams(ctx, types.Params{UploadAccess: types.AllowNobody, DefaultInstantiatePermission: types.Nobody})
+			wasmParams := wasmKeeper.GetParams(ctx)
+			wasmParams.UploadAccess = types.AllowNobody
+			wasmParams.DefaultInstantiatePermission = types.Nobody
+			wasmKeeper.setParams(ctx, wasmParams)
 
 			codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfoFixture, wasmCode))

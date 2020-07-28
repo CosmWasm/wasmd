@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"encoding/json"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,9 +38,10 @@ type recurseResponse struct {
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = InstanceCost + 2_756
+		// after moving to instance cost from params we got a +5081 in gas. I append the value to highlight it for review
+		GasNoWork uint64 = types.DefaultInstanceCost + 2_756 + 5081
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = InstanceCost + 8_464 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = types.DefaultInstanceCost + 8_464 + 5081 // this is a little shy of 50k gas - to keep an eye on the limit
 
 		GasReturnUnhashed uint64 = 647
 		GasReturnHashed   uint64 = 597
@@ -149,7 +152,7 @@ func TestGasCostOnQuery(t *testing.T) {
 
 func TestGasOnExternalQuery(t *testing.T) {
 	const (
-		GasWork50       uint64 = InstanceCost + 8_464
+		GasWork50       uint64 = types.DefaultInstanceCost + 8_464
 		GasReturnHashed uint64 = 597
 	)
 
