@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type Recurse struct {
@@ -32,6 +32,38 @@ func buildQuery(t *testing.T, msg Recurse) []byte {
 
 type recurseResponse struct {
 	Hashed []byte `json:"hashed"`
+}
+
+func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper Keeper, cleanup func()) {
+	// we do one basic setup before all test cases (which are read-only and don't change state)
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	cleanup = func() { os.RemoveAll(tempDir) }
+
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator = createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+
+	// store the code
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	require.NoError(t, err)
+
+	// instantiate the contract
+	_, _, bob := keyPubAddr()
+	_, _, fred := keyPubAddr()
+	initMsg := InitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "recursive contract", deposit)
+	require.NoError(t, err)
+
+	return contractAddr, creator, ctx, keeper, cleanup
 }
 
 func TestGasCostOnQuery(t *testing.T) {
@@ -87,33 +119,8 @@ func TestGasCostOnQuery(t *testing.T) {
 		},
 	}
 
-	// we do one basic setup before all test cases (which are read-only and don't change state)
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
-
-	// store the code
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
-	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
-	require.NoError(t, err)
-
-	// instantiate the contract
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
-	initMsg := InitMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "recursive contract", deposit)
-	require.NoError(t, err)
+	contractAddr, creator, ctx, keeper, cleanup := initRecurseContract(t)
+	defer cleanup()
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -149,8 +156,7 @@ func TestGasCostOnQuery(t *testing.T) {
 
 func TestGasOnExternalQuery(t *testing.T) {
 	const (
-		GasWork50       uint64 = InstanceCost + 8_464
-		GasReturnHashed uint64 = 597
+		GasWork50 uint64 = InstanceCost + 8_464
 	)
 
 	cases := map[string]struct {
@@ -190,33 +196,8 @@ func TestGasOnExternalQuery(t *testing.T) {
 		},
 	}
 
-	// we do one basic setup before all test cases (which are read-only and don't change state)
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
-
-	// store the code
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
-	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
-	require.NoError(t, err)
-
-	// instantiate the contract
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
-	initMsg := InitMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-	contractAddr, err := keeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "recursive contract", deposit)
-	require.NoError(t, err)
+	contractAddr, _, ctx, keeper, cleanup := initRecurseContract(t)
+	defer cleanup()
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
