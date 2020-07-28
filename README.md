@@ -150,6 +150,16 @@ Examples:
 * [`gaiaflex`](./Makefile#L78-L87) is a generic, *permissioned* version using the `cosmos` bech32 prefix
 * [`coral`](./Makefile#L63-L71) is a permissionless version designed for a specific testnet, with a `coral` bech32 prefix
 
+## Genesis Configuration
+
+@alpe we should document all the genesis config for x/wasm even more.
+
+Tip: if you want to lock this down to a permisisoned network, the following script can edit the genesis file
+to only allow permissioned use of code upload or instantiating. (Make sure you set `app.ProposalsEnabled=true`
+in this binary):
+
+`sed -i 's/permission": "Everybody"/permission": "Nobody"/'  .../config/genesis.json`
+
 ## Contributors
 
 Much thanks to all who have contributed to this project, from this app, to the `cosmwasm` framework, to example contracts and documentation.
