@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,14 +35,27 @@ type recurseResponse struct {
 	Hashed []byte `json:"hashed"`
 }
 
+
+// number os wasm queries called from a contract
+var totalWasmQueryCounter int
+
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper Keeper, cleanup func()) {
 	// we do one basic setup before all test cases (which are read-only and don't change state)
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	cleanup = func() { os.RemoveAll(tempDir) }
 
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	var realWasmQuerier func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
+	countingQuerier := &QueryPlugins{
+		Wasm: func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+			totalWasmQueryCounter++
+			return realWasmQuerier(ctx, request)
+		},
+	}
+	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, countingQuerier)
 	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+	realWasmQuerier = WasmQuerier(&keeper)
+
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator = createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 
@@ -241,11 +255,11 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	)
 
 	cases := map[string]struct {
-		gasLimit       uint64
-		msg            Recurse
-		expectCalls    int
-		expectedGas    uint64
-		expectOutOfGas bool
+		gasLimit                  uint64
+		msg                       Recurse
+		expectQueriesFromContract int
+		expectedGas               uint64
+		expectOutOfGas            bool
 	}{
 		"no recursion, lots of work": {
 			gasLimit: 4_000_000,
@@ -253,8 +267,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 0,
 				Work:  2000,
 			},
-			expectCalls: 1,
-			expectedGas: GasWork2k,
+			expectQueriesFromContract: 0,
+			expectedGas:               GasWork2k,
 		},
 		"recursion 5, lots of work": {
 			gasLimit: 4_000_000,
@@ -262,8 +276,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 5,
 				Work:  2000,
 			},
-			expectCalls: 6,
-			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed),
+			expectQueriesFromContract: 5,
+			expectedGas:               GasWork2k + 5*(GasWork2k+GasReturnHashed),
 		},
 		// this is where we expect an error...
 		// it has enough gas to run 4 times and die on the 5th
@@ -275,8 +289,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 50,
 				Work:  2000,
 			},
-			expectCalls:    6,
-			expectOutOfGas: true,
+			expectQueriesFromContract: 5,
+			expectOutOfGas:            true,
 		},
 	}
 
@@ -286,7 +300,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			// reset the counter before test
-			TimesQueryCalled = 0
+			totalWasmQueryCounter = 0
 
 			// make sure we set a limit before calling
 			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
@@ -302,7 +316,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				require.Panics(t, func() {
 					_, _ = keeper.QuerySmart(ctx, contractAddr, msg)
 				})
-				assert.Equal(t, tc.expectCalls, TimesQueryCalled)
+				assert.Equal(t, tc.expectQueriesFromContract, totalWasmQueryCounter)
 				return
 			}
 
@@ -311,7 +325,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
 
-			assert.Equal(t, tc.expectCalls, TimesQueryCalled)
+			assert.Equal(t, tc.expectQueriesFromContract, totalWasmQueryCounter)
 		})
 	}
 }
