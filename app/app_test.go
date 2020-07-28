@@ -1,18 +1,19 @@
 package app
 
 import (
+	"github.com/magiconair/properties/assert"
 	"os"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
-	db "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
-
 	abci "github.com/tendermint/tendermint/abci/types"
+	db "github.com/tendermint/tm-db"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 func TestWasmdExport(t *testing.T) {
@@ -34,6 +35,37 @@ func TestBlackListedAddrs(t *testing.T) {
 
 	for acc := range maccPerms {
 		require.True(t, gapp.bankKeeper.BlacklistedAddr(gapp.supplyKeeper.GetModuleAddress(acc)))
+	}
+}
+
+func TestGetEnabledProposals(t *testing.T) {
+	cases := map[string]struct {
+		proposalsEnabled string
+		specificEnabled  string
+		expected         []wasm.ProposalType
+	}{
+		"all disabled": {
+			proposalsEnabled: "false",
+			expected:         wasm.DisableAllProposals,
+		},
+		"all enabled": {
+			proposalsEnabled: "true",
+			expected:         wasm.EnableAllProposals,
+		},
+		"some enabled": {
+			proposalsEnabled: "okay",
+			specificEnabled:  "StoreCode,InstantiateContract",
+			expected:         []wasm.ProposalType{wasm.ProposalTypeStoreCode, wasm.ProposalTypeInstantiateContract},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			ProposalsEnabled = tc.proposalsEnabled
+			EnableSpecificProposals = tc.specificEnabled
+			proposals := GetEnabledProposals()
+			assert.Equal(t, tc.expected, proposals)
+		})
 	}
 }
 

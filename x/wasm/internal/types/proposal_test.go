@@ -636,7 +636,7 @@ func TestConvertToProposals(t *testing.T) {
 			isError: true,
 		},
 		"invalid item": {
-			input:   "StoreCode,InstanceContract",
+			input:   "StoreCode,InvalidProposalType",
 			isError: true,
 		},
 	}
