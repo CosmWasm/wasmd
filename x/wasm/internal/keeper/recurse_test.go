@@ -224,3 +224,88 @@ func TestGasOnExternalQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestLimitRecursiveQueryGas(t *testing.T) {
+	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
+	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)
+	// the sub-query will have all the original gas (minus the 40k instance charge)
+	// and can burn 90% and call a sub-contract again...
+	// This attack would allow us to use far more than the provided gas before
+	// eventually hitting an OutOfGas panic.
+
+	const (
+		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+		GasWork2k uint64 = InstanceCost + 233_379 // we have 6x gas used in cpu than in the instance
+		// This is overhead for calling into a sub-contract
+		GasReturnHashed uint64 = 603
+	)
+
+	cases := map[string]struct {
+		gasLimit       uint64
+		msg            Recurse
+		expectedGas    uint64
+		expectOutOfGas bool
+	}{
+		"no recursion, lots of work": {
+			gasLimit: 4_000_000,
+			msg: Recurse{
+				Depth: 0,
+				Work:  2000,
+			},
+			expectedGas: GasWork2k,
+		},
+		"recursion 5, lots of work": {
+			gasLimit: 4_000_000,
+			msg: Recurse{
+				Depth: 5,
+				Work:  2000,
+			},
+			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed),
+		},
+		// this is where we expect an error...
+		// it has enough gas to run 4 times and die on the 5th
+		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
+		// TODO: figure out how to asset how deep it went
+		"deep recursion, should die on 5th level": {
+			gasLimit: 1_200_000,
+			msg: Recurse{
+				Depth: 5,
+				Work:  2000,
+			},
+			expectOutOfGas: true,
+		},
+	}
+
+	contractAddr, _, ctx, keeper, cleanup := initRecurseContract(t)
+	defer cleanup()
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			// external limit has no effect (we get a panic if this is enforced)
+			keeper.queryGasLimit = 1000
+
+			// make sure we set a limit before calling
+			ctx = ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
+			require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
+
+			// prepare the query
+			recurse := tc.msg
+			recurse.Contract = contractAddr
+			msg := buildQuery(t, recurse)
+
+			// if we expect out of gas, make sure this panics
+			if tc.expectOutOfGas {
+				require.Panics(t, func() {
+					_, _ = keeper.QuerySmart(ctx, contractAddr, msg)
+				})
+				return
+			}
+
+			// otherwise, we expect a successful call
+			_, err := keeper.QuerySmart(ctx, contractAddr, msg)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
+
+		})
+	}
+}
