@@ -62,10 +62,10 @@ ldflags := $(strip $(ldflags))
 
 coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
 				  -X github.com/cosmos/cosmos-sdk/version.ServerName=corald \
-				  -X github.com/cosmos/cosmos-sdk/version.ClientName=coral \
+				  -X github.com/cosmos/cosmos-sdk/version.ClientName=coralcli \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coral \
+				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coralcli \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
 				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
 				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -77,7 +77,7 @@ coral_ldflags := $(strip $(coral_ldflags))
 
 flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.ServerName=gaiaflexd \
-				  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiaflex \
+				  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiaflexcli \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 				  -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true \
@@ -110,7 +110,7 @@ ifeq ($(OS),Windows_NT)
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
-	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral ./cmd/wasmcli
+	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coralcli ./cmd/wasmcli
 endif
 
 build-gaiaflex: go.sum
@@ -119,7 +119,7 @@ ifeq ($(OS),Windows_NT)
 	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex.exe ./cmd/wasmcli
 else
 	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexd ./cmd/wasmd
-	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex ./cmd/wasmcli
+	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexcli ./cmd/wasmcli
 endif
 
 build-linux: go.sum

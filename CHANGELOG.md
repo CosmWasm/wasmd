@@ -36,6 +36,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+* (testnets) Suffix testnet specific client executables with "cli"
+
 ### Features
 * (wasmd) [\#196](https://github.com/CosmWasm/wasmd/issues/196) Move history of contract code migrations to their own prefix store
 * (wasmd) [\#130](https://github.com/CosmWasm/wasmd/issues/130) Full history of contract code migrations
