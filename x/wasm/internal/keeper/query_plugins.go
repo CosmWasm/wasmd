@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,20 +18,26 @@ type QueryHandler struct {
 
 var _ wasmTypes.Querier = QueryHandler{}
 
-func (q QueryHandler) Query(request wasmTypes.QueryRequest) ([]byte, error) {
+func (q QueryHandler) Query(request wasmTypes.QueryRequest, gasLimit uint64) (res []byte, err error) {
+	sdkGas := gasLimit / GasMultiplier
+	fmt.Printf("Sdk gas %d, wasmer gas: %d\n", sdkGas, gasLimit)
+	subctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(gasLimit / GasMultiplier))
+	res, err = nil, wasmTypes.Unknown{}
 	if request.Bank != nil {
-		return q.Plugins.Bank(q.Ctx, request.Bank)
+		res, err = q.Plugins.Bank(subctx, request.Bank)
 	}
 	if request.Custom != nil {
-		return q.Plugins.Custom(q.Ctx, request.Custom)
+		res, err = q.Plugins.Custom(subctx, request.Custom)
 	}
 	if request.Staking != nil {
-		return q.Plugins.Staking(q.Ctx, request.Staking)
+		res, err = q.Plugins.Staking(subctx, request.Staking)
 	}
 	if request.Wasm != nil {
-		return q.Plugins.Wasm(q.Ctx, request.Wasm)
+		res, err = q.Plugins.Wasm(subctx, request.Wasm)
 	}
-	return nil, wasmTypes.Unknown{}
+	fmt.Printf("charged: %d\n", subctx.GasMeter().GasConsumed())
+	q.Ctx.GasMeter().ConsumeGas(subctx.GasMeter().GasConsumed(), "contract sub-query")
+	return res, err
 }
 
 func (q QueryHandler) GasConsumed() uint64 {

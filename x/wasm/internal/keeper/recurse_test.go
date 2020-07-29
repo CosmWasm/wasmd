@@ -314,7 +314,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			// if we expect out of gas, make sure this panics
 			if tc.expectOutOfGas {
 				require.Panics(t, func() {
-					_, _ = keeper.QuerySmart(ctx, contractAddr, msg)
+					_, err := keeper.QuerySmart(ctx, contractAddr, msg)
+					t.Logf("Got error not panic: %#v", err)
 				})
 				assert.Equal(t, tc.expectQueriesFromContract, totalWasmQueryCounter)
 				return
