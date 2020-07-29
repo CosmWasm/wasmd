@@ -30,7 +30,7 @@ const (
 // Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
 func Setup(isCheckTx bool) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, "")
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0)
 	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
@@ -56,7 +56,7 @@ func Setup(isCheckTx bool) *wasmd.WasmApp {
 // genesis accounts.
 func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, map[int64]bool{}, "")
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0)
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := wasmd.NewDefaultGenesisState()

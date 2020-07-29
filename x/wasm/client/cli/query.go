@@ -12,13 +12,12 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )
 
-func GetQueryCmd(cliCtx client.Context) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	queryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Querying commands for the wasm module",
@@ -27,26 +26,28 @@ func GetQueryCmd(cliCtx client.Context) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	queryCmd.AddCommand(
-		flags.GetCommands(
-			GetCmdListCode(cliCtx),
-			GetCmdListContractByCode(cliCtx),
-			GetCmdQueryCode(cliCtx),
-			GetCmdGetContractInfo(cliCtx),
-			GetCmdGetContractState(cliCtx),
-		)...,
+		GetCmdListCode(),
+		GetCmdListContractByCode(),
+		GetCmdQueryCode(),
+		GetCmdGetContractInfo(),
+		GetCmdGetContractState(),
 	)
 	return queryCmd
 }
 
 // GetCmdListCode lists all wasm code uploaded
-func GetCmdListCode(clientCtx client.Context) *cobra.Command {
+func GetCmdListCode() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list-code",
 		Short: "List all wasm bytecode on the chain",
 		Long:  "List all wasm bytecode on the chain",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListCode)
 			res, _, err := clientCtx.Query(route)
@@ -60,14 +61,18 @@ func GetCmdListCode(clientCtx client.Context) *cobra.Command {
 }
 
 // GetCmdListContractByCode lists all wasm code uploaded for given code id
-func GetCmdListContractByCode(clientCtx client.Context) *cobra.Command {
+func GetCmdListContractByCode() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list-contract-by-code [code_id]",
 		Short: "List wasm all bytecode on the chain for given code id",
 		Long:  "List wasm all bytecode on the chain for given code id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
@@ -86,14 +91,18 @@ func GetCmdListContractByCode(clientCtx client.Context) *cobra.Command {
 }
 
 // GetCmdQueryCode returns the bytecode for a given contract
-func GetCmdQueryCode(clientCtx client.Context) *cobra.Command {
+func GetCmdQueryCode() *cobra.Command {
 	return &cobra.Command{
 		Use:   "code [code_id] [output filename]",
 		Short: "Downloads wasm bytecode for given code id",
 		Long:  "Downloads wasm bytecode for given code id",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
@@ -125,14 +134,18 @@ func GetCmdQueryCode(clientCtx client.Context) *cobra.Command {
 }
 
 // GetCmdGetContractInfo gets details about a given contract
-func GetCmdGetContractInfo(clientCtx client.Context) *cobra.Command {
+func GetCmdGetContractInfo() *cobra.Command {
 	return &cobra.Command{
 		Use:   "contract [bech32_address]",
 		Short: "Prints out metadata of a contract given its address",
 		Long:  "Prints out metadata of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -151,7 +164,7 @@ func GetCmdGetContractInfo(clientCtx client.Context) *cobra.Command {
 }
 
 // GetCmdGetContractState dumps full internal state of a given contract
-func GetCmdGetContractState(cliCtx client.Context) *cobra.Command {
+func GetCmdGetContractState() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "contract-state",
 		Short:                      "Querying commands for the wasm module",
@@ -160,24 +173,26 @@ func GetCmdGetContractState(cliCtx client.Context) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	cmd.AddCommand(
-		flags.GetCommands(
-		GetCmdGetContractStateAll(cliCtx),
-		GetCmdGetContractStateRaw(cliCtx),
-		GetCmdGetContractStateSmart(cliCtx),
-		)...,
+		GetCmdGetContractStateAll(),
+		GetCmdGetContractStateRaw(),
+		GetCmdGetContractStateSmart(),
 	)
 	return cmd
 
 }
 
-func GetCmdGetContractStateAll(clientCtx client.Context) *cobra.Command {
+func GetCmdGetContractStateAll() *cobra.Command {
 	return &cobra.Command{
 		Use:   "all [bech32_address]",
 		Short: "Prints out all internal state of a contract given its address",
 		Long:  "Prints out all internal state of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -195,7 +210,7 @@ func GetCmdGetContractStateAll(clientCtx client.Context) *cobra.Command {
 	}
 }
 
-func GetCmdGetContractStateRaw(clientCtx client.Context) *cobra.Command {
+func GetCmdGetContractStateRaw() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
 		Use:   "raw [bech32_address] [key]",
@@ -203,7 +218,11 @@ func GetCmdGetContractStateRaw(clientCtx client.Context) *cobra.Command {
 		Long:  "Prints out internal state for of a contract given its address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -226,7 +245,7 @@ func GetCmdGetContractStateRaw(clientCtx client.Context) *cobra.Command {
 	return cmd
 }
 
-func GetCmdGetContractStateSmart(clientCtx client.Context) *cobra.Command {
+func GetCmdGetContractStateSmart() *cobra.Command {
 	decoder := newArgDecoder(asciiDecodeString)
 
 	cmd := &cobra.Command{
@@ -235,7 +254,11 @@ func GetCmdGetContractStateSmart(clientCtx client.Context) *cobra.Command {
 		Long:  "Calls contract with given address  with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {

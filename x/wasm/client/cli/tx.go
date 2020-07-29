@@ -8,7 +8,6 @@ import (
 	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,7 +26,7 @@ const (
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cliCtx client.Context) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Wasm transaction subcommands",
@@ -36,26 +35,25 @@ func GetTxCmd(cliCtx client.Context) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 	txCmd.AddCommand(
-		flags.PostCommands(
-			StoreCodeCmd(cliCtx),
-			InstantiateContractCmd(cliCtx),
-			ExecuteContractCmd(cliCtx),
-			MigrateContractCmd(cliCtx),
-			UpdateContractAdminCmd(cliCtx),
-			ClearContractAdminCmd(cliCtx),
-		)...,
+		StoreCodeCmd(),
+		InstantiateContractCmd(),
+		ExecuteContractCmd(),
+		MigrateContractCmd(),
+		UpdateContractAdminCmd(),
+		ClearContractAdminCmd(),
 	)
 	return txCmd
 }
 
 // StoreCodeCmd will upload code to be reused.
-func StoreCodeCmd(clientCtx client.Context) *cobra.Command {
+func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store [wasm file] --source [source] --builder [builder]",
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// parse coins trying to be sent
 			wasm, err := ioutil.ReadFile(args[0])
@@ -101,13 +99,14 @@ func StoreCodeCmd(clientCtx client.Context) *cobra.Command {
 }
 
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
-func InstantiateContractCmd(clientCtx client.Context) *cobra.Command {
+func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instantiate [code_id_int64] [json_encoded_init_args]",
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.RangeArgs(2, 3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get the id of the code to instantiate
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
@@ -157,13 +156,14 @@ func InstantiateContractCmd(clientCtx client.Context) *cobra.Command {
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
-func ExecuteContractCmd(clientCtx client.Context) *cobra.Command {
+func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "execute [contract_addr_bech32] [json_encoded_send_args]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := clientCtx.InitWithInput(cmd.InOrStdin())
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get the id of the code to instantiate
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])

@@ -30,5 +30,8 @@ func FuzzContractInfo(m *types.ContractInfo, c fuzz.Continue) {
 }
 func FuzzStateModel(m *types.Model, c fuzz.Continue) {
 	m.Key = tmBytes.HexBytes(c.RandString())
+	if len(m.Key) == 0 {
+		m.Key = tmBytes.HexBytes("non empty key")
+	}
 	c.Fuzz(&m.Value)
 }

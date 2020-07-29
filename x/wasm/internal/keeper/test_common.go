@@ -158,7 +158,9 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		bankSubsp,
 		nil,
 	)
-	bankKeeper.SetSendEnabled(ctx, true)
+	bankParams := banktypes.DefaultParams()
+	bankParams = bankParams.SetSendEnabledParam("stake", true)
+	bankKeeper.SetParams(ctx, bankParams)
 
 	stakingSubsp, _ := pk.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, accountKeeper, bankKeeper, stakingSubsp)

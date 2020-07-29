@@ -42,9 +42,9 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, bz json.RawMessage) error {
+func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONMarshaler, config client.TxEncodingConfig, message json.RawMessage) error {
 	var data GenesisState
-	err := cdc.UnmarshalJSON(bz, &data)
+	err := marshaler.UnmarshalJSON(message, &data)
 	if err != nil {
 		return err
 	}
@@ -57,17 +57,17 @@ func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
-func (AppModuleBasic) GetTxCmd(cliCtx client.Context) *cobra.Command {
-	return cli.GetTxCmd(cliCtx)
+func (b AppModuleBasic) GetTxCmd() *cobra.Command {
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the wasm module.
-func (AppModuleBasic) GetQueryCmd(cliCtx client.Context) *cobra.Command {
-	return cli.GetQueryCmd(cliCtx)
+func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaceTypes implements InterfaceModule
-func (b AppModuleBasic) RegisterInterfaceTypes(registry cdctypes.InterfaceRegistry) {
+func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
@@ -142,4 +142,9 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc codec.JSONMarshaler) sdk.Querier {
+	// TODO: revisit for proper integration:	return wasm.NewQuerier(am.keeper, legacyQuerierCdc)
+	return nil
 }
