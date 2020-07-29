@@ -35,7 +35,6 @@ type recurseResponse struct {
 	Hashed []byte `json:"hashed"`
 }
 
-
 // number os wasm queries called from a contract
 var totalWasmQueryCounter int
 
@@ -228,7 +227,8 @@ func TestGasOnExternalQuery(t *testing.T) {
 			if tc.expectPanic {
 				require.Panics(t, func() {
 					// this should run out of gas
-					_, _ = NewQuerier(keeper)(ctx, path, req)
+					_, err := NewQuerier(keeper)(ctx, path, req)
+					t.Logf("%v", err)
 				})
 			} else {
 				// otherwise, make sure we get a good success
@@ -280,7 +280,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			expectedGas:               GasWork2k + 5*(GasWork2k+GasReturnHashed),
 		},
 		// this is where we expect an error...
-		// it has enough gas to run 4 times and die on the 5th
+		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)
 		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
 		// TODO: figure out how to asset how deep it went
 		"deep recursion, should die on 5th level": {
@@ -289,7 +289,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 50,
 				Work:  2000,
 			},
-			expectQueriesFromContract: 5,
+			expectQueriesFromContract: 4,
 			expectOutOfGas:            true,
 		},
 	}

@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
-
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,26 +16,30 @@ type QueryHandler struct {
 
 var _ wasmTypes.Querier = QueryHandler{}
 
-func (q QueryHandler) Query(request wasmTypes.QueryRequest, gasLimit uint64) (res []byte, err error) {
+func (q QueryHandler) Query(request wasmTypes.QueryRequest, gasLimit uint64) ([]byte, error) {
+	// set a limit for a subctx
 	sdkGas := gasLimit / GasMultiplier
-	fmt.Printf("Sdk gas %d, wasmer gas: %d\n", sdkGas, gasLimit)
-	subctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(gasLimit / GasMultiplier))
-	res, err = nil, wasmTypes.Unknown{}
+	subctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas))
+
+	// make sure we charge the higher level context even on panic
+	defer func() {
+		q.Ctx.GasMeter().ConsumeGas(subctx.GasMeter().GasConsumed(), "contract sub-query")
+	}()
+
+	// do the query
 	if request.Bank != nil {
-		res, err = q.Plugins.Bank(subctx, request.Bank)
+		return q.Plugins.Bank(subctx, request.Bank)
 	}
 	if request.Custom != nil {
-		res, err = q.Plugins.Custom(subctx, request.Custom)
+		return q.Plugins.Custom(subctx, request.Custom)
 	}
 	if request.Staking != nil {
-		res, err = q.Plugins.Staking(subctx, request.Staking)
+		return q.Plugins.Staking(subctx, request.Staking)
 	}
 	if request.Wasm != nil {
-		res, err = q.Plugins.Wasm(subctx, request.Wasm)
+		return q.Plugins.Wasm(subctx, request.Wasm)
 	}
-	fmt.Printf("charged: %d\n", subctx.GasMeter().GasConsumed())
-	q.Ctx.GasMeter().ConsumeGas(subctx.GasMeter().GasConsumed(), "contract sub-query")
-	return res, err
+	return nil, wasmTypes.Unknown{}
 }
 
 func (q QueryHandler) GasConsumed() uint64 {
