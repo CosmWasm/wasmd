@@ -43,9 +43,9 @@ COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 COPY --from=go-builder /code/build/wasmcli /usr/bin/wasmcli
 
 # testnet
-COPY --from=go-builder /code/build/coral /usr/bin/coral
+COPY --from=go-builder /code/build/coralcli /usr/bin/coralcli
 COPY --from=go-builder /code/build/corald /usr/bin/corald
-COPY --from=go-builder /code/build/gaiaflex /usr/bin/gaiaflex
+COPY --from=go-builder /code/build/gaiaflexcli /usr/bin/gaiaflexcli
 COPY --from=go-builder /code/build/gaiaflexd /usr/bin/gaiaflexd
 
 COPY docker/* /opt/
