@@ -9,11 +9,11 @@
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
 
-This code was forked from the `cosmos/gaia` repository and the majority of the codebase is the same as `gaia`.
+This code was forked from the `cosmos/gaia` repository as a basis and then we added `x/wasm` and cleaned up 
+many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
+addition of the `x/wasm` module.
 
 **Note**: Requires [Go 1.13+](https://golang.org/dl/)
-
-**Compatibility**: Last merge from `cosmos/gaia` was `090c545347b03e59415a18107a0a279c703c8f40` (Jan 23, 2020)
 
 ## Supported Systems
 
@@ -38,16 +38,21 @@ and everything with `v0.7.x` tags is compatible with each other.
 We will have a series of minor version updates prior to `v1.0.0`, 
 where we offer strong backwards compatibility guarantees. 
 
-We are currently on `v0.9` and targeting `v0.10` for late July, at which point
-we will have feature freeze for the `v1` tag and only perform needed bugfixes
-(which may be API breaking).
+We released `v0.10` on  July 31, 2020, and have a `v1.0` feature freeze now.
+We will be performing bug fixes, security patches, and performance improvements,
+but the API should be stable and compatible with `v1.0`.
 
 Thank you to all projects who have run this code in your testnets and
 given feedback to improve stability.
 
 ## Encoding
 
-We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for your use case.
+We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, 
+as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself 
+responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
+valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is
+a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for 
+your use case.
 
 ## Quick Start
 
