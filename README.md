@@ -63,6 +63,19 @@ To set up a single node testnet, [look at the deployment documentation](./docs/d
 
 If you want to deploy a whole cluster, [look at the network scripts](./networks/README.md).
 
+## Protobuf
+
+1. Install [protoc](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) 
+
+2. Install [cosmos-extension](https://github.com/regen-network/cosmos-proto/) for [gogo-protobuf](https://github.com/gogo/protobuf)  
+```sh
+go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
+```
+3. Run generator
+```sh
+ make proto-gen
+```
+
 ## Dockerized
 
 We provide a docker image to help with test setups. There are two modes to use it

@@ -1,0 +1,89 @@
+syntax = "proto3";
+package wasmd.x.wasmd;
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
+
+import "gogoproto/gogo.proto";
+import "x/wasm/internal/types/types.proto";
+import "google/protobuf/empty.proto";
+
+// Query provides defines the gRPC querier service
+service Query {
+
+    rpc ContractInfo (QueryContractInfoRequest) returns (QueryContractInfoResponse) {
+    }
+
+    rpc ContractsByCode (QueryContractsByCodeRequest) returns (QueryContractsByCodeResponse) {
+    }
+
+    rpc ContractState (QueryContractStateRequest) returns (QueryContractStateResponse) {
+    }
+
+    rpc Code (QueryCodeRequest) returns (QueryCodeResponse) {
+    }
+
+    rpc Codes (google.protobuf.Empty) returns (QueryCodesResponse) {
+    }
+}
+
+// QueryContractInfoRequest is the request type for the Query/ContractInfo RPC method
+message QueryContractInfoRequest {
+    // address is the address of the contract to query
+    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+// QueryContractInfoResponse is the response type for the Query/ContractInfo RPC method
+message QueryContractInfoResponse {
+    // address is the address of the contract
+    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    ContractInfo ContractInfo = 2;
+}
+
+message QueryContractsByCodeRequest {
+    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+}
+
+message ContractInfoWithAddress {
+    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    ContractInfo ContractInfo = 2;
+}
+
+message QueryContractsByCodeResponse {
+    repeated ContractInfoWithAddress contract_infos = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryContractStateRequest {
+    // address is the address of the contract
+    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    enum StateQueryType {
+        UNDEFINED = 0;
+        SMART = 1;
+        ALL = 2;
+        RAW = 3;
+    }
+    StateQueryType QueryMethod = 2;
+}
+
+message QueryContractStateResponse {
+    repeated Model models = 1;
+}
+
+message QueryCodeRequest {
+    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+}
+
+message CodeInfoResponse {
+    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes data_hash = 3 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+    string source = 4;
+    string builder = 5;
+}
+
+message QueryCodeResponse {
+    CodeInfoResponse code_info = 1;
+    bytes data = 2;
+}
+
+message QueryCodesResponse {
+    repeated CodeInfoResponse code_infos = 1;
+}

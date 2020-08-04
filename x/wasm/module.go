@@ -79,7 +79,9 @@ type AppModule struct {
 	keeper Keeper
 }
 
-func (am AppModule) RegisterQueryService(grpc.Server) {}
+func (am AppModule) RegisterQueryService(server grpc.Server) {
+// todo: continue here	types.RegisterQueryServer(server, NewQuerier(am.keeper))
+}
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(keeper Keeper) AppModule {

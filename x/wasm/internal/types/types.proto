@@ -1,12 +1,13 @@
 syntax = "proto3";
-package wasmd.x.wasmd.v1;
+package wasmd.x.wasmd;
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
 
-import "third_party/proto/gogoproto/gogo.proto";
-import "types/types.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/cosmos.proto";
 
-message MsgStoreCode{
+
+message MsgStoreCode {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -18,7 +19,7 @@ message MsgStoreCode{
     string builder = 4;
 }
 
-message MsgInstantiateContract{
+message MsgInstantiateContract {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -27,25 +28,19 @@ message MsgInstantiateContract{
     uint64 code = 3 [(gogoproto.jsontag) = "code_id"];
     string label = 4;
     bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    repeated cosmos_sdk.v1.Coin init_funds = 6 [
-                                           (gogoproto.nullable)     = false,
-                                           (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-                                           ];
+    repeated cosmos.Coin init_funds = 6 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
-message MsgExecuteContract{
+message MsgExecuteContract {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    repeated cosmos_sdk.v1.Coin sent_funds = 5 [
-                                               (gogoproto.nullable)     = false,
-                                               (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-                                               ];
+    repeated cosmos.Coin sent_funds = 5 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
-message MsgMigrateContract{
+message MsgMigrateContract {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -54,7 +49,7 @@ message MsgMigrateContract{
     bytes migrate_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
 }
 
-message MsgUpdateAdmin{
+message MsgUpdateAdmin {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -62,7 +57,7 @@ message MsgUpdateAdmin{
     bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 
-message MsgClearAdmin{
+message MsgClearAdmin {
     option (gogoproto.goproto_getters) = false;
 
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -76,7 +71,7 @@ message CodeInfo {
     bytes code_hash = 1;
     bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     string source = 3;
-    string builder =4;
+    string builder = 4;
 }
 
 // ContractInfo stores a WASM contract instance
@@ -98,7 +93,15 @@ message ContractInfo {
 // AbsoluteTxPosition can be used to sort contracts
 message AbsoluteTxPosition {
     // BlockHeight is the block the contract was created at
-    int64 block_height =1;
+    int64 block_height = 1;
     // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
-    uint64 tx_index =2;
+    uint64 tx_index = 2;
+}
+
+// Model is a struct that holds a KV pair
+message Model {
+    // hex-encode key to read it better (this is often ascii)
+    bytes Key = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+    // base64-encode raw value
+    bytes Value = 2;
 }
