@@ -81,7 +81,99 @@ For mocks, all the `IBCxxxPacket` commands are routed to some
 Golang stub handler, but containing the contract address, so we
 can perform contract-specific actions for each packet.
 
-## Ports and Channels
+## Contract Details
+
+Here we map out the workflow with the exact arguments passed with those calls 
+from the Go side (which we will use with our mock), and then a 
+proposal for multiplexing this over fewer wasm exports (define some rust types)
+
+Messages:
+
+```go
+type IBCSendMsg struct {
+    ChannelID string
+    RemotePort string // do we need both? isn't channel enough once it is established???
+    Msg []byte
+    // optional fields
+    TimeoutHeight uint64
+    TimeoutTimestamp uint64
+}
+
+// note that a contract has exactly one port, so the SourcePortID is implied
+type IBCOpenChannel struct {
+    ConnectionID string
+    // this is the remote port ID
+    PortID string
+    Versions []Version
+    // more info??
+}
+
+type IBCCloseChannel struct {
+    ChannelID string
+    // more info??
+}
+
+// use type from https://github.com/cosmos/cosmos-sdk/blob/master/x/ibc/03-connection/types/version.go ?
+// or is there a better generic model?
+type Version string
+```
+
+Packet callbacks:
+
+```go
+// for reference: this is more like what we pass to go-cosmwasm
+// func (c *mockContract) OnReceive(params cosmwasm2.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, 
+//         querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnReceiveIBCResponse, uint64, error) {}
+
+// we can imagine it like this in go
+// an error here will not be passed up to the transaction level, but will be encoded in an envelope
+// and send packet as an IBCAckPacket, to trigger IBCPacketFailed on the other end
+func (c *mockContract) IBCRecvPacket(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, msg []byte) (response []byte, err error) {}
+
+// how to handle error here? if we push it up the ibc stack and fail the transaction (normal handling),
+// the packet may be posted again and again. just log and ignore failures here? what does a failure even mean?
+func (c *mockContract) IBCPacketAck(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, originalMsg []byte, result []byte) (response []byte, err error) {}
+
+// same question as for IBCPacketAck
+func (c *mockContract) IBCPacketFailed(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, originalMsg []byte, errorMsg string) (response []byte, err error) {}
+
+type IBCInfo struct {
+	// PortID of the remote contract???
+	RemotePortID string
+	// PortID of the our contract???
+	OurPortID string
+	// ChannelID packet was sent on
+	ChannelID string
+	Packet    *IBCPacketInfo `json:"packet,omitempty"`
+}
+
+// do we need/want all this info?
+type IBCPacketInfo struct {
+	Sequence uint64
+	// identifies the port on the sending chain.
+	SourcePort string
+	// identifies the channel end on the sending chain.
+	SourceChannel string
+	// block height after which the packet times out
+	TimeoutHeight uint64
+	// block timestamp (in nanoseconds) after which the packet times out
+	TimeoutTimestamp uint64
+}
+```
+
+Channel Lifecycle:
+
+**TODO**
+
+Queries:
+
+**TODO**
+
+### Contract (Wasm) entrypoints
+
+**TODO**
+
+## Ports and Channels Discussion
 
 We decided on "one port per contract", especially after the IBC team raised
 the max length on port names to allow `wasm-<bech32 address>` to be a valid port.
