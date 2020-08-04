@@ -102,19 +102,9 @@ func (am AppModule) Route() sdk.Route {
 	return sdk.NewRoute(RouterKey, NewHandler(am.keeper))
 }
 
-// NewHandler returns an sdk.Handler for the wasm module.
-func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper)
-}
-
 // QuerierRoute returns the wasm module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return QuerierRoute
-}
-
-// NewQuerierHandler returns the wasm module sdk.Querier.
-func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the wasm module. It returns
@@ -145,6 +135,5 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 }
 
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc codec.JSONMarshaler) sdk.Querier {
-	// TODO: revisit for proper integration:	return wasm.NewQuerier(am.keeper, legacyQuerierCdc)
-	return nil
+	return NewQuerier(am.keeper)
 }
