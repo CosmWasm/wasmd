@@ -17,41 +17,75 @@ and *Channel*
 
 Establishing *Clients* and *Connections* is out of the scope of this
 module and must be created by the same means as for `ibc-transfer`
-(via the cli or otherwise). `x/wasm` will bind one or more *Ports* to
-handle messages for the contracts. How *Channels* are established
-is an open question for discussion.
+(via the cli or otherwise). `x/wasm` will bind a unique *Port* for each
+"IBC Enabled" contract.
 
-The following actions are only available for `IBCEnabled` contracts:
+An "IBC Enabled" contract may dispatch the following messages not available
+to other contracts:
 
-* Dispatch `IBCSendMsg` - this sends an IBC packet over an established
-  channel. This is returned from `handle` just like any other `CosmosMsg`
-  (For mocks, we will trigger this externally, later only
-  valid contract addresses should be able to do so).
-* Handle `IBCRecvPacket` - when another chain sends a packet destined to
+* `IBCSendMsg` - this sends an IBC packet over an established channel. 
+* `IBCOpenChannel` - given a ConnectionID and a remote Port, this will request
+  to open a new channel with the given chain
+* `IBCCloseChannel` - given an existing channelID bound to this contract's Port,
+  initiate the closing sequence and reject all pending packets.
+
+They are returned from `handle` just like any other `CosmosMsg`
+(For mocks, we will trigger this externally, later only valid contract addresses 
+should be able to do so).
+
+An "IBC Enabled" contract must support the following callbacks from the runtime
+(we will likely multiplex many over one wasm export, as we do with handle, but these 
+are the different calls we must support):
+
+Packet Lifecycle:
+
+* `IBCRecvPacket` - when another chain sends a packet destined to
   an IBCEnabled contract, this will be routed to the proper contract
   and call an exposed function for this purpose.
-* Handle `IBCAckPacket` - The original sender of `IBCSendMsg` will
+* `IBCPacketAck` - The original sender of `IBCSendMsg` will
   get this callback eventually if the message was successfully
-  processed on the other chain
-* Handle `IBCErrorPacket` - The original sender of `IBCSendMsg` will 
+  processed on the other chain (this implies using an envelope for the 
+  IBC acknowledge message, so the Go code can differentiate between success and error)
+* `IBCPacketFailed` - The original sender of `IBCSendMsg` will 
   get this callback eventually if the message failed to be
-  processed on the other chain (for any reason)
+  processed on the other chain (for timeout, closed channel, or the 
+  other side returning an error message in the IBC acknowledgement)
+
+Channel Lifecycle Hooks:
+
+* `OnChanOpenTry` - this is called when another chain attempts to open
+  a channel with this contract. It provides the protocol versions that
+  the initiate expects, and the contract can reject it or accept it
+  and return the protocol version it will communicate with.
+* `OnChanOpenConfirm` - this is called when the other party has agreed
+  to the channel and all negotiation is over. This will be called exactly
+  once for any established channel, and the contract should record these
+  open channels in the internal state.
+* `OnChanClosed` - this is called when an existing channel is closed
+  for any reason, allowing the client to update the state there.
+  This will (likely? @cwgoes?) be accompanied by `IBCPacketFailed`
+  callbacks for all the in-progress packets that were not processed before
+  it closed, as well as all pending acks.
+
+We may want to expose some basic queries of IBC State to the contract.
+We should check if this is useful to the contract and if it opens up
+any possible DoS:
+
+* `ListMyChannels` - return a list of all channel IDs (along with remote PortID)
+  that are bound to this contract's Port.
+* `ListPendingPackets` - given a channelID owned by the contract, return all packets
+  in that channel, that were sent by this chain, for which no acknowledgement or timeout
+  has been received
 
 For mocks, all the `IBCxxxPacket` commands are routed to some
 Golang stub handler, but containing the contract address, so we
 can perform contract-specific actions for each packet.
 
-There are open questions on how exactly the various `IBCxxPacket`
-messages are routed to a contract, as well as related to the
-channel lifecycle. (Can a contract open a channel? How do we
-allow contracts to participate in protocol version negotiation
-when establishing a channel?)
-
 ## Ports and Channels
 
-There are two main proposals on how to map these concepts to
-contracts. We will describe both in detail, with arguments
-pro and contra, to select one approach.
+We decided on "one port per contract", especially after the IBC team raised
+the max length on port names to allow `wasm-<bech32 address>` to be a valid port.
+Here are the arguments for "one port for x/wasm" vs "one port per contract"
 
 ### One Port per Contract
 
@@ -70,10 +104,10 @@ as how contracts can properly identify their counterparty.
   [`ChanOpenTry` and `ChanOpenAck` phases](https://docs.cosmos.network/master/ibc/overview.html#channels).
   (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
 * Both the *Port* and the *Channel* are fully owned by one contract.
-* `x/wasm` only accepts *ORDERED Channels* for simplicity of contract
-  correctness.
+* Question: `x/wasm` only accepts *ORDERED Channels* for simplicity of contract
+  correctness? Or should we allow the contract to decide?
 * When sending a packet, the CosmWasm contract must specify the *ChannelID*
-  (and remote *PortID*?), which is generally provided by the external client
+  and remote *PortID*, which is generally provided by the external client
   which understands which channels it wishes to communicate over.
 * When sending a packet, the contract can set a custom identifier (of
   max 64 characters) that it can use to look this up later.
@@ -81,8 +115,7 @@ as how contracts can properly identify their counterparty.
   *ChannelID* as well as remote *PortID* (and *ClientID*???) that is
   communicating.
 * When receiving an Ack or Error packet, the contract also receives the
-  same identifier that it set on Send (`x/wasm` handles mapping between this
-  and the native IBC packet IDs).
+  original packet that it set on Send 
   
 ### One Port per Module
 
