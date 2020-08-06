@@ -205,14 +205,7 @@ type ListCodeResponse struct {
 
 func queryCodeList(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 	var info []ListCodeResponse
-
-	var i uint64
-	for true {
-		i++
-		res := keeper.GetCodeInfo(ctx, i)
-		if res == nil {
-			break
-		}
+	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
 		info = append(info, ListCodeResponse{
 			ID:       i,
 			Creator:  res.Creator,
@@ -220,7 +213,8 @@ func queryCodeList(ctx sdk.Context, keeper Keeper) ([]byte, error) {
 			Source:   res.Source,
 			Builder:  res.Builder,
 		})
-	}
+		return false
+	})
 
 	bz, err := json.MarshalIndent(info, "", "  ")
 	if err != nil {
