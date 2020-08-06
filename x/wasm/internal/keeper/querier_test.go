@@ -318,3 +318,53 @@ func TestQueryContractHistory(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryCodeList(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		codeIDs []uint64
+	}{
+		"none": {},
+		"no gaps": {
+			codeIDs: []uint64{1, 2, 3},
+		},
+		"with gaps": {
+			codeIDs: []uint64{2, 4, 6},
+		},
+	}
+
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "wasm")
+			require.NoError(t, err)
+			defer os.RemoveAll(tempDir)
+			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			keeper := keepers.WasmKeeper
+
+			for _, codeID := range spec.codeIDs {
+				require.NoError(t, keeper.importCode(ctx, codeID,
+					types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode)),
+					wasmCode),
+				)
+			}
+			q := NewQuerier(keeper)
+			// when
+			query := []string{QueryListCode}
+			data := abci.RequestQuery{}
+			resData, err := q(ctx, query, data)
+
+			// then
+			require.NoError(t, err)
+
+			var got []map[string]interface{}
+			err = json.Unmarshal(resData, &got)
+			require.NoError(t, err)
+			require.Len(t, got, len(spec.codeIDs))
+			for i, exp := range spec.codeIDs {
+				assert.EqualValues(t, exp, got[i]["id"])
+			}
+		})
+	}
+}
