@@ -6,6 +6,7 @@ require (
 	// Note: update ENV GO_COSMWASM in Dockerfile when updating this
 	github.com/CosmWasm/go-cosmwasm v0.9.1
 	github.com/cosmos/cosmos-sdk v0.34.4-0.20200729074245-8b77cb442fa1
+	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/mux v1.7.4

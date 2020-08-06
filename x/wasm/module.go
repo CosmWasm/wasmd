@@ -80,7 +80,7 @@ type AppModule struct {
 }
 
 func (am AppModule) RegisterQueryService(server grpc.Server) {
-// todo: continue here	types.RegisterQueryServer(server, NewQuerier(am.keeper))
+	types.RegisterQueryServer(server, NewQuerier(am.keeper))
 }
 
 // NewAppModule creates a new AppModule object
@@ -137,5 +137,5 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 }
 
 func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc codec.JSONMarshaler) sdk.Querier {
-	return NewQuerier(am.keeper)
+	return NewLegacyQuerier(am.keeper)
 }

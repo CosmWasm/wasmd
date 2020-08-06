@@ -9,7 +9,6 @@ import (
 const defaultLRUCacheSize = uint64(0)
 const defaultQueryGasLimit = uint64(3000000)
 
-
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "key")
