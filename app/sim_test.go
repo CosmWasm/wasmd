@@ -68,7 +68,7 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", fauxMerkleModeOpt)
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, appName, app.Name())
 
 	// run randomized simulation
@@ -100,7 +100,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", fauxMerkleModeOpt)
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, appName, app.Name())
 
 	// Run randomized simulation
@@ -134,7 +134,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", fauxMerkleModeOpt)
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, appName, newApp.Name())
 
 	var genesisState GenesisState
@@ -191,7 +191,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", fauxMerkleModeOpt)
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, appName, app.Name())
 
 	// Run randomized simulation
@@ -230,7 +230,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", fauxMerkleModeOpt)
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, fauxMerkleModeOpt)
 	require.Equal(t, appName, newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
@@ -274,7 +274,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 			db := dbm.NewMemDB()
 
-			app := NewWasmApp(logger, db, nil, true, simapp.FlagPeriodValue, map[int64]bool{}, "", interBlockCacheOpt())
+			app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

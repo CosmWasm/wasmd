@@ -58,7 +58,7 @@ var (
 	EncodeStakingMsg          = keeper.EncodeStakingMsg
 	EncodeWasmMsg             = keeper.EncodeWasmMsg
 	NewKeeper                 = keeper.NewKeeper
-	NewQuerier                = keeper.NewQuerier
+	NewLegacyQuerier          = keeper.NewLegacyQuerier
 	DefaultQueryPlugins       = keeper.DefaultQueryPlugins
 	BankQuerier               = keeper.BankQuerier
 	NoCustomQuerier           = keeper.NoCustomQuerier
@@ -66,6 +66,7 @@ var (
 	WasmQuerier               = keeper.WasmQuerier
 	CreateTestInput           = keeper.CreateTestInput
 	TestHandler               = keeper.TestHandler
+	NewQuerier                = keeper.NewQuerier
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
@@ -101,6 +102,8 @@ type (
 	ContractInfo            = types.ContractInfo
 	CreatedAt               = types.AbsoluteTxPosition
 	WasmConfig              = types.WasmConfig
+	ContractInfoWithAddress = types.ContractInfoWithAddress
+	CodeInfoResponse        = types.CodeInfoResponse
 	MessageHandler          = keeper.MessageHandler
 	BankEncoder             = keeper.BankEncoder
 	CustomEncoder           = keeper.CustomEncoder
@@ -108,9 +111,6 @@ type (
 	WasmEncoder             = keeper.WasmEncoder
 	MessageEncoders         = keeper.MessageEncoders
 	Keeper                  = keeper.Keeper
-	ContractInfoWithAddress = keeper.ContractInfoWithAddress
-	GetCodeResponse         = keeper.GetCodeResponse
-	ListCodeResponse        = keeper.ListCodeResponse
 	QueryHandler            = keeper.QueryHandler
 	CustomQuerier           = keeper.CustomQuerier
 	QueryPlugins            = keeper.QueryPlugins

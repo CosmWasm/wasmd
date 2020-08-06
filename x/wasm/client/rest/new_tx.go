@@ -30,7 +30,7 @@ type updateContractAdministrateReq struct {
 func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req updateContractAdministrateReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 		vars := mux.Vars(r)
@@ -64,7 +64,7 @@ func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
 func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req migrateContractReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 		vars := mux.Vars(r)

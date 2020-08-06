@@ -42,9 +42,9 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, bz json.RawMessage) error {
+func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONMarshaler, config client.TxEncodingConfig, message json.RawMessage) error {
 	var data GenesisState
-	err := cdc.UnmarshalJSON(bz, &data)
+	err := marshaler.UnmarshalJSON(message, &data)
 	if err != nil {
 		return err
 	}
@@ -57,17 +57,17 @@ func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
-func (AppModuleBasic) GetTxCmd(cliCtx client.Context) *cobra.Command {
-	return cli.GetTxCmd(cliCtx)
+func (b AppModuleBasic) GetTxCmd() *cobra.Command {
+	return cli.GetTxCmd()
 }
 
 // GetQueryCmd returns no root query command for the wasm module.
-func (AppModuleBasic) GetQueryCmd(cliCtx client.Context) *cobra.Command {
-	return cli.GetQueryCmd(cliCtx)
+func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
+	return cli.GetQueryCmd()
 }
 
 // RegisterInterfaceTypes implements InterfaceModule
-func (b AppModuleBasic) RegisterInterfaceTypes(registry cdctypes.InterfaceRegistry) {
+func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
@@ -79,7 +79,9 @@ type AppModule struct {
 	keeper Keeper
 }
 
-func (am AppModule) RegisterQueryService(grpc.Server) {}
+func (am AppModule) RegisterQueryService(server grpc.Server) {
+	types.RegisterQueryServer(server, NewQuerier(am.keeper))
+}
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(keeper Keeper) AppModule {
@@ -102,19 +104,9 @@ func (am AppModule) Route() sdk.Route {
 	return sdk.NewRoute(RouterKey, NewHandler(am.keeper))
 }
 
-// NewHandler returns an sdk.Handler for the wasm module.
-func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper)
-}
-
 // QuerierRoute returns the wasm module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return QuerierRoute
-}
-
-// NewQuerierHandler returns the wasm module sdk.Querier.
-func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper)
 }
 
 // InitGenesis performs genesis initialization for the wasm module. It returns
@@ -142,4 +134,8 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func (am AppModule) LegacyQuerierHandler(legacyQuerierCdc codec.JSONMarshaler) sdk.Querier {
+	return NewLegacyQuerier(am.keeper)
 }

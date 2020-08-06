@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -116,7 +117,7 @@ func TestHandleCreate(t *testing.T) {
 			defer cleanup()
 
 			h := data.module.Route().Handler()
-			q := data.module.NewQuerierHandler()
+			q := data.module.LegacyQuerierHandler(nil)
 
 			res, err := h(data.ctx, tc.msg)
 			if !tc.isValid {
@@ -150,7 +151,7 @@ func TestHandleInstantiate(t *testing.T) {
 	creator := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, deposit)
 
 	h := data.module.Route().Handler()
-	q := data.module.NewQuerierHandler()
+	q := data.module.LegacyQuerierHandler(nil)
 
 	msg := &MsgStoreCode{
 		Sender:       creator,
@@ -211,7 +212,7 @@ func TestHandleExecute(t *testing.T) {
 	fred := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, topUp)
 
 	h := data.module.Route().Handler()
-	q := data.module.NewQuerierHandler()
+	q := data.module.LegacyQuerierHandler(nil)
 
 	msg := &MsgStoreCode{
 		Sender:       creator,
@@ -439,17 +440,19 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
-	if len(bz) == 0 {
-		require.Equal(t, len(expectedBytes), 0)
+	if len(expectedBytes) == 0 {
+		require.Equal(t, len(bz), 0, "%q", string(bz))
 		return
 	}
-
-	var res GetCodeResponse
+	var res map[string]interface{}
 	err := json.Unmarshal(bz, &res)
 	require.NoError(t, err)
 
-	assert.Equal(t, expectedBytes, res.Data)
-	assert.Equal(t, codeID, res.ID)
+	require.Contains(t, res, "data")
+	b, err := base64url.Decode(res["data"].(string))
+	require.NoError(t, err)
+	assert.Equal(t, expectedBytes, b)
+	assert.EqualValues(t, codeID, res["id"])
 }
 
 func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, addrs []string) {

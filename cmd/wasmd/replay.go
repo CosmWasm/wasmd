@@ -93,7 +93,7 @@ func replayTxs(rootDir string) error {
 	// Application
 	fmt.Fprintln(os.Stderr, "Creating application")
 	gapp := app.NewWasmApp(
-		ctx.Logger, appDB, traceStoreWriter, true, uint(1), map[int64]bool{}, "",
+		ctx.Logger, appDB, traceStoreWriter, true, map[int64]bool{}, "", uint(1),
 		baseapp.SetPruning(storetypes.PruneEverything), // nothing
 	)
 

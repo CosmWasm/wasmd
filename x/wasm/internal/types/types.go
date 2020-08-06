@@ -4,19 +4,10 @@ import (
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 const defaultLRUCacheSize = uint64(0)
 const defaultQueryGasLimit = uint64(3000000)
-
-// Model is a struct that holds a KV pair
-type Model struct {
-	// hex-encode key to read it better (this is often ascii)
-	Key tmBytes.HexBytes `json:"key"`
-	// base64-encode raw value
-	Value []byte `json:"val"`
-}
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {

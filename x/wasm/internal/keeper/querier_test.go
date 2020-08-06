@@ -51,7 +51,7 @@ func TestQueryContractState(t *testing.T) {
 	keeper.importContractState(ctx, addr, contractModel)
 
 	// this gets us full error, not redacted sdk.Error
-	q := NewQuerier(keeper)
+	q := NewLegacyQuerier(keeper)
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery
@@ -125,7 +125,7 @@ func TestQueryContractState(t *testing.T) {
 
 			// if smart query, check custom response
 			if spec.expSmartRes != "" {
-				require.Equal(t, spec.expSmartRes, string(binResult))
+				require.JSONEq(t, spec.expSmartRes, string(binResult))
 				return
 			}
 
@@ -192,23 +192,23 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	}
 
 	// query and check the results are properly sorted
-	q := NewQuerier(keeper)
+	q := NewLegacyQuerier(keeper)
 	query := []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}
 	data := abci.RequestQuery{}
 	res, err := q(ctx, query, data)
 	require.NoError(t, err)
 
-	var contracts []ContractInfoWithAddress
+	var contracts []map[string]interface{}
 	err = json.Unmarshal(res, &contracts)
 	require.NoError(t, err)
 
 	require.Equal(t, 10, len(contracts))
-
+	t.Log(string(res))
 	for i, contract := range contracts {
-		assert.Equal(t, fmt.Sprintf("contract %d", i), contract.Label)
-		assert.NotEmpty(t, contract.Address)
+		assert.Equal(t, fmt.Sprintf("contract %d", i), contract["label"])
+		assert.NotEmpty(t, contract["address"])
 		// ensure these are not shown
-		assert.Nil(t, contract.InitMsg)
-		assert.Nil(t, contract.Created)
+		assert.Nil(t, contract["init_msg"])
+		assert.Nil(t, contract["created"])
 	}
 }

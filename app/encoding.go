@@ -6,8 +6,8 @@ import (
 	simparams "github.com/cosmos/cosmos-sdk/simapp/params"
 )
 
-func MakeEncoding() simparams.EncodingConfig{
-	encodingConfig := simapp.MakeEncodingConfig()
+func MakeEncodingConfig() simparams.EncodingConfig {
+	encodingConfig := simapp.MakeEncodingConfig() // todo: this is the simapp !!!
 	wasm.RegisterCodec(encodingConfig.Amino)
 	wasm.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
