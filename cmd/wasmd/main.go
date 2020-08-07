@@ -75,7 +75,7 @@ func main() {
 		debug.Cmd(),
 	)
 
-	server.AddCommands(rootCmd, newApp, exportAppStateAndTMValidators)
+	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, exportAppStateAndTMValidators)
 
 	// Create and set a client.Context on the command's Context. During the pre-run
 	// of the root command, a default initialized client.Context is provided to
