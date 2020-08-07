@@ -46,6 +46,9 @@ as how contracts can properly identify their counterparty.
   *ChannelID* as well as remote *PortID* with which it is communicating.
 * When receiving an Ack or Error packet, the contract also receives the
   original packet that it set on Send 
+* We do not support multihop packets in this model (they are rejected by `x/wasm`).
+  They are currently not fully specified nor implemented in IBC 1.0, so let us
+  simplify our model until this is well established
 
 ## Workflow
 
@@ -71,7 +74,7 @@ An "IBC Enabled" contract must support the following callbacks from the runtime
 (we will likely multiplex many over one wasm export, as we do with handle, but these 
 are the different calls we must support):
 
-Packet Lifecycle:
+### Packet Lifecycle
 
 * `IBCRecvPacket` - when another chain sends a packet destined to
   an IBCEnabled contract, this will be routed to the proper contract
@@ -90,26 +93,45 @@ to `IBCPacketSucceeded` / `IBCPacketFailed` assuming they use the standard envel
 we decided not to enforce this on the Go-level, to allow contracts to communicate using protocols
 that do not use this envelope.
 
-Channel Lifecycle Hooks:
+### Channel Lifecycle Hooks
 
-* `OnChanOpenTry` - this is called when another chain attempts to open
-  a channel with this contract. It provides the protocol versions that
-  the initiate expects, and the contract can reject it or accept it
-  and return the protocol version it will communicate with.
-* `OnChanOpenConfirm` - this is called when the other party has agreed
-  to the channel and all negotiation is over. This will be called exactly
-  once for any established channel, and the contract should record these
-  open channels in the internal state.
-* `OnChanClosed` - this is called when an existing channel is closed
-  for any reason, allowing the client to update the state there.
-  This will (likely? @cwgoes?) be accompanied by `IBCPacketFailed`
-  callbacks for all the in-progress packets that were not processed before
-  it closed, as well as all pending acks.
+If you look at the [4 step process](https://docs.cosmos.network/master/ibc/overview.html#channels) for
+channel handshakes, we simplify this from the view of the contract:
+
+1. Channels *cannot* be opened by external clients, only the contract can initiate opening
+   a channel, via an `IBCOpenChannel` message. This means that `ChanOpenInit` does not need to
+   call the contract, but just verify that this contract did indeed just attempt to open this channel.
+2. The counterparty has a chance for version negotiation in `OnChanOpenTry`, where the contract
+   can apply custom logic. It provides the protocol versions that the initiator expects, and 
+   the contract can reject the connection or accept it and return the protocol version it will communicate with.
+3. `OnChanOpened` is called on the contract for both `OnChanOpenAck` and `OnChanOpenConfirm` containing
+   the final version string (counterparty version). This gives a chance to abort the process
+   if we realize this doesn't work. Or save the info (if we realize we have to use an older version
+   of the protocol).
+4. `OnChanClosed` is called on both sides if the channel is closed for any reason, allowing them to
+   perform any cleanup. This will (likely? @cwgoes?) be accompanied by `IBCPacketFailed`
+   callbacks for all the in-progress packets that were not processed before it closed, as well as all pending acks.
+
+We require the following callbacks on the contract
+
+* `OnChanNegotiate` - called on receiving end for `OnChanOpenTry`. 
+* `OnChanOpened` - called on both sides after the initial 2 steps have passed to confirm the version used
+* `OnChanClosed` - this is called when an existing channel is closed for any reason
+
+Note @cwgoes I am rather confused by 
+[the handshake docs](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation)
+In particular "ChanOpenTry callback should verify that the MsgChanOpenTry.Version is valid and that 
+MsgChanOpenTry.CounterpartyVersion is valid.". Where does the CounterpartyVersion come from?
+I thought the module would accept the Version and decide on it's own CounterpartyVersion. We assume the
+relayer makes that decision????
+
+### Queries
 
 We may want to expose some basic queries of IBC State to the contract.
 We should check if this is useful to the contract and if it opens up
 any possible DoS:
 
+* `GetPort` - return my local PortID
 * `ListMyChannels` - return a list of all channel IDs (along with remote PortID)
   that are bound to this contract's Port.
 * `ListPendingPackets` - given a channelID owned by the contract, return all packets
@@ -129,11 +151,13 @@ proposal for multiplexing this over fewer wasm exports (define some rust types)
 Messages:
 
 ```go
+package messages
+
 type IBCSendMsg struct {
     ChannelID string
     RemotePort string // do we need both? isn't channel enough once it is established???
     Msg []byte
-    // optional fields
+    // optional fields (or do we need exactly/at least one of these?)
     TimeoutHeight uint64
     TimeoutTimestamp uint64
 }
@@ -141,10 +165,10 @@ type IBCSendMsg struct {
 // note that a contract has exactly one port, so the SourcePortID is implied
 type IBCOpenChannel struct {
     ConnectionID string
-    // this is the remote port ID
+    // this is the remote port ID, local port ID is implied as contract only has one port
     PortID string
     Versions []Version
-    Ordered bool
+    Order channeltypes.Order
     // more info??
 }
 
@@ -161,40 +185,48 @@ type Version string
 Packet callbacks:
 
 ```go
+package packets
+
 // for reference: this is more like what we pass to go-cosmwasm
 // func (c *mockContract) OnReceive(params cosmwasm2.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, 
 //         querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnReceiveIBCResponse, uint64, error) {}
+// below is how we want to expose it in x/wasm:
 
-// we can imagine it like this in go
-// an error here will not be passed up to the transaction level, but will be encoded in an envelope
-// and send packet as an IBCAckPacket, to trigger IBCPacketFailed on the other end
-func (c *mockContract) IBCRecvPacket(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, msg []byte) (response []byte, err error) {}
+// IBCRecvPacket is called when we receive a packet sent from the other end of a channel
+// The response bytes listed here will be returned to the caller as "result" in IBCPacketAck
+// What do we do with error?
+//
+// If we were to assume/enforce an envelope, then we could wrap response/error into the acknowledge packet,
+// but we delegated that encoding to the contract
+func IBCRecvPacket(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, msg []byte) 
+    (response []byte, err error) {}
 
 // how to handle error here? if we push it up the ibc stack and fail the transaction (normal handling),
 // the packet may be posted again and again. just log and ignore failures here? what does a failure even mean?
-func (c *mockContract) IBCPacketAck(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, originalMsg []byte, result []byte) (response []byte, err error) {}
+// only realistic one I can imagine is OutOfGas (panic) to retry with higher gas limit.
+//
+// if there any point in returning a response, what does it mean?
+func IBCPacketAck(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, 
+    originalMsg []byte, result []byte) error {}
 
 // same question as for IBCPacketAck
-func (c *mockContract) IBCPacketFailed(ctx sdk.Context, k *wasm.Keeper, env IBCInfo, originalMsg []byte, errorMsg string) (response []byte, err error) {}
-
-type IBCInfo struct {
-	// PortID of the remote contract???
-	RemotePortID string
-	// PortID of the our contract???
-	OurPortID string
-	// ChannelID packet was sent on
-	ChannelID string
-	Packet    *IBCPacketInfo `json:"packet,omitempty"`
-}
+func IBCPacketDropped(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, 
+    originalMsg []byte, errorMsg string) error {}
 
 // do we need/want all this info?
 type IBCPacketInfo struct {
+	// local id for the Channel packet was sent/received on
+	ChannelID string
+    // remote port for this channel? (could be stored locally in handshake, but let's make it clear)
+    PortID string
+
+    // sequence for the packet (will already be enforced in order if ORDERED channel)
 	Sequence uint64
-	// identifies the port on the sending chain.
-	SourcePort string
-	// identifies the channel end on the sending chain.
-	SourceChannel string
-	// block height after which the packet times out
+	
+    // Note: Timeout if guaranteed ONLY to be exceeded iff we are processing IBCPacketDropped
+    // otherwise, this is just interesting metadata
+
+	// block height after which the packet times out 
 	TimeoutHeight uint64
 	// block timestamp (in nanoseconds) after which the packet times out
 	TimeoutTimestamp uint64
@@ -203,11 +235,108 @@ type IBCPacketInfo struct {
 
 Channel Lifecycle:
 
-**TODO**
+```go
+package lifecycle
+
+// if this returns error, we reject the channel opening
+// otherwise response has the versions we accept
+//
+// It is provided the full ChannelInfo being proposed to do any needed checks
+func OnChanNegotiate(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelInfo) 
+    (version Version, err error) {}
+
+// This is called with the full ChannelInfo once the other side has agreed.
+// An error here will still abort the handshake process. (so you can double check the order/version here)
+//
+// The main purpose is to allow the contract to set up any internal state knowing the channel was established,
+// and keep a registry with that ChannelID
+func OnChanOpened(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelInfo) error {}
+
+// This is called when the channel is closed for any reason
+// TODO: any meaning to return an error here? we cannot abort closing a channel
+func OnChanClosed(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelClosedInfo) error {}
+
+type ChannelInfo struct {
+    // key info to enforce (error if not what is expected)
+    Order channeltypes.Order
+    // the version info the counterparty contract is proposing / agreed to
+    CounterpartyVerson Version
+    // local id for the Channel that is being initiated
+    ChannelID string
+    // these two are taken from channeltypes.Counterparty
+    RemotePortID string
+    RemoteChannelID string
+}
+
+type ChannelClosedInfo struct {
+    // local id for the Channel that is being shut down
+    ChannelID string
+    // TODO: any more info we need???
+}
+```
 
 Queries:
 
-**TODO**
+These are callbacks that the contract can make, calling into a QueryPlugin.
+The general type definition for a `QueryPlugin` is
+`func(ctx sdk.Context, request *wasmTypes.IBCQuery) ([]byte, error)`.
+All other info (like the contract address we are querying for) must be passed in
+from the contract (which knows it's own address).
+
+Here we just defined the request and response types (which will be serialized into `[]byte`)
+
+```go
+package queries
+
+type QueryPort struct {
+   ContractAddress string
+}
+
+type QueryPortResponse struct {
+   PortID string
+}
+
+type QueryChannels struct {
+    // exactly one of these must be set. ContractAddress is a shortcut to save the Contract->PortID mapping
+    PortID string
+	ContractAddress string
+}
+
+type QueryChannelsResponse struct {
+   ChannelIDs []ChannelMetadata
+}
+
+type ChannelMetadata struct {
+    ChannelID string
+    RemotePortID string
+    Order channeltypes.Order
+    CounterpartyVerson Version
+}
+
+type QueryPendingPackets struct {
+    // Always required
+    ChannelID string
+
+    // exactly one of these must be set. ContractAddress is a shortcut to save the Contract->PortID mapping
+    PortID string
+	ContractAddress string
+}
+
+type QueryPendingPacketsResponse struct {
+   Packets []PacketMetadata
+}
+
+type PacketMetadata struct {
+    // The original (serialized) message we sent
+    Msg []byte
+
+    Sequence uint64
+	// block height after which the packet times out 
+	TimeoutHeight uint64
+	// block timestamp (in nanoseconds) after which the packet times out
+	TimeoutTimestamp uint64
+}
+```
 
 ### Contract (Wasm) entrypoints
 
@@ -227,6 +356,11 @@ This is inspired by the Agoric design, but also adds considerable complexity to 
 implementation as well as the correctness reasoning of any given contract. This will not be
 available in the first version of our "IBC Enabled contracts", but we can consider it for later,
 if there are concrete user cases that would significantly benefit from this added complexity. 
+
+### Add multihop support
+
+Once the ICS and IBC specs fully establish how multihop packets work, we should add support for that.
+Both on setting up the routes with OpenChannel, as well as acting as an intermediate relayer (if that is possible)
 
 ## Rejected Ideas
   
