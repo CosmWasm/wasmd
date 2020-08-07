@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -43,7 +44,7 @@ func main() {
 		WithInput(os.Stdin).
 		WithAccountRetriever(authtypes.NewAccountRetriever(encodingConfig.Marshaler)).
 		WithBroadcastMode(flags.BroadcastBlock).
-		WithHomeDir(app.DefaultNodeHome)
+		WithHomeDir(app.DefaultCLIHome)
 
 	rootCmd := &cobra.Command{
 		Use:   "wasmcli",
@@ -70,10 +71,19 @@ func main() {
 		cli.NewCompletionCmd(rootCmd, true),
 	)
 
-	// Add flags and prefix all env exposed with WM
-	executor := cli.PrepareMainCmd(rootCmd, "WM", app.DefaultCLIHome)
+	// Create and set a client.Context on the command's Context. During the pre-run
+	// of the root command, a default initialized client.Context is provided to
+	// seed child command execution with values such as AccountRetriver, Keyring,
+	// and a Tendermint RPC. This requires the use of a pointer reference when
+	// getting and setting the client.Context. Ideally, we utilize
+	// https://github.com/spf13/cobra/pull/1118.
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
+	ctx = context.WithValue(ctx, server.ServerContextKey, server.NewDefaultContext())
 
-	err := executor.Execute()
+	executor := cli.PrepareBaseCmd(rootCmd, "WM", app.DefaultCLIHome)
+	err := executor.ExecuteContext(ctx)
+
 	if err != nil {
 		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
 		os.Exit(1)
