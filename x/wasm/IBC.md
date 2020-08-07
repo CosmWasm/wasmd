@@ -36,7 +36,7 @@ as how contracts can properly identify their counterparty.
   (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
 * Both the *Port* and the *Channel* are fully owned by one contract.
 * `x/wasm` will allow both *ORDERED* and *UNORDERED* channel and pass that mode
-  down to the contract in `OnTryOpenChannel`, so the contract can decide if it accepts
+  down to the contract in `OnChanOpenTry`, so the contract can decide if it accepts
   the mode. We will recommend the contract developers stick with *ORDERED* channels
   unless they can reason about async packet timing.
 * When sending a packet, the CosmWasm contract must specify the *ChannelID*
@@ -79,13 +79,18 @@ Packet Lifecycle:
   an IBCEnabled contract, this will be routed to the proper contract
   and call an exposed function for this purpose.
 * `IBCPacketAck` - The original sender of `IBCSendMsg` will
-  get this callback eventually if the message was successfully
-  processed on the other chain (this implies using an envelope for the 
-  IBC acknowledge message, so the Go code can differentiate between success and error)
-* `IBCPacketFailed` - The original sender of `IBCSendMsg` will 
+  get this callback eventually if the message was
+  processed on the other chain (this may be either a success or an error,
+  but comes from the app-level protocol, not the IBC protocol).
+* `IBCPacketDropped` - The original sender of `IBCSendMsg` will 
   get this callback eventually if the message failed to be
-  processed on the other chain (for timeout, closed channel, or the 
-  other side returning an error message in the IBC acknowledgement)
+  processed on the other chain (for timeout, closed channel, or 
+  other IBC-level failure)
+  
+Note: We may add some helpers inside the contract to map `IBCPacketAck` / `IBCPacketDropped`
+to `IBCPacketSucceeded` / `IBCPacketFailed` assuming they use the standard envelope. However,
+we decided not to enforce this on the Go-level, to allow contracts to communicate using protocols
+that do not use this envelope.
 
 Channel Lifecycle Hooks:
 
