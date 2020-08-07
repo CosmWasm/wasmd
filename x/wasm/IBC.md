@@ -43,12 +43,10 @@ as how contracts can properly identify their counterparty.
   and remote *PortID*, which is generally provided by the external client
   which understands which channels it wishes to communicate over.
 * When receiving a Packet (or Ack or Error), the contracts receives the
-  *ChannelID* as well as remote *PortID* (and *ClientID*???) that is
-  communicating.
+  *ChannelID* as well as remote *PortID* with which it is communicating.
 * When receiving an Ack or Error packet, the contract also receives the
   original packet that it set on Send 
-  
-  
+
 ## Workflow
 
 Establishing *Clients* and *Connections* is out of the scope of this
