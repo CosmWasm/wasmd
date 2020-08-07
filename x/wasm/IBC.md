@@ -4,14 +4,50 @@ This documents how CosmWasm contracts are expected to interact with IBC.
 
 ## General Concepts
 
-**IBC Enabled** - when instantiating a contract, we detect if it supports IBC messages
-  (this is an optional extension). If so, it is considered "IBC Enabled".
-  This info should be public on all contracts. (For mock, we assume all
-  contracts are IBC enabled)
+**IBC Enabled** - when instantiating a contract, we detect if it supports IBC messages.
+  We require "feature flags" in the contract/vm handshake to ensure compatibility
+  for features like staking or chain-specific extensions. IBC functionality will require
+  another "feature flag", and the list of "enabled features" can be returned to the `x/wasm`
+  module to control conditional IBC behavior.
+  
+  If this feature is enabled, it is considered "IBC Enabled", and that info will
+  be stored in the ContractInfo. (For mock, we assume all contracts are IBC enabled)
   
 Also, please read the [IBC Docs](https://docs.cosmos.network/master/ibc/overview.html)
 for detailed descriptions of the terms *Port*, *Client*, *Connection*,
 and *Channel*
+  
+## Overview
+
+We use "One Port per Contract", which is the most straight-forward mapping, treating each contract 
+like a module. It does lead to very long portIDs however. Pay special attention to both the Channel establishment 
+(which should be compatible with standard ICS20 modules without changes on their part), as well
+as how contracts can properly identify their counterparty.
+
+(We considered on port for the `x/wasm` module and multiplexing on it, but [dismissed that idea](#rejected-ideas))
+
+* Upon `Instantiate`, if a contract is *IBC Enabled*, we dynamically 
+  bind a port for this contract. The port name is `wasm-<contract address>`,
+  eg. `wasm-cosmos1hmdudppzceg27qsuq707tjg8rkgj7g5hnvnw29`
+* If a *Channel* is being established with a registered `wasm-xyz` port,
+  the `x/wasm.Keeper` will handle this and call into the appropriate
+  contract to determine supported protocol versions during the
+  [`ChanOpenTry` and `ChanOpenAck` phases](https://docs.cosmos.network/master/ibc/overview.html#channels).
+  (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
+* Both the *Port* and the *Channel* are fully owned by one contract.
+* `x/wasm` will allow both *ORDERED* and *UNORDERED* channel and pass that mode
+  down to the contract in `OnTryOpenChannel`, so the contract can decide if it accepts
+  the mode. We will recommend the contract developers stick with *ORDERED* channels
+  unless they can reason about async packet timing.
+* When sending a packet, the CosmWasm contract must specify the *ChannelID*
+  and remote *PortID*, which is generally provided by the external client
+  which understands which channels it wishes to communicate over.
+* When receiving a Packet (or Ack or Error), the contracts receives the
+  *ChannelID* as well as remote *PortID* (and *ClientID*???) that is
+  communicating.
+* When receiving an Ack or Error packet, the contract also receives the
+  original packet that it set on Send 
+  
   
 ## Workflow
 
@@ -105,6 +141,7 @@ type IBCOpenChannel struct {
     // this is the remote port ID
     PortID string
     Versions []Version
+    Ordered bool
     // more info??
 }
 
@@ -173,43 +210,29 @@ Queries:
 
 **TODO**
 
-## Ports and Channels Discussion
+## Future Ideas
+
+Here are some ideas we may add in the future
+
+### Dynamic Ports and Channels
+
+* multiple ports per contract
+* elastic ports that can be assigned to different contracts
+* transfer of channels to another contract
+
+This is inspired by the Agoric design, but also adds considerable complexity to both the `x/wasm`
+implementation as well as the correctness reasoning of any given contract. This will not be
+available in the first version of our "IBC Enabled contracts", but we can consider it for later,
+if there are concrete user cases that would significantly benefit from this added complexity. 
+
+## Rejected Ideas
+  
+### One Port per Module
 
 We decided on "one port per contract", especially after the IBC team raised
 the max length on port names to allow `wasm-<bech32 address>` to be a valid port.
-Here are the arguments for "one port for x/wasm" vs "one port per contract"
-
-### One Port per Contract
-
-This may be the most straight-forward mapping, treating each contract 
-like a module. It does lead to very long portIDs however. Make special
-attention to both the Channel establishment (which should be compatible
-with standard ICS20 modules without changes on their part), as well
-as how contracts can properly identify their counterparty.
-
-* Upon `Instantiate`, if a contract is *IBC Enabled*, we dynamically 
-  bind a port for this contract. The port name is `wasm-<contract address>`,
-  eg. `wasm-cosmos1hmdudppzceg27qsuq707tjg8rkgj7g5hnvnw29`
-* If a *Channel* is being established with a registered `wasm-xyz` port,
-  the `x/wasm.Keeper` will handle this and call into the appropriate
-  contract to determine supported protocol versions during the
-  [`ChanOpenTry` and `ChanOpenAck` phases](https://docs.cosmos.network/master/ibc/overview.html#channels).
-  (See [Channel Handshake Version Negotiation](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation))
-* Both the *Port* and the *Channel* are fully owned by one contract.
-* Question: `x/wasm` only accepts *ORDERED Channels* for simplicity of contract
-  correctness? Or should we allow the contract to decide?
-* When sending a packet, the CosmWasm contract must specify the *ChannelID*
-  and remote *PortID*, which is generally provided by the external client
-  which understands which channels it wishes to communicate over.
-* When sending a packet, the contract can set a custom identifier (of
-  max 64 characters) that it can use to look this up later.
-* When receiving a Packet (or Ack or Error), the contracts receives the
-  *ChannelID* as well as remote *PortID* (and *ClientID*???) that is
-  communicating.
-* When receiving an Ack or Error packet, the contract also receives the
-  original packet that it set on Send 
-  
-### One Port per Module
+Here are the arguments for "one port for x/wasm" vs "one port per contract". Here 
+was an alternate proposal:
 
 In this approach, the `x/wasm` module just binds one port to handle all
 modules. This can be well defined name like `wasm`. Since we always
