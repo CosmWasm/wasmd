@@ -1,6 +1,6 @@
 module github.com/CosmWasm/wasmd
 
-go 1.13
+go 1.14
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.0
