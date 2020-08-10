@@ -110,6 +110,8 @@ channel handshakes, we simplify this from the view of the contract:
 2. The counterparty has a chance for version negotiation in `OnChanOpenTry`, where the contract
    can apply custom logic. It provides the protocol versions that the initiating party expects, and 
    the contract can reject the connection or accept it and return the protocol version it will communicate with.
+   Implementing this requires that we support [ADR 025](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-025-ibc-passive-channels.md).
+   TODO: check with Agoric and cwgoes to upstream any Cosmos SDK changes so this can work out of the box.
 3. `OnChanOpened` is called on the contract for both `OnChanOpenAck` and `OnChanOpenConfirm` containing
    the final version string (counterparty version). This gives a chance to abort the process
    if we realize this doesn't work. Or save the info (we may need to define this channel uses an older version
@@ -167,12 +169,21 @@ type IBCSendMsg struct {
 
 // note that a contract has exactly one port, so the SourcePortID is implied
 type IBCOpenChannel struct {
+    // an establish connection between the two chains that we will multiplex on top of
     ConnectionID string
-    // this is the remote port ID, local port ID is implied as contract only has one port
-    PortID string
+    // This is the identifier we will use locally
+    LocalChannelID string
+
+    // note: local port ID is implied as contract only has one port
+    RemotePortID string
+    // this will be the channel id on the remote side. 
+    // ideally we can remove this soon
+    // https://github.com/cosmos/ics/issues/465
+    RemoteChannelID string 
+
     Version Version
     Order channeltypes.Order
-    // TODO: more info??
+
 }
 
 type IBCCloseChannel struct {
