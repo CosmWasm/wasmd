@@ -21,12 +21,12 @@ func TestQueryContractState(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -52,7 +52,7 @@ func TestQueryContractState(t *testing.T) {
 	keeper.importContractState(ctx, addr, contractModel)
 
 	// this gets us full error, not redacted sdk.Error
-	q := NewQuerier(keeper)
+	q := NewLegacyQuerier(keeper)
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery
@@ -159,12 +159,12 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -202,23 +202,23 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	}
 
 	// query and check the results are properly sorted
-	q := NewQuerier(keeper)
+	q := NewLegacyQuerier(keeper)
 	query := []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}
 	data := abci.RequestQuery{}
 	res, err := q(ctx, query, data)
 	require.NoError(t, err)
 
-	var contracts []ContractInfoWithAddress
+	var contracts []map[string]interface{}
 	err = json.Unmarshal(res, &contracts)
 	require.NoError(t, err)
 
 	require.Equal(t, 10, len(contracts))
 
 	for i, contract := range contracts {
-		assert.Equal(t, fmt.Sprintf("contract %d", i), contract.Label)
-		assert.NotEmpty(t, contract.Address)
+		assert.Equal(t, fmt.Sprintf("contract %d", i), contract["label"])
+		assert.NotEmpty(t, contract["address"])
 		// ensure these are not shown
-		assert.Nil(t, contract.Created)
+		assert.Nil(t, contract["created"])
 	}
 }
 
@@ -240,44 +240,44 @@ func TestQueryContractHistory(t *testing.T) {
 	}{
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.InitContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeInit,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    2,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    3,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.InitContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    3,
 				Msg:       []byte(`"migrate message 2"`),
 			}},
@@ -285,7 +285,7 @@ func TestQueryContractHistory(t *testing.T) {
 		"unknown contract address": {
 			srcQueryAddr: otherAddr,
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
@@ -297,7 +297,7 @@ func TestQueryContractHistory(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			_, _, myContractAddr := keyPubAddr()
 			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
-			q := NewQuerier(keeper)
+			q := NewLegacyQuerier(keeper)
 			queryContractAddr := spec.srcQueryAddr
 			if queryContractAddr == nil {
 				queryContractAddr = myContractAddr
@@ -353,7 +353,7 @@ func TestQueryCodeList(t *testing.T) {
 					wasmCode),
 				)
 			}
-			q := NewQuerier(keeper)
+			q := NewLegacyQuerier(keeper)
 			// when
 			query := []string{QueryListCode}
 			data := abci.RequestQuery{}
@@ -361,6 +361,10 @@ func TestQueryCodeList(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
+			if len(spec.codeIDs) == 0 {
+				require.Nil(t, resData)
+				return
+			}
 
 			var got []map[string]interface{}
 			err = json.Unmarshal(resData, &got)

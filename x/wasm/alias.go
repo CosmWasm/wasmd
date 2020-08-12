@@ -43,7 +43,8 @@ const (
 
 var (
 	// functions aliases
-	RegisterCodec             = types.RegisterCodec
+	RegisterCodec             = types.RegisterLegacyAminoCodec
+	RegisterInterfaces        = types.RegisterInterfaces
 	ValidateGenesis           = types.ValidateGenesis
 	ConvertToProposals        = types.ConvertToProposals
 	GetCodeKey                = types.GetCodeKey
@@ -66,16 +67,16 @@ var (
 	EncodeStakingMsg          = keeper.EncodeStakingMsg
 	EncodeWasmMsg             = keeper.EncodeWasmMsg
 	NewKeeper                 = keeper.NewKeeper
-	NewQuerier                = keeper.NewQuerier
+	NewLegacyQuerier          = keeper.NewLegacyQuerier
 	DefaultQueryPlugins       = keeper.DefaultQueryPlugins
 	BankQuerier               = keeper.BankQuerier
 	NoCustomQuerier           = keeper.NoCustomQuerier
 	StakingQuerier            = keeper.StakingQuerier
 	WasmQuerier               = keeper.WasmQuerier
-	MakeTestCodec             = keeper.MakeTestCodec
 	CreateTestInput           = keeper.CreateTestInput
 	TestHandler               = keeper.TestHandler
 	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
+	NewQuerier                = keeper.NewQuerier
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
@@ -114,6 +115,8 @@ type (
 	ContractInfo            = types.ContractInfo
 	CreatedAt               = types.AbsoluteTxPosition
 	Config                  = types.WasmConfig
+	ContractInfoWithAddress = types.ContractInfoWithAddress
+	CodeInfoResponse        = types.CodeInfoResponse
 	MessageHandler          = keeper.MessageHandler
 	BankEncoder             = keeper.BankEncoder
 	CustomEncoder           = keeper.CustomEncoder
@@ -121,9 +124,6 @@ type (
 	WasmEncoder             = keeper.WasmEncoder
 	MessageEncoders         = keeper.MessageEncoders
 	Keeper                  = keeper.Keeper
-	ContractInfoWithAddress = keeper.ContractInfoWithAddress
-	GetCodeResponse         = keeper.GetCodeResponse
-	ListCodeResponse        = keeper.ListCodeResponse
 	QueryHandler            = keeper.QueryHandler
 	CustomQuerier           = keeper.CustomQuerier
 	QueryPlugins            = keeper.QueryPlugins

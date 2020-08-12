@@ -2,10 +2,14 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-// RegisterCodec registers the account types and interface
-func RegisterCodec(cdc *codec.Codec) {
+// RegisterLegacyAminoCodec registers the account types and interface
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(MsgStoreCode{}, "wasm/MsgStoreCode", nil)
 	cdc.RegisterConcrete(MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(MsgExecuteContract{}, "wasm/MsgExecuteContract", nil)
@@ -20,12 +24,36 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
 }
 
-// ModuleCdc generic sealed codec to be used throughout module
-var ModuleCdc *codec.Codec
+func RegisterInterfaces(registry types.InterfaceRegistry) {
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&MsgStoreCode{},
+		&MsgInstantiateContract{},
+		&MsgExecuteContract{},
+		&MsgMigrateContract{},
+		&MsgUpdateAdmin{},
+		&MsgClearAdmin{},
+	)
+	registry.RegisterImplementations(
+		(*govtypes.Content)(nil),
+		&StoreCodeProposal{},
+		&InstantiateContractProposal{},
+		&MigrateContractProposal{},
+		&UpdateAdminProposal{},
+		&ClearAdminProposal{},
+	)
+}
+
+var (
+	amino = codec.NewLegacyAmino()
+
+	// ModuleCdc references the global x/wasm module codec.
+
+	ModuleCdc = codec.NewAminoCodec(amino)
+)
 
 func init() {
-	cdc := codec.New()
-	RegisterCodec(cdc)
-	codec.RegisterCrypto(cdc)
-	ModuleCdc = cdc.Seal()
+	RegisterLegacyAminoCodec(amino)
+	cryptocodec.RegisterCrypto(amino)
+	amino.Seal()
 }

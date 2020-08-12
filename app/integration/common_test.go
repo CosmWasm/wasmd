@@ -6,20 +6,25 @@ This file is full of test helper functions, taken from simapp
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	wasmd "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
+	"github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
-
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -32,12 +37,12 @@ const (
 // Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
 func Setup(isCheckTx bool) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, 0, wasm.EnableAllProposals, nil)
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0, wasm.EnableAllProposals)
 	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := wasmd.NewDefaultGenesisState()
-		stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
+		stateBytes, err := codec.MarshalJSONIndent(app.LegacyAmino(), genesisState)
 		if err != nil {
 			panic(err)
 		}
@@ -56,19 +61,18 @@ func Setup(isCheckTx bool) *wasmd.WasmApp {
 
 // SetupWithGenesisAccounts initializes a new wasmd.WasmApp with the passed in
 // genesis accounts.
-func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *wasmd.WasmApp {
+func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, 0, wasm.EnableAllProposals, nil)
-	// app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, 0)
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0, wasm.EnableAllProposals)
 
 	// initialize the chain with the passed in genesis accounts
 	genesisState := wasmd.NewDefaultGenesisState()
 
-	authGenesis := auth.NewGenesisState(auth.DefaultParams(), genAccs)
-	genesisStateBz := app.Codec().MustMarshalJSON(authGenesis)
-	genesisState[auth.ModuleName] = genesisStateBz
+	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
+	genesisStateBz := app.LegacyAmino().MustMarshalJSON(authGenesis)
+	genesisState[authtypes.ModuleName] = genesisStateBz
 
-	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
+	stateBytes, err := codec.MarshalJSONIndent(app.LegacyAmino(), genesisState)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +87,7 @@ func SetupWithGenesisAccounts(genAccs []authexported.GenesisAccount) *wasmd.Wasm
 	)
 
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	return app
 }
@@ -96,8 +100,9 @@ func SignAndDeliver(
 	t *testing.T, app *wasmd.WasmApp, msgs []sdk.Msg,
 	accNums, seq []uint64, expPass bool, priv ...crypto.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
-
-	tx := GenTx(
+	t.Helper()
+	tx, err := GenTx(
+		wasmd.MakeEncodingConfig().TxConfig,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
 		DefaultGenTxGas,
@@ -106,9 +111,9 @@ func SignAndDeliver(
 		seq,
 		priv...,
 	)
-
+	require.NoError(t, err)
 	// Simulate a sending a transaction and committing a block
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	gasInfo, res, err := app.Deliver(tx)
 	if expPass {
@@ -126,27 +131,58 @@ func SignAndDeliver(
 }
 
 // GenTx generates a signed mock transaction.
-func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums []uint64, seq []uint64, priv ...crypto.PrivKey) auth.StdTx {
-	fee := auth.StdFee{
-		Amount: feeAmt,
-		Gas:    gas,
+func GenTx(gen client.TxConfig, msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums []uint64, seq []uint64, priv ...crypto.PrivKey) (sdk.Tx, error) {
+	sigs := make([]signing.SignatureV2, len(priv))
+
+	// create a random length memo
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	memo := simulation.RandStringOfLength(r, simulation.RandIntBetween(r, 0, 100))
+
+	signMode := gen.SignModeHandler().DefaultMode()
+
+	for i, p := range priv {
+		sigs[i] = signing.SignatureV2{
+			PubKey: p.PubKey(),
+			Data: &signing.SingleSignatureData{
+				SignMode: signMode,
+			},
+		}
 	}
 
-	sigs := make([]auth.StdSignature, len(priv))
-
-	memo := "Test tx"
+	tx := gen.NewTxBuilder()
+	err := tx.SetMsgs(msgs...)
+	if err != nil {
+		return nil, err
+	}
+	err = tx.SetSignatures(sigs...)
+	if err != nil {
+		return nil, err
+	}
+	tx.SetMemo(memo)
+	tx.SetFeeAmount(feeAmt)
+	tx.SetGasLimit(gas)
 	for i, p := range priv {
 		// use a empty chainID for ease of testing
-		sig, err := p.Sign(auth.StdSignBytes(chainID, accnums[i], seq[i], fee, msgs, memo))
+		signerData := authsign.SignerData{
+			ChainID:       chainID,
+			AccountNumber: accnums[i],
+			Sequence:      seq[i],
+		}
+		signBytes, err := gen.SignModeHandler().GetSignBytes(signMode, signerData, tx.GetTx())
 		if err != nil {
 			panic(err)
 		}
-
-		sigs[i] = auth.StdSignature{
-			PubKey:    p.PubKey(),
-			Signature: sig,
+		sig, err := p.Sign(signBytes)
+		if err != nil {
+			panic(err)
+		}
+		sigs[i].Data.(*signing.SingleSignatureData).Signature = sig
+		err = tx.SetSignatures(sigs...)
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	return auth.NewStdTx(msgs, fee, sigs, memo)
+	return tx.GetTx(), nil
 }

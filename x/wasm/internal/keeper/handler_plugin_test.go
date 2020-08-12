@@ -3,16 +3,16 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncoding(t *testing.T) {
@@ -55,9 +55,9 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				bank.MsgSend{
-					FromAddress: addr1,
-					ToAddress:   addr2,
+				&banktypes.MsgSend{
+					FromAddress: addr1.String(),
+					ToAddress:   addr2.String(),
 					Amount: sdk.Coins{
 						sdk.NewInt64Coin("uatom", 12345),
 						sdk.NewInt64Coin("usdt", 54321),
@@ -115,7 +115,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				types.MsgExecuteContract{
+				&types.MsgExecuteContract{
 					Sender:    addr1,
 					Contract:  addr2,
 					Msg:       jsonMsg,
@@ -137,7 +137,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				types.MsgInstantiateContract{
+				&types.MsgInstantiateContract{
 					Sender: addr1,
 					CodeID: 7,
 					// TODO: fix this
@@ -158,9 +158,9 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				staking.MsgDelegate{
-					DelegatorAddress: addr1,
-					ValidatorAddress: valAddr,
+				&stakingtypes.MsgDelegate{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: valAddr.String(),
 					Amount:           sdk.NewInt64Coin("stake", 777),
 				},
 			},
@@ -188,9 +188,9 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				staking.MsgUndelegate{
-					DelegatorAddress: addr1,
-					ValidatorAddress: valAddr,
+				&stakingtypes.MsgUndelegate{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: valAddr.String(),
 					Amount:           sdk.NewInt64Coin("stake", 555),
 				},
 			},
@@ -207,10 +207,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				staking.MsgBeginRedelegate{
-					DelegatorAddress:    addr1,
-					ValidatorSrcAddress: valAddr,
-					ValidatorDstAddress: valAddr2,
+				&stakingtypes.MsgBeginRedelegate{
+					DelegatorAddress:    addr1.String(),
+					ValidatorSrcAddress: valAddr.String(),
+					ValidatorDstAddress: valAddr2.String(),
 					Amount:              sdk.NewInt64Coin("stake", 222),
 				},
 			},
@@ -225,13 +225,13 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				distribution.MsgSetWithdrawAddress{
-					DelegatorAddress: addr1,
-					WithdrawAddress:  addr1,
+				&distributiontypes.MsgSetWithdrawAddress{
+					DelegatorAddress: addr1.String(),
+					WithdrawAddress:  addr1.String(),
 				},
-				distribution.MsgWithdrawDelegatorReward{
-					DelegatorAddress: addr1,
-					ValidatorAddress: valAddr2,
+				&distributiontypes.MsgWithdrawDelegatorReward{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: valAddr2.String(),
 				},
 			},
 		},
@@ -246,13 +246,13 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				distribution.MsgSetWithdrawAddress{
-					DelegatorAddress: addr1,
-					WithdrawAddress:  addr2,
+				&distributiontypes.MsgSetWithdrawAddress{
+					DelegatorAddress: addr1.String(),
+					WithdrawAddress:  addr2.String(),
 				},
-				distribution.MsgWithdrawDelegatorReward{
-					DelegatorAddress: addr1,
-					ValidatorAddress: valAddr2,
+				&distributiontypes.MsgWithdrawDelegatorReward{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: valAddr2.String(),
 				},
 			},
 		},

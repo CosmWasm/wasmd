@@ -1,40 +1,19 @@
 package types
 
 import (
-	"encoding/json"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	tmBytes "github.com/tendermint/tendermint/libs/bytes"
-
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const defaultLRUCacheSize = uint64(0)
 const defaultQueryGasLimit = uint64(3000000)
-
-// Model is a struct that holds a KV pair
-type Model struct {
-	// hex-encode key to read it better (this is often ascii)
-	Key tmBytes.HexBytes `json:"key"`
-	// base64-encode raw value
-	Value []byte `json:"val"`
-}
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "key")
 	}
 	return nil
-}
-
-// CodeInfo is data for the uploaded contract WASM code
-type CodeInfo struct {
-	CodeHash          []byte         `json:"code_hash"`
-	Creator           sdk.AccAddress `json:"creator"`
-	Source            string         `json:"source"`
-	Builder           string         `json:"builder"`
-	InstantiateConfig AccessConfig   `json:"instantiate_config"`
 }
 
 func (c CodeInfo) ValidateBasic() error {
@@ -67,33 +46,10 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 	}
 }
 
-type ContractCodeHistoryOperationType string
+var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{ContractCodeHistoryTypeGenesis, ContractCodeHistoryTypeInit, ContractCodeHistoryTypeMigrate}
 
-const (
-	InitContractCodeHistoryType    ContractCodeHistoryOperationType = "Init"
-	MigrateContractCodeHistoryType ContractCodeHistoryOperationType = "Migrate"
-	GenesisContractCodeHistoryType ContractCodeHistoryOperationType = "Genesis"
-)
-
-var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{InitContractCodeHistoryType, MigrateContractCodeHistoryType}
-
-// ContractCodeHistoryEntry stores code updates to a contract.
-type ContractCodeHistoryEntry struct {
-	Operation ContractCodeHistoryOperationType `json:"operation"`
-	CodeID    uint64                           `json:"code_id"`
-	Updated   *AbsoluteTxPosition              `json:"updated,omitempty"`
-	Msg       json.RawMessage                  `json:"msg,omitempty"`
-}
-
-// ContractInfo stores a WASM contract instance
-type ContractInfo struct {
-	CodeID  uint64         `json:"code_id"`
-	Creator sdk.AccAddress `json:"creator"`
-	Admin   sdk.AccAddress `json:"admin,omitempty"`
-	Label   string         `json:"label"`
-	// never show this in query results, just use for sorting
-	// (Note: when using json tag "-" amino refused to serialize it...)
-	Created *AbsoluteTxPosition `json:"created,omitempty"`
+func (c *ContractHistory) AppendCodeHistory(newEntries ...ContractCodeHistoryEntry) {
+	c.CodeHistoryEntries = append(c.CodeHistoryEntries, newEntries...)
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
@@ -106,6 +62,7 @@ func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string,
 		Created: createdAt,
 	}
 }
+
 func (c *ContractInfo) ValidateBasic() error {
 	if c.CodeID == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code id")
@@ -126,7 +83,7 @@ func (c *ContractInfo) ValidateBasic() error {
 
 func (c ContractInfo) InitialHistory(initMsg []byte) ContractCodeHistoryEntry {
 	return ContractCodeHistoryEntry{
-		Operation: InitContractCodeHistoryType,
+		Operation: ContractCodeHistoryTypeInit,
 		CodeID:    c.CodeID,
 		Updated:   c.Created,
 		Msg:       initMsg,
@@ -135,7 +92,7 @@ func (c ContractInfo) InitialHistory(initMsg []byte) ContractCodeHistoryEntry {
 
 func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) ContractCodeHistoryEntry {
 	h := ContractCodeHistoryEntry{
-		Operation: MigrateContractCodeHistoryType,
+		Operation: ContractCodeHistoryTypeMigrate,
 		CodeID:    codeID,
 		Updated:   NewAbsoluteTxPosition(ctx),
 		Msg:       msg,
@@ -148,18 +105,10 @@ func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) 
 func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntry {
 	c.Created = NewAbsoluteTxPosition(ctx)
 	return ContractCodeHistoryEntry{
-		Operation: GenesisContractCodeHistoryType,
+		Operation: ContractCodeHistoryTypeGenesis,
 		CodeID:    c.CodeID,
 		Updated:   c.Created,
 	}
-}
-
-// AbsoluteTxPosition can be used to sort contracts
-type AbsoluteTxPosition struct {
-	// BlockHeight is the block the contract was created at
-	BlockHeight int64
-	// TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
-	TxIndex uint64
 }
 
 // LessThan can be used to sort

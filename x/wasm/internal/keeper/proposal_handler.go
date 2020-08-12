@@ -23,16 +23,16 @@ func NewWasmProposalHandler(k Keeper, enabledProposalTypes []types.ProposalType)
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unsupported wasm proposal content type: %q", content.ProposalType())
 		}
 		switch c := content.(type) {
-		case types.StoreCodeProposal:
-			return handleStoreCodeProposal(ctx, k, c)
-		case types.InstantiateContractProposal:
-			return handleInstantiateProposal(ctx, k, c)
-		case types.MigrateContractProposal:
-			return handleMigrateProposal(ctx, k, c)
-		case types.UpdateAdminProposal:
-			return handleUpdateAdminProposal(ctx, k, c)
-		case types.ClearAdminProposal:
-			return handleClearAdminProposal(ctx, k, c)
+		case *types.StoreCodeProposal:
+			return handleStoreCodeProposal(ctx, k, *c)
+		case *types.InstantiateContractProposal:
+			return handleInstantiateProposal(ctx, k, *c)
+		case *types.MigrateContractProposal:
+			return handleMigrateProposal(ctx, k, *c)
+		case *types.UpdateAdminProposal:
+			return handleUpdateAdminProposal(ctx, k, *c)
+		case *types.ClearAdminProposal:
+			return handleClearAdminProposal(ctx, k, *c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
@@ -93,7 +93,15 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
 	)
-	ctx.EventManager().EmitEvents(append(res.Events, ourEvent))
+	ctx.EventManager().EmitEvent(ourEvent)
+
+	for _, e := range res.Events {
+		attr := make([]sdk.Attribute, len(e.Attributes))
+		for i, a := range e.Attributes {
+			attr[i] = sdk.NewAttribute(string(a.Key), string(a.Value))
+		}
+		ctx.EventManager().EmitEvent(sdk.NewEvent(e.Type, attr...))
+	}
 	return nil
 }
 
