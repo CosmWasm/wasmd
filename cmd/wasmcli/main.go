@@ -95,7 +95,7 @@ func main() {
 }
 
 func queryCmd() *cobra.Command {
-	queryCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
 		Short:                      "Querying subcommands",
@@ -104,7 +104,7 @@ func queryCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	queryCmd.AddCommand(
+	cmd.AddCommand(
 		authcmd.GetAccountCmd(),
 		flags.LineBreak,
 		rpc.ValidatorCommand(),
@@ -114,13 +114,14 @@ func queryCmd() *cobra.Command {
 		flags.LineBreak,
 	)
 
-	app.ModuleBasics.AddQueryCommands(queryCmd)
+	app.ModuleBasics.AddQueryCommands(cmd)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
-	return queryCmd
+	return cmd
 }
 
 func txCmd() *cobra.Command {
-	txCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",
 		DisableFlagParsing:         true,
@@ -128,7 +129,7 @@ func txCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	txCmd.AddCommand(
+	cmd.AddCommand(
 		bankcmd.NewSendTxCmd(),
 		flags.LineBreak,
 		authcmd.GetSignCommand(),
@@ -143,18 +144,19 @@ func txCmd() *cobra.Command {
 	)
 
 	// add modules' tx commands
-	app.ModuleBasics.AddTxCommands(txCmd)
+	app.ModuleBasics.AddTxCommands(cmd)
 
 	// remove auth and bank commands as they're mounted under the root tx command
 	var cmdsToRemove []*cobra.Command
 
-	for _, cmd := range txCmd.Commands() {
+	for _, cmd := range cmd.Commands() {
 		if cmd.Use == authtypes.ModuleName || cmd.Use == banktypes.ModuleName {
 			cmdsToRemove = append(cmdsToRemove, cmd)
 		}
 	}
 
-	txCmd.RemoveCommand(cmdsToRemove...)
+	cmd.RemoveCommand(cmdsToRemove...)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
-	return txCmd
+	return cmd
 }

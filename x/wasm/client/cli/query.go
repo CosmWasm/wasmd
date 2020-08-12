@@ -12,6 +12,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
@@ -38,7 +39,7 @@ func GetQueryCmd() *cobra.Command {
 
 // GetCmdListCode lists all wasm code uploaded
 func GetCmdListCode() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list-code",
 		Short: "List all wasm bytecode on the chain",
 		Long:  "List all wasm bytecode on the chain",
@@ -59,11 +60,13 @@ func GetCmdListCode() *cobra.Command {
 			return nil
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdListContractByCode lists all wasm code uploaded for given code id
 func GetCmdListContractByCode() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list-contract-by-code [code_id]",
 		Short: "List wasm all bytecode on the chain for given code id",
 		Long:  "List wasm all bytecode on the chain for given code id",
@@ -89,11 +92,13 @@ func GetCmdListContractByCode() *cobra.Command {
 			return nil
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdQueryCode returns the bytecode for a given contract
 func GetCmdQueryCode() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "code [code_id] [output filename]",
 		Short: "Downloads wasm bytecode for given code id",
 		Long:  "Downloads wasm bytecode for given code id",
@@ -132,11 +137,13 @@ func GetCmdQueryCode() *cobra.Command {
 			return ioutil.WriteFile(args[1], code.Data, 0644)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdGetContractInfo gets details about a given contract
 func GetCmdGetContractInfo() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "contract [bech32_address]",
 		Short: "Prints out metadata of a contract given its address",
 		Long:  "Prints out metadata of a contract given its address",
@@ -162,6 +169,8 @@ func GetCmdGetContractInfo() *cobra.Command {
 			return nil
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 // GetCmdGetContractState dumps full internal state of a given contract
@@ -183,7 +192,7 @@ func GetCmdGetContractState() *cobra.Command {
 }
 
 func GetCmdGetContractStateAll() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "all [bech32_address]",
 		Short: "Prints out all internal state of a contract given its address",
 		Long:  "Prints out all internal state of a contract given its address",
@@ -209,6 +218,8 @@ func GetCmdGetContractStateAll() *cobra.Command {
 			return nil
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 func GetCmdGetContractStateRaw() *cobra.Command {
@@ -243,6 +254,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -287,12 +299,13 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 // GetCmdGetContractHistory prints the code history for a given contract
 func GetCmdGetContractHistory() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "contract-history [bech32_address]",
 		Short: "Prints out the code history for a contract given its address",
 		Long:  "Prints out the code history for a contract given its address",
@@ -318,6 +331,8 @@ func GetCmdGetContractHistory() *cobra.Command {
 			return nil
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
 }
 
 type argumentDecoder struct {
