@@ -52,11 +52,11 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 		},
 	}
 	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, countingQuerier)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+	accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.WasmKeeper
 	realWasmQuerier = WasmQuerier(&keeper)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator = createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
+	creator = createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 
 	// store the code
 	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
@@ -81,9 +81,9 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = InstanceCost + 2_756
+		GasNoWork uint64 = InstanceCost + 2_729
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = InstanceCost + 8_464 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = InstanceCost + 8_437 // this is a little shy of 50k gas - to keep an eye on the limit
 
 		GasReturnUnhashed uint64 = 647
 		GasReturnHashed   uint64 = 597
@@ -227,12 +227,12 @@ func TestGasOnExternalQuery(t *testing.T) {
 			if tc.expectPanic {
 				require.Panics(t, func() {
 					// this should run out of gas
-					_, err := NewQuerier(keeper)(ctx, path, req)
+					_, err := NewLegacyQuerier(keeper)(ctx, path, req)
 					t.Logf("%v", err)
 				})
 			} else {
 				// otherwise, make sure we get a good success
-				_, err := NewQuerier(keeper)(ctx, path, req)
+				_, err := NewLegacyQuerier(keeper)(ctx, path, req)
 				require.NoError(t, err)
 			}
 		})
@@ -249,7 +249,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = InstanceCost + 233_379 // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = InstanceCost + 233_352 // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
 		GasReturnHashed uint64 = 603
 	)

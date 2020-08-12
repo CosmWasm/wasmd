@@ -1,22 +1,26 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/version"
 	"io"
+	"os"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
@@ -29,7 +33,7 @@ const flagInvCheckPeriod = "inv-check-period"
 var invCheckPeriod uint
 
 func main() {
-	cdc := app.MakeCodec()
+	encodingConfig := app.MakeEncodingConfig()
 
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
@@ -37,80 +41,96 @@ func main() {
 	config.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
 	config.Seal()
 
-	ctx := server.NewDefaultContext()
+	initClientCtx := client.Context{}.
+		WithJSONMarshaler(encodingConfig.Marshaler).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino).
+		WithInput(os.Stdin).
+		WithAccountRetriever(types.NewAccountRetriever(encodingConfig.Marshaler)).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithHomeDir(app.DefaultNodeHome)
+
 	cobra.EnableCommandSorting = false
 	rootCmd := &cobra.Command{
-		Use:               version.ServerName,
-		Short:             "Wasm Daemon (server) with wasm gov proposals disabled\",",
-		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
+		Use:   version.AppName,
+		Short: "Wasm Daemon (server)",
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+				return err
+			}
+
+			return server.InterceptConfigsPreRunHandler(cmd)
+		},
 	}
 
-	rootCmd.AddCommand(genutilcli.InitCmd(ctx, cdc, app.ModuleBasics, app.DefaultNodeHome))
-	rootCmd.AddCommand(genutilcli.CollectGenTxsCmd(ctx, cdc, auth.GenesisAccountIterator{}, app.DefaultNodeHome))
-	rootCmd.AddCommand(genutilcli.MigrateGenesisCmd(ctx, cdc))
 	rootCmd.AddCommand(
-		genutilcli.GenTxCmd(
-			ctx, cdc, app.ModuleBasics, staking.AppModuleBasic{},
-			auth.GenesisAccountIterator{}, app.DefaultNodeHome, app.DefaultCLIHome,
-		),
+		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
+		genutilcli.MigrateGenesisCmd(),
+		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
+		genutilcli.ValidateGenesisCmd(app.ModuleBasics, encodingConfig.TxConfig),
+		AddGenesisAccountCmd(app.DefaultNodeHome),
+		cli.NewCompletionCmd(rootCmd, true),
+		//testnetCmd(newApp.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		replayCmd(),
+		debug.Cmd(),
 	)
-	rootCmd.AddCommand(genutilcli.ValidateGenesisCmd(ctx, cdc, app.ModuleBasics))
-	rootCmd.AddCommand(AddGenesisAccountCmd(ctx, cdc, app.DefaultNodeHome, app.DefaultCLIHome))
-	rootCmd.AddCommand(flags.NewCompletionCmd(rootCmd, true))
-	// rootCmd.AddCommand(testnetCmd(ctx, cdc, app.ModuleBasics, auth.GenesisAccountIterator{}))
-	rootCmd.AddCommand(replayCmd())
-	rootCmd.AddCommand(debug.Cmd(cdc))
 
-	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
+	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, exportAppStateAndTMValidators)
+
+	// Create and set a client.Context on the command's Context. During the pre-run
+	// of the root command, a default initialized client.Context is provided to
+	// seed child command execution with values such as AccountRetriver, Keyring,
+	// and a Tendermint RPC. This requires the use of a pointer reference when
+	// getting and setting the client.Context. Ideally, we utilize
+	// https://github.com/spf13/cobra/pull/1118.
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
+	ctx = context.WithValue(ctx, server.ServerContextKey, server.NewDefaultContext())
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "WM", app.DefaultNodeHome)
 	rootCmd.PersistentFlags().UintVar(&invCheckPeriod, flagInvCheckPeriod,
 		0, "Assert registered invariants every N blocks")
-	err := executor.Execute()
+	err := executor.ExecuteContext(ctx)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer) abci.Application {
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 
-	if viper.GetBool(server.FlagInterBlockCache) {
+	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
 		cache = store.NewCommitKVStoreCacheManager()
 	}
-	pruningOpts, err := server.GetPruningOptionsFromFlags()
+
+	skipUpgradeHeights := make(map[int64]bool)
+	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+	pruningOpts, err := server.GetPruningOptionsFromFlags(appOpts)
 	if err != nil {
 		panic(err)
 	}
-	skipUpgradeHeights := make(map[int64]bool)
-	for _, h := range viper.GetIntSlice(server.FlagUnsafeSkipUpgrades) {
-		skipUpgradeHeights[int64(h)] = true
-	}
 
-	return app.NewWasmApp(logger, db, traceStore, true, invCheckPeriod,
-		app.GetEnabledProposals(),
-		skipUpgradeHeights,
-		baseapp.SetPruning(pruningOpts),
-		baseapp.SetMinGasPrices(viper.GetString(server.FlagMinGasPrices)),
-		baseapp.SetHaltHeight(viper.GetUint64(server.FlagHaltHeight)),
-		baseapp.SetHaltTime(viper.GetUint64(server.FlagHaltTime)),
-		baseapp.SetInterBlockCache(cache))
+	return app.NewWasmApp(logger, db, traceStore, true, skipUpgradeHeights, cast.ToString(appOpts.Get(flags.FlagHome)), cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)), app.GetEnabledProposals(), baseapp.SetPruning(pruningOpts), baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))), baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))), baseapp.SetHaltTime(cast.ToUint64(appOpts.Get(server.FlagHaltTime))), baseapp.SetInterBlockCache(cache), baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))))
 }
 
 func exportAppStateAndTMValidators(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailWhiteList []string,
-) (json.RawMessage, []tmtypes.GenesisValidator, error) {
+) (json.RawMessage, []tmtypes.GenesisValidator, *abci.ConsensusParams, error) {
 
+	var wasmApp *app.WasmApp
 	if height != -1 {
-		gapp := app.NewWasmApp(logger, db, traceStore, false, uint(1), app.GetEnabledProposals(), nil)
-		err := gapp.LoadHeight(height)
-		if err != nil {
-			return nil, nil, err
+		wasmApp = app.NewWasmApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), app.GetEnabledProposals())
+
+		if err := wasmApp.LoadHeight(height); err != nil {
+			return nil, nil, nil, err
 		}
-		return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+	} else {
+		wasmApp = app.NewWasmApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), app.GetEnabledProposals())
 	}
 
-	gapp := app.NewWasmApp(logger, db, traceStore, true, uint(1), app.GetEnabledProposals(), nil)
-	return gapp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
+	return wasmApp.ExportAppStateAndValidators(forZeroHeight, jailWhiteList)
 }

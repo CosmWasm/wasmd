@@ -16,9 +16,10 @@ import (
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,9 +124,9 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info correct": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
@@ -138,13 +139,13 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code ids can contain gaps": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}, {
-					CodeID:     3,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    3,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 10},
@@ -157,13 +158,13 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code order does not matter": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     2,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    2,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}, {
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: nil,
 				Sequences: []types.Sequence{
@@ -176,23 +177,23 @@ func TestFailFastImport(t *testing.T) {
 		},
 		"prevent code hash mismatch": {src: types.GenesisState{
 			Codes: []types.Code{{
-				CodeID:     1,
-				CodeInfo:   wasmTypes.CodeInfoFixture(func(i *wasmTypes.CodeInfo) { i.CodeHash = make([]byte, sha256.Size) }),
-				CodesBytes: wasmCode,
+				CodeID:    1,
+				CodeInfo:  wasmTypes.CodeInfoFixture(func(i *wasmTypes.CodeInfo) { i.CodeHash = make([]byte, sha256.Size) }),
+				CodeBytes: wasmCode,
 			}},
 			Params: types.DefaultParams(),
 		}},
 		"prevent duplicate codeIDs": {src: types.GenesisState{
 			Codes: []types.Code{
 				{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				},
 				{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				},
 			},
 			Params: types.DefaultParams(),
@@ -200,9 +201,9 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
 					{
@@ -221,9 +222,9 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info with two contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
 					{
@@ -256,9 +257,9 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract address": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
 					{
@@ -275,9 +276,9 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract model keys": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
 					{
@@ -310,9 +311,9 @@ func TestFailFastImport(t *testing.T) {
 		"prevent code id seq init value == max codeID used": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     2,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    2,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 1},
@@ -323,9 +324,9 @@ func TestFailFastImport(t *testing.T) {
 		"prevent contract id seq init value == count contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     1,
-					CodeInfo:   myCodeInfo,
-					CodesBytes: wasmCode,
+					CodeID:    1,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
 				}},
 				Contracts: []types.Contract{
 					{
@@ -359,7 +360,7 @@ func TestFailFastImport(t *testing.T) {
 }
 
 func TestImportContractWithCodeHistoryReset(t *testing.T) {
-	genesis := `
+	genesisTemplate := `
 {
 	"params":{
 		"code_upload_access": {
@@ -407,14 +408,14 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 
 	wasmCodeHash := sha256.Sum256(wasmCode)
 	enc64 := base64.StdEncoding.EncodeToString
+	genesisStr := fmt.Sprintf(genesisTemplate, enc64(wasmCodeHash[:]), enc64(wasmCode),
+		enc64(append([]byte{0x04}, []byte("lastCodeId")...)),
+		enc64(append([]byte{0x04}, []byte("lastContractId")...)))
+
 	var importState wasmTypes.GenesisState
-	err = keeper.cdc.UnmarshalJSON([]byte(
-		fmt.Sprintf(genesis, enc64(wasmCodeHash[:]), enc64(wasmCode),
-			enc64(append([]byte{0x04}, []byte("lastCodeId")...)),
-			enc64(append([]byte{0x04}, []byte("lastContractId")...))),
-	), &importState)
+	err = keeper.cdc.UnmarshalJSON([]byte(genesisStr), &importState)
 	require.NoError(t, err)
-	require.NoError(t, importState.ValidateBasic())
+	require.NoError(t, importState.ValidateBasic(), genesisStr)
 
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
@@ -437,8 +438,8 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		Source:   "https://example.com",
 		Builder:  "foo/bar:tag",
 		InstantiateConfig: wasmTypes.AccessConfig{
-			Type:    types.OnlyAddress,
-			Address: codeCreatorAddr,
+			Permission: types.AccessTypeOnlyAddress,
+			Address:    codeCreatorAddr,
 		},
 	}
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)
@@ -460,12 +461,12 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expContractInfo, *gotContractInfo)
 
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.GenesisContractCodeHistoryType,
+		Operation: types.ContractCodeHistoryTypeGenesis,
 		CodeID:    1,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	},
 	}
-	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
+	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
 }
 
 func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
@@ -475,8 +476,8 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
 	cleanup := func() { os.RemoveAll(tempDir) }
 	//t.Cleanup(cleanup) todo: add with Go 1.14
 	var (
-		keyParams  = sdk.NewKVStoreKey(params.StoreKey)
-		tkeyParams = sdk.NewTransientStoreKey(params.TStoreKey)
+		keyParams  = sdk.NewKVStoreKey(paramtypes.StoreKey)
+		tkeyParams = sdk.NewTransientStoreKey(paramtypes.TStoreKey)
 		keyWasm    = sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	)
 
@@ -491,10 +492,12 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())
-	cdc := MakeTestCodec()
-	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
+
+	appCodec := MakeTestCodec()
 	wasmConfig := wasmTypes.DefaultWasmConfig()
-	srcKeeper := NewKeeper(cdc, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	pk := paramskeeper.NewKeeper(appCodec, keyParams, tkeyParams)
+
+	srcKeeper := NewKeeper(appCodec, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	srcKeeper.setParams(ctx, wasmTypes.DefaultParams())
 
 	return srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup

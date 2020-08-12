@@ -111,7 +111,7 @@ func TestStoreCodeValidation(t *testing.T) {
 			msg: MsgStoreCode{
 				Sender:                goodAddress,
 				WASMByteCode:          []byte("foo"),
-				InstantiatePermission: &AccessConfig{Type: OnlyAddress, Address: badAddress},
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
 			},
 			valid: false,
 		},

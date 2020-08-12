@@ -40,16 +40,16 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
-empty :=
-space := $(empty) $(empty)
+whitespace :=
+whitespace += $(whitespace)
 comma := ,
-build_tags_comma_sep := $(subst $(space),$(comma),$(build_tags))
+build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
 # process linker flags
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
-		  -X github.com/cosmos/cosmos-sdk/version.ServerName=wasmd \
-		  -X github.com/cosmos/cosmos-sdk/version.ClientName=wasmcli \
+		  -X github.com/cosmos/cosmos-sdk/version.AppName=wasmd \
+		  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=wasmcli \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -61,8 +61,8 @@ ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
-				  -X github.com/cosmos/cosmos-sdk/version.ServerName=corald \
-				  -X github.com/cosmos/cosmos-sdk/version.ClientName=coral \
+				  -X github.com/cosmos/cosmos-sdk/version.AppName=corald \
+				  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=coral \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coral \
@@ -76,8 +76,8 @@ coral_ldflags += $(LDFLAGS)
 coral_ldflags := $(strip $(coral_ldflags))
 
 flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
-				  -X github.com/cosmos/cosmos-sdk/version.ServerName=gaiaflexd \
-				  -X github.com/cosmos/cosmos-sdk/version.ClientName=gaiaflex \
+				  -X github.com/cosmos/cosmos-sdk/version.AppName=gaiaflexd \
+				  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 				  -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true \
@@ -162,7 +162,7 @@ distclean: clean
 ### Testing
 
 
-test: test-unit test-build
+test: test-unit
 test-all: check test-race test-cover
 
 test-unit:
@@ -174,16 +174,39 @@ test-race:
 test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
-test-build: build
-	@go test -mod=readonly -p 4 `go list ./cli_test/...` -tags=cli_test -v
+
+benchmark:
+	@go test -mod=readonly -bench=. ./...
+
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+lint:
+	golangci-lint run
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" | xargs gofmt -d -s
 
 format:
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs gofmt -w -s
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs misspell -w
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/lcd/statik/statik.go" | xargs goimports -w -local github.com/CosmWasm/wasmd
 
-benchmark:
-	@go test -mod=readonly -bench=. ./...
+
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
+
+proto-all: proto-gen proto-lint proto-check-breaking
+
+proto-gen:
+	@./scripts/protocgen.sh
+
+proto-lint:
+	@buf check lint --error-format=json
+
+proto-check-breaking:
+	@buf check breaking --against-input '.git#branch=master'
 
 
 .PHONY: all build-linux install install-debug \

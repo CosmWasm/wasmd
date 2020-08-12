@@ -5,12 +5,12 @@ import (
 	"net/http"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	govrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type StoreCodeProposalJsonReq struct {
@@ -32,12 +32,10 @@ type StoreCodeProposalJsonReq struct {
 	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
 
-func (s StoreCodeProposalJsonReq) Content() gov.Content {
-	return types.StoreCodeProposal{
-		WasmProposal: types.WasmProposal{
-			Title:       s.Title,
-			Description: s.Description,
-		},
+func (s StoreCodeProposalJsonReq) Content() govtypes.Content {
+	return &types.StoreCodeProposal{
+		Title:                 s.Title,
+		Description:           s.Description,
 		RunAs:                 s.RunAs,
 		WASMByteCode:          s.WASMByteCode,
 		Source:                s.Source,
@@ -55,12 +53,12 @@ func (s StoreCodeProposalJsonReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
 
-func StoreCodeProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+func StoreCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_store_code",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req StoreCodeProposalJsonReq
-			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
 			toStdTxResponse(cliCtx, w, req)
@@ -86,15 +84,16 @@ type InstantiateProposalJsonReq struct {
 	InitFunds sdk.Coins       `json:"init_funds" yaml:"init_funds"`
 }
 
-func (s InstantiateProposalJsonReq) Content() gov.Content {
-	return types.InstantiateContractProposal{
-		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
-		RunAs:        s.RunAs,
-		Admin:        s.Admin,
-		CodeID:       s.Code,
-		Label:        s.Label,
-		InitMsg:      s.InitMsg,
-		InitFunds:    s.InitFunds,
+func (s InstantiateProposalJsonReq) Content() govtypes.Content {
+	return &types.InstantiateContractProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		RunAs:       s.RunAs,
+		Admin:       s.Admin,
+		CodeID:      s.Code,
+		Label:       s.Label,
+		InitMsg:     s.InitMsg,
+		InitFunds:   s.InitFunds,
 	}
 }
 func (s InstantiateProposalJsonReq) GetProposer() sdk.AccAddress {
@@ -107,12 +106,12 @@ func (s InstantiateProposalJsonReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
 
-func InstantiateProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+func InstantiateProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_instantiate",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req InstantiateProposalJsonReq
-			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
 			toStdTxResponse(cliCtx, w, req)
@@ -136,13 +135,14 @@ type MigrateProposalJsonReq struct {
 	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
 }
 
-func (s MigrateProposalJsonReq) Content() gov.Content {
-	return types.MigrateContractProposal{
-		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
-		Contract:     s.Contract,
-		CodeID:       s.Code,
-		MigrateMsg:   s.MigrateMsg,
-		RunAs:        s.RunAs,
+func (s MigrateProposalJsonReq) Content() govtypes.Content {
+	return &types.MigrateContractProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		Contract:    s.Contract,
+		CodeID:      s.Code,
+		MigrateMsg:  s.MigrateMsg,
+		RunAs:       s.RunAs,
 	}
 }
 func (s MigrateProposalJsonReq) GetProposer() sdk.AccAddress {
@@ -154,12 +154,12 @@ func (s MigrateProposalJsonReq) GetDeposit() sdk.Coins {
 func (s MigrateProposalJsonReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
-func MigrateProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+func MigrateProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_migrate",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req MigrateProposalJsonReq
-			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
 			toStdTxResponse(cliCtx, w, req)
@@ -180,11 +180,12 @@ type UpdateAdminJsonReq struct {
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
-func (s UpdateAdminJsonReq) Content() gov.Content {
-	return types.UpdateAdminProposal{
-		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
-		Contract:     s.Contract,
-		NewAdmin:     s.NewAdmin,
+func (s UpdateAdminJsonReq) Content() govtypes.Content {
+	return &types.UpdateAdminProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		Contract:    s.Contract,
+		NewAdmin:    s.NewAdmin,
 	}
 }
 func (s UpdateAdminJsonReq) GetProposer() sdk.AccAddress {
@@ -196,12 +197,12 @@ func (s UpdateAdminJsonReq) GetDeposit() sdk.Coins {
 func (s UpdateAdminJsonReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
-func UpdateContractAdminProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+func UpdateContractAdminProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_update_admin",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req UpdateAdminJsonReq
-			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
 			toStdTxResponse(cliCtx, w, req)
@@ -221,10 +222,11 @@ type ClearAdminJsonReq struct {
 	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
 }
 
-func (s ClearAdminJsonReq) Content() gov.Content {
-	return types.ClearAdminProposal{
-		WasmProposal: types.WasmProposal{Title: s.Title, Description: s.Description},
-		Contract:     s.Contract,
+func (s ClearAdminJsonReq) Content() govtypes.Content {
+	return &types.ClearAdminProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		Contract:    s.Contract,
 	}
 }
 func (s ClearAdminJsonReq) GetProposer() sdk.AccAddress {
@@ -236,12 +238,12 @@ func (s ClearAdminJsonReq) GetDeposit() sdk.Coins {
 func (s ClearAdminJsonReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
-func ClearContractAdminProposalHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+func ClearContractAdminProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_clear_admin",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req ClearAdminJsonReq
-			if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
 			toStdTxResponse(cliCtx, w, req)
@@ -250,14 +252,18 @@ func ClearContractAdminProposalHandler(cliCtx context.CLIContext) govrest.Propos
 }
 
 type wasmProposalData interface {
-	Content() gov.Content
+	Content() govtypes.Content
 	GetProposer() sdk.AccAddress
 	GetDeposit() sdk.Coins
 	GetBaseReq() rest.BaseReq
 }
 
-func toStdTxResponse(cliCtx context.CLIContext, w http.ResponseWriter, data wasmProposalData) {
-	msg := gov.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), data.GetProposer())
+func toStdTxResponse(cliCtx client.Context, w http.ResponseWriter, data wasmProposalData) {
+	msg, err := govtypes.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), data.GetProposer())
+	if err != nil {
+		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if err := msg.ValidateBasic(); err != nil {
 		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
@@ -266,5 +272,5 @@ func toStdTxResponse(cliCtx context.CLIContext, w http.ResponseWriter, data wasm
 	if !baseReq.ValidateBasic(w) {
 		return
 	}
-	utils.WriteGenerateStdTxResponse(w, cliCtx, baseReq, []sdk.Msg{msg})
+	tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
 }

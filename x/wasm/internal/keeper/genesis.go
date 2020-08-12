@@ -14,7 +14,7 @@ import (
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) error {
 	var maxCodeID uint64
 	for i, code := range data.Codes {
-		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodesBytes)
+		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)
 		if err != nil {
 			return sdkerrors.Wrapf(err, "code %d with id: %d", i, code.CodeID)
 		}
@@ -63,9 +63,9 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 			panic(err)
 		}
 		genState.Codes = append(genState.Codes, types.Code{
-			CodeID:     codeID,
-			CodeInfo:   info,
-			CodesBytes: bytecode,
+			CodeID:    codeID,
+			CodeInfo:  info,
+			CodeBytes: bytecode,
 		})
 		return false
 	})

@@ -1,25 +1,18 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
-
 	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -35,7 +28,7 @@ const (
 )
 
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
+func GetTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Wasm transaction subcommands",
@@ -43,37 +36,35 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	txCmd.AddCommand(flags.PostCommands(
-		StoreCodeCmd(cdc),
-		InstantiateContractCmd(cdc),
-		ExecuteContractCmd(cdc),
-		MigrateContractCmd(cdc),
-		UpdateContractAdminCmd(cdc),
-		ClearContractAdminCmd(cdc),
-	)...)
+	txCmd.AddCommand(
+		StoreCodeCmd(),
+		InstantiateContractCmd(),
+		ExecuteContractCmd(),
+		MigrateContractCmd(),
+		UpdateContractAdminCmd(),
+		ClearContractAdminCmd(),
+	)
 	return txCmd
 }
 
 // StoreCodeCmd will upload code to be reused.
-func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
+func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store [wasm file] --source [source] --builder [builder]",
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
-			msg, err := parseStoreCodeArgs(args, cliCtx)
+			msg, err := parseStoreCodeArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
-
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -85,7 +76,7 @@ func StoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func parseStoreCodeArgs(args []string, cliCtx context.CLIContext) (types.MsgStoreCode, error) {
+func parseStoreCodeArgs(args []string, cliCtx client.Context) (types.MsgStoreCode, error) {
 	wasm, err := ioutil.ReadFile(args[0])
 	if err != nil {
 		return types.MsgStoreCode{}, err
@@ -108,7 +99,7 @@ func parseStoreCodeArgs(args []string, cliCtx context.CLIContext) (types.MsgStor
 		if err != nil {
 			return types.MsgStoreCode{}, sdkerrors.Wrap(err, flagInstantiateByAddress)
 		}
-		x := types.OnlyAddress.With(allowedAddr)
+		x := types.AccessTypeOnlyAddress.With(allowedAddr)
 		perm = &x
 	} else if everybody := viper.GetBool(flagInstantiateByEverybody); everybody {
 		perm = &types.AllowEverybody
@@ -126,24 +117,23 @@ func parseStoreCodeArgs(args []string, cliCtx context.CLIContext) (types.MsgStor
 }
 
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
-func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
+func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional]",
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
-			msg, err := parseInstantiateArgs(args, cliCtx)
+			msg, err := parseInstantiateArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -153,7 +143,7 @@ func InstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-func parseInstantiateArgs(args []string, cliCtx context.CLIContext) (types.MsgInstantiateContract, error) {
+func parseInstantiateArgs(args []string, cliCtx client.Context) (types.MsgInstantiateContract, error) {
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[0], 10, 64)
 	if err != nil {
@@ -195,15 +185,14 @@ func parseInstantiateArgs(args []string, cliCtx context.CLIContext) (types.MsgIn
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
-func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
+func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "execute [contract_addr_bech32] [json_encoded_send_args]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get the id of the code to instantiate
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
@@ -221,12 +210,12 @@ func ExecuteContractCmd(cdc *codec.Codec) *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
-				Sender:    cliCtx.GetFromAddress(),
+				Sender:    clientCtx.GetFromAddress(),
 				Contract:  contractAddr,
 				SentFunds: amount,
 				Msg:       []byte(execMsg),
 			}
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 

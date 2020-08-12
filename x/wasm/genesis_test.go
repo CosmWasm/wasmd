@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 type contractState struct {
@@ -18,11 +17,11 @@ func TestInitGenesis(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(data.ctx, data.acctKeeper, deposit.Add(deposit...))
-	fred := createFakeFundedAccount(data.ctx, data.acctKeeper, topUp)
+	creator := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, deposit.Add(deposit...))
+	fred := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, topUp)
 
-	h := data.module.NewHandler()
-	q := data.module.NewQuerierHandler()
+	h := data.module.Route().Handler()
+	q := data.module.LegacyQuerierHandler(nil)
 
 	t.Log("fail with invalid source url")
 	msg := MsgStoreCode{
@@ -35,7 +34,7 @@ func TestInitGenesis(t *testing.T) {
 	err := msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("fail with relative source url")
@@ -49,7 +48,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("fail with invalid build tag")
@@ -63,7 +62,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.Error(t, err)
 
-	_, err = h(data.ctx, msg)
+	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
 	t.Log("no error with valid source and build tag")
@@ -76,7 +75,7 @@ func TestInitGenesis(t *testing.T) {
 	err = msg.ValidateBasic()
 	require.NoError(t, err)
 
-	res, err := h(data.ctx, msg)
+	res, err := h(data.ctx, &msg)
 	require.NoError(t, err)
 	require.Equal(t, res.Data, []byte("1"))
 
@@ -94,7 +93,7 @@ func TestInitGenesis(t *testing.T) {
 		InitMsg:   initMsgBz,
 		InitFunds: deposit,
 	}
-	res, err = h(data.ctx, initCmd)
+	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractAddr := sdk.AccAddress(res.Data)
 
@@ -104,7 +103,7 @@ func TestInitGenesis(t *testing.T) {
 		Msg:       []byte(`{"release":{}}`),
 		SentFunds: topUp,
 	}
-	res, err = h(data.ctx, execCmd)
+	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
 
 	// ensure all contract state is as after init
@@ -125,7 +124,7 @@ func TestInitGenesis(t *testing.T) {
 	// create new app to import genstate into
 	newData, newCleanup := setupTest(t)
 	defer newCleanup()
-	q2 := newData.module.NewQuerierHandler()
+	q2 := newData.module.LegacyQuerierHandler(nil)
 
 	// initialize new app with genstate
 	InitGenesis(newData.ctx, newData.keeper, genState)

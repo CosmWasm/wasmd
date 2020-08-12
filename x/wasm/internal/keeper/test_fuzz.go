@@ -44,22 +44,25 @@ func FuzzContractCodeHistory(m *types.ContractCodeHistoryEntry, c fuzz.Continue)
 
 func FuzzStateModel(m *types.Model, c fuzz.Continue) {
 	m.Key = tmBytes.HexBytes(c.RandString())
+	if len(m.Key) == 0 {
+		m.Key = tmBytes.HexBytes("non empty key")
+	}
 	c.Fuzz(&m.Value)
 }
 
 func FuzzAccessType(m *types.AccessType, c fuzz.Continue) {
 	pos := c.Int() % len(types.AllAccessTypes)
-	for k, _ := range types.AllAccessTypes {
+	for _, v := range types.AllAccessTypes {
 		if pos == 0 {
-			*m = k
+			*m = v
 			return
 		}
 		pos--
 	}
 }
 func FuzzAccessConfig(m *types.AccessConfig, c fuzz.Continue) {
-	FuzzAccessType(&m.Type, c)
+	FuzzAccessType(&m.Permission, c)
 	var add sdk.AccAddress
 	FuzzAddr(&add, c)
-	*m = m.Type.With(add)
+	*m = m.Permission.With(add)
 }

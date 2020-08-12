@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/gorilla/mux"
 )
 
-func registerNewTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
+func registerNewTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/{contractAddr}/admin", setContractAdminHandlerFn(cliCtx)).Methods("PUT")
 	r.HandleFunc("/wasm/contract/{contractAddr}/code", migrateContractHandlerFn(cliCtx)).Methods("PUT")
 }
@@ -27,10 +27,10 @@ type updateContractAdministrateReq struct {
 	Admin   sdk.AccAddress `json:"admin,omitempty" yaml:"admin"`
 }
 
-func setContractAdminHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req updateContractAdministrateReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 		vars := mux.Vars(r)
@@ -47,7 +47,7 @@ func setContractAdminHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgUpdateAdmin{
+		msg := &types.MsgUpdateAdmin{
 			Sender:   cliCtx.GetFromAddress(),
 			NewAdmin: req.Admin,
 			Contract: contractAddress,
@@ -57,14 +57,14 @@ func setContractAdminHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }
 
-func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req migrateContractReq
-		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
+		if !rest.ReadRESTReq(w, r, cliCtx.JSONMarshaler, &req) {
 			return
 		}
 		vars := mux.Vars(r)
@@ -81,7 +81,7 @@ func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		msg := types.MsgMigrateContract{
+		msg := &types.MsgMigrateContract{
 			Sender:     cliCtx.GetFromAddress(),
 			Contract:   contractAddress,
 			CodeID:     req.CodeID,
@@ -92,6 +92,6 @@ func migrateContractHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		tx.WriteGeneratedTxResponse(cliCtx, w, req.BaseReq, msg)
 	}
 }

@@ -1,0 +1,68 @@
+syntax = "proto3";
+package wasmd.x.wasmd;
+
+import "gogoproto/gogo.proto";
+import "cosmos/cosmos.proto";
+import "x/wasm/internal/types/types.proto";
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.equal_all) = true;
+
+message StoreCodeProposal {
+    string title = 1;
+    string description = 2;
+    // RunAs is the address that is passed to the contract's environment as sender
+    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // WASMByteCode can be raw or gzip compressed
+    bytes wasm_byte_code = 4 [(gogoproto.customname) = "WASMByteCode"];
+    // Source is a valid absolute HTTPS URI to the contract's source code, optional
+    string source = 5;
+    // Builder is a valid docker image name with tag, optional
+    string builder = 6;
+    // InstantiatePermission to apply on contract creation, optional
+    AccessConfig InstantiatePermission = 7;
+}
+
+// InstantiateContractProposal gov proposal content type to instantiate a contract.
+message InstantiateContractProposal {
+    string title = 1;
+    string description = 2;
+
+
+    // RunAs is the address that is passed to the contract's environment as sender
+    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    // Admin is an optional address that can execute migrations
+    bytes admin = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 code_id = 5 [(gogoproto.customname) = "CodeID"];
+    string label = 6;
+    bytes init_msg = 7 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+    repeated cosmos.Coin init_funds = 8 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+}
+
+// MigrateContractProposal gov proposal content type to migrate a contract.
+message MigrateContractProposal {
+    string title = 1;
+    string description = 2;
+    // RunAs is the address that is passed to the contract's environment as sender
+    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    bytes contract = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    uint64 code_id = 5 [(gogoproto.customname) = "CodeID"];
+    bytes migrate_msg = 6 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+}
+
+// UpdateAdminProposal gov proposal content type to set an admin for a contract.
+message UpdateAdminProposal {
+    string title = 1;
+    string description = 2;
+    bytes new_admin = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress", (gogoproto.moretags) = "yaml:\"new_admin\""];
+    bytes contract = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+
+// ClearAdminProposal gov proposal content type to clear the admin of a contract.
+message ClearAdminProposal {
+    string title = 1;
+    string description = 2;
+    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}

@@ -6,71 +6,74 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
 
-func TestValidateWasmProposal(t *testing.T) {
+func TestValidateProposalCommons(t *testing.T) {
+	type commonProposal struct {
+		Title, Description string
+	}
+
 	specs := map[string]struct {
-		src    WasmProposal
+		src    commonProposal
 		expErr bool
 	}{
-		"all good": {src: WasmProposal{
+		"all good": {src: commonProposal{
 			Title:       "Foo",
 			Description: "Bar",
 		}},
 		"prevent empty title": {
-			src: WasmProposal{
+			src: commonProposal{
 				Description: "Bar",
 			},
 			expErr: true,
 		},
 		"prevent white space only title": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       " ",
 				Description: "Bar",
 			},
 			expErr: true,
 		},
 		"prevent leading white spaces in title": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       " Foo",
 				Description: "Bar",
 			},
 			expErr: true,
 		},
 		"prevent title exceeds max length ": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       strings.Repeat("a", govtypes.MaxTitleLength+1),
 				Description: "Bar",
 			},
 			expErr: true,
 		},
 		"prevent empty description": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title: "Foo",
 			},
 			expErr: true,
 		},
 		"prevent leading white spaces in description": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       "Foo",
 				Description: " Bar",
 			},
 			expErr: true,
 		},
 		"prevent white space only description": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       "Foo",
 				Description: " ",
 			},
 			expErr: true,
 		},
 		"prevent descr exceeds max length ": {
-			src: WasmProposal{
+			src: commonProposal{
 				Title:       "Foo",
 				Description: strings.Repeat("a", govtypes.MaxDescriptionLength+1),
 			},
@@ -79,7 +82,7 @@ func TestValidateWasmProposal(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			err := spec.src.ValidateBasic()
+			err := validateProposalCommons(spec.src.Title, spec.src.Description)
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -96,7 +99,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		src    StoreCodeProposal
+		src    *StoreCodeProposal
 		expErr bool
 	}{
 		"all good": {
@@ -104,7 +107,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"with instantiate permission": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				accessConfig := OnlyAddress.With(anyAddress)
+				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
 				p.InstantiatePermission = &accessConfig
 			}),
 		},
@@ -116,7 +119,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"base data missing": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WasmProposal = WasmProposal{}
+				p.Title = ""
 			}),
 			expErr: true,
 		},
@@ -181,7 +184,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		src    InstantiateContractProposal
+		src    *InstantiateContractProposal
 		expErr bool
 	}{
 		"all good": {
@@ -204,7 +207,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"base data missing": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.WasmProposal = WasmProposal{}
+				p.Title = ""
 			}),
 			expErr: true,
 		},
@@ -269,7 +272,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		src    MigrateContractProposal
+		src    *MigrateContractProposal
 		expErr bool
 	}{
 		"all good": {
@@ -282,7 +285,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 		},
 		"base data missing": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.WasmProposal = WasmProposal{}
+				p.Title = ""
 			}),
 			expErr: true,
 		},
@@ -335,7 +338,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		src    UpdateAdminProposal
+		src    *UpdateAdminProposal
 		expErr bool
 	}{
 		"all good": {
@@ -343,7 +346,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 		},
 		"base data missing": {
 			src: UpdateAdminProposalFixture(func(p *UpdateAdminProposal) {
-				p.WasmProposal = WasmProposal{}
+				p.Title = ""
 			}),
 			expErr: true,
 		},
@@ -390,7 +393,7 @@ func TestValidateClearAdminProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		src    ClearAdminProposal
+		src    *ClearAdminProposal
 		expErr bool
 	}{
 		"all good": {
@@ -398,7 +401,7 @@ func TestValidateClearAdminProposal(t *testing.T) {
 		},
 		"base data missing": {
 			src: ClearAdminProposalFixture(func(p *ClearAdminProposal) {
-				p.WasmProposal = WasmProposal{}
+				p.Title = ""
 			}),
 			expErr: true,
 		},
@@ -429,7 +432,7 @@ func TestValidateClearAdminProposal(t *testing.T) {
 
 func TestProposalStrings(t *testing.T) {
 	specs := map[string]struct {
-		src gov.Content
+		src govtypes.Content
 		exp string
 	}{
 		"store code": {
@@ -524,7 +527,7 @@ func TestProposalStrings(t *testing.T) {
 
 func TestProposalYaml(t *testing.T) {
 	specs := map[string]struct {
-		src gov.Content
+		src govtypes.Content
 		exp string
 	}{
 		"store code": {

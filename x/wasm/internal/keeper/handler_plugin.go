@@ -8,9 +8,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type MessageHandler struct {
@@ -99,12 +99,12 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, er
 	if err != nil {
 		return nil, err
 	}
-	sdkMsg := bank.MsgSend{
+	sdkMsg := banktypes.MsgSend{
 		FromAddress: fromAddr,
 		ToAddress:   toAddr,
 		Amount:      toSend,
 	}
-	return []sdk.Msg{sdkMsg}, nil
+	return []sdk.Msg{&sdkMsg}, nil
 }
 
 func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
@@ -121,12 +121,12 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgDelegate{
+		sdkMsg := stakingtypes.MsgDelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
 	}
 	if msg.Redelegate != nil {
 		src, err := sdk.ValAddressFromBech32(msg.Redelegate.SrcValidator)
@@ -141,13 +141,13 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgBeginRedelegate{
+		sdkMsg := stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    sender,
 			ValidatorSrcAddress: src,
 			ValidatorDstAddress: dst,
 			Amount:              coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
 	}
 	if msg.Undelegate != nil {
 		validator, err := sdk.ValAddressFromBech32(msg.Undelegate.Validator)
@@ -158,12 +158,12 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgUndelegate{
+		sdkMsg := stakingtypes.MsgUndelegate{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 			Amount:           coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
 	}
 	if msg.Withdraw != nil {
 		var err error
@@ -178,15 +178,15 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.M
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
 		}
-		setMsg := distribution.MsgSetWithdrawAddress{
+		setMsg := distributiontypes.MsgSetWithdrawAddress{
 			DelegatorAddress: sender,
 			WithdrawAddress:  rcpt,
 		}
-		withdrawMsg := distribution.MsgWithdrawDelegatorReward{
+		withdrawMsg := distributiontypes.MsgWithdrawDelegatorReward{
 			DelegatorAddress: sender,
 			ValidatorAddress: validator,
 		}
-		return []sdk.Msg{setMsg, withdrawMsg}, nil
+		return []sdk.Msg{&setMsg, &withdrawMsg}, nil
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 }
@@ -208,7 +208,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			Msg:       msg.Execute.Msg,
 			SentFunds: coins,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
 	}
 	if msg.Instantiate != nil {
 		coins, err := convertWasmCoinsToSdkCoins(msg.Instantiate.Send)
@@ -224,7 +224,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			InitMsg:   msg.Instantiate.Msg,
 			InitFunds: coins,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
@@ -259,8 +259,13 @@ func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Addre
 	if err != nil {
 		return err
 	}
+
+	events := make(sdk.Events, len(res.Events))
+	for i := range res.Events {
+		events[i] = sdk.Event(res.Events[i])
+	}
 	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	ctx.EventManager().EmitEvents(res.Events)
+	ctx.EventManager().EmitEvents(events)
 
 	return nil
 }
