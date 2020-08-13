@@ -1,8 +1,8 @@
 syntax = "proto3";
-package wasmd.x.wasmd;
+package wasmd.x.wasmd.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "cosmos/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "x/wasm/internal/types/types.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
@@ -38,7 +38,7 @@ message InstantiateContractProposal {
     uint64 code_id = 5 [(gogoproto.customname) = "CodeID"];
     string label = 6;
     bytes init_msg = 7 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    repeated cosmos.Coin init_funds = 8 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+    repeated cosmos.base.v1beta1.Coin init_funds = 8 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 // MigrateContractProposal gov proposal content type to migrate a contract.
