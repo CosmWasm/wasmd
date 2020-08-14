@@ -27,6 +27,8 @@ func NewHandler(k Keeper) sdk.Handler {
 			return handleUpdateContractAdmin(ctx, k, msg)
 		case *MsgClearAdmin:
 			return handleClearContractAdmin(ctx, k, msg)
+		case *MsgWasmIBCCall:
+			return handleIBCCall(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
@@ -163,4 +165,26 @@ func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*s
 	return &sdk.Result{
 		Events: append(events, ourEvent).ToABCIEvents(),
 	}, nil
+}
+
+func handleIBCCall(ctx sdk.Context, k Keeper, msg *MsgWasmIBCCall) (*sdk.Result, error) {
+	if err := k.IBCCallFromContract(ctx, msg.SourcePort, msg.SourceChannel, msg.Sender, msg.TimeoutHeight, msg.TimeoutTimestamp, msg.Msg); err != nil {
+		return nil, err
+	}
+
+	//k.Logger(ctx).Info("IBC transfer: %s from %s to %s", msg.Amount, msg.Sender, msg.Receiver)
+
+	//ctx.EventManager().EmitEvent(
+	//      sdk.NewEvent(
+	//              sdk.EventTypeMessage,
+	//              sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+	//              sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender.String()),
+	//              sdk.NewAttribute(types.AttributeKeyReceiver, msg.Receiver),
+	//      ),
+	//)
+	//
+	return &sdk.Result{
+		Events: ctx.EventManager().Events().ToABCIEvents(),
+	}, nil
+
 }

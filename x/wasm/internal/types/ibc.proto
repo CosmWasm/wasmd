@@ -1,0 +1,34 @@
+syntax = "proto3";
+package wasmd.x.wasmd.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
+option (gogoproto.goproto_getters_all) = false;
+
+message MsgWasmIBCCall {
+    // the port on which the packet will be sent
+    string source_port = 1 [(gogoproto.moretags) = "yaml:\"source_port\""];
+    // the channel by which the packet will be sent
+    string source_channel = 2 [(gogoproto.moretags) = "yaml:\"source_channel\""];
+
+    bytes sender = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+
+    // Timeout height relative to the current block height.
+    // The timeout is disabled when set to 0.
+    uint64 timeout_height = 4 [(gogoproto.moretags) = "yaml:\"timeout_height\""];
+    // Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+    // The timeout is disabled when set to 0.
+    uint64 timeout_timestamp = 5 [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
+
+    // Msg is the message to the contract
+    bytes msg = 6 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+}
+
+// MsgIBCCloseChannel port and channel need to be owned by the contract
+message MsgIBCCloseChannel {
+    string port = 1 [(gogoproto.moretags) = "yaml:\"dest_port\""];
+    string channel = 2 [(gogoproto.moretags) = "yaml:\"deset_channel\""];
+
+    bytes sender = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}

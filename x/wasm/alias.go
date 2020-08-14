@@ -76,6 +76,7 @@ var (
 	TestHandler               = keeper.TestHandler
 	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
 	NewQuerier                = keeper.NewQuerier
+	ContractFromPortID        = keeper.ContractFromPortID
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
@@ -109,6 +110,7 @@ type (
 	MsgMigrateContract      = types.MsgMigrateContract
 	MsgUpdateAdmin          = types.MsgUpdateAdmin
 	MsgClearAdmin           = types.MsgClearAdmin
+	MsgWasmIBCCall          = types.MsgWasmIBCCall
 	Model                   = types.Model
 	CodeInfo                = types.CodeInfo
 	ContractInfo            = types.ContractInfo

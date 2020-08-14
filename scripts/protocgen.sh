@@ -16,4 +16,5 @@ Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,\
 Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types,\
 plugins=interfacetype+grpc,paths=source_relative:. \
 ./x/wasm/internal/types/types.proto ./x/wasm/internal/types/query.proto ./x/wasm/internal/types/msg.proto \
-./x/wasm/internal/types/proposal.proto ./x/wasm/internal/types/genesis.proto
+./x/wasm/internal/types/proposal.proto ./x/wasm/internal/types/genesis.proto \
+./x/wasm/internal/types/ibc.proto

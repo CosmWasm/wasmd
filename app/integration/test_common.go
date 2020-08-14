@@ -5,7 +5,7 @@ This file is full of test helper functions, taken from simapp
 **/
 
 import (
-	"fmt"
+	"encoding/json"
 	"math/rand"
 	"os"
 	"testing"
@@ -15,16 +15,20 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -35,9 +39,9 @@ const (
 )
 
 // Setup initializes a new wasmd.WasmApp. A Nop logger is set in WasmApp.
-func Setup(isCheckTx bool) *wasmd.WasmApp {
+func Setup(isCheckTx bool, homeDir string) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0, wasm.EnableAllProposals)
+	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, homeDir, 0, wasm.EnableAllProposals)
 	// app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, 0)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
@@ -59,37 +63,100 @@ func Setup(isCheckTx bool) *wasmd.WasmApp {
 	return app
 }
 
-// SetupWithGenesisAccounts initializes a new wasmd.WasmApp with the passed in
-// genesis accounts.
-func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp {
+type GenesisState map[string]json.RawMessage
+
+// NewDefaultGenesisState generates the default state for the application.
+func NewDefaultGenesisState() GenesisState {
+	cdc := std.MakeCodec(wasmd.ModuleBasics)
+	return wasmd.ModuleBasics.DefaultGenesis(cdc)
+}
+
+func SetupWithGenesisValSet(t *testing.T, homeDir string, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *wasmd.WasmApp {
 	db := dbm.NewMemDB()
-	app := wasmd.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, "", 0, wasm.EnableAllProposals)
+	app := wasmd.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, homeDir, 5, wasm.EnableAllProposals)
 
-	// initialize the chain with the passed in genesis accounts
-	genesisState := wasmd.NewDefaultGenesisState()
+	genesisState := NewDefaultGenesisState()
 
+	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	genesisStateBz := app.LegacyAmino().MustMarshalJSON(authGenesis)
-	genesisState[authtypes.ModuleName] = genesisStateBz
+	genesisState[authtypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(authGenesis)
+
+	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
+	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
+
+	bondAmt := sdk.NewInt(1000000)
+
+	for _, val := range valSet.Validators {
+		validator := stakingtypes.Validator{
+			OperatorAddress:   val.Address.Bytes(),
+			ConsensusPubkey:   sdk.MustBech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, val.PubKey),
+			Jailed:            false,
+			Status:            sdk.Bonded,
+			Tokens:            bondAmt,
+			DelegatorShares:   sdk.OneDec(),
+			Description:       stakingtypes.Description{},
+			UnbondingHeight:   int64(0),
+			UnbondingTime:     time.Unix(0, 0).UTC(),
+			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			MinSelfDelegation: sdk.ZeroInt(),
+		}
+		validators = append(validators, validator)
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
+
+	}
+
+	// set validators and delegations
+	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
+	genesisState[stakingtypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(stakingGenesis)
+
+	totalSupply := sdk.NewCoins()
+	for _, b := range balances {
+		// add genesis acc tokens and delegated tokens to total supply
+		totalSupply = totalSupply.Add(b.Coins.Add(sdk.NewCoin(sdk.DefaultBondDenom, bondAmt))...)
+	}
+
+	// update total supply
+	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	genesisState[banktypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := codec.MarshalJSONIndent(app.LegacyAmino(), genesisState)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(stateBytes))
+	require.NoError(t, err)
 
-	// Initialize the chain
+	// init chain will set the validator set and initialize the genesis accounts
 	app.InitChain(
 		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
+			Validators:      []abci.ValidatorUpdate{},
+			ConsensusParams: DefaultConsensusParams,
+			AppStateBytes:   stateBytes,
 		},
 	)
 
+	// commit genesis changes
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		Height:             app.LastBlockHeight() + 1,
+		AppHash:            app.LastCommitID().Hash,
+		ValidatorsHash:     valSet.Hash(),
+		NextValidatorsHash: valSet.Hash(),
+	}})
 
 	return app
+}
+
+var DefaultConsensusParams = &abci.ConsensusParams{
+	Block: &abci.BlockParams{
+		MaxBytes: 200000,
+		MaxGas:   2000000,
+	},
+	Evidence: &tmproto.EvidenceParams{
+		MaxAgeNumBlocks: 302400,
+		MaxAgeDuration:  1814400,
+	},
+	Validator: &tmproto.ValidatorParams{
+		PubKeyTypes: []string{
+			tmtypes.ABCIPubKeyTypeEd25519,
+		},
+	},
 }
 
 // SignAndDeliver checks a generated signed transaction and simulates a
