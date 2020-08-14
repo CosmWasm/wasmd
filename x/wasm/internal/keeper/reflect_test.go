@@ -137,7 +137,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 }
 
 func TestMaskReflectCustomMsg(t *testing.T) {
-	t.Skip("Alex: fails with `cannot protobuf JSON decode unsupported type: *types.Msg: failed to unmarshal JSON bytes`")
+	t.Skip("Alex: fails with `cannot protobuf JSON decode unsupported type: *types.Data: failed to unmarshal JSON bytes`")
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
@@ -332,7 +332,7 @@ func maskEncoders(cdc codec.Marshaler) *MessageEncoders {
 	}
 }
 
-// fromMaskRawMsg decodes msg.Data to an sdk.Msg using amino json encoding.
+// fromMaskRawMsg decodes msg.Data to an sdk.Data using amino json encoding.
 // this needs to be registered on the Encoders
 func fromMaskRawMsg(cdc codec.Marshaler) CustomEncoder {
 	return func(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {

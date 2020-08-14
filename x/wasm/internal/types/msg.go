@@ -61,11 +61,12 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	}
 
 	if msg.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if err := validateLabel(msg.Label); err != nil {
-		return err
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+
 	}
 
 	if !msg.InitFunds.IsValid() {
@@ -134,7 +135,7 @@ func (msg MsgMigrateContract) Type() string {
 
 func (msg MsgMigrateContract) ValidateBasic() error {
 	if msg.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return sdkerrors.Wrap(err, "sender")
@@ -213,4 +214,44 @@ func (msg MsgClearAdmin) GetSignBytes() []byte {
 
 func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
+}
+
+func (msg MsgIBCSend) Route() string {
+	return RouterKey
+}
+
+func (msg MsgIBCSend) Type() string {
+	return "wasm-ibc-send"
+}
+
+func (msg MsgIBCSend) ValidateBasic() error {
+	return nil
+}
+
+func (msg MsgIBCSend) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgIBCSend) GetSigners() []sdk.AccAddress {
+	return nil
+}
+
+func (msg MsgIBCCloseChannel) Route() string {
+	return RouterKey
+}
+
+func (msg MsgIBCCloseChannel) Type() string {
+	return "wasm-ibc-close"
+}
+
+func (msg MsgIBCCloseChannel) ValidateBasic() error {
+	return nil
+}
+
+func (msg MsgIBCCloseChannel) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
+}
+
+func (msg MsgIBCCloseChannel) GetSigners() []sdk.AccAddress {
+	return nil
 }

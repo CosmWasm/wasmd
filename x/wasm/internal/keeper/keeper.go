@@ -7,6 +7,7 @@ import (
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	cosmwasmv2 "github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -14,6 +15,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/pkg/errors"
@@ -46,6 +48,9 @@ type Keeper struct {
 	cdc           codec.Marshaler
 	accountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
+	ChannelKeeper types.ChannelKeeper
+	PortKeeper    types.PortKeeper
+	ScopedKeeper  capabilitykeeper.ScopedKeeper
 
 	wasmer       wasm.Wasmer
 	queryPlugins QueryPlugins
@@ -58,9 +63,23 @@ type Keeper struct {
 
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
-func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, paramSpace paramtypes.Subspace, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper,
+func NewKeeper(
+	cdc codec.Marshaler,
+	storeKey sdk.StoreKey,
+	paramSpace paramtypes.Subspace,
+	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
-	router sdk.Router, homeDir string, wasmConfig types.WasmConfig, supportedFeatures string, customEncoders *MessageEncoders, customPlugins *QueryPlugins) Keeper {
+	channelKeeper types.ChannelKeeper,
+	portKeeper types.PortKeeper,
+	scopedKeeper capabilitykeeper.ScopedKeeper,
+	router sdk.Router,
+	homeDir string,
+	wasmConfig types.WasmConfig,
+	supportedFeatures string,
+	customEncoders *MessageEncoders,
+	customPlugins *QueryPlugins,
+) Keeper {
 	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.CacheSize)
 	if err != nil {
 		panic(err)
@@ -71,13 +90,18 @@ func NewKeeper(cdc codec.Marshaler, storeKey sdk.StoreKey, paramSpace paramtypes
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	// todo: revisit: DefaultEncoders are used twice now
+	quickHack := DefaultEncoders(channelKeeper, scopedKeeper).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
 		wasmer:        *wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
-		messenger:     NewMessageHandler(router, customEncoders),
+		ChannelKeeper: channelKeeper,
+		PortKeeper:    portKeeper,
+		ScopedKeeper:  scopedKeeper,
+		messenger:     NewMessageHandler(router, &quickHack),
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 		authZPolicy:   DefaultAuthorizationPolicy{},
 		paramSpace:    paramSpace,
@@ -240,9 +264,17 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, err
 	}
 
+	// register IBC port
+	ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	// persist instance
 	createdAt := types.NewAbsoluteTxPosition(ctx)
 	instance := types.NewContractInfo(codeID, creator, admin, label, createdAt)
+	instance.IBCPortID = ibcPort
+
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
 	k.appendToContractHistory(ctx, contractAddress, instance.InitialHistory(initMsg))
 	return contractAddress, nil
@@ -278,6 +310,27 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	gas := gasForContract(ctx)
+
+	mock, ok := MockContracts[contractAddress.String()]
+	if ok {
+		res, gasUsed, execErr := mock.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+		consumeGas(ctx, gasUsed)
+		if execErr != nil {
+			return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		}
+
+		// emit all events from this contract itself
+		events := types.ParseEvents(res.Log, contractAddress)
+		ctx.EventManager().EmitEvents(events)
+
+		if err := k.messenger.DispatchV2(ctx, contractAddress, cosmwasmv2.IBCEndpoint{}, res.Messages...); err != nil {
+			return nil, err
+		}
+		return &sdk.Result{
+			Data: res.Data,
+		}, nil
+	}
+
 	res, gasUsed, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
@@ -572,7 +625,7 @@ func consumeGas(ctx sdk.Context, gas uint64) {
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
 	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
 	if ctx.GasMeter().IsOutOfGas() {
-		panic(sdk.ErrorOutOfGas{"Wasmer function execution"})
+		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
 	}
 }
 

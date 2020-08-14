@@ -21,8 +21,9 @@ func CreateTestApp(t *testing.T, accounts []*authtypes.BaseAccount) *app.WasmApp
 	for i, acct := range accounts {
 		genAccounts[i] = acct
 	}
-	wasmd := SetupWithGenesisAccounts(genAccounts)
-	return wasmd
+	//	wasmd := SetupWithGenesisAccounts("", genAccounts...)
+	//	return wasmd
+	panic("not implemented")
 }
 
 func TestSendWithApp(t *testing.T) {

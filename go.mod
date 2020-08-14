@@ -4,9 +4,10 @@ go 1.14
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.0
-	github.com/cosmos/cosmos-sdk v0.34.4-0.20200818095108-bcd967576239
+	github.com/cosmos/cosmos-sdk v0.34.4-0.20200819073641-f02b0b574501
 	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/protobuf v1.4.2
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/mux v1.7.4
 	github.com/onsi/ginkgo v1.8.0 // indirect
