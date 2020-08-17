@@ -14,8 +14,6 @@ import (
 	wasmd "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -46,7 +44,7 @@ func Setup(isCheckTx bool, homeDir string) *wasmd.WasmApp {
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := wasmd.NewDefaultGenesisState()
-		stateBytes, err := codec.MarshalJSONIndent(app.LegacyAmino(), genesisState)
+		stateBytes, err := json.Marshal(genesisState)
 		if err != nil {
 			panic(err)
 		}
@@ -67,8 +65,8 @@ type GenesisState map[string]json.RawMessage
 
 // NewDefaultGenesisState generates the default state for the application.
 func NewDefaultGenesisState() GenesisState {
-	cdc := std.MakeCodec(wasmd.ModuleBasics)
-	return wasmd.ModuleBasics.DefaultGenesis(cdc)
+	encCfg := wasmd.MakeEncodingConfig()
+	return wasmd.ModuleBasics.DefaultGenesis(encCfg.Marshaler)
 }
 
 func SetupWithGenesisValSet(t *testing.T, homeDir string, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *wasmd.WasmApp {
@@ -79,7 +77,7 @@ func SetupWithGenesisValSet(t *testing.T, homeDir string, valSet *tmtypes.Valida
 
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	genesisState[authtypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(authGenesis)
+	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
 
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
@@ -107,7 +105,7 @@ func SetupWithGenesisValSet(t *testing.T, homeDir string, valSet *tmtypes.Valida
 
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
-	genesisState[stakingtypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(stakingGenesis)
+	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
 
 	totalSupply := sdk.NewCoins()
 	for _, b := range balances {
@@ -117,9 +115,9 @@ func SetupWithGenesisValSet(t *testing.T, homeDir string, valSet *tmtypes.Valida
 
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
-	genesisState[banktypes.ModuleName] = app.LegacyAmino().MustMarshalJSON(bankGenesis)
+	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
-	stateBytes, err := codec.MarshalJSONIndent(app.LegacyAmino(), genesisState)
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	require.NoError(t, err)
 
 	// init chain will set the validator set and initialize the genesis accounts
@@ -168,8 +166,9 @@ func SignAndDeliver(
 	accNums, seq []uint64, expPass bool, priv ...crypto.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	t.Helper()
+	txGen := wasmd.MakeEncodingConfig().TxConfig
 	tx, err := GenTx(
-		wasmd.MakeEncodingConfig().TxConfig,
+		txGen,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
 		DefaultGenTxGas,
@@ -179,8 +178,23 @@ func SignAndDeliver(
 		priv...,
 	)
 	require.NoError(t, err)
+	txBytes, err := txGen.TxEncoder()(tx)
+	require.Nil(t, err)
+
+	// Must simulate now as CheckTx doesn't run Msgs anymore
+	_, res, err := app.Simulate(txBytes, tx)
+
+	expSimPass := true
+	if expSimPass {
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	} else {
+		require.Error(t, err)
+		require.Nil(t, res)
+	}
+
 	// Simulate a sending a transaction and committing a block
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	gasInfo, res, err := app.Deliver(tx)
 	if expPass {

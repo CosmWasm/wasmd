@@ -15,9 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/integration"
@@ -168,8 +168,8 @@ func CreateTestApp(t *testing.T) *app.WasmApp {
 	return integration.Setup(false, tempDir)
 }
 
-func header(height int64) abci.Header {
-	return abci.Header{
+func header(height int64) tmproto.Header {
+	return tmproto.Header{
 		Height: height,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC).Add(time.Second * time.Duration(height)),
 	}

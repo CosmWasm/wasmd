@@ -1,7 +1,6 @@
 package wasm_test
 
 import (
-	"strings"
 	"testing"
 
 	cosmwasmv1 "github.com/CosmWasm/go-cosmwasm"
@@ -72,9 +71,9 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	require.NoError(t, err)
 	newBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 	assert.Equal(t, originalBalance.Sub(coinToSendToB), newBalance)
-	const ibcVoucherTicker = "wasmxcosmo/connectionid00/stake"
+	const ibcVoucherTicker = "ibc/310F9D708E5AA2F54CA83BC04C2E56F1EA62DB6FBDA321B337867CF5BEECF531"
 	chainBBalance := chainB.App.BankKeeper.GetBalance(chainB.GetContext(), chainB.SenderAccount.GetAddress(), ibcVoucherTicker)
-	assert.Equal(t, sdk.Coin{Denom: ibcVoucherTicker, Amount: coinToSendToB.Amount}, chainBBalance)
+	assert.Equal(t, sdk.Coin{Denom: ibcVoucherTicker, Amount: coinToSendToB.Amount}, chainBBalance, chainB.App.BankKeeper.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
 
 type myContractA struct {
@@ -99,8 +98,6 @@ func (c *myContractA) OnReceive(ctx sdk.Context, hash []byte, params cosmwasmv2.
 	}
 	// call original ibctransfer keeper to not copy all code into this
 	packet := params.IBC.AsPacket(msg)
-	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
-	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
 	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, packet, src)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
@@ -117,8 +114,6 @@ func (c *myContractA) OnAcknowledgement(ctx sdk.Context, hash []byte, params cos
 	}
 	// call original ibctransfer keeper to not copy all code into this
 	packet := params.IBC.AsPacket(originalData)
-	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
-	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
 
 	var ack ibctransfertypes.FungibleTokenPacketAcknowledgement
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &src); err != nil {
@@ -140,8 +135,6 @@ func (c *myContractA) OnTimeout(ctx sdk.Context, hash []byte, params cosmwasmv2.
 	}
 	// call original ibctransfer keeper to not copy all code into this
 	packet := params.IBC.AsPacket(originalData)
-	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
-	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
 
 	// call original ibctransfer keeper to not copy all code into this
 	err := c.chain.App.TransferKeeper.OnTimeoutPacket(ctx, packet, src)

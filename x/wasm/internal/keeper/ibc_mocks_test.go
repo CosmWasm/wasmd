@@ -58,7 +58,7 @@ func (c *mockContract) OnAcknowledgement(ctx sdk.Context, hash []byte, params co
 	return &cosmwasmv2.OnAcknowledgeIBCResponse{}, 0, nil
 }
 
-func (c *mockContract) OnTimeout(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
+func (c *mockContract) OnTimeout(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
 	state := store.Get(hash)
 	require.NotNil(c.t, state)
 	assert.True(c.t, bytes.HasPrefix(state, originalData))
