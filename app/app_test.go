@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -10,7 +11,6 @@ import (
 	db "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	"github.com/cosmos/cosmos-sdk/codec"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
@@ -74,7 +74,7 @@ func TestGetEnabledProposals(t *testing.T) {
 
 func setGenesis(gapp *WasmApp) error {
 	genesisState := NewDefaultGenesisState()
-	stateBytes, err := codec.MarshalJSONIndent(gapp.LegacyAmino(), genesisState)
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		return err
 	}

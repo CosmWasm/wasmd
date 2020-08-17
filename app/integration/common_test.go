@@ -24,6 +24,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -86,7 +87,7 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp
 	)
 
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	return app
 }
@@ -112,7 +113,7 @@ func SignAndDeliver(
 	)
 	require.NoError(t, err)
 	// Simulate a sending a transaction and committing a block
-	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
 	gasInfo, res, err := app.Deliver(tx)
 	if expPass {

@@ -91,7 +91,7 @@ func maskKeyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	seed := make([]byte, 8)
 	binary.BigEndian.PutUint64(seed, maskKeyCounter)
 
-	key := secp256k1.GenPrivKeySecp256k1(seed)
+	key := secp256k1.GenPrivKeyFromSecret(seed)
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
 	return key, pub, addr

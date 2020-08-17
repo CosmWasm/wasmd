@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -18,9 +19,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/kv"
-
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 )
 
 type testData struct {
@@ -401,7 +399,7 @@ func prettyEvents(evts []abci.Event) string {
 	return string(bz)
 }
 
-func prettyAttrs(attrs []kv.Pair) []sdk.Attribute {
+func prettyAttrs(attrs []abci.EventAttribute) []sdk.Attribute {
 	pretty := make([]sdk.Attribute, len(attrs))
 	for i, a := range attrs {
 		pretty[i] = prettyAttr(a)
@@ -409,11 +407,11 @@ func prettyAttrs(attrs []kv.Pair) []sdk.Attribute {
 	return pretty
 }
 
-func prettyAttr(attr kv.Pair) sdk.Attribute {
+func prettyAttr(attr abci.EventAttribute) sdk.Attribute {
 	return sdk.NewAttribute(string(attr.Key), string(attr.Value))
 }
 
-func assertAttribute(t *testing.T, key string, value string, attr kv.Pair) {
+func assertAttribute(t *testing.T, key string, value string, attr abci.EventAttribute) {
 	t.Helper()
 	assert.Equal(t, key, string(attr.Key), prettyAttr(attr))
 	assert.Equal(t, value, string(attr.Value), prettyAttr(attr))

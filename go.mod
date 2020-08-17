@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.10.0
-	github.com/cosmos/cosmos-sdk v0.34.4-0.20200812130328-034b478a604d
+	github.com/cosmos/cosmos-sdk v0.34.4-0.20200817093322-ce9c2b2a0b75
 	github.com/dvsekhvalnov/jose2go v0.0.0-20180829124132-7f401d37b68a
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.0.0
@@ -19,8 +19,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
-	github.com/tendermint/tendermint v0.33.8
-	github.com/tendermint/tm-db v0.5.1
+	github.com/tendermint/tendermint v0.34.0-rc3
+	github.com/tendermint/tm-db v0.6.1
 	google.golang.org/grpc v1.31.0
 	gopkg.in/yaml.v2 v2.3.0
 )

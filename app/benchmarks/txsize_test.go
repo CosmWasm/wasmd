@@ -19,9 +19,9 @@ func ExampleTxSendSize() {
 
 	var gas uint64 = 1
 
-	priv1 := secp256k1.GenPrivKeySecp256k1([]byte{0})
+	priv1 := secp256k1.GenPrivKeyFromSecret([]byte{0})
 	addr1 := sdk.AccAddress(priv1.PubKey().Address())
-	priv2 := secp256k1.GenPrivKeySecp256k1([]byte{1})
+	priv2 := secp256k1.GenPrivKeyFromSecret([]byte{1})
 	addr2 := sdk.AccAddress(priv2.PubKey().Address())
 	coins := sdk.Coins{sdk.NewCoin("denom", sdk.NewInt(10))}
 	msg1 := banktypes.MsgMultiSend{

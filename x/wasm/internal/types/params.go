@@ -1,11 +1,13 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/gogo/protobuf/jsonpb"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -61,9 +63,16 @@ func (a *AccessType) UnmarshalText(text []byte) error {
 	*a = AccessTypeUndefined
 	return nil
 }
-
 func (a AccessType) MarshalText() ([]byte, error) {
 	return []byte(a.String()), nil
+}
+
+func (a *AccessType) MarshalJSONPB(_ *jsonpb.Marshaler) ([]byte, error) {
+	return json.Marshal(a)
+}
+
+func (a *AccessType) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
+	return json.Unmarshal(data, a)
 }
 
 func (a AccessConfig) Equals(o AccessConfig) bool {

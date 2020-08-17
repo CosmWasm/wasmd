@@ -289,6 +289,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
 	)
 
+	nobodyJson, err := json.Marshal(types.AccessTypeNobody)
 	specs := map[string]struct {
 		src                proposal.ParamChange
 		expUploadConfig    types.AccessConfig
@@ -316,7 +317,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 			src: proposal.ParamChange{
 				Subspace: types.DefaultParamspace,
 				Key:      string(types.ParamStoreKeyInstantiateAccess),
-				Value:    string(cdc.MustMarshalJSON(types.AccessTypeNobody)),
+				Value:    string(nobodyJson),
 			},
 			expUploadConfig:    types.AllowEverybody,
 			expInstantiateType: types.AccessTypeNobody,

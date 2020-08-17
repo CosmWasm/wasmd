@@ -49,7 +49,7 @@ var (
 
 	// ModuleCdc references the global x/wasm module codec.
 
-	ModuleCdc = codec.NewHybridCodec(amino, types.NewInterfaceRegistry())
+	ModuleCdc = codec.NewAminoCodec(amino)
 )
 
 func init() {
