@@ -1,15 +1,17 @@
 package wasm_test
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
 	cosmwasmv1 "github.com/CosmWasm/go-cosmwasm"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/ibc_testing"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	cosmwasmv2 "github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc-transfer/types"
 	clientexported "github.com/cosmos/cosmos-sdk/x/ibc/02-client/exported"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
@@ -23,18 +25,18 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
 		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
 	)
-	myContractAddr := chainA.NewRandomContractInstance()
-	wasmkeeper.MockContracts[myContractAddr.String()] = &myContractA{t: t, contractAddr: myContractAddr}
+	myContractAddr := chainB.NewRandomContractInstance()
+	wasmkeeper.MockContracts[myContractAddr.String()] = &myContractA{t: t, contractAddr: myContractAddr, chain: chainB}
 
-	contractAPortID := chainA.ContractInfo(myContractAddr).IBCPortID
+	contractAPortID := chainB.ContractInfo(myContractAddr).IBCPortID
 
 	var (
-		counterpartPortID = "transfer"
-		sourcePortID      = contractAPortID
+		sourcePortID      = "transfer"
+		counterpartPortID = contractAPortID
 	)
 	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
 
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.ORDERED)
+	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
 
 	//_, _, err := coordinator.ChanOpenInit(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
 	//require.Error(t, err) //  can not test this as it fails in SignCheckDeliver with the test assertions there
@@ -50,49 +52,102 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	//err = coordinator.ChanOpenConfirm(chainB, chainA, channelB, channelA)
 	//require.NoError(t, err)
 
+	originalBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
+
 	// with the channels established, let's do a transfer
-	coinToSendToA := ibc_testing.TestCoin
-	msg := ibctransfertypes.NewMsgTransfer(channelB.PortID, channelB.ID, coinToSendToA, chainB.SenderAccount.GetAddress(), chainA.SenderAccount.GetAddress().String(), 110, 0)
-	err := coordinator.SendMsgs(chainB, chainA, clientA, msg)
+	coinToSendToB := ibc_testing.TestCoin
+	msg := ibctransfertypes.NewMsgTransfer(channelA.PortID, channelA.ID, coinToSendToB, chainA.SenderAccount.GetAddress(), chainB.SenderAccount.GetAddress().String(), 110, 0)
+	err := coordinator.SendMsgs(chainA, chainB, clientB, msg)
 	require.NoError(t, err)
 
-
-	t.Skip("debug failure in relay call")
-	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToA.Denom, coinToSendToA.Amount.Uint64(), chainB.SenderAccount.GetAddress().String(), chainA.SenderAccount.GetAddress().String())
-	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelB.PortID, channelB.ID, channelA.PortID, channelA.ID, 110, 0)
-	ack := ibctransfertypes.FungibleTokenPacketAcknowledgement{Success: true}
-	err = coordinator.RelayPacket(chainB, chainA, clientB, clientA, packet, ack.GetBytes())
+	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String())
+	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, 110, 0)
+	err = coordinator.RecvPacket(chainA, chainB, clientA, packet) //sent to chainB
 	require.NoError(t, err)
+
+	ack := ibctransfertypes.FungibleTokenPacketAcknowledgement{Success: true}.GetBytes()
+
+	err = coordinator.AcknowledgePacket(chainA, chainB, clientB, packet, ack) // sent to chainA
+	//err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, packet, ack)
+	require.NoError(t, err)
+	newBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
+	assert.Equal(t, originalBalance.Sub(coinToSendToB), newBalance)
+	const ibcVoucherTicker = "wasmxcosmo/connectionid00/stake"
+	chainBBalance := chainB.App.BankKeeper.GetBalance(chainB.GetContext(), chainB.SenderAccount.GetAddress(), ibcVoucherTicker)
+	assert.Equal(t, sdk.Coin{Denom: ibcVoucherTicker, Amount: coinToSendToB.Amount}, chainBBalance)
 }
 
 type myContractA struct {
 	t            *testing.T
 	contractAddr sdk.AccAddress
+	chain        *ibc_testing.TestChain
 }
 
 func (c *myContractA) AcceptChannel(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
-	if order != channeltypes.ORDERED {
-		return &cosmwasmv2.AcceptChannelResponse{
-			Result: false,
-			Reason: "channel type must be ordered",
-		}, 0, nil
-	}
+	//if order != channeltypes.ORDERED { // todo: ordered channels fail with `k.GetNextSequenceAck` as there is no value for destPort/ DestChannel stored
+	//	return &cosmwasmv2.AcceptChannelResponse{
+	//		Result: false,
+	//		Reason: "channel type must be ordered",
+	//	}, 0, nil
+	//}
 	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
 }
-func (c *myContractA) OnReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
+func (c *myContractA) OnReceive(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
+	var src ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg, &src); err != nil {
+		return nil, 0, err
+	}
+	// call original ibctransfer keeper to not copy all code into this
+	packet := params.IBC.AsPacket(msg)
+	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
+	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
+	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, packet, src)
+	if err != nil {
+		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+	}
+
+	log := []wasmTypes.LogAttribute{} // note: all events are under `wasm` event type
 	myAck := ibctransfertypes.FungibleTokenPacketAcknowledgement{Success: true}.GetBytes()
-	return &cosmwasmv2.OnReceiveIBCResponse{Acknowledgement: myAck}, 0, nil
+	return &cosmwasmv2.OnReceiveIBCResponse{Acknowledgement: myAck, Log: log}, 0, nil
 }
-func (c *myContractA) OnAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
-	//state := store.Get(hash)
-	//require.NotNil(c.t, state)
-	//assert.Equal(c.t, state, append(originalData, acknowledgement...))
+func (c *myContractA) OnAcknowledgement(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
+	var src ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(originalData, &src); err != nil {
+		return nil, 0, err
+	}
+	// call original ibctransfer keeper to not copy all code into this
+	packet := params.IBC.AsPacket(originalData)
+	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
+	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
+
+	var ack ibctransfertypes.FungibleTokenPacketAcknowledgement
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(acknowledgement, &src); err != nil {
+		return nil, 0, err
+	}
+	// call original ibctransfer keeper to not copy all code into this
+	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, packet, src, ack)
+	if err != nil {
+		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+	}
+
 	return &cosmwasmv2.OnAcknowledgeIBCResponse{}, 0, nil
 }
 
-func (c *myContractA) OnTimeout(hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
-	state := store.Get(hash)
-	require.NotNil(c.t, state)
-	assert.True(c.t, bytes.HasPrefix(state, originalData))
+func (c *myContractA) OnTimeout(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
+	var src ibctransfertypes.FungibleTokenPacketData
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(originalData, &src); err != nil {
+		return nil, 0, err
+	}
+	// call original ibctransfer keeper to not copy all code into this
+	packet := params.IBC.AsPacket(originalData)
+	packet.DestinationPort = strings.Replace(packet.DestinationPort, ".", "x", 1) //
+	packet.DestinationPort = packet.DestinationPort[0:10]                         // denum: [a-z][a-z0-9/]{2,63}
+
+	// call original ibctransfer keeper to not copy all code into this
+	err := c.chain.App.TransferKeeper.OnTimeoutPacket(ctx, packet, src)
+	if err != nil {
+		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+	}
+
 	return &cosmwasmv2.OnTimeoutIBCResponse{}, 0, nil
 }

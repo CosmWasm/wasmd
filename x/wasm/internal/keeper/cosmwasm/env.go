@@ -4,6 +4,7 @@ import (
 	wasmtypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 )
 
 type Env struct {
@@ -43,6 +44,23 @@ type IBCInfo struct {
 	// ChannelID to the contract
 	ChannelID string
 	Packet    *IBCPacketInfo `json:"packet,omitempty"`
+}
+
+func (i IBCInfo) AsPacket(data []byte) channeltypes.Packet {
+	r := channeltypes.Packet{
+		DestinationPort:    i.PortID,
+		DestinationChannel: i.ChannelID,
+	}
+	if i.Packet == nil {
+		return r
+	}
+	r.TimeoutHeight = i.Packet.TimeoutHeight
+	r.Sequence = i.Packet.Sequence
+	r.SourcePort = i.Packet.SourcePort
+	r.SourceChannel = i.Packet.SourceChannel
+	r.TimeoutTimestamp = i.Packet.TimeoutTimestamp
+	r.Data = data
+	return r
 }
 
 type IBCPacketInfo struct {

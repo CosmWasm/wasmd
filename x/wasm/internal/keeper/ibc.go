@@ -66,9 +66,9 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 
 type IBCCallbacks interface {
 	// IBC packet lifecycle
-	OnReceive(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnReceiveIBCResponse, uint64, error)
-	OnAcknowledgement(hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnAcknowledgeIBCResponse, uint64, error)
-	OnTimeout(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
+	OnReceive(ctx sdk.Context, hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnReceiveIBCResponse, uint64, error)
+	OnAcknowledgement(ctx sdk.Context, hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnAcknowledgeIBCResponse, uint64, error)
+	OnTimeout(ctx sdk.Context, hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
 	// IBC channel livecycle
 	AcceptChannel(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
 	//OnConnect(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
@@ -128,7 +128,7 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, paylo
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnReceive(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnReceive(ctx, codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -167,7 +167,7 @@ func (k Keeper) OnAckPacket(ctx sdk.Context, contractAddr sdk.AccAddress, payloa
 	if !ok {
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnAcknowledgement(codeInfo.CodeHash, params, payloadData, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnAcknowledgement(ctx, codeInfo.CodeHash, params, payloadData, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -206,7 +206,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, pa
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnTimeout(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnTimeout(ctx, codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

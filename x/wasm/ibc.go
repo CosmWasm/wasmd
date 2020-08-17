@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc-transfer/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc/03-connection/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
@@ -80,13 +81,8 @@ func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, cou
 }
 
 func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string) error {
-	//contractAddr, err := ContractFromPortID(portID)
-	//if err != nil {
-	//	return sdkerrors.Wrapf(err, "contract port id")
-	//}
-	//return i.keeper.OnChannelOpen(ctx, contractAddr, cosmwasm.IBCInfo{PortID: portID, ChannelID: channelID})
-	// any events to send?
-	panic("not implemented")
+	// todo: let contract know...
+	return nil
 }
 
 func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) error {
@@ -117,14 +113,17 @@ func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet) (*
 	}
 
 	// todo: send proper events
-	//ctx.EventManager().EmitEvent(
-	//	sdk.NewEvent(
-	//		types.EventTypePacket,
-	//		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-	//		sdk.NewAttribute(types.AttributeKeyReceiver, data.Receiver),
-	//		sdk.NewAttribute(types.AttributeKeyValue, data.Amount.String()),
-	//	),
-	//)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			ibctransfertypes.EventTypeTransfer,
+			//sdk.NewAttribute(sdk.AttributeKeySender, ),
+			//sdk.NewAttribute(ibctransfertypes.AttributeKeyReceiver, msg.Receiver),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, ibctransfertypes.ModuleName),
+		),
+	})
 
 	return &sdk.Result{
 		Events: ctx.EventManager().Events().ToABCIEvents(),

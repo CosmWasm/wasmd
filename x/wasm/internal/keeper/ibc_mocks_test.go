@@ -44,21 +44,21 @@ func (c *mockContract) AcceptChannel(hash []byte, params cosmwasmv2.Env, order c
 	}
 	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
 }
-func (c *mockContract) OnReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
+func (c *mockContract) OnReceive(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
 	// real contract would do something with incoming msg
 	// create some random ackknowledgement
 	myAck := rand.Bytes(25)
 	store.Set(hash, append(msg, myAck...))
 	return &cosmwasmv2.OnReceiveIBCResponse{Acknowledgement: myAck}, 0, nil
 }
-func (c *mockContract) OnAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
+func (c *mockContract) OnAcknowledgement(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
 	state := store.Get(hash)
 	require.NotNil(c.t, state)
 	assert.Equal(c.t, state, append(originalData, acknowledgement...))
 	return &cosmwasmv2.OnAcknowledgeIBCResponse{}, 0, nil
 }
 
-func (c *mockContract) OnTimeout(hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
+func (c *mockContract) OnTimeout(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
 	state := store.Get(hash)
 	require.NotNil(c.t, state)
 	assert.True(c.t, bytes.HasPrefix(state, originalData))
