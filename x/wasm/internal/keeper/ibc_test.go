@@ -8,12 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
-	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -69,94 +66,6 @@ func TestBindingPortOnInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "wasm", owner)
 
-}
-
-func TestRelay(t *testing.T) {
-	// a chain with a contract instantiated and a channel
-
-	// when our test-contract sends the MsgWasmIBCCall for an outgoing ibc call
-	// then a WasmIBCContractPacketData is sent to the channel
-	// and a WasmIBCContractPacketAcknowledgement stored
-
-	// when the relayer picks up WasmIBCContractPacketData and returns an ack to
-	// our chain
-	// then the ack is passed to the contract with the origin WasmIBCContractPacketData
-
-	wasmApp := CreateTestApp(t)
-	ctx := wasmApp.BaseApp.NewContext(false, header(10))
-	contractAddr := withAContractInstance(t, ctx, wasmApp)
-	portID := wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).IBCPortID
-
-	mockChannelKeeper := NewMockChannelKeeper(wasmApp.WasmKeeper.ChannelKeeper)
-	wasmApp.WasmKeeper.ChannelKeeper = mockChannelKeeper
-	withCapabilities(t, ctx, channelID, portID, wasmApp)
-
-	myContract := MockContract(t, contractAddr, wasmApp)
-	myContract.DoIBCCall(ctx, channelID, portID)
-	// then
-	require.Len(t, mockChannelKeeper.received, 1)
-
-	// new scenario:
-	mockChannelKeeper.Reset()
-	// when we receive an incoming ibc packet
-
-	packet := types.Packet{
-		Sequence:           1,
-		SourcePort:         counterpartyPortID,
-		SourceChannel:      counterpartyChannelID,
-		DestinationPort:    portID,
-		DestinationChannel: channelID,
-		Data:               []byte(`{"my":"data""}`),
-		TimeoutHeight:      100,
-		TimeoutTimestamp:   0,
-	}
-
-	ibcHandler := wasm.NewIBCHandler(wasmApp.WasmKeeper)
-	_, ack, err := ibcHandler.OnRecvPacket(ctx, packet)
-	require.NoError(t, err)
-	require.NotEmpty(t, ack)
-	//
-	res, err := ibcHandler.OnAcknowledgementPacket(ctx, packet, ack)
-	require.NoError(t, err)
-	_ = res
-}
-
-func withCapabilities(t *testing.T, ctx sdk.Context, channelID, portID string, wasmApp *app.WasmApp) {
-	capName := host.ChannelCapabilityPath(portID, channelID)
-	cap, err := wasmApp.ScopedIBCKeeper.NewCapability(ctx, capName)
-	require.NoError(t, err)
-	err = wasmApp.ScopedWasmKeeper.ClaimCapability(ctx, cap, capName)
-	require.NoError(t, err)
-}
-
-func withAContractInstance(t *testing.T, ctx sdk.Context, app *app.WasmApp) sdk.AccAddress {
-	t.Helper()
-	accKeeper, keeper, bankKeeper := app.AccountKeeper, app.WasmKeeper, app.BankKeeper
-
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
-
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
-	require.NoError(t, err)
-
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm", "", nil)
-	require.NoError(t, err)
-
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
-
-	initMsg := InitMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	// create with no balance is legal
-	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 1", nil)
-	require.NoError(t, err)
-
-	return addr
 }
 
 // This should replace CreateTestInput when possible (likely after CosmWasm 1.0 is merged into this branch)
