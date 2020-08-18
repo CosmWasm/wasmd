@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
@@ -22,7 +21,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -288,16 +287,16 @@ func initGenFiles(
 	}
 
 	authGenState.Accounts = accounts
-	appGenState[authtypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(authGenState)
+	appGenState[authtypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&authGenState)
 
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	clientCtx.JSONMarshaler.MustUnmarshalJSON(appGenState[banktypes.ModuleName], &bankGenState)
 
 	bankGenState.Balances = genBalances
-	appGenState[banktypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(bankGenState)
+	appGenState[banktypes.ModuleName] = clientCtx.JSONMarshaler.MustMarshalJSON(&bankGenState)
 
-	appGenStateJSON, err := codec.MarshalJSONIndent(clientCtx.JSONMarshaler, appGenState)
+	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
 	}

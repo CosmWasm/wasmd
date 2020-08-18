@@ -41,9 +41,9 @@ build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
 whitespace :=
-whitespace += $(whitespace)
+empty = $(whitespace) $(whitespace)
 comma := ,
-build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+build_tags_comma_sep := $(subst $(empty),$(comma),$(build_tags))
 
 # process linker flags
 
@@ -89,9 +89,9 @@ flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
 flex_ldflags += $(LDFLAGS)
 flex_ldflags := $(strip $(flex_ldflags))
 
-BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(ldflags)' -trimpath
-CORAL_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(coral_ldflags)' -trimpath
-FLEX_BUILD_FLAGS := -tags $(build_tags_comma_sep) -ldflags '$(flex_ldflags)' -trimpath
+BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)' -trimpath
+CORAL_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(coral_ldflags)' -trimpath
+FLEX_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(flex_ldflags)' -trimpath
 
 all: install lint test
 
