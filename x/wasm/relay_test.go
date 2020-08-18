@@ -19,6 +19,7 @@ import (
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
+	// scenario: a contract can handle the receiving side of a ibc transfer
 	var (
 		coordinator = ibc_testing.NewCoordinator(t, 2)
 		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
@@ -61,46 +62,62 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	assert.Equal(t, sdk.Coin{Denom: ibcVoucherTicker, Amount: coinToSendToB.Amount}, chainBBalance, chainB.App.BankKeeper.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
 
-func TestFromContractToIBCTransfer(t *testing.T) {
+func TestContractCanInitiateIBCTransfer(t *testing.T) {
+	// scenario: a contract can start an ibc transfer via ibctransfertypes.NewMsgTransfer
+	// on an existing connection
 	var (
-		coordinator = ibc_testing.NewCoordinator(t, 2)
-		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
-		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+		coordinator   = ibc_testing.NewCoordinator(t, 2)
+		chainA        = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB        = coordinator.GetChain(ibc_testing.GetChainID(1))
+		coinToSendToB = ibc_testing.TestCoin
 	)
 	myContractAddr := chainA.NewRandomContractInstance()
-	wasmkeeper.MockContracts[myContractAddr.String()] = &senderContract{t: t, contractAddr: myContractAddr, chain: chainA}
+	myContract := &senderContract{t: t, contractAddr: myContractAddr, chain: chainA, receiverAddr: chainB.SenderAccount.GetAddress(), coinsToSend: coinToSendToB}
+	wasmkeeper.MockContracts[myContractAddr.String()] = myContract
 
-	contractAPortID := chainB.ContractInfo(myContractAddr).IBCPortID
+	contractAPortID := chainA.ContractInfo(myContractAddr).IBCPortID
 
 	var (
 		sourcePortID      = contractAPortID
 		counterpartPortID = "transfer"
 	)
 	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+	// a channel for transfer to transfer
+	transChanA, transChanB := coordinator.CreateTransferChannels(chainA, chainB, connA, connB, channeltypes.UNORDERED)
+	myContract.transferChannelID = transChanA.ID
+
+	originalBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), myContractAddr, sdk.DefaultBondDenom)
+	require.Equal(t, ibc_testing.TestCoin, originalBalance, "exp %q but got %q", ibc_testing.TestCoin, originalBalance)
+
+	// a channel for contranct to transfer
 	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
 
-	originalBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
-
+	_ = transChanB
 	_, _, _ = clientA, channelB, originalBalance
-
-	// with the channels established, let's do a transfer
-	coinToSendToB := ibc_testing.TestCoin
-	msg := ibctransfertypes.NewMsgTransfer(channelA.PortID, channelA.ID, coinToSendToB, chainA.SenderAccount.GetAddress(), chainB.SenderAccount.GetAddress().String(), 110, 0)
-	err := coordinator.SendMsgs(chainA, chainB, clientB, msg)
-	require.NoError(t, err)
+	_ = clientB
+	_ = channelA
+	newBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), myContractAddr, sdk.DefaultBondDenom)
+	assert.Equal(t, originalBalance.Sub(coinToSendToB).String(), newBalance.String())
 }
 
 type senderContract struct {
-	t            *testing.T
-	contractAddr sdk.AccAddress
-	chain        *ibc_testing.TestChain
+	t                 *testing.T
+	contractAddr      sdk.AccAddress
+	chain             *ibc_testing.TestChain
+	receiverAddr      sdk.AccAddress
+	coinsToSend       sdk.Coin
+	transferChannelID string
 }
 
 func (s *senderContract) AcceptChannel(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
 	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
 }
-func (s *senderContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
-	return &cosmwasmv2.OnConnectIBCResponse{}, 0, nil
+func (s *senderContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
+	// abusing onConnect event to send the message. can be any execute event which is not mocked though
+	//todo: better demo would be to use querier to find the transfer port
+
+	msg := ibctransfertypes.NewMsgTransfer("transfer", s.transferChannelID, s.coinsToSend, s.contractAddr, s.receiverAddr.String(), 110, 0)
+	return &cosmwasmv2.OnConnectIBCResponse{Messages: []sdk.Msg{msg}}, 0, nil
 }
 
 func (s *senderContract) OnReceive(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
@@ -183,6 +200,6 @@ func (c *receiverContract) OnTimeout(ctx sdk.Context, hash []byte, params cosmwa
 
 	return &cosmwasmv2.OnTimeoutIBCResponse{}, 0, nil
 }
-func (s *receiverContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
+func (s *receiverContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
 	return &cosmwasmv2.OnConnectIBCResponse{}, 0, nil
 }

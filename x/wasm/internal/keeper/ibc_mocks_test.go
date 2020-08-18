@@ -45,7 +45,7 @@ func (c *mockContract) AcceptChannel(ctx sdk.Context, hash []byte, params cosmwa
 	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
 }
 
-func (s *mockContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
+func (s *mockContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
 	return &cosmwasmv2.OnConnectIBCResponse{}, 0, nil
 }
 

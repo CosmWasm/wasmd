@@ -71,8 +71,8 @@ type IBCCallbacks interface {
 	OnTimeout(ctx sdk.Context, hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
 	// IBC channel livecycle
 	AcceptChannel(ctx sdk.Context, hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
-	OnConnect(ctx sdk.Context, hash []byte, params cosmwasm.Env, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnConnectIBCResponse, uint64, error)
-	//OnClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnCloseIBCResponse, uint64, error)
+	OnConnect(ctx sdk.Context, hash []byte, params cosmwasm.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnConnectIBCResponse, uint64, error)
+	//OnClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnCloseIBCResponse, uint64, error)
 }
 
 var MockContracts = make(map[string]IBCCallbacks, 0)
@@ -225,7 +225,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, pa
 	return nil
 }
 
-func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, ibcInfo cosmwasm.IBCInfo) error {
+func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, counterparty channeltypes.Counterparty, ibcInfo cosmwasm.IBCInfo) error {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return err
@@ -245,7 +245,7 @@ func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, ibcI
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnConnect(ctx, codeInfo.CodeHash, params, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnConnect(ctx, codeInfo.CodeHash, params, counterparty.PortId, counterparty.ChannelId, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

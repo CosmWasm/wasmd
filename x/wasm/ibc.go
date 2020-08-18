@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -12,11 +13,12 @@ import (
 )
 
 type IBCHandler struct {
-	keeper Keeper
+	keeper        Keeper
+	channelKeeper wasmTypes.ChannelKeeper
 }
 
 func NewIBCHandler(keeper Keeper) IBCHandler {
-	return IBCHandler{keeper: keeper}
+	return IBCHandler{keeper: keeper, channelKeeper: keeper.ChannelKeeper}
 }
 
 func (i IBCHandler) OnChanOpenInit(ctx sdk.Context, order channeltypes.Order, connectionHops []string, portID string, channelID string, channelCap *capabilitytypes.Capability, counterParty channeltypes.Counterparty, version string) error {
@@ -80,7 +82,11 @@ func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, cou
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCInfo{
+	channelInfo, ok := i.channelKeeper.GetChannel(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
+	}
+	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})
@@ -91,7 +97,11 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCInfo{
+	channelInfo, ok := i.channelKeeper.GetChannel(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
+	}
+	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})

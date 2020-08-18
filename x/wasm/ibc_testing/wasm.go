@@ -29,11 +29,12 @@ func (c *TestChain) NewRandomContractInstance() sdk.AccAddress {
 
 	anyAddressStr := c.SenderAccount.GetAddress().String()
 	instantiateMsg := &types.MsgInstantiateContract{
-		Sender:  c.SenderAccount.GetAddress(),
-		Admin:   c.SenderAccount.GetAddress(),
-		CodeID:  codeID,
-		Label:   "ibc-test",
-		InitMsg: []byte(fmt.Sprintf(`{"verifier": %q, "beneficiary": %q}`, anyAddressStr, anyAddressStr)),
+		Sender:    c.SenderAccount.GetAddress(),
+		Admin:     c.SenderAccount.GetAddress(),
+		CodeID:    codeID,
+		Label:     "ibc-test",
+		InitMsg:   []byte(fmt.Sprintf(`{"verifier": %q, "beneficiary": %q}`, anyAddressStr, anyAddressStr)),
+		InitFunds: sdk.Coins{TestCoin},
 	}
 
 	r, err = c.SendMsgs(instantiateMsg)
