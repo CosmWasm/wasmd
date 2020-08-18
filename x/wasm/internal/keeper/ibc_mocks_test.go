@@ -35,7 +35,7 @@ func MockContract(t *testing.T, contractAddr sdk.AccAddress, app *app.WasmApp) *
 	return c
 }
 
-func (c *mockContract) AcceptChannel(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
+func (c *mockContract) AcceptChannel(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
 	if order != channeltypes.ORDERED {
 		return &cosmwasmv2.AcceptChannelResponse{
 			Result: false,
@@ -44,6 +44,11 @@ func (c *mockContract) AcceptChannel(hash []byte, params cosmwasmv2.Env, order c
 	}
 	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
 }
+
+func (s *mockContract) OnConnect(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
+	return &cosmwasmv2.OnConnectIBCResponse{}, 0, nil
+}
+
 func (c *mockContract) OnReceive(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
 	// real contract would do something with incoming msg
 	// create some random ackknowledgement

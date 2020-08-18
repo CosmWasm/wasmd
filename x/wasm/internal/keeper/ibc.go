@@ -70,9 +70,9 @@ type IBCCallbacks interface {
 	OnAcknowledgement(ctx sdk.Context, hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnAcknowledgeIBCResponse, uint64, error)
 	OnTimeout(ctx sdk.Context, hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
 	// IBC channel livecycle
-	AcceptChannel(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
-	//OnConnect(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
-	//OnClose(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
+	AcceptChannel(ctx sdk.Context, hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
+	OnConnect(ctx sdk.Context, hash []byte, params cosmwasm.Env, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnConnectIBCResponse, uint64, error)
+	//OnClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnCloseIBCResponse, uint64, error)
 }
 
 var MockContracts = make(map[string]IBCCallbacks, 0)
@@ -97,7 +97,7 @@ func (k Keeper) AcceptChannel(ctx sdk.Context, contractAddr sdk.AccAddress, orde
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.AcceptChannel(codeInfo.CodeHash, params, order, version, connectionHops, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.AcceptChannel(ctx, codeInfo.CodeHash, params, order, version, connectionHops, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -207,6 +207,45 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, pa
 		panic("not supported")
 	}
 	res, gasUsed, execErr := mock.OnTimeout(ctx, codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Log, contractAddr)
+	ctx.EventManager().EmitEvents(events)
+
+	// hack: use sdk messages here for simplicity
+	for _, m := range res.Messages {
+		if err := k.messenger.handleSdkMessage(ctx, contractAddr, m); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, ibcInfo cosmwasm.IBCInfo) error {
+	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	if err != nil {
+		return err
+	}
+
+	var sender sdk.AccAddress // we don't know the sender
+	params := cosmwasm.NewEnv(ctx, sender, nil, contractAddr)
+	params.IBC = &ibcInfo
+
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+
+	gas := gasForContract(ctx)
+	mock, ok := MockContracts[contractAddr.String()]
+	if !ok { // hack for testing without wasmer
+		panic("not supported")
+	}
+	res, gasUsed, execErr := mock.OnConnect(ctx, codeInfo.CodeHash, params, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

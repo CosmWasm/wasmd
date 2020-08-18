@@ -76,13 +76,25 @@ func (i IBCHandler) OnChanOpenTry(ctx sdk.Context, order channeltypes.Order, con
 }
 
 func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, counterpartyVersion string) error {
-	// anything to do? We are not opening channels from wasm contracts
-	return nil
+	contractAddr, err := ContractFromPortID(portID)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "contract port id")
+	}
+	return i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCInfo{
+		PortID:    portID,
+		ChannelID: channelID,
+	})
 }
 
 func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string) error {
-	// todo: let contract know...
-	return nil
+	contractAddr, err := ContractFromPortID(portID)
+	if err != nil {
+		return sdkerrors.Wrapf(err, "contract port id")
+	}
+	return i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCInfo{
+		PortID:    portID,
+		ChannelID: channelID,
+	})
 }
 
 func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) error {

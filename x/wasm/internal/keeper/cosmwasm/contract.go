@@ -26,6 +26,15 @@ type OnTimeoutIBCResponse struct {
 	Log []wasmTypes.LogAttribute `json:"log"`
 }
 
+// OnConnectIBCResponse response to a channel open event
+type OnConnectIBCResponse struct {
+	Messages []sdk.Msg `json:"messages"`
+
+	// log message to return over abci interface
+	Log []wasmTypes.LogAttribute `json:"log"`
+}
+
+// AcceptChannelResponse is a frame for flow control in wasmd.
 type AcceptChannelResponse struct {
 	Result                       bool     `json:"result"`
 	Reason                       string   `json:"reason"`
