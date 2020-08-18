@@ -29,7 +29,7 @@ func (i IBCHandler) OnChanOpenInit(ctx sdk.Context, order channeltypes.Order, co
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	_, err = i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
+	err = i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})
@@ -50,26 +50,13 @@ func (i IBCHandler) OnChanOpenTry(ctx sdk.Context, order channeltypes.Order, con
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	restrictCounterpartyVersions, err := i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
+	err = i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})
 	if err != nil {
 		return err
 	}
-	if len(restrictCounterpartyVersions) != 0 {
-		var found bool
-		for _, accept := range restrictCounterpartyVersions {
-			if accept == counterpartyVersion {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return sdkerrors.Wrapf(types.ErrInvalidCounterparty, "not in supported versions: %q", restrictCounterpartyVersions)
-		}
-	}
-
 	// Claim channel capability passed back by IBC module
 	if err := i.keeper.ClaimCapability(ctx, channelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, err.Error())
@@ -86,7 +73,7 @@ func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, cou
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, cosmwasm.IBCInfo{
+	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, counterpartyVersion, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})
@@ -101,7 +88,7 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, cosmwasm.IBCInfo{
+	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, channelInfo.Version, cosmwasm.IBCInfo{
 		PortID:    portID,
 		ChannelID: channelID,
 	})

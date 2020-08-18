@@ -36,7 +36,7 @@ type OnConnectIBCResponse struct {
 
 // AcceptChannelResponse is a frame for flow control in wasmd.
 type AcceptChannelResponse struct {
-	Result                       bool     `json:"result"`
-	Reason                       string   `json:"reason"`
-	RestrictCounterpartyVersions []string `json:"accepted_counterpary_versions"`
+	Result                       bool   `json:"result"`
+	Reason                       string `json:"reason"`
+	RestrictCounterpartyVersions string `json:"accepted_counterparty_version"` // todo: return only 1
 }
