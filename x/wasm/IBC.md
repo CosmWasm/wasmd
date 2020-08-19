@@ -67,8 +67,6 @@ An "IBC Enabled" contract may dispatch the following messages not available
 to other contracts:
 
 * `IBCSendMsg` - this sends an IBC packet over an established channel. 
-* `IBCOpenChannel` - given a ConnectionID and a remote Port, this will request
-  to open a new channel with the given chain
 * `IBCCloseChannel` - given an existing channelID bound to this contract's Port,
   initiate the closing sequence and reject all pending packets.
 
@@ -104,13 +102,16 @@ that do not use this envelope.
 If you look at the [4 step process](https://docs.cosmos.network/master/ibc/overview.html#channels) for
 channel handshakes, we simplify this from the view of the contract:
 
-1. Channels *cannot* be opened by external clients, only the contract can initiate opening
-   a channel, via an `IBCOpenChannel` message. This means that `ChanOpenInit` does not need to
-   call the contract, but just verify that this contract did indeed attempt to open this channel.
+1. The main path to initiate a channel from a contract to an external port is via an external
+   client executing `simd tx ibc channel open-init` or such. This allows the initiating party
+   to select which version/protocol they want to connect with. There must be a callback for
+   the initiating contract to verify if the version and/or ordering are valid.
+   **Question**: can we reuse the same check-logic as for step 2
 2. The counterparty has a chance for version negotiation in `OnChanOpenTry`, where the contract
    can apply custom logic. It provides the protocol versions that the initiating party expects, and 
    the contract can reject the connection or accept it and return the protocol version it will communicate with.
-   Implementing this requires that we support [ADR 025](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-025-ibc-passive-channels.md).
+   Implementing this (contract selects a version, not just the relayer) requires that we support 
+   [ADR 025](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-025-ibc-passive-channels.md).
    TODO: check with Agoric and cwgoes to upstream any Cosmos SDK changes so this can work out of the box.
 3. `OnChanOpened` is called on the contract for both `OnChanOpenAck` and `OnChanOpenConfirm` containing
    the final version string (counterparty version). This gives a chance to abort the process
@@ -123,16 +124,11 @@ channel handshakes, we simplify this from the view of the contract:
 
 We require the following callbacks on the contract
 
-* `OnChanNegotiate` - called on receiving end for `OnChanOpenTry`. 
+* `OnChanNegotiate` - called on the initiating side on `OnChanOpenInit` and on receiving end for `OnChanOpenTry`. 
+    @alpe: does it make sense to use the same shape for both of these? Rather than `CounterPartyVersion`, they would
+    have `ProposedVersion`, but otherwise the same logic.
 * `OnChanOpened` - called on both sides after the initial 2 steps have passed to confirm the version used
 * `OnChanClosed` - this is called when an existing channel is closed for any reason
-
-Note @cwgoes I am rather confused by 
-[the handshake docs](https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation)
-In particular "ChanOpenTry callback should verify that the MsgChanOpenTry.Version is valid and that 
-MsgChanOpenTry.CounterpartyVersion is valid.". Where does the CounterpartyVersion come from?
-I thought the module would accept the Version and decide on it's own CounterpartyVersion. We assume the
-relayer makes that decision????
 
 ### Queries
 
@@ -167,31 +163,13 @@ type IBCSendMsg struct {
     TimeoutTimestamp uint64
 }
 
-// note that a contract has exactly one port, so the SourcePortID is implied
-type IBCOpenChannel struct {
-    // an establish connection between the two chains that we will multiplex on top of
-    ConnectionID string
-    // This is the identifier we will use locally
-    LocalChannelID string
-
-    // note: local port ID is implied as contract only has one port
-    RemotePortID string
-    // this will be the channel id on the remote side. 
-    // ideally we can remove this soon
-    // https://github.com/cosmos/ics/issues/465
-    RemoteChannelID string 
-
-    Version Version
-    Order channeltypes.Order
-
-}
-
 type IBCCloseChannel struct {
     ChannelID string
 }
 
-// use type from https://github.com/cosmos/cosmos-sdk/blob/master/x/ibc/03-connection/types/version.go ?
-// or is there a better generic model?
+// "Versions must be strings but and implement any versioning structure..."
+// https://docs.cosmos.network/master/ibc/custom.html#channel-handshake-version-negotiation
+// Use the same approach here
 type Version string
 ```
 
