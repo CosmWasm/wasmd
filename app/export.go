@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -28,8 +27,8 @@ func (app *WasmApp) ExportAppStateAndValidators(
 		app.prepForZeroHeightGenesis(ctx, jailWhiteList)
 	}
 
-	genState := app.mm.ExportGenesis(ctx, app.cdc)
-	appState, err = codec.MarshalJSONIndent(app.cdc, genState)
+	genState := app.mm.ExportGenesis(ctx, app.appCodec)
+	appState, err = json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return nil, nil, nil, err
 	}
