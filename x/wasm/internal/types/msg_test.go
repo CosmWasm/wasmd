@@ -146,7 +146,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"correct minimal": {
 			msg: MsgInstantiateContract{
 				Sender:  goodAddress,
-				CodeID:  1,
+				CodeID:  CID,
 				Label:   "foo",
 				InitMsg: []byte("{}"),
 			},
@@ -177,7 +177,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"bad sender minimal": {
 			msg: MsgInstantiateContract{
 				Sender:  badAddress,
-				CodeID:  1,
+				CodeID:  CID,
 				Label:   "foo",
 				InitMsg: []byte("{}"),
 			},
@@ -186,7 +186,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"correct maximal": {
 			msg: MsgInstantiateContract{
 				Sender:    goodAddress,
-				CodeID:    1,
+				CodeID:    CID,
 				Label:     "foo",
 				InitMsg:   []byte(`{"some": "data"}`),
 				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
@@ -196,7 +196,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"negative funds": {
 			msg: MsgInstantiateContract{
 				Sender:  goodAddress,
-				CodeID:  1,
+				CodeID:  CID,
 				Label:   "foo",
 				InitMsg: []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
@@ -207,7 +207,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"non json init msg": {
 			msg: MsgInstantiateContract{
 				Sender:  goodAddress,
-				CodeID:  1,
+				CodeID:  CID,
 				Label:   "foo",
 				InitMsg: []byte("invalid-json"),
 			},
@@ -216,7 +216,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 		"empty init msg": {
 			msg: MsgInstantiateContract{
 				Sender: goodAddress,
-				CodeID: 1,
+				CodeID: CID,
 				Label:  "foo",
 			},
 			valid: false,
@@ -479,7 +479,7 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:     goodAddress,
 				Contract:   anotherGoodAddress,
-				CodeID:     1,
+				CodeID:     CID,
 				MigrateMsg: []byte("{}"),
 			},
 		},
@@ -487,14 +487,14 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:   badAddress,
 				Contract: anotherGoodAddress,
-				CodeID:   1,
+				CodeID:   CID,
 			},
 			expErr: true,
 		},
 		"empty sender": {
 			src: MsgMigrateContract{
 				Contract: anotherGoodAddress,
-				CodeID:   1,
+				CodeID:   CID,
 			},
 			expErr: true,
 		},
@@ -509,14 +509,14 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:   goodAddress,
 				Contract: badAddress,
-				CodeID:   1,
+				CodeID:   CID,
 			},
 			expErr: true,
 		},
 		"empty contract addr": {
 			src: MsgMigrateContract{
 				Sender: goodAddress,
-				CodeID: 1,
+				CodeID: CID,
 			},
 			expErr: true,
 		},
@@ -524,7 +524,7 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:     goodAddress,
 				Contract:   anotherGoodAddress,
-				CodeID:     1,
+				CodeID:     CID,
 				MigrateMsg: []byte("invalid json"),
 			},
 			expErr: true,
@@ -533,7 +533,7 @@ func TestMsgMigrateContract(t *testing.T) {
 			src: MsgMigrateContract{
 				Sender:   goodAddress,
 				Contract: anotherGoodAddress,
-				CodeID:   1,
+				CodeID:   CID,
 			},
 			expErr: true,
 		},

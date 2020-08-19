@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	CID                             = 1
 	DefaultParamspace               = types.DefaultParamspace
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey

@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const CID = 1
+
 func TestWasmStoreCode(t *testing.T) {
 	kb, err := newKeybase()
 	require.NoError(t, err)
@@ -73,7 +75,6 @@ func TestWasmStoreCode(t *testing.T) {
 	require.Len(t, listPayload.Result, 1)
 
 	// and check detail view
-	codeID := "1"
-	resp, body = Request(t, port, "GET", fmt.Sprintf("/wasm/code/%s", codeID), nil)
+	resp, body = Request(t, port, "GET", fmt.Sprintf("/wasm/code/%d", CID), nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, body)
 }
