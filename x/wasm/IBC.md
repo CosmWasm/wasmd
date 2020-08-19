@@ -142,6 +142,11 @@ any possible DoS:
 * `ListPendingPackets` - given a (portID, channelID) identifier, return all packets
   in that channel, that have been sent by this chain, but for which no acknowledgement 
   or timeout has yet been received
+* `ListPendingAcknowledgements` - given a (portID, channelID) identifier, return all packets
+  in that channel, that have been received and processed by this chain, but for which 
+  we have no proof the acknowledgement has been relayed
+* `GetCounterparty` - given a local (portID, channelID) identifier, it will look up
+  what (portID, channelID) are bound to the remote end of the channel.
 
 ## Contract Details
 
@@ -248,8 +253,10 @@ func OnChanClosed(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddres
 type ChannelInfo struct {
     // key info to enforce (error if not what is expected)
     Order channeltypes.Order
-    // the version info the counterparty contract is proposing / agreed to
-    CounterpartyVersion Version
+    // The proposed version. This may come from the relayer, from the initiating contract, or the responding contract.
+    // In any case, this is the currently agreed upon version to use and if there is disagreement, the contract should
+    // propose another one (if possible in return value), or return an error
+    ProposedVersion Version
     // local id for the Channel that is being initiated
     ChannelID string
     // these two are taken from channeltypes.Counterparty
@@ -300,7 +307,7 @@ type ChannelMetadata struct {
     ChannelID string
     RemotePortID string
     Order channeltypes.Order
-    CounterpartyVerson Version
+    Verson Version
 }
 
 type QueryPendingPackets struct {
@@ -325,6 +332,36 @@ type PacketMetadata struct {
 	TimeoutHeight uint64
 	// block timestamp (in nanoseconds) after which the packet times out
 	TimeoutTimestamp uint64
+}
+
+type QueryPendingAcknowlegdements struct {
+    // Always required
+    ChannelID string
+
+    // exactly one of these must be set. ContractAddress is a shortcut to save the Contract->PortID mapping
+    PortID string
+	ContractAddress string
+}
+
+type QueryPendingPacketsResponse struct {
+    // Do we need another struct for the metadata?
+    Packets []PacketMetadata
+}
+
+
+type QueryCounterparty struct {
+    // Always required
+    ChannelID string
+
+    // exactly one of these must be set. ContractAddress is a shortcut to save the Contract->PortID mapping
+    PortID string
+	ContractAddress string
+}
+
+// lists (port, channel) on the counterparty for our local channel
+type QueryCounterpartyResponse struct {
+    PortID string
+    ChannelID string
 }
 ```
 
