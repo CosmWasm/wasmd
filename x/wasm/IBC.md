@@ -178,96 +178,98 @@ type IBCCloseChannel struct {
 type Version string
 ```
 
-Packet callbacks:
+Channel andPacket callbacks to the wasm contract
 
 ```go
-package packets
 
-// for reference: this is more like what we pass to go-cosmwasm
-// func (c *mockContract) OnReceive(params cosmwasm2.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, 
-//         querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnReceiveIBCResponse, uint64, error) {}
-// below is how we want to expose it in x/wasm:
+// IBCContractCallbacks defines the methods for go-cosmwasm to interact with the wasm contract.
+// A mock contract would implement the interface to fully simulate a wasm contract's behaviour.
+type IBCContractCallbacks interface {
+  // Package livecycle
 
-// IBCRecvPacket is called when we receive a packet sent from the other end of a channel
-// The response bytes listed here will be returned to the caller as "result" in IBCPacketAck
-// What do we do with error?
-//
-// If we were to assume/enforce an envelope, then we could wrap response/error into the acknowledge packet,
-// but we delegated that encoding to the contract
-func IBCRecvPacket(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, msg []byte) 
-    (response []byte, err error) {}
+  // OnIBCPacketReceive handles an incoming IBC package
+  OnIBCPacketReceive(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketReceiveResponse, uint64, error)
+  // OnIBCPacketAcknowledgement handles a IBC package execution on the counterparty chain
+  OnIBCPacketAcknowledgement(hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketAcknowledgementResponse, uint64, error)
+  // OnIBCPacketTimeout reverts state when the IBC package execution does not come in time
+  OnIBCPacketTimeout(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketTimeoutResponse, uint64, error)
+  // channel livecycle
 
-// how to handle error here? if we push it up the ibc stack and fail the transaction (normal handling),
-// the packet may be posted again and again. just log and ignore failures here? what does a failure even mean?
-// only realistic one I can imagine is OutOfGas (panic) to retry with higher gas limit.
-//
-// if there any point in returning a response, what does it mean?
-func IBCPacketAck(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, 
-    originalMsg []byte, result []byte) error {}
+  // OnIBCChannelOpen does the protocol version negotiation during channel handshake phase
+  OnIBCChannelOpen(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelOpenResponse, uint64, error)
+  // OnIBCChannelConnect callback when a IBC channel is established
+  OnIBCChannelConnect(hash []byte, params cosmwasm.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelConnectResponse, uint64, error)
+  // OnIBCChannelConnect callback when a IBC channel is closed
+  OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelCloseResponse, uint64, error)
+}
 
-// same question as for IBCPacketAck
-func IBCPacketDropped(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, env IBCPacketInfo, 
-    originalMsg []byte, errorMsg string) error {}
+// Response types
 
-// do we need/want all this info?
+
+type IBCPacketReceiveResponse struct {
+  // Acknowledgement contains the data to acknowledge the ibc packet execution
+  Acknowledgement []byte `json:"acknowledgement"`
+  // Messages comes directly from the contract and is it's request for action
+  Messages []sdk.Msg `json:"messages,omitempty"`
+  // Log contains event attributes to expose over abci interface
+  Log []wasmTypes.LogAttribute `json:"log,omitempty"`
+}
+
+type IBCPacketAcknowledgementResponse struct {
+  Messages []sdk.Msg `json:"messages"`
+  Log []wasmTypes.LogAttribute `json:"log"`
+}
+
+type IBCPacketTimeoutResponse struct {
+  Messages []sdk.Msg `json:"messages"`
+  Log []wasmTypes.LogAttribute `json:"log"`
+}
+
+type IBCChannelOpenResponse struct {
+  // Result contains a boolean if the channel would be accepted
+  Result                       bool   `json:"result"`
+  // Reason optional description why it was not accepted
+  Reason                       string `json:"reason"`
+}
+
+type IBCChannelConnectResponse struct {
+  Messages []sdk.Msg `json:"messages"`
+  Log []wasmTypes.LogAttribute `json:"log"`
+}
+
+type IBCChannelCloseResponse struct {
+  Messages []sdk.Msg `json:"messages"`
+  Log []wasmTypes.LogAttribute `json:"log"`
+}
+
+// Environment data for a contract
+type Env struct {
+...
+  // optional IBC meta data only set when called in IBC context
+  IBC *IBCInfo `json:"ibc,omitempty"`
+}
+
+type IBCInfo struct {
+  // Port of the contract
+  Port string `json:"port"`
+  // Channel to the contract
+  Channel string         `json:"channel"`
+  // Optional packet meta data when called on IBC packet functions
+  Packet  *IBCPacketInfo `json:"packet,omitempty"`
+}
+
 type IBCPacketInfo struct {
-	// local id for the Channel packet was sent/received on
-	ChannelID string
-
-    // sequence for the packet (will already be enforced in order if ORDERED channel)
-	Sequence uint64
-	
-    // Note: Timeout if guaranteed ONLY to be exceeded iff we are processing IBCPacketDropped
-    // otherwise, this is just interesting metadata
-
-	// block height after which the packet times out 
-	TimeoutHeight uint64
-	// block timestamp (in nanoseconds) after which the packet times out
-	TimeoutTimestamp uint64
-}
-```
-
-Channel Lifecycle:
-
-```go
-package lifecycle
-
-// if this returns error, we reject the channel opening
-// otherwise response has the versions we accept
-//
-// It is provided the full ChannelInfo being proposed to do any needed checks
-func OnChanNegotiate(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelInfo) 
-    (version Version, err error) {}
-
-// This is called with the full ChannelInfo once the other side has agreed.
-// An error here will still abort the handshake process. (so you can double check the order/version here)
-//
-// The main purpose is to allow the contract to set up any internal state knowing the channel was established,
-// and keep a registry with that ChannelID
-func OnChanOpened(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelInfo) error {}
-
-// This is called when the channel is closed for any reason
-// TODO: any meaning to return an error here? we cannot abort closing a channel
-func OnChanClosed(ctx sdk.Context, k *wasm.Keeper, contractAddress sdk.AccAddress, request ChannelClosedInfo) error {}
-
-type ChannelInfo struct {
-    // key info to enforce (error if not what is expected)
-    Order channeltypes.Order
-    // The proposed version. This may come from the relayer, from the initiating contract, or the responding contract.
-    // In any case, this is the currently agreed upon version to use and if there is disagreement, the contract should
-    // propose another one (if possible in return value), or return an error
-    ProposedVersion Version
-    // local id for the Channel that is being initiated
-    ChannelID string
-    // these two are taken from channeltypes.Counterparty
-    RemotePortID string
-    RemoteChannelID string
+  Sequence uint64
+  // identifies the port on the sending chain.
+  SourcePort string
+  // identifies the channel end on the sending chain.
+  SourceChannel string
+  // block height after which the packet times out
+  TimeoutHeight uint64
+  // block timestamp (in nanoseconds) after which the packet times out
+  TimeoutTimestamp uint64
 }
 
-type ChannelClosedInfo struct {
-    // local id for the Channel that is being shut down
-    ChannelID string
-}
 ```
 
 Queries:
