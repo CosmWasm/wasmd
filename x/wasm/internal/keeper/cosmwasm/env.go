@@ -11,7 +11,8 @@ type Env struct {
 	Block    wasmtypes.BlockInfo    `json:"block"`
 	Message  wasmtypes.MessageInfo  `json:"message"`
 	Contract wasmtypes.ContractInfo `json:"contract"`
-	IBC      *IBCInfo
+	// optional IBC meta data only set when called in IBC context
+	IBC *IBCInfo `json:"ibc,omitempty"`
 }
 
 func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) Env {
@@ -39,17 +40,18 @@ func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contract
 }
 
 type IBCInfo struct {
-	// PortID of the contract
-	PortID string
-	// ChannelID to the contract
-	ChannelID string
-	Packet    *IBCPacketInfo `json:"packet,omitempty"`
+	// Port of the contract
+	Port string `json:"port"`
+	// Channel to the contract
+	Channel string `json:"channel"`
+	// Optional packet meta data when called on IBC packet functions
+	Packet *IBCPacketInfo `json:"packet,omitempty"`
 }
 
 func (i IBCInfo) AsPacket(data []byte) channeltypes.Packet {
 	r := channeltypes.Packet{
-		DestinationPort:    i.PortID,
-		DestinationChannel: i.ChannelID,
+		DestinationPort:    i.Port,
+		DestinationChannel: i.Channel,
 	}
 	if i.Packet == nil {
 		return r

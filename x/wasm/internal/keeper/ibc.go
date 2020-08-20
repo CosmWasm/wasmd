@@ -63,23 +63,30 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 	return k.ScopedKeeper.ClaimCapability(ctx, cap, name)
 }
 
-// IBCContractCallbacks the contract methods that should be implemeted in rust without `ctx sdk.Context`
+// IBCContractCallbacks defines the methods for go-cosmwasm to interact with the wasm contract.
+// A mock contract would implement the interface to fully simulate a wasm contract's behaviour.
 type IBCContractCallbacks interface {
-	// todo: Rename methods #214
+	// Package livecycle
 
-	// IBC packet lifecycle
-	OnReceive(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnReceiveIBCResponse, uint64, error)
-	OnAcknowledgement(hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnAcknowledgeIBCResponse, uint64, error)
-	OnTimeout(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnTimeoutIBCResponse, uint64, error)
-	// IBC channel livecycle
-	AcceptChannel(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.AcceptChannelResponse, uint64, error)
-	OnConnect(hash []byte, params cosmwasm.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnConnectIBCResponse, uint64, error)
-	//OnClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.OnCloseIBCResponse, uint64, error)
+	// OnIBCPacketReceive handles an incoming IBC package
+	OnIBCPacketReceive(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketReceiveResponse, uint64, error)
+	// OnIBCPacketAcknowledgement handles a IBC package execution on the counterparty chain
+	OnIBCPacketAcknowledgement(hash []byte, params cosmwasm.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketAcknowledgementResponse, uint64, error)
+	// OnIBCPacketTimeout reverts state when the IBC package execution does not come in time
+	OnIBCPacketTimeout(hash []byte, params cosmwasm.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCPacketTimeoutResponse, uint64, error)
+	// channel livecycle
+
+	// OnIBCChannelOpen does the protocol version negotiation during channel handshake phase
+	OnIBCChannelOpen(hash []byte, params cosmwasm.Env, order channeltypes.Order, version string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelOpenResponse, uint64, error)
+	// OnIBCChannelConnect callback when a IBC channel is established
+	OnIBCChannelConnect(hash []byte, params cosmwasm.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelConnectResponse, uint64, error)
+	// OnIBCChannelConnect callback when a IBC channel is closed
+	OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelCloseResponse, uint64, error)
 }
 
 var MockContracts = make(map[string]IBCContractCallbacks, 0)
 
-func (k Keeper) AcceptChannel(ctx sdk.Context, contractAddr sdk.AccAddress, order channeltypes.Order, version string, connectionHops []string, ibcInfo cosmwasm.IBCInfo) error {
+func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, order channeltypes.Order, version string, connectionHops []string, ibcInfo cosmwasm.IBCInfo) error {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return err
@@ -99,7 +106,7 @@ func (k Keeper) AcceptChannel(ctx sdk.Context, contractAddr sdk.AccAddress, orde
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.AcceptChannel(codeInfo.CodeHash, params, order, version, connectionHops, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnIBCChannelOpen(codeInfo.CodeHash, params, order, version, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -130,7 +137,7 @@ func (k Keeper) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, paylo
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnReceive(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnIBCPacketReceive(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -169,7 +176,7 @@ func (k Keeper) OnAckPacket(ctx sdk.Context, contractAddr sdk.AccAddress, payloa
 	if !ok {
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnAcknowledgement(codeInfo.CodeHash, params, payloadData, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnIBCPacketAcknowledgement(codeInfo.CodeHash, params, payloadData, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -208,7 +215,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, pa
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnTimeout(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnIBCPacketTimeout(codeInfo.CodeHash, params, payloadData, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -227,7 +234,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, contractAddr sdk.AccAddress, pa
 	return nil
 }
 
-func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, counterparty channeltypes.Counterparty, version string, ibcInfo cosmwasm.IBCInfo) error {
+func (k Keeper) OnConnectChannel(ctx sdk.Context, contractAddr sdk.AccAddress, counterparty channeltypes.Counterparty, version string, ibcInfo cosmwasm.IBCInfo) error {
 	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return err
@@ -247,7 +254,7 @@ func (k Keeper) OnOpenChannel(ctx sdk.Context, contractAddr sdk.AccAddress, coun
 	if !ok { // hack for testing without wasmer
 		panic("not supported")
 	}
-	res, gasUsed, execErr := mock.OnConnect(codeInfo.CodeHash, params, counterparty.PortId, counterparty.ChannelId, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := mock.OnIBCChannelConnect(codeInfo.CodeHash, params, counterparty.PortId, counterparty.ChannelId, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

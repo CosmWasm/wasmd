@@ -111,26 +111,30 @@ type senderContract struct {
 	transferChannelID string
 }
 
-func (s *senderContract) AcceptChannel(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
-	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
+func (s *senderContract) OnIBCChannelOpen(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelOpenResponse, uint64, error) {
+	return &cosmwasmv2.IBCChannelOpenResponse{Result: true}, 0, nil
 }
-func (s *senderContract) OnConnect(hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
+func (s *senderContract) OnIBCChannelConnect(hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelConnectResponse, uint64, error) {
 	// abusing onConnect event to send the message. can be any execute event which is not mocked though
 	//todo: better demo would be to use querier to find the transfer port
 
 	msg := ibctransfertypes.NewMsgTransfer("transfer", s.transferChannelID, s.coinsToSend, s.contractAddr, s.receiverAddr.String(), 110, 0)
-	return &cosmwasmv2.OnConnectIBCResponse{Messages: []sdk.Msg{msg}}, 0, nil
+	return &cosmwasmv2.IBCChannelConnectResponse{Messages: []sdk.Msg{msg}}, 0, nil
 }
 
-func (s *senderContract) OnReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
+func (s *senderContract) OnIBCPacketReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketReceiveResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *senderContract) OnAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
+func (s *senderContract) OnIBCPacketAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketAcknowledgementResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *senderContract) OnTimeout(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
+func (s *senderContract) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketTimeoutResponse, uint64, error) {
+	panic("implement me")
+}
+
+func (s *senderContract) OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelCloseResponse, uint64, error) {
 	panic("implement me")
 }
 
@@ -140,16 +144,16 @@ type receiverContract struct {
 	chain        *ibc_testing.TestChain
 }
 
-func (c *receiverContract) AcceptChannel(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, connectionHops []string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.AcceptChannelResponse, uint64, error) {
+func (c *receiverContract) OnIBCChannelOpen(hash []byte, params cosmwasmv2.Env, order channeltypes.Order, version string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelOpenResponse, uint64, error) {
 	//if order != channeltypes.ORDERED { // todo: ordered channels fail with `k.GetNextSequenceAck` as there is no value for destPort/ DestChannel stored
-	//	return &cosmwasmv2.AcceptChannelResponse{
+	//	return &cosmwasmv2.IBCChannelOpenResponse{
 	//		Result: false,
 	//		Reason: "channel type must be ordered",
 	//	}, 0, nil
 	//}
-	return &cosmwasmv2.AcceptChannelResponse{Result: true}, 0, nil
+	return &cosmwasmv2.IBCChannelOpenResponse{Result: true}, 0, nil
 }
-func (c *receiverContract) OnReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnReceiveIBCResponse, uint64, error) {
+func (c *receiverContract) OnIBCPacketReceive(hash []byte, params cosmwasmv2.Env, msg []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketReceiveResponse, uint64, error) {
 	var src ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg, &src); err != nil {
 		return nil, 0, err
@@ -164,9 +168,9 @@ func (c *receiverContract) OnReceive(hash []byte, params cosmwasmv2.Env, msg []b
 
 	log := []wasmTypes.LogAttribute{} // note: all events are under `wasm` event type
 	myAck := ibctransfertypes.FungibleTokenPacketAcknowledgement{Success: true}.GetBytes()
-	return &cosmwasmv2.OnReceiveIBCResponse{Acknowledgement: myAck, Log: log}, 0, nil
+	return &cosmwasmv2.IBCPacketReceiveResponse{Acknowledgement: myAck, Log: log}, 0, nil
 }
-func (c *receiverContract) OnAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnAcknowledgeIBCResponse, uint64, error) {
+func (c *receiverContract) OnIBCPacketAcknowledgement(hash []byte, params cosmwasmv2.Env, originalData []byte, acknowledgement []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketAcknowledgementResponse, uint64, error) {
 	var src ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(originalData, &src); err != nil {
 		return nil, 0, err
@@ -185,10 +189,10 @@ func (c *receiverContract) OnAcknowledgement(hash []byte, params cosmwasmv2.Env,
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}
 
-	return &cosmwasmv2.OnAcknowledgeIBCResponse{}, 0, nil
+	return &cosmwasmv2.IBCPacketAcknowledgementResponse{}, 0, nil
 }
 
-func (c *receiverContract) OnTimeout(hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnTimeoutIBCResponse, uint64, error) {
+func (c *receiverContract) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env, originalData []byte, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketTimeoutResponse, uint64, error) {
 	var src ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(originalData, &src); err != nil {
 		return nil, 0, err
@@ -203,8 +207,11 @@ func (c *receiverContract) OnTimeout(hash []byte, params cosmwasmv2.Env, origina
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}
 
-	return &cosmwasmv2.OnTimeoutIBCResponse{}, 0, nil
+	return &cosmwasmv2.IBCPacketTimeoutResponse{}, 0, nil
 }
-func (s *receiverContract) OnConnect(hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.OnConnectIBCResponse, uint64, error) {
-	return &cosmwasmv2.OnConnectIBCResponse{}, 0, nil
+func (s *receiverContract) OnIBCChannelConnect(hash []byte, params cosmwasmv2.Env, counterpartyPortID string, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelConnectResponse, uint64, error) {
+	return &cosmwasmv2.IBCChannelConnectResponse{}, 0, nil
+}
+func (s *receiverContract) OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasmv2.Env, counterpartyPortID, counterpartyChannelID string, store prefix.Store, api cosmwasmv1.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCChannelCloseResponse, uint64, error) {
+	panic("implement me")
 }

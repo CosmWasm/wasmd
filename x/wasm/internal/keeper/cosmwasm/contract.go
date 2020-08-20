@@ -5,38 +5,38 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type OnReceiveIBCResponse struct {
-	Messages []sdk.Msg `json:"messages"`
-
-	Acknowledgement []byte
-	// log message to return over abci interface
-	Log []wasmTypes.LogAttribute `json:"log"`
+type IBCPacketReceiveResponse struct {
+	// Acknowledgement contains the data to acknowledge the ibc packet execution
+	Acknowledgement []byte `json:"acknowledgement"`
+	// Messages comes directly from the contract and is it's request for action
+	Messages []sdk.Msg `json:"messages,omitempty"`
+	// Log contains event attributes to expose over abci interface
+	Log []wasmTypes.LogAttribute `json:"log,omitempty"`
 }
 
-type OnAcknowledgeIBCResponse struct {
-	Messages []sdk.Msg `json:"messages"`
-
-	// log message to return over abci interface
-	Log []wasmTypes.LogAttribute `json:"log"`
-}
-type OnTimeoutIBCResponse struct {
-	Messages []sdk.Msg `json:"messages"`
-
-	// log message to return over abci interface
-	Log []wasmTypes.LogAttribute `json:"log"`
+type IBCPacketAcknowledgementResponse struct {
+	Messages []sdk.Msg                `json:"messages"`
+	Log      []wasmTypes.LogAttribute `json:"log"`
 }
 
-// OnConnectIBCResponse response to a channel open event
-type OnConnectIBCResponse struct {
-	Messages []sdk.Msg `json:"messages"`
-
-	// log message to return over abci interface
-	Log []wasmTypes.LogAttribute `json:"log"`
+type IBCPacketTimeoutResponse struct {
+	Messages []sdk.Msg                `json:"messages"`
+	Log      []wasmTypes.LogAttribute `json:"log"`
 }
 
-// AcceptChannelResponse is a frame for flow control in wasmd.
-type AcceptChannelResponse struct {
-	Result                       bool   `json:"result"`
-	Reason                       string `json:"reason"`
-	RestrictCounterpartyVersions string `json:"accepted_counterparty_version"` // todo: return only 1
+type IBCChannelOpenResponse struct {
+	// Result contains a boolean if the channel would be accepted
+	Result bool `json:"result"`
+	// Reason optional description why it was not accepted
+	Reason string `json:"reason"`
+}
+
+type IBCChannelConnectResponse struct {
+	Messages []sdk.Msg                `json:"messages"`
+	Log      []wasmTypes.LogAttribute `json:"log"`
+}
+
+type IBCChannelCloseResponse struct {
+	Messages []sdk.Msg                `json:"messages"`
+	Log      []wasmTypes.LogAttribute `json:"log"`
 }

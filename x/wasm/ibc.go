@@ -29,9 +29,9 @@ func (i IBCHandler) OnChanOpenInit(ctx sdk.Context, order channeltypes.Order, co
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
-		PortID:    portID,
-		ChannelID: channelID,
+	err = i.keeper.OnOpenChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
+		Port:    portID,
+		Channel: channelID,
 	})
 	if err != nil {
 		return err
@@ -50,9 +50,9 @@ func (i IBCHandler) OnChanOpenTry(ctx sdk.Context, order channeltypes.Order, con
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.AcceptChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
-		PortID:    portID,
-		ChannelID: channelID,
+	err = i.keeper.OnOpenChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
+		Port:    portID,
+		Channel: channelID,
 	})
 	if err != nil {
 		return err
@@ -73,9 +73,9 @@ func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, cou
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, counterpartyVersion, cosmwasm.IBCInfo{
-		PortID:    portID,
-		ChannelID: channelID,
+	return i.keeper.OnConnectChannel(ctx, contractAddr, channelInfo.Counterparty, counterpartyVersion, cosmwasm.IBCInfo{
+		Port:    portID,
+		Channel: channelID,
 	})
 }
 
@@ -88,9 +88,9 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnOpenChannel(ctx, contractAddr, channelInfo.Counterparty, channelInfo.Version, cosmwasm.IBCInfo{
-		PortID:    portID,
-		ChannelID: channelID,
+	return i.keeper.OnConnectChannel(ctx, contractAddr, channelInfo.Counterparty, channelInfo.Version, cosmwasm.IBCInfo{
+		Port:    portID,
+		Channel: channelID,
 	})
 }
 
@@ -106,7 +106,7 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	//if err != nil {
 	//	return sdkerrors.Wrapf(err, "contract port id")
 	//}
-	//return i.keeper.OnChannelClose(ctx, contractAddr, cosmwasm.IBCInfo{PortID: portID, ChannelID: channelID})
+	//return i.keeper.OnChannelClose(ctx, contractAddr, cosmwasm.IBCInfo{Port: portID, Channel: channelID})
 	// any events to send?
 	panic("not implemented")
 }
@@ -202,8 +202,8 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet)
 
 func ibcInfoFromPacket(packet channeltypes.Packet) cosmwasm.IBCInfo {
 	return cosmwasm.IBCInfo{
-		PortID:    packet.DestinationPort,
-		ChannelID: packet.DestinationChannel,
-		Packet:    cosmwasm.NewIBCPacketInfo(packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.TimeoutHeight, packet.TimeoutTimestamp),
+		Port:    packet.DestinationPort,
+		Channel: packet.DestinationChannel,
+		Packet:  cosmwasm.NewIBCPacketInfo(packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.TimeoutHeight, packet.TimeoutTimestamp),
 	}
 }
