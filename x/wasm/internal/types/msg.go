@@ -216,27 +216,23 @@ func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Sender}
 }
 
-func (msg MsgWasmIBCCall) Route() string {
+func (msg MsgIBCSend) Route() string {
 	return RouterKey
 }
 
-func (msg MsgWasmIBCCall) Type() string {
-	return "wasm-ibc-call"
+func (msg MsgIBCSend) Type() string {
+	return "wasm-ibc-send"
 }
 
-func (msg MsgWasmIBCCall) ValidateBasic() error {
-	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
-		return sdkerrors.Wrap(err, "sender")
-	}
-
+func (msg MsgIBCSend) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgWasmIBCCall) GetSignBytes() []byte {
+func (msg MsgIBCSend) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
-func (msg MsgWasmIBCCall) GetSigners() []sdk.AccAddress {
+func (msg MsgIBCSend) GetSigners() []sdk.AccAddress {
 	return nil
 }
 
@@ -249,10 +245,6 @@ func (msg MsgIBCCloseChannel) Type() string {
 }
 
 func (msg MsgIBCCloseChannel) ValidateBasic() error {
-	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
-		return sdkerrors.Wrap(err, "sender")
-	}
-
 	return nil
 }
 

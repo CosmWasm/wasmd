@@ -89,6 +89,8 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	// todo: revisit: DefaultEncoders are used twice now
+	quickHack := DefaultEncoders(channelKeeper, scopedKeeper).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
@@ -98,7 +100,7 @@ func NewKeeper(
 		ChannelKeeper: channelKeeper,
 		PortKeeper:    portKeeper,
 		ScopedKeeper:  scopedKeeper,
-		messenger:     NewMessageHandler(router, customEncoders),
+		messenger:     NewMessageHandler(router, &quickHack),
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 		authZPolicy:   DefaultAuthorizationPolicy{},
 		paramSpace:    paramSpace,
