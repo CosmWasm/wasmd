@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -81,6 +82,7 @@ type IBCContractCallbacks interface {
 	OnIBCChannelConnect(hash []byte, params cosmwasm.Env, channel cosmwasm.IBCChannel, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelConnectResponse, uint64, error)
 	// OnIBCChannelConnect callback when a IBC channel is closed
 	OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasm.Env, channel cosmwasm.IBCChannel, meter sdk.GasMeter, gas uint64) (*cosmwasm.IBCChannelCloseResponse, uint64, error)
+	Execute(hash []byte, params wasmTypes.Env, msg []byte, store prefix.Store, api wasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm.HandleResponse, uint64, error)
 }
 
 var MockContracts = make(map[string]IBCContractCallbacks, 0)

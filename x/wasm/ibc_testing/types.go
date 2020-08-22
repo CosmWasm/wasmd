@@ -10,6 +10,7 @@ type TestConnection struct {
 	ID                   string
 	ClientID             string
 	CounterpartyClientID string
+	NextChannelVersion   string
 	Channels             []TestChannel
 }
 
@@ -32,6 +33,7 @@ func (conn *TestConnection) AddTestChannel(portID string) TestChannel {
 func (conn *TestConnection) NextTestChannel(portID string) TestChannel {
 	channelID := fmt.Sprintf("%s%d", conn.ID, len(conn.Channels))
 	return TestChannel{
+		Version:              conn.NextChannelVersion,
 		PortID:               portID,
 		ID:                   channelID,
 		ClientID:             conn.ClientID,
@@ -58,4 +60,5 @@ type TestChannel struct {
 	ID                   string
 	ClientID             string
 	CounterpartyClientID string
+	Version              string
 }

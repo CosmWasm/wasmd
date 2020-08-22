@@ -3,7 +3,7 @@ package wasm_test
 import (
 	"testing"
 
-	cosmwasm "github.com/CosmWasm/go-cosmwasm"
+	"github.com/CosmWasm/go-cosmwasm"
 	cosmwasmv1 "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/ibc_testing"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
@@ -56,7 +56,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	require.NoError(t, err)
 	newBalance := chainA.App.BankKeeper.GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 	assert.Equal(t, originalBalance.Sub(coinToSendToB), newBalance)
-	const ibcVoucherTicker = "ibc/310F9D708E5AA2F54CA83BC04C2E56F1EA62DB6FBDA321B337867CF5BEECF531"
+	const ibcVoucherTicker = "ibc/1AAD10C9C252ACF464C7167E328C866BBDA0BDED3D89EFAB7B7C30BF01DE4657"
 	chainBBalance := chainB.App.BankKeeper.GetBalance(chainB.GetContext(), chainB.SenderAccount.GetAddress(), ibcVoucherTicker)
 	// note: the contract is called during check and deliverTX but the context used in the contract does not rollback
 	// so that we got twice the amount
@@ -81,7 +81,7 @@ func TestContractCanInitiateIBCTransfer(t *testing.T) {
 	var (
 		sourcePortID      = contractAPortID
 		counterpartPortID = "transfer"
-		ibcVoucherTicker  = "ibc/054D923266485D040762676605B33A3F4B560217E11FCACE3CE52D844CFBCEF6"
+		ibcVoucherTicker  = "ibc/8D5B148875A26426899137B476C646A94652D73BAEEE3CD30B9C261EB7BC0E1B"
 	)
 	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
 	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
@@ -100,7 +100,7 @@ func TestContractCanInitiateIBCTransfer(t *testing.T) {
 	require.NoError(t, err)
 
 	newBalance := chainB.App.BankKeeper.GetBalance(chainB.GetContext(), chainB.SenderAccount.GetAddress(), ibcVoucherTicker)
-	assert.Equal(t, sdk.NewCoin(ibcVoucherTicker, coinToSendToB.Amount).String(), newBalance.String())
+	assert.Equal(t, sdk.NewCoin(ibcVoucherTicker, coinToSendToB.Amount).String(), newBalance.String(), chainB.App.BankKeeper.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
 
 type senderContract struct {
@@ -155,6 +155,10 @@ func (s *senderContract) OnIBCPacketAcknowledgement(hash []byte, params cosmwasm
 
 func (s *senderContract) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env, packet cosmwasmv2.IBCPacket, store prefix.Store, api cosmwasm.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.IBCPacketTimeoutResponse, uint64, error) {
 	// return from escrow
+	panic("implement me")
+}
+
+func (s *senderContract) Execute(hash []byte, params cosmwasmv1.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.HandleResponse, uint64, error) {
 	panic("implement me")
 }
 
@@ -239,6 +243,10 @@ func (c *receiverContract) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env
 	}
 
 	return &cosmwasmv2.IBCPacketTimeoutResponse{}, 0, nil
+}
+
+func (c *receiverContract) Execute(hash []byte, params cosmwasmv1.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier wasmkeeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.HandleResponse, uint64, error) {
+	panic("implement me")
 }
 
 func toIBCPacket(p cosmwasmv2.IBCPacket) channeltypes.Packet {
