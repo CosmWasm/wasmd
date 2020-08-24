@@ -196,7 +196,7 @@ func (c *receiverContract) OnIBCPacketReceive(hash []byte, params cosmwasmv2.Env
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, sdkerrors.Wrap(err, "within Our smart contract")
 	}
 
 	log := []cosmwasmv1.LogAttribute{} // note: all events are under `wasm` event type
@@ -221,7 +221,7 @@ func (c *receiverContract) OnIBCPacketAcknowledgement(hash []byte, params cosmwa
 	ibcPacket := toIBCPacket(packetAck.OriginalPacket)
 	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, src, ack)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, sdkerrors.Wrap(err, "within Our smart contract")
 	}
 
 	return &cosmwasmv2.IBCPacketAcknowledgementResponse{}, 0, nil
@@ -239,7 +239,7 @@ func (c *receiverContract) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.TransferKeeper.OnTimeoutPacket(ctx, ibcPacket, src)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, sdkerrors.Wrap(err, "within Our smart contract")
 	}
 
 	return &cosmwasmv2.IBCPacketTimeoutResponse{}, 0, nil

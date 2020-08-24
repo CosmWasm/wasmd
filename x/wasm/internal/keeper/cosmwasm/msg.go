@@ -19,7 +19,8 @@ type CosmosMsg struct {
 type IBCMsg struct {
 	SendPacket   *IBCSendMsg         `json:"execute,omitempty"`
 	CloseChannel *IBCCloseChannelMsg `json:"instantiate,omitempty"`
-	Transfer     *IBCTransferMsg     `json:"instantiate,omitempty"`
+	// Transfer starts an ics-20 transfer from a contract using the sdk ibc-transfer module.
+	Transfer *IBCTransferMsg `json:"instantiate,omitempty"`
 }
 
 type IBCSendMsg struct {
@@ -34,7 +35,8 @@ type IBCSendMsg struct {
 type IBCCloseChannelMsg struct {
 	ChannelID string
 }
-type IBCTransferMsg struct {
+
+type IBCTransferMsg struct { // TODO: impl
 }
 
 //------- Results / Msgs -------------

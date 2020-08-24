@@ -23,7 +23,7 @@ func TestInitGenesis(t *testing.T) {
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
 
-	t.Log("fail with invalid source url")
+	t.Log("fail with invalid Our url")
 	msg := MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
@@ -37,7 +37,7 @@ func TestInitGenesis(t *testing.T) {
 	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
-	t.Log("fail with relative source url")
+	t.Log("fail with relative Our url")
 	msg = MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
@@ -65,7 +65,7 @@ func TestInitGenesis(t *testing.T) {
 	_, err = h(data.ctx, &msg)
 	require.Error(t, err)
 
-	t.Log("no error with valid source and build tag")
+	t.Log("no error with valid Our and build tag")
 	msg = MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
