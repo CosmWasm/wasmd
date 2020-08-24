@@ -54,26 +54,3 @@ type HandleResponse struct {
 	// log message to return over abci interface
 	Log []cosmwasmv1.LogAttribute `json:"log"`
 }
-
-//type WasmMsg struct {
-//	Execute     *cosmwasmv1.ExecuteMsg     `json:"execute,omitempty"`
-//	Instantiate *cosmwasmv1.InstantiateMsg `json:"instantiate,omitempty"`
-//}
-//
-//// ExecuteMsg is used to call another defined contract on this chain.
-//// The calling contract requires the callee to be defined beforehand,
-//// and the address should have been defined in initialization.
-//// And we assume the developer tested the ABIs and coded them together.
-////
-//// Since a contract is immutable once it is deployed, we don't need to transform this.
-//// If it was properly coded and worked once, it will continue to work throughout upgrades.
-//type ExecuteMsg struct {
-//	// ContractAddr is the sdk.AccAddress of the contract, which uniquely defines
-//	// the contract ID and instance ID. The sdk module should maintain a reverse lookup table.
-//	ContractAddr string `json:"contract_addr"`
-//	// Msg is assumed to be a json-encoded message, which will be passed directly
-//	// as `userMsg` when calling `Handle` on the above-defined contract
-//	Msg []byte `json:"msg"`
-//	// Send is an optional amount of coins this contract sends to the called contract
-//	Send cosmwasmv1.Coins `json:"send"`
-//}

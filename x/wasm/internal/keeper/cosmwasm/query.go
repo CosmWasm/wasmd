@@ -12,7 +12,3 @@ type ChannelEndQuery struct {
 type ChannelClientStateQuery struct {
 	PortID, ChannelID string
 }
-
-//type AllChannelsToContractQuery struct {
-// address string
-//}
