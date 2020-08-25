@@ -44,12 +44,12 @@ const (
 	TrustingPeriod  time.Duration = time.Hour * 24 * 7 * 2
 	UnbondingPeriod time.Duration = time.Hour * 24 * 7 * 3
 	MaxClockDrift   time.Duration = time.Second * 10
-
-	ChannelVersion = ibctransfertypes.Version
-	InvalidID      = "IDisInvalid"
+	InvalidID                     = "IDisInvalid"
 
 	ConnectionIDPrefix = "connectionid"
 )
+
+//var ChannelVersion = ibctransfertypes.Version
 
 // Default params variables used to create a TM client
 var (
@@ -334,10 +334,11 @@ func (chain *TestChain) AddTestConnection(clientID, counterpartyClientID string)
 // format:
 // connectionid<index>
 func (chain *TestChain) ConstructNextTestConnection(clientID, counterpartyClientID string) *TestConnection {
-	connectionID := ConnectionIDPrefix + strconv.Itoa(len(chain.Connections))
+	connectionID := chain.ChainID + ConnectionIDPrefix + strconv.Itoa(len(chain.Connections))
 	return &TestConnection{
 		ID:                   connectionID,
 		ClientID:             clientID,
+		NextChannelVersion:   ibctransfertypes.Version,
 		CounterpartyClientID: counterpartyClientID,
 	}
 }
@@ -590,7 +591,7 @@ func (chain *TestChain) ChanOpenInit(
 ) error {
 	msg := channeltypes.NewMsgChannelOpenInit(
 		ch.PortID, ch.ID,
-		ChannelVersion, order, []string{connectionID},
+		ch.Version, order, []string{connectionID},
 		counterparty.PortID, counterparty.ID,
 		chain.SenderAccount.GetAddress(),
 	)
@@ -608,9 +609,9 @@ func (chain *TestChain) ChanOpenTry(
 
 	msg := channeltypes.NewMsgChannelOpenTry(
 		ch.PortID, ch.ID,
-		ChannelVersion, order, []string{connectionID},
+		ch.Version, order, []string{connectionID},
 		counterpartyCh.PortID, counterpartyCh.ID,
-		ChannelVersion,
+		counterpartyCh.Version,
 		proof, height,
 		chain.SenderAccount.GetAddress(),
 	)
@@ -626,7 +627,7 @@ func (chain *TestChain) ChanOpenAck(
 
 	msg := channeltypes.NewMsgChannelOpenAck(
 		ch.PortID, ch.ID,
-		ChannelVersion,
+		counterpartyCh.Version,
 		proof, height,
 		chain.SenderAccount.GetAddress(),
 	)

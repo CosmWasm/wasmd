@@ -7,6 +7,7 @@ import (
 
 	wasm "github.com/CosmWasm/go-cosmwasm"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	cosmwasmv2 "github.com/CosmWasm/wasmd/x/wasm/internal/keeper/cosmwasm"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -89,6 +90,8 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	// todo: revisit: DefaultEncoders are used twice now
+	quickHack := DefaultEncoders(channelKeeper, scopedKeeper).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
@@ -98,7 +101,7 @@ func NewKeeper(
 		ChannelKeeper: channelKeeper,
 		PortKeeper:    portKeeper,
 		ScopedKeeper:  scopedKeeper,
-		messenger:     NewMessageHandler(router, customEncoders),
+		messenger:     NewMessageHandler(router, &quickHack),
 		queryGasLimit: wasmConfig.SmartQueryGasLimit,
 		authZPolicy:   DefaultAuthorizationPolicy{},
 		paramSpace:    paramSpace,
@@ -307,6 +310,27 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	gas := gasForContract(ctx)
+
+	mock, ok := MockContracts[contractAddress.String()]
+	if ok {
+		res, gasUsed, execErr := mock.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+		consumeGas(ctx, gasUsed)
+		if execErr != nil {
+			return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		}
+
+		// emit all events from this contract itself
+		events := types.ParseEvents(res.Log, contractAddress)
+		ctx.EventManager().EmitEvents(events)
+
+		if err := k.messenger.DispatchV2(ctx, contractAddress, cosmwasmv2.IBCEndpoint{}, res.Messages...); err != nil {
+			return nil, err
+		}
+		return &sdk.Result{
+			Data: res.Data,
+		}, nil
+	}
+
 	res, gasUsed, execErr := k.wasmer.Execute(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {

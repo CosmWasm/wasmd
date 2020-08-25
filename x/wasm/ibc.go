@@ -29,9 +29,11 @@ func (i IBCHandler) OnChanOpenInit(ctx sdk.Context, order channeltypes.Order, co
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnOpenChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
-		Port:    portID,
-		Channel: channelID,
+	err = i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCChannel{
+		Endpoint:             cosmwasm.IBCEndpoint{Port: portID, Channel: channelID},
+		CounterpartyEndpoint: cosmwasm.IBCEndpoint{Port: counterParty.PortId, Channel: counterParty.ChannelId},
+		Order:                order,
+		Version:              version,
 	})
 	if err != nil {
 		return err
@@ -50,9 +52,12 @@ func (i IBCHandler) OnChanOpenTry(ctx sdk.Context, order channeltypes.Order, con
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnOpenChannel(ctx, contractAddr, order, version, connectionHops, cosmwasm.IBCInfo{
-		Port:    portID,
-		Channel: channelID,
+	err = i.keeper.OnOpenChannel(ctx, contractAddr, cosmwasm.IBCChannel{
+		Endpoint:             cosmwasm.IBCEndpoint{Port: portID, Channel: channelID},
+		CounterpartyEndpoint: cosmwasm.IBCEndpoint{Port: counterParty.PortId, Channel: counterParty.ChannelId},
+		Order:                order,
+		Version:              version,
+		CounterpartyVersion:  &counterpartyVersion,
 	})
 	if err != nil {
 		return err
@@ -73,9 +78,12 @@ func (i IBCHandler) OnChanOpenAck(ctx sdk.Context, portID, channelID string, cou
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnConnectChannel(ctx, contractAddr, channelInfo.Counterparty, counterpartyVersion, cosmwasm.IBCInfo{
-		Port:    portID,
-		Channel: channelID,
+	return i.keeper.OnConnectChannel(ctx, contractAddr, cosmwasm.IBCChannel{
+		Endpoint:             cosmwasm.IBCEndpoint{Port: portID, Channel: channelID},
+		CounterpartyEndpoint: cosmwasm.IBCEndpoint{Port: channelInfo.Counterparty.PortId, Channel: channelInfo.Counterparty.ChannelId},
+		Order:                channelInfo.Ordering,
+		Version:              channelInfo.Version,
+		CounterpartyVersion:  &counterpartyVersion,
 	})
 }
 
@@ -88,9 +96,11 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return sdkerrors.Wrap(types.ErrInvalidCounterparty, "not found")
 	}
-	return i.keeper.OnConnectChannel(ctx, contractAddr, channelInfo.Counterparty, channelInfo.Version, cosmwasm.IBCInfo{
-		Port:    portID,
-		Channel: channelID,
+	return i.keeper.OnConnectChannel(ctx, contractAddr, cosmwasm.IBCChannel{
+		Endpoint:             cosmwasm.IBCEndpoint{Port: portID, Channel: channelID},
+		CounterpartyEndpoint: cosmwasm.IBCEndpoint{Port: channelInfo.Counterparty.PortId, Channel: channelInfo.Counterparty.ChannelId},
+		Order:                channelInfo.Ordering,
+		Version:              channelInfo.Version,
 	})
 }
 
@@ -116,7 +126,7 @@ func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet) (*
 	if err != nil {
 		return nil, nil, sdkerrors.Wrapf(err, "contract port id")
 	}
-	msgBz, err := i.keeper.OnRecvPacket(ctx, contractAddr, packet.Data, ibcInfoFromPacket(packet))
+	msgBz, err := i.keeper.OnRecvPacket(ctx, contractAddr, newIBCPacket(packet))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -140,12 +150,15 @@ func (i IBCHandler) OnRecvPacket(ctx sdk.Context, packet channeltypes.Packet) (*
 }
 
 func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) (*sdk.Result, error) {
-	contractAddr, err := ContractFromPortID(packet.DestinationPort)
+	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnAckPacket(ctx, contractAddr, packet.Data, acknowledgement, ibcInfoFromPacket(packet))
+	err = i.keeper.OnAckPacket(ctx, contractAddr, cosmwasm.IBCAcknowledgement{
+		Acknowledgement: acknowledgement,
+		OriginalPacket:  newIBCPacket(packet),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +193,7 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "contract port id")
 	}
-	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, packet.Data, ibcInfoFromPacket(packet))
+	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, newIBCPacket(packet))
 	if err != nil {
 		return nil, err
 	}
@@ -200,10 +213,13 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet)
 
 }
 
-func ibcInfoFromPacket(packet channeltypes.Packet) cosmwasm.IBCInfo {
-	return cosmwasm.IBCInfo{
-		Port:    packet.DestinationPort,
-		Channel: packet.DestinationChannel,
-		Packet:  cosmwasm.NewIBCPacketInfo(packet.Sequence, packet.SourcePort, packet.SourceChannel, packet.TimeoutHeight, packet.TimeoutTimestamp),
+func newIBCPacket(packet channeltypes.Packet) cosmwasm.IBCPacket {
+	return cosmwasm.IBCPacket{
+		Data:             packet.Data,
+		Source:           cosmwasm.IBCEndpoint{Channel: packet.SourceChannel, Port: packet.SourcePort},
+		Destination:      cosmwasm.IBCEndpoint{Channel: packet.DestinationChannel, Port: packet.DestinationPort},
+		Sequence:         packet.Sequence,
+		TimeoutHeight:    packet.TimeoutHeight,
+		TimeoutTimestamp: packet.TimeoutTimestamp,
 	}
 }

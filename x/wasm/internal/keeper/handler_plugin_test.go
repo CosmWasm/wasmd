@@ -258,7 +258,7 @@ func TestEncoding(t *testing.T) {
 		},
 	}
 
-	encoder := DefaultEncoders()
+	encoder := DefaultEncoders(nil, nil)
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {

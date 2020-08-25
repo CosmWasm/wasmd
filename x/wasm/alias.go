@@ -110,7 +110,7 @@ type (
 	MsgMigrateContract      = types.MsgMigrateContract
 	MsgUpdateAdmin          = types.MsgUpdateAdmin
 	MsgClearAdmin           = types.MsgClearAdmin
-	MsgWasmIBCCall          = types.MsgWasmIBCCall
+	MsgWasmIBCCall          = types.MsgIBCSend
 	Model                   = types.Model
 	CodeInfo                = types.CodeInfo
 	ContractInfo            = types.ContractInfo
