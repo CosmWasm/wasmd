@@ -86,6 +86,11 @@ type TestChain struct {
 	// IBC specific helpers
 	ClientIDs   []string          // ClientID's used on this chain
 	Connections []*TestConnection // track connectionID's created for this chain
+
+	// ExpSimulationPass sets assertions for sign and deliver
+	ExpSimulationPass bool
+	// ExpDeliveryPass sets assertions for sign and deliver
+	ExpDeliveryPass bool
 }
 
 // NewTestChain initializes a new TestChain instance with a single validator set using a
@@ -136,20 +141,22 @@ func NewTestChain(t *testing.T, chainID string) *TestChain {
 
 	// create an account to send transactions from
 	chain := &TestChain{
-		t:             t,
-		ChainID:       chainID,
-		App:           app,
-		CurrentHeader: header,
-		Querier:       keeper.NewQuerier(*app.IBCKeeper, legacyQuerierCdc),
-		QueryServer:   app.IBCKeeper,
-		TxConfig:      txConfig,
-		Codec:         app.AppCodec(),
-		Vals:          valSet,
-		Signers:       signers,
-		senderPrivKey: senderPrivKey,
-		SenderAccount: acc,
-		ClientIDs:     make([]string, 0),
-		Connections:   make([]*TestConnection, 0),
+		t:                 t,
+		ChainID:           chainID,
+		App:               app,
+		CurrentHeader:     header,
+		Querier:           keeper.NewQuerier(*app.IBCKeeper, legacyQuerierCdc),
+		QueryServer:       app.IBCKeeper,
+		TxConfig:          txConfig,
+		Codec:             app.AppCodec(),
+		Vals:              valSet,
+		Signers:           signers,
+		senderPrivKey:     senderPrivKey,
+		SenderAccount:     acc,
+		ClientIDs:         make([]string, 0),
+		Connections:       make([]*TestConnection, 0),
+		ExpSimulationPass: true,
+		ExpDeliveryPass:   true,
 	}
 
 	chain.NextBlock()
@@ -238,7 +245,9 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		msgs,
 		[]uint64{chain.SenderAccount.GetAccountNumber()},
 		[]uint64{chain.SenderAccount.GetSequence()},
-		true, true, chain.senderPrivKey,
+		// instead of passing assertions in the helper function a detailed result object would be nice
+		// assertions would improve readability in tests a lot
+		chain.ExpSimulationPass, chain.ExpDeliveryPass, chain.senderPrivKey,
 	)
 	if err != nil {
 		return nil, err

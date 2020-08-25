@@ -226,6 +226,83 @@ func TestPinPongWithAppLevelError(t *testing.T) {
 	assert.Equal(t, uint64(1), pongContract.QueryState(receivedErrorBallsCountKey))
 }
 
+func TestWithNonMatchingProtocolVersionOnInit(t *testing.T) {
+	var (
+		coordinator = ibc_testing.NewCoordinator(t, 2)
+		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+	)
+	_ = chainB.NewRandomContractInstance() // skip 1 id
+	var (
+		pingContractAddr = chainA.NewRandomContractInstance()
+		pongContractAddr = chainB.NewRandomContractInstance()
+	)
+	require.NotEqual(t, pingContractAddr, pongContractAddr)
+
+	pingContract := &player{t: t, actor: ping, chain: chainA, contractAddr: pingContractAddr}
+	pongContract := &player{t: t, actor: pong, chain: chainB, contractAddr: pongContractAddr}
+
+	wasmkeeper.MockContracts[pingContractAddr.String()] = pingContract
+	wasmkeeper.MockContracts[pongContractAddr.String()] = pongContract
+
+	var (
+		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
+		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+	)
+	_, _, connA, _ := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+
+	chainA.ExpSimulationPass = false
+	chainA.ExpDeliveryPass = false
+	msg := channeltypes.NewMsgChannelOpenInit(
+		sourcePortID, "mychannelid", "non-matching", channeltypes.UNORDERED, []string{connA.ID},
+		counterpartyPortID, "otherchannelid", chainA.SenderAccount.GetAddress(),
+	)
+	// when
+	_, err := chainA.SendMsgs(msg)
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expected \"ping\" but got \"non-matching\": invalid")
+}
+
+func TestWithNonMatchingProtocolVersionOnTry(t *testing.T) {
+	var (
+		coordinator = ibc_testing.NewCoordinator(t, 2)
+		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+	)
+	_ = chainB.NewRandomContractInstance() // skip 1 id
+	var (
+		pingContractAddr = chainA.NewRandomContractInstance()
+		pongContractAddr = chainB.NewRandomContractInstance()
+	)
+	require.NotEqual(t, pingContractAddr, pongContractAddr)
+
+	pingContract := &player{t: t, actor: ping, chain: chainA, contractAddr: pingContractAddr}
+	pongContract := &player{t: t, actor: pong, chain: chainB, contractAddr: pongContractAddr}
+
+	wasmkeeper.MockContracts[pingContractAddr.String()] = pingContract
+	wasmkeeper.MockContracts[pongContractAddr.String()] = pongContract
+
+	var (
+		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
+		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+	)
+	_, _, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+	connA.NextChannelVersion = ping
+	connB.NextChannelVersion = "non-matching"
+
+	channelA, channelB, err := coordinator.ChanOpenInit(chainA, chainB, connA, connB, sourcePortID, counterpartyPortID, channeltypes.UNORDERED)
+	require.NoError(t, err)
+
+	chainB.ExpSimulationPass = false
+	chainB.ExpDeliveryPass = false
+
+	// when tried to open a channel on the other side
+	err = coordinator.ChanOpenTry(chainB, chainA, channelB, channelA, connB, channeltypes.UNORDERED)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expected \"pong\" but got \"non-matching\": invalid")
+}
+
 // hit is ibc packet payload
 type hit map[string]uint64
 
