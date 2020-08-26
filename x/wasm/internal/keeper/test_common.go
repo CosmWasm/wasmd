@@ -165,6 +165,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		transfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		wasmtypes.ModuleName:           {authtypes.Minter, authtypes.Burner},
 	}
 	authSubsp, _ := paramsKeeper.GetSubspace(authtypes.ModuleName)
 	authKeeper := authkeeper.NewAccountKeeper(

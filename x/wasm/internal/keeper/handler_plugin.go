@@ -9,12 +9,15 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc-transfer/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/24-host"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/tendermint/tendermint/crypto/tmhash"
+	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 type MessageHandler struct {
@@ -23,7 +26,7 @@ type MessageHandler struct {
 }
 
 func NewMessageHandler(router sdk.Router, customEncoders *MessageEncoders) MessageHandler {
-	encoders := DefaultEncoders(nil, nil).Merge(customEncoders)
+	encoders := DefaultEncoders(nil, nil, nil).Merge(customEncoders)
 	return MessageHandler{
 		router:   router,
 		encoders: encoders,
@@ -31,14 +34,14 @@ func NewMessageHandler(router sdk.Router, customEncoders *MessageEncoders) Messa
 }
 
 func NewMessageHandlerV2(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, customEncoders *MessageEncoders) MessageHandler {
-	encoders := DefaultEncoders(channelKeeper, capabilityKeeper).Merge(customEncoders)
+	encoders := DefaultEncoders(channelKeeper, capabilityKeeper, nil).Merge(customEncoders)
 	return MessageHandler{
 		router:   router,
 		encoders: encoders,
 	}
 }
 
-type BankEncoder func(sender sdk.AccAddress, msg *cosmwasmv1.BankMsg) ([]sdk.Msg, error)
+type BankEncoder func(ctx sdk.Context, sender sdk.AccAddress, msg *cosmwasmv2.BankMsg) ([]sdk.Msg, error)
 type CustomEncoder func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
 type StakingEncoder func(sender sdk.AccAddress, msg *cosmwasmv1.StakingMsg) ([]sdk.Msg, error)
 type WasmEncoder func(sender sdk.AccAddress, msg *cosmwasmv1.WasmMsg) ([]sdk.Msg, error)
@@ -52,7 +55,7 @@ type MessageEncoders struct {
 	IBC     IBCEncoder
 }
 
-func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) MessageEncoders {
+func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, bankKeeper bankkeeper.Keeper) MessageEncoders {
 	e := MessageEncoders{
 		Bank:    EncodeBankMsg,
 		Custom:  NoCustomMsg,
@@ -61,6 +64,9 @@ func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.C
 	}
 	if channelKeeper != nil { // todo: quick hack to keep tests happy
 		e.IBC = EncodeIBCMsg(channelKeeper, capabilityKeeper)
+	}
+	if bankKeeper != nil {
+		e.Bank = BankMsgEncoderV2(bankKeeper)
 	}
 	return e
 }
@@ -90,7 +96,7 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 func (e MessageEncoders) Encode(contractAddr sdk.AccAddress, msg cosmwasmv1.CosmosMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Bank != nil:
-		return e.Bank(contractAddr, msg.Bank)
+		return e.Bank(sdk.Context{}, contractAddr, &cosmwasmv2.BankMsg{Send: msg.Bank.Send}) // TODO: quick hack for the spike
 	case msg.Custom != nil:
 		return e.Custom(contractAddr, msg.Custom)
 	case msg.Staking != nil:
@@ -105,7 +111,7 @@ func (e MessageEncoders) Encode(contractAddr sdk.AccAddress, msg cosmwasmv1.Cosm
 func (e MessageEncoders) EncodeV2(ctx sdk.Context, contractAddr sdk.AccAddress, source cosmwasmv2.IBCEndpoint, msg cosmwasmv2.CosmosMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Bank != nil:
-		return e.Bank(contractAddr, msg.Bank)
+		return e.Bank(ctx, contractAddr, msg.Bank)
 	case msg.Custom != nil:
 		return e.Custom(contractAddr, msg.Custom)
 	case msg.Staking != nil:
@@ -118,7 +124,53 @@ func (e MessageEncoders) EncodeV2(ctx sdk.Context, contractAddr sdk.AccAddress, 
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
-func EncodeBankMsg(sender sdk.AccAddress, msg *cosmwasmv1.BankMsg) ([]sdk.Msg, error) {
+func BankMsgEncoderV2(keeper bankkeeper.Keeper) BankEncoder {
+	return func(ctx sdk.Context, contractAddr sdk.AccAddress, msg *cosmwasmv2.BankMsg) ([]sdk.Msg, error) {
+		if msg.Mint != nil {
+			if len(msg.Mint.Coin.Amount) == 0 {
+				return nil, nil
+			}
+			voucher, err := coinToVoucher(contractAddr, msg.Mint.Coin)
+			if err != nil {
+				return nil, err
+			}
+			err = keeper.MintCoins(ctx, types.ModuleName, voucher)
+			if err != nil {
+				return nil, err
+			}
+			return nil, keeper.SendCoinsFromModuleToAccount(
+				ctx, types.ModuleName, contractAddr, voucher,
+			)
+		}
+		if msg.Burn != nil {
+			voucher, err := coinToVoucher(contractAddr, msg.Mint.Coin)
+			if err != nil {
+				return nil, err
+			}
+			if err := keeper.SendCoinsFromAccountToModule(
+				ctx, contractAddr, types.ModuleName, voucher,
+			); err != nil {
+				return nil, err
+			}
+
+			return nil, keeper.BurnCoins(ctx, types.ModuleName, voucher)
+		}
+		return EncodeBankMsg(ctx, contractAddr, msg)
+	}
+}
+
+func coinToVoucher(contractAddr sdk.AccAddress, coin cosmwasmv1.Coin) (sdk.Coins, error) {
+	sdkCoin, err := convertWasmCoinToSdkCoin(coin)
+	if err != nil {
+		return nil, err
+	}
+	denumTrace := fmt.Sprintf("%s/%s/", contractAddr.String(), sdkCoin.Denom)
+	var hash tmbytes.HexBytes = tmhash.Sum([]byte(denumTrace))
+	simpleVoucherDenum := fmt.Sprintf("wasm/%s", hash)
+	return sdk.NewCoins(sdk.NewCoin(simpleVoucherDenum, sdkCoin.Amount)), nil
+}
+
+func EncodeBankMsg(_ sdk.Context, sender sdk.AccAddress, msg *cosmwasmv2.BankMsg) ([]sdk.Msg, error) {
 	if msg.Send == nil {
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Bank")
 	}

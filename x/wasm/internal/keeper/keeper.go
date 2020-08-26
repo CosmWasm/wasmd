@@ -91,7 +91,7 @@ func NewKeeper(
 	}
 
 	// todo: revisit: DefaultEncoders are used twice now
-	quickHack := DefaultEncoders(channelKeeper, scopedKeeper).Merge(customEncoders)
+	quickHack := DefaultEncoders(channelKeeper, scopedKeeper, bankKeeper).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,

@@ -9,7 +9,7 @@ import (
 // CosmosMsg is an rust enum and only (exactly) one of the fields should be set
 // Should we do a cleaner approach in Go? (type/data?)
 type CosmosMsg struct {
-	Bank    *cosmwasmv1.BankMsg    `json:"bank,omitempty"`
+	Bank    *BankMsg               `json:"bank,omitempty"`
 	Custom  json.RawMessage        `json:"custom,omitempty"`
 	Staking *cosmwasmv1.StakingMsg `json:"staking,omitempty"`
 	Wasm    *cosmwasmv1.WasmMsg    `json:"wasm,omitempty"`
@@ -55,4 +55,17 @@ type HandleResponse struct {
 	Data []byte `json:"data"`
 	// log message to return over abci interface
 	Log []cosmwasmv1.LogAttribute `json:"log"`
+}
+
+type MintMsg struct {
+	Coin cosmwasmv1.Coin `json:"amount"`
+}
+type BurnMsg struct {
+	Coin cosmwasmv1.Coin `json:"amount"`
+}
+
+type BankMsg struct {
+	Send *cosmwasmv1.SendMsg `json:"send,omitempty"`
+	Mint *MintMsg            `json:"mint,omitempty"`
+	Burn *BurnMsg            `json:"burn,omitempty"`
 }

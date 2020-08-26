@@ -119,7 +119,7 @@ func (s *senderContract) OnIBCChannelConnect(hash []byte, params cosmwasmv2.Env,
 	// abusing onConnect event to send the message. can be any execute event which is not mocked though
 
 	escrowAddress := ibctransfertypes.GetEscrowAddress(channel.Endpoint.Port, channel.Endpoint.Channel)
-	sendToEscrowMsg := &cosmwasmv1.BankMsg{
+	sendToEscrowMsg := &cosmwasmv2.BankMsg{
 		Send: &cosmwasmv1.SendMsg{
 			FromAddress: s.contractAddr.String(),
 			ToAddress:   escrowAddress.String(),
