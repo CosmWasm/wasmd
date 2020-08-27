@@ -55,6 +55,11 @@ type MessageEncoders struct {
 	IBC     IBCEncoder
 }
 
+type BankKeeper interface {
+	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+}
+
 func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, bankKeeper bankkeeper.Keeper) MessageEncoders {
 	e := MessageEncoders{
 		Bank:    EncodeBankMsg,
@@ -124,7 +129,7 @@ func (e MessageEncoders) EncodeV2(ctx sdk.Context, contractAddr sdk.AccAddress, 
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
-func BankMsgEncoderV2(keeper bankkeeper.Keeper) BankEncoder {
+func BankMsgEncoderV2(bank bankkeeper.Keeper) BankEncoder {
 	return func(ctx sdk.Context, contractAddr sdk.AccAddress, msg *cosmwasmv2.BankMsg) ([]sdk.Msg, error) {
 		if msg.Mint != nil {
 			if len(msg.Mint.Coin.Amount) == 0 {
@@ -134,26 +139,27 @@ func BankMsgEncoderV2(keeper bankkeeper.Keeper) BankEncoder {
 			if err != nil {
 				return nil, err
 			}
-			err = keeper.MintCoins(ctx, types.ModuleName, voucher)
+			err = bank.MintCoins(ctx, types.ModuleName, voucher)
 			if err != nil {
 				return nil, err
 			}
-			return nil, keeper.SendCoinsFromModuleToAccount(
+			return nil, bank.SendCoinsFromModuleToAccount(
 				ctx, types.ModuleName, contractAddr, voucher,
 			)
 		}
 		if msg.Burn != nil {
-			voucher, err := coinToVoucher(contractAddr, msg.Mint.Coin)
+			if len(msg.Burn.Coin.Amount) == 0 {
+				return nil, nil
+			}
+			voucher, err := coinToVoucher(contractAddr, msg.Burn.Coin)
 			if err != nil {
 				return nil, err
 			}
-			if err := keeper.SendCoinsFromAccountToModule(
-				ctx, contractAddr, types.ModuleName, voucher,
-			); err != nil {
+			err = bank.SendCoinsFromAccountToModule(ctx, contractAddr, types.ModuleName, voucher)
+			if err != nil {
 				return nil, err
 			}
-
-			return nil, keeper.BurnCoins(ctx, types.ModuleName, voucher)
+			return nil, bank.BurnCoins(ctx, types.ModuleName, voucher)
 		}
 		return EncodeBankMsg(ctx, contractAddr, msg)
 	}

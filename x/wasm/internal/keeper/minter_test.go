@@ -40,9 +40,20 @@ func TestMinter(t *testing.T) {
 
 	MockContracts[contractAddr.String()] = &minterContract{t: t, contractAddr: contractAddr}
 	fred := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, sdk.NewCoins(sdk.NewInt64Coin("denom", 5000)))
-	_, err = keeper.Execute(ctx, contractAddr, fred, []byte(`{}`), nil)
+
+	// call execute to return a mint message
+	_, err = keeper.Execute(ctx, contractAddr, fred, []byte(`mint`), nil)
+	require.NoError(t, err)
+
+	const contractsDenom = "wasm/5EFEC84ADDE58024AEF3A7BB9CD5945F91D180D0A4AC5AA2534BEF8F6194CD79"
+	t.Logf("+++ Contract owns: %s", bankKeeper.GetAllBalances(ctx, contractAddr).String())
+	require.Equal(t, sdk.Coin{Denom: contractsDenom, Amount: sdk.NewInt(10000000)}, bankKeeper.GetBalance(ctx, contractAddr, contractsDenom))
+
+	// now call execute to return a burn message
+	_, err = keeper.Execute(ctx, contractAddr, fred, []byte(`burn`), nil)
 	require.NoError(t, err)
 	t.Logf("+++ Contract owns: %s", bankKeeper.GetAllBalances(ctx, contractAddr).String())
+	require.Equal(t, sdk.Coin{Denom: contractsDenom, Amount: sdk.NewInt(1)}, bankKeeper.GetBalance(ctx, contractAddr, contractsDenom))
 }
 
 type minterContract struct {
@@ -50,15 +61,18 @@ type minterContract struct {
 	contractAddr sdk.AccAddress
 }
 
-func (m minterContract) Execute(hash []byte, params cosmwasmv1.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.HandleResponse, uint64, error) {
+func (m *minterContract) Execute(hash []byte, params cosmwasmv1.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, querier QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasmv2.HandleResponse, uint64, error) {
+	msgs := map[string]*cosmwasmv2.BankMsg{
+		"mint": {
+			Mint: &cosmwasmv2.MintMsg{Coin: cosmwasmv1.Coin{Denom: "alx", Amount: "10000000"}},
+		},
+		"burn": {
+			Burn: &cosmwasmv2.BurnMsg{Coin: cosmwasmv1.Coin{Denom: "alx", Amount: "9999999"}},
+		},
+	}
 	return &cosmwasmv2.HandleResponse{
 		Messages: []cosmwasmv2.CosmosMsg{
-			{Bank: &cosmwasmv2.BankMsg{
-				Mint: &cosmwasmv2.MintMsg{Coin: cosmwasmv1.Coin{
-					Denom:  "alx",
-					Amount: "10000000",
-				}},
-			}},
+			{Bank: msgs[string(msg)]},
 		},
 	}, 0, nil
 }
