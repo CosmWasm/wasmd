@@ -88,7 +88,6 @@ func TestPinPong(t *testing.T) {
 
 		err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, pkg, ack.GetBytes())
 		require.NoError(t, err)
-		//coordinator.CommitBlock(chainA, chainB)
 		err = coordinator.UpdateClient(chainA, chainB, clientA, clientexported.Tendermint)
 		require.NoError(t, err)
 
@@ -119,6 +118,189 @@ func TestPinPong(t *testing.T) {
 	assert.Equal(t, uint64(rounds), pongContract.QueryState(receivedBallsCountKey))
 	assert.Equal(t, uint64(rounds), pongContract.QueryState(confirmedBallsCountKey))
 
+}
+
+func TestPinPongWithAppLevelError(t *testing.T) {
+	var (
+		coordinator = ibc_testing.NewCoordinator(t, 2)
+		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+	)
+	_ = chainB.NewRandomContractInstance() // skip 1 id
+	var (
+		pingContractAddr = chainA.NewRandomContractInstance()
+		pongContractAddr = chainB.NewRandomContractInstance()
+	)
+	require.NotEqual(t, pingContractAddr, pongContractAddr)
+
+	pingContract := &player{t: t, actor: ping, chain: chainA, contractAddr: pingContractAddr}
+	pongContract := &player{t: t, actor: pong, chain: chainB, contractAddr: pongContractAddr}
+
+	wasmkeeper.MockContracts[pingContractAddr.String()] = pingContract
+	wasmkeeper.MockContracts[pongContractAddr.String()] = pongContract
+
+	var (
+		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
+		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+	)
+	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+	connA.NextChannelVersion = ping
+	connB.NextChannelVersion = pong
+
+	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartyPortID, channeltypes.UNORDERED)
+	var err error
+
+	const startValue uint64 = 100
+	const rounds = 3
+	s := startGame{
+		ChannelID: channelA.ID,
+		Value:     startValue,
+		MaxValue:  rounds - 1,
+	}
+	startMsg := &wasm.MsgExecuteContract{
+		Sender:   chainA.SenderAccount.GetAddress(),
+		Contract: pingContractAddr,
+		Msg:      s.GetBytes(),
+	}
+	// send from chainA to chainB
+	err = coordinator.SendMsgs(chainA, chainB, clientB, startMsg)
+	require.NoError(t, err)
+
+	t.Log("Duplicate messages are due to check/deliver tx calls")
+
+	var (
+		activePlayer  = ping
+		pingBallValue = startValue
+	)
+	for i := 1; i <= rounds-1; i++ { // play some rounds before reaching max value
+		t.Logf("++ round: %d\n", i)
+		ball := NewHit(activePlayer, pingBallValue)
+
+		seq := uint64(i)
+		pkg := channeltypes.NewPacket(ball.GetBytes(), seq, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, doNotTimeout, 0)
+		ack := ball.BuildAck()
+
+		err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, pkg, ack.GetBytes())
+		require.NoError(t, err)
+		err = coordinator.UpdateClient(chainA, chainB, clientA, clientexported.Tendermint)
+		require.NoError(t, err)
+
+		// switch side
+		activePlayer = counterParty(activePlayer)
+		ball = NewHit(activePlayer, uint64(i))
+		pkg = channeltypes.NewPacket(ball.GetBytes(), seq, channelB.PortID, channelB.ID, channelA.PortID, channelA.ID, doNotTimeout, 0)
+		ack = ball.BuildAck()
+
+		err = coordinator.RelayPacket(chainB, chainA, clientB, clientA, pkg, ack.GetBytes())
+		require.NoError(t, err)
+		err = coordinator.UpdateClient(chainB, chainA, clientB, clientexported.Tendermint)
+		require.NoError(t, err)
+
+		// switch side for next round
+		activePlayer = counterParty(activePlayer)
+		pingBallValue++
+	}
+	// next round should fail with app level error
+	t.Logf("++ round: %d\n", rounds)
+
+	ball := NewHit(activePlayer, pingBallValue)
+	seq := uint64(rounds)
+	pkg := channeltypes.NewPacket(ball.GetBytes(), seq, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, doNotTimeout, 0)
+	ack := ball.BuildAck()
+
+	err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, pkg, ack.GetBytes())
+	require.NoError(t, err)
+	err = coordinator.UpdateClient(chainA, chainB, clientA, clientexported.Tendermint)
+	require.NoError(t, err)
+
+	// switch side to receive app level error message
+	activePlayer = counterParty(activePlayer)
+	ball = NewHit(activePlayer, rounds)
+	pkg = channeltypes.NewPacket(ball.GetBytes(), seq, channelB.PortID, channelB.ID, channelA.PortID, channelA.ID, doNotTimeout, 0)
+	ack = ball.BuildError(fmt.Sprintf("max value exceeded: %d got %d", rounds-1, rounds))
+
+	err = coordinator.RelayPacket(chainB, chainA, clientB, clientA, pkg, ack.GetBytes())
+	require.NoError(t, err)
+
+	// verify an error was received
+	assert.Equal(t, uint64(1), pongContract.QueryState(receivedErrorBallsCountKey))
+}
+
+func TestWithNonMatchingProtocolVersionOnInit(t *testing.T) {
+	var (
+		coordinator = ibc_testing.NewCoordinator(t, 2)
+		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+	)
+	_ = chainB.NewRandomContractInstance() // skip 1 id
+	var (
+		pingContractAddr = chainA.NewRandomContractInstance()
+		pongContractAddr = chainB.NewRandomContractInstance()
+	)
+	require.NotEqual(t, pingContractAddr, pongContractAddr)
+
+	pingContract := &player{t: t, actor: ping, chain: chainA, contractAddr: pingContractAddr}
+	pongContract := &player{t: t, actor: pong, chain: chainB, contractAddr: pongContractAddr}
+
+	wasmkeeper.MockContracts[pingContractAddr.String()] = pingContract
+	wasmkeeper.MockContracts[pongContractAddr.String()] = pongContract
+
+	var (
+		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
+		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+	)
+	_, _, connA, _ := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+
+	chainA.ExpSimulationPass = false
+	chainA.ExpDeliveryPass = false
+	msg := channeltypes.NewMsgChannelOpenInit(
+		sourcePortID, "mychannelid", "non-matching", channeltypes.UNORDERED, []string{connA.ID},
+		counterpartyPortID, "otherchannelid", chainA.SenderAccount.GetAddress(),
+	)
+	// when
+	_, err := chainA.SendMsgs(msg)
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expected \"ping\" but got \"non-matching\": invalid")
+}
+
+func TestWithNonMatchingProtocolVersionOnTry(t *testing.T) {
+	var (
+		coordinator = ibc_testing.NewCoordinator(t, 2)
+		chainA      = coordinator.GetChain(ibc_testing.GetChainID(0))
+		chainB      = coordinator.GetChain(ibc_testing.GetChainID(1))
+	)
+	_ = chainB.NewRandomContractInstance() // skip 1 id
+	var (
+		pingContractAddr = chainA.NewRandomContractInstance()
+		pongContractAddr = chainB.NewRandomContractInstance()
+	)
+	require.NotEqual(t, pingContractAddr, pongContractAddr)
+
+	pingContract := &player{t: t, actor: ping, chain: chainA, contractAddr: pingContractAddr}
+	pongContract := &player{t: t, actor: pong, chain: chainB, contractAddr: pongContractAddr}
+
+	wasmkeeper.MockContracts[pingContractAddr.String()] = pingContract
+	wasmkeeper.MockContracts[pongContractAddr.String()] = pongContract
+
+	var (
+		sourcePortID       = wasmkeeper.PortIDForContract(pingContractAddr)
+		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
+	)
+	_, _, connA, connB := coordinator.SetupClientConnections(chainA, chainB, clientexported.Tendermint)
+	connA.NextChannelVersion = ping
+	connB.NextChannelVersion = "non-matching"
+
+	channelA, channelB, err := coordinator.ChanOpenInit(chainA, chainB, connA, connB, sourcePortID, counterpartyPortID, channeltypes.UNORDERED)
+	require.NoError(t, err)
+
+	chainB.ExpSimulationPass = false
+	chainB.ExpDeliveryPass = false
+
+	// when tried to open a channel on the other side
+	err = coordinator.ChanOpenTry(chainB, chainA, channelB, channelA, connB, channeltypes.UNORDERED)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "expected \"pong\" but got \"non-matching\": invalid")
 }
 
 // hit is ibc packet payload
@@ -201,6 +383,7 @@ func (p *player) Execute(hash []byte, params wasmTypes.Env, data []byte, store p
 
 	if start.MaxValue != 0 {
 		store.Set(maxValueKey, sdk.Uint64ToBigEndian(start.MaxValue))
+		p.t.Logf("[%s] set max allowed value to receive: %d\n", p.actor, start.MaxValue)
 	}
 	endpoints := p.loadEndpoints(store, start.ChannelID)
 	ctx := p.chain.GetContext()
@@ -219,7 +402,7 @@ func (p *player) Execute(hash []byte, params wasmTypes.Env, data []byte, store p
 		return nil, 0, err
 	}
 
-	p.incrementCounter(sentBallsCountKey, store)
+	p.incrementCounter(store, sentBallsCountKey)
 	store.Set(lastBallSentKey, sdk.Uint64ToBigEndian(start.Value))
 	return &cosmwasmv2.HandleResponse{}, 0, nil
 }
@@ -279,11 +462,12 @@ func (p player) OnIBCChannelClose(ctx sdk.Context, hash []byte, params cosmwasmv
 }
 
 var ( // store keys
-	lastBallSentKey        = []byte("lastBallSent")
-	lastBallReceivedKey    = []byte("lastBallReceived")
-	sentBallsCountKey      = []byte("sentBalls")
-	receivedBallsCountKey  = []byte("recvBalls")
-	confirmedBallsCountKey = []byte("confBalls")
+	lastBallSentKey            = []byte("lastBallSent")
+	lastBallReceivedKey        = []byte("lastBallReceived")
+	sentBallsCountKey          = []byte("sentBalls")
+	receivedBallsCountKey      = []byte("recvBalls")
+	receivedErrorBallsCountKey = []byte("recvErrBalls")
+	confirmedBallsCountKey     = []byte("confBalls")
 )
 
 // OnIBCPacketReceive receives the hit and serves a response hit via `cosmwasmv2.IBCMsg`
@@ -296,7 +480,7 @@ func (p player) OnIBCPacketReceive(hash []byte, params cosmwasmv2.Env, packet co
 			// no hit msg, we stop the game
 		}, 0, nil
 	}
-	p.incrementCounter(receivedBallsCountKey, store)
+	p.incrementCounter(store, receivedBallsCountKey)
 
 	otherCount := receivedBall[counterParty(p.actor)]
 	store.Set(lastBallReceivedKey, sdk.Uint64ToBigEndian(otherCount))
@@ -308,14 +492,14 @@ func (p player) OnIBCPacketReceive(hash []byte, params cosmwasmv2.Env, packet co
 		}, 0, nil
 	}
 
-	nextValue := p.incrementCounter(lastBallSentKey, store)
+	nextValue := p.incrementCounter(store, lastBallSentKey)
 	newHit := NewHit(p.actor, nextValue)
 	respHit := &cosmwasmv2.IBCMsg{SendPacket: &cosmwasmv2.IBCSendMsg{
 		ChannelID:     packet.Source.Channel,
 		Data:          newHit.GetBytes(),
 		TimeoutHeight: doNotTimeout,
 	}}
-	p.incrementCounter(sentBallsCountKey, store)
+	p.incrementCounter(store, sentBallsCountKey)
 	p.t.Logf("[%s] received %d, returning %d: %v\n", p.actor, otherCount, nextValue, newHit)
 
 	return &cosmwasmv2.IBCPacketReceiveResponse{
@@ -341,10 +525,10 @@ func (p player) OnIBCPacketAcknowledgement(hash []byte, params cosmwasmv2.Env, p
 		p.t.Logf("[%s] acknowledged %d: %v\n", p.actor, confirmedCount, sentBall)
 	} else {
 		p.t.Logf("[%s] received app layer error: %s\n", p.actor, ack.Error)
-
+		p.incrementCounter(store, receivedErrorBallsCountKey)
 	}
 
-	p.incrementCounter(confirmedBallsCountKey, store)
+	p.incrementCounter(store, confirmedBallsCountKey)
 	return &cosmwasmv2.IBCPacketAcknowledgementResponse{}, 0, nil
 }
 
@@ -352,7 +536,7 @@ func (p player) OnIBCPacketTimeout(hash []byte, params cosmwasmv2.Env, packet co
 	panic("implement me")
 }
 
-func (p player) incrementCounter(key []byte, store prefix.Store) uint64 {
+func (p player) incrementCounter(store prefix.Store, key []byte) uint64 {
 	var count uint64
 	bz := store.Get(key)
 	if bz != nil {
