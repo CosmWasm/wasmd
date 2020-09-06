@@ -183,7 +183,7 @@ type WasmApp struct {
 // WasmWrapper allows us to use namespacing in the config file
 // This is only used for parsing in the app, x/wasm expects WasmConfig
 type WasmWrapper struct {
-	Wasm wasm.WasmConfig `mapstructure:"wasm"`
+	Wasm wasm.Config `mapstructure:"wasm"`
 }
 
 // NewWasmApp returns a reference to an initialized WasmApp.

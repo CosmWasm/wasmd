@@ -27,6 +27,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
+const firstCodeID = 1
+
 func TestGenesisExportImport(t *testing.T) {
 	srcKeeper, srcCtx, srcStoreKeys, srcCleanup := setupKeeper(t)
 	defer srcCleanup()
@@ -123,7 +125,7 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info correct": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -138,7 +140,7 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code ids can contain gaps": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}, {
@@ -161,7 +163,7 @@ func TestFailFastImport(t *testing.T) {
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}, {
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -176,7 +178,7 @@ func TestFailFastImport(t *testing.T) {
 		},
 		"prevent code hash mismatch": {src: types.GenesisState{
 			Codes: []types.Code{{
-				CodeID:     CID,
+				CodeID:     firstCodeID,
 				CodeInfo:   wasmTypes.CodeInfoFixture(func(i *wasmTypes.CodeInfo) { i.CodeHash = make([]byte, sha256.Size) }),
 				CodesBytes: wasmCode,
 			}},
@@ -185,12 +187,12 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate codeIDs": {src: types.GenesisState{
 			Codes: []types.Code{
 				{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				},
 				{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				},
@@ -200,7 +202,7 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -221,7 +223,7 @@ func TestFailFastImport(t *testing.T) {
 		"happy path: code info with two contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -256,7 +258,7 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract address": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -275,7 +277,7 @@ func TestFailFastImport(t *testing.T) {
 		"prevent duplicate contract model keys": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -323,7 +325,7 @@ func TestFailFastImport(t *testing.T) {
 		"prevent contract id seq init value == count contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:     CID,
+					CodeID:     firstCodeID,
 					CodeInfo:   myCodeInfo,
 					CodesBytes: wasmCode,
 				}},
@@ -451,7 +453,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	adminAddr, _ := sdk.AccAddressFromBech32("cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn")
 
 	expContractInfo := types.ContractInfo{
-		CodeID:  CID,
+		CodeID:  firstCodeID,
 		Creator: contractCreatorAddr,
 		Admin:   adminAddr,
 		Label:   "ȀĴnZV芢毤",
@@ -461,7 +463,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.GenesisContractCodeHistoryType,
-		CodeID:    CID,
+		CodeID:    firstCodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	},
 	}

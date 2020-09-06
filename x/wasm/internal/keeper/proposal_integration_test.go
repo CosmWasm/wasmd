@@ -79,7 +79,7 @@ func TestInstantiateProposal(t *testing.T) {
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
 	)
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
-		p.CodeID = CID
+		p.CodeID = firstCodeID
 		p.RunAs = oneAddress
 		p.Admin = otherAddress
 		p.Label = "testing"
@@ -179,7 +179,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.GenesisContractCodeHistoryType,
-		CodeID:    CID,
+		CodeID:    firstCodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	}, {
 		Operation: types.MigrateContractCodeHistoryType,
