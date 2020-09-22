@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"io"
 
-	"github.com/CosmWasm/wasmd/app"
+	"github.com/cosmwasm/wasmd/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"

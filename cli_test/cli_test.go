@@ -24,7 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 
-	"github.com/CosmWasm/wasmd/app"
+	"github.com/cosmwasm/wasmd/app"
 )
 
 func TestGaiaCLIKeysAddMultisig(t *testing.T) {

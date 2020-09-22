@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	cosmwasm "github.com/CosmWasm/go-cosmwasm"
+	cosmwasm "github.com/cosmwasm/go-cosmwasm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

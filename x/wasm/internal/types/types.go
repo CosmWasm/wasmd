@@ -6,7 +6,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmTypes "github.com/cosmwasm/go-cosmwasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

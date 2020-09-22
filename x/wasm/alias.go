@@ -6,8 +6,8 @@
 package wasm
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/keeper"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 const (

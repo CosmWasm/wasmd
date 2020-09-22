@@ -13,7 +13,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/cosmwasm/wasmd/x/wasm"
 )
 
 func TestWasmdExport(t *testing.T) {

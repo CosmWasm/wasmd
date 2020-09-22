@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	wasm2 "github.com/CosmWasm/wasmd/x/wasm"
+	wasm2 "github.com/cosmwasm/wasmd/x/wasm"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"

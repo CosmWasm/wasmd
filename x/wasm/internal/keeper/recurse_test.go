@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmTypes "github.com/cosmwasm/go-cosmwasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -240,7 +240,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 }
 
 func TestLimitRecursiveQueryGas(t *testing.T) {
-	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
+	// The point of this test from https://github.com/cosmwasm/cosmwasm/issues/456
 	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)
 	// the sub-query will have all the original gas (minus the 40k instance charge)
 	// and can burn 90% and call a sub-contract again...

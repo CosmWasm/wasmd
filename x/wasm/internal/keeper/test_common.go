@@ -25,7 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmtypes "github.com/cosmwasm/wasmd/x/wasm/internal/types"
 )
 
 const flagLRUCacheSize = "lru_size"

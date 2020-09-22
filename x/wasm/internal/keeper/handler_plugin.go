@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmTypes "github.com/cosmwasm/go-cosmwasm/types"
+	"github.com/cosmwasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
