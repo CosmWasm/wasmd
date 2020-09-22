@@ -1,9 +1,9 @@
-module github.com/CosmWasm/wasmd
+module github.com/cosmwasm/wasmd
 
 go 1.14
 
 require (
-	github.com/CosmWasm/go-cosmwasm v0.10.0
+	github.com/cosmwasm/go-cosmwasm v0.10.0
 	github.com/cosmos/cosmos-sdk v0.39.1-0.20200727135228-9d00f712e334
 	github.com/golang/mock v1.4.3 // indirect
 	github.com/google/gofuzz v1.0.0
