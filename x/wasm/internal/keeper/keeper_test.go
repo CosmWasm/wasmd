@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -521,7 +522,8 @@ func TestExecute(t *testing.T) {
 	trialCtx := ctx.WithMultiStore(ctx.MultiStore().CacheWrap().(sdk.MultiStore))
 	res, err := keeper.Execute(trialCtx, addr, creator, []byte(`{"release":{}}`), nil)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unauthorized")
+	require.True(t, errors.Is(err, types.ErrExecuteFailed))
+	require.Equal(t, err.Error(), "execute wasm contract failed: Unauthorized")
 
 	// verifier can execute, and get proper gas amount
 	start := time.Now()
@@ -674,6 +676,8 @@ func TestExecuteWithPanic(t *testing.T) {
 	// let's make sure we get a reasonable error, no panic/crash
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
 	require.Error(t, err)
+	require.True(t, errors.Is(err, types.ErrExecuteFailed))
+	require.Equal(t, err.Error(), "execute wasm contract failed: Out of gas")
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
