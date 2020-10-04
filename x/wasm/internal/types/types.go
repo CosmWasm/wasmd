@@ -229,7 +229,7 @@ const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
 // ParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
-func ParseEvents(logs []wasmTypes.LogAttribute, contractAddr sdk.AccAddress) sdk.Events {
+func ParseEvents(logs []wasmTypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
 	if len(logs) == 0 {
 		return nil
 	}

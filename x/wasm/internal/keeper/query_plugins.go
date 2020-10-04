@@ -228,7 +228,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation stak
 		Validator: delegation.ValidatorAddress.String(),
 		Amount:    convertSdkCoinToWasmCoin(amount),
 		// TODO: AccumulatedRewards
-		AccumulatedRewards: wasmTypes.NewCoin(0, bondDenom),
+		AccumulatedRewards: wasmTypes.Coins{},
 		// TODO: Determine redelegate
 		CanRedelegate: wasmTypes.NewCoin(0, bondDenom),
 	}, nil

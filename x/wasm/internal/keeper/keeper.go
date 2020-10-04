@@ -234,7 +234,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	}
 
 	// emit all events from this contract itself
-	events := types.ParseEvents(res.Log, contractAddress)
+	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
@@ -287,7 +287,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// emit all events from this contract itself
-	events := types.ParseEvents(res.Log, contractAddress)
+	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
@@ -340,7 +340,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// emit all events from this contract itself
-	events := types.ParseEvents(res.Log, contractAddress)
+	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
 	historyEntry := contractInfo.AddMigration(ctx, newCodeID, msg)
