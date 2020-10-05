@@ -59,7 +59,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	creator = createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
 
 	// store the code
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)

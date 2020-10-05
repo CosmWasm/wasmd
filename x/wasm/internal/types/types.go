@@ -188,7 +188,7 @@ func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contractAddr sdk.AccAddress) wasmTypes.Env {
+func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmTypes.Env {
 	// safety checks before casting below
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
@@ -205,15 +205,19 @@ func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contract
 			TimeNanos: uint64(nano),
 			ChainID:   ctx.ChainID(),
 		},
-		Message: wasmTypes.MessageInfo{
-			Sender:    creator.String(),
-			SentFunds: NewWasmCoins(deposit),
-		},
 		Contract: wasmTypes.ContractInfo{
 			Address: contractAddr.String(),
 		},
 	}
 	return env
+}
+
+// NewInfo initializes the MessageInfo for a contract instance
+func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmTypes.MessageInfo {
+	return wasmTypes.MessageInfo{
+		Sender:    creator.String(),
+		SentFunds: NewWasmCoins(deposit),
+	}
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins

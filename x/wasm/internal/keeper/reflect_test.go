@@ -71,7 +71,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	require.Equal(t, uint64(1), maskID)
 
 	// upload hackatom escrow code
-	escrowCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	escrowCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, err := keeper.Create(ctx, creator, escrowCode, "", "", nil)
 	require.NoError(t, err)

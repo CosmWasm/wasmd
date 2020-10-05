@@ -14,10 +14,10 @@ import (
 )
 
 func TestUncompress(t *testing.T) {
-	wasmRaw, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmRaw, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmGzipped, err := ioutil.ReadFile("./testdata/contract.wasm.gzip")
+	wasmGzipped, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
 	specs := map[string]struct {
