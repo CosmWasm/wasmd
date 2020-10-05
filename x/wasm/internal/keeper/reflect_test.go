@@ -38,7 +38,7 @@ type reflectPayload struct {
 // MaskQueryMsg is used to encode query messages
 type MaskQueryMsg struct {
 	Owner       *struct{}               `json:"owner,omitempty"`
-	Capitalized *Text                   `json:"capitalized,omitempty""`
+	Capitalized *Text                   `json:"capitalized,omitempty"`
 	Chain       *wasmTypes.QueryRequest `json:"chain,omitempty"`
 }
 

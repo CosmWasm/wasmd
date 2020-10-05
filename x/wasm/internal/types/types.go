@@ -197,10 +197,7 @@ func NewEnv(ctx sdk.Context, creator sdk.AccAddress, deposit sdk.Coins, contract
 	if sec < 0 {
 		panic("Block (unix) time must never be negative ")
 	}
-	nano := ctx.BlockTime().UnixNano() - sec*1e9
-	if nano < 0 {
-		panic("Block (unix) nanoseconds must never be negative ")
-	}
+	nano := ctx.BlockTime().Nanosecond()
 	env := wasmTypes.Env{
 		Block: wasmTypes.BlockInfo{
 			Height:    uint64(ctx.BlockHeight()),
