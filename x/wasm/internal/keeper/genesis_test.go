@@ -30,7 +30,7 @@ import (
 func TestGenesisExportImport(t *testing.T) {
 	srcKeeper, srcCtx, srcStoreKeys, srcCleanup := setupKeeper(t)
 	defer srcCleanup()
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	// store some test data
@@ -112,7 +112,7 @@ func TestGenesisExportImport(t *testing.T) {
 }
 
 func TestFailFastImport(t *testing.T) {
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
@@ -402,7 +402,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	keeper, ctx, _, dstCleanup := setupKeeper(t)
 	defer dstCleanup()
 
-	wasmCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	wasmCodeHash := sha256.Sum256(wasmCode)

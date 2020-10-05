@@ -23,7 +23,7 @@ func TestWasmStoreCode(t *testing.T) {
 	require.NoError(t, err)
 	defer cleanup()
 
-	wasmCode, err := ioutil.ReadFile("../x/wasm/internal/keeper/testdata/contract.wasm")
+	wasmCode, err := ioutil.ReadFile("../x/wasm/internal/keeper/testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	var (

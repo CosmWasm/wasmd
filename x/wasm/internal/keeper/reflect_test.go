@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -13,8 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 )
@@ -37,8 +37,9 @@ type reflectPayload struct {
 
 // MaskQueryMsg is used to encode query messages
 type MaskQueryMsg struct {
-	Owner         *struct{} `json:"owner,omitempty"`
-	ReflectCustom *Text     `json:"reflect_custom,omitempty"`
+	Owner       *struct{}               `json:"owner,omitempty"`
+	Capitalized *Text                   `json:"capitalized,omitempty"`
+	Chain       *wasmTypes.QueryRequest `json:"chain,omitempty"`
 }
 
 type Text struct {
@@ -70,7 +71,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	require.Equal(t, uint64(1), maskID)
 
 	// upload hackatom escrow code
-	escrowCode, err := ioutil.ReadFile("./testdata/contract.wasm")
+	escrowCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, err := keeper.Create(ctx, creator, escrowCode, "", "", nil)
 	require.NoError(t, err)
@@ -269,7 +270,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 
 	// and now making use of the custom querier callbacks
 	customQuery := MaskQueryMsg{
-		ReflectCustom: &Text{
+		Capitalized: &Text{
 			Text: "all Caps noW",
 		},
 	}
@@ -277,10 +278,10 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	require.NoError(t, err)
 	custom, err := keeper.QuerySmart(ctx, contractAddr, customQueryBz)
 	require.NoError(t, err)
-	var resp customQueryResponse
+	var resp capitalizedResponse
 	err = json.Unmarshal(custom, &resp)
 	require.NoError(t, err)
-	assert.Equal(t, resp.Msg, "ALL CAPS NOW")
+	assert.Equal(t, resp.Text, "ALL CAPS NOW")
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
@@ -353,12 +354,26 @@ func fromMaskRawMsg(cdc *codec.Codec) CustomEncoder {
 }
 
 type maskCustomQuery struct {
-	Ping    *struct{} `json:"ping,omitempty"`
-	Capital *Text     `json:"capital,omitempty"`
+	Ping        *struct{} `json:"ping,omitempty"`
+	Capitalized *Text     `json:"capitalized,omitempty"`
 }
 
+// this is from the go code back to the contract (capitalized or ping)
 type customQueryResponse struct {
 	Msg string `json:"msg"`
+}
+
+// these are the return values from contract -> go depending on type of query
+type ownerResponse struct {
+	Owner string `json:"owner"`
+}
+
+type capitalizedResponse struct {
+	Text string `json:"text"`
+}
+
+type chainResponse struct {
+	Data []byte `json:"data"`
 }
 
 // maskPlugins needs to be registered in test setup to handle custom query callbacks
@@ -374,8 +389,8 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
-	if custom.Capital != nil {
-		msg := strings.ToUpper(custom.Capital.Text)
+	if custom.Capitalized != nil {
+		msg := strings.ToUpper(custom.Capitalized.Text)
 		return json.Marshal(customQueryResponse{Msg: msg})
 	}
 	if custom.Ping != nil {
