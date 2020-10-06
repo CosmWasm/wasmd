@@ -50,6 +50,17 @@ type OwnerResponse struct {
 	Owner string `json:"owner,omitempty"`
 }
 
+func buildMaskQuery(t *testing.T, query *MaskQueryMsg) []byte {
+	bz, err := json.Marshal(query)
+	require.NoError(t, err)
+	return bz
+}
+
+func mustParse(t *testing.T, data []byte, res interface{}) {
+	err := json.Unmarshal(data, res)
+	require.NoError(t, err)
+}
+
 const MaskFeatures = "staking,mask"
 
 func TestMaskReflectContractSend(t *testing.T) {
@@ -282,6 +293,52 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	err = json.Unmarshal(custom, &resp)
 	require.NoError(t, err)
 	assert.Equal(t, resp.Text, "ALL CAPS NOW")
+}
+
+type maskState struct {
+	Owner []byte `json:"owner"`
+}
+
+func TestMaskReflectWasmQueries(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+	//_, _, bob := keyPubAddr()
+
+	// upload mask code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	maskID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), maskID)
+
+	// creator instantiates a contract and gives it tokens
+	maskStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	maskAddr, err := keeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", maskStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, maskAddr)
+
+	// for control, let's make some queries directly on the mask
+	ownerQuery := buildMaskQuery(t, &MaskQueryMsg{Owner: &struct{}{}})
+	res, err := keeper.QuerySmart(ctx, maskAddr, ownerQuery)
+	require.NoError(t, err)
+	var ownerRes OwnerResponse
+	mustParse(t, res, &ownerRes)
+	require.Equal(t, ownerRes.Owner, creator.String())
+
+	// and a raw query
+	configKey := append([]byte{0, 6}, []byte("config")...)
+	models := keeper.QueryRaw(ctx, maskAddr, configKey)
+	require.Equal(t, 1, len(models))
+	var stateRes maskState
+	mustParse(t, models[0].Value, &stateRes)
+	require.Equal(t, stateRes.Owner, []byte(creator))
+
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
