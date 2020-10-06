@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
@@ -417,8 +416,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	// initial checks of bonding state
 	val, found := stakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
-	//initPower := val.GetDelegatorShares()
-	assert.Equal(t, val.Tokens, sdk.NewInt(1000000), "%s", val.Tokens)
+	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
 
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
@@ -469,7 +467,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	mustParse(t, res, &reflectRes)
 	var validatorRes wasmTypes.ValidatorsResponse
 	mustParse(t, reflectRes.Data, &validatorRes)
-	require.Equal(t, 1, len(validatorRes.Validators))
+	require.Len(t, validatorRes.Validators, 1)
 	valInfo := validatorRes.Validators[0]
 	// Note: this ValAddress not AccAddress, may change with #264
 	require.Equal(t, valAddr.String(), valInfo.Address)
@@ -490,9 +488,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	mustParse(t, res, &reflectRes)
 	var allDelegationsRes wasmTypes.AllDelegationsResponse
 	mustParse(t, reflectRes.Data, &allDelegationsRes)
-	require.Equal(t, 1, len(allDelegationsRes.Delegations))
+	require.Len(t, allDelegationsRes.Delegations, 1)
 	delInfo := allDelegationsRes.Delegations[0]
-	fmt.Printf("%#v\n", delInfo)
 	// Note: this ValAddress not AccAddress, may change with #264
 	require.Equal(t, valAddr.String(), delInfo.Validator)
 	// note this is not bob (who staked to the contract), but the contract itself

@@ -316,7 +316,6 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-	//_, _, bob := keyPubAddr()
 
 	// upload mask code
 	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
@@ -339,10 +338,10 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	mustParse(t, res, &ownerRes)
 	require.Equal(t, ownerRes.Owner, creator.String())
 
-	// and a raw query
+	// and a raw query: cosmwasm_storage::Singleton uses 2 byte big-endian length-prefixed to store data
 	configKey := append([]byte{0, 6}, []byte("config")...)
 	models := keeper.QueryRaw(ctx, maskAddr, configKey)
-	require.Equal(t, 1, len(models))
+	require.Len(t, models, 1)
 	var stateRes maskState
 	mustParse(t, models[0].Value, &stateRes)
 	require.Equal(t, stateRes.Owner, []byte(creator))
@@ -380,7 +379,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	// this returns []Model... we need to parse this to actually get the key-value info
 	var reflectModels []types.Model
 	mustParse(t, reflectRawRes.Data, &reflectModels)
-	require.Equal(t, 1, len(reflectModels))
+	require.Len(t, reflectModels, 1)
 	// now, with the raw data, we can parse it into state
 	var reflectStateRes maskState
 	mustParse(t, reflectModels[0].Value, &reflectStateRes)
