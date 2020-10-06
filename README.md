@@ -35,12 +35,12 @@ binary for `muslc`. (Or just use this Dockerfile for your production setup).
 
 With the `v0.6.0` tag, we entered semver. That means anything with `v0.6.x` tags is compatible with each other, 
 and everything with `v0.7.x` tags is compatible with each other. 
-We will have a series of minor version updates prior to `v1.0.0`, 
-where we offer strong backwards compatibility guarantees. 
+Between these minor versions, there is API breakage with no upgrade path provided.
 
-We released `v0.10` on  July 31, 2020, and have a `v1.0` feature freeze now.
-We will be performing bug fixes, security patches, and performance improvements,
-but the API should be stable and compatible with `v1.0`.
+We will have a stable `v0.x` version before the final `v1.0.0` version with
+the same API as the `v1.0` version in order to run last testnets and manual testing on it.
+We have not yet committed to that version number. Our `v1.0.0` release plans were also
+delayed by upstream release cycles, and we have continued to refine APIs while we can.
 
 Thank you to all projects who have run this code in your testnets and
 given feedback to improve stability.
