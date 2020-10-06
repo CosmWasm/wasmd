@@ -56,10 +56,10 @@ func TestQueryContractState(t *testing.T) {
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery
-		// smart queries return raw bytes from contract not []types.Model
+		// smart and raw queries (not all queries) return raw bytes from contract not []types.Model
 		// if this is set, then we just compare - (should be json encoded string)
 		expSmartRes string
-		// if success and expSmartRes is not set, we parse into []types.Model and compare
+		// if success and expSmartRes is not set, we parse into []types.Model and compare (all state)
 		expModelLen      int
 		expModelContains []types.Model
 		expErr           *sdkErrors.Error
@@ -73,16 +73,14 @@ func TestQueryContractState(t *testing.T) {
 			},
 		},
 		"query raw key": {
-			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:           abci.RequestQuery{Data: []byte("foo")},
-			expModelLen:      1,
-			expModelContains: []types.Model{{Key: []byte("foo"), Value: []byte(`"bar"`)}},
+			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:      abci.RequestQuery{Data: []byte("foo")},
+			expSmartRes: `"bar"`,
 		},
 		"query raw binary key": {
-			srcPath:          []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:           abci.RequestQuery{Data: []byte{0x0, 0x1}},
-			expModelLen:      1,
-			expModelContains: []types.Model{{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)}},
+			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:      abci.RequestQuery{Data: []byte{0x0, 0x1}},
+			expSmartRes: `{"count":8}`,
 		},
 		"query smart": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
@@ -102,15 +100,15 @@ func TestQueryContractState(t *testing.T) {
 		"query unknown raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
 			srcReq:      abci.RequestQuery{Data: []byte("unknown")},
-			expModelLen: 0,
+			expSmartRes: "",
 		},
 		"query empty raw key": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			expModelLen: 0,
+			expSmartRes: "",
 		},
 		"query raw with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateRaw},
-			expModelLen: 0,
+			expSmartRes: "",
 		},
 		"query all with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateAll},
@@ -130,11 +128,13 @@ func TestQueryContractState(t *testing.T) {
 			require.True(t, spec.expErr.Is(err), err)
 
 			// if smart query, check custom response
-			if spec.expSmartRes != "" {
+			if spec.srcPath[2] != QueryMethodContractStateAll {
+				fmt.Printf("path: %s\n", spec.srcPath[2])
 				require.Equal(t, spec.expSmartRes, string(binResult))
 				return
 			}
 
+			fmt.Printf("all state: %s\n", spec.srcPath[2])
 			// otherwise, check returned models
 			var r []types.Model
 			if spec.expErr == nil {

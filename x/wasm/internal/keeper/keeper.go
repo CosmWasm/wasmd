@@ -422,21 +422,13 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 }
 
 // QueryRaw returns the contract's state for give key. For a `nil` key a empty slice result is returned.
-func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []types.Model {
-	result := make([]types.Model, 0)
+func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
 	if key == nil {
-		return result
+		return nil
 	}
 	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-
-	if val := prefixStore.Get(key); val != nil {
-		return append(result, types.Model{
-			Key:   key,
-			Value: val,
-		})
-	}
-	return result
+	return prefixStore.Get(key)
 }
 
 func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, error) {
