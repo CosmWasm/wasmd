@@ -24,7 +24,7 @@ type recurseWrapper struct {
 	Recurse Recurse `json:"recurse"`
 }
 
-func buildQuery(t *testing.T, msg Recurse) []byte {
+func buildRecurseQuery(t *testing.T, msg Recurse) []byte {
 	wrapper := recurseWrapper{Recurse: msg}
 	bz, err := json.Marshal(wrapper)
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestGasCostOnQuery(t *testing.T) {
 			// do the query
 			recurse := tc.msg
 			recurse.Contract = contractAddr
-			msg := buildQuery(t, recurse)
+			msg := buildRecurseQuery(t, recurse)
 			data, err := keeper.QuerySmart(ctx, contractAddr, msg)
 			require.NoError(t, err)
 
@@ -219,7 +219,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 
 			recurse := tc.msg
 			recurse.Contract = contractAddr
-			msg := buildQuery(t, recurse)
+			msg := buildRecurseQuery(t, recurse)
 
 			// do the query
 			path := []string{QueryGetContractState, contractAddr.String(), QueryMethodContractStateSmart}
@@ -310,7 +310,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			// prepare the query
 			recurse := tc.msg
 			recurse.Contract = contractAddr
-			msg := buildQuery(t, recurse)
+			msg := buildRecurseQuery(t, recurse)
 
 			// if we expect out of gas, make sure this panics
 			if tc.expectOutOfGas {

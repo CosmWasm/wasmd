@@ -37,9 +37,13 @@ type reflectPayload struct {
 
 // MaskQueryMsg is used to encode query messages
 type MaskQueryMsg struct {
-	Owner       *struct{}               `json:"owner,omitempty"`
-	Capitalized *Text                   `json:"capitalized,omitempty"`
-	Chain       *wasmTypes.QueryRequest `json:"chain,omitempty"`
+	Owner       *struct{}   `json:"owner,omitempty"`
+	Capitalized *Text       `json:"capitalized,omitempty"`
+	Chain       *ChainQuery `json:"chain,omitempty"`
+}
+
+type ChainQuery struct {
+	Request *wasmTypes.QueryRequest `json:"request,omitempty"`
 }
 
 type Text struct {
@@ -48,6 +52,21 @@ type Text struct {
 
 type OwnerResponse struct {
 	Owner string `json:"owner,omitempty"`
+}
+
+type ChainResponse struct {
+	Data []byte `json:"data,omitempty"`
+}
+
+func buildMaskQuery(t *testing.T, query *MaskQueryMsg) []byte {
+	bz, err := json.Marshal(query)
+	require.NoError(t, err)
+	return bz
+}
+
+func mustParse(t *testing.T, data []byte, res interface{}) {
+	err := json.Unmarshal(data, res)
+	require.NoError(t, err)
 }
 
 const MaskFeatures = "staking,mask"
@@ -282,6 +301,90 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	err = json.Unmarshal(custom, &resp)
 	require.NoError(t, err)
 	assert.Equal(t, resp.Text, "ALL CAPS NOW")
+}
+
+type maskState struct {
+	Owner []byte `json:"owner"`
+}
+
+func TestMaskReflectWasmQueries(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	// upload mask code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	maskID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), maskID)
+
+	// creator instantiates a contract and gives it tokens
+	maskStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	maskAddr, err := keeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", maskStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, maskAddr)
+
+	// for control, let's make some queries directly on the mask
+	ownerQuery := buildMaskQuery(t, &MaskQueryMsg{Owner: &struct{}{}})
+	res, err := keeper.QuerySmart(ctx, maskAddr, ownerQuery)
+	require.NoError(t, err)
+	var ownerRes OwnerResponse
+	mustParse(t, res, &ownerRes)
+	require.Equal(t, ownerRes.Owner, creator.String())
+
+	// and a raw query: cosmwasm_storage::Singleton uses 2 byte big-endian length-prefixed to store data
+	configKey := append([]byte{0, 6}, []byte("config")...)
+	models := keeper.QueryRaw(ctx, maskAddr, configKey)
+	require.Len(t, models, 1)
+	var stateRes maskState
+	mustParse(t, models[0].Value, &stateRes)
+	require.Equal(t, stateRes.Owner, []byte(creator))
+
+	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
+	reflectOwnerQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
+		Smart: &wasmTypes.SmartQuery{
+			ContractAddr: maskAddr.String(),
+			Msg:          ownerQuery,
+		},
+	}}}}
+	reflectOwnerBin := buildMaskQuery(t, &reflectOwnerQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectOwnerBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRes ChainResponse
+	mustParse(t, res, &reflectRes)
+	var reflectOwnerRes OwnerResponse
+	mustParse(t, reflectRes.Data, &reflectOwnerRes)
+	require.Equal(t, reflectOwnerRes.Owner, creator.String())
+
+	// and with queryRaw
+	reflectStateQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
+		Raw: &wasmTypes.RawQuery{
+			ContractAddr: maskAddr.String(),
+			Key:          configKey,
+		},
+	}}}}
+	reflectStateBin := buildMaskQuery(t, &reflectStateQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectStateBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRawRes ChainResponse
+	mustParse(t, res, &reflectRawRes)
+	// this returns []Model... we need to parse this to actually get the key-value info
+	var reflectModels []types.Model
+	mustParse(t, reflectRawRes.Data, &reflectModels)
+	require.Len(t, reflectModels, 1)
+	// now, with the raw data, we can parse it into state
+	var reflectStateRes maskState
+	mustParse(t, reflectModels[0].Value, &reflectStateRes)
+	require.Equal(t, reflectStateRes.Owner, []byte(creator))
+
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {

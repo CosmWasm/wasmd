@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -402,6 +403,140 @@ func TestReinvest(t *testing.T) {
 	assertBalance(t, ctx, keeper, contractAddr, initInfo.creator, "0")
 	assertClaims(t, ctx, keeper, contractAddr, bob, "0")
 	assertSupply(t, ctx, keeper, contractAddr, "200000", sdk.NewInt64Coin("stake", 236000))
+}
+
+func TestQueryStakingInfo(t *testing.T) {
+	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
+	initInfo := initializeStaking(t)
+	defer initInfo.cleanup()
+	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+	distKeeper := initInfo.distKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
+
+	// full is 2x funds, 1x goes to the contract, other stays on his wallet
+	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
+	bob := createFakeFundedAccount(ctx, accKeeper, full)
+
+	// we will stake 200k to a validator with 1M self-bond
+	// this means we should get 1/6 of the rewards
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// update height a bit to solidify the delegation
+	ctx = nextBlock(ctx, stakingKeeper)
+	// we get 1/6, our share should be 40k minus 10% commission = 36k
+	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+
+	// STEP 2: Prepare the mask contract
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	// upload mask code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	maskID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), maskID)
+
+	// creator instantiates a contract and gives it tokens
+	maskAddr, err := keeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, maskAddr)
+
+	// STEP 3: now, let's reflect some queries.
+	// let's get the bonded denom
+	reflectBondedQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+		BondedDenom: &struct{}{},
+	}}}}
+	reflectBondedBin := buildMaskQuery(t, &reflectBondedQuery)
+	res, err := keeper.QuerySmart(ctx, maskAddr, reflectBondedBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRes ChainResponse
+	mustParse(t, res, &reflectRes)
+	var bondedRes wasmTypes.BondedDenomResponse
+	mustParse(t, reflectRes.Data, &bondedRes)
+	assert.Equal(t, "stake", bondedRes.Denom)
+
+	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
+	reflectValidatorsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+		Validators: &wasmTypes.ValidatorsQuery{},
+	}}}}
+	reflectValidatorsBin := buildMaskQuery(t, &reflectValidatorsQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectValidatorsBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var validatorRes wasmTypes.ValidatorsResponse
+	mustParse(t, reflectRes.Data, &validatorRes)
+	require.Len(t, validatorRes.Validators, 1)
+	valInfo := validatorRes.Validators[0]
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), valInfo.Address)
+	require.Contains(t, valInfo.Commission, "0.100")
+	require.Contains(t, valInfo.MaxCommission, "0.200")
+	require.Contains(t, valInfo.MaxChangeRate, "0.010")
+
+	// test to get all my delegations
+	reflectAllDelegationsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+		AllDelegations: &wasmTypes.AllDelegationsQuery{
+			Delegator: contractAddr.String(),
+		},
+	}}}}
+	reflectAllDelegationsBin := buildMaskQuery(t, &reflectAllDelegationsQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectAllDelegationsBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var allDelegationsRes wasmTypes.AllDelegationsResponse
+	mustParse(t, reflectRes.Data, &allDelegationsRes)
+	require.Len(t, allDelegationsRes.Delegations, 1)
+	delInfo := allDelegationsRes.Delegations[0]
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
+
+	// test to get one delegations
+	reflectDelegationQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+		Delegation: &wasmTypes.DelegationQuery{
+			Validator: valAddr.String(),
+			Delegator: contractAddr.String(),
+		},
+	}}}}
+	reflectDelegationBin := buildMaskQuery(t, &reflectDelegationQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectDelegationBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var delegationRes wasmTypes.DelegationResponse
+	mustParse(t, reflectRes.Data, &delegationRes)
+	assert.NotEmpty(t, delegationRes.Delegation)
+	delInfo2 := delegationRes.Delegation
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo2.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo2.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo2.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
+	// TODO: fix this - these should return real values!!! Issue #263
+	require.Len(t, delInfo2.AccumulatedRewards, 0)
+	require.Equal(t, delInfo2.CanRedelegate, wasmTypes.NewCoin(0, "stake"))
 }
 
 // adds a few validators and returns a list of validators that are registered
