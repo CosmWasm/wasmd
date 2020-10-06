@@ -220,17 +220,25 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation stak
 	bondDenom := keeper.BondDenom(ctx)
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
 
-	// can relegate? other query for redelegations?
-	// keeper.GetRedelegation
+	delegationCoins := convertSdkCoinToWasmCoin(amount)
+
+	// FIXME: this is very rough but better than nothing...
+	// if this (val, delegate) pair is receiving a redelegation, it cannot redelegate more
+	// otherwise, it can redelegate the full amount
+	// (there are cases of partial funds redelegated, but this is a start)
+	redelegateCoins := wasmTypes.NewCoin(0, bondDenom)
+	if !keeper.HasReceivingRedelegation(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress) {
+		redelegateCoins = delegationCoins
+	}
 
 	return &wasmTypes.FullDelegation{
 		Delegator: delegation.DelegatorAddress.String(),
 		Validator: delegation.ValidatorAddress.String(),
-		Amount:    convertSdkCoinToWasmCoin(amount),
+		Amount:    delegationCoins,
 		// TODO: AccumulatedRewards
 		AccumulatedRewards: wasmTypes.Coins{},
 		// TODO: Determine redelegate
-		CanRedelegate: wasmTypes.NewCoin(0, bondDenom),
+		CanRedelegate: redelegateCoins,
 	}, nil
 }
 
