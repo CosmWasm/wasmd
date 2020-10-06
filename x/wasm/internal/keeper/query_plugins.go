@@ -248,9 +248,7 @@ func WasmQuerier(wasm *Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuer
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Raw.ContractAddr)
 			}
-			models := wasm.QueryRaw(ctx, addr, request.Raw.Key)
-			// TODO: do we want to change the return value?
-			return json.Marshal(models)
+			return wasm.QueryRaw(ctx, addr, request.Raw.Key), nil
 		}
 		return nil, wasmTypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 	}

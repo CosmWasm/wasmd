@@ -340,10 +340,9 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 
 	// and a raw query: cosmwasm_storage::Singleton uses 2 byte big-endian length-prefixed to store data
 	configKey := append([]byte{0, 6}, []byte("config")...)
-	models := keeper.QueryRaw(ctx, maskAddr, configKey)
-	require.Len(t, models, 1)
+	raw := keeper.QueryRaw(ctx, maskAddr, configKey)
 	var stateRes maskState
-	mustParse(t, models[0].Value, &stateRes)
+	mustParse(t, raw, &stateRes)
 	require.Equal(t, stateRes.Owner, []byte(creator))
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
@@ -376,13 +375,9 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	// first we pull out the data from chain response, before parsing the original response
 	var reflectRawRes ChainResponse
 	mustParse(t, res, &reflectRawRes)
-	// this returns []Model... we need to parse this to actually get the key-value info
-	var reflectModels []types.Model
-	mustParse(t, reflectRawRes.Data, &reflectModels)
-	require.Len(t, reflectModels, 1)
 	// now, with the raw data, we can parse it into state
 	var reflectStateRes maskState
-	mustParse(t, reflectModels[0].Value, &reflectStateRes)
+	mustParse(t, reflectRawRes.Data, &reflectStateRes)
 	require.Equal(t, reflectStateRes.Owner, []byte(creator))
 
 }

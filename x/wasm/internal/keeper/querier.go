@@ -141,8 +141,8 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, req abci.Requ
 			resultData = make([]types.Model, 0)
 		}
 	case QueryMethodContractStateRaw:
-		// this returns a serialized json object
-		resultData = keeper.QueryRaw(ctx, contractAddr, req.Data)
+		// this returns the raw data from the state, base64-encoded
+		return keeper.QueryRaw(ctx, contractAddr, req.Data), nil
 	case QueryMethodContractStateSmart:
 		// we enforce a subjective gas limit on all queries to avoid infinite loops
 		ctx = ctx.WithGasMeter(sdk.NewGasMeter(keeper.queryGasLimit))

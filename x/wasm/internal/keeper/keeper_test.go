@@ -908,10 +908,9 @@ func TestMigrate(t *testing.T) {
 			}}
 			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 
-			m := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
-			require.Len(t, m, 1)
+			raw := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 			var stored map[string][]byte
-			require.NoError(t, json.Unmarshal(m[0].Value, &stored))
+			require.NoError(t, json.Unmarshal(raw, &stored))
 			require.Contains(t, stored, "verifier")
 			require.NoError(t, err)
 			assert.Equal(t, spec.expVerifier, sdk.AccAddress(stored["verifier"]))
