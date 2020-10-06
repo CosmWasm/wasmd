@@ -37,9 +37,13 @@ type reflectPayload struct {
 
 // MaskQueryMsg is used to encode query messages
 type MaskQueryMsg struct {
-	Owner       *struct{}               `json:"owner,omitempty"`
-	Capitalized *Text                   `json:"capitalized,omitempty"`
-	Chain       *wasmTypes.QueryRequest `json:"chain,omitempty"`
+	Owner       *struct{}   `json:"owner,omitempty"`
+	Capitalized *Text       `json:"capitalized,omitempty"`
+	Chain       *ChainQuery `json:"chain,omitempty"`
+}
+
+type ChainQuery struct {
+	Request *wasmTypes.QueryRequest `json:"request,omitempty"`
 }
 
 type Text struct {
@@ -48,6 +52,10 @@ type Text struct {
 
 type OwnerResponse struct {
 	Owner string `json:"owner,omitempty"`
+}
+
+type ChainResponse struct {
+	Data []byte `json:"data,omitempty"`
 }
 
 func buildMaskQuery(t *testing.T, query *MaskQueryMsg) []byte {
@@ -338,6 +346,45 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	var stateRes maskState
 	mustParse(t, models[0].Value, &stateRes)
 	require.Equal(t, stateRes.Owner, []byte(creator))
+
+	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
+	reflectOwnerQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
+		Smart: &wasmTypes.SmartQuery{
+			ContractAddr: maskAddr.String(),
+			Msg:          ownerQuery,
+		},
+	}}}}
+	reflectOwnerBin := buildMaskQuery(t, &reflectOwnerQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectOwnerBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRes ChainResponse
+	mustParse(t, res, &reflectRes)
+	var reflectOwnerRes OwnerResponse
+	mustParse(t, reflectRes.Data, &reflectOwnerRes)
+	require.Equal(t, reflectOwnerRes.Owner, creator.String())
+
+	// and with queryRaw
+	reflectStateQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
+		Raw: &wasmTypes.RawQuery{
+			ContractAddr: maskAddr.String(),
+			Key:          configKey,
+		},
+	}}}}
+	reflectStateBin := buildMaskQuery(t, &reflectStateQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectStateBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRawRes ChainResponse
+	mustParse(t, res, &reflectRawRes)
+	// this returns []Model... we need to parse this to actually get the key-value info
+	var reflectModels []types.Model
+	mustParse(t, reflectRawRes.Data, &reflectModels)
+	require.Equal(t, 1, len(reflectModels))
+	// now, with the raw data, we can parse it into state
+	var reflectStateRes maskState
+	mustParse(t, reflectModels[0].Value, &reflectStateRes)
+	require.Equal(t, reflectStateRes.Owner, []byte(creator))
 
 }
 
