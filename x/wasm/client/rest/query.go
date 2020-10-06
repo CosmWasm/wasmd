@@ -180,7 +180,7 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, string(res))
+		rest.PostProcessResponse(w, cliCtx, json.RawMessage(res))
 	}
 }
 
