@@ -237,20 +237,20 @@ func TestQueryContractHistory(t *testing.T) {
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.GenesisContractCodeHistoryType,
-				CodeID:    1,
+				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.GenesisContractCodeHistoryType,
-				CodeID:    1,
+				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.InitContractCodeHistoryType,
-				CodeID:    1,
+				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}, {
@@ -266,7 +266,7 @@ func TestQueryContractHistory(t *testing.T) {
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.InitContractCodeHistoryType,
-				CodeID:    1,
+				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.MigrateContractCodeHistoryType,
@@ -282,7 +282,7 @@ func TestQueryContractHistory(t *testing.T) {
 			srcQueryAddr: otherAddr,
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.GenesisContractCodeHistoryType,
-				CodeID:    1,
+				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},

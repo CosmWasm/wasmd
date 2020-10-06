@@ -242,7 +242,7 @@ func TestIsSimulationMode(t *testing.T) {
 			exp: true,
 		},
 	}
-	for msg, _ := range specs {
+	for msg := range specs {
 		t.Run(msg, func(t *testing.T) {
 			//assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
 		})
@@ -994,8 +994,8 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			},
 		},
 	}
-	expJsonEvts := string(mustMarshal(t, expEvents))
-	assert.JSONEq(t, expJsonEvts, prettyEvents(t, ctx.EventManager().Events()))
+	expJSONEvts := string(mustMarshal(t, expEvents))
+	assert.JSONEq(t, expJSONEvts, prettyEvents(t, ctx.EventManager().Events()))
 
 	// all persistent data cleared
 	m := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
