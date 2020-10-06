@@ -477,7 +477,33 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Contains(t, valInfo.MaxCommission, "0.200")
 	require.Contains(t, valInfo.MaxChangeRate, "0.010")
 
+	// test to get all my delegations
+	reflectAllDelegationsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+		AllDelegations: &wasmTypes.AllDelegationsQuery{
+			Delegator: contractAddr.String(),
+		},
+	}}}}
+	reflectAllDelegationsBin := buildMaskQuery(t, &reflectAllDelegationsQuery)
+	res, err = keeper.QuerySmart(ctx, maskAddr, reflectAllDelegationsBin)
+	require.NoError(t, err)
+	// first we pull out the data from chain response, before parsing the original response
+	mustParse(t, res, &reflectRes)
+	var allDelegationsRes wasmTypes.AllDelegationsResponse
+	mustParse(t, reflectRes.Data, &allDelegationsRes)
+	require.Equal(t, 1, len(allDelegationsRes.Delegations))
+	delInfo := allDelegationsRes.Delegations[0]
+	fmt.Printf("%#v\n", delInfo)
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
+
 	// TODO: more delegation queries
+	// BondedDenom -> Atom
+	// Delegation -> With detailed info
 }
 
 // adds a few validators and returns a list of validators that are registered
