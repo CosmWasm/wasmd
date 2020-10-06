@@ -535,7 +535,6 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Denom, delInfo2.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
 
-	// TODO: fix this - these should return real values!!! Issue #263
 	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo2.CanRedelegate)
 	require.Len(t, delInfo2.AccumulatedRewards, 1)
 	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
