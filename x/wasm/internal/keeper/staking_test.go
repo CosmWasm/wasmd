@@ -369,7 +369,7 @@ func TestReinvest(t *testing.T) {
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
-	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
+	// this should withdraw our outstanding 36k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
 		Reinvest: &struct{}{},
 	}
@@ -536,8 +536,10 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
 
 	// TODO: fix this - these should return real values!!! Issue #263
-	require.Len(t, delInfo2.AccumulatedRewards, 0)
 	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo2.CanRedelegate)
+	require.Len(t, delInfo2.AccumulatedRewards, 1)
+	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
+	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
 }
 
 func TestQueryStakingPlugin(t *testing.T) {
@@ -580,7 +582,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 			Validator: valAddr.String(),
 		},
 	}
-	raw, err := StakingQuerier(stakingKeeper)(ctx, &query)
+	raw, err := StakingQuerier(stakingKeeper, distKeeper)(ctx, &query)
 	require.NoError(t, err)
 	var res wasmTypes.DelegationResponse
 	mustParse(t, raw, &res)
@@ -594,9 +596,10 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
 
-	// TODO: fix this - these should return real values!!! Issue #263
 	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo.CanRedelegate)
-	require.Len(t, delInfo.AccumulatedRewards, 0)
+	require.Len(t, delInfo.AccumulatedRewards, 1)
+	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
+	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
 }
 
 // adds a few validators and returns a list of validators that are registered
