@@ -421,7 +421,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	return queryResult, nil
 }
 
-// QueryRaw returns the contract's state for give key. For a `nil` key a empty slice result is returned.
+// QueryRaw returns the contract's state for give key. Returns `nil` when key is `nil`.
 func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
 	if key == nil {
 		return nil

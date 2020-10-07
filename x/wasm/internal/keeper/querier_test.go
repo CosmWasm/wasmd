@@ -58,7 +58,7 @@ func TestQueryContractState(t *testing.T) {
 		srcReq  abci.RequestQuery
 		// smart and raw queries (not all queries) return raw bytes from contract not []types.Model
 		// if this is set, then we just compare - (should be json encoded string)
-		expSmartRes string
+		expRes []byte
 		// if success and expSmartRes is not set, we parse into []types.Model and compare (all state)
 		expModelLen      int
 		expModelContains []types.Model
@@ -73,19 +73,19 @@ func TestQueryContractState(t *testing.T) {
 			},
 		},
 		"query raw key": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:      abci.RequestQuery{Data: []byte("foo")},
-			expSmartRes: `"bar"`,
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("foo")},
+			expRes:  []byte(`"bar"`),
 		},
 		"query raw binary key": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:      abci.RequestQuery{Data: []byte{0x0, 0x1}},
-			expSmartRes: `{"count":8}`,
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte{0x0, 0x1}},
+			expRes:  []byte(`{"count":8}`),
 		},
 		"query smart": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
-			expSmartRes: fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String()),
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
+			expRes:  []byte(fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String())),
 		},
 		"query smart invalid request": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
@@ -97,18 +97,24 @@ func TestQueryContractState(t *testing.T) {
 			srcReq:  abci.RequestQuery{Data: []byte(`not a json string`)},
 			expErr:  types.ErrQueryFailed,
 		},
-		"query unknown raw key": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:      abci.RequestQuery{Data: []byte("unknown")},
-			expSmartRes: "",
+		"query non-existent raw key": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("i do not exist")},
+			expRes:  nil,
 		},
 		"query empty raw key": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			expSmartRes: "",
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("")},
+			expRes:  nil,
+		},
+		"query nil raw key": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: nil},
+			expRes:  nil,
 		},
 		"query raw with unknown address": {
-			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateRaw},
-			expSmartRes: "",
+			srcPath: []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateRaw},
+			expRes:  nil,
 		},
 		"query all with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateAll},
@@ -130,7 +136,7 @@ func TestQueryContractState(t *testing.T) {
 			// if smart query, check custom response
 			if spec.srcPath[2] != QueryMethodContractStateAll {
 				fmt.Printf("path: %s\n", spec.srcPath[2])
-				require.Equal(t, spec.expSmartRes, string(binResult))
+				require.Equal(t, spec.expRes, binResult)
 				return
 			}
 
