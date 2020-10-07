@@ -135,12 +135,10 @@ func TestQueryContractState(t *testing.T) {
 
 			// if smart query, check custom response
 			if spec.srcPath[2] != QueryMethodContractStateAll {
-				fmt.Printf("path: %s\n", spec.srcPath[2])
 				require.Equal(t, spec.expRes, binResult)
 				return
 			}
 
-			fmt.Printf("all state: %s\n", spec.srcPath[2])
 			// otherwise, check returned models
 			var r []types.Model
 			if spec.expErr == nil {

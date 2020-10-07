@@ -379,7 +379,54 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	var reflectStateRes maskState
 	mustParse(t, reflectRawRes.Data, &reflectStateRes)
 	require.Equal(t, reflectStateRes.Owner, []byte(creator))
+}
 
+func TestWasmRawQueryWithNil(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	ctx, keepers := CreateTestInput(t, false, tempDir, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
+
+	// upload mask code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	maskID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), maskID)
+
+	// creator instantiates a contract and gives it tokens
+	maskStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	maskAddr, err := keeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", maskStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, maskAddr)
+
+	// control: query directly
+	missingKey := []byte{0, 1, 2, 3, 4}
+	raw := keeper.QueryRaw(ctx, maskAddr, missingKey)
+	require.Nil(t, raw)
+
+	// and with queryRaw
+	reflectQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
+		Raw: &wasmTypes.RawQuery{
+			ContractAddr: maskAddr.String(),
+			Key:          missingKey,
+		},
+	}}}}
+	reflectStateBin := buildMaskQuery(t, &reflectQuery)
+	res, err := keeper.QuerySmart(ctx, maskAddr, reflectStateBin)
+	require.NoError(t, err)
+
+	// first we pull out the data from chain response, before parsing the original response
+	var reflectRawRes ChainResponse
+	mustParse(t, res, &reflectRawRes)
+	// and make sure there is no data
+	require.Empty(t, reflectRawRes.Data)
+	// we get an empty byte slice not nil (if anyone care in go-land)
+	require.Equal(t, []byte{}, reflectRawRes.Data)
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
