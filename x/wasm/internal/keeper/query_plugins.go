@@ -220,6 +220,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, distKeeper dist
 	delegationCoins := convertSdkCoinToWasmCoin(amount)
 
 	// FIXME: this is very rough but better than nothing...
+	// https://github.com/CosmWasm/wasmd/issues/282
 	// if this (val, delegate) pair is receiving a redelegation, it cannot redelegate more
 	// otherwise, it can redelegate the full amount
 	// (there are cases of partial funds redelegated, but this is a start)
@@ -238,13 +239,11 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, distKeeper dist
 	}
 
 	return &wasmTypes.FullDelegation{
-		Delegator: delegation.DelegatorAddress.String(),
-		Validator: delegation.ValidatorAddress.String(),
-		Amount:    delegationCoins,
-		// TODO: AccumulatedRewards
+		Delegator:          delegation.DelegatorAddress.String(),
+		Validator:          delegation.ValidatorAddress.String(),
+		Amount:             delegationCoins,
 		AccumulatedRewards: accRewards,
-		// TODO: Determine redelegate
-		CanRedelegate: redelegateCoins,
+		CanRedelegate:      redelegateCoins,
 	}, nil
 }
 
@@ -274,13 +273,12 @@ func getAccumulatedRewards(ctx sdk.Context, distKeeper distribution.Keeper, dele
 	// **** all this above should be ONE method call
 
 	// now we have it, convert it into wasmTypes
-	var rewards []wasmTypes.Coin
-	for _, r := range decRewards {
-		c := wasmTypes.Coin{
+	rewards := make([]wasmTypes.Coin, len(decRewards))
+	for i, r := range decRewards {
+		rewards[i] = wasmTypes.Coin{
 			Denom:  r.Denom,
 			Amount: r.Amount.TruncateInt().String(),
 		}
-		rewards = append(rewards, c)
 	}
 	return rewards, nil
 }
