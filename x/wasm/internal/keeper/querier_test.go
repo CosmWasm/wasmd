@@ -104,6 +104,12 @@ func TestQueryContractState(t *testing.T) {
 		},
 		"query empty raw key": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("")},
+			expRes:  nil,
+		},
+		"query nil raw key": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: nil},
 			expRes:  nil,
 		},
 		"query raw with unknown address": {
