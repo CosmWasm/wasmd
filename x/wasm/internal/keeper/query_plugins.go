@@ -260,7 +260,10 @@ func getAccumulatedRewards(ctx sdk.Context, distKeeper distribution.Keeper, dele
 		return nil, err
 	}
 	req := abci.RequestQuery{Data: data}
-	qres, err := distribution.NewQuerier(distKeeper)(ctx, []string{distribution.QueryDelegationRewards}, req)
+
+	// just to be safe... ensure we do not accidentally write in the querier (which does some funky things)
+	cache, _ := ctx.CacheContext()
+	qres, err := distribution.NewQuerier(distKeeper)(cache, []string{distribution.QueryDelegationRewards}, req)
 	if err != nil {
 		return nil, err
 	}
