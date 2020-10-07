@@ -369,7 +369,7 @@ func TestReinvest(t *testing.T) {
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
-	// this should withdraw our outstanding 40k of rewards and reinvest them in the same delegation
+	// this should withdraw our outstanding 36k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
 		Reinvest: &struct{}{},
 	}
@@ -437,6 +437,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	ctx = nextBlock(ctx, stakingKeeper)
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+
+	// see what the current rewards are
+	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
 
 	// STEP 2: Prepare the mask contract
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -534,9 +537,82 @@ func TestQueryStakingInfo(t *testing.T) {
 	// this is a different Coin type, with String not BigInt, compare field by field
 	require.Equal(t, funds[0].Denom, delInfo2.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
-	// TODO: fix this - these should return real values!!! Issue #263
-	require.Len(t, delInfo2.AccumulatedRewards, 0)
-	require.Equal(t, delInfo2.CanRedelegate, wasmTypes.NewCoin(0, "stake"))
+
+	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo2.CanRedelegate)
+	require.Len(t, delInfo2.AccumulatedRewards, 1)
+	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
+	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
+
+	// ensure rewards did not change when querying (neither amount nor period)
+	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.Equal(t, origReward, finalReward)
+}
+
+func TestQueryStakingPlugin(t *testing.T) {
+	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
+	initInfo := initializeStaking(t)
+	defer initInfo.cleanup()
+	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
+	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+	distKeeper := initInfo.distKeeper
+
+	// initial checks of bonding state
+	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	require.True(t, found)
+	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
+
+	// full is 2x funds, 1x goes to the contract, other stays on his wallet
+	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
+	bob := createFakeFundedAccount(ctx, accKeeper, full)
+
+	// we will stake 200k to a validator with 1M self-bond
+	// this means we should get 1/6 of the rewards
+	bond := StakingHandleMsg{
+		Bond: &struct{}{},
+	}
+	bondBz, err := json.Marshal(bond)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	require.NoError(t, err)
+
+	// update height a bit to solidify the delegation
+	ctx = nextBlock(ctx, stakingKeeper)
+	// we get 1/6, our share should be 40k minus 10% commission = 36k
+	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+
+	// see what the current rewards are
+	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+
+	// Step 2: Try out the query plugins
+	query := wasmTypes.StakingQuery{
+		Delegation: &wasmTypes.DelegationQuery{
+			Delegator: contractAddr.String(),
+			Validator: valAddr.String(),
+		},
+	}
+	raw, err := StakingQuerier(stakingKeeper, distKeeper)(ctx, &query)
+	require.NoError(t, err)
+	var res wasmTypes.DelegationResponse
+	mustParse(t, raw, &res)
+	assert.NotEmpty(t, res.Delegation)
+	delInfo := res.Delegation
+	// Note: this ValAddress not AccAddress, may change with #264
+	require.Equal(t, valAddr.String(), delInfo.Validator)
+	// note this is not bob (who staked to the contract), but the contract itself
+	require.Equal(t, contractAddr.String(), delInfo.Delegator)
+	// this is a different Coin type, with String not BigInt, compare field by field
+	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
+	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
+
+	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo.CanRedelegate)
+	require.Len(t, delInfo.AccumulatedRewards, 1)
+	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
+	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
+
+	// ensure rewards did not change when querying (neither amount nor period)
+	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.Equal(t, origReward, finalReward)
 }
 
 // adds a few validators and returns a list of validators that are registered

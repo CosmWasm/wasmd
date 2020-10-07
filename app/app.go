@@ -299,7 +299,10 @@ func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"
-	app.wasmKeeper = wasm.NewKeeper(app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName], app.accountKeeper, app.bankKeeper, app.stakingKeeper, wasmRouter, wasmDir, wasmConfig, supportedFeatures, nil, nil)
+	app.wasmKeeper = wasm.NewKeeper(
+		app.cdc, keys[wasm.StoreKey], app.subspaces[wasm.ModuleName], app.accountKeeper,
+		app.bankKeeper, app.stakingKeeper, app.distrKeeper, wasmRouter, wasmDir, wasmConfig,
+		supportedFeatures, nil, nil)
 
 	// The gov proposal types can be individually enabled
 	if len(enabledProposals) != 0 {

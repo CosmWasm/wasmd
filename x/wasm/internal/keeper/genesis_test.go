@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -496,7 +497,7 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
 	cdc := MakeTestCodec()
 	pk := params.NewKeeper(cdc, keyParams, tkeyParams)
 	wasmConfig := wasmTypes.DefaultWasmConfig()
-	srcKeeper := NewKeeper(cdc, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), auth.AccountKeeper{}, nil, staking.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
+	srcKeeper := NewKeeper(cdc, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), auth.AccountKeeper{}, nil, staking.Keeper{}, distribution.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	srcKeeper.setParams(ctx, wasmTypes.DefaultParams())
 
 	return srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup

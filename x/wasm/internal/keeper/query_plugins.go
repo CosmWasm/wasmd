@@ -6,7 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/distribution"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type QueryHandler struct {
@@ -55,11 +57,11 @@ type QueryPlugins struct {
 	Wasm    func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bank.ViewKeeper, staking staking.Keeper, wasm *Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank bank.ViewKeeper, staking staking.Keeper, distKeeper distribution.Keeper, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:    BankQuerier(bank),
 		Custom:  NoCustomQuerier,
-		Staking: StakingQuerier(staking),
+		Staking: StakingQuerier(staking, distKeeper),
 		Wasm:    WasmQuerier(wasm),
 	}
 }
@@ -120,7 +122,7 @@ func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
 	return nil, wasmTypes.UnsupportedRequest{Kind: "custom"}
 }
 
-func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
+func StakingQuerier(keeper staking.Keeper, distKeeper distribution.Keeper) func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmTypes.StakingQuery) ([]byte, error) {
 		if request.BondedDenom != nil {
 			denom := keeper.BondDenom(ctx)
@@ -174,7 +176,7 @@ func StakingQuerier(keeper staking.Keeper) func(ctx sdk.Context, request *wasmTy
 			var res wasmTypes.DelegationResponse
 			d, found := keeper.GetDelegation(ctx, delegator, validator)
 			if found {
-				res.Delegation, err = sdkToFullDelegation(ctx, keeper, d)
+				res.Delegation, err = sdkToFullDelegation(ctx, keeper, distKeeper, d)
 				if err != nil {
 					return nil, err
 				}
@@ -198,11 +200,6 @@ func sdkToDelegations(ctx sdk.Context, keeper staking.Keeper, delegations []stak
 		}
 		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(d.Shares).TruncateInt())
 
-		// Accumulated Rewards???
-
-		// can relegate? other query for redelegations?
-		// keeper.GetRedelegation
-
 		result[i] = wasmTypes.Delegation{
 			Delegator: d.DelegatorAddress.String(),
 			Validator: d.ValidatorAddress.String(),
@@ -212,7 +209,7 @@ func sdkToDelegations(ctx sdk.Context, keeper staking.Keeper, delegations []stak
 	return result, nil
 }
 
-func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation staking.Delegation) (*wasmTypes.FullDelegation, error) {
+func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, distKeeper distribution.Keeper, delegation staking.Delegation) (*wasmTypes.FullDelegation, error) {
 	val, found := keeper.GetValidator(ctx, delegation.ValidatorAddress)
 	if !found {
 		return nil, sdkerrors.Wrap(staking.ErrNoValidatorFound, "can't load validator for delegation")
@@ -220,18 +217,73 @@ func sdkToFullDelegation(ctx sdk.Context, keeper staking.Keeper, delegation stak
 	bondDenom := keeper.BondDenom(ctx)
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
 
-	// can relegate? other query for redelegations?
-	// keeper.GetRedelegation
+	delegationCoins := convertSdkCoinToWasmCoin(amount)
+
+	// FIXME: this is very rough but better than nothing...
+	// https://github.com/CosmWasm/wasmd/issues/282
+	// if this (val, delegate) pair is receiving a redelegation, it cannot redelegate more
+	// otherwise, it can redelegate the full amount
+	// (there are cases of partial funds redelegated, but this is a start)
+	redelegateCoins := wasmTypes.NewCoin(0, bondDenom)
+	if !keeper.HasReceivingRedelegation(ctx, delegation.DelegatorAddress, delegation.ValidatorAddress) {
+		redelegateCoins = delegationCoins
+	}
+
+	// FIXME: make a cleaner way to do this (modify the sdk)
+	// we need the info from `distKeeper.calculateDelegationRewards()`, but it is not public
+	// neither is `queryDelegationRewards(ctx sdk.Context, _ []string, req abci.RequestQuery, k Keeper)`
+	// so we go through the front door of the querier....
+	accRewards, err := getAccumulatedRewards(ctx, distKeeper, delegation)
+	if err != nil {
+		return nil, err
+	}
 
 	return &wasmTypes.FullDelegation{
-		Delegator: delegation.DelegatorAddress.String(),
-		Validator: delegation.ValidatorAddress.String(),
-		Amount:    convertSdkCoinToWasmCoin(amount),
-		// TODO: AccumulatedRewards
-		AccumulatedRewards: wasmTypes.Coins{},
-		// TODO: Determine redelegate
-		CanRedelegate: wasmTypes.NewCoin(0, bondDenom),
+		Delegator:          delegation.DelegatorAddress.String(),
+		Validator:          delegation.ValidatorAddress.String(),
+		Amount:             delegationCoins,
+		AccumulatedRewards: accRewards,
+		CanRedelegate:      redelegateCoins,
 	}, nil
+}
+
+// FIXME: simplify this enormously when
+// https://github.com/cosmos/cosmos-sdk/issues/7466 is merged
+func getAccumulatedRewards(ctx sdk.Context, distKeeper distribution.Keeper, delegation staking.Delegation) ([]wasmTypes.Coin, error) {
+	// Try to get *delegator* reward info!
+	params := distribution.QueryDelegationRewardsParams{
+		DelegatorAddress: delegation.DelegatorAddress,
+		ValidatorAddress: delegation.ValidatorAddress,
+	}
+	data, err := json.Marshal(params)
+	if err != nil {
+		return nil, err
+	}
+	req := abci.RequestQuery{Data: data}
+
+	// just to be safe... ensure we do not accidentally write in the querier (which does some funky things)
+	cache, _ := ctx.CacheContext()
+	qres, err := distribution.NewQuerier(distKeeper)(cache, []string{distribution.QueryDelegationRewards}, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var decRewards sdk.DecCoins
+	err = json.Unmarshal(qres, &decRewards)
+	if err != nil {
+		return nil, err
+	}
+	// **** all this above should be ONE method call
+
+	// now we have it, convert it into wasmTypes
+	rewards := make([]wasmTypes.Coin, len(decRewards))
+	for i, r := range decRewards {
+		rewards[i] = wasmTypes.Coin{
+			Denom:  r.Denom,
+			Amount: r.Amount.TruncateInt().String(),
+		}
+	}
+	return rewards, nil
 }
 
 func WasmQuerier(wasm *Keeper) func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
