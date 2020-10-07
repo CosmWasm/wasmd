@@ -425,8 +425,8 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	mustParse(t, res, &reflectRawRes)
 	// and make sure there is no data
 	require.Empty(t, reflectRawRes.Data)
-	// TODO: check between []byte{} and nil
-	require.Nil(t, reflectRawRes.Data)
+	// we get an empty byte slice not nil (if anyone care in go-land)
+	require.Equal(t, []byte{}, reflectRawRes.Data)
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper auth.AccountKeeper, addr sdk.AccAddress, expected sdk.Coins) {
