@@ -566,11 +566,10 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, m
 
 func gasForContract(ctx sdk.Context) uint64 {
 	meter := ctx.GasMeter()
-	// avoid integer overflow
 	if meter.IsOutOfGas() {
 		return 0
 	}
-	remaining := (meter.Limit() - meter.GasConsumed()) * GasMultiplier
+	remaining := (meter.Limit() - meter.GasConsumedToLimit()) * GasMultiplier
 	if remaining > MaxGas {
 		return MaxGas
 	}
