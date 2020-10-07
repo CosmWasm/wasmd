@@ -438,6 +438,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
+	// see what the current rewards are
+	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+
 	// STEP 2: Prepare the mask contract
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
@@ -539,6 +542,10 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Len(t, delInfo2.AccumulatedRewards, 1)
 	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
 	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
+
+	// ensure rewards did not change when querying (neither amount nor period)
+	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.Equal(t, origReward, finalReward)
 }
 
 func TestQueryStakingPlugin(t *testing.T) {
@@ -574,6 +581,9 @@ func TestQueryStakingPlugin(t *testing.T) {
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
+	// see what the current rewards are
+	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+
 	// Step 2: Try out the query plugins
 	query := wasmTypes.StakingQuery{
 		Delegation: &wasmTypes.DelegationQuery{
@@ -599,6 +609,10 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.Len(t, delInfo.AccumulatedRewards, 1)
 	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
 	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
+
+	// ensure rewards did not change when querying (neither amount nor period)
+	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.Equal(t, origReward, finalReward)
 }
 
 // adds a few validators and returns a list of validators that are registered
