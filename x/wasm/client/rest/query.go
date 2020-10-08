@@ -180,7 +180,9 @@ func queryContractStateRawHandlerFn(cliCtx context.CLIContext) http.HandlerFunc 
 			return
 		}
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		// ensure this is base64 encoded
+		encoded := base64.StdEncoding.EncodeToString(res)
+		rest.PostProcessResponse(w, cliCtx, encoded)
 	}
 }
 
