@@ -3,7 +3,6 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/iavl"
-	"github.com/magiconair/properties/assert"
 	"github.com/stretchr/testify/require"
 	iavl2 "github.com/tendermint/iavl"
 	dbm "github.com/tendermint/tm-db"
@@ -14,11 +13,12 @@ import (
 // https://github.com/CosmWasm/cosmwasm-plus/blob/f97a7de44b6a930fd1d5179ee6f95b786a532f32/packages/storage-plus/src/prefix.rs#L183
 // and designed to ensure the IAVL store handles bounds the same way as the mock storage we use in Rust contract tests
 func TestIavlRangeBounds(t *testing.T) {
-	db := dbm.NewMemDB()
-	tree, err := iavl2.NewMutableTree(db, 50)
+	memdb := dbm.NewMemDB()
+	tree, err := iavl2.NewMutableTree(memdb, 50)
 	require.NoError(t, err)
-	store := iavl.UnsafeNewStore(tree)
+	kvstore := iavl.UnsafeNewStore(tree)
 
+	// values to compare with
 	expected := []KV{
 		{[]byte("bar"), []byte("1")},
 		{[]byte("ra"), []byte("2")},
@@ -32,18 +32,42 @@ func TestIavlRangeBounds(t *testing.T) {
 
 	// set up test cases, like `ensure_proper_range_bounds` in `cw-storage-plus`
 	for _, kv := range expected {
-		store.Set(kv.Key, kv.Value)
+		kvstore.Set(kv.Key, kv.Value)
 	}
 
-	ascAll := store.Iterator(nil, nil)
-	assert.Equal(t, expected, consume(ascAll))
+	cases := map[string]struct {
+		start    []byte
+		end      []byte
+		reverse  bool
+		expected []KV
+	}{
+		"all ascending":             {nil, nil, false, expected},
+		"ascending start inclusive": {[]byte("ra"), nil, false, expected[1:]},
+		"ascending end exclusive":   {nil, []byte("ra"), false, expected[:1]},
+		"ascending both points":     {[]byte("bar"), []byte("zi"), false, expected[:2]},
 
-	descAll := store.ReverseIterator(nil, nil)
-	assert.Equal(t, reversed, consume(descAll))
+		"all descending":             {nil, nil, true, reversed},
+		"descending start inclusive": {[]byte("ra"), nil, true, reversed[:2]},           // "zi", "ra"
+		"descending end inclusive":   {nil, []byte("ra"), true, reversed[2:]},           // "bar"
+		"descending both points":     {[]byte("bar"), []byte("zi"), true, reversed[1:]}, // "ra", "bar"
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var iter store.Iterator
+			if tc.reverse {
+				iter = kvstore.ReverseIterator(tc.start, tc.end)
+			} else {
+				iter = kvstore.Iterator(tc.start, tc.end)
+			}
+			items := consume(iter)
+			require.Equal(t, tc.expected, items)
+		})
+	}
 }
 
 type KV struct {
-	Key []byte
+	Key   []byte
 	Value []byte
 }
 
