@@ -105,7 +105,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 	require.NotEmpty(t, maskAddr)
 
 	// now we set contract as verifier of an escrow
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    maskAddr,
 		Beneficiary: bob,
 	}

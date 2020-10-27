@@ -1,7 +1,10 @@
 package keeper
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"testing"
 	"time"
 
@@ -52,13 +55,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
-
-const flagLRUCacheSize = "lru_size"
-const flagQueryGasLimit = "query_gas_limit"
 
 var ModuleBasics = module.NewBasicManager(
 	auth.AppModuleBasic{},
@@ -307,4 +309,88 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgExecuteContract)
 
 	res.Events = ctx.EventManager().Events().ToABCIEvents()
 	return res, nil
+}
+
+func AnyAccAddress(t *testing.T) sdk.AccAddress {
+	_, _, addr := keyPubAddr()
+	return addr
+}
+
+type HackatomExampleContract struct {
+	InitialAmount   sdk.Coins
+	Contract        sdk.AccAddress
+	Creator         crypto.PrivKey
+	CreatorAddr     sdk.AccAddress
+	Verifier        crypto.PrivKey
+	VerifierAddr    sdk.AccAddress
+	Beneficiary     crypto.PrivKey
+	BeneficiaryAddr sdk.AccAddress
+}
+
+// InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
+func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, err error, keeper Keeper) HackatomExampleContract {
+	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
+	creator, _, creatorAddr := keyPubAddr()
+	fundAccounts(t, ctx, accKeeper, bankKeeper, creatorAddr, anyAmount)
+	verifier, _, verifierAddr := keyPubAddr()
+	fundAccounts(t, ctx, accKeeper, bankKeeper, verifierAddr, anyAmount)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	require.NoError(t, err)
+
+	beneficiary, _, beneficiaryAddr := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    verifierAddr,
+		Beneficiary: beneficiaryAddr,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	contractAddr, err := keeper.Instantiate(ctx, contractID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
+	require.NoError(t, err)
+	return HackatomExampleContract{
+		InitialAmount:   initialAmount,
+		Contract:        contractAddr,
+		Creator:         creator,
+		CreatorAddr:     creatorAddr,
+		Verifier:        verifier,
+		VerifierAddr:    verifierAddr,
+		Beneficiary:     beneficiary,
+		BeneficiaryAddr: beneficiaryAddr,
+	}
+}
+
+type HackatomExampleInitMsg struct {
+	Verifier    sdk.AccAddress `json:"verifier"`
+	Beneficiary sdk.AccAddress `json:"beneficiary"`
+}
+
+func createFakeFundedAccount(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
+	_, _, addr := keyPubAddr()
+	fundAccounts(t, ctx, am, bank, addr, coins)
+	return addr
+}
+
+func fundAccounts(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
+	acc := am.NewAccountWithAddress(ctx, addr)
+	am.SetAccount(ctx, acc)
+	require.NoError(t, bank.SetBalances(ctx, addr, coins))
+}
+
+var keyCounter uint64 = 0
+
+// we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
+// depends on the actual bytes (due to ugly CanonicalAddress encoding)
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+	keyCounter++
+	seed := make([]byte, 8)
+	binary.BigEndian.PutUint64(seed, keyCounter)
+
+	key := ed25519.GenPrivKeyFromSecret(seed)
+	pub := key.PubKey()
+	addr := sdk.AccAddress(pub.Address())
+	return key, pub, addr
 }

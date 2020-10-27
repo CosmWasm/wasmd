@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"context"
 	"encoding/json"
 	"math/rand"
 
@@ -33,8 +34,8 @@ func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	RegisterCodec(amino)
 }
 
-func (b AppModuleBasic) RegisterGRPCRoutes(context client.Context, serveMux *runtime.ServeMux) {
-	panic("implement me")
+func (b AppModuleBasic) RegisterGRPCRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
+	types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 }
 
 // Name returns the wasm module's name.

@@ -2,18 +2,22 @@
 
 set -eo pipefail
 
-
+project_dir=x/wasm/internal/types/
+cosmos_sdk_dir=$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)
+# Generate Go types from protobuf
 protoc \
--I=. \
--I="$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)/third_party/proto" \
--I="$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)/proto" \
---gocosmos_out=\
-Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types,\
-Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,\
-Mgoogle/protobuf/empty.proto=github.com/gogo/protobuf/types,\
-Mgoogle/protobuf/struct.proto=github.com/gogo/protobuf/types,\
-Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,\
-Mgoogle/protobuf/wrappers.proto=github.com/gogo/protobuf/types,\
-plugins=interfacetype+grpc,paths=source_relative:. \
-./x/wasm/internal/types/types.proto ./x/wasm/internal/types/query.proto ./x/wasm/internal/types/msg.proto \
-./x/wasm/internal/types/proposal.proto ./x/wasm/internal/types/genesis.proto
+  -I=. \
+  -I="$cosmos_sdk_dir/third_party/proto" \
+  -I="$cosmos_sdk_dir/proto" \
+  --gocosmos_out=Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types,plugins=interfacetype+grpc,paths=source_relative:. \
+  $(find "${project_dir}" -maxdepth 1 -name '*.proto')
+
+# Generate gRPC gateway (*.pb.gw.go in respective modules) files
+protoc \
+  -I=. \
+  -I="$cosmos_sdk_dir/third_party/proto" \
+  -I="$cosmos_sdk_dir/proto" \
+  --grpc-gateway_out .\
+  --grpc-gateway_opt logtostderr=true \
+  --grpc-gateway_opt paths=source_relative \
+  $(find "${project_dir}" -maxdepth 1 -name '*.proto')

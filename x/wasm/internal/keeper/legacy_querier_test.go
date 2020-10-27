@@ -13,157 +13,148 @@ import (
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func TestQueryAllContractState(t *testing.T) {
+func TestLegacyQueryContractState(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
 	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
-	exampleContract := InstantiateHackatomExampleContract(t, ctx, accKeeper, bankKeeper, err, keeper)
-	contractAddr := exampleContract.Contract
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract to query", deposit)
+	require.NoError(t, err)
+
 	contractModel := []types.Model{
 		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
-	keeper.importContractState(ctx, contractAddr, contractModel)
+	keeper.importContractState(ctx, addr, contractModel)
 
-	q := NewQuerier(keeper)
+	// this gets us full error, not redacted sdk.Error
+	q := NewLegacyQuerier(keeper)
 	specs := map[string]struct {
-		srcQuery         *types.QueryAllContractStateRequest
+		srcPath []string
+		srcReq  abci.RequestQuery
+		// smart and raw queries (not all queries) return raw bytes from contract not []types.Model
+		// if this is set, then we just compare - (should be json encoded string)
+		expRes []byte
+		// if success and expSmartRes is not set, we parse into []types.Model and compare (all state)
+		expModelLen      int
 		expModelContains []types.Model
 		expErr           *sdkErrors.Error
 	}{
 		"query all": {
-			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr},
-			expModelContains: contractModel,
+			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
+			expModelLen: 3,
+			expModelContains: []types.Model{
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+			},
 		},
-		"query all with unknown address": {
-			srcQuery: &types.QueryAllContractStateRequest{Address: AnyAccAddress(t)},
-			expErr:   types.ErrNotFound,
-		},
-	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			got, err := q.AllContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
-			if spec.expErr != nil {
-				return
-			}
-			for _, exp := range spec.expModelContains {
-				assert.Contains(t, got.Models, exp)
-			}
-		})
-	}
-}
-
-func TestQuerySmartContractState(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
-
-	exampleContract := InstantiateHackatomExampleContract(t, ctx, accKeeper, bankKeeper, err, keeper)
-	contractAddr := exampleContract.Contract
-
-	q := NewQuerier(keeper)
-	specs := map[string]struct {
-		srcAddr  sdk.AccAddress
-		srcQuery *types.QuerySmartContractStateRequest
-		expResp  string
-		expErr   *sdkErrors.Error
-	}{
-		"query smart": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`{"verifier":{}}`)},
-			expResp:  fmt.Sprintf(`{"verifier":"%s"}`, exampleContract.VerifierAddr.String()),
-		},
-		"query smart invalid request": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`{"raw":{"key":"config"}}`)},
-			expErr:   types.ErrQueryFailed,
-		},
-		"query smart with invalid json": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`not a json string`)},
-			expErr:   types.ErrQueryFailed,
-		},
-		"query smart with unknown address": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte(`{"verifier":{}}`)},
-			expErr:   types.ErrNotFound,
-		},
-	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
-			if spec.expErr != nil {
-				return
-			}
-			assert.JSONEq(t, string(got.Data), spec.expResp)
-		})
-	}
-}
-
-func TestQueryRawContractState(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
-
-	exampleContract := InstantiateHackatomExampleContract(t, ctx, accKeeper, bankKeeper, err, keeper)
-	contractAddr := exampleContract.Contract
-	contractModel := []types.Model{
-		{Key: []byte("foo"), Value: []byte(`"bar"`)},
-		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
-	}
-	keeper.importContractState(ctx, contractAddr, contractModel)
-
-	q := NewQuerier(keeper)
-	specs := map[string]struct {
-		srcQuery *types.QueryRawContractStateRequest
-		expData  []byte
-		expErr   *sdkErrors.Error
-	}{
 		"query raw key": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
-			expData:  []byte(`"bar"`),
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("foo")},
+			expRes:  []byte(`"bar"`),
 		},
 		"query raw binary key": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte{0x0, 0x1}},
-			expData:  []byte(`{"count":8}`),
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte{0x0, 0x1}},
+			expRes:  []byte(`{"count":8}`),
+		},
+		"query smart": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
+			expRes:  []byte(fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String())),
+		},
+		"query smart invalid request": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
+			expErr:  types.ErrQueryFailed,
+		},
+		"query smart with invalid json": {
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
+			srcReq:  abci.RequestQuery{Data: []byte(`not a json string`)},
+			expErr:  types.ErrQueryFailed,
 		},
 		"query non-existent raw key": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("not existing key")},
-			expData:  nil,
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("i do not exist")},
+			expRes:  nil,
 		},
 		"query empty raw key": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("")},
-			expData:  nil,
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: []byte("")},
+			expRes:  nil,
 		},
 		"query nil raw key": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr},
-			expData:  nil,
+			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
+			srcReq:  abci.RequestQuery{Data: nil},
+			expRes:  nil,
 		},
 		"query raw with unknown address": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte("foo")},
-			expErr:   types.ErrNotFound,
+			srcPath: []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateRaw},
+			expRes:  nil,
+		},
+		"query all with unknown address": {
+			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateAll},
+			expModelLen: 0,
+		},
+		"query smart with unknown address": {
+			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
+			expModelLen: 0,
+			expErr:      types.ErrNotFound,
 		},
 	}
+
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, err := q.RawContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
+			// require.True(t, spec.expErr.Is(err), "unexpected error")
 			require.True(t, spec.expErr.Is(err), err)
-			if spec.expErr != nil {
+
+			// if smart query, check custom response
+			if spec.srcPath[2] != QueryMethodContractStateAll {
+				require.Equal(t, spec.expRes, binResult)
 				return
 			}
-			assert.Equal(t, spec.expData, got.Data)
+
+			// otherwise, check returned models
+			var r []types.Model
+			if spec.expErr == nil {
+				require.NoError(t, json.Unmarshal(binResult, &r))
+				require.NotNil(t, r)
+			}
+			require.Len(t, r, spec.expModelLen)
+			// and in result set
+			for _, v := range spec.expModelContains {
+				assert.Contains(t, r, v)
+			}
 		})
 	}
 }
 
-func TestQueryContractListByCodeOrdering(t *testing.T) {
+func TestLegacyQueryContractListByCodeOrdering(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
@@ -211,21 +202,27 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	}
 
 	// query and check the results are properly sorted
-	q := NewQuerier(keeper)
-	res, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), &types.QueryContractsByCodeRequest{CodeId: codeID})
+	q := NewLegacyQuerier(keeper)
+	query := []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}
+	data := abci.RequestQuery{}
+	res, err := q(ctx, query, data)
 	require.NoError(t, err)
 
-	require.Equal(t, 10, len(res.ContractInfos))
+	var contracts []map[string]interface{}
+	err = json.Unmarshal(res, &contracts)
+	require.NoError(t, err)
 
-	for i, contract := range res.ContractInfos {
-		assert.Equal(t, fmt.Sprintf("contract %d", i), contract.Label)
-		assert.NotEmpty(t, contract.Address)
+	require.Equal(t, 10, len(contracts))
+
+	for i, contract := range contracts {
+		assert.Equal(t, fmt.Sprintf("contract %d", i), contract["label"])
+		assert.NotEmpty(t, contract["address"])
 		// ensure these are not shown
-		assert.Nil(t, contract.Created)
+		assert.Nil(t, contract["created"])
 	}
 }
 
-func TestQueryContractHistory(t *testing.T) {
+func TestLegacyQueryContractHistory(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
@@ -300,29 +297,33 @@ func TestQueryContractHistory(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			_, _, myContractAddr := keyPubAddr()
 			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
-
+			q := NewLegacyQuerier(keeper)
 			queryContractAddr := spec.srcQueryAddr
 			if queryContractAddr == nil {
 				queryContractAddr = myContractAddr
 			}
-			req := &types.QueryContractHistoryRequest{Address: queryContractAddr}
 
 			// when
-			q := NewQuerier(keeper)
-			got, err := q.ContractHistory(sdk.WrapSDKContext(ctx), req)
+			query := []string{QueryContractHistory, queryContractAddr.String()}
+			data := abci.RequestQuery{}
+			resData, err := q(ctx, query, data)
 
 			// then
+			require.NoError(t, err)
 			if spec.expContent == nil {
-				require.Error(t, types.ErrEmpty)
+				require.Nil(t, resData)
 				return
 			}
+			var got []types.ContractCodeHistoryEntry
+			err = json.Unmarshal(resData, &got)
 			require.NoError(t, err)
-			assert.Equal(t, spec.expContent, got.Entries)
+
+			assert.Equal(t, spec.expContent, got)
 		})
 	}
 }
 
-func TestQueryCodeList(t *testing.T) {
+func TestLegacyQueryCodeList(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -352,20 +353,25 @@ func TestQueryCodeList(t *testing.T) {
 					wasmCode),
 				)
 			}
+			q := NewLegacyQuerier(keeper)
 			// when
-			q := NewQuerier(keeper)
-			got, err := q.Codes(sdk.WrapSDKContext(ctx), nil)
+			query := []string{QueryListCode}
+			data := abci.RequestQuery{}
+			resData, err := q(ctx, query, data)
 
 			// then
+			require.NoError(t, err)
 			if len(spec.codeIDs) == 0 {
-				require.Error(t, err)
+				require.Nil(t, resData)
 				return
 			}
-			require.NoError(t, err)
 
-			require.Len(t, got.CodeInfos, len(spec.codeIDs))
+			var got []map[string]interface{}
+			err = json.Unmarshal(resData, &got)
+			require.NoError(t, err)
+			require.Len(t, got, len(spec.codeIDs))
 			for i, exp := range spec.codeIDs {
-				assert.EqualValues(t, exp, got.CodeInfos[i].CodeID)
+				assert.EqualValues(t, exp, got[i]["id"])
 			}
 		})
 	}

@@ -67,7 +67,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	// instantiate the contract
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}

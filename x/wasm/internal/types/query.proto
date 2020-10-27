@@ -4,6 +4,7 @@ package wasmd.x.wasmd.v1beta1;
 import "gogoproto/gogo.proto";
 import "x/wasm/internal/types/types.proto";
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -12,18 +13,28 @@ option (gogoproto.equal_all) = true;
 // Query provides defines the gRPC querier service
 service Query {
     rpc ContractInfo (QueryContractInfoRequest) returns (QueryContractInfoResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/contract/{address}";
+    }
+    rpc ContractHistory (QueryContractHistoryRequest) returns (QueryContractHistoryResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/contract/{address}/history";
     }
     rpc ContractsByCode (QueryContractsByCodeRequest) returns (QueryContractsByCodeResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/code/{code_id}/contracts";
     }
     rpc AllContractState (QueryAllContractStateRequest) returns (QueryAllContractStateResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/contract/{address}/state";
     }
     rpc RawContractState (QueryRawContractStateRequest) returns (QueryRawContractStateResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/contract/{address}/raw/{query_data}";
     }
     rpc SmartContractState (QuerySmartContractStateRequest) returns (QuerySmartContractStateResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/contract/{address}/smart/{query_data}";
     }
     rpc Code (QueryCodeRequest) returns (QueryCodeResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/code/{code_id}";
     }
     rpc Codes (google.protobuf.Empty) returns (QueryCodesResponse) {
+        option (google.api.http).get = "/wasm/v1beta1/code";
     }
 }
 
@@ -39,8 +50,17 @@ message QueryContractInfoResponse {
     ContractInfo ContractInfo = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
 }
 
+message QueryContractHistoryRequest {
+    // address is the address of the contract to query
+    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+}
+
+message QueryContractHistoryResponse {
+    repeated ContractCodeHistoryEntry entries = 1 [(gogoproto.nullable) = false];
+}
+
 message QueryContractsByCodeRequest {
-    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+    uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
 }
 
 // ContractInfoWithAddress adds the address (key) to the ContractInfo representation
@@ -83,7 +103,7 @@ message QuerySmartContractStateResponse {
 }
 
 message QueryCodeRequest {
-    uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+    uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
 }
 
 message CodeInfoResponse {

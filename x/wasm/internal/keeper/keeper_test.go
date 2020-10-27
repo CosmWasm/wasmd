@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -14,13 +13,9 @@ import (
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
@@ -293,7 +288,7 @@ func TestInstantiate(t *testing.T) {
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
 
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
@@ -335,7 +330,7 @@ func TestInstantiateWithDeposit(t *testing.T) {
 		fred = bytes.Repeat([]byte{2}, sdk.AddrLen)
 
 		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-		initMsg = InitMsg{Verifier: fred, Beneficiary: bob}
+		initMsg = HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob}
 	)
 
 	initMsgBz, err := json.Marshal(initMsg)
@@ -399,7 +394,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 		anyAddr   = bytes.Repeat([]byte{3}, sdk.AddrLen)
 	)
 
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: anyAddr,
 	}
@@ -464,7 +459,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 
 	require.NoError(t, err)
 
-	initMsg := InitMsg{}
+	initMsg := HackatomExampleInitMsg{}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
@@ -493,7 +488,7 @@ func TestExecute(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
@@ -607,7 +602,7 @@ func TestExecuteWithDeposit(t *testing.T) {
 			codeID, err := keeper.Create(ctx, spec.srcActor, wasmCode, "https://example.com/escrow.wasm", "", nil)
 			require.NoError(t, err)
 
-			initMsg := InitMsg{Verifier: spec.srcActor, Beneficiary: spec.beneficiary}
+			initMsg := HackatomExampleInitMsg{Verifier: spec.srcActor, Beneficiary: spec.beneficiary}
 			initMsgBz, err := json.Marshal(initMsg)
 			require.NoError(t, err)
 
@@ -664,7 +659,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
@@ -700,7 +695,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
@@ -748,7 +743,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
@@ -799,7 +794,7 @@ func TestMigrate(t *testing.T) {
 
 	_, _, anyAddr := keyPubAddr()
 	_, _, newVerifierAddr := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: anyAddr,
 	}
@@ -943,7 +938,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	require.NotEqual(t, originalContractID, burnerContractID)
 
 	_, _, myPayoutAddr := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: fred,
 	}
@@ -1051,7 +1046,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: anyAddr,
 	}
@@ -1126,7 +1121,7 @@ func TestClearContractAdmin(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: anyAddr,
 	}
@@ -1174,36 +1169,4 @@ func TestClearContractAdmin(t *testing.T) {
 			assert.Empty(t, cInfo.Admin)
 		})
 	}
-}
-
-type InitMsg struct {
-	Verifier    sdk.AccAddress `json:"verifier"`
-	Beneficiary sdk.AccAddress `json:"beneficiary"`
-}
-
-func createFakeFundedAccount(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
-	_, _, addr := keyPubAddr()
-	fundAccounts(t, ctx, am, bank, addr, coins)
-	return addr
-}
-
-func fundAccounts(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
-	acc := am.NewAccountWithAddress(ctx, addr)
-	am.SetAccount(ctx, acc)
-	require.NoError(t, bank.SetBalances(ctx, addr, coins))
-}
-
-var keyCounter uint64 = 0
-
-// we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
-// depends on the actual bytes (due to ugly CanonicalAddress encoding)
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
-	keyCounter++
-	seed := make([]byte, 8)
-	binary.BigEndian.PutUint64(seed, keyCounter)
-
-	key := ed25519.GenPrivKeyFromSecret(seed)
-	pub := key.PubKey()
-	addr := sdk.AccAddress(pub.Address())
-	return key, pub, addr
 }

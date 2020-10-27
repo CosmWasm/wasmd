@@ -75,6 +75,13 @@ If you want to deploy a whole cluster, [look at the network scripts](./networks/
 ```sh
 go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
 ```
+3. Install [grpc gateway extension](github.com/grpc-ecosystem/grpc-gateway)
+```go
+go install \                                                                     upgrade_stargate_rebased 3a8aa77 ✗
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger \
+    github.com/golang/protobuf/protoc-gen-go
+```
 3. Run generator
 ```sh
  make proto-gen

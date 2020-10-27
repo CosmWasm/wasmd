@@ -8,6 +8,7 @@ require (
 	github.com/cosmos/iavl v0.15.0-rc4
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/protobuf v1.4.3
 	github.com/google/gofuzz v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.15.2
@@ -21,10 +22,9 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/tendermint/tendermint v0.34.0-rc5
 	github.com/tendermint/tm-db v0.6.2
+	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9
 	google.golang.org/grpc v1.33.0
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/keybase/go-keychain => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
