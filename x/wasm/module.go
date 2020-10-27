@@ -15,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/gogo/protobuf/grpc"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -89,18 +88,6 @@ type AppModule struct {
 	keeper Keeper
 }
 
-func (am AppModule) RegisterServices(configurator module.Configurator) {
-	types.RegisterQueryServer(configurator.QueryServer(), NewQuerier(am.keeper))
-}
-
-func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
-	return keeper.NewLegacyQuerier(am.keeper)
-}
-
-func (am AppModule) RegisterQueryService(server grpc.Server) {
-	types.RegisterQueryServer(server, NewQuerier(am.keeper))
-}
-
 // NewAppModule creates a new AppModule object
 func NewAppModule(keeper Keeper) AppModule {
 	return AppModule{
@@ -109,9 +96,12 @@ func NewAppModule(keeper Keeper) AppModule {
 	}
 }
 
-// Name returns the wasm module's name.
-func (AppModule) Name() string {
-	return ModuleName
+func (am AppModule) RegisterServices(configurator module.Configurator) {
+	types.RegisterQueryServer(configurator.QueryServer(), NewQuerier(am.keeper))
+}
+
+func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
+	return keeper.NewLegacyQuerier(am.keeper)
 }
 
 // RegisterInvariants registers the wasm module invariants.
