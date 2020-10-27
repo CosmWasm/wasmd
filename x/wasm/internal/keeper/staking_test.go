@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -89,10 +88,7 @@ type InvestmentResponse struct {
 }
 
 func TestInitializeStaking(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, k := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1234567))
@@ -162,14 +158,10 @@ type initInfo struct {
 	distKeeper    distributionkeeper.Keeper
 	wasmKeeper    Keeper
 	bankKeeper    bankkeeper.Keeper
-
-	cleanup func()
 }
 
 func initializeStaking(t *testing.T) initInfo {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	ctx, k := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1000000))
@@ -222,13 +214,11 @@ func initializeStaking(t *testing.T) initInfo {
 		wasmKeeper:    keeper,
 		distKeeper:    k.DistKeeper,
 		bankKeeper:    bankKeeper,
-		cleanup:       func() { os.RemoveAll(tempDir) },
 	}
 }
 
 func TestBonding(t *testing.T) {
 	initInfo := initializeStaking(t)
-	defer initInfo.cleanup()
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
 	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
 
@@ -277,7 +267,6 @@ func TestBonding(t *testing.T) {
 
 func TestUnbonding(t *testing.T) {
 	initInfo := initializeStaking(t)
-	defer initInfo.cleanup()
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
 	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
 
@@ -343,7 +332,6 @@ func TestUnbonding(t *testing.T) {
 
 func TestReinvest(t *testing.T) {
 	initInfo := initializeStaking(t)
-	defer initInfo.cleanup()
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
 	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
 	distKeeper := initInfo.distKeeper
@@ -413,7 +401,6 @@ func TestReinvest(t *testing.T) {
 func TestQueryStakingInfo(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
-	defer initInfo.cleanup()
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
 	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
 	distKeeper := initInfo.distKeeper
@@ -556,7 +543,6 @@ func TestQueryStakingInfo(t *testing.T) {
 func TestQueryStakingPlugin(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
-	defer initInfo.cleanup()
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
 	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
 	distKeeper := initInfo.distKeeper

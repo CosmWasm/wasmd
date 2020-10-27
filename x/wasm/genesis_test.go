@@ -12,8 +12,7 @@ type contractState struct {
 }
 
 func TestInitGenesis(t *testing.T) {
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -122,8 +121,7 @@ func TestInitGenesis(t *testing.T) {
 	genState := ExportGenesis(data.ctx, data.keeper)
 
 	// create new app to import genstate into
-	newData, newCleanup := setupTest(t)
-	defer newCleanup()
+	newData := setupTest(t)
 	q2 := newData.module.LegacyQuerierHandler(nil)
 
 	// initialize new app with genstate

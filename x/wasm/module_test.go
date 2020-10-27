@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
@@ -30,11 +29,8 @@ type testData struct {
 }
 
 // returns a cleanup function, which must be defered on
-func setupTest(t *testing.T) (testData, func()) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+func setupTest(t *testing.T) testData {
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	acctKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 	data := testData{
 		module:     NewAppModule(keeper),
@@ -43,8 +39,7 @@ func setupTest(t *testing.T) (testData, func()) {
 		keeper:     keeper,
 		bankKeeper: bankKeeper,
 	}
-	cleanup := func() { os.RemoveAll(tempDir) }
-	return data, cleanup
+	return data
 }
 
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
@@ -111,8 +106,7 @@ func TestHandleCreate(t *testing.T) {
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			data, cleanup := setupTest(t)
-			defer cleanup()
+			data := setupTest(t)
 
 			h := data.module.Route().Handler()
 			q := data.module.LegacyQuerierHandler(nil)
@@ -142,8 +136,7 @@ type state struct {
 }
 
 func TestHandleInstantiate(t *testing.T) {
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := createFakeFundedAccount(t, data.ctx, data.acctKeeper, data.bankKeeper, deposit)
@@ -200,8 +193,7 @@ func TestHandleInstantiate(t *testing.T) {
 }
 
 func TestHandleExecute(t *testing.T) {
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
@@ -314,8 +306,7 @@ func TestHandleExecute(t *testing.T) {
 }
 
 func TestHandleExecuteEscrow(t *testing.T) {
-	data, cleanup := setupTest(t)
-	defer cleanup()
+	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))

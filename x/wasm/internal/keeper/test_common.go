@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -121,7 +122,11 @@ type TestKeepers struct {
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
+func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
+	tempDir, err := ioutil.TempDir("", "wasm")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
+
 	keyWasm := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
@@ -141,8 +146,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, tempDir string, supportedFeat
 	ms.MountStoreWithDB(keyDistro, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	ms.MountStoreWithDB(keyGov, sdk.StoreTypeIAVL, db)
-	err := ms.LoadLatestVersion()
-	require.Nil(t, err)
+	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
@@ -311,7 +315,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgExecuteContract)
 	return res, nil
 }
 
-func AnyAccAddress(t *testing.T) sdk.AccAddress {
+func AnyAccAddress(_ *testing.T) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	return addr
 }
@@ -328,17 +332,17 @@ type HackatomExampleContract struct {
 }
 
 // InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
-func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, err error, keeper Keeper) HackatomExampleContract {
+func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
-	fundAccounts(t, ctx, accKeeper, bankKeeper, creatorAddr, anyAmount)
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	verifier, _, verifierAddr := keyPubAddr()
-	fundAccounts(t, ctx, accKeeper, bankKeeper, verifierAddr, anyAmount)
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, anyAmount)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	contractID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	beneficiary, _, beneficiaryAddr := keyPubAddr()
@@ -349,7 +353,7 @@ func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, accKeeper
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-	contractAddr, err := keeper.Instantiate(ctx, contractID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
+	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contractID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
 	require.NoError(t, err)
 	return HackatomExampleContract{
 		InitialAmount:   initialAmount,

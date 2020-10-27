@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -17,11 +16,7 @@ import (
 )
 
 func TestStoreCodeProposal(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
@@ -58,11 +53,7 @@ func TestStoreCodeProposal(t *testing.T) {
 }
 
 func TestInstantiateProposal(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
 
@@ -114,11 +105,7 @@ func TestInstantiateProposal(t *testing.T) {
 }
 
 func TestMigrateProposal(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
 
@@ -247,10 +234,7 @@ func TestAdminProposals(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "wasm")
-			require.NoError(t, err)
-			defer os.RemoveAll(tempDir)
-			ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+			ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 			govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 			wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
 
@@ -276,11 +260,7 @@ func TestAdminProposals(t *testing.T) {
 }
 
 func TestUpdateParamsProposal(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-
-	ctx, keepers := CreateTestInput(t, false, tempDir, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 
 	var (
@@ -290,6 +270,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 	)
 
 	nobodyJson, err := json.Marshal(types.AccessTypeNobody)
+	require.NoError(t, err)
 	specs := map[string]struct {
 		src                proposal.ParamChange
 		expUploadConfig    types.AccessConfig
