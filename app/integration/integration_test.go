@@ -44,7 +44,8 @@ func TestSendWithApp(t *testing.T) {
 }
 
 func sign(t *testing.T, wasm *app.WasmApp, msg sdk.Msg, signer *signer, expectPass bool) *sdk.Result {
-	_, res, _ := SignAndDeliver(t, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
+	txGen := app.MakeEncodingConfig().TxConfig
+	_, res, _ := SignAndDeliver(t, txGen, wasm, []sdk.Msg{msg}, []uint64{signer.acctNum}, []uint64{signer.seq}, expectPass, signer.priv)
 	if expectPass {
 		signer.seq++
 	}

@@ -97,7 +97,7 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount) *wasmd.WasmApp
 // the parameter 'expPass' against the result. A corresponding result is
 // returned.
 func SignAndDeliver(
-	t *testing.T, app *wasmd.WasmApp, msgs []sdk.Msg,
+	t *testing.T, txCfg client.TxConfig, app *wasmd.WasmApp, msgs []sdk.Msg,
 	accNums, seq []uint64, expPass bool, priv ...crypto.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	t.Helper()
@@ -115,7 +115,7 @@ func SignAndDeliver(
 	// Simulate a sending a transaction and committing a block
 	app.BeginBlock(abci.RequestBeginBlock{Header: tmtypes.Header{Height: app.LastBlockHeight() + 1, ChainID: SimAppChainID}})
 
-	gasInfo, res, err := app.Deliver(tx)
+	gasInfo, res, err := app.Deliver(txCfg.TxEncoder(), tx)
 	if expPass {
 		require.NoError(t, err)
 		require.NotNil(t, res)
