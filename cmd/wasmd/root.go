@@ -81,7 +81,7 @@ func Execute(rootCmd *cobra.Command) error {
 	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
 	ctx = context.WithValue(ctx, server.ServerContextKey, server.NewDefaultContext())
 
-	executor := tmcli.PrepareBaseCmd(rootCmd, "", app.DefaultNodeHome)
+	executor := tmcli.PrepareBaseCmd(rootCmd, "WM", app.DefaultNodeHome)
 	return executor.ExecuteContext(ctx)
 }
 

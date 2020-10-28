@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -o errexit -o nounset -o pipefail
 
 PASSWORD=${PASSWORD:-1234567890}

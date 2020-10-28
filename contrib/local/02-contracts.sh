@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -o errexit -o nounset -o pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
@@ -11,7 +11,7 @@ RESP=$(wasmcli tx wasm store "$DIR/../../x/wasm/internal/keeper/testdata/hackato
 CODE_ID=$(echo "$RESP" | jq -r '.logs[0].events[0].attributes[-1].value')
 echo "* Code id: $CODE_ID"
 echo "* Download code"
-TMPDIR=$(mktemp -t wasmcli)
+TMPDIR=$(mktemp -t wasmcliXXXX)
 wasmcli q wasm code "$CODE_ID" "$TMPDIR"
 rm -f "$TMPDIR"
 echo "-----------------------"
