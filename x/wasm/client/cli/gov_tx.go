@@ -1,15 +1,11 @@
 package cli
 
 import (
-	"bufio"
-
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
@@ -17,17 +13,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
+func ProposalStoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wasm-store [wasm file] --source [source] --builder [builder] --title [text] --description [text] --run-as [address]",
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			src, err := parseStoreCodeArgs(args, cliCtx)
+			src, err := parseStoreCodeArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
@@ -39,10 +37,8 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 				return errors.Wrap(err, "run-as")
 			}
 			content := types.StoreCodeProposal{
-				WasmProposal: types.WasmProposal{
-					Title:       viper.GetString(cli.FlagTitle),
-					Description: viper.GetString(cli.FlagDescription),
-				},
+				Title:                 viper.GetString(cli.FlagTitle),
+				Description:           viper.GetString(cli.FlagDescription),
 				RunAs:                 runAsAddr,
 				WASMByteCode:          src.WASMByteCode,
 				Source:                src.Source,
@@ -54,13 +50,15 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			msg := govtypes.NewMsgSubmitProposal(content, deposit, cliCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -76,21 +74,23 @@ func ProposalStoreCodeCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
-func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
+func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			src, err := parseInstantiateArgs(args, cliCtx)
+			src, err := parseInstantiateArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
@@ -102,16 +102,14 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 				return errors.Wrap(err, "creator")
 			}
 			content := types.InstantiateContractProposal{
-				WasmProposal: types.WasmProposal{
-					Title:       viper.GetString(cli.FlagTitle),
-					Description: viper.GetString(cli.FlagDescription),
-				},
-				RunAs:     creator,
-				Admin:     src.Admin,
-				CodeID:    src.CodeID,
-				Label:     src.Label,
-				InitMsg:   src.InitMsg,
-				InitFunds: src.InitFunds,
+				Title:       viper.GetString(cli.FlagTitle),
+				Description: viper.GetString(cli.FlagDescription),
+				RunAs:       creator,
+				Admin:       src.Admin,
+				CodeID:      src.CodeID,
+				Label:       src.Label,
+				InitMsg:     src.InitMsg,
+				InitFunds:   src.InitFunds,
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -119,12 +117,15 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := govtypes.NewMsgSubmitProposal(content, deposit, cliCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -138,21 +139,23 @@ func ProposalInstantiateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
-func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
+func ProposalMigrateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate-contract [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
 		Short: "Submit a migrate wasm contract to a new code version proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			src, err := parseMigrateContractArgs(args, cliCtx)
+			src, err := parseMigrateContractArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
@@ -166,14 +169,12 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			content := types.MigrateContractProposal{
-				WasmProposal: types.WasmProposal{
-					Title:       viper.GetString(cli.FlagTitle),
-					Description: viper.GetString(cli.FlagDescription),
-				},
-				Contract:   src.Contract,
-				CodeID:     src.CodeID,
-				MigrateMsg: src.MigrateMsg,
-				RunAs:      runAs,
+				Title:       viper.GetString(cli.FlagTitle),
+				Description: viper.GetString(cli.FlagDescription),
+				Contract:    src.Contract,
+				CodeID:      src.CodeID,
+				MigrateMsg:  src.MigrateMsg,
+				RunAs:       runAs,
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -181,12 +182,15 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := govtypes.NewMsgSubmitProposal(content, deposit, cliCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
@@ -197,32 +201,32 @@ func ProposalMigrateContractCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
-func ProposalUpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
+func ProposalUpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
 		Short: "Submit a new admin for a contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-			src, err := parseUpdateContractAdminArgs(args, cliCtx)
+			src, err := parseUpdateContractAdminArgs(args, clientCtx)
 			if err != nil {
 				return err
 			}
 
 			content := types.UpdateAdminProposal{
-				WasmProposal: types.WasmProposal{
-					Title:       viper.GetString(cli.FlagTitle),
-					Description: viper.GetString(cli.FlagDescription),
-				},
-				Contract: src.Contract,
-				NewAdmin: src.NewAdmin,
+				Title:       viper.GetString(cli.FlagTitle),
+				Description: viper.GetString(cli.FlagDescription),
+				Contract:    src.Contract,
+				NewAdmin:    src.NewAdmin,
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -230,12 +234,15 @@ func ProposalUpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := govtypes.NewMsgSubmitProposal(content, deposit, cliCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	// proposal flags
@@ -244,19 +251,21 @@ func ProposalUpdateContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
-func ProposalClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
+func ProposalClearContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clear-contract-admin [contract_addr_bech32]",
 		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			txBldr := auth.NewTxBuilderFromCLI(inBuf).WithTxEncoder(utils.GetTxEncoder(cdc))
-			cliCtx := context.NewCLIContextWithInput(inBuf).WithCodec(cdc)
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
 			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
@@ -264,11 +273,9 @@ func ProposalClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 			}
 
 			content := types.ClearAdminProposal{
-				WasmProposal: types.WasmProposal{
-					Title:       viper.GetString(cli.FlagTitle),
-					Description: viper.GetString(cli.FlagDescription),
-				},
-				Contract: contractAddr,
+				Title:       viper.GetString(cli.FlagTitle),
+				Description: viper.GetString(cli.FlagDescription),
+				Contract:    contractAddr,
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -276,12 +283,15 @@ func ProposalClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := govtypes.NewMsgSubmitProposal(content, deposit, cliCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
 			if err = msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	// proposal flags
@@ -290,6 +300,6 @@ func ProposalClearContractAdminCmd(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }

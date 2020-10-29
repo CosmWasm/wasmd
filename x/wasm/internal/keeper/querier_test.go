@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -13,158 +12,155 @@ import (
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func TestQueryContractState(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+func TestQueryAllContractState(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
 
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
-
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
-	require.NoError(t, err)
-
-	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
-	require.NoError(t, err)
-
-	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
-		Verifier:    anyAddr,
-		Beneficiary: bob,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	addr, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract to query", deposit)
-	require.NoError(t, err)
-
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := exampleContract.Contract
 	contractModel := []types.Model{
 		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
-	keeper.importContractState(ctx, addr, contractModel)
+	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
 
-	// this gets us full error, not redacted sdk.Error
 	q := NewQuerier(keeper)
 	specs := map[string]struct {
-		srcPath []string
-		srcReq  abci.RequestQuery
-		// smart and raw queries (not all queries) return raw bytes from contract not []types.Model
-		// if this is set, then we just compare - (should be json encoded string)
-		expRes []byte
-		// if success and expSmartRes is not set, we parse into []types.Model and compare (all state)
-		expModelLen      int
+		srcQuery         *types.QueryAllContractStateRequest
 		expModelContains []types.Model
 		expErr           *sdkErrors.Error
 	}{
 		"query all": {
-			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
-			expModelLen: 3,
-			expModelContains: []types.Model{
-				{Key: []byte("foo"), Value: []byte(`"bar"`)},
-				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
-			},
-		},
-		"query raw key": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:  abci.RequestQuery{Data: []byte("foo")},
-			expRes:  []byte(`"bar"`),
-		},
-		"query raw binary key": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:  abci.RequestQuery{Data: []byte{0x0, 0x1}},
-			expRes:  []byte(`{"count":8}`),
-		},
-		"query smart": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:  abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
-			expRes:  []byte(fmt.Sprintf(`{"verifier":"%s"}`, anyAddr.String())),
-		},
-		"query smart invalid request": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:  abci.RequestQuery{Data: []byte(`{"raw":{"key":"config"}}`)},
-			expErr:  types.ErrQueryFailed,
-		},
-		"query smart with invalid json": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
-			srcReq:  abci.RequestQuery{Data: []byte(`not a json string`)},
-			expErr:  types.ErrQueryFailed,
-		},
-		"query non-existent raw key": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:  abci.RequestQuery{Data: []byte("i do not exist")},
-			expRes:  nil,
-		},
-		"query empty raw key": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:  abci.RequestQuery{Data: []byte("")},
-			expRes:  nil,
-		},
-		"query nil raw key": {
-			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
-			srcReq:  abci.RequestQuery{Data: nil},
-			expRes:  nil,
-		},
-		"query raw with unknown address": {
-			srcPath: []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateRaw},
-			expRes:  nil,
+			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr},
+			expModelContains: contractModel,
 		},
 		"query all with unknown address": {
-			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateAll},
-			expModelLen: 0,
-		},
-		"query smart with unknown address": {
-			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
-			expModelLen: 0,
-			expErr:      types.ErrNotFound,
+			srcQuery: &types.QueryAllContractStateRequest{Address: AnyAccAddress(t)},
+			expErr:   types.ErrNotFound,
 		},
 	}
-
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			// require.True(t, spec.expErr.Is(err), "unexpected error")
+			got, err := q.AllContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
 			require.True(t, spec.expErr.Is(err), err)
-
-			// if smart query, check custom response
-			if spec.srcPath[2] != QueryMethodContractStateAll {
-				require.Equal(t, spec.expRes, binResult)
+			if spec.expErr != nil {
 				return
 			}
-
-			// otherwise, check returned models
-			var r []types.Model
-			if spec.expErr == nil {
-				require.NoError(t, json.Unmarshal(binResult, &r))
-				require.NotNil(t, r)
-			}
-			require.Len(t, r, spec.expModelLen)
-			// and in result set
-			for _, v := range spec.expModelContains {
-				assert.Contains(t, r, v)
+			for _, exp := range spec.expModelContains {
+				assert.Contains(t, got.Models, exp)
 			}
 		})
 	}
 }
 
-func TestListContractByCodeOrdering(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
-	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
+func TestQuerySmartContractState(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := exampleContract.Contract
+
+	q := NewQuerier(keeper)
+	specs := map[string]struct {
+		srcAddr  sdk.AccAddress
+		srcQuery *types.QuerySmartContractStateRequest
+		expResp  string
+		expErr   *sdkErrors.Error
+	}{
+		"query smart": {
+			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`{"verifier":{}}`)},
+			expResp:  fmt.Sprintf(`{"verifier":"%s"}`, exampleContract.VerifierAddr.String()),
+		},
+		"query smart invalid request": {
+			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`{"raw":{"key":"config"}}`)},
+			expErr:   types.ErrQueryFailed,
+		},
+		"query smart with invalid json": {
+			srcQuery: &types.QuerySmartContractStateRequest{Address: contractAddr, QueryData: []byte(`not a json string`)},
+			expErr:   types.ErrQueryFailed,
+		},
+		"query smart with unknown address": {
+			srcQuery: &types.QuerySmartContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte(`{"verifier":{}}`)},
+			expErr:   types.ErrNotFound,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			require.True(t, spec.expErr.Is(err), err)
+			if spec.expErr != nil {
+				return
+			}
+			assert.JSONEq(t, string(got.Data), spec.expResp)
+		})
+	}
+}
+
+func TestQueryRawContractState(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := exampleContract.Contract
+	contractModel := []types.Model{
+		{Key: []byte("foo"), Value: []byte(`"bar"`)},
+		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+	}
+	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
+
+	q := NewQuerier(keeper)
+	specs := map[string]struct {
+		srcQuery *types.QueryRawContractStateRequest
+		expData  []byte
+		expErr   *sdkErrors.Error
+	}{
+		"query raw key": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
+			expData:  []byte(`"bar"`),
+		},
+		"query raw binary key": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte{0x0, 0x1}},
+			expData:  []byte(`{"count":8}`),
+		},
+		"query non-existent raw key": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("not existing key")},
+			expData:  nil,
+		},
+		"query empty raw key": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("")},
+			expData:  nil,
+		},
+		"query nil raw key": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr},
+			expData:  nil,
+		},
+		"query raw with unknown address": {
+			srcQuery: &types.QueryRawContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte("foo")},
+			expErr:   types.ErrNotFound,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := q.RawContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			require.True(t, spec.expErr.Is(err), err)
+			if spec.expErr != nil {
+				return
+			}
+			assert.Equal(t, spec.expData, got.Data)
+		})
+	}
+}
+
+func TestQueryContractListByCodeOrdering(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := createFakeFundedAccount(ctx, accKeeper, deposit)
-	anyAddr := createFakeFundedAccount(ctx, accKeeper, topUp)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -173,7 +169,7 @@ func TestListContractByCodeOrdering(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
-	initMsg := InitMsg{
+	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
 	}
@@ -203,18 +199,12 @@ func TestListContractByCodeOrdering(t *testing.T) {
 
 	// query and check the results are properly sorted
 	q := NewQuerier(keeper)
-	query := []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}
-	data := abci.RequestQuery{}
-	res, err := q(ctx, query, data)
+	res, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), &types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
 
-	var contracts []ContractInfoWithAddress
-	err = json.Unmarshal(res, &contracts)
-	require.NoError(t, err)
+	require.Equal(t, 10, len(res.ContractInfos))
 
-	require.Equal(t, 10, len(contracts))
-
-	for i, contract := range contracts {
+	for i, contract := range res.ContractInfos {
 		assert.Equal(t, fmt.Sprintf("contract %d", i), contract.Label)
 		assert.NotEmpty(t, contract.Address)
 		// ensure these are not shown
@@ -223,10 +213,7 @@ func TestListContractByCodeOrdering(t *testing.T) {
 }
 
 func TestQueryContractHistory(t *testing.T) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	var (
@@ -240,44 +227,44 @@ func TestQueryContractHistory(t *testing.T) {
 	}{
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.InitContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeInit,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    2,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    3,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.InitContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.MigrateContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeMigrate,
 				CodeID:    3,
 				Msg:       []byte(`"migrate message 2"`),
 			}},
@@ -285,7 +272,7 @@ func TestQueryContractHistory(t *testing.T) {
 		"unknown contract address": {
 			srcQueryAddr: otherAddr,
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.GenesisContractCodeHistoryType,
+				Operation: types.ContractCodeHistoryTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
@@ -297,28 +284,24 @@ func TestQueryContractHistory(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			_, _, myContractAddr := keyPubAddr()
 			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
-			q := NewQuerier(keeper)
+
 			queryContractAddr := spec.srcQueryAddr
 			if queryContractAddr == nil {
 				queryContractAddr = myContractAddr
 			}
+			req := &types.QueryContractHistoryRequest{Address: queryContractAddr}
 
 			// when
-			query := []string{QueryContractHistory, queryContractAddr.String()}
-			data := abci.RequestQuery{}
-			resData, err := q(ctx, query, data)
+			q := NewQuerier(keeper)
+			got, err := q.ContractHistory(sdk.WrapSDKContext(ctx), req)
 
 			// then
-			require.NoError(t, err)
 			if spec.expContent == nil {
-				require.Nil(t, resData)
+				require.Error(t, types.ErrEmpty)
 				return
 			}
-			var got []types.ContractCodeHistoryEntry
-			err = json.Unmarshal(resData, &got)
 			require.NoError(t, err)
-
-			assert.Equal(t, spec.expContent, got)
+			assert.Equal(t, spec.expContent, got.Entries)
 		})
 	}
 }
@@ -341,10 +324,7 @@ func TestQueryCodeList(t *testing.T) {
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "wasm")
-			require.NoError(t, err)
-			defer os.RemoveAll(tempDir)
-			ctx, keepers := CreateTestInput(t, false, tempDir, SupportedFeatures, nil, nil)
+			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 			keeper := keepers.WasmKeeper
 
 			for _, codeID := range spec.codeIDs {
@@ -353,21 +333,20 @@ func TestQueryCodeList(t *testing.T) {
 					wasmCode),
 				)
 			}
-			q := NewQuerier(keeper)
 			// when
-			query := []string{QueryListCode}
-			data := abci.RequestQuery{}
-			resData, err := q(ctx, query, data)
+			q := NewQuerier(keeper)
+			got, err := q.Codes(sdk.WrapSDKContext(ctx), nil)
 
 			// then
+			if len(spec.codeIDs) == 0 {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 
-			var got []map[string]interface{}
-			err = json.Unmarshal(resData, &got)
-			require.NoError(t, err)
-			require.Len(t, got, len(spec.codeIDs))
+			require.Len(t, got.CodeInfos, len(spec.codeIDs))
 			for i, exp := range spec.codeIDs {
-				assert.EqualValues(t, exp, got[i]["id"])
+				assert.EqualValues(t, exp, got.CodeInfos[i].CodeID)
 			}
 		})
 	}

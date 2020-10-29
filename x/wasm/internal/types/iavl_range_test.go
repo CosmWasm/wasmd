@@ -3,8 +3,8 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/iavl"
+	iavl2 "github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
-	iavl2 "github.com/tendermint/iavl"
 	dbm "github.com/tendermint/tm-db"
 	"testing"
 )

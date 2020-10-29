@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
+	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/libs/rand"
 )
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
@@ -30,7 +30,7 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	}
 	for i := 0; i < numSequences; i++ {
 		fixture.Sequences[i] = Sequence{
-			IDKey: rand.Bytes(5),
+			IDKey: randBytes(5),
 			Value: uint64(i),
 		}
 	}
@@ -40,13 +40,19 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	return fixture
 }
 
+func randBytes(n int) []byte {
+	r := make([]byte, n)
+	rand.Read(r)
+	return r
+}
+
 func CodeFixture(mutators ...func(*Code)) Code {
-	wasmCode := rand.Bytes(100)
+	wasmCode := randBytes(100)
 
 	fixture := Code{
-		CodeID:     1,
-		CodeInfo:   CodeInfoFixture(WithSHA256CodeHash(wasmCode)),
-		CodesBytes: wasmCode,
+		CodeID:    1,
+		CodeInfo:  CodeInfoFixture(WithSHA256CodeHash(wasmCode)),
+		CodeBytes: wasmCode,
 	}
 
 	for _, m := range mutators {
@@ -112,25 +118,23 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 	}
 }
 
-func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) StoreCodeProposal {
+func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
 	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-	p := StoreCodeProposal{
-		WasmProposal: WasmProposal{
-			Title:       "Foo",
-			Description: "Bar",
-		},
+	p := &StoreCodeProposal{
+		Title:        "Foo",
+		Description:  "Bar",
 		RunAs:        anyValidAddress,
 		WASMByteCode: []byte{0x0},
 		Source:       "https://example.com/code",
 		Builder:      "foo/bar:latest",
 	}
 	for _, m := range mutators {
-		m(&p)
+		m(p)
 	}
 	return p
 }
 
-func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) InstantiateContractProposal {
+func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 
@@ -147,26 +151,24 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 	if err != nil {
 		panic(err)
 	}
-	p := InstantiateContractProposal{
-		WasmProposal: WasmProposal{
-			Title:       "Foo",
-			Description: "Bar",
-		},
-		RunAs:     anyValidAddress,
-		Admin:     anyValidAddress,
-		CodeID:    1,
-		Label:     "testing",
-		InitMsg:   initMsgBz,
-		InitFunds: nil,
+	p := &InstantiateContractProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		RunAs:       anyValidAddress,
+		Admin:       anyValidAddress,
+		CodeID:      1,
+		Label:       "testing",
+		InitMsg:     initMsgBz,
+		InitFunds:   nil,
 	}
 
 	for _, m := range mutators {
-		m(&p)
+		m(p)
 	}
 	return p
 }
 
-func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) MigrateContractProposal {
+func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 
@@ -184,24 +186,22 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		panic(err)
 	}
 
-	p := MigrateContractProposal{
-		WasmProposal: WasmProposal{
-			Title:       "Foo",
-			Description: "Bar",
-		},
-		Contract:   contractAddr,
-		CodeID:     1,
-		MigrateMsg: migMsgBz,
-		RunAs:      anyValidAddress,
+	p := &MigrateContractProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		Contract:    contractAddr,
+		CodeID:      1,
+		MigrateMsg:  migMsgBz,
+		RunAs:       anyValidAddress,
 	}
 
 	for _, m := range mutators {
-		m(&p)
+		m(p)
 	}
 	return p
 }
 
-func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) UpdateAdminProposal {
+func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *UpdateAdminProposal {
 	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
 
 	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
@@ -209,35 +209,31 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) Update
 		panic(err)
 	}
 
-	p := UpdateAdminProposal{
-		WasmProposal: WasmProposal{
-			Title:       "Foo",
-			Description: "Bar",
-		},
-		NewAdmin: anyValidAddress,
-		Contract: contractAddr,
+	p := &UpdateAdminProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		NewAdmin:    anyValidAddress,
+		Contract:    contractAddr,
 	}
 	for _, m := range mutators {
-		m(&p)
+		m(p)
 	}
 	return p
 }
 
-func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) ClearAdminProposal {
+func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) *ClearAdminProposal {
 	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 	if err != nil {
 		panic(err)
 	}
 
-	p := ClearAdminProposal{
-		WasmProposal: WasmProposal{
-			Title:       "Foo",
-			Description: "Bar",
-		},
-		Contract: contractAddr,
+	p := &ClearAdminProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		Contract:    contractAddr,
 	}
 	for _, m := range mutators {
-		m(&p)
+		m(p)
 	}
 	return p
 }

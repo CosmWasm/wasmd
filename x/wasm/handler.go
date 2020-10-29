@@ -6,6 +6,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // NewHandler returns a handler for "bank" type messages.
@@ -14,18 +15,18 @@ func NewHandler(k Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case MsgStoreCode:
-			return handleStoreCode(ctx, k, &msg)
-		case MsgInstantiateContract:
-			return handleInstantiate(ctx, k, &msg)
-		case MsgExecuteContract:
-			return handleExecute(ctx, k, &msg)
-		case MsgMigrateContract:
-			return handleMigration(ctx, k, &msg)
-		case MsgUpdateAdmin:
-			return handleUpdateContractAdmin(ctx, k, &msg)
-		case MsgClearAdmin:
-			return handleClearContractAdmin(ctx, k, &msg)
+		case *MsgStoreCode:
+			return handleStoreCode(ctx, k, msg)
+		case *MsgInstantiateContract:
+			return handleInstantiate(ctx, k, msg)
+		case *MsgExecuteContract:
+			return handleExecute(ctx, k, msg)
+		case *MsgMigrateContract:
+			return handleMigration(ctx, k, msg)
+		case *MsgUpdateAdmin:
+			return handleUpdateContractAdmin(ctx, k, msg)
+		case *MsgClearAdmin:
+			return handleClearContractAdmin(ctx, k, msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
@@ -35,9 +36,9 @@ func NewHandler(k Keeper) sdk.Handler {
 
 // filterMessageEvents returns the same events with all of type == EventTypeMessage removed.
 // this is so only our top-level message event comes through
-func filterMessageEvents(manager *sdk.EventManager) sdk.Events {
-	events := manager.Events()
-	res := make([]sdk.Event, 0, len(events)+1)
+func filteredMessageEvents(manager *sdk.EventManager) []abci.Event {
+	events := manager.ABCIEvents()
+	res := make([]abci.Event, 0, len(events))
 	for _, e := range events {
 		if e.Type != sdk.EventTypeMessage {
 			res = append(res, e)
@@ -57,17 +58,18 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
-		sdk.EventTypeMessage,
-		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
-		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
-	)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
+			sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
+			sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+		),
+	})
 
 	return &sdk.Result{
 		Data:   []byte(fmt.Sprintf("%d", codeID)),
-		Events: append(events, ourEvent),
+		Events: ctx.EventManager().ABCIEvents(),
 	}, nil
 }
 
@@ -77,18 +79,19 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
+	events := filteredMessageEvents(ctx.EventManager())
+	custom := sdk.Events{sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
 		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
-	)
+	)}
+	events = append(events, custom.ToABCIEvents()...)
 
 	return &sdk.Result{
 		Data:   contractAddr,
-		Events: append(events, ourEvent),
+		Events: events,
 	}, nil
 }
 
@@ -98,15 +101,17 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
+	events := filteredMessageEvents(ctx.EventManager())
+	custom := sdk.Events{sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
-	)
+	),
+	}
+	events = append(events, custom.ToABCIEvents()...)
 
-	res.Events = append(events, ourEvent)
+	res.Events = events
 	return res, nil
 }
 
@@ -116,14 +121,15 @@ func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.R
 		return nil, err
 	}
 
-	events := filterMessageEvents(ctx.EventManager())
-	ourEvent := sdk.NewEvent(
+	events := filteredMessageEvents(ctx.EventManager())
+	custom := sdk.Events{sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender.String()),
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
-	)
-	res.Events = append(events, ourEvent)
+	)}
+	events = append(events, custom.ToABCIEvents()...)
+	res.Events = events
 	return res, nil
 }
 
@@ -139,7 +145,7 @@ func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdmin) (
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 	return &sdk.Result{
-		Events: append(events, ourEvent),
+		Events: append(events, ourEvent).ToABCIEvents(),
 	}, nil
 }
 
@@ -155,6 +161,6 @@ func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*s
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract.String()),
 	)
 	return &sdk.Result{
-		Events: append(events, ourEvent),
+		Events: append(events, ourEvent).ToABCIEvents(),
 	}, nil
 }

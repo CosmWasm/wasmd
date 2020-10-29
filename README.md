@@ -2,10 +2,10 @@
 
 [![CircleCI](https://circleci.com/gh/cosmwasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/cosmwasm/wasmd/tree/master)
 [![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
-[![Go Report Card](https://goreportcard.com/badge/github.com/cosmwasm/wasmd)](https://goreportcard.com/report/github.com/cosmwasm/wasmd)
-[![license](https://img.shields.io/github/license/cosmwasm/wasmd.svg)](https://github.com/cosmwasm/wasmd/blob/master/LICENSE)
-[![LoC](https://tokei.rs/b1/github/cosmwasm/wasmd)](https://github.com/cosmwasm/wasmd)
-<!-- [![GolangCI](https://golangci.com/badges/github.com/cosmwasm/wasmd.svg)](https://golangci.com/r/github.com/cosmwasm/wasmd) -->
+[![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
+[![license](https://img.shields.io/github/license/cosmwasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
+[![LoC](https://tokei.rs/b1/github/cosmwasm/wasmd)](https://github.com/CosmWasm/wasmd)
+<!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
 
@@ -46,6 +46,7 @@ Thank you to all projects who have run this code in your testnets and
 given feedback to improve stability.
 
 ## Encoding
+The used cosmos-sdk version is in transition migrating from amino encoding to protobuf for state. So are we now.
 
 We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, 
 as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself 
@@ -60,11 +61,31 @@ your use case.
 make install
 make test
 ```
-if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/cosmwasm/wasmd/issues/31#issuecomment-577058321).
+if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
 To set up a single node testnet, [look at the deployment documentation](./docs/deploy-testnet.md).
 
 If you want to deploy a whole cluster, [look at the network scripts](./networks/README.md).
+
+## Protobuf
+
+1. Install [protoc](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) 
+
+2. Install [cosmos-extension](https://github.com/regen-network/cosmos-proto/) for [gogo-protobuf](https://github.com/gogo/protobuf)  
+```sh
+go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
+```
+3. Install [grpc gateway extension](github.com/grpc-ecosystem/grpc-gateway)
+```go
+go install \                                                                     upgrade_stargate_rebased 3a8aa77 ✗
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger \
+    github.com/golang/protobuf/protoc-gen-go
+```
+3. Run generator
+```sh
+ make proto-gen
+```
 
 ## Dockerized
 

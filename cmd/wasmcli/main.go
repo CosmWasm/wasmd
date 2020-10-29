@@ -1,38 +1,33 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
-	"path"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
+	"github.com/CosmWasm/wasmd/app"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	"github.com/cosmos/cosmos-sdk/x/bank"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
-
-	"github.com/tendermint/go-amino"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/cli"
-
-	"github.com/CosmWasm/wasmd/app"
 )
+
+// ClientName is set via build process
+const ClientName = "wasmcli"
 
 func main() {
 	// Configure cobra to sort commands
 	cobra.EnableCommandSorting = false
-
-	// Instantiate the codec for the command line application
-	cdc := app.MakeCodec()
 
 	// Read in the configuration file for the sdk
 	config := sdk.GetConfig()
@@ -45,130 +40,125 @@ func main() {
 	// the below functions and eliminate global vars, like we do
 	// with the cdc
 
-	rootCmd := &cobra.Command{
-		Use:   version.ClientName,
-		Short: "Command line interface for interacting with " + version.ServerName,
-	}
+	encodingConfig := app.MakeEncodingConfig()
 
-	// Add --chain-id to persistent flags and mark it required
-	rootCmd.PersistentFlags().String(flags.FlagChainID, "", "Chain ID of tendermint node")
-	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
-		return initConfig(rootCmd)
+	initClientCtx := client.Context{}.
+		WithJSONMarshaler(encodingConfig.Marshaler).
+		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino).
+		WithInput(os.Stdin).
+		WithAccountRetriever(authtypes.AccountRetriever{}).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithHomeDir(app.DefaultCLIHome)
+
+	rootCmd := &cobra.Command{
+		Use:   ClientName,
+		Short: "Command line interface for interacting with " + version.AppName,
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
+				return err
+			}
+
+			return server.InterceptConfigsPreRunHandler(cmd)
+		},
 	}
 
 	// Construct Root Command
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		client.ConfigCmd(app.DefaultCLIHome),
-		queryCmd(cdc),
-		txCmd(cdc),
+		queryCommand(),
+		txCommand(),
 		flags.LineBreak,
-		lcd.ServeCommand(cdc, registerRoutes),
 		flags.LineBreak,
-		keys.Commands(),
+		keys.Commands(app.DefaultNodeHome),
 		flags.LineBreak,
-		version.Cmd,
-		flags.NewCompletionCmd(rootCmd, true),
+		//version.Cmd,
+		cli.NewCompletionCmd(rootCmd, true),
 	)
 
-	// Add flags and prefix all env exposed with WM
-	executor := cli.PrepareMainCmd(rootCmd, "WM", app.DefaultCLIHome)
+	// Create and set a client.Context on the command's Context. During the pre-run
+	// of the root command, a default initialized client.Context is provided to
+	// seed child command execution with values such as AccountRetriver, Keyring,
+	// and a Tendermint RPC. This requires the use of a pointer reference when
+	// getting and setting the client.Context. Ideally, we utilize
+	// https://github.com/spf13/cobra/pull/1118.
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
+	ctx = context.WithValue(ctx, server.ServerContextKey, server.NewDefaultContext())
 
-	err := executor.Execute()
+	executor := cli.PrepareBaseCmd(rootCmd, "WM", app.DefaultCLIHome)
+	err := executor.ExecuteContext(ctx)
+
 	if err != nil {
 		fmt.Printf("Failed executing CLI command: %s, exiting...\n", err)
 		os.Exit(1)
 	}
 }
 
-func queryCmd(cdc *amino.Codec) *cobra.Command {
-	queryCmd := &cobra.Command{
-		Use:     "query",
-		Aliases: []string{"q"},
-		Short:   "Querying subcommands",
+func queryCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        "query",
+		Aliases:                    []string{"q"},
+		Short:                      "Querying subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
 	}
-
-	queryCmd.AddCommand(
-		authcmd.GetAccountCmd(cdc),
+	cmd.AddCommand(
+		authcmd.GetAccountCmd(),
 		flags.LineBreak,
-		rpc.ValidatorCommand(cdc),
+		rpc.ValidatorCommand(),
 		rpc.BlockCommand(),
-		authcmd.QueryTxsByEventsCmd(cdc),
-		authcmd.QueryTxCmd(cdc),
+		authcmd.QueryTxsByEventsCmd(),
+		authcmd.QueryTxCmd(),
 		flags.LineBreak,
 	)
 
-	// add modules' query commands
-	app.ModuleBasics.AddQueryCommands(queryCmd, cdc)
+	app.ModuleBasics.AddQueryCommands(cmd)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
-	return queryCmd
+	return cmd
 }
 
-func txCmd(cdc *amino.Codec) *cobra.Command {
-	txCmd := &cobra.Command{
-		Use:   "tx",
-		Short: "Transactions subcommands",
+func txCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        "tx",
+		Short:                      "Transactions subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
 	}
 
-	txCmd.AddCommand(
-		bankcmd.SendTxCmd(cdc),
+	cmd.AddCommand(
+		bankcmd.NewSendTxCmd(),
 		flags.LineBreak,
-		authcmd.GetSignCommand(cdc),
-		authcmd.GetMultiSignCommand(cdc),
+		authcmd.GetSignCommand(),
+		authcmd.GetSignBatchCommand(),
+		authcmd.GetMultiSignCommand(),
+		authcmd.GetValidateSignaturesCommand(),
 		flags.LineBreak,
-		authcmd.GetBroadcastCommand(cdc),
-		authcmd.GetEncodeCommand(cdc),
-		authcmd.GetDecodeCommand(cdc),
-		// TODO: I think it is safe to remove
-		// authcmd.GetDecodeTxCmd(cdc),
+		authcmd.GetBroadcastCommand(),
+		authcmd.GetEncodeCommand(),
+		authcmd.GetDecodeCommand(),
 		flags.LineBreak,
+		vestingcli.GetTxCmd(),
 	)
 
 	// add modules' tx commands
-	app.ModuleBasics.AddTxCommands(txCmd, cdc)
+	app.ModuleBasics.AddTxCommands(cmd)
 
 	// remove auth and bank commands as they're mounted under the root tx command
 	var cmdsToRemove []*cobra.Command
 
-	for _, cmd := range txCmd.Commands() {
-		if cmd.Use == auth.ModuleName || cmd.Use == bank.ModuleName {
+	for _, cmd := range cmd.Commands() {
+		if cmd.Use == authtypes.ModuleName || cmd.Use == banktypes.ModuleName {
 			cmdsToRemove = append(cmdsToRemove, cmd)
 		}
 	}
 
-	txCmd.RemoveCommand(cmdsToRemove...)
+	cmd.RemoveCommand(cmdsToRemove...)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 
-	return txCmd
-}
-
-// registerRoutes registers the routes from the different modules for the LCD.
-// NOTE: details on the routes added for each module are in the module documentation
-// NOTE: If making updates here you also need to update the test helper in client/lcd/test_helper.go
-func registerRoutes(rs *lcd.RestServer) {
-	client.RegisterRoutes(rs.CliCtx, rs.Mux)
-	authrest.RegisterTxRoutes(rs.CliCtx, rs.Mux)
-	app.ModuleBasics.RegisterRESTRoutes(rs.CliCtx, rs.Mux)
-}
-
-func initConfig(cmd *cobra.Command) error {
-	home, err := cmd.PersistentFlags().GetString(cli.HomeFlag)
-	if err != nil {
-		return err
-	}
-
-	cfgFile := path.Join(home, "config", "config.toml")
-	if _, err := os.Stat(cfgFile); err == nil {
-		viper.SetConfigFile(cfgFile)
-
-		if err := viper.ReadInConfig(); err != nil {
-			return err
-		}
-	}
-	if err := viper.BindPFlag(flags.FlagChainID, cmd.PersistentFlags().Lookup(flags.FlagChainID)); err != nil {
-		return err
-	}
-	if err := viper.BindPFlag(cli.EncodingFlag, cmd.PersistentFlags().Lookup(cli.EncodingFlag)); err != nil {
-		return err
-	}
-	return viper.BindPFlag(cli.OutputFlag, cmd.PersistentFlags().Lookup(cli.OutputFlag))
+	return cmd
 }

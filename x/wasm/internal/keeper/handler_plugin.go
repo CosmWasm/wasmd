@@ -8,9 +8,9 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type MessageHandler struct {
@@ -87,24 +87,16 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmTypes.BankMsg) ([]sdk.Msg, er
 	if len(msg.Send.Amount) == 0 {
 		return nil, nil
 	}
-	fromAddr, stderr := sdk.AccAddressFromBech32(msg.Send.FromAddress)
-	if stderr != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Send.FromAddress)
-	}
-	toAddr, stderr := sdk.AccAddressFromBech32(msg.Send.ToAddress)
-	if stderr != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Send.ToAddress)
-	}
 	toSend, err := convertWasmCoinsToSdkCoins(msg.Send.Amount)
 	if err != nil {
 		return nil, err
 	}
-	sdkMsg := bank.MsgSend{
-		FromAddress: fromAddr,
-		ToAddress:   toAddr,
+	sdkMsg := banktypes.MsgSend{
+		FromAddress: msg.Send.FromAddress,
+		ToAddress:   msg.Send.ToAddress,
 		Amount:      toSend,
 	}
-	return []sdk.Msg{sdkMsg}, nil
+	return []sdk.Msg{&sdkMsg}, nil
 }
 
 func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
@@ -112,87 +104,65 @@ func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) 
 }
 
 func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmTypes.StakingMsg) ([]sdk.Msg, error) {
-	if msg.Delegate != nil {
-		validator, err := sdk.ValAddressFromBech32(msg.Delegate.Validator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Delegate.Validator)
-		}
+	switch {
+	case msg.Delegate != nil:
 		coin, err := convertWasmCoinToSdkCoin(msg.Delegate.Amount)
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgDelegate{
-			DelegatorAddress: sender,
-			ValidatorAddress: validator,
+		sdkMsg := stakingtypes.MsgDelegate{
+			DelegatorAddress: sender.String(),
+			ValidatorAddress: msg.Delegate.Validator,
 			Amount:           coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
-	}
-	if msg.Redelegate != nil {
-		src, err := sdk.ValAddressFromBech32(msg.Redelegate.SrcValidator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Redelegate.SrcValidator)
-		}
-		dst, err := sdk.ValAddressFromBech32(msg.Redelegate.DstValidator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Redelegate.DstValidator)
-		}
+		return []sdk.Msg{&sdkMsg}, nil
+
+	case msg.Redelegate != nil:
 		coin, err := convertWasmCoinToSdkCoin(msg.Redelegate.Amount)
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgBeginRedelegate{
-			DelegatorAddress:    sender,
-			ValidatorSrcAddress: src,
-			ValidatorDstAddress: dst,
+		sdkMsg := stakingtypes.MsgBeginRedelegate{
+			DelegatorAddress:    sender.String(),
+			ValidatorSrcAddress: msg.Redelegate.SrcValidator,
+			ValidatorDstAddress: msg.Redelegate.DstValidator,
 			Amount:              coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
-	}
-	if msg.Undelegate != nil {
-		validator, err := sdk.ValAddressFromBech32(msg.Undelegate.Validator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Undelegate.Validator)
-		}
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.Undelegate != nil:
 		coin, err := convertWasmCoinToSdkCoin(msg.Undelegate.Amount)
 		if err != nil {
 			return nil, err
 		}
-		sdkMsg := staking.MsgUndelegate{
-			DelegatorAddress: sender,
-			ValidatorAddress: validator,
+		sdkMsg := stakingtypes.MsgUndelegate{
+			DelegatorAddress: sender.String(),
+			ValidatorAddress: msg.Undelegate.Validator,
 			Amount:           coin,
 		}
-		return []sdk.Msg{sdkMsg}, nil
-	}
-	if msg.Withdraw != nil {
-		var err error
-		rcpt := sender
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.Withdraw != nil:
+		senderAddr := sender.String()
+		rcpt := senderAddr
 		if len(msg.Withdraw.Recipient) != 0 {
-			rcpt, err = sdk.AccAddressFromBech32(msg.Withdraw.Recipient)
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Recipient)
-			}
+			rcpt = msg.Withdraw.Recipient
 		}
-		validator, err := sdk.ValAddressFromBech32(msg.Withdraw.Validator)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Withdraw.Validator)
-		}
-		setMsg := distribution.MsgSetWithdrawAddress{
-			DelegatorAddress: sender,
+		setMsg := distributiontypes.MsgSetWithdrawAddress{
+			DelegatorAddress: senderAddr,
 			WithdrawAddress:  rcpt,
 		}
-		withdrawMsg := distribution.MsgWithdrawDelegatorReward{
-			DelegatorAddress: sender,
-			ValidatorAddress: validator,
+		withdrawMsg := distributiontypes.MsgWithdrawDelegatorReward{
+			DelegatorAddress: senderAddr,
+			ValidatorAddress: msg.Withdraw.Validator,
 		}
-		return []sdk.Msg{setMsg, withdrawMsg}, nil
+		return []sdk.Msg{&setMsg, &withdrawMsg}, nil
+	default:
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 }
 
 func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, error) {
-	if msg.Execute != nil {
+	switch {
+	case msg.Execute != nil:
 		contractAddr, err := sdk.AccAddressFromBech32(msg.Execute.ContractAddr)
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Execute.ContractAddr)
@@ -208,9 +178,8 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			Msg:       msg.Execute.Msg,
 			SentFunds: coins,
 		}
-		return []sdk.Msg{sdkMsg}, nil
-	}
-	if msg.Instantiate != nil {
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.Instantiate != nil:
 		coins, err := convertWasmCoinsToSdkCoins(msg.Instantiate.Send)
 		if err != nil {
 			return nil, err
@@ -224,9 +193,10 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmTypes.WasmMsg) ([]sdk.Msg, er
 			InitMsg:   msg.Instantiate.Msg,
 			InitFunds: coins,
 		}
-		return []sdk.Msg{sdkMsg}, nil
+		return []sdk.Msg{&sdkMsg}, nil
+	default:
+		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
 
 func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmTypes.CosmosMsg) error {
@@ -243,6 +213,9 @@ func (h MessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, m
 }
 
 func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {
+	if err := msg.ValidateBasic(); err != nil {
+		return err
+	}
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
@@ -259,8 +232,13 @@ func (h MessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Addre
 	if err != nil {
 		return err
 	}
+
+	events := make(sdk.Events, len(res.Events))
+	for i := range res.Events {
+		events[i] = sdk.Event(res.Events[i])
+	}
 	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	ctx.EventManager().EmitEvents(res.Events)
+	ctx.EventManager().EmitEvents(events)
 
 	return nil
 }
