@@ -175,7 +175,7 @@ func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]t
 	sort.Slice(contracts, func(i, j int) bool {
 		return contracts[i].ContractInfo.Created.LessThan(contracts[j].ContractInfo.Created)
 	})
-	// and remove that info for the final json (yes, the json:"-" tag doesn't work)
+
 	for i := range contracts {
 		contracts[i].Created = nil
 	}

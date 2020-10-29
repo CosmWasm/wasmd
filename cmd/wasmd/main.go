@@ -12,7 +12,7 @@ func main() {
 		//case server.ErrorCode:
 		//	os.Exit(e.Code)
 		//default:
-			os.Exit(1)
+		os.Exit(1)
 		//}
 	}
 }

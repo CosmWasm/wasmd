@@ -99,7 +99,16 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			isError: true,
+			isError: false, // addresses are checked in the handler
+			output: []sdk.Msg{
+				&banktypes.MsgSend{
+					FromAddress: addr1.String(),
+					ToAddress:   invalidAddr,
+					Amount: sdk.Coins{
+						sdk.NewInt64Coin("uatom", 7890),
+					},
+				},
+			},
 		},
 		"wasm execute": {
 			sender: addr1,
@@ -175,7 +184,14 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			isError: true,
+			isError: false, // fails in the handler
+			output: []sdk.Msg{
+				&stakingtypes.MsgDelegate{
+					DelegatorAddress: addr1.String(),
+					ValidatorAddress: addr2.String(),
+					Amount:           sdk.NewInt64Coin("stake", 777),
+				},
+			},
 		},
 		"staking undelegate": {
 			sender: addr1,
