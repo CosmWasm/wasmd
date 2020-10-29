@@ -87,7 +87,7 @@ docker volume rm -f wasmd_data
 docker run --rm -it \
     -e PASSWORD=xxxxxxxxx \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd:latest ./setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
 # This will start both wasmd and wasmcli rest-server, only wasmcli output is shown on the screen
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
@@ -110,7 +110,7 @@ rm -rf ./template && mkdir ./template
 docker run --rm -it \
     -e PASSWORD=xxxxxxxxx \
     --mount type=bind,source=$(pwd)/template,target=/root \
-    cosmwasm/wasmd:latest ./setup.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd:latest ./setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
 sudo chown -R $(id -u):$(id -g) ./template
 
