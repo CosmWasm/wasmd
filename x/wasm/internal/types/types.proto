@@ -52,10 +52,6 @@ message ContractInfo {
     // never show this in query results, just use for sorting
     // (Note: when using json tag "-" amino refused to serialize it...)
     AbsoluteTxPosition created = 5;
-    //    bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    //
-    //    AbsoluteTxPosition last_updated = 7;
-    //    uint64 previous_code_id = 8 [(gogoproto.customname) = "PreviousCodeID"];
 }
 
 enum ContractCodeHistoryOperationType {

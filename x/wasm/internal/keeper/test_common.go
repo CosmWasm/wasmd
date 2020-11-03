@@ -152,8 +152,10 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
-	encodingConfig := MakeEncodingConfig
-	paramsKeeper := paramskeeper.NewKeeper(encodingConfig().Marshaler, encodingConfig().Amino, keyParams, tkeyParams)
+	encodingConfig := MakeEncodingConfig()
+	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tkeyParams)
 	paramsKeeper.Subspace(authtypes.ModuleName)
 	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
@@ -173,7 +175,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	}
 	authSubsp, _ := paramsKeeper.GetSubspace(authtypes.ModuleName)
 	authKeeper := authkeeper.NewAccountKeeper(
-		encodingConfig().Marshaler,
+		appCodec,
 		keyAcc, // target store
 		authSubsp,
 		authtypes.ProtoBaseAccount, // prototype
@@ -187,7 +189,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 
 	bankSubsp, _ := paramsKeeper.GetSubspace(banktypes.ModuleName)
 	bankKeeper := bankkeeper.NewBaseKeeper(
-		encodingConfig().Marshaler,
+		appCodec,
 		keyBank,
 		authKeeper,
 		bankSubsp,
@@ -198,11 +200,11 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	bankKeeper.SetParams(ctx, bankParams)
 
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
-	stakingKeeper := stakingkeeper.NewKeeper(encodingConfig().Marshaler, keyStaking, authKeeper, bankKeeper, stakingSubsp)
+	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
 	distSubsp, _ := paramsKeeper.GetSubspace(distributiontypes.ModuleName)
-	distKeeper := distributionkeeper.NewKeeper(encodingConfig().Marshaler, keyDistro, distSubsp, authKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
+	distKeeper := distributionkeeper.NewKeeper(appCodec, keyDistro, distSubsp, authKeeper, bankKeeper, stakingKeeper, authtypes.FeeCollectorName, nil)
 	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
@@ -230,7 +232,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 
 	keeper := NewKeeper(
-		encodingConfig().Marshaler,
+		appCodec,
 		keyWasm,
 		paramsKeeper.Subspace(wasmtypes.DefaultParamspace),
 		authKeeper,
@@ -255,7 +257,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		AddRoute(wasmtypes.RouterKey, NewWasmProposalHandler(keeper, wasmtypes.EnableAllProposals))
 
 	govKeeper := govkeeper.NewKeeper(
-		encodingConfig().Marshaler, keyGov, paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), authKeeper, bankKeeper, stakingKeeper, govRouter,
+		appCodec, keyGov, paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), authKeeper, bankKeeper, stakingKeeper, govRouter,
 	)
 
 	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
@@ -329,31 +331,23 @@ type HackatomExampleContract struct {
 	VerifierAddr    sdk.AccAddress
 	Beneficiary     crypto.PrivKey
 	BeneficiaryAddr sdk.AccAddress
+	CodeID          uint64
 }
 
 // InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
 func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleContract {
-	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
-	creator, _, creatorAddr := keyPubAddr()
-	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
+	anyAmount, creator, creatorAddr, codeID := StoreHackatomExampleContract(t, ctx, keepers)
+
 	verifier, _, verifierAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, anyAmount)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
-	require.NoError(t, err)
-
-	contractID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
-	require.NoError(t, err)
-
 	beneficiary, _, beneficiaryAddr := keyPubAddr()
-	initMsg := HackatomExampleInitMsg{
+	initMsgBz := HackatomExampleInitMsg{
 		Verifier:    verifierAddr,
 		Beneficiary: beneficiaryAddr,
-	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
+	}.GetBytes(t)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contractID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
+	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, codeID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
 	require.NoError(t, err)
 	return HackatomExampleContract{
 		InitialAmount:   initialAmount,
@@ -364,12 +358,32 @@ func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers T
 		VerifierAddr:    verifierAddr,
 		Beneficiary:     beneficiary,
 		BeneficiaryAddr: beneficiaryAddr,
+		CodeID:          codeID,
 	}
+}
+
+func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) (sdk.Coins, crypto.PrivKey, sdk.AccAddress, uint64) {
+	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
+	creator, _, creatorAddr := keyPubAddr()
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	require.NoError(t, err)
+	return anyAmount, creator, creatorAddr, codeID
 }
 
 type HackatomExampleInitMsg struct {
 	Verifier    sdk.AccAddress `json:"verifier"`
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
+}
+
+func (m HackatomExampleInitMsg) GetBytes(t *testing.T) []byte {
+	initMsgBz, err := json.Marshal(m)
+	require.NoError(t, err)
+	return initMsgBz
 }
 
 func createFakeFundedAccount(t *testing.T, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {

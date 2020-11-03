@@ -1,17 +1,16 @@
 syntax = "proto3";
 package wasmd.x.wasmd.v1beta1;
 
-option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
-
 import "x/wasm/internal/types/types.proto";
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
+option (gogoproto.goproto_getters_all) = false;
 
 
 message MsgStoreCode {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     // WASMByteCode can be raw or gzip compressed
     bytes wasm_byte_code = 2 [(gogoproto.customname) = "WASMByteCode"];
@@ -24,8 +23,6 @@ message MsgStoreCode {
 }
 
 message MsgInstantiateContract {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     // Admin is an optional address that can execute migrations
     bytes admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
@@ -36,8 +33,6 @@ message MsgInstantiateContract {
 }
 
 message MsgExecuteContract {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
@@ -45,8 +40,6 @@ message MsgExecuteContract {
 }
 
 message MsgMigrateContract {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
@@ -54,16 +47,12 @@ message MsgMigrateContract {
 }
 
 message MsgUpdateAdmin {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes new_admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
 
 message MsgClearAdmin {
-    option (gogoproto.goproto_getters) = false;
-
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
     bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
 }
