@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -614,6 +616,11 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 
 	owner := createFakeFundedAccount(t, ctx, accountKeeper, bankKeeper, sdk.Coins{value})
 
+	pk, err := ed25519.FromTmEd25519(pub)
+	require.NoError(t, err)
+	pkAny, err := codectypes.PackAny(pk)
+	require.NoError(t, err)
+
 	msg := stakingtypes.MsgCreateValidator{
 		Description: types.Description{
 			Moniker: "Validator power",
@@ -626,12 +633,12 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 		MinSelfDelegation: sdk.OneInt(),
 		DelegatorAddress:  owner.String(),
 		ValidatorAddress:  addr.String(),
-		Pubkey:            sdk.MustBech32ifyPubKey(sdk.Bech32PubKeyTypeConsPub, pub),
+		Pubkey:            pkAny,
 		Value:             value,
 	}
 
 	h := staking.NewHandler(stakingKeeper)
-	_, err := h(ctx, &msg)
+	_, err = h(ctx, &msg)
 	require.NoError(t, err)
 	return addr
 }

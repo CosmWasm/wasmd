@@ -62,11 +62,12 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	}
 
 	if msg.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if err := validateLabel(msg.Label); err != nil {
-		return err
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+
 	}
 
 	if !msg.InitFunds.IsValid() {
@@ -137,7 +138,7 @@ func (msg MsgMigrateContract) Type() string {
 
 func (msg MsgMigrateContract) ValidateBasic() error {
 	if msg.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 	if err := sdk.VerifyAddressFormat(msg.Sender); err != nil {
 		return sdkerrors.Wrap(err, "sender")

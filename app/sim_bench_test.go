@@ -29,7 +29,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, wasm.EnableAllProposals, interBlockCacheOpt())
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, wasm.EnableAllProposals, EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -41,6 +41,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		simapp.SimulationOperations(app, app.appCodec, config),
 		app.ModuleAccountAddrs(),
 		config,
+		app.appCodec,
 	)
 
 	// export state and simParams before the simulation error is checked
@@ -73,7 +74,7 @@ func BenchmarkInvariants(b *testing.B) {
 		}
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, wasm.EnableAllProposals, interBlockCacheOpt())
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, "", simapp.FlagPeriodValue, wasm.EnableAllProposals, EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -85,6 +86,7 @@ func BenchmarkInvariants(b *testing.B) {
 		simapp.SimulationOperations(app, app.appCodec, config),
 		app.ModuleAccountAddrs(),
 		config,
+		app.appCodec,
 	)
 
 	// export state and simParams before the simulation error is checked

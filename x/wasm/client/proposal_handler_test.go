@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func TestGovRestHandlers(t *testing.T) {
 			"fees":           []dict{{"denom": "ustake", "amount": "1000000"}},
 		}
 	)
-	encodingConfig := simapp.MakeEncodingConfig()
+	encodingConfig := keeper.MakeEncodingConfig()
 	clientCtx := client.Context{}.
 		WithJSONMarshaler(encodingConfig.Marshaler).
 		WithTxConfig(encodingConfig.TxConfig).
