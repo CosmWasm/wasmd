@@ -3,17 +3,19 @@ package keeper
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/go-cosmwasm"
+	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	params2 "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -87,7 +89,7 @@ func MakeTestCodec() codec.Marshaler {
 }
 func MakeEncodingConfig() params2.EncodingConfig {
 	amino := codec.NewLegacyAmino()
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
 
@@ -115,10 +117,12 @@ var TestingStakeParams = stakingtypes.Params{
 type TestKeepers struct {
 	AccountKeeper authkeeper.AccountKeeper
 	StakingKeeper stakingkeeper.Keeper
+	// deprecated use WasmKeeperRef instead
 	WasmKeeper    Keeper
 	DistKeeper    distributionkeeper.Keeper
 	BankKeeper    bankkeeper.Keeper
 	GovKeeper     govkeeper.Keeper
+	WasmKeeperRef *Keeper
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -127,7 +131,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
-	keyWasm := sdk.NewKVStoreKey(wasmTypes.StoreKey)
+	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
 	keyBank := sdk.NewKVStoreKey(banktypes.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
@@ -229,12 +233,12 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
 
 	// Load default wasm config
-	wasmConfig := wasmTypes.DefaultWasmConfig()
+	wasmConfig := types.DefaultWasmConfig()
 
 	keeper := NewKeeper(
 		appCodec,
 		keyWasm,
-		paramsKeeper.Subspace(wasmtypes.DefaultParamspace),
+		paramsKeeper.Subspace(types.DefaultParamspace),
 		authKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -246,15 +250,15 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		encoders,
 		queriers,
 	)
-	keeper.setParams(ctx, wasmtypes.DefaultParams())
+	keeper.setParams(ctx, types.DefaultParams())
 	// add wasm handler so we can loop-back (contracts calling contracts)
-	router.AddRoute(sdk.NewRoute(wasmTypes.RouterKey, TestHandler(keeper)))
+	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(&keeper)))
 
 	govRouter := govtypes.NewRouter().
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
-		AddRoute(wasmtypes.RouterKey, NewWasmProposalHandler(keeper, wasmtypes.EnableAllProposals))
+		AddRoute(types.RouterKey, NewWasmProposalHandler(keeper, types.EnableAllProposals))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec, keyGov, paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()), authKeeper, bankKeeper, stakingKeeper, govRouter,
@@ -270,6 +274,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
 		WasmKeeper:    keeper,
+		WasmKeeperRef: &keeper,
 		BankKeeper:    bankKeeper,
 		GovKeeper:     govKeeper,
 	}
@@ -277,15 +282,15 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
-func TestHandler(k Keeper) sdk.Handler {
+func TestHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case *wasmtypes.MsgInstantiateContract:
+		case *types.MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
 
-		case *wasmtypes.MsgExecuteContract:
+		case *types.MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
 
 		default:
@@ -295,7 +300,7 @@ func TestHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	contractAddr, err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Admin, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err
@@ -307,7 +312,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgInstantiateC
 	}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *wasmtypes.MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.Msg, msg.SentFunds)
 	if err != nil {
 		return nil, err
@@ -323,46 +328,13 @@ func AnyAccAddress(_ *testing.T) sdk.AccAddress {
 }
 
 type HackatomExampleContract struct {
-	InitialAmount   sdk.Coins
-	Contract        sdk.AccAddress
-	Creator         crypto.PrivKey
-	CreatorAddr     sdk.AccAddress
-	Verifier        crypto.PrivKey
-	VerifierAddr    sdk.AccAddress
-	Beneficiary     crypto.PrivKey
-	BeneficiaryAddr sdk.AccAddress
-	CodeID          uint64
+	InitialAmount sdk.Coins
+	Creator       crypto.PrivKey
+	CreatorAddr   sdk.AccAddress
+	CodeID        uint64
 }
 
-// InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
-func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleContract {
-	anyAmount, creator, creatorAddr, codeID := StoreHackatomExampleContract(t, ctx, keepers)
-
-	verifier, _, verifierAddr := keyPubAddr()
-	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, anyAmount)
-
-	beneficiary, _, beneficiaryAddr := keyPubAddr()
-	initMsgBz := HackatomExampleInitMsg{
-		Verifier:    verifierAddr,
-		Beneficiary: beneficiaryAddr,
-	}.GetBytes(t)
-	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, codeID, creatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
-	require.NoError(t, err)
-	return HackatomExampleContract{
-		InitialAmount:   initialAmount,
-		Contract:        contractAddr,
-		Creator:         creator,
-		CreatorAddr:     creatorAddr,
-		Verifier:        verifier,
-		VerifierAddr:    verifierAddr,
-		Beneficiary:     beneficiary,
-		BeneficiaryAddr: beneficiaryAddr,
-		CodeID:          codeID,
-	}
-}
-
-func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) (sdk.Coins, crypto.PrivKey, sdk.AccAddress, uint64) {
+func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
@@ -372,7 +344,41 @@ func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKee
 
 	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	return anyAmount, creator, creatorAddr, codeID
+	return HackatomExampleContract{anyAmount, creator, creatorAddr, codeID}
+}
+
+type HackatomExampleInstance struct {
+	HackatomExampleContract
+	Contract        sdk.AccAddress
+	Verifier        crypto.PrivKey
+	VerifierAddr    sdk.AccAddress
+	Beneficiary     crypto.PrivKey
+	BeneficiaryAddr sdk.AccAddress
+}
+
+// InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
+func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
+	contract := StoreHackatomExampleContract(t, ctx, keepers)
+
+	verifier, _, verifierAddr := keyPubAddr()
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, contract.InitialAmount)
+
+	beneficiary, _, beneficiaryAddr := keyPubAddr()
+	initMsgBz := HackatomExampleInitMsg{
+		Verifier:    verifierAddr,
+		Beneficiary: beneficiaryAddr,
+	}.GetBytes(t)
+	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
+	require.NoError(t, err)
+	return HackatomExampleInstance{
+		HackatomExampleContract: contract,
+		Contract:                contractAddr,
+		Verifier:                verifier,
+		VerifierAddr:            verifierAddr,
+		Beneficiary:             beneficiary,
+		BeneficiaryAddr:         beneficiaryAddr,
+	}
 }
 
 type HackatomExampleInitMsg struct {
@@ -411,4 +417,38 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
 	return key, pub, addr
+}
+
+var _ types.WasmerEngine = &AlwaysFailMockWasmer{}
+
+var MockDefaultError = errors.New("default mock test error")
+
+type AlwaysFailMockWasmer struct{}
+
+func (a AlwaysFailMockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
+	return nil, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
+	return nil, 0, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+	return nil, 0, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) Query(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+	return nil, 0, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) Migrate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error) {
+	return nil, 0, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) GetCode(code cosmwasm.CodeID) (cosmwasm.WasmCode, error) {
+	return nil, MockDefaultError
+}
+
+func (a AlwaysFailMockWasmer) Cleanup() {
+	panic("implement me")
 }
