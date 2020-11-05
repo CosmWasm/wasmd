@@ -5,6 +5,8 @@ import (
 	"compress/gzip"
 	"io"
 	"io/ioutil"
+
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 // magic bytes to identify gzip.
@@ -28,6 +30,24 @@ func uncompress(src []byte) ([]byte, error) {
 		return nil, err
 	}
 	zr.Multistream(false)
+	defer zr.Close()
+	return ioutil.ReadAll(LimitReader(zr, maxSize))
+}
 
-	return ioutil.ReadAll(io.LimitReader(zr, maxSize))
+// LimitReader returns a Reader that reads from r
+// but stops with types.ErrLimit after n bytes.
+// The underlying implementation is a *io.LimitedReader.
+func LimitReader(r io.Reader, n int64) io.Reader {
+	return &LimitedReader{r: &io.LimitedReader{R: r, N: n}}
+}
+
+type LimitedReader struct {
+	r *io.LimitedReader
+}
+
+func (l *LimitedReader) Read(p []byte) (n int, err error) {
+	if l.r.N <= 0 {
+		return 0, types.ErrLimit
+	}
+	return l.r.Read(p)
 }
