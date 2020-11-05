@@ -472,7 +472,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
 }
 
-func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey, func()) {
 	t.Helper()
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -503,5 +503,5 @@ func setupKeeper(t *testing.T) (Keeper, sdk.Context, []sdk.StoreKey, func()) {
 	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	srcKeeper.setParams(ctx, wasmTypes.DefaultParams())
 
-	return srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup
+	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup
 }

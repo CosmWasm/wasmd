@@ -36,7 +36,7 @@ type recurseResponse struct {
 // number os wasm queries called from a contract
 var totalWasmQueryCounter int
 
-func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper Keeper) {
+func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
 	// we do one basic setup before all test cases (which are read-only and don't change state)
 	var realWasmQuerier func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
 	countingQuerier := &QueryPlugins{
@@ -48,7 +48,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, countingQuerier)
 	keeper = keepers.WasmKeeper
-	realWasmQuerier = WasmQuerier(&keeper)
+	realWasmQuerier = WasmQuerier(keeper)
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	return exampleContract.Contract, exampleContract.CreatorAddr, ctx, keeper

@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -117,12 +116,10 @@ var TestingStakeParams = stakingtypes.Params{
 type TestKeepers struct {
 	AccountKeeper authkeeper.AccountKeeper
 	StakingKeeper stakingkeeper.Keeper
-	// deprecated use WasmKeeperRef instead
-	WasmKeeper    Keeper
 	DistKeeper    distributionkeeper.Keeper
 	BankKeeper    bankkeeper.Keeper
 	GovKeeper     govkeeper.Keeper
-	WasmKeeperRef *Keeper
+	WasmKeeper    *Keeper
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -273,8 +270,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		AccountKeeper: authKeeper,
 		StakingKeeper: stakingKeeper,
 		DistKeeper:    distKeeper,
-		WasmKeeper:    keeper,
-		WasmKeeperRef: &keeper,
+		WasmKeeper:    &keeper,
 		BankKeeper:    bankKeeper,
 		GovKeeper:     govKeeper,
 	}
@@ -419,36 +415,98 @@ func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	return key, pub, addr
 }
 
-var _ types.WasmerEngine = &AlwaysFailMockWasmer{}
+var _ types.WasmerEngine = &alwaysPanicMockWasmer{}
 
-var MockDefaultError = errors.New("default mock test error")
+type alwaysPanicMockWasmer struct{}
 
-type AlwaysFailMockWasmer struct{}
-
-func (a AlwaysFailMockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
-	return nil, MockDefaultError
+func (a alwaysPanicMockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
-	return nil, 0, MockDefaultError
+func (a alwaysPanicMockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
-	return nil, 0, MockDefaultError
+func (a alwaysPanicMockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) Query(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
-	return nil, 0, MockDefaultError
+func (a alwaysPanicMockWasmer) Query(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) Migrate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error) {
-	return nil, 0, MockDefaultError
+func (a alwaysPanicMockWasmer) Migrate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) GetCode(code cosmwasm.CodeID) (cosmwasm.WasmCode, error) {
-	return nil, MockDefaultError
+func (a alwaysPanicMockWasmer) GetCode(code cosmwasm.CodeID) (cosmwasm.WasmCode, error) {
+	panic("not supposed to be called!")
 }
 
-func (a AlwaysFailMockWasmer) Cleanup() {
-	panic("implement me")
+func (a alwaysPanicMockWasmer) Cleanup() {
+	panic("not supposed to be called!")
+}
+
+var _ types.WasmerEngine = &MockWasmer{}
+
+// MockWasmer implements types.WasmerEngine for testing purpose. One or multiple messages can be stubbed.
+// Without a stub function a panic is thrown.
+type MockWasmer struct {
+	CreateFn      func(code cosmwasm.WasmCode) (cosmwasm.CodeID, error)
+	InstantiateFn func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error)
+	ExecuteFn     func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error)
+	QueryFn       func(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error)
+	MigrateFn     func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error)
+	GetCodeFn     func(code cosmwasm.CodeID) (cosmwasm.WasmCode, error)
+	CleanupFn     func()
+}
+
+func (m *MockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
+	if m.CreateFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.CreateFn(code)
+}
+
+func (m *MockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
+	if m.InstantiateFn == nil {
+		panic("not supposed to be called!")
+	}
+
+	return m.InstantiateFn(code, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit)
+}
+
+func (m *MockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+	if m.ExecuteFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.ExecuteFn(code, env, info, executeMsg, store, goapi, querier, gasMeter, gasLimit)
+}
+
+func (m *MockWasmer) Query(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+	if m.QueryFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.QueryFn(code, env, queryMsg, store, goapi, querier, gasMeter, gasLimit)
+}
+
+func (m *MockWasmer) Migrate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error) {
+	if m.MigrateFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.MigrateFn(code, env, info, migrateMsg, store, goapi, querier, gasMeter, gasLimit)
+}
+
+func (m *MockWasmer) GetCode(code cosmwasm.CodeID) (cosmwasm.WasmCode, error) {
+	if m.GetCodeFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.GetCodeFn(code)
+}
+
+func (m *MockWasmer) Cleanup() {
+	if m.CleanupFn == nil {
+		panic("not supposed to be called!")
+	}
+	m.CleanupFn()
 }

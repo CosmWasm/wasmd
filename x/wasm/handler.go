@@ -10,7 +10,7 @@ import (
 )
 
 // NewHandler returns a handler for "bank" type messages.
-func NewHandler(k Keeper) sdk.Handler {
+func NewHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
@@ -47,7 +47,7 @@ func filteredMessageEvents(manager *sdk.EventManager) []abci.Event {
 	return res
 }
 
-func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
+func handleStoreCode(ctx sdk.Context, k *Keeper, msg *MsgStoreCode) (*sdk.Result, error) {
 	err := msg.ValidateBasic()
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func handleStoreCode(ctx sdk.Context, k Keeper, msg *MsgStoreCode) (*sdk.Result,
 	}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k *Keeper, msg *MsgInstantiateContract) (*sdk.Result, error) {
 	contractAddr, err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Admin, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func handleInstantiate(ctx sdk.Context, k Keeper, msg *MsgInstantiateContract) (
 	}, nil
 }
 
-func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k *Keeper, msg *MsgExecuteContract) (*sdk.Result, error) {
 	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.Msg, msg.SentFunds)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func handleExecute(ctx sdk.Context, k Keeper, msg *MsgExecuteContract) (*sdk.Res
 	return res, nil
 }
 
-func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {
+func handleMigration(ctx sdk.Context, k *Keeper, msg *MsgMigrateContract) (*sdk.Result, error) {
 	res, err := k.Migrate(ctx, msg.Contract, msg.Sender, msg.CodeID, msg.MigrateMsg)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func handleMigration(ctx sdk.Context, k Keeper, msg *MsgMigrateContract) (*sdk.R
 	return res, nil
 }
 
-func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdmin) (*sdk.Result, error) {
+func handleUpdateContractAdmin(ctx sdk.Context, k *Keeper, msg *MsgUpdateAdmin) (*sdk.Result, error) {
 	if err := k.UpdateContractAdmin(ctx, msg.Contract, msg.Sender, msg.NewAdmin); err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func handleUpdateContractAdmin(ctx sdk.Context, k Keeper, msg *MsgUpdateAdmin) (
 	}, nil
 }
 
-func handleClearContractAdmin(ctx sdk.Context, k Keeper, msg *MsgClearAdmin) (*sdk.Result, error) {
+func handleClearContractAdmin(ctx sdk.Context, k *Keeper, msg *MsgClearAdmin) (*sdk.Result, error) {
 	if err := k.ClearContractAdmin(ctx, msg.Contract, msg.Sender); err != nil {
 		return nil, err
 	}

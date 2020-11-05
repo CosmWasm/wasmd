@@ -436,38 +436,33 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 func TestInstantiateWithCallbackToContract(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	var (
-		wasmerMock = &selfCallingInstMockWasmer{}
-		err        error
+		excuteCalled bool
+		err          error
 	)
-	keepers.WasmKeeperRef.wasmer = wasmerMock
+	wasmerMock := &MockWasmer{
+		CreateFn: func(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
+			anyCodeID := bytes.Repeat([]byte{0x1}, 32)
+			return anyCodeID, nil
+		},
+		InstantiateFn: func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
+			return &wasmTypes.InitResponse{
+				Messages: []wasmTypes.CosmosMsg{
+					{Wasm: &wasmTypes.WasmMsg{Execute: &wasmTypes.ExecuteMsg{ContractAddr: env.Contract.Address, Msg: []byte(`{}`)}}},
+				},
+			}, 1, nil
+		},
+		ExecuteFn: func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+			excuteCalled = true
+			return &wasmTypes.HandleResponse{}, 1, nil
+		},
+	}
+
+	keepers.WasmKeeper.wasmer = wasmerMock
 	keepers.WasmKeeper.wasmer = wasmerMock
 	example := StoreHackatomExampleContract(t, ctx, keepers)
 	_, err = keepers.WasmKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
 	require.NoError(t, err)
-	assert.True(t, wasmerMock.excuteCalled)
-}
-
-// mock to call itself on instantiation
-type selfCallingInstMockWasmer struct {
-	AlwaysFailMockWasmer
-	excuteCalled bool
-}
-
-func (a *selfCallingInstMockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
-	return bytes.Repeat([]byte{0x1}, 32), nil
-}
-
-func (a *selfCallingInstMockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
-	return &wasmTypes.InitResponse{
-		Messages: []wasmTypes.CosmosMsg{
-			{Wasm: &wasmTypes.WasmMsg{Execute: &wasmTypes.ExecuteMsg{ContractAddr: env.Contract.Address, Msg: []byte(`{}`)}}},
-		},
-	}, 1, nil
-}
-
-func (a *selfCallingInstMockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
-	a.excuteCalled = true
-	return &wasmTypes.HandleResponse{}, 1, nil
+	assert.True(t, excuteCalled)
 }
 
 func TestExecute(t *testing.T) {

@@ -36,7 +36,7 @@ func setupTest(t *testing.T) testData {
 		module:     NewAppModule(keeper),
 		ctx:        ctx,
 		acctKeeper: acctKeeper,
-		keeper:     keeper,
+		keeper:     *keeper,
 		bankKeeper: bankKeeper,
 	}
 	return data

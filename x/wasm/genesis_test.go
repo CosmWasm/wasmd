@@ -118,14 +118,14 @@ func TestInitGenesis(t *testing.T) {
 	})
 
 	// export into genstate
-	genState := ExportGenesis(data.ctx, data.keeper)
+	genState := ExportGenesis(data.ctx, &data.keeper)
 
 	// create new app to import genstate into
 	newData := setupTest(t)
 	q2 := newData.module.LegacyQuerierHandler(nil)
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, newData.keeper, *genState)
+	InitGenesis(newData.ctx, &newData.keeper, *genState)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
 	assertCodeList(t, q2, newData.ctx, 1)

@@ -11,11 +11,11 @@ import (
 )
 
 type grpcQuerier struct {
-	keeper Keeper
+	keeper *Keeper
 }
 
 // todo: this needs proper tests and doc
-func NewQuerier(keeper Keeper) grpcQuerier {
+func NewQuerier(keeper *Keeper) grpcQuerier {
 	return grpcQuerier{keeper: keeper}
 }
 
@@ -23,7 +23,7 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
 		return nil, err
 	}
-	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), req.Address, q.keeper)
+	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), req.Address, *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -40,7 +40,7 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
 		return nil, err
 	}
-	rsp, err := queryContractHistory(sdk.UnwrapSDKContext(c), req.Address, q.keeper)
+	rsp, err := queryContractHistory(sdk.UnwrapSDKContext(c), req.Address, *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -56,7 +56,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 	if req.CodeId == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
 	}
-	rsp, err := queryContractListByCode(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
+	rsp, err := queryContractListByCode(sdk.UnwrapSDKContext(c), req.CodeId, *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -134,7 +134,7 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 }
 
 func (q grpcQuerier) Codes(c context.Context, _ *empty.Empty) (*types.QueryCodesResponse, error) {
-	rsp, err := queryCodeList(sdk.UnwrapSDKContext(c), q.keeper)
+	rsp, err := queryCodeList(sdk.UnwrapSDKContext(c), *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -182,7 +182,7 @@ func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]t
 	return contracts, nil
 }
 
-func queryCode(ctx sdk.Context, codeID uint64, keeper Keeper) (*types.QueryCodeResponse, error) {
+func queryCode(ctx sdk.Context, codeID uint64, keeper *Keeper) (*types.QueryCodeResponse, error) {
 	if codeID == 0 {
 		return nil, nil
 	}
