@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
 	"io/ioutil"
 	"testing"
 
@@ -150,7 +151,12 @@ func TestQuerySmartContractState(t *testing.T) {
 
 func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
-	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := contractAddress(1, 1)
+	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
+	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
+		CodeID:  1,
+		Created: types.NewAbsoluteTxPosition(ctx),
+	})
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(InstanceCost)).WithLogger(log.TestingLogger())
 
 	specs := map[string]struct {
@@ -172,14 +178,14 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keepers.WasmKeeper.wasmer = &MockWasmer{QueryFn: func(code cosmwasm.CodeID, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+			keepers.WasmKeeper.wasmer = &wasmtesting.MockWasmer{QueryFn: func(checksum cosmwasm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
 				spec.doInContract()
 				return nil, 0, nil
 			}}
 			// when
 			q := NewQuerier(keepers.WasmKeeper)
 			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), &types.QuerySmartContractStateRequest{
-				Address: exampleContract.Contract.String(),
+				Address: contractAddr.String(),
 			})
 			require.True(t, spec.expErr.Is(err), "got error: %+v", err)
 			assert.Nil(t, got)

@@ -223,7 +223,7 @@ const AttributeKeyContractAddr = "contract_address"
 func ParseEvents(wasmOutputAttrs []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
 	// we always tag with the contract address issuing this event
 	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
-	
+
 	// append attributes from wasm to the sdk.Event
 	for _, l := range wasmOutputAttrs {
 		// and reserve the contract_address key for our use (not contract)
@@ -232,7 +232,7 @@ func ParseEvents(wasmOutputAttrs []wasmvmtypes.EventAttribute, contractAddr sdk.
 			attrs = append(attrs, attr)
 		}
 	}
-	
+
 	// each wasm invokation always returns one sdk.Event
 	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 }
