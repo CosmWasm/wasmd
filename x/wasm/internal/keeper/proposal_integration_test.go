@@ -18,7 +18,11 @@ import (
 func TestStoreCodeProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
+	wasmKeeper.setParams(ctx, types.Params{
+		CodeUploadAccess:             types.AllowNobody,
+		InstantiateDefaultPermission: types.AccessTypeNobody,
+		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
+	})
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -55,7 +59,11 @@ func TestStoreCodeProposal(t *testing.T) {
 func TestInstantiateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
+	wasmKeeper.setParams(ctx, types.Params{
+		CodeUploadAccess:             types.AllowNobody,
+		InstantiateDefaultPermission: types.AccessTypeNobody,
+		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
+	})
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -107,7 +115,11 @@ func TestInstantiateProposal(t *testing.T) {
 func TestMigrateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
+	wasmKeeper.setParams(ctx, types.Params{
+		CodeUploadAccess:             types.AllowNobody,
+		InstantiateDefaultPermission: types.AccessTypeNobody,
+		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
+	})
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -236,7 +248,11 @@ func TestAdminProposals(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
 			govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-			wasmKeeper.setParams(ctx, types.Params{CodeUploadAccess: types.AllowNobody, InstantiateDefaultPermission: types.AccessTypeNobody})
+			wasmKeeper.setParams(ctx, types.Params{
+				CodeUploadAccess:             types.AllowNobody,
+				InstantiateDefaultPermission: types.AccessTypeNobody,
+				MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
+			})
 
 			codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfoFixture, wasmCode))

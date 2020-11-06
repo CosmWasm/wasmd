@@ -14,13 +14,13 @@ import (
 // and https://github.com/golang/go/blob/master/src/net/http/sniff.go#L186
 var gzipIdent = []byte("\x1F\x8B\x08")
 
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
-
 // uncompress returns gzip uncompressed content or given src when not gzip.
-func uncompress(src []byte) ([]byte, error) {
-	if len(src) < 3 {
+func uncompress(src []byte, limit uint64) ([]byte, error) {
+	switch n := uint64(len(src)); {
+	case n < 3:
 		return src, nil
+	case n > limit:
+		return nil, types.ErrLimit
 	}
 	if !bytes.Equal(gzipIdent, src[0:3]) {
 		return src, nil
@@ -31,7 +31,7 @@ func uncompress(src []byte) ([]byte, error) {
 	}
 	zr.Multistream(false)
 	defer zr.Close()
-	return ioutil.ReadAll(LimitReader(zr, maxSize))
+	return ioutil.ReadAll(LimitReader(zr, int64(limit)))
 }
 
 // LimitReader returns a Reader that reads from r

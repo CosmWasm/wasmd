@@ -21,7 +21,8 @@ func TestUncompress(t *testing.T) {
 	wasmGzipped, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
-	_, _ = wasmRaw, wasmGzipped
+	const maxSize = 400_000
+
 	specs := map[string]struct {
 		src       []byte
 		expError  error
@@ -44,8 +45,8 @@ func TestUncompress(t *testing.T) {
 			expResult: []byte{0x1, 0x2},
 		},
 		"handle big input slice": {
-			src:       []byte(strings.Repeat("a", maxSize+1)),
-			expResult: []byte(strings.Repeat("a", maxSize+1)),
+			src:      []byte(strings.Repeat("a", maxSize+1)),
+			expError: types.ErrLimit,
 		},
 		"handle gzip identifier only": {
 			src:      gzipIdent,
@@ -74,7 +75,7 @@ func TestUncompress(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			r, err := uncompress(spec.src)
+			r, err := uncompress(spec.src, maxSize)
 			require.True(t, errors.Is(spec.expError, err), "exp %v got %+v", spec.expError, err)
 			if spec.expError != nil {
 				return
@@ -82,7 +83,6 @@ func TestUncompress(t *testing.T) {
 			assert.Equal(t, spec.expResult, r)
 		})
 	}
-
 }
 
 func asGzip(src []byte) []byte {

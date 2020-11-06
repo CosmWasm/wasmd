@@ -59,7 +59,7 @@ func TestGenesisExportImport(t *testing.T) {
 		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
 	var wasmParams types.Params
-	f.Fuzz(&wasmParams)
+	f.NilChance(0).Fuzz(&wasmParams)
 	srcKeeper.setParams(srcCtx, wasmParams)
 
 	// export
@@ -369,7 +369,8 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		"code_upload_access": {
 			"permission": "Everybody"
 		},
-		"instantiate_default_permission": "Everybody"
+		"instantiate_default_permission": "Everybody",
+		"max_wasm_code_size": 500000
 	},
   "codes": [
     {
