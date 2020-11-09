@@ -44,9 +44,13 @@ func TestUncompress(t *testing.T) {
 			src:       []byte{0x1, 0x2},
 			expResult: []byte{0x1, 0x2},
 		},
-		"handle big input slice": {
+		"handle input slice exceeding limit": {
 			src:      []byte(strings.Repeat("a", maxSize+1)),
 			expError: types.ErrLimit,
+		},
+		"handle input slice at limit": {
+			src:       []byte(strings.Repeat("a", maxSize)),
+			expResult: []byte(strings.Repeat("a", maxSize)),
 		},
 		"handle gzip identifier only": {
 			src:      gzipIdent,
