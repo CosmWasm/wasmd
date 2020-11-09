@@ -47,7 +47,7 @@ type Keeper struct {
 	accountKeeper authkeeper.AccountKeeper
 	bankKeeper    bankkeeper.Keeper
 
-	wasmer       wasm.Wasmer
+	wasmer       types.WasmerEngine
 	queryPlugins QueryPlugins
 	messenger    MessageHandler
 	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
@@ -86,7 +86,7 @@ func NewKeeper(
 	keeper := Keeper{
 		storeKey:      storeKey,
 		cdc:           cdc,
-		wasmer:        *wasmer,
+		wasmer:        wasmer,
 		accountKeeper: accountKeeper,
 		bankKeeper:    bankKeeper,
 		messenger:     NewMessageHandler(router, customEncoders),
@@ -254,16 +254,18 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
+	// persist instance first
+	createdAt := types.NewAbsoluteTxPosition(ctx)
+	instance := types.NewContractInfo(codeID, creator, admin, label, createdAt)
+	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
+	k.appendToContractHistory(ctx, contractAddress, instance.InitialHistory(initMsg))
+
+	// then dispatch so that contract could be called back
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
 	if err != nil {
 		return nil, err
 	}
 
-	// persist instance
-	createdAt := types.NewAbsoluteTxPosition(ctx)
-	instance := types.NewContractInfo(codeID, creator, admin, label, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
-	k.appendToContractHistory(ctx, contractAddress, instance.InitialHistory(initMsg))
 	return contractAddress, nil
 }
 

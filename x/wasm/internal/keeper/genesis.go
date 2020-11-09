@@ -11,7 +11,7 @@ import (
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) error {
+func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error {
 	var maxCodeID uint64
 	for i, code := range data.Codes {
 		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)
@@ -52,7 +52,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) error 
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
-func ExportGenesis(ctx sdk.Context, keeper Keeper) *types.GenesisState {
+func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 	var genState types.GenesisState
 
 	genState.Params = keeper.GetParams(ctx)

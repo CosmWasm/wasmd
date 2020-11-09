@@ -213,7 +213,7 @@ func initializeStaking(t *testing.T) initInfo {
 		ctx:           ctx,
 		accKeeper:     accKeeper,
 		stakingKeeper: stakingKeeper,
-		wasmKeeper:    keeper,
+		wasmKeeper:    *keeper,
 		distKeeper:    k.DistKeeper,
 		bankKeeper:    bankKeeper,
 	}

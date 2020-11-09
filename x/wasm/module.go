@@ -85,11 +85,11 @@ func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
 	AppModuleBasic
-	keeper Keeper
+	keeper *Keeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper) AppModule {
+func NewAppModule(keeper *Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,

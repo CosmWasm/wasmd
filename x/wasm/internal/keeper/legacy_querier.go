@@ -27,7 +27,7 @@ const (
 )
 
 // NewLegacyQuerier creates a new querier
-func NewLegacyQuerier(keeper Keeper) sdk.Querier {
+func NewLegacyQuerier(keeper *Keeper) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		var (
 			rsp interface{}
@@ -39,13 +39,13 @@ func NewLegacyQuerier(keeper Keeper) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractInfo(ctx, addr, keeper)
+			rsp, err = queryContractInfo(ctx, addr, *keeper)
 		case QueryListContractByCode:
 			codeID, err := strconv.ParseUint(path[1], 10, 64)
 			if err != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
 			}
-			rsp, err = queryContractListByCode(ctx, codeID, keeper)
+			rsp, err = queryContractListByCode(ctx, codeID, *keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
@@ -58,13 +58,13 @@ func NewLegacyQuerier(keeper Keeper) sdk.Querier {
 			}
 			rsp, err = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
-			rsp, err = queryCodeList(ctx, keeper)
+			rsp, err = queryCodeList(ctx, *keeper)
 		case QueryContractHistory:
 			contractAddr, err := sdk.AccAddressFromBech32(path[1])
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
+			rsp, err = queryContractHistory(ctx, contractAddr, *keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
@@ -82,7 +82,7 @@ func NewLegacyQuerier(keeper Keeper) sdk.Querier {
 	}
 }
 
-func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, keeper Keeper) (json.RawMessage, error) {
+func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, keeper *Keeper) (json.RawMessage, error) {
 	contractAddr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, bech)

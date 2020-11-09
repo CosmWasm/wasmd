@@ -432,6 +432,21 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 	require.Nil(t, addr)
 }
 
+func TestInstantiateWithCallbackToContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	var (
+		executeCalled bool
+		err           error
+	)
+	wasmerMock := selfCallingInstMockWasmer(&executeCalled)
+
+	keepers.WasmKeeper.wasmer = wasmerMock
+	example := StoreHackatomExampleContract(t, ctx, keepers)
+	_, err = keepers.WasmKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+	require.NoError(t, err)
+	assert.True(t, executeCalled)
+}
+
 func TestExecute(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
