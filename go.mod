@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/CosmWasm/go-cosmwasm v0.11.0
-	github.com/cosmos/cosmos-sdk v0.40.0-rc2
+	github.com/cosmos/cosmos-sdk v0.40.0-rc3
 	github.com/cosmos/iavl v0.15.0-rc4
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.1
@@ -20,7 +20,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
-	github.com/tendermint/tendermint v0.34.0-rc5
+	github.com/tendermint/tendermint v0.34.0-rc6
 	github.com/tendermint/tm-db v0.6.2
 	google.golang.org/genproto v0.0.0-20201014134559-03b6142f0dc9
 	google.golang.org/grpc v1.33.0
