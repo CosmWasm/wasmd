@@ -124,7 +124,7 @@ func TestAccessTypeMarshalJson(t *testing.T) {
 		src AccessType
 		exp string
 	}{
-		"Unspecified":   {src: AccessTypeUnspecified, exp: `"Unspecified"`},
+		"Unspecified": {src: AccessTypeUnspecified, exp: `"Unspecified"`},
 		"Nobody":      {src: AccessTypeNobody, exp: `"Nobody"`},
 		"OnlyAddress": {src: AccessTypeOnlyAddress, exp: `"OnlyAddress"`},
 		"Everybody":   {src: AccessTypeEverybody, exp: `"Everybody"`},
@@ -144,7 +144,7 @@ func TestAccessTypeUnmarshalJson(t *testing.T) {
 		src string
 		exp AccessType
 	}{
-		"Unspecified":   {src: `"Unspecified"`, exp: AccessTypeUnspecified},
+		"Unspecified": {src: `"Unspecified"`, exp: AccessTypeUnspecified},
 		"Nobody":      {src: `"Nobody"`, exp: AccessTypeNobody},
 		"OnlyAddress": {src: `"OnlyAddress"`, exp: AccessTypeOnlyAddress},
 		"Everybody":   {src: `"Everybody"`, exp: AccessTypeEverybody},

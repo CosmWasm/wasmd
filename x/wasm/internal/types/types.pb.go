@@ -27,13 +27,18 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// AccessType permission types
 type AccessType int32
 
 const (
+	// AccessTypeUnspecified placeholder for empty value
 	AccessTypeUnspecified AccessType = 0
-	AccessTypeNobody      AccessType = 1
+	// AccessTypeNobody forbidden
+	AccessTypeNobody AccessType = 1
+	// AccessTypeOnlyAddress restricted to an address
 	AccessTypeOnlyAddress AccessType = 2
-	AccessTypeEverybody   AccessType = 3
+	// AccessTypeEverybody unrestricted
+	AccessTypeEverybody AccessType = 3
 )
 
 var AccessType_name = map[int32]string{
@@ -54,13 +59,18 @@ func (AccessType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_45de2b3fc8aff6aa, []int{0}
 }
 
+// ContractCodeHistoryOperationType actions that caused a code change
 type ContractCodeHistoryOperationType int32
 
 const (
+	// ContractCodeHistoryOperationTypeUnspecified placeholder for empty value
 	ContractCodeHistoryOperationTypeUnspecified ContractCodeHistoryOperationType = 0
-	ContractCodeHistoryOperationTypeInit        ContractCodeHistoryOperationType = 1
-	ContractCodeHistoryOperationTypeMigrate     ContractCodeHistoryOperationType = 2
-	ContractCodeHistoryOperationTypeGenesis     ContractCodeHistoryOperationType = 3
+	// ContractCodeHistoryOperationTypeInit on chain contract instantiation
+	ContractCodeHistoryOperationTypeInit ContractCodeHistoryOperationType = 1
+	// ContractCodeHistoryOperationTypeMigrate code migration
+	ContractCodeHistoryOperationTypeMigrate ContractCodeHistoryOperationType = 2
+	// ContractCodeHistoryOperationTypeGenesis based on genesis data
+	ContractCodeHistoryOperationTypeGenesis ContractCodeHistoryOperationType = 3
 )
 
 var ContractCodeHistoryOperationType_name = map[int32]string{
@@ -85,6 +95,7 @@ func (ContractCodeHistoryOperationType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_45de2b3fc8aff6aa, []int{1}
 }
 
+// AccessTypeParam
 type AccessTypeParam struct {
 	Value AccessType `protobuf:"varint,1,opt,name=value,proto3,enum=wasmd.x.wasmd.v1beta1.AccessType" json:"value,omitempty" yaml:"value"`
 }
@@ -122,6 +133,7 @@ func (m *AccessTypeParam) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AccessTypeParam proto.InternalMessageInfo
 
+// AccessConfig access control type.
 type AccessConfig struct {
 	Permission AccessType                                    `protobuf:"varint,1,opt,name=permission,proto3,enum=wasmd.x.wasmd.v1beta1.AccessType" json:"permission,omitempty" yaml:"permission"`
 	Address    github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty" yaml:"address"`
@@ -201,11 +213,16 @@ var xxx_messageInfo_Params proto.InternalMessageInfo
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	CodeHash          []byte                                        `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
-	Creator           github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=creator,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"creator,omitempty"`
-	Source            string                                        `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
-	Builder           string                                        `protobuf:"bytes,4,opt,name=builder,proto3" json:"builder,omitempty"`
-	InstantiateConfig AccessConfig                                  `protobuf:"bytes,5,opt,name=instantiate_config,json=instantiateConfig,proto3" json:"instantiate_config"`
+	// CodeHash is the unique CodeID
+	CodeHash []byte `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
+	// Creator address who initially stored the code
+	Creator github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=creator,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"creator,omitempty"`
+	// Source is a valid absolute HTTPS URI to the contract's source code, optional
+	Source string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	// Builder is a valid docker image name with tag, optional
+	Builder string `protobuf:"bytes,4,opt,name=builder,proto3" json:"builder,omitempty"`
+	// InstantiateConfig access control to apply on contract creation, optional
+	InstantiateConfig AccessConfig `protobuf:"bytes,5,opt,name=instantiate_config,json=instantiateConfig,proto3" json:"instantiate_config"`
 }
 
 func (m *CodeInfo) Reset()         { *m = CodeInfo{} }
@@ -243,12 +260,16 @@ var xxx_messageInfo_CodeInfo proto.InternalMessageInfo
 
 // ContractInfo stores a WASM contract instance
 type ContractInfo struct {
-	CodeID  uint64                                        `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// CodeID is the reference to the stored WASM code
+	CodeID uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// Creator address who initially instantiated the contract
 	Creator github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=creator,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"creator,omitempty"`
-	Admin   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
-	Label   string                                        `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	// never show this in query results, just use for sorting
-	// (Note: when using json tag "-" amino refused to serialize it...)
+	// Admin is an optional address that can execute migrations
+	Admin github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
+	// Label is optional metadata to be stored with a contract instance.
+	Label string `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	// Created Tx position when the contract was instantiated.
+	// This data should kept internal and not be exposed via query results. Just use for sorting
 	Created *AbsoluteTxPosition `protobuf:"bytes,5,opt,name=created,proto3" json:"created,omitempty"`
 }
 
@@ -285,6 +306,7 @@ func (m *ContractInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractInfo proto.InternalMessageInfo
 
+// ContractHistory contains a sorted list of code updates to a contract
 type ContractHistory struct {
 	CodeHistoryEntries []ContractCodeHistoryEntry `protobuf:"bytes,1,rep,name=code_history_entries,json=codeHistoryEntries,proto3" json:"code_history_entries"`
 }
@@ -322,12 +344,14 @@ func (m *ContractHistory) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractHistory proto.InternalMessageInfo
 
-// ContractCodeHistoryEntry stores code updates to a contract.
+// ContractCodeHistoryEntry metadata to a contract.
 type ContractCodeHistoryEntry struct {
 	Operation ContractCodeHistoryOperationType `protobuf:"varint,1,opt,name=operation,proto3,enum=wasmd.x.wasmd.v1beta1.ContractCodeHistoryOperationType" json:"operation,omitempty"`
-	CodeID    uint64                           `protobuf:"varint,2,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	Updated   *AbsoluteTxPosition              `protobuf:"bytes,3,opt,name=updated,proto3" json:"updated,omitempty"`
-	Msg       encoding_json.RawMessage         `protobuf:"bytes,4,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
+	// CodeID is the reference to the stored WASM code
+	CodeID uint64 `protobuf:"varint,2,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// Updated Tx position when the operation was executed.
+	Updated *AbsoluteTxPosition      `protobuf:"bytes,3,opt,name=updated,proto3" json:"updated,omitempty"`
+	Msg     encoding_json.RawMessage `protobuf:"bytes,4,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
 }
 
 func (m *ContractCodeHistoryEntry) Reset()         { *m = ContractCodeHistoryEntry{} }

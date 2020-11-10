@@ -113,6 +113,7 @@ func (m *QueryContractInfoResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryContractInfoResponse proto.InternalMessageInfo
 
+// QueryContractHistoryRequest is the request type for the Query/ContractHistory RPC method
 type QueryContractHistoryRequest struct {
 	// address is the address of the contract to query
 	Address github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty"`
@@ -151,6 +152,7 @@ func (m *QueryContractHistoryRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryContractHistoryRequest proto.InternalMessageInfo
 
+// QueryContractHistoryResponse is the response type for the Query/ContractHistory RPC method
 type QueryContractHistoryResponse struct {
 	Entries []ContractCodeHistoryEntry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries"`
 }
@@ -188,6 +190,7 @@ func (m *QueryContractHistoryResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryContractHistoryResponse proto.InternalMessageInfo
 
+// QueryContractsByCodeRequest is the request type for the Query/ContractsByCode RPC method
 type QueryContractsByCodeRequest struct {
 	CodeId uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 }
@@ -264,6 +267,7 @@ func (m *ContractInfoWithAddress) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractInfoWithAddress proto.InternalMessageInfo
 
+// QueryContractsByCodeResponse is the response type for the Query/ContractsByCode RPC method
 type QueryContractsByCodeResponse struct {
 	ContractInfos []ContractInfoWithAddress `protobuf:"bytes,1,rep,name=contract_infos,json=contractInfos,proto3" json:"contract_infos"`
 }
@@ -301,6 +305,7 @@ func (m *QueryContractsByCodeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryContractsByCodeResponse proto.InternalMessageInfo
 
+// QueryAllContractStateRequest is the request type for the Query/AllContractState RPC method
 type QueryAllContractStateRequest struct {
 	// address is the address of the contract
 	Address github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty"`
@@ -339,6 +344,7 @@ func (m *QueryAllContractStateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryAllContractStateRequest proto.InternalMessageInfo
 
+// QueryAllContractStateResponse is the response type for the Query/AllContractState RPC method
 type QueryAllContractStateResponse struct {
 	Models []Model `protobuf:"bytes,1,rep,name=models,proto3" json:"models"`
 }
@@ -376,6 +382,7 @@ func (m *QueryAllContractStateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryAllContractStateResponse proto.InternalMessageInfo
 
+// QueryRawContractStateRequest is the request type for the Query/RawContractState RPC method
 type QueryRawContractStateRequest struct {
 	// address is the address of the contract
 	Address   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty"`
@@ -415,7 +422,9 @@ func (m *QueryRawContractStateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryRawContractStateRequest proto.InternalMessageInfo
 
+// QueryRawContractStateResponse is the response type for the Query/RawContractState RPC method
 type QueryRawContractStateResponse struct {
+	// Data contains the raw store data
 	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 }
 
@@ -452,10 +461,12 @@ func (m *QueryRawContractStateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryRawContractStateResponse proto.InternalMessageInfo
 
+// QuerySmartContractStateRequest is the request type for the Query/SmartContractState RPC method
 type QuerySmartContractStateRequest struct {
 	// address is the address of the contract
-	Address   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty"`
-	QueryData []byte                                        `protobuf:"bytes,2,opt,name=query_data,json=queryData,proto3" json:"query_data,omitempty"`
+	Address github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=address,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"address,omitempty"`
+	// QueryData contains the query data passed to the contract
+	QueryData []byte `protobuf:"bytes,2,opt,name=query_data,json=queryData,proto3" json:"query_data,omitempty"`
 }
 
 func (m *QuerySmartContractStateRequest) Reset()         { *m = QuerySmartContractStateRequest{} }
@@ -491,7 +502,9 @@ func (m *QuerySmartContractStateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySmartContractStateRequest proto.InternalMessageInfo
 
+// QuerySmartContractStateResponse is the response type for the Query/SmartContractState RPC method
 type QuerySmartContractStateResponse struct {
+	// Data contains the json data returned from the smart contract
 	Data encoding_json.RawMessage `protobuf:"bytes,1,opt,name=data,proto3,casttype=encoding/json.RawMessage" json:"data,omitempty"`
 }
 
@@ -528,6 +541,7 @@ func (m *QuerySmartContractStateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySmartContractStateResponse proto.InternalMessageInfo
 
+// QueryCodeRequest is the request type for the Query/Code RPC method
 type QueryCodeRequest struct {
 	CodeId uint64 `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 }
@@ -565,6 +579,7 @@ func (m *QueryCodeRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCodeRequest proto.InternalMessageInfo
 
+// CodeInfoResponse contains code meta data from CodeInfo
 type CodeInfoResponse struct {
 	CodeID   uint64                                               `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"id"`
 	Creator  github_com_cosmos_cosmos_sdk_types.AccAddress        `protobuf:"bytes,2,opt,name=creator,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"creator,omitempty"`
@@ -606,6 +621,7 @@ func (m *CodeInfoResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CodeInfoResponse proto.InternalMessageInfo
 
+// QueryCodeResponse is the response type for the Query/Code RPC method
 type QueryCodeResponse struct {
 	*CodeInfoResponse `protobuf:"bytes,1,opt,name=code_info,json=codeInfo,proto3,embedded=code_info" json:""`
 	Data              []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data"`
@@ -644,6 +660,7 @@ func (m *QueryCodeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCodeResponse proto.InternalMessageInfo
 
+// QueryCodesResponse is the response type for the Query/Codes RPC method
 type QueryCodesResponse struct {
 	CodeInfos []CodeInfoResponse `protobuf:"bytes,1,rep,name=code_infos,json=codeInfos,proto3" json:"code_infos"`
 }
@@ -1243,13 +1260,21 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// ContractInfo gets the contract meta data
 	ContractInfo(ctx context.Context, in *QueryContractInfoRequest, opts ...grpc.CallOption) (*QueryContractInfoResponse, error)
+	// ContractHistory gets the contract code history
 	ContractHistory(ctx context.Context, in *QueryContractHistoryRequest, opts ...grpc.CallOption) (*QueryContractHistoryResponse, error)
+	// ContractsByCode lists all smart contracts for a code id
 	ContractsByCode(ctx context.Context, in *QueryContractsByCodeRequest, opts ...grpc.CallOption) (*QueryContractsByCodeResponse, error)
+	// AllContractState gets all raw store data for a single contract
 	AllContractState(ctx context.Context, in *QueryAllContractStateRequest, opts ...grpc.CallOption) (*QueryAllContractStateResponse, error)
+	// RawContractState gets single key from the raw store data of a contract
 	RawContractState(ctx context.Context, in *QueryRawContractStateRequest, opts ...grpc.CallOption) (*QueryRawContractStateResponse, error)
+	// SmartContractState get smart query result from the contract
 	SmartContractState(ctx context.Context, in *QuerySmartContractStateRequest, opts ...grpc.CallOption) (*QuerySmartContractStateResponse, error)
+	// Code gets the binary code and metadata for a singe wasm code
 	Code(ctx context.Context, in *QueryCodeRequest, opts ...grpc.CallOption) (*QueryCodeResponse, error)
+	// Codes gets the metadata for all stored wasm codes
 	Codes(ctx context.Context, in *types.Empty, opts ...grpc.CallOption) (*QueryCodesResponse, error)
 }
 
@@ -1335,13 +1360,21 @@ func (c *queryClient) Codes(ctx context.Context, in *types.Empty, opts ...grpc.C
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// ContractInfo gets the contract meta data
 	ContractInfo(context.Context, *QueryContractInfoRequest) (*QueryContractInfoResponse, error)
+	// ContractHistory gets the contract code history
 	ContractHistory(context.Context, *QueryContractHistoryRequest) (*QueryContractHistoryResponse, error)
+	// ContractsByCode lists all smart contracts for a code id
 	ContractsByCode(context.Context, *QueryContractsByCodeRequest) (*QueryContractsByCodeResponse, error)
+	// AllContractState gets all raw store data for a single contract
 	AllContractState(context.Context, *QueryAllContractStateRequest) (*QueryAllContractStateResponse, error)
+	// RawContractState gets single key from the raw store data of a contract
 	RawContractState(context.Context, *QueryRawContractStateRequest) (*QueryRawContractStateResponse, error)
+	// SmartContractState get smart query result from the contract
 	SmartContractState(context.Context, *QuerySmartContractStateRequest) (*QuerySmartContractStateResponse, error)
+	// Code gets the binary code and metadata for a singe wasm code
 	Code(context.Context, *QueryCodeRequest) (*QueryCodeResponse, error)
+	// Codes gets the metadata for all stored wasm codes
 	Codes(context.Context, *types.Empty) (*QueryCodesResponse, error)
 }
 

@@ -28,7 +28,7 @@ message Contract {
     repeated Model contract_state = 3 [(gogoproto.nullable) = false];
 }
 
-// Sequence id and value of a counter
+// Sequence key and value of an id generation counter
 message Sequence {
     bytes id_key = 1 [(gogoproto.customname) = "IDKey"];
     uint64 value = 2;

@@ -26,7 +26,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgStoreCode submit WASM code to the system
 type MsgStoreCode struct {
+	// Sender is the that actor that signed the messages
 	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `protobuf:"bytes,2,opt,name=wasm_byte_code,json=wasmByteCode,proto3" json:"wasm_byte_code,omitempty"`
@@ -34,7 +36,7 @@ type MsgStoreCode struct {
 	Source string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
 	// Builder is a valid docker image name with tag, optional
 	Builder string `protobuf:"bytes,4,opt,name=builder,proto3" json:"builder,omitempty"`
-	// InstantiatePermission to apply on contract creation, optional
+	// InstantiatePermission access control to apply on contract creation, optional
 	InstantiatePermission *AccessConfig `protobuf:"bytes,5,opt,name=instantiate_permission,json=instantiatePermission,proto3" json:"instantiate_permission,omitempty"`
 }
 
@@ -71,14 +73,20 @@ func (m *MsgStoreCode) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgStoreCode proto.InternalMessageInfo
 
+// MsgInstantiateContract create a new smart contract instance for the given code id.
 type MsgInstantiateContract struct {
+	// Sender is the that actor that signed the messages
 	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
 	// Admin is an optional address that can execute migrations
-	Admin     github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
-	CodeID    uint64                                        `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	Label     string                                        `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	InitMsg   encoding_json.RawMessage                      `protobuf:"bytes,5,opt,name=init_msg,json=initMsg,proto3,casttype=encoding/json.RawMessage" json:"init_msg,omitempty"`
-	InitFunds github_com_cosmos_cosmos_sdk_types.Coins      `protobuf:"bytes,6,rep,name=init_funds,json=initFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"init_funds"`
+	Admin github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
+	// CodeID is the reference to the stored WASM code
+	CodeID uint64 `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// Label is optional metadata to be stored with a contract instance.
+	Label string `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	// InitMsg json encoded message to be passed to the contract on instantiation
+	InitMsg encoding_json.RawMessage `protobuf:"bytes,5,opt,name=init_msg,json=initMsg,proto3,casttype=encoding/json.RawMessage" json:"init_msg,omitempty"`
+	// InitFunds coins that are transferred to the contract on instantiation
+	InitFunds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,6,rep,name=init_funds,json=initFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"init_funds"`
 }
 
 func (m *MsgInstantiateContract) Reset()         { *m = MsgInstantiateContract{} }
@@ -114,11 +122,16 @@ func (m *MsgInstantiateContract) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgInstantiateContract proto.InternalMessageInfo
 
+// MsgExecuteContract submits the given message data to a smart contract
 type MsgExecuteContract struct {
-	Sender    github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
-	Contract  github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
-	Msg       encoding_json.RawMessage                      `protobuf:"bytes,3,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
-	SentFunds github_com_cosmos_cosmos_sdk_types.Coins      `protobuf:"bytes,5,rep,name=sent_funds,json=sentFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"sent_funds"`
+	// Sender is the that actor that signed the messages
+	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// Contract is the address of the smart contract
+	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
+	// Msg json encoded message to be passed to the contract
+	Msg encoding_json.RawMessage `protobuf:"bytes,3,opt,name=msg,proto3,casttype=encoding/json.RawMessage" json:"msg,omitempty"`
+	// SentFunds coins that are transferred to the contract on execution
+	SentFunds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,5,rep,name=sent_funds,json=sentFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"sent_funds"`
 }
 
 func (m *MsgExecuteContract) Reset()         { *m = MsgExecuteContract{} }
@@ -154,11 +167,16 @@ func (m *MsgExecuteContract) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgExecuteContract proto.InternalMessageInfo
 
+// MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 type MsgMigrateContract struct {
-	Sender     github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
-	Contract   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
-	CodeID     uint64                                        `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	MigrateMsg encoding_json.RawMessage                      `protobuf:"bytes,4,opt,name=migrate_msg,json=migrateMsg,proto3,casttype=encoding/json.RawMessage" json:"migrate_msg,omitempty"`
+	// Sender is the that actor that signed the messages
+	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// Contract is the address of the smart contract
+	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
+	// CodeID references the new WASM code
+	CodeID uint64 `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// MigrateMsg json encoded message to be passed to the contract on migration
+	MigrateMsg encoding_json.RawMessage `protobuf:"bytes,4,opt,name=migrate_msg,json=migrateMsg,proto3,casttype=encoding/json.RawMessage" json:"migrate_msg,omitempty"`
 }
 
 func (m *MsgMigrateContract) Reset()         { *m = MsgMigrateContract{} }
@@ -194,9 +212,13 @@ func (m *MsgMigrateContract) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgMigrateContract proto.InternalMessageInfo
 
+// MsgUpdateAdmin sets a new admin for a smart contract
 type MsgUpdateAdmin struct {
-	Sender   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// Sender is the that actor that signed the messages
+	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// NewAdmin address to be set
 	NewAdmin github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,2,opt,name=new_admin,json=newAdmin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"new_admin,omitempty"`
+	// Contract is the address of the smart contract
 	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
 }
 
@@ -233,8 +255,11 @@ func (m *MsgUpdateAdmin) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateAdmin proto.InternalMessageInfo
 
+// MsgClearAdmin removes any admin stored for a smart contract
 type MsgClearAdmin struct {
-	Sender   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// Sender is the that actor that signed the messages
+	Sender github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,1,opt,name=sender,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"sender,omitempty"`
+	// Contract is the address of the smart contract
 	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
 }
 

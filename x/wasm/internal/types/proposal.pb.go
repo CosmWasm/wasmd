@@ -27,8 +27,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// StoreCodeProposal gov proposal content type to submit WASM code to the system
 type StoreCodeProposal struct {
-	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// RunAs is the address that is passed to the contract's environment as sender
 	RunAs github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=run_as,json=runAs,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"run_as,omitempty"`
@@ -76,16 +79,22 @@ var xxx_messageInfo_StoreCodeProposal proto.InternalMessageInfo
 
 // InstantiateContractProposal gov proposal content type to instantiate a contract.
 type InstantiateContractProposal struct {
-	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// RunAs is the address that is passed to the contract's environment as sender
 	RunAs github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=run_as,json=runAs,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"run_as,omitempty"`
 	// Admin is an optional address that can execute migrations
-	Admin     github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
-	CodeID    uint64                                        `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	Label     string                                        `protobuf:"bytes,6,opt,name=label,proto3" json:"label,omitempty"`
-	InitMsg   encoding_json.RawMessage                      `protobuf:"bytes,7,opt,name=init_msg,json=initMsg,proto3,casttype=encoding/json.RawMessage" json:"init_msg,omitempty"`
-	InitFunds github_com_cosmos_cosmos_sdk_types.Coins      `protobuf:"bytes,8,rep,name=init_funds,json=initFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"init_funds"`
+	Admin github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=admin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"admin,omitempty"`
+	// CodeID is the reference to the stored WASM code
+	CodeID uint64 `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// Label is optional metadata to be stored with a constract instance.
+	Label string `protobuf:"bytes,6,opt,name=label,proto3" json:"label,omitempty"`
+	// InitMsg json encoded message to be passed to the contract on instantiation
+	InitMsg encoding_json.RawMessage `protobuf:"bytes,7,opt,name=init_msg,json=initMsg,proto3,casttype=encoding/json.RawMessage" json:"init_msg,omitempty"`
+	// InitFunds coins that are transferred to the contract on instantiation
+	InitFunds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,8,rep,name=init_funds,json=initFunds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"init_funds"`
 }
 
 func (m *InstantiateContractProposal) Reset()      { *m = InstantiateContractProposal{} }
@@ -122,13 +131,18 @@ var xxx_messageInfo_InstantiateContractProposal proto.InternalMessageInfo
 
 // MigrateContractProposal gov proposal content type to migrate a contract.
 type MigrateContractProposal struct {
-	Title       string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// RunAs is the address that is passed to the contract's environment as sender
-	RunAs      github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=run_as,json=runAs,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"run_as,omitempty"`
-	Contract   github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
-	CodeID     uint64                                        `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	MigrateMsg encoding_json.RawMessage                      `protobuf:"bytes,6,opt,name=migrate_msg,json=migrateMsg,proto3,casttype=encoding/json.RawMessage" json:"migrate_msg,omitempty"`
+	RunAs github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=run_as,json=runAs,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"run_as,omitempty"`
+	// Contract is the address of the smart contract
+	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
+	// CodeID references the new WASM code
+	CodeID uint64 `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// MigrateMsg json encoded message to be passed to the contract on migration
+	MigrateMsg encoding_json.RawMessage `protobuf:"bytes,6,opt,name=migrate_msg,json=migrateMsg,proto3,casttype=encoding/json.RawMessage" json:"migrate_msg,omitempty"`
 }
 
 func (m *MigrateContractProposal) Reset()      { *m = MigrateContractProposal{} }
@@ -165,10 +179,14 @@ var xxx_messageInfo_MigrateContractProposal proto.InternalMessageInfo
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.
 type UpdateAdminProposal struct {
-	Title       string                                        `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description string                                        `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	NewAdmin    github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=new_admin,json=newAdmin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"new_admin,omitempty" yaml:"new_admin"`
-	Contract    github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// NewAdmin address to be set
+	NewAdmin github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=new_admin,json=newAdmin,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"new_admin,omitempty" yaml:"new_admin"`
+	// Contract is the address of the smart contract
+	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,4,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
 }
 
 func (m *UpdateAdminProposal) Reset()      { *m = UpdateAdminProposal{} }
@@ -205,9 +223,12 @@ var xxx_messageInfo_UpdateAdminProposal proto.InternalMessageInfo
 
 // ClearAdminProposal gov proposal content type to clear the admin of a contract.
 type ClearAdminProposal struct {
-	Title       string                                        `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description string                                        `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Contract    github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// Contract is the address of the smart contract
+	Contract github_com_cosmos_cosmos_sdk_types.AccAddress `protobuf:"bytes,3,opt,name=contract,proto3,casttype=github.com/cosmos/cosmos-sdk/types.AccAddress" json:"contract,omitempty"`
 }
 
 func (m *ClearAdminProposal) Reset()      { *m = ClearAdminProposal{} }
