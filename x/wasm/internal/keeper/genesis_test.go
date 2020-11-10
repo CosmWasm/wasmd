@@ -465,7 +465,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expContractInfo, *gotContractInfo)
 
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryTypeGenesis,
+		Operation: types.ContractCodeHistoryOperationTypeGenesis,
 		CodeID:    firstCodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	},

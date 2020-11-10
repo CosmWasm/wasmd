@@ -19,7 +19,7 @@ message MsgStoreCode {
     // Builder is a valid docker image name with tag, optional
     string builder = 4;
     // InstantiatePermission to apply on contract creation, optional
-    AccessConfig InstantiatePermission = 5;
+    AccessConfig instantiate_permission = 5;
 }
 
 message MsgInstantiateContract {

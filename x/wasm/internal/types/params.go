@@ -53,7 +53,7 @@ func (a AccessType) String() string {
 	case AccessTypeEverybody:
 		return "Everybody"
 	}
-	return "Undefined"
+	return "Unspecified"
 }
 
 func (a *AccessType) UnmarshalText(text []byte) error {
@@ -63,7 +63,7 @@ func (a *AccessType) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	*a = AccessTypeUndefined
+	*a = AccessTypeUnspecified
 	return nil
 }
 func (a AccessType) MarshalText() ([]byte, error) {
@@ -143,7 +143,7 @@ func validateAccessType(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	if a == AccessTypeUndefined {
+	if a == AccessTypeUnspecified {
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	}
 	for _, v := range AllAccessTypes {
@@ -167,7 +167,7 @@ func validateMaxWasmCodeSize(i interface{}) error {
 
 func (v AccessConfig) ValidateBasic() error {
 	switch v.Permission {
-	case AccessTypeUndefined:
+	case AccessTypeUnspecified:
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	case AccessTypeNobody, AccessTypeEverybody:
 		if len(v.Address) != 0 {

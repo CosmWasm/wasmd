@@ -6,6 +6,11 @@ COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 
+# for dockerized protobuf tools
+PROTO_CONTAINER := cosmwasm/prototool-docker:latest
+DOCKER_BUF := docker run --rm -v $(shell pwd)/buf.yaml:/workspace/buf.yaml -v $(shell go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk):/workspace/cosmos_sdk_dir -v $(shell pwd):/workspace/wasmd  --workdir /workspace $(PROTO_CONTAINER)
+HTTPS_GIT := https://github.com/CosmWasm/wasmd.git
+
 export GO111MODULE = on
 
 # process build tags
@@ -198,16 +203,19 @@ format:
 ###############################################################################
 
 proto-all: proto-gen proto-lint proto-check-breaking
+.PHONY: proto-all
 
-proto-gen:
-	@./scripts/protocgen.sh
+proto-gen: proto-lint
+	@docker run --rm -v $(shell go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk):/workspace/cosmos_sdk_dir -v $(shell pwd):/workspace --workdir /workspace --env COSMOS_SDK_DIR=/workspace/cosmos_sdk_dir $(PROTO_CONTAINER) ./scripts/protocgen.sh
+.PHONY: proto-gen
 
 proto-lint:
-	@buf check lint --error-format=json
+	@$(DOCKER_BUF) buf check lint --error-format=json
+.PHONY: proto-lint
 
 proto-check-breaking:
-	@buf check breaking --against-input '.git#branch=master'
-
+	@$(DOCKER_BUF) buf check breaking --against-input $(HTTPS_GIT)#branch=master
+.PHONY: proto-check-breaking
 
 .PHONY: all build-linux install install-debug \
 	go-mod-cache draw-deps clean build format \

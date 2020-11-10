@@ -22,7 +22,7 @@ message StoreCodeProposal {
     // Builder is a valid docker image name with tag, optional
     string builder = 6;
     // InstantiatePermission to apply on contract creation, optional
-    AccessConfig InstantiatePermission = 7;
+    AccessConfig instantiate_permission = 7;
 }
 
 // InstantiateContractProposal gov proposal content type to instantiate a contract.

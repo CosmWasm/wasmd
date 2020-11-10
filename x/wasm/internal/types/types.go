@@ -46,7 +46,7 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 	}
 }
 
-var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{ContractCodeHistoryTypeGenesis, ContractCodeHistoryTypeInit, ContractCodeHistoryTypeMigrate}
+var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{ContractCodeHistoryOperationTypeGenesis, ContractCodeHistoryOperationTypeInit, ContractCodeHistoryOperationTypeMigrate}
 
 func (c *ContractHistory) AppendCodeHistory(newEntries ...ContractCodeHistoryEntry) {
 	c.CodeHistoryEntries = append(c.CodeHistoryEntries, newEntries...)
@@ -83,7 +83,7 @@ func (c *ContractInfo) ValidateBasic() error {
 
 func (c ContractInfo) InitialHistory(initMsg []byte) ContractCodeHistoryEntry {
 	return ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryTypeInit,
+		Operation: ContractCodeHistoryOperationTypeInit,
 		CodeID:    c.CodeID,
 		Updated:   c.Created,
 		Msg:       initMsg,
@@ -92,7 +92,7 @@ func (c ContractInfo) InitialHistory(initMsg []byte) ContractCodeHistoryEntry {
 
 func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) ContractCodeHistoryEntry {
 	h := ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryTypeMigrate,
+		Operation: ContractCodeHistoryOperationTypeMigrate,
 		CodeID:    codeID,
 		Updated:   NewAbsoluteTxPosition(ctx),
 		Msg:       msg,
@@ -105,7 +105,7 @@ func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) 
 func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntry {
 	c.Created = NewAbsoluteTxPosition(ctx)
 	return ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryTypeGenesis,
+		Operation: ContractCodeHistoryOperationTypeGenesis,
 		CodeID:    c.CodeID,
 		Updated:   c.Created,
 	}

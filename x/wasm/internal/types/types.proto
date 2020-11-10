@@ -10,10 +10,10 @@ option (gogoproto.equal_all) = true;
 enum AccessType {
     option (gogoproto.goproto_enum_prefix) = false;
     option (gogoproto.goproto_enum_stringer) = false;
-    UNDEFINED = 0 [(gogoproto.enumvalue_customname) = "AccessTypeUndefined"];
-    NOBODY = 1 [(gogoproto.enumvalue_customname) = "AccessTypeNobody"];
-    ONLY_ADDRESS = 2 [(gogoproto.enumvalue_customname) = "AccessTypeOnlyAddress"];
-    EVERYBODY = 3 [(gogoproto.enumvalue_customname) = "AccessTypeEverybody"];
+    ACCESS_TYPE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "AccessTypeUnspecified"];
+    ACCESS_TYPE_NOBODY = 1 [(gogoproto.enumvalue_customname) = "AccessTypeNobody"];
+    ACCESS_TYPE_ONLY_ADDRESS = 2 [(gogoproto.enumvalue_customname) = "AccessTypeOnlyAddress"];
+    ACCESS_TYPE_EVERYBODY = 3 [(gogoproto.enumvalue_customname) = "AccessTypeEverybody"];
 }
 
 message AccessTypeParam {
@@ -57,10 +57,10 @@ message ContractInfo {
 
 enum ContractCodeHistoryOperationType {
     option (gogoproto.goproto_enum_prefix) = false;
-    Undefined = 0;
-    Init = 1 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryTypeInit"];
-    Migrate = 2 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryTypeMigrate"];
-    Genesis = 3 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryTypeGenesis"];
+    CONTRACT_CODE_HISTORY_OPERATION_TYPE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryOperationTypeUnspecified"];
+    CONTRACT_CODE_HISTORY_OPERATION_TYPE_INIT = 1 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryOperationTypeInit"];
+    CONTRACT_CODE_HISTORY_OPERATION_TYPE_MIGRATE = 2 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryOperationTypeMigrate"];
+    CONTRACT_CODE_HISTORY_OPERATION_TYPE_GENESIS = 3 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryOperationTypeGenesis"];
 }
 
 message ContractHistory {
@@ -87,7 +87,7 @@ message AbsoluteTxPosition {
 // Model is a struct that holds a KV pair
 message Model {
     // hex-encode key to read it better (this is often ascii)
-    bytes Key = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
+    bytes key = 1 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
     // base64-encode raw value
-    bytes Value = 2;
+    bytes value = 2;
 }

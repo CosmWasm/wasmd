@@ -47,7 +47,7 @@ message QueryContractInfoRequest {
 message QueryContractInfoResponse {
     // address is the address of the contract
     bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    ContractInfo ContractInfo = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
+    ContractInfo contract_info = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
 }
 
 message QueryContractHistoryRequest {
@@ -66,7 +66,7 @@ message QueryContractsByCodeRequest {
 // ContractInfoWithAddress adds the address (key) to the ContractInfo representation
 message ContractInfoWithAddress {
     bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
-    ContractInfo ContractInfo = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
+    ContractInfo contract_info = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
 }
 
 message QueryContractsByCodeResponse {
