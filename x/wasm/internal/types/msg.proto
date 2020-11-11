@@ -10,7 +10,7 @@ option go_package = "github.com/CosmWasm/wasmd/x/wasmd/internal/types";
 option (gogoproto.goproto_getters_all) = false;
 
 
-// MsgStoreCode submit WASM code to the system
+// MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
     // Sender is the that actor that signed the messages
     bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
