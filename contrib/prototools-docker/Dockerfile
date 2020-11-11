@@ -12,7 +12,7 @@ RUN apk --no-cache add --update curl git libc6-compat make upx
 RUN go get -d \
   github.com/gogo/protobuf/gogoproto && \
   mkdir -p /usr/include/google/protobuf/ && \
-  mv /go/src/github.com/gogo/protobuf/protobuf/google/protobuf/empty.proto /usr/include/google/protobuf/ &&\
+  mv /go/src/github.com/gogo/protobuf/protobuf/google/protobuf/empty.proto /usr/include/google/protobuf/ && \
   mv /go/src/github.com/gogo/protobuf/protobuf/google/protobuf/descriptor.proto /usr/include/google/protobuf/
 
 RUN GO111MODULE=on go get \
