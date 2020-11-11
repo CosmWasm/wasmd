@@ -58,7 +58,7 @@ message CodeInfo {
 
 // ContractInfo stores a WASM contract instance
 message ContractInfo {
-    // CodeID is the reference to the stored WASM code
+    // CodeID is the reference to the stored Wasm code
     uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
     // Creator address who initially instantiated the contract
     bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
