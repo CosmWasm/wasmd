@@ -17,7 +17,7 @@ message StoreCodeProposal {
     // Description is a human readable text
     string description = 2;
     // RunAs is the address that is passed to the contract's environment as sender
-    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string run_as = 3;
     // WASMByteCode can be raw or gzip compressed
     bytes wasm_byte_code = 4 [(gogoproto.customname) = "WASMByteCode"];
     // Source is a valid absolute HTTPS URI to the contract's source code, optional
@@ -35,9 +35,9 @@ message InstantiateContractProposal {
     // Description is a human readable text
     string description = 2;
     // RunAs is the address that is passed to the contract's environment as sender
-    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string run_as = 3;
     // Admin is an optional address that can execute migrations
-    bytes admin = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string admin = 4;
     // CodeID is the reference to the stored WASM code
     uint64 code_id = 5 [(gogoproto.customname) = "CodeID"];
     // Label is optional metadata to be stored with a constract instance.
@@ -55,9 +55,9 @@ message MigrateContractProposal {
     // Description is a human readable text
     string description = 2;
     // RunAs is the address that is passed to the contract's environment as sender
-    bytes run_as = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string run_as = 3;
     // Contract is the address of the smart contract
-    bytes contract = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 4;
     // CodeID references the new WASM code
     uint64 code_id = 5 [(gogoproto.customname) = "CodeID"];
     // MigrateMsg json encoded message to be passed to the contract on migration
@@ -71,9 +71,9 @@ message UpdateAdminProposal {
     // Description is a human readable text
     string description = 2;
     // NewAdmin address to be set
-    bytes new_admin = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress", (gogoproto.moretags) = "yaml:\"new_admin\""];
+    string new_admin = 3 [(gogoproto.moretags) = "yaml:\"new_admin\""];
     // Contract is the address of the smart contract
-    bytes contract = 4 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 4;
 }
 
 // ClearAdminProposal gov proposal content type to clear the admin of a contract.
@@ -83,5 +83,5 @@ message ClearAdminProposal {
     // Description is a human readable text
     string description = 2;
     // Contract is the address of the smart contract
-    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 3;
 }

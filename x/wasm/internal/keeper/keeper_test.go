@@ -48,8 +48,8 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	var (
-		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr  = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		deposit                = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, sdk.AddrLen)
 	)
 
 	specs := map[string]struct {
@@ -70,7 +70,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 		},
 		"onlyAddress with matching address": {
 			srcPermission: types.AccessTypeOnlyAddress,
-			expInstConf:   types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: myAddr},
+			expInstConf:   types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: myAddr.String()},
 		},
 	}
 	for msg, spec := range specs {
@@ -278,14 +278,14 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x112ad), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x115e6), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, info)
-	assert.Equal(t, info.Creator, creator)
-	assert.Equal(t, info.CodeID, codeID)
-	assert.Equal(t, info.Label, "demo contract 1")
+	assert.Equal(t, creator.String(), info.Creator)
+	assert.Equal(t, codeID, info.CodeID)
+	assert.Equal(t, "demo contract 1", info.Label)
 
 	exp := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
@@ -507,7 +507,7 @@ func TestExecute(t *testing.T) {
 
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11e33), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11ec9), gasAfter-gasBefore)
 
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -1036,7 +1036,6 @@ func TestUpdateContractAdmin(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			require.NotNil(t, spec.newAdmin)
 			addr, err := keeper.Instantiate(ctx, originalContractID, creator, spec.instAdmin, initMsgBz, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
@@ -1048,7 +1047,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 				return
 			}
 			cInfo := keeper.GetContractInfo(ctx, addr)
-			assert.Equal(t, spec.newAdmin, cInfo.Admin)
+			assert.Equal(t, spec.newAdmin.String(), cInfo.Admin)
 		})
 	}
 }

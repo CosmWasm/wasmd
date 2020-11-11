@@ -31,7 +31,7 @@ message AccessTypeParam {
 message AccessConfig {
     option (gogoproto.goproto_stringer) = true;
     AccessType permission = 1 [(gogoproto.moretags) = "yaml:\"permission\""];
-    bytes address = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress", (gogoproto.moretags) = "yaml:\"address\""];
+    string address = 2 [(gogoproto.moretags) = "yaml:\"address\""];
 }
 
 // Params defines the set of wasm parameters.
@@ -47,7 +47,7 @@ message CodeInfo {
     // CodeHash is the unique CodeID
     bytes code_hash = 1;
     // Creator address who initially stored the code
-    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string creator = 2;
     // Source is a valid absolute HTTPS URI to the contract's source code, optional
     string source = 3;
     // Builder is a valid docker image name with tag, optional
@@ -61,9 +61,9 @@ message ContractInfo {
     // CodeID is the reference to the stored Wasm code
     uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
     // Creator address who initially instantiated the contract
-    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string creator = 2;
     // Admin is an optional address that can execute migrations
-    bytes admin = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string admin = 3;
     // Label is optional metadata to be stored with a contract instance.
     string label = 4;
     // Created Tx position when the contract was instantiated.

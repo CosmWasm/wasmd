@@ -16,12 +16,12 @@ import (
 type StoreCodeProposalJsonReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	Title       string         `json:"title" yaml:"title"`
-	Description string         `json:"description" yaml:"description"`
-	Proposer    sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit     sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Title       string    `json:"title" yaml:"title"`
+	Description string    `json:"description" yaml:"description"`
+	Proposer    string    `json:"proposer" yaml:"proposer"`
+	Deposit     sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
+	RunAs string `json:"run_as" yaml:"run_as"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 	// Source is a valid absolute HTTPS URI to the contract's source code, optional
@@ -43,7 +43,7 @@ func (s StoreCodeProposalJsonReq) Content() govtypes.Content {
 		InstantiatePermission: s.InstantiatePermission,
 	}
 }
-func (s StoreCodeProposalJsonReq) GetProposer() sdk.AccAddress {
+func (s StoreCodeProposalJsonReq) GetProposer() string {
 	return s.Proposer
 }
 func (s StoreCodeProposalJsonReq) GetDeposit() sdk.Coins {
@@ -72,12 +72,12 @@ type InstantiateProposalJsonReq struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
 
-	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
+	RunAs string `json:"run_as" yaml:"run_as"`
 	// Admin is an optional address that can execute migrations
-	Admin     sdk.AccAddress  `json:"admin,omitempty" yaml:"admin"`
+	Admin     string          `json:"admin,omitempty" yaml:"admin"`
 	Code      uint64          `json:"code_id" yaml:"code_id"`
 	Label     string          `json:"label" yaml:"label"`
 	InitMsg   json.RawMessage `json:"init_msg" yaml:"init_msg"`
@@ -96,7 +96,7 @@ func (s InstantiateProposalJsonReq) Content() govtypes.Content {
 		InitFunds:   s.InitFunds,
 	}
 }
-func (s InstantiateProposalJsonReq) GetProposer() sdk.AccAddress {
+func (s InstantiateProposalJsonReq) GetProposer() string {
 	return s.Proposer
 }
 func (s InstantiateProposalJsonReq) GetDeposit() sdk.Coins {
@@ -125,14 +125,14 @@ type MigrateProposalJsonReq struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
 
-	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	Contract   sdk.AccAddress  `json:"contract" yaml:"contract"`
+	Contract   string          `json:"contract" yaml:"contract"`
 	Code       uint64          `json:"code_id" yaml:"code_id"`
 	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
 	// RunAs is the role that is passed to the contract's environment
-	RunAs sdk.AccAddress `json:"run_as" yaml:"run_as"`
+	RunAs string `json:"run_as" yaml:"run_as"`
 }
 
 func (s MigrateProposalJsonReq) Content() govtypes.Content {
@@ -145,7 +145,7 @@ func (s MigrateProposalJsonReq) Content() govtypes.Content {
 		RunAs:       s.RunAs,
 	}
 }
-func (s MigrateProposalJsonReq) GetProposer() sdk.AccAddress {
+func (s MigrateProposalJsonReq) GetProposer() string {
 	return s.Proposer
 }
 func (s MigrateProposalJsonReq) GetDeposit() sdk.Coins {
@@ -173,11 +173,11 @@ type UpdateAdminJsonReq struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
 
-	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	NewAdmin sdk.AccAddress `json:"new_admin" yaml:"new_admin"`
-	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	NewAdmin string `json:"new_admin" yaml:"new_admin"`
+	Contract string `json:"contract" yaml:"contract"`
 }
 
 func (s UpdateAdminJsonReq) Content() govtypes.Content {
@@ -188,7 +188,7 @@ func (s UpdateAdminJsonReq) Content() govtypes.Content {
 		NewAdmin:    s.NewAdmin,
 	}
 }
-func (s UpdateAdminJsonReq) GetProposer() sdk.AccAddress {
+func (s UpdateAdminJsonReq) GetProposer() string {
 	return s.Proposer
 }
 func (s UpdateAdminJsonReq) GetDeposit() sdk.Coins {
@@ -216,10 +216,10 @@ type ClearAdminJsonReq struct {
 	Title       string `json:"title" yaml:"title"`
 	Description string `json:"description" yaml:"description"`
 
-	Proposer sdk.AccAddress `json:"proposer" yaml:"proposer"`
-	Deposit  sdk.Coins      `json:"deposit" yaml:"deposit"`
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	Contract sdk.AccAddress `json:"contract" yaml:"contract"`
+	Contract string `json:"contract" yaml:"contract"`
 }
 
 func (s ClearAdminJsonReq) Content() govtypes.Content {
@@ -229,7 +229,7 @@ func (s ClearAdminJsonReq) Content() govtypes.Content {
 		Contract:    s.Contract,
 	}
 }
-func (s ClearAdminJsonReq) GetProposer() sdk.AccAddress {
+func (s ClearAdminJsonReq) GetProposer() string {
 	return s.Proposer
 }
 func (s ClearAdminJsonReq) GetDeposit() sdk.Coins {
@@ -253,13 +253,18 @@ func ClearContractAdminProposalHandler(cliCtx client.Context) govrest.ProposalRE
 
 type wasmProposalData interface {
 	Content() govtypes.Content
-	GetProposer() sdk.AccAddress
+	GetProposer() string
 	GetDeposit() sdk.Coins
 	GetBaseReq() rest.BaseReq
 }
 
 func toStdTxResponse(cliCtx client.Context, w http.ResponseWriter, data wasmProposalData) {
-	msg, err := govtypes.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), data.GetProposer())
+	proposerAddr, err := sdk.AccAddressFromBech32(data.GetProposer())
+	if err != nil {
+		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	msg, err := govtypes.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), proposerAddr)
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return

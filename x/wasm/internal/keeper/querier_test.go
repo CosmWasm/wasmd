@@ -33,7 +33,7 @@ func TestQueryAllContractState(t *testing.T) {
 		expErr           *sdkErrors.Error
 	}{
 		"query all": {
-			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr},
+			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
 			expModelContains: contractModel,
 		},
 		"query all with unknown address": {
@@ -60,7 +60,7 @@ func TestQuerySmartContractState(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
-	contractAddr := exampleContract.Contract
+	contractAddr := exampleContract.Contract.String()
 
 	q := NewQuerier(keeper)
 	specs := map[string]struct {
@@ -103,12 +103,12 @@ func TestQueryRawContractState(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
-	contractAddr := exampleContract.Contract
+	contractAddr := exampleContract.Contract.String()
 	contractModel := []types.Model{
 		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
-	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
+	require.NoError(t, keeper.importContractState(ctx, exampleContract.Contract, contractModel))
 
 	q := NewQuerier(keeper)
 	specs := map[string]struct {
@@ -289,7 +289,7 @@ func TestQueryContractHistory(t *testing.T) {
 			if queryContractAddr == nil {
 				queryContractAddr = myContractAddr
 			}
-			req := &types.QueryContractHistoryRequest{Address: queryContractAddr}
+			req := &types.QueryContractHistoryRequest{Address: queryContractAddr.String()}
 
 			// when
 			q := NewQuerier(keeper)

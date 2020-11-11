@@ -20,7 +20,7 @@ func TestInitGenesis(t *testing.T) {
 	q := data.module.LegacyQuerierHandler(nil)
 
 	msg := MsgStoreCode{
-		Sender:       creator,
+		Sender:       creator.String(),
 		WASMByteCode: testContract,
 		Source:       "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
 		Builder:      "confio/cosmwasm-opt:0.7.0",
@@ -41,18 +41,18 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator,
+		Sender:    creator.String(),
 		CodeID:    firstCodeID,
 		InitMsg:   initMsgBz,
 		InitFunds: deposit,
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractAddr := sdk.AccAddress(res.Data)
+	contractBech32Addr := string(res.Data)
 
 	execCmd := MsgExecuteContract{
-		Sender:    fred,
-		Contract:  contractAddr,
+		Sender:    fred.String(),
+		Contract:  contractBech32Addr,
 		Msg:       []byte(`{"release":{}}`),
 		SentFunds: topUp,
 	}
@@ -63,9 +63,9 @@ func TestInitGenesis(t *testing.T) {
 	assertCodeList(t, q, data.ctx, 1)
 	assertCodeBytes(t, q, data.ctx, 1, testContract)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractAddr.String()})
-	assertContractInfo(t, q, data.ctx, contractAddr, 1, creator)
-	assertContractState(t, q, data.ctx, contractAddr, state{
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
+	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    []byte(fred),
 		Beneficiary: []byte(bob),
 		Funder:      []byte(creator),
@@ -85,9 +85,9 @@ func TestInitGenesis(t *testing.T) {
 	assertCodeList(t, q2, newData.ctx, 1)
 	assertCodeBytes(t, q2, newData.ctx, 1, testContract)
 
-	assertContractList(t, q2, newData.ctx, 1, []string{contractAddr.String()})
-	assertContractInfo(t, q2, newData.ctx, contractAddr, 1, creator)
-	assertContractState(t, q2, newData.ctx, contractAddr, state{
+	assertContractList(t, q2, newData.ctx, 1, []string{contractBech32Addr})
+	assertContractInfo(t, q2, newData.ctx, contractBech32Addr, 1, creator)
+	assertContractState(t, q2, newData.ctx, contractBech32Addr, state{
 		Verifier:    []byte(fred),
 		Beneficiary: []byte(bob),
 		Funder:      []byte(creator),

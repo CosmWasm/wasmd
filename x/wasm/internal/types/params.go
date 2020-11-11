@@ -37,7 +37,7 @@ func (a AccessType) With(addr sdk.AccAddress) AccessConfig {
 		if err := sdk.VerifyAddressFormat(addr); err != nil {
 			panic(err)
 		}
-		return AccessConfig{Permission: AccessTypeOnlyAddress, Address: addr}
+		return AccessConfig{Permission: AccessTypeOnlyAddress, Address: addr.String()}
 	case AccessTypeEverybody:
 		return AllowEverybody
 	}
@@ -79,7 +79,7 @@ func (a *AccessType) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
 }
 
 func (a AccessConfig) Equals(o AccessConfig) bool {
-	return a.Permission == o.Permission && a.Address.Equals(o.Address)
+	return a.Permission == o.Permission && a.Address == o.Address
 }
 
 var (
@@ -175,7 +175,8 @@ func (v AccessConfig) ValidateBasic() error {
 		}
 		return nil
 	case AccessTypeOnlyAddress:
-		return sdk.VerifyAddressFormat(v.Address)
+		_, err := sdk.AccAddressFromBech32(v.Address)
+		return err
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", v.Permission)
 }
@@ -187,7 +188,7 @@ func (v AccessConfig) Allowed(actor sdk.AccAddress) bool {
 	case AccessTypeEverybody:
 		return true
 	case AccessTypeOnlyAddress:
-		return v.Address.Equals(actor)
+		return v.Address == actor.String()
 	default:
 		panic("unknown type")
 	}

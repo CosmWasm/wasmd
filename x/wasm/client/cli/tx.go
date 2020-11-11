@@ -108,7 +108,7 @@ func parseStoreCodeArgs(args []string, cliCtx client.Context) (types.MsgStoreCod
 
 	// build and sign the transaction, then broadcast to Tendermint
 	msg := types.MsgStoreCode{
-		Sender:                cliCtx.GetFromAddress(),
+		Sender:                cliCtx.GetFromAddress().String(),
 		WASMByteCode:          wasm,
 		Source:                viper.GetString(flagSource),
 		Builder:               viper.GetString(flagBuilder),
@@ -164,24 +164,15 @@ func parseInstantiateArgs(args []string, cliCtx client.Context) (types.MsgInstan
 	}
 
 	initMsg := args[1]
-
 	adminStr := viper.GetString(flagAdmin)
-	var adminAddr sdk.AccAddress
-	if len(adminStr) != 0 {
-		adminAddr, err = sdk.AccAddressFromBech32(adminStr)
-		if err != nil {
-			return types.MsgInstantiateContract{}, sdkerrors.Wrap(err, "admin")
-		}
-	}
-
 	// build and sign the transaction, then broadcast to Tendermint
 	msg := types.MsgInstantiateContract{
-		Sender:    cliCtx.GetFromAddress(),
+		Sender:    cliCtx.GetFromAddress().String(),
 		CodeID:    codeID,
 		Label:     label,
 		InitFunds: amount,
 		InitMsg:   []byte(initMsg),
-		Admin:     adminAddr,
+		Admin:     adminStr,
 	}
 	return msg, nil
 }
@@ -197,11 +188,6 @@ func ExecuteContractCmd() *cobra.Command {
 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 
 			// get the id of the code to instantiate
-			contractAddr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-
 			amounstStr := viper.GetString(flagAmount)
 			amount, err := sdk.ParseCoins(amounstStr)
 			if err != nil {
@@ -212,10 +198,13 @@ func ExecuteContractCmd() *cobra.Command {
 
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := types.MsgExecuteContract{
-				Sender:    clientCtx.GetFromAddress(),
-				Contract:  contractAddr,
+				Sender:    clientCtx.GetFromAddress().String(),
+				Contract:  args[0],
 				SentFunds: amount,
 				Msg:       []byte(execMsg),
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},

@@ -23,7 +23,7 @@ message Code {
 
 // Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 message Contract {
-    bytes contract_address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract_address = 1;
     ContractInfo contract_info = 2 [(gogoproto.nullable) = false];
     repeated Model contract_state = 3 [(gogoproto.nullable) = false];
 }

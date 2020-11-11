@@ -64,7 +64,7 @@ func CodeFixture(mutators ...func(*Code)) Code {
 func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
 	wasmCode := bytes.Repeat([]byte{0x1}, 10)
 	codeHash := sha256.Sum256(wasmCode)
-	anyAddress := make([]byte, 20)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	fixture := CodeInfo{
 		CodeHash:          codeHash[:],
 		Creator:           anyAddress,
@@ -79,7 +79,8 @@ func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
 }
 
 func ContractFixture(mutators ...func(*Contract)) Contract {
-	anyAddress := make([]byte, 20)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+
 	fixture := Contract{
 		ContractAddress: anyAddress,
 		ContractInfo:    ContractInfoFixture(OnlyGenesisFields),
@@ -97,7 +98,8 @@ func OnlyGenesisFields(info *ContractInfo) {
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
-	anyAddress := make([]byte, 20)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+
 	fixture := ContractInfo{
 		CodeID:  1,
 		Creator: anyAddress,
@@ -119,11 +121,11 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 }
 
 func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
-	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	p := &StoreCodeProposal{
 		Title:        "Foo",
 		Description:  "Bar",
-		RunAs:        anyValidAddress,
+		RunAs:        anyAddress,
 		WASMByteCode: []byte{0x0},
 		Source:       "https://example.com/code",
 		Builder:      "foo/bar:latest",
@@ -146,6 +148,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 			Beneficiary: anyValidAddress,
 		}
 	)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 
 	initMsgBz, err := json.Marshal(initMsg)
 	if err != nil {
@@ -154,8 +157,8 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 	p := &InstantiateContractProposal{
 		Title:       "Foo",
 		Description: "Bar",
-		RunAs:       anyValidAddress,
-		Admin:       anyValidAddress,
+		RunAs:       anyAddress,
+		Admin:       anyAddress,
 		CodeID:      1,
 		Label:       "testing",
 		InitMsg:     initMsgBz,
@@ -181,18 +184,17 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 	if err != nil {
 		panic(err)
 	}
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
-	if err != nil {
-		panic(err)
-	}
-
+	const (
+		contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+	)
 	p := &MigrateContractProposal{
 		Title:       "Foo",
 		Description: "Bar",
 		Contract:    contractAddr,
 		CodeID:      1,
 		MigrateMsg:  migMsgBz,
-		RunAs:       anyValidAddress,
+		RunAs:       anyAddress,
 	}
 
 	for _, m := range mutators {
@@ -202,17 +204,15 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 }
 
 func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *UpdateAdminProposal {
-	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
-	if err != nil {
-		panic(err)
-	}
+	const (
+		contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+	)
 
 	p := &UpdateAdminProposal{
 		Title:       "Foo",
 		Description: "Bar",
-		NewAdmin:    anyValidAddress,
+		NewAdmin:    anyAddress,
 		Contract:    contractAddr,
 	}
 	for _, m := range mutators {
@@ -222,11 +222,7 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *Updat
 }
 
 func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) *ClearAdminProposal {
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
-	if err != nil {
-		panic(err)
-	}
-
+	const contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
 	p := &ClearAdminProposal{
 		Title:       "Foo",
 		Description: "Bar",

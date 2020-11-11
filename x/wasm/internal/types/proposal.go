@@ -80,7 +80,7 @@ func (p StoreCodeProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if err := sdk.VerifyAddressFormat(p.RunAs); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(err, "run as")
 	}
 
@@ -118,13 +118,13 @@ func (p StoreCodeProposal) String() string {
 // MarshalYAML pretty prints the wasm byte code
 func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 	return struct {
-		Title                 string         `yaml:"title"`
-		Description           string         `yaml:"description"`
-		RunAs                 sdk.AccAddress `yaml:"run_as"`
-		WASMByteCode          string         `yaml:"wasm_byte_code"`
-		Source                string         `yaml:"source"`
-		Builder               string         `yaml:"builder"`
-		InstantiatePermission *AccessConfig  `yaml:"instantiate_permission"`
+		Title                 string        `yaml:"title"`
+		Description           string        `yaml:"description"`
+		RunAs                 string        `yaml:"run_as"`
+		WASMByteCode          string        `yaml:"wasm_byte_code"`
+		Source                string        `yaml:"source"`
+		Builder               string        `yaml:"builder"`
+		InstantiatePermission *AccessConfig `yaml:"instantiate_permission"`
 	}{
 		Title:                 p.Title,
 		Description:           p.Description,
@@ -155,7 +155,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if err := sdk.VerifyAddressFormat(p.RunAs); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "run as")
 	}
 
@@ -172,7 +172,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 	}
 
 	if len(p.Admin) != 0 {
-		if err := sdk.VerifyAddressFormat(p.Admin); err != nil {
+		if _, err := sdk.AccAddressFromBech32(p.Admin); err != nil {
 			return err
 		}
 	}
@@ -197,14 +197,14 @@ func (p InstantiateContractProposal) String() string {
 // MarshalYAML pretty prints the init message
 func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 	return struct {
-		Title       string         `yaml:"title"`
-		Description string         `yaml:"description"`
-		RunAs       sdk.AccAddress `yaml:"run_as"`
-		Admin       sdk.AccAddress `yaml:"admin"`
-		CodeID      uint64         `yaml:"code_id"`
-		Label       string         `yaml:"label"`
-		InitMsg     string         `yaml:"init_msg"`
-		InitFunds   sdk.Coins      `yaml:"init_funds"`
+		Title       string    `yaml:"title"`
+		Description string    `yaml:"description"`
+		RunAs       string    `yaml:"run_as"`
+		Admin       string    `yaml:"admin"`
+		CodeID      uint64    `yaml:"code_id"`
+		Label       string    `yaml:"label"`
+		InitMsg     string    `yaml:"init_msg"`
+		InitFunds   sdk.Coins `yaml:"init_funds"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
@@ -237,10 +237,10 @@ func (p MigrateContractProposal) ValidateBasic() error {
 	if p.CodeID == 0 {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
-	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err := sdk.VerifyAddressFormat(p.RunAs); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(err, "run as")
 	}
 	return nil
@@ -261,12 +261,12 @@ func (p MigrateContractProposal) String() string {
 // MarshalYAML pretty prints the migrate message
 func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 	return struct {
-		Title       string         `yaml:"title"`
-		Description string         `yaml:"description"`
-		Contract    sdk.AccAddress `yaml:"contract"`
-		CodeID      uint64         `yaml:"code_id"`
-		MigrateMsg  string         `yaml:"msg"`
-		RunAs       sdk.AccAddress `yaml:"run_as"`
+		Title       string `yaml:"title"`
+		Description string `yaml:"description"`
+		Contract    string `yaml:"contract"`
+		CodeID      uint64 `yaml:"code_id"`
+		MigrateMsg  string `yaml:"msg"`
+		RunAs       string `yaml:"run_as"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
@@ -294,10 +294,10 @@ func (p UpdateAdminProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err := sdk.VerifyAddressFormat(p.NewAdmin); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.NewAdmin); err != nil {
 		return sdkerrors.Wrap(err, "new admin")
 	}
 	return nil
@@ -330,7 +330,7 @@ func (p ClearAdminProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if err := sdk.VerifyAddressFormat(p.Contract); err != nil {
+	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
 	return nil

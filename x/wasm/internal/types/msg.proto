@@ -13,7 +13,7 @@ option (gogoproto.goproto_getters_all) = false;
 // MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // WASMByteCode can be raw or gzip compressed
     bytes wasm_byte_code = 2 [(gogoproto.customname) = "WASMByteCode"];
     // Source is a valid absolute HTTPS URI to the contract's source code, optional
@@ -27,9 +27,9 @@ message MsgStoreCode {
 // MsgInstantiateContract create a new smart contract instance for the given code id.
 message MsgInstantiateContract {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // Admin is an optional address that can execute migrations
-    bytes admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string admin = 2;
     // CodeID is the reference to the stored WASM code
     uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
     // Label is optional metadata to be stored with a contract instance.
@@ -43,9 +43,9 @@ message MsgInstantiateContract {
 // MsgExecuteContract submits the given message data to a smart contract
 message MsgExecuteContract {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // Contract is the address of the smart contract
-    bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 2;
     // Msg json encoded message to be passed to the contract
     bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
     // SentFunds coins that are transferred to the contract on execution
@@ -55,9 +55,9 @@ message MsgExecuteContract {
 // MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 message MsgMigrateContract {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // Contract is the address of the smart contract
-    bytes contract = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 2;
     // CodeID references the new WASM code
     uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
     // MigrateMsg json encoded message to be passed to the contract on migration
@@ -67,18 +67,18 @@ message MsgMigrateContract {
 // MsgUpdateAdmin sets a new admin for a smart contract
 message MsgUpdateAdmin {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // NewAdmin address to be set
-    bytes new_admin = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string new_admin = 2;
     // Contract is the address of the smart contract
-    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 3;
 }
 
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
     // Sender is the that actor that signed the messages
-    bytes sender = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string sender = 1;
     // Contract is the address of the smart contract
-    bytes contract = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string contract = 3;
 }

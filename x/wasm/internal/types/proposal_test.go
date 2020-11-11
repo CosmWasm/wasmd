@@ -95,7 +95,7 @@ func TestValidateProposalCommons(t *testing.T) {
 func TestValidateStoreCodeProposal(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, sdk.AddrLen)
-		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
+		invalidAddress                = "invalid address"
 	)
 
 	specs := map[string]struct {
@@ -125,7 +125,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"run_as missing": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.RunAs = nil
+				p.RunAs = ""
 			}),
 			expErr: true,
 		},
@@ -180,7 +180,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
 	var (
-		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
+		invalidAddress = "invalid address"
 	)
 
 	specs := map[string]struct {
@@ -192,7 +192,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"without admin": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Admin = nil
+				p.Admin = ""
 			}),
 		},
 		"without init msg": {
@@ -213,7 +213,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"run_as missing": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.RunAs = nil
+				p.RunAs = ""
 			}),
 			expErr: true,
 		},
@@ -268,7 +268,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 
 func TestValidateMigrateContractProposal(t *testing.T) {
 	var (
-		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
+		invalidAddress = "invalid address2"
 	)
 
 	specs := map[string]struct {
@@ -291,7 +291,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 		},
 		"contract missing": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.Contract = nil
+				p.Contract = ""
 			}),
 			expErr: true,
 		},
@@ -309,7 +309,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 		},
 		"run_as missing": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.RunAs = nil
+				p.RunAs = ""
 			}),
 			expErr: true,
 		},
@@ -334,7 +334,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
 	var (
-		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
+		invalidAddress = "invalid address"
 	)
 
 	specs := map[string]struct {
@@ -352,7 +352,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 		},
 		"contract missing": {
 			src: UpdateAdminProposalFixture(func(p *UpdateAdminProposal) {
-				p.Contract = nil
+				p.Contract = ""
 			}),
 			expErr: true,
 		},
@@ -364,7 +364,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 		},
 		"admin missing": {
 			src: UpdateAdminProposalFixture(func(p *UpdateAdminProposal) {
-				p.NewAdmin = nil
+				p.NewAdmin = ""
 			}),
 			expErr: true,
 		},
@@ -389,7 +389,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 
 func TestValidateClearAdminProposal(t *testing.T) {
 	var (
-		invalidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen-1)
+		invalidAddress = "invalid address"
 	)
 
 	specs := map[string]struct {
@@ -407,7 +407,7 @@ func TestValidateClearAdminProposal(t *testing.T) {
 		},
 		"contract missing": {
 			src: ClearAdminProposalFixture(func(p *ClearAdminProposal) {
-				p.Contract = nil
+				p.Contract = ""
 			}),
 			expErr: true,
 		},
@@ -477,7 +477,7 @@ func TestProposalStrings(t *testing.T) {
 `,
 		},
 		"instantiate contract without admin": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = nil }),
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = "" }),
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
@@ -574,7 +574,7 @@ init_funds: []
 `,
 		},
 		"instantiate contract without admin": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = nil }),
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = "" }),
 			exp: `title: Foo
 description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du

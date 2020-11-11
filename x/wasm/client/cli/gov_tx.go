@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
@@ -32,14 +31,10 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if len(viper.GetString(flagRunAs)) == 0 {
 				return errors.New("run-as address is required")
 			}
-			runAsAddr, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
-			if err != nil {
-				return errors.Wrap(err, "run-as")
-			}
 			content := types.StoreCodeProposal{
 				Title:                 viper.GetString(cli.FlagTitle),
 				Description:           viper.GetString(cli.FlagDescription),
-				RunAs:                 runAsAddr,
+				RunAs:                 viper.GetString(flagRunAs),
 				WASMByteCode:          src.WASMByteCode,
 				Source:                src.Source,
 				Builder:               src.Builder,
@@ -97,14 +92,10 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			if len(viper.GetString(flagRunAs)) == 0 {
 				return errors.New("creator address is required")
 			}
-			creator, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
-			if err != nil {
-				return errors.Wrap(err, "creator")
-			}
 			content := types.InstantiateContractProposal{
 				Title:       viper.GetString(cli.FlagTitle),
 				Description: viper.GetString(cli.FlagDescription),
-				RunAs:       creator,
+				RunAs:       viper.GetString(flagRunAs),
 				Admin:       src.Admin,
 				CodeID:      src.CodeID,
 				Label:       src.Label,
@@ -163,10 +154,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			if len(viper.GetString(flagRunAs)) == 0 {
 				return errors.New("run-as address is required")
 			}
-			runAs, err := sdk.AccAddressFromBech32(viper.GetString(flagRunAs))
-			if err != nil {
-				return errors.Wrap(err, "run-as")
-			}
 
 			content := types.MigrateContractProposal{
 				Title:       viper.GetString(cli.FlagTitle),
@@ -174,7 +161,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				Contract:    src.Contract,
 				CodeID:      src.CodeID,
 				MigrateMsg:  src.MigrateMsg,
-				RunAs:       runAs,
+				RunAs:       viper.GetString(flagRunAs),
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
@@ -267,15 +254,10 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			contractAddr, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return sdkerrors.Wrap(err, "contract")
-			}
-
 			content := types.ClearAdminProposal{
 				Title:       viper.GetString(cli.FlagTitle),
 				Description: viper.GetString(cli.FlagDescription),
-				Contract:    contractAddr,
+				Contract:    args[0],
 			}
 
 			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))

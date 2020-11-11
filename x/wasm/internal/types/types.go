@@ -23,7 +23,7 @@ func (c CodeInfo) ValidateBasic() error {
 	if len(c.CodeHash) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code hash")
 	}
-	if err := sdk.VerifyAddressFormat(c.Creator); err != nil {
+	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
 		return sdkerrors.Wrap(err, "creator")
 	}
 	if err := validateSourceURL(c.Source); err != nil {
@@ -42,7 +42,7 @@ func (c CodeInfo) ValidateBasic() error {
 func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string, instantiatePermission AccessConfig) CodeInfo {
 	return CodeInfo{
 		CodeHash:          codeHash,
-		Creator:           creator,
+		Creator:           creator.String(),
 		Source:            source,
 		Builder:           builder,
 		InstantiateConfig: instantiatePermission,
@@ -57,10 +57,14 @@ func (c *ContractHistory) AppendCodeHistory(newEntries ...ContractCodeHistoryEnt
 
 // NewContractInfo creates a new instance of a given WASM contract info
 func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string, createdAt *AbsoluteTxPosition) ContractInfo {
+	var adminAddr string
+	if !admin.Empty() {
+		adminAddr = admin.String()
+	}
 	return ContractInfo{
 		CodeID:  codeID,
-		Creator: creator,
-		Admin:   admin,
+		Creator: creator.String(),
+		Admin:   adminAddr,
 		Label:   label,
 		Created: createdAt,
 	}
@@ -70,11 +74,11 @@ func (c *ContractInfo) ValidateBasic() error {
 	if c.CodeID == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code id")
 	}
-	if err := sdk.VerifyAddressFormat(c.Creator); err != nil {
+	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
 		return sdkerrors.Wrap(err, "creator")
 	}
-	if c.Admin != nil {
-		if err := sdk.VerifyAddressFormat(c.Admin); err != nil {
+	if len(c.Admin) != 0 {
+		if _, err := sdk.AccAddressFromBech32(c.Admin); err != nil {
 			return sdkerrors.Wrap(err, "admin")
 		}
 	}
@@ -112,6 +116,18 @@ func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntr
 		CodeID:    c.CodeID,
 		Updated:   c.Created,
 	}
+}
+
+// AdminAddr convert into sdk.AccAddress or nil when not set
+func (c *ContractInfo) AdminAddr() sdk.AccAddress {
+	if c.Admin == "" {
+		return nil
+	}
+	admin, err := sdk.AccAddressFromBech32(c.Admin)
+	if err != nil { // should never happen
+		panic(err.Error())
+	}
+	return admin
 }
 
 // LessThan can be used to sort

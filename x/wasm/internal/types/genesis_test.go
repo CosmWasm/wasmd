@@ -29,7 +29,7 @@ func TestValidateGenesisState(t *testing.T) {
 		},
 		"contract invalid": {
 			srcMutator: func(s *GenesisState) {
-				s.Contracts[0].ContractAddress = nil
+				s.Contracts[0].ContractAddress = "invalid"
 			},
 			expError: true,
 		},
@@ -111,13 +111,13 @@ func TestContractValidateBasic(t *testing.T) {
 		"all good": {srcMutator: func(_ *Contract) {}},
 		"contract address invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractAddress = nil
+				c.ContractAddress = "invalid"
 			},
 			expError: true,
 		},
 		"contract info invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractInfo.Creator = nil
+				c.ContractInfo.Creator = "invalid"
 			},
 			expError: true,
 		},

@@ -163,18 +163,14 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Execute != nil:
-		contractAddr, err := sdk.AccAddressFromBech32(msg.Execute.ContractAddr)
-		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.Execute.ContractAddr)
-		}
 		coins, err := convertWasmCoinsToSdkCoins(msg.Execute.Send)
 		if err != nil {
 			return nil, err
 		}
 
 		sdkMsg := types.MsgExecuteContract{
-			Sender:    sender,
-			Contract:  contractAddr,
+			Sender:    sender.String(),
+			Contract:  msg.Execute.ContractAddr,
 			Msg:       msg.Execute.Msg,
 			SentFunds: coins,
 		}
@@ -186,7 +182,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 		}
 
 		sdkMsg := types.MsgInstantiateContract{
-			Sender: sender,
+			Sender: sender.String(),
 			CodeID: msg.Instantiate.CodeID,
 			// TODO: add this to CosmWasm
 			Label:     fmt.Sprintf("Auto-created by %s", sender),

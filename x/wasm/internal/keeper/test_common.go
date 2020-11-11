@@ -298,7 +298,15 @@ func TestHandler(k *Keeper) sdk.Handler {
 }
 
 func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
-	contractAddr, err := k.Instantiate(ctx, msg.CodeID, msg.Sender, msg.Admin, msg.InitMsg, msg.Label, msg.InitFunds)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "sender")
+	}
+	adminAddr, err := sdk.AccAddressFromBech32(msg.Admin)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "admin")
+	}
+	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +318,15 @@ func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateCont
 }
 
 func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
-	res, err := k.Execute(ctx, msg.Contract, msg.Sender, msg.Msg, msg.SentFunds)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "sender")
+	}
+	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "admin")
+	}
+	res, err := k.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.SentFunds)
 	if err != nil {
 		return nil, err
 	}
@@ -319,9 +335,9 @@ func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*
 	return res, nil
 }
 
-func AnyAccAddress(_ *testing.T) sdk.AccAddress {
+func AnyAccAddress(_ *testing.T) string {
 	_, _, addr := keyPubAddr()
-	return addr
+	return addr.String()
 }
 
 type HackatomExampleContract struct {
