@@ -13,9 +13,9 @@ import (
 	"io"
 	"net/http"
 
+	types_1 "github.com/gogo/protobuf/types"
 	"github.com/golang/protobuf/descriptor"
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
 	"google.golang.org/grpc"
@@ -457,7 +457,7 @@ func local_request_Query_Code_0(ctx context.Context, marshaler runtime.Marshaler
 }
 
 func request_Query_Codes_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq empty.Empty
+	var protoReq types_1.Empty
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.Codes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -466,7 +466,7 @@ func request_Query_Codes_0(ctx context.Context, marshaler runtime.Marshaler, cli
 }
 
 func local_request_Query_Codes_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq empty.Empty
+	var protoReq types_1.Empty
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.Codes(ctx, &protoReq)

@@ -93,7 +93,7 @@ func TestValidateParams(t *testing.T) {
 		},
 		"reject undefined permission in CodeUploadAccess": {
 			src: Params{
-				CodeUploadAccess:             AccessConfig{Permission: AccessTypeUndefined},
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeUnspecified},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
 				MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
 			},
@@ -124,11 +124,11 @@ func TestAccessTypeMarshalJson(t *testing.T) {
 		src AccessType
 		exp string
 	}{
-		"Undefined":   {src: AccessTypeUndefined, exp: `"Undefined"`},
+		"Unspecified": {src: AccessTypeUnspecified, exp: `"Unspecified"`},
 		"Nobody":      {src: AccessTypeNobody, exp: `"Nobody"`},
 		"OnlyAddress": {src: AccessTypeOnlyAddress, exp: `"OnlyAddress"`},
 		"Everybody":   {src: AccessTypeEverybody, exp: `"Everybody"`},
-		"unknown":     {src: 999, exp: `"Undefined"`},
+		"unknown":     {src: 999, exp: `"Unspecified"`},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -144,11 +144,11 @@ func TestAccessTypeUnmarshalJson(t *testing.T) {
 		src string
 		exp AccessType
 	}{
-		"Undefined":   {src: `"Undefined"`, exp: AccessTypeUndefined},
+		"Unspecified": {src: `"Unspecified"`, exp: AccessTypeUnspecified},
 		"Nobody":      {src: `"Nobody"`, exp: AccessTypeNobody},
 		"OnlyAddress": {src: `"OnlyAddress"`, exp: AccessTypeOnlyAddress},
 		"Everybody":   {src: `"Everybody"`, exp: AccessTypeEverybody},
-		"unknown":     {src: `""`, exp: AccessTypeUndefined},
+		"unknown":     {src: `""`, exp: AccessTypeUnspecified},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

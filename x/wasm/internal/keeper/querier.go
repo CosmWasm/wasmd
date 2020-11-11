@@ -7,7 +7,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/golang/protobuf/ptypes/empty"
+	prototypes "github.com/gogo/protobuf/types"
 )
 
 type grpcQuerier struct {
@@ -133,7 +133,7 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 	}, nil
 }
 
-func (q grpcQuerier) Codes(c context.Context, _ *empty.Empty) (*types.QueryCodesResponse, error) {
+func (q grpcQuerier) Codes(c context.Context, _ *prototypes.Empty) (*types.QueryCodesResponse, error) {
 	rsp, err := queryCodeList(sdk.UnwrapSDKContext(c), *q.keeper)
 	switch {
 	case err != nil:

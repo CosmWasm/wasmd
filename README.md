@@ -1,10 +1,10 @@
 # Wasm Zone
 
-[![CircleCI](https://circleci.com/gh/cosmwasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/cosmwasm/wasmd/tree/master)
+[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/master)
 [![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
 [![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
-[![license](https://img.shields.io/github/license/cosmwasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
-[![LoC](https://tokei.rs/b1/github/cosmwasm/wasmd)](https://github.com/CosmWasm/wasmd)
+[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
+[![LoC](https://tokei.rs/b1/github/CosmWasm/wasmd)](https://github.com/CosmWasm/wasmd)
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.14+](https://golang.org/dl/)
+**Note**: Requires [Go 1.15+](https://golang.org/dl/)
 
 ## Supported Systems
 
@@ -68,24 +68,11 @@ To set up a single node testnet, [look at the deployment documentation](./docs/d
 If you want to deploy a whole cluster, [look at the network scripts](./networks/README.md).
 
 ## Protobuf
-
-1. Install [protoc](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) 
-
-2. Install [cosmos-extension](https://github.com/regen-network/cosmos-proto/) for [gogo-protobuf](https://github.com/gogo/protobuf)  
-```sh
-go install github.com/regen-network/cosmos-proto/protoc-gen-gocosmos
+Generate protobuf
+```shell script
+make proto-gen
 ```
-3. Install [grpc gateway extension](github.com/grpc-ecosystem/grpc-gateway)
-```go
-go install \                                                                     upgrade_stargate_rebased 3a8aa77 ✗
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger \
-    github.com/golang/protobuf/protoc-gen-go
-```
-3. Run generator
-```sh
- make proto-gen
-```
+The generators are executed within a Docker [container](./contrib/prototools-docker), now.
 
 ## Dockerized
 

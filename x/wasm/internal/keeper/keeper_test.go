@@ -288,7 +288,7 @@ func TestInstantiate(t *testing.T) {
 	assert.Equal(t, info.Label, "demo contract 1")
 
 	exp := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryTypeInit,
+		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    codeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       json.RawMessage(initMsgBz),
@@ -850,12 +850,12 @@ func TestMigrate(t *testing.T) {
 			assert.Equal(t, spec.codeID, cInfo.CodeID)
 
 			expHistory := []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeInit,
+				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    originalCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       initMsgBz,
 			}, {
-				Operation: types.ContractCodeHistoryTypeMigrate,
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    spec.codeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       spec.migrateMsg,

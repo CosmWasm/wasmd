@@ -230,44 +230,44 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 	}{
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeGenesis,
+				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeGenesis,
+				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeInit,
+				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.ContractCodeHistoryTypeMigrate,
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.ContractCodeHistoryTypeMigrate,
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 			expContent: []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeInit,
+				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
 			}, {
-				Operation: types.ContractCodeHistoryTypeMigrate,
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
-				Operation: types.ContractCodeHistoryTypeMigrate,
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
 				Msg:       []byte(`"migrate message 2"`),
 			}},
@@ -275,7 +275,7 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 		"unknown contract address": {
 			srcQueryAddr: otherAddr,
 			srcHistory: []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryTypeGenesis,
+				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),

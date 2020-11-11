@@ -215,7 +215,7 @@ func (m *Contract) GetContractState() []Model {
 	return nil
 }
 
-// Sequence id and value of a counter
+// Sequence key and value of an id generation counter
 type Sequence struct {
 	IDKey []byte `protobuf:"bytes,1,opt,name=id_key,json=idKey,proto3" json:"id_key,omitempty"`
 	Value uint64 `protobuf:"varint,2,opt,name=value,proto3" json:"value,omitempty"`
