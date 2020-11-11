@@ -71,7 +71,7 @@ func main() {
 		txCommand(),
 		flags.LineBreak,
 		flags.LineBreak,
-		keys.Commands(app.DefaultNodeHome),
+		keys.Commands(app.DefaultCLIHome),
 		flags.LineBreak,
 		//version.Cmd,
 		cli.NewCompletionCmd(rootCmd, true),
