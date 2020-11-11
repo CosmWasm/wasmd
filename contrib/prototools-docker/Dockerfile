@@ -18,7 +18,7 @@ RUN go get -d \
 RUN GO111MODULE=on go get \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION} \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@v${GRPC_GATEWAY_VERSION} && \
-    mv /go/bin/protoc-gen-grpc-gateway /usr/local/bin/ &&\
+    mv /go/bin/protoc-gen-grpc-gateway /usr/local/bin/ && \
     mv /go/bin/protoc-gen-swagger /usr/local/bin/
 
 # Install regen fork of gogo proto
