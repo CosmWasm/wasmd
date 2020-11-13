@@ -10,9 +10,9 @@ You can add the following section to `config/app.toml`. Below is shown with defa
 [wasm]
 # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
 query_gas_limit = 300000
-# This is the number of wasm vm instances we keep cached in memory for speed-up
-# Warning: this is currently unstable and may lead to crashes, best to keep for 0 unless testing locally
-lru_size = 0
+# This defines the memory size for wasm contract instances that we can keep cached for speed-up
+# The value is in MiB not bytes
+lru_cache_size = 0
 ```
 
 ## Events

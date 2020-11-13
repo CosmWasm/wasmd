@@ -8,9 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type contractState struct {
-}
-
 func TestInitGenesis(t *testing.T) {
 	data := setupTest(t)
 
@@ -22,56 +19,13 @@ func TestInitGenesis(t *testing.T) {
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
 
-	t.Log("fail with invalid source url")
 	msg := MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-		Source:       "someinvalidurl",
-		Builder:      "",
-	}
-
-	err := msg.ValidateBasic()
-	require.Error(t, err)
-
-	_, err = h(data.ctx, &msg)
-	require.Error(t, err)
-
-	t.Log("fail with relative source url")
-	msg = MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-		Source:       "./testdata/escrow.wasm",
-		Builder:      "",
-	}
-
-	err = msg.ValidateBasic()
-	require.Error(t, err)
-
-	_, err = h(data.ctx, &msg)
-	require.Error(t, err)
-
-	t.Log("fail with invalid build tag")
-	msg = MsgStoreCode{
-		Sender:       creator,
-		WASMByteCode: testContract,
-		Source:       "",
-		Builder:      "somerandombuildtag-0.6.2",
-	}
-
-	err = msg.ValidateBasic()
-	require.Error(t, err)
-
-	_, err = h(data.ctx, &msg)
-	require.Error(t, err)
-
-	t.Log("no error with valid source and build tag")
-	msg = MsgStoreCode{
 		Sender:       creator,
 		WASMByteCode: testContract,
 		Source:       "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
 		Builder:      "confio/cosmwasm-opt:0.7.0",
 	}
-	err = msg.ValidateBasic()
+	err := msg.ValidateBasic()
 	require.NoError(t, err)
 
 	res, err := h(data.ctx, &msg)

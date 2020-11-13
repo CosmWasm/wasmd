@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -130,9 +131,9 @@ type initMsg struct {
 }
 
 type state struct {
-	Verifier    wasmTypes.CanonicalAddress `json:"verifier"`
-	Beneficiary wasmTypes.CanonicalAddress `json:"beneficiary"`
-	Funder      wasmTypes.CanonicalAddress `json:"funder"`
+	Verifier    wasmvmtypes.CanonicalAddress `json:"verifier"`
+	Beneficiary wasmvmtypes.CanonicalAddress `json:"beneficiary"`
+	Funder      wasmvmtypes.CanonicalAddress `json:"funder"`
 }
 
 func TestHandleInstantiate(t *testing.T) {
@@ -367,6 +368,59 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins(nil), data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
+}
+
+func TestReadWasmConfig(t *testing.T) {
+	defaults := DefaultWasmConfig()
+	specs := map[string]struct {
+		src AppOptionsMock
+		exp types.WasmConfig
+	}{
+		"set query gas limit via opts": {
+			src: AppOptionsMock{
+				"wasm.query_gas_limit": 1,
+			},
+			exp: types.WasmConfig{
+				SmartQueryGasLimit: 1,
+				LRUCacheSize:       defaults.LRUCacheSize,
+			},
+		},
+		"set cache via opts": {
+			src: AppOptionsMock{
+				"wasm.lru_cache_size": 2,
+			},
+			exp: types.WasmConfig{
+				LRUCacheSize:       2,
+				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
+			},
+		},
+		"set debug via opts": {
+			src: AppOptionsMock{
+				"trace": true,
+			},
+			exp: types.WasmConfig{
+				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
+				LRUCacheSize:       defaults.LRUCacheSize,
+				ContractDebugMode:  true,
+			},
+		},
+		"all defaults when no options set": {
+			exp: defaults,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := ReadWasmConfig(spec.src)
+			require.NoError(t, err)
+			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
+
+type AppOptionsMock map[string]interface{}
+
+func (a AppOptionsMock) Get(s string) interface{} {
+	return a[s]
 }
 
 type prettyEvent struct {

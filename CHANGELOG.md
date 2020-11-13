@@ -44,7 +44,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (wasmd) [\#163](https://github.com/CosmWasm/wasmd/issues/163) Control who can instantiate code
 * (wasmd) [\#164](https://github.com/CosmWasm/wasmd/issues/164) Control who can upload code
 * (wasmd) [\#173](https://github.com/CosmWasm/wasmd/issues/173) Gov proposal types and handler
-* (wasmd) [\#122](https://github.com/CosmWasm/wasmd/pull/122]) Migrate contract backend functionality with go-cosmwasm stub impl
+* (wasmd) [\#122](https://github.com/CosmWasm/wasmd/pull/122]) Migrate contract backend functionality with wasmvm stub impl
 * (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
 * (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
 flag and configuration.

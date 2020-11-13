@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -453,7 +453,7 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// STEP 3: now, let's reflect some queries.
 	// let's get the bonded denom
-	reflectBondedQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
+	reflectBondedQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		BondedDenom: &struct{}{},
 	}}}}
 	reflectBondedBin := buildMaskQuery(t, &reflectBondedQuery)
@@ -462,20 +462,20 @@ func TestQueryStakingInfo(t *testing.T) {
 	// first we pull out the data from chain response, before parsing the original response
 	var reflectRes ChainResponse
 	mustParse(t, res, &reflectRes)
-	var bondedRes wasmTypes.BondedDenomResponse
+	var bondedRes wasmvmtypes.BondedDenomResponse
 	mustParse(t, reflectRes.Data, &bondedRes)
 	assert.Equal(t, "stake", bondedRes.Denom)
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
-	reflectValidatorsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
-		Validators: &wasmTypes.ValidatorsQuery{},
+	reflectValidatorsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Validators: &wasmvmtypes.ValidatorsQuery{},
 	}}}}
 	reflectValidatorsBin := buildMaskQuery(t, &reflectValidatorsQuery)
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectValidatorsBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
-	var validatorRes wasmTypes.ValidatorsResponse
+	var validatorRes wasmvmtypes.ValidatorsResponse
 	mustParse(t, reflectRes.Data, &validatorRes)
 	require.Len(t, validatorRes.Validators, 1)
 	valInfo := validatorRes.Validators[0]
@@ -486,8 +486,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Contains(t, valInfo.MaxChangeRate, "0.010")
 
 	// test to get all my delegations
-	reflectAllDelegationsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
-		AllDelegations: &wasmTypes.AllDelegationsQuery{
+	reflectAllDelegationsQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		AllDelegations: &wasmvmtypes.AllDelegationsQuery{
 			Delegator: contractAddr.String(),
 		},
 	}}}}
@@ -496,7 +496,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
-	var allDelegationsRes wasmTypes.AllDelegationsResponse
+	var allDelegationsRes wasmvmtypes.AllDelegationsResponse
 	mustParse(t, reflectRes.Data, &allDelegationsRes)
 	require.Len(t, allDelegationsRes.Delegations, 1)
 	delInfo := allDelegationsRes.Delegations[0]
@@ -509,8 +509,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
 
 	// test to get one delegations
-	reflectDelegationQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Staking: &wasmTypes.StakingQuery{
-		Delegation: &wasmTypes.DelegationQuery{
+	reflectDelegationQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+		Delegation: &wasmvmtypes.DelegationQuery{
 			Validator: valAddr.String(),
 			Delegator: contractAddr.String(),
 		},
@@ -520,7 +520,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
-	var delegationRes wasmTypes.DelegationResponse
+	var delegationRes wasmvmtypes.DelegationResponse
 	mustParse(t, reflectRes.Data, &delegationRes)
 	assert.NotEmpty(t, delegationRes.Delegation)
 	delInfo2 := delegationRes.Delegation
@@ -532,10 +532,10 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Denom, delInfo2.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo2.Amount.Amount)
 
-	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo2.CanRedelegate)
+	require.Equal(t, wasmvmtypes.NewCoin(200000, "stake"), delInfo2.CanRedelegate)
 	require.Len(t, delInfo2.AccumulatedRewards, 1)
 	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
-	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
+	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
 	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
@@ -578,15 +578,15 @@ func TestQueryStakingPlugin(t *testing.T) {
 	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
 
 	// Step 2: Try out the query plugins
-	query := wasmTypes.StakingQuery{
-		Delegation: &wasmTypes.DelegationQuery{
+	query := wasmvmtypes.StakingQuery{
+		Delegation: &wasmvmtypes.DelegationQuery{
 			Delegator: contractAddr.String(),
 			Validator: valAddr.String(),
 		},
 	}
 	raw, err := StakingQuerier(stakingKeeper, distKeeper)(ctx, &query)
 	require.NoError(t, err)
-	var res wasmTypes.DelegationResponse
+	var res wasmvmtypes.DelegationResponse
 	mustParse(t, raw, &res)
 	assert.NotEmpty(t, res.Delegation)
 	delInfo := res.Delegation
@@ -598,10 +598,10 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
 
-	require.Equal(t, wasmTypes.NewCoin(200000, "stake"), delInfo.CanRedelegate)
+	require.Equal(t, wasmvmtypes.NewCoin(200000, "stake"), delInfo.CanRedelegate)
 	require.Len(t, delInfo.AccumulatedRewards, 1)
 	// see bonding above to see how we calculate 36000 (240000 / 6 - 10% commission)
-	require.Equal(t, wasmTypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
+	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
 	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)

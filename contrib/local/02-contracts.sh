@@ -33,7 +33,7 @@ echo "$RESP"
 echo "### Query smart"
 wasmcli query wasm contract-state smart "$CONTRACT" '{"verifier":{}}' -o json | jq
 echo "### Query raw"
-KEY=$(echo "$RESP" | jq -r ".[0].Key")
+KEY=$(echo "$RESP" | jq -r ".[0].key")
 wasmcli query wasm contract-state raw "$CONTRACT" "$KEY" -o json
 
 

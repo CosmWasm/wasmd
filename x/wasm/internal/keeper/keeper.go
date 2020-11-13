@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"path/filepath"
 
-	wasm "github.com/CosmWasm/go-cosmwasm"
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,7 +50,7 @@ type Keeper struct {
 	wasmer       types.WasmerEngine
 	queryPlugins QueryPlugins
 	messenger    MessageHandler
-	// queryGasLimit is the max wasm gas that can be spent on executing a query with a contract
+	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	authZPolicy   AuthorizationPolicy
 	paramSpace    paramtypes.Subspace
@@ -73,7 +73,7 @@ func NewKeeper(
 	customEncoders *MessageEncoders,
 	customPlugins *QueryPlugins,
 ) Keeper {
-	wasmer, err := wasm.NewWasmer(filepath.Join(homeDir, "wasm"), supportedFeatures)
+	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.ContractDebugMode, wasmConfig.LRUCacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -566,7 +566,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	return k.wasmer.GetCode(codeInfo.CodeHash)
 }
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmTypes.CosmosMsg) error {
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) error {
 	for _, msg := range msgs {
 		if err := k.messenger.Dispatch(ctx, contractAddr, msg); err != nil {
 			return err
@@ -679,7 +679,7 @@ type MultipiedGasMeter struct {
 	originalMeter sdk.GasMeter
 }
 
-var _ wasm.GasMeter = MultipiedGasMeter{}
+var _ wasmvm.GasMeter = MultipiedGasMeter{}
 
 func (m MultipiedGasMeter) GasConsumed() sdk.Gas {
 	return m.originalMeter.GasConsumed() * GasMultiplier
