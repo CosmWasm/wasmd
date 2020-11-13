@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
+	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -27,7 +30,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
@@ -50,7 +53,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
-		WithAccountRetriever(types.AccountRetriever{}).
+		WithAccountRetriever(authtypes.AccountRetriever{}).
 		WithBroadcastMode(flags.BroadcastBlock).
 		WithHomeDir(app.DefaultNodeHome)
 
@@ -82,7 +85,7 @@ func Execute(rootCmd *cobra.Command) error {
 	srvCtx := server.NewDefaultContext()
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &client.Context{})
-	ctx = context.WithValue(ctx, server.ServerContextKey, server.NewDefaultContext())
+	ctx = context.WithValue(ctx, server.ServerContextKey, srvCtx)
 
 	rootCmd.PersistentFlags().String("log_level", srvCtx.Config.LogLevel, "The logging level in the format of <module>:<level>,...")
 
@@ -110,6 +113,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
+		queryCommand(),
+		txCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
 }
@@ -117,6 +122,73 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
 	wasm.AddModuleInitFlags(startCmd)
+}
+
+func queryCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        "query",
+		Aliases:                    []string{"q"},
+		Short:                      "Querying subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+	cmd.AddCommand(
+		authcmd.GetAccountCmd(),
+		flags.LineBreak,
+		rpc.ValidatorCommand(),
+		rpc.BlockCommand(),
+		authcmd.QueryTxsByEventsCmd(),
+		authcmd.QueryTxCmd(),
+		flags.LineBreak,
+	)
+
+	app.ModuleBasics.AddQueryCommands(cmd)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+
+	return cmd
+}
+
+func txCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        "tx",
+		Short:                      "Transactions subcommands",
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+
+	cmd.AddCommand(
+		bankcmd.NewSendTxCmd(),
+		flags.LineBreak,
+		authcmd.GetSignCommand(),
+		authcmd.GetSignBatchCommand(),
+		authcmd.GetMultiSignCommand(),
+		authcmd.GetValidateSignaturesCommand(),
+		flags.LineBreak,
+		authcmd.GetBroadcastCommand(),
+		authcmd.GetEncodeCommand(),
+		authcmd.GetDecodeCommand(),
+		flags.LineBreak,
+		vestingcli.GetTxCmd(),
+	)
+
+	// add modules' tx commands
+	app.ModuleBasics.AddTxCommands(cmd)
+
+	// remove auth and bank commands as they're mounted under the root tx command
+	var cmdsToRemove []*cobra.Command
+
+	for _, cmd := range cmd.Commands() {
+		if cmd.Use == authtypes.ModuleName || cmd.Use == banktypes.ModuleName {
+			cmdsToRemove = append(cmdsToRemove, cmd)
+		}
+	}
+
+	cmd.RemoveCommand(cmdsToRemove...)
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
+
+	return cmd
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {

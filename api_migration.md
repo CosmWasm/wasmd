@@ -17,9 +17,9 @@ A list of ContractCodeHistoryEntries with following fields:
 * 404 - for an unknown contract
 
 ### CLI
-`wasmcli query wasm contract-history [bech32_address] to print all the code changes.`
+`wasmd query wasm contract-history [bech32_address] to print all the code changes.`
 Example:
-`wasmcli query wasm contract-history cosmos18r5szma8hm93pvx6lwpjwyxruw27e0k5uw835c` 
+`wasmd query wasm contract-history cosmos18r5szma8hm93pvx6lwpjwyxruw27e0k5uw835c` 
 ```json
 [
   {

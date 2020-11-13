@@ -39,12 +39,9 @@ RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-gaiaflex
 FROM alpine:3.12
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
-COPY --from=go-builder /code/build/wasmcli /usr/bin/wasmcli
 
 # testnet
-COPY --from=go-builder /code/build/coral /usr/bin/coral
 COPY --from=go-builder /code/build/corald /usr/bin/corald
-COPY --from=go-builder /code/build/gaiaflex /usr/bin/gaiaflex
 COPY --from=go-builder /code/build/gaiaflexd /usr/bin/gaiaflexd
 
 COPY docker/* /opt/
