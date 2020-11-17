@@ -95,7 +95,6 @@ const appName = "WasmApp"
 
 // We pull these out so we can set them with LDFLAGS in the Makefile
 var (
-	CLIDir       = ".wasmcli"
 	NodeDir      = ".wasmd"
 	Bech32Prefix = sdk.Bech32MainPrefix
 
@@ -129,8 +128,6 @@ func GetEnabledProposals() []wasm.ProposalType {
 // These are the ones we will want to use in the code, based on
 // any overrides above
 var (
-	// DefaultCLIHome default home directories for wasmcli
-	DefaultCLIHome = os.ExpandEnv("$HOME/") + CLIDir
 	// DefaultNodeHome default home directories for wasmd
 	DefaultNodeHome = os.ExpandEnv("$HOME/") + NodeDir
 

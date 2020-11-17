@@ -54,7 +54,6 @@ build_tags_comma_sep := $(subst $(empty),$(comma),$(build_tags))
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=wasm \
 		  -X github.com/cosmos/cosmos-sdk/version.AppName=wasmd \
-		  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=wasmcli \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -67,10 +66,8 @@ ldflags := $(strip $(ldflags))
 
 coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
 				  -X github.com/cosmos/cosmos-sdk/version.AppName=corald \
-				  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=coral \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-				  -X github.com/CosmWasm/wasmd/app.CLIDir=.coral \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
 				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
 				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -82,11 +79,9 @@ coral_ldflags := $(strip $(coral_ldflags))
 
 flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.AppName=gaiaflexd \
-				  -X github.com/CosmWasm/wasmd/cmd/wasmcli/version.ClientName=gaiaflex \
 				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 				  -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true \
-				  -X github.com/CosmWasm/wasmd/app.CLIDir=.gaiaflex \
 				  -X github.com/CosmWasm/wasmd/app.NodeDir=.gaiaflexd \
 				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=cosmos \
 				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
@@ -102,29 +97,23 @@ all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	# wasmd nodes not supported on windows, maybe the cli?
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli.exe ./cmd/wasmcli
+	exit 1
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmcli ./cmd/wasmcli
 endif
 
 build-coral: go.sum
 ifeq ($(OS),Windows_NT)
-	# wasmd nodes not supported on windows, maybe the cli?
-	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral.exe ./cmd/wasmcli
+	exit 1
 else
 	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
-	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/coral ./cmd/wasmcli
 endif
 
 build-gaiaflex: go.sum
 ifeq ($(OS),Windows_NT)
-	# wasmd nodes not supported on windows, maybe the cli?
-	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex.exe ./cmd/wasmcli
+	exit 1
 else
 	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexd ./cmd/wasmd
-	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflex ./cmd/wasmcli
 endif
 
 build-linux: go.sum
@@ -139,7 +128,6 @@ endif
 
 install: go.sum
 	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmcli
 
 ########################################
 ### Tools & dependencies

@@ -10,8 +10,8 @@ MONIKER=${MONIKER:-node001}
 wasmd init --chain-id "$CHAIN_ID" "$MONIKER"
 # staking/governance token is hardcoded in config, change this
 sed -i "s/\"stake\"/\"$STAKE\"/" "$HOME"/.wasmd/config/genesis.json
-if ! wasmcli keys show validator; then
-  (echo "$PASSWORD"; echo "$PASSWORD") | wasmcli keys add validator
+if ! wasmd keys show validator; then
+  (echo "$PASSWORD"; echo "$PASSWORD") | wasmd keys add validator
 fi
 # hardcode the validator account for this instance
 echo "$PASSWORD" | wasmd add-genesis-account validator "1000000000$STAKE,1000000000$FEE"
