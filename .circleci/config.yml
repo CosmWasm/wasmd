@@ -71,7 +71,7 @@ jobs:
       - run:
           name: Run tests with coverage
           command: |
-            GORACE=halt_on_error=1
+            export GORACE=halt_on_error=1
             export VERSION="$(git describe --tags --long | sed 's/v\(.*\)/\1/')"
             export GO111MODULE=on
             mkdir -p /tmp/logs /tmp/workspace/profiles
