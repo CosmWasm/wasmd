@@ -335,7 +335,7 @@ func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*
 	return res, nil
 }
 
-func AnyAccAddress(_ *testing.T) string {
+func RandomBech32AccountAddress(_ *testing.T) string {
 	_, _, addr := keyPubAddr()
 	return addr.String()
 }

@@ -26,7 +26,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	myActorAddress := AnyAccAddress(t)
+	myActorAddress := RandomBech32AccountAddress(t)
 
 	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 		p.RunAs = myActorAddress

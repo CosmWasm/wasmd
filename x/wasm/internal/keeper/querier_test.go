@@ -37,7 +37,7 @@ func TestQueryAllContractState(t *testing.T) {
 			expModelContains: contractModel,
 		},
 		"query all with unknown address": {
-			srcQuery: &types.QueryAllContractStateRequest{Address: AnyAccAddress(t)},
+			srcQuery: &types.QueryAllContractStateRequest{Address: RandomBech32AccountAddress(t)},
 			expErr:   types.ErrNotFound,
 		},
 	}
@@ -82,7 +82,7 @@ func TestQuerySmartContractState(t *testing.T) {
 			expErr:   types.ErrQueryFailed,
 		},
 		"query smart with unknown address": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte(`{"verifier":{}}`)},
+			srcQuery: &types.QuerySmartContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte(`{"verifier":{}}`)},
 			expErr:   types.ErrNotFound,
 		},
 	}
@@ -137,7 +137,7 @@ func TestQueryRawContractState(t *testing.T) {
 			expData:  nil,
 		},
 		"query raw with unknown address": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: AnyAccAddress(t), QueryData: []byte("foo")},
+			srcQuery: &types.QueryRawContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte("foo")},
 			expErr:   types.ErrNotFound,
 		},
 	}
