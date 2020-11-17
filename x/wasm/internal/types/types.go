@@ -7,8 +7,7 @@ import (
 )
 
 const (
-	DisabledLRUCacheSize     uint32 = 0
-	defaultLRUCacheSize      uint32 = 100 // in MiB
+	defaultMemoryCacheSize   uint32 = 100 // in MiB
 	defaultQueryGasLimit     uint64 = 3000000
 	defaultContractDebugMode        = false
 )
@@ -208,8 +207,8 @@ func ParseEvents(logs []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress)
 // WasmConfig is the extra config required for wasm
 type WasmConfig struct {
 	SmartQueryGasLimit uint64
-	// LRUCacheSize in MiB not bytes
-	LRUCacheSize uint32
+	// MemoryCacheSize in MiB not bytes
+	MemoryCacheSize uint32
 	// ContractDebugMode log what contract print
 	ContractDebugMode bool
 }
@@ -218,7 +217,7 @@ type WasmConfig struct {
 func DefaultWasmConfig() WasmConfig {
 	return WasmConfig{
 		SmartQueryGasLimit: defaultQueryGasLimit,
-		LRUCacheSize:       defaultLRUCacheSize,
+		MemoryCacheSize:    defaultMemoryCacheSize,
 		ContractDebugMode:  defaultContractDebugMode,
 	}
 }

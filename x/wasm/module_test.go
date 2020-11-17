@@ -382,15 +382,15 @@ func TestReadWasmConfig(t *testing.T) {
 			},
 			exp: types.WasmConfig{
 				SmartQueryGasLimit: 1,
-				LRUCacheSize:       defaults.LRUCacheSize,
+				MemoryCacheSize:    defaults.MemoryCacheSize,
 			},
 		},
 		"set cache via opts": {
 			src: AppOptionsMock{
-				"wasm.lru_cache_size": 2,
+				"wasm.memory_cache_size": 2,
 			},
 			exp: types.WasmConfig{
-				LRUCacheSize:       2,
+				MemoryCacheSize:    2,
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 			},
 		},
@@ -400,7 +400,7 @@ func TestReadWasmConfig(t *testing.T) {
 			},
 			exp: types.WasmConfig{
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
-				LRUCacheSize:       defaults.LRUCacheSize,
+				MemoryCacheSize:    defaults.MemoryCacheSize,
 				ContractDebugMode:  true,
 			},
 		},
