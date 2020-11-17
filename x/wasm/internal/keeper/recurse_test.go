@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,9 +38,9 @@ var totalWasmQueryCounter int
 
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
 	// we do one basic setup before all test cases (which are read-only and don't change state)
-	var realWasmQuerier func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error)
+	var realWasmQuerier func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 	countingQuerier := &QueryPlugins{
-		Wasm: func(ctx sdk.Context, request *wasmTypes.WasmQuery) ([]byte, error) {
+		Wasm: func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
 			totalWasmQueryCounter++
 			return realWasmQuerier(ctx, request)
 		},

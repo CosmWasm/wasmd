@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
@@ -240,12 +239,6 @@ type WasmApp struct {
 	sm *module.SimulationManager
 }
 
-// WasmWrapper allows us to use namespacing in the config file
-// This is only used for parsing in the app, x/wasm expects WasmConfig
-type WasmWrapper struct {
-	Wasm wasm.Config `mapstructure:"wasm"`
-}
-
 // NewWasmApp returns a reference to an initialized WasmApp.
 func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool,
 	skipUpgradeHeights map[int64]bool, homePath string, invCheckPeriod uint, enabledProposals []wasm.ProposalType,
@@ -358,13 +351,10 @@ func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	var wasmRouter = bApp.Router()
 	wasmDir := filepath.Join(homePath, "wasm")
 
-	wasmWrap := WasmWrapper{Wasm: wasm.DefaultWasmConfig()}
-	err := viper.Unmarshal(&wasmWrap)
+	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic("error while reading wasm config: " + err.Error())
 	}
-	wasmConfig := wasmWrap.Wasm
-
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	supportedFeatures := "staking"

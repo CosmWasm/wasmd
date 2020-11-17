@@ -18,8 +18,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d h1:nalkkPQcITbvhmL4+C4cKA87NW0tfm3Kl9VXRoPywFg=
 github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:URdX5+vg25ts3aCh8H5IFZybJYKWhJHYMTnf+ULtoC4=
-github.com/CosmWasm/go-cosmwasm v0.11.0 h1:H+7Xzh2tEquJXuP4q1VN7ekdheAQvCjD4FRmlPqcXnQ=
-github.com/CosmWasm/go-cosmwasm v0.11.0/go.mod h1:gAFCwllx97ejI+m9SqJQrmd2SBW7HA0fOjvWWJjM2uc=
+github.com/CosmWasm/wasmvm v0.12.0-alpha1 h1:UPaemjM+O/9uQRDCiExXPpcUlMJ5Zo8N/BUvqjheb5A=
+github.com/CosmWasm/wasmvm v0.12.0-alpha1/go.mod h1:tbXGE9Jz6sYpiJroGr71OQ5TFOufq/P5LWsruA2u6JE=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.4.1/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
 github.com/DataDog/zstd v1.4.5 h1:EndNeuB0l9syBZhut0wns3gV1hL8zX8LIu6ZiVHWLIQ=

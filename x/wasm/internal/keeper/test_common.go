@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/go-cosmwasm"
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -422,10 +422,10 @@ var _ types.WasmerEngine = &MockWasmer{}
 // Without a stub function a panic is thrown.
 type MockWasmer struct {
 	CreateFn      func(code cosmwasm.WasmCode) (cosmwasm.CodeID, error)
-	InstantiateFn func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error)
-	ExecuteFn     func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error)
-	QueryFn       func(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error)
-	MigrateFn     func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error)
+	InstantiateFn func(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.InitResponse, uint64, error)
+	ExecuteFn     func(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error)
+	QueryFn       func(code cosmwasm.CodeID, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error)
+	MigrateFn     func(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.MigrateResponse, uint64, error)
 	GetCodeFn     func(code cosmwasm.CodeID) (cosmwasm.WasmCode, error)
 	CleanupFn     func()
 }
@@ -437,7 +437,7 @@ func (m *MockWasmer) Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error) {
 	return m.CreateFn(code)
 }
 
-func (m *MockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
+func (m *MockWasmer) Instantiate(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.InitResponse, uint64, error) {
 	if m.InstantiateFn == nil {
 		panic("not supposed to be called!")
 	}
@@ -445,21 +445,21 @@ func (m *MockWasmer) Instantiate(code cosmwasm.CodeID, env wasmTypes.Env, info w
 	return m.InstantiateFn(code, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit)
 }
 
-func (m *MockWasmer) Execute(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+func (m *MockWasmer) Execute(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error) {
 	if m.ExecuteFn == nil {
 		panic("not supposed to be called!")
 	}
 	return m.ExecuteFn(code, env, info, executeMsg, store, goapi, querier, gasMeter, gasLimit)
 }
 
-func (m *MockWasmer) Query(code cosmwasm.CodeID, env wasmTypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+func (m *MockWasmer) Query(code cosmwasm.CodeID, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
 	if m.QueryFn == nil {
 		panic("not supposed to be called!")
 	}
 	return m.QueryFn(code, env, queryMsg, store, goapi, querier, gasMeter, gasLimit)
 }
 
-func (m *MockWasmer) Migrate(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.MigrateResponse, uint64, error) {
+func (m *MockWasmer) Migrate(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, migrateMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.MigrateResponse, uint64, error) {
 	if m.MigrateFn == nil {
 		panic("not supposed to be called!")
 	}
@@ -490,16 +490,16 @@ func selfCallingInstMockWasmer(executeCalled *bool) *MockWasmer {
 			anyCodeID := bytes.Repeat([]byte{0x1}, 32)
 			return anyCodeID, nil
 		},
-		InstantiateFn: func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.InitResponse, uint64, error) {
-			return &wasmTypes.InitResponse{
-				Messages: []wasmTypes.CosmosMsg{
-					{Wasm: &wasmTypes.WasmMsg{Execute: &wasmTypes.ExecuteMsg{ContractAddr: env.Contract.Address, Msg: []byte(`{}`)}}},
+		InstantiateFn: func(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.InitResponse, uint64, error) {
+			return &wasmvmtypes.InitResponse{
+				Messages: []wasmvmtypes.CosmosMsg{
+					{Wasm: &wasmvmtypes.WasmMsg{Execute: &wasmvmtypes.ExecuteMsg{ContractAddr: env.Contract.Address, Msg: []byte(`{}`)}}},
 				},
 			}, 1, nil
 		},
-		ExecuteFn: func(code cosmwasm.CodeID, env wasmTypes.Env, info wasmTypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmTypes.HandleResponse, uint64, error) {
+		ExecuteFn: func(code cosmwasm.CodeID, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error) {
 			*executeCalled = true
-			return &wasmTypes.HandleResponse{}, 1, nil
+			return &wasmvmtypes.HandleResponse{}, 1, nil
 		},
 	}
 }

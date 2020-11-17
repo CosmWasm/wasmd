@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -115,6 +116,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	wasm.AddModuleInitFlags(startCmd)
 }
 
 func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {

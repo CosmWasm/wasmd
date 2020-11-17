@@ -183,7 +183,7 @@ Packet callbacks:
 ```go
 package packets
 
-// for reference: this is more like what we pass to go-cosmwasm
+// for reference: this is more like what we pass to wasmvm
 // func (c *mockContract) OnReceive(params cosmwasm2.Env, msg []byte, store prefix.Store, api cosmwasm.GoAPI, 
 //         querier keeper.QueryHandler, meter sdk.GasMeter, gas uint64) (*cosmwasm2.OnReceiveIBCResponse, uint64, error) {}
 // below is how we want to expose it in x/wasm:

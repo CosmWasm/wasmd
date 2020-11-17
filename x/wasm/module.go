@@ -12,11 +12,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/server"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -24,6 +27,12 @@ import (
 var (
 	_ module.AppModule      = AppModule{}
 	_ module.AppModuleBasic = AppModuleBasic{}
+)
+
+// Module init related flags
+const (
+	flagWasmMemoryCacheSize = "wasm.memory_cache_size"
+	flagWasmQueryGasLimit   = "wasm.query_gas_limit"
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.
@@ -169,4 +178,36 @@ func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
+}
+
+//____________________________________________________________________________
+
+// AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
+func AddModuleInitFlags(startCmd *cobra.Command) {
+	defaults := DefaultWasmConfig()
+	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
+	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
+}
+
+// ReadWasmConfig reads the wasm specifig configuration
+func ReadWasmConfig(opts servertypes.AppOptions) (types.WasmConfig, error) {
+	cfg := types.DefaultWasmConfig()
+	var err error
+	if v := opts.Get(flagWasmMemoryCacheSize); v != nil {
+		if cfg.MemoryCacheSize, err = cast.ToUint32E(v); err != nil {
+			return cfg, err
+		}
+	}
+	if v := opts.Get(flagWasmQueryGasLimit); v != nil {
+		if cfg.SmartQueryGasLimit, err = cast.ToUint64E(v); err != nil {
+			return cfg, err
+		}
+	}
+	// attach contract debugging to global "trace" flag
+	if v := opts.Get(server.FlagTrace); v != nil {
+		if cfg.ContractDebugMode, err = cast.ToBoolE(v); err != nil {
+			return cfg, err
+		}
+	}
+	return cfg, nil
 }

@@ -19,14 +19,14 @@ hardware it runs on.
 
 We currently only support Intel/AMD64 CPUs and OSX or Linux. For Linux, the standard build
 commands work for `glibc` systems (Ubuntu, Debian, CentOS, etc). If you wish to compile
-for a `muslc` based system (like alpine), you need to compile a static library go-cosmwasm locally
+for a `muslc` based system (like alpine), you need to compile a static library wasmvm locally
 and compile go with the `muslc` build tag. Or just use the [Dockerfile](./Dockerfile),
 which builds a static go binary in an alpine system.
 
 This limit comes from the Rust dll we use to run the wasm code, which comes 
-from [`go-cosmwasm`](https://github.com/CosmWasm/go-cosmwasm). There are open issues
-for adding [ARM support](https://github.com/CosmWasm/go-cosmwasm/issues/53), and
-adding [Windows support](https://github.com/CosmWasm/go-cosmwasm/issues/28).
+from [`wasmvm`](https://github.com/CosmWasm/wasmvm). There are open issues
+for adding [ARM support](https://github.com/CosmWasm/wasmvm/issues/53), and
+adding [Windows support](https://github.com/CosmWasm/wasmvm/issues/28).
 However, these issues are not high on the roadmap and unless you are championing
 them, please count on the current limits for the near future.
 

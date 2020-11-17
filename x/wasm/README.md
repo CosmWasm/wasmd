@@ -4,15 +4,21 @@ This should be a brief overview of the functionality
 
 ## Configuration
 
-You can add the following section to `config/app.toml`. Below is shown with defaults:
+You can add the following section to `config/app.toml`:
 
 ```toml
 [wasm]
 # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
 query_gas_limit = 300000
-# This is the number of wasm vm instances we keep cached in memory for speed-up
-# Warning: this is currently unstable and may lead to crashes, best to keep for 0 unless testing locally
-lru_size = 0
+# This defines the memory size for Wasm modules that we can keep cached to speed-up instantiation
+# The value is in MiB not bytes
+memory_cache_size = 300
+```
+
+The values can also be set via CLI flags on with the `start` command:
+```shell script
+--wasm.memory_cache_size uint32     Sets the size in MiB (NOT bytes) of an in-memory cache for wasm modules. Set to 0 to disable. (default 100)
+--wasm.query_gas_limit uint         Set the max gas that can be spent on executing a query with a Wasm contract (default 3000000)
 ```
 
 ## Events

@@ -17,7 +17,7 @@ addition of the `x/wasm` module.
 
 ## Supported Systems
 
-The supported systems are limited by the dlls created in [`go-cosmwasm`](https://github.com/CosmWasm/go-cosmwasm). In particular, **we only support MacOS and Linux**. 
+The supported systems are limited by the dlls created in [`wasmvm`](https://github.com/CosmWasm/wasmvm). In particular, **we only support MacOS and Linux**.
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
 using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19). 

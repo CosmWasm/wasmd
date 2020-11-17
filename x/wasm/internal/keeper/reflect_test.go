@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,7 +32,7 @@ type ownerPayload struct {
 }
 
 type reflectPayload struct {
-	Msgs []wasmTypes.CosmosMsg `json:"msgs"`
+	Msgs []wasmvmtypes.CosmosMsg `json:"msgs"`
 }
 
 // MaskQueryMsg is used to encode query messages
@@ -43,7 +43,7 @@ type MaskQueryMsg struct {
 }
 
 type ChainQuery struct {
-	Request *wasmTypes.QueryRequest `json:"request,omitempty"`
+	Request *wasmvmtypes.QueryRequest `json:"request,omitempty"`
 }
 
 type Text struct {
@@ -123,12 +123,12 @@ func TestMaskReflectContractSend(t *testing.T) {
 	// this should reduce the mask balance by 14k (to 26k)
 	// this 14k is added to the escrow, then the entire balance is sent to bob (total: 39k)
 	approveMsg := []byte(`{"release":{}}`)
-	msgs := []wasmTypes.CosmosMsg{{
-		Wasm: &wasmTypes.WasmMsg{
-			Execute: &wasmTypes.ExecuteMsg{
+	msgs := []wasmvmtypes.CosmosMsg{{
+		Wasm: &wasmvmtypes.WasmMsg{
+			Execute: &wasmvmtypes.ExecuteMsg{
 				ContractAddr: escrowAddr.String(),
 				Msg:          approveMsg,
-				Send: []wasmTypes.Coin{{
+				Send: []wasmvmtypes.Coin{{
 					Denom:  "denom",
 					Amount: "14000",
 				}},
@@ -193,12 +193,12 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// bob can send contract's tokens to fred (using SendMsg)
-	msgs := []wasmTypes.CosmosMsg{{
-		Bank: &wasmTypes.BankMsg{
-			Send: &wasmTypes.SendMsg{
+	msgs := []wasmvmtypes.CosmosMsg{{
+		Bank: &wasmvmtypes.BankMsg{
+			Send: &wasmvmtypes.SendMsg{
 				FromAddress: contractAddr.String(),
 				ToAddress:   fred.String(),
-				Amount: []wasmTypes.Coin{{
+				Amount: []wasmvmtypes.Coin{{
 					Denom:  "denom",
 					Amount: "15000",
 				}},
@@ -231,7 +231,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 	reflectOpaque := MaskHandleMsg{
 		Reflect: &reflectPayload{
-			Msgs: []wasmTypes.CosmosMsg{opaque},
+			Msgs: []wasmvmtypes.CosmosMsg{opaque},
 		},
 	}
 	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
@@ -337,8 +337,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.Equal(t, stateRes.Owner, []byte(creator))
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
-	reflectOwnerQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
-		Smart: &wasmTypes.SmartQuery{
+	reflectOwnerQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+		Smart: &wasmvmtypes.SmartQuery{
 			ContractAddr: maskAddr.String(),
 			Msg:          ownerQuery,
 		},
@@ -354,8 +354,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.Equal(t, reflectOwnerRes.Owner, creator.String())
 
 	// and with queryRaw
-	reflectStateQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
-		Raw: &wasmTypes.RawQuery{
+	reflectStateQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+		Raw: &wasmvmtypes.RawQuery{
 			ContractAddr: maskAddr.String(),
 			Key:          configKey,
 		},
@@ -398,8 +398,8 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	require.Nil(t, raw)
 
 	// and with queryRaw
-	reflectQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmTypes.QueryRequest{Wasm: &wasmTypes.WasmQuery{
-		Raw: &wasmTypes.RawQuery{
+	reflectQuery := MaskQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+		Raw: &wasmvmtypes.RawQuery{
 			ContractAddr: maskAddr.String(),
 			Key:          missingKey,
 		},
@@ -441,19 +441,19 @@ type maskCustomMsg struct {
 
 // toMaskRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
-func toMaskRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmTypes.CosmosMsg, error) {
+func toMaskRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
-		return wasmTypes.CosmosMsg{}, err
+		return wasmvmtypes.CosmosMsg{}, err
 	}
 	rawBz, err := cdc.MarshalJSON(any)
 	if err != nil {
-		return wasmTypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	customMsg, err := json.Marshal(maskCustomMsg{
 		Raw: rawBz,
 	})
-	res := wasmTypes.CosmosMsg{
+	res := wasmvmtypes.CosmosMsg{
 		Custom: customMsg,
 	}
 	return res, nil

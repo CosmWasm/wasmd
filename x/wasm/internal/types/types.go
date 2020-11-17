@@ -1,13 +1,16 @@
 package types
 
 import (
-	wasmTypes "github.com/CosmWasm/go-cosmwasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const defaultLRUCacheSize = uint64(0)
-const defaultQueryGasLimit = uint64(3000000)
+const (
+	defaultMemoryCacheSize   uint32 = 100 // in MiB
+	defaultQueryGasLimit     uint64 = 3000000
+	defaultContractDebugMode        = false
+)
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {
@@ -137,7 +140,7 @@ func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmTypes.Env {
+func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	// safety checks before casting below
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
@@ -147,14 +150,14 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmTypes.Env {
 		panic("Block (unix) time must never be negative ")
 	}
 	nano := ctx.BlockTime().Nanosecond()
-	env := wasmTypes.Env{
-		Block: wasmTypes.BlockInfo{
+	env := wasmvmtypes.Env{
+		Block: wasmvmtypes.BlockInfo{
 			Height:    uint64(ctx.BlockHeight()),
 			Time:      uint64(sec),
 			TimeNanos: uint64(nano),
 			ChainID:   ctx.ChainID(),
 		},
-		Contract: wasmTypes.ContractInfo{
+		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),
 		},
 	}
@@ -162,17 +165,17 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmTypes.Env {
 }
 
 // NewInfo initializes the MessageInfo for a contract instance
-func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmTypes.MessageInfo {
-	return wasmTypes.MessageInfo{
+func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmvmtypes.MessageInfo {
+	return wasmvmtypes.MessageInfo{
 		Sender:    creator.String(),
 		SentFunds: NewWasmCoins(deposit),
 	}
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
-func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmTypes.Coin) {
+func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 	for _, coin := range cosmosCoins {
-		wasmCoin := wasmTypes.Coin{
+		wasmCoin := wasmvmtypes.Coin{
 			Denom:  coin.Denom,
 			Amount: coin.Amount.String(),
 		}
@@ -185,7 +188,7 @@ const CustomEventType = "wasm"
 const AttributeKeyContractAddr = "contract_address"
 
 // ParseEvents converts wasm LogAttributes into an sdk.Events (with 0 or 1 elements)
-func ParseEvents(logs []wasmTypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
+func ParseEvents(logs []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
 	if len(logs) == 0 {
 		return nil
 	}
@@ -203,14 +206,18 @@ func ParseEvents(logs []wasmTypes.EventAttribute, contractAddr sdk.AccAddress) s
 
 // WasmConfig is the extra config required for wasm
 type WasmConfig struct {
-	SmartQueryGasLimit uint64 `mapstructure:"query_gas_limit"`
-	CacheSize          uint64 `mapstructure:"lru_size"`
+	SmartQueryGasLimit uint64
+	// MemoryCacheSize in MiB not bytes
+	MemoryCacheSize uint32
+	// ContractDebugMode log what contract print
+	ContractDebugMode bool
 }
 
 // DefaultWasmConfig returns the default settings for WasmConfig
 func DefaultWasmConfig() WasmConfig {
 	return WasmConfig{
 		SmartQueryGasLimit: defaultQueryGasLimit,
-		CacheSize:          defaultLRUCacheSize,
+		MemoryCacheSize:    defaultMemoryCacheSize,
+		ContractDebugMode:  defaultContractDebugMode,
 	}
 }
