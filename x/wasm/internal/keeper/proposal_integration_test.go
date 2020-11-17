@@ -26,10 +26,10 @@ func TestStoreCodeProposal(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	var anyAddress sdk.AccAddress = make([]byte, sdk.AddrLen)
+	myActorAddress := RandomBech32AccountAddress(t)
 
 	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
-		p.RunAs = anyAddress
+		p.RunAs = myActorAddress
 		p.WASMByteCode = wasmCode
 		p.Source = "https://example.com/mysource"
 		p.Builder = "foo/bar:v0.0.0"
@@ -47,7 +47,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	// then
 	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, cInfo)
-	assert.Equal(t, anyAddress, cInfo.Creator)
+	assert.Equal(t, myActorAddress, cInfo.Creator)
 	assert.Equal(t, "foo/bar:v0.0.0", cInfo.Builder)
 	assert.Equal(t, "https://example.com/mysource", cInfo.Source)
 
@@ -79,8 +79,8 @@ func TestInstantiateProposal(t *testing.T) {
 	)
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
 		p.CodeID = firstCodeID
-		p.RunAs = oneAddress
-		p.Admin = otherAddress
+		p.RunAs = oneAddress.String()
+		p.Admin = otherAddress.String()
 		p.Label = "testing"
 	})
 
@@ -100,8 +100,8 @@ func TestInstantiateProposal(t *testing.T) {
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
-	assert.Equal(t, oneAddress, cInfo.Creator)
-	assert.Equal(t, otherAddress, cInfo.Admin)
+	assert.Equal(t, oneAddress.String(), cInfo.Creator)
+	assert.Equal(t, otherAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
@@ -136,7 +136,7 @@ func TestMigrateProposal(t *testing.T) {
 
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
 		c.Label = "testing"
-		c.Admin = anyAddress
+		c.Admin = anyAddress.String()
 	})
 	key, err := hex.DecodeString("636F6E666967")
 	require.NoError(t, err)
@@ -153,9 +153,9 @@ func TestMigrateProposal(t *testing.T) {
 		Title:       "Foo",
 		Description: "Bar",
 		CodeID:      2,
-		Contract:    contractAddr,
+		Contract:    contractAddr.String(),
 		MigrateMsg:  migMsgBz,
-		RunAs:       otherAddress,
+		RunAs:       otherAddress.String(),
 	}
 
 	// when stored
@@ -172,7 +172,7 @@ func TestMigrateProposal(t *testing.T) {
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(2), cInfo.CodeID)
-	assert.Equal(t, anyAddress, cInfo.Admin)
+	assert.Equal(t, anyAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeGenesis,
@@ -206,20 +206,20 @@ func TestAdminProposals(t *testing.T) {
 			srcProposal: &types.UpdateAdminProposal{
 				Title:       "Foo",
 				Description: "Bar",
-				Contract:    contractAddr,
-				NewAdmin:    otherAddress,
+				Contract:    contractAddr.String(),
+				NewAdmin:    otherAddress.String(),
 			},
 			expAdmin: otherAddress,
 		},
 		"update with old admin empty": {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
-				info.Admin = nil
+				info.Admin = ""
 			}),
 			srcProposal: &types.UpdateAdminProposal{
 				Title:       "Foo",
 				Description: "Bar",
-				Contract:    contractAddr,
-				NewAdmin:    otherAddress,
+				Contract:    contractAddr.String(),
+				NewAdmin:    otherAddress.String(),
 			},
 			expAdmin: otherAddress,
 		},
@@ -228,18 +228,18 @@ func TestAdminProposals(t *testing.T) {
 			srcProposal: &types.ClearAdminProposal{
 				Title:       "Foo",
 				Description: "Bar",
-				Contract:    contractAddr,
+				Contract:    contractAddr.String(),
 			},
 			expAdmin: nil,
 		},
 		"clear with old admin empty": {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
-				info.Admin = nil
+				info.Admin = ""
 			}),
 			srcProposal: &types.ClearAdminProposal{
 				Title:       "Foo",
 				Description: "Bar",
-				Contract:    contractAddr,
+				Contract:    contractAddr.String(),
 			},
 			expAdmin: nil,
 		},
@@ -270,7 +270,7 @@ func TestAdminProposals(t *testing.T) {
 			// then
 			cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 			require.NotNil(t, cInfo)
-			assert.Equal(t, spec.expAdmin, cInfo.Admin)
+			assert.Equal(t, spec.expAdmin.String(), cInfo.Admin)
 		})
 	}
 }

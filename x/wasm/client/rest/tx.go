@@ -28,10 +28,10 @@ type storeCodeReq struct {
 }
 
 type instantiateContractReq struct {
-	BaseReq rest.BaseReq   `json:"base_req" yaml:"base_req"`
-	Deposit sdk.Coins      `json:"deposit" yaml:"deposit"`
-	Admin   sdk.AccAddress `json:"admin,omitempty" yaml:"admin"`
-	InitMsg []byte         `json:"init_msg" yaml:"init_msg"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
+	Admin   string       `json:"admin,omitempty" yaml:"admin"`
+	InitMsg []byte       `json:"init_msg" yaml:"init_msg"`
 }
 
 type executeContractReq struct {
@@ -71,19 +71,13 @@ func storeCodeHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		fromAddr, err := sdk.AccAddressFromBech32(req.BaseReq.From)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
 		// build and sign the transaction, then broadcast to Tendermint
 		msg := types.MsgStoreCode{
-			Sender:       fromAddr,
+			Sender:       req.BaseReq.From,
 			WASMByteCode: wasm,
 		}
 
-		err = msg.ValidateBasic()
-		if err != nil {
+		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -113,15 +107,14 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := types.MsgInstantiateContract{
-			Sender:    cliCtx.GetFromAddress(),
+			Sender:    cliCtx.GetFromAddress().String(),
 			CodeID:    codeID,
 			InitFunds: req.Deposit,
 			InitMsg:   req.InitMsg,
 			Admin:     req.Admin,
 		}
 
-		err = msg.ValidateBasic()
-		if err != nil {
+		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -144,20 +137,14 @@ func executeContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
-		if err != nil {
-			return
-		}
-
 		msg := types.MsgExecuteContract{
-			Sender:    cliCtx.GetFromAddress(),
-			Contract:  contractAddress,
+			Sender:    cliCtx.GetFromAddress().String(),
+			Contract:  contractAddr,
 			Msg:       req.ExecMsg,
 			SentFunds: req.Amount,
 		}
 
-		err = msg.ValidateBasic()
-		if err != nil {
+		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

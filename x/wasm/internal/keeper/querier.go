@@ -20,10 +20,11 @@ func NewQuerier(keeper *Keeper) grpcQuerier {
 }
 
 func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
-	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
 		return nil, err
 	}
-	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), req.Address, *q.keeper)
+	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), contractAddr, *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -37,10 +38,12 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 }
 
 func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContractHistoryRequest) (*types.QueryContractHistoryResponse, error) {
-	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
 		return nil, err
 	}
-	rsp, err := queryContractHistory(sdk.UnwrapSDKContext(c), req.Address, *q.keeper)
+
+	rsp, err := queryContractHistory(sdk.UnwrapSDKContext(c), contractAddr, *q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -69,15 +72,17 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 }
 
 func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllContractStateRequest) (*types.QueryAllContractStateResponse, error) {
-	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
 		return nil, err
 	}
+
 	ctx := sdk.UnwrapSDKContext(c)
-	if !q.keeper.containsContractInfo(ctx, req.Address) {
+	if !q.keeper.containsContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
 	var resultData []types.Model
-	for iter := q.keeper.GetContractState(ctx, req.Address); iter.Valid(); iter.Next() {
+	for iter := q.keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
 		resultData = append(resultData, types.Model{
 			Key:   iter.Key(),
 			Value: iter.Value(),
@@ -89,23 +94,26 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawContractStateRequest) (*types.QueryRawContractStateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
 		return nil, err
 	}
 
-	if !q.keeper.containsContractInfo(ctx, req.Address) {
+	if !q.keeper.containsContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
-	rsp := q.keeper.QueryRaw(ctx, req.Address, req.QueryData)
+	rsp := q.keeper.QueryRaw(ctx, contractAddr, req.QueryData)
 	return &types.QueryRawContractStateResponse{Data: rsp}, nil
 }
 
 func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (*types.QuerySmartContractStateResponse, error) {
-	if err := sdk.VerifyAddressFormat(req.Address); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(sdk.NewGasMeter(q.keeper.queryGasLimit))
-	rsp, err := q.keeper.QuerySmart(ctx, req.Address, req.QueryData)
+
+	rsp, err := q.keeper.QuerySmart(ctx, contractAddr, req.QueryData)
 	switch {
 	case err != nil:
 		return nil, err
@@ -152,7 +160,7 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper Keeper) (*ty
 	// redact the Created field (just used for sorting, not part of public API)
 	info.Created = nil
 	return &types.ContractInfoWithAddress{
-		Address:      addr,
+		Address:      addr.String(),
 		ContractInfo: info,
 	}, nil
 }
@@ -163,7 +171,7 @@ func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]t
 		if info.CodeID == codeID {
 			// and add the address
 			infoWithAddress := types.ContractInfoWithAddress{
-				Address:      addr,
+				Address:      addr.String(),
 				ContractInfo: &info,
 			}
 			contracts = append(contracts, infoWithAddress)

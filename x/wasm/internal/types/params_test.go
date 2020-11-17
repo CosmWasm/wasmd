@@ -13,8 +13,8 @@ import (
 
 func TestValidateParams(t *testing.T) {
 	var (
-		anyAddress     = make([]byte, sdk.AddrLen)
-		invalidAddress = make([]byte, sdk.AddrLen-1)
+		anyAddress     sdk.AccAddress = make([]byte, sdk.AddrLen)
+		invalidAddress                = "invalid address"
 	)
 
 	specs := map[string]struct {
@@ -70,7 +70,7 @@ func TestValidateParams(t *testing.T) {
 		},
 		"reject CodeUploadAccess Everybody with obsolete address": {
 			src: Params{
-				CodeUploadAccess:             AccessConfig{Permission: AccessTypeEverybody, Address: anyAddress},
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeEverybody, Address: anyAddress.String()},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
 				MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
 			},
@@ -78,7 +78,7 @@ func TestValidateParams(t *testing.T) {
 		},
 		"reject CodeUploadAccess Nobody with obsolete address": {
 			src: Params{
-				CodeUploadAccess:             AccessConfig{Permission: AccessTypeNobody, Address: anyAddress},
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeNobody, Address: anyAddress.String()},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
 				MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
 			},

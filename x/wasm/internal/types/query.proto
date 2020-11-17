@@ -49,19 +49,19 @@ service Query {
 // QueryContractInfoRequest is the request type for the Query/ContractInfo RPC method
 message QueryContractInfoRequest {
     // address is the address of the contract to query
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
 }
 // QueryContractInfoResponse is the response type for the Query/ContractInfo RPC method
 message QueryContractInfoResponse {
     // address is the address of the contract
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
     ContractInfo contract_info = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
 }
 
 // QueryContractHistoryRequest is the request type for the Query/ContractHistory RPC method
 message QueryContractHistoryRequest {
     // address is the address of the contract to query
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
 }
 
 // QueryContractHistoryResponse is the response type for the Query/ContractHistory RPC method
@@ -75,7 +75,7 @@ message QueryContractsByCodeRequest {
 
 // ContractInfoWithAddress adds the address (key) to the ContractInfo representation
 message ContractInfoWithAddress {
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
     ContractInfo contract_info = 2 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
 }
 // QueryContractsByCodeResponse is the response type for the Query/ContractsByCode RPC method
@@ -86,7 +86,7 @@ message QueryContractsByCodeResponse {
 // QueryAllContractStateRequest is the request type for the Query/AllContractState RPC method
 message QueryAllContractStateRequest {
     // address is the address of the contract
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
 }
 
 // QueryAllContractStateResponse is the response type for the Query/AllContractState RPC method
@@ -97,7 +97,7 @@ message QueryAllContractStateResponse {
 // QueryRawContractStateRequest is the request type for the Query/RawContractState RPC method
 message QueryRawContractStateRequest {
     // address is the address of the contract
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
     bytes query_data = 2;
 }
 // QueryRawContractStateResponse is the response type for the Query/RawContractState RPC method
@@ -109,7 +109,7 @@ message QueryRawContractStateResponse {
 // QuerySmartContractStateRequest is the request type for the Query/SmartContractState RPC method
 message QuerySmartContractStateRequest {
     // address is the address of the contract
-    bytes address = 1 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string address = 1;
     // QueryData contains the query data passed to the contract
     bytes query_data = 2;
 }
@@ -127,7 +127,7 @@ message QueryCodeRequest {
 // CodeInfoResponse contains code meta data from CodeInfo
 message CodeInfoResponse {
     uint64 code_id = 1 [(gogoproto.customname) = "CodeID", (gogoproto.jsontag) = "id"]; // id for legacy support
-    bytes creator = 2 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.AccAddress"];
+    string creator = 2;
     bytes data_hash = 3 [(gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes"];
     string source = 4;
     string builder = 5;

@@ -40,10 +40,11 @@ func TestBuilderRegexp(t *testing.T) {
 }
 
 func TestStoreCodeValidation(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
 	cases := map[string]struct {
 		msg   MsgStoreCode
@@ -132,10 +133,11 @@ func TestStoreCodeValidation(t *testing.T) {
 }
 
 func TestInstantiateContractValidation(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
 	cases := map[string]struct {
 		msg   MsgInstantiateContract
@@ -238,10 +240,11 @@ func TestInstantiateContractValidation(t *testing.T) {
 }
 
 func TestExecuteContractValidation(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
 	cases := map[string]struct {
 		msg   MsgExecuteContract
@@ -346,12 +349,13 @@ func TestExecuteContractValidation(t *testing.T) {
 }
 
 func TestMsgUpdateAdministrator(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
-	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20))
-	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20)).String()
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
 
 	specs := map[string]struct {
 		src    MsgUpdateAdmin
@@ -417,11 +421,12 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 }
 
 func TestMsgClearAdministrator(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
-	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
 
 	specs := map[string]struct {
 		src    MsgClearAdmin
@@ -467,11 +472,12 @@ func TestMsgClearAdministrator(t *testing.T) {
 }
 
 func TestMsgMigrateContract(t *testing.T) {
-	badAddress, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
+	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20))
-	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20))
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
 
 	specs := map[string]struct {
 		src    MsgMigrateContract

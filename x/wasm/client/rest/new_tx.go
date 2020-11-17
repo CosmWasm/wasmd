@@ -6,7 +6,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 )
@@ -17,14 +16,15 @@ func registerNewTxRoutes(cliCtx client.Context, r *mux.Router) {
 }
 
 type migrateContractReq struct {
-	BaseReq    rest.BaseReq   `json:"base_req" yaml:"base_req"`
-	Admin      sdk.AccAddress `json:"admin,omitempty" yaml:"admin"`
-	CodeID     uint64         `json:"code_id" yaml:"code_id"`
-	MigrateMsg []byte         `json:"migrate_msg,omitempty" yaml:"migrate_msg"`
+	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Admin      string       `json:"admin,omitempty" yaml:"admin"`
+	CodeID     uint64       `json:"code_id" yaml:"code_id"`
+	MigrateMsg []byte       `json:"migrate_msg,omitempty" yaml:"migrate_msg"`
 }
+
 type updateContractAdministrateReq struct {
-	BaseReq rest.BaseReq   `json:"base_req" yaml:"base_req"`
-	Admin   sdk.AccAddress `json:"admin,omitempty" yaml:"admin"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Admin   string       `json:"admin,omitempty" yaml:"admin"`
 }
 
 func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
@@ -41,18 +41,12 @@ func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		msg := &types.MsgUpdateAdmin{
-			Sender:   cliCtx.GetFromAddress(),
+			Sender:   cliCtx.GetFromAddress().String(),
 			NewAdmin: req.Admin,
-			Contract: contractAddress,
+			Contract: contractAddr,
 		}
-		if err = msg.ValidateBasic(); err != nil {
+		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -75,19 +69,13 @@ func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 
-		contractAddress, err := sdk.AccAddressFromBech32(contractAddr)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
 		msg := &types.MsgMigrateContract{
-			Sender:     cliCtx.GetFromAddress(),
-			Contract:   contractAddress,
+			Sender:     cliCtx.GetFromAddress().String(),
+			Contract:   contractAddr,
 			CodeID:     req.CodeID,
 			MigrateMsg: req.MigrateMsg,
 		}
-		if err = msg.ValidateBasic(); err != nil {
+		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

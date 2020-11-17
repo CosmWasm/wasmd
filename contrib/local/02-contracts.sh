@@ -11,7 +11,7 @@ RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/internal/keeper/testdata/hackatom.
 CODE_ID=$(echo "$RESP" | jq -r '.logs[0].events[0].attributes[-1].value')
 echo "* Code id: $CODE_ID"
 echo "* Download code"
-TMPDIR=$(mktemp -t wasmdXXXX)
+TMPDIR=$(mktemp -t wasmdXXXXXX)
 wasmd q wasm code "$CODE_ID" "$TMPDIR"
 rm -f "$TMPDIR"
 echo "-----------------------"

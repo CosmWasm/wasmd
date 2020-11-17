@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 )
@@ -37,11 +36,6 @@ func MigrateContractCmd() *cobra.Command {
 }
 
 func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMigrateContract, error) {
-	contractAddr, err := sdk.AccAddressFromBech32(args[0])
-	if err != nil {
-		return types.MsgMigrateContract{}, sdkerrors.Wrap(err, "contract")
-	}
-
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
@@ -51,8 +45,8 @@ func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMi
 	migrateMsg := args[2]
 
 	msg := types.MsgMigrateContract{
-		Sender:     cliCtx.GetFromAddress(),
-		Contract:   contractAddr,
+		Sender:     cliCtx.GetFromAddress().String(),
+		Contract:   args[0],
 		CodeID:     codeID,
 		MigrateMsg: []byte(migrateMsg),
 	}
@@ -84,19 +78,10 @@ func UpdateContractAdminCmd() *cobra.Command {
 }
 
 func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
-	contractAddr, err := sdk.AccAddressFromBech32(args[0])
-	if err != nil {
-		return types.MsgUpdateAdmin{}, sdkerrors.Wrap(err, "contract")
-	}
-	newAdmin, err := sdk.AccAddressFromBech32(args[1])
-	if err != nil {
-		return types.MsgUpdateAdmin{}, sdkerrors.Wrap(err, "new admin")
-	}
-
 	msg := types.MsgUpdateAdmin{
-		Sender:   cliCtx.GetFromAddress(),
-		Contract: contractAddr,
-		NewAdmin: newAdmin,
+		Sender:   cliCtx.GetFromAddress().String(),
+		Contract: args[0],
+		NewAdmin: args[1],
 	}
 	return msg, nil
 }
@@ -110,15 +95,13 @@ func ClearContractAdminCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
-
-			contractAddr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
-				return sdkerrors.Wrap(err, "contract")
+				return err
 			}
 
 			msg := types.MsgClearAdmin{
-				Sender:   clientCtx.GetFromAddress(),
-				Contract: contractAddr,
+				Sender:   clientCtx.GetFromAddress().String(),
+				Contract: args[0],
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err

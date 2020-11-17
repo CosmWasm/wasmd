@@ -44,7 +44,11 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 		return err
 	}
 
-	codeID, err := k.create(ctx, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	codeID, err := k.create(ctx, runAsAddr, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -62,8 +66,16 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	adminAddr, err := sdk.AccAddressFromBech32(p.Admin)
+	if err != nil {
+		return sdkerrors.Wrap(err, "admin")
+	}
 
-	contractAddr, err := k.instantiate(ctx, p.CodeID, p.RunAs, p.Admin, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
+	contractAddr, err := k.instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.InitMsg, p.Label, p.InitFunds, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -83,7 +95,15 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 		return err
 	}
 
-	res, err := k.migrate(ctx, p.Contract, p.RunAs, p.CodeID, p.MigrateMsg, GovAuthorizationPolicy{})
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	res, err := k.migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.MigrateMsg, GovAuthorizationPolicy{})
 	if err != nil {
 		return err
 	}
@@ -91,7 +111,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 
@@ -109,15 +129,23 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminPro
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	newAdminAddr, err := sdk.AccAddressFromBech32(p.NewAdmin)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
 
-	if err := k.setContractAdmin(ctx, p.Contract, nil, p.NewAdmin, GovAuthorizationPolicy{}); err != nil {
+	if err := k.setContractAdmin(ctx, contractAddr, nil, newAdminAddr, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -128,13 +156,17 @@ func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminPropo
 		return err
 	}
 
-	if err := k.setContractAdmin(ctx, p.Contract, nil, nil, GovAuthorizationPolicy{}); err != nil {
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	if err := k.setContractAdmin(ctx, contractAddr, nil, nil, GovAuthorizationPolicy{}); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyContract, p.Contract.String()),
+		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
