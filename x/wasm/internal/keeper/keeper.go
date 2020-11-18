@@ -256,9 +256,9 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(ctx)
-	instance := types.NewContractInfo(codeID, creator, admin, label, createdAt)
-	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(&instance))
-	k.appendToContractHistory(ctx, contractAddress, instance.InitialHistory(initMsg))
+	contractInfo := types.NewContractInfo(codeID, creator, admin, label, createdAt)
+	k.storeContractInfo(ctx, contractAddress, &contractInfo)
+	k.appendToContractHistory(ctx, contractAddress, contractInfo.InitialHistory(initMsg))
 
 	// then dispatch so that contract could be called back
 	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
@@ -364,10 +364,14 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
+	// delete old secondary index entry
+	k.deleteContractSecondIndex(ctx, contractAddress, contractInfo)
+	// persist migration updates
 	historyEntry := contractInfo.AddMigration(ctx, newCodeID, msg)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
-	k.setContractInfo(ctx, contractAddress, contractInfo)
+	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
+	// then dispatch
 	if err := k.dispatchMessages(ctx, contractAddress, res.Messages); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -375,6 +379,10 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return &sdk.Result{
 		Data: res.Data,
 	}, nil
+}
+
+func (k Keeper) deleteContractSecondIndex(ctx sdk.Context, contractAddress sdk.AccAddress, contractInfo *types.ContractInfo) {
+	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, contractInfo))
 }
 
 // UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
@@ -396,7 +404,7 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
 	contractInfo.Admin = newAdmin.String()
-	k.setContractInfo(ctx, contractAddress, contractInfo)
+	k.storeContractInfo(ctx, contractAddress, contractInfo)
 	return nil
 }
 
@@ -487,9 +495,10 @@ func (k Keeper) containsContractInfo(ctx sdk.Context, contractAddress sdk.AccAdd
 	return store.Has(types.GetContractAddressKey(contractAddress))
 }
 
-func (k Keeper) setContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract *types.ContractInfo) {
+func (k Keeper) storeContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contract *types.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.GetContractAddressKey(contractAddress), k.cdc.MustMarshalBinaryBare(contract))
+	store.Set(types.GetContractByCreatedSecondaryIndexKey(contractAddress, contract), []byte{})
 }
 
 func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool) {
@@ -663,7 +672,7 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 
 	historyEntry := c.ResetFromGenesis(ctx)
 	k.appendToContractHistory(ctx, contractAddr, historyEntry)
-	k.setContractInfo(ctx, contractAddr, c)
+	k.storeContractInfo(ctx, contractAddr, c)
 	return k.importContractState(ctx, contractAddr, state)
 }
 

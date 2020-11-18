@@ -10,6 +10,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,8 +22,8 @@ func TestQueryAllContractState(t *testing.T) {
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract
 	contractModel := []types.Model{
-		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 	}
 	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
 
@@ -39,6 +40,28 @@ func TestQueryAllContractState(t *testing.T) {
 		"query all with unknown address": {
 			srcQuery: &types.QueryAllContractStateRequest{Address: RandomBech32AccountAddress(t)},
 			expErr:   types.ErrNotFound,
+		},
+		"with pagination offset": {
+			srcQuery: &types.QueryAllContractStateRequest{
+				Address: contractAddr.String(),
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expModelContains:  []types.Model{
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+			},
+		},
+		"with pagination limit": {
+			srcQuery: &types.QueryAllContractStateRequest{
+				Address: contractAddr.String(),
+				Pagination: &query.PageRequest{
+					Limit: 1,
+				},
+			},
+			expModelContains:  []types.Model{
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+			},
 		},
 	}
 	for msg, spec := range specs {
@@ -311,14 +334,36 @@ func TestQueryCodeList(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		codeIDs []uint64
+		storedCodeIDs []uint64
+		req           types.QueryCodesRequest
+		expCodeIDs    []uint64
 	}{
 		"none": {},
 		"no gaps": {
-			codeIDs: []uint64{1, 2, 3},
+			storedCodeIDs: []uint64{1, 2, 3},
+			expCodeIDs:    []uint64{1, 2, 3},
 		},
 		"with gaps": {
-			codeIDs: []uint64{2, 4, 6},
+			storedCodeIDs: []uint64{2, 4, 6},
+			expCodeIDs:    []uint64{2, 4, 6},
+		},
+		"with pagination offset": {
+			storedCodeIDs: []uint64{1, 2, 3},
+			req: types.QueryCodesRequest{
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expCodeIDs: []uint64{2, 3},
+		},
+		"with pagination limit": {
+			storedCodeIDs: []uint64{1, 2, 3},
+			req: types.QueryCodesRequest{
+				Pagination: &query.PageRequest{
+					Limit: 2,
+				},
+			},
+			expCodeIDs: []uint64{1, 2},
 		},
 	}
 
@@ -327,7 +372,7 @@ func TestQueryCodeList(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 			keeper := keepers.WasmKeeper
 
-			for _, codeID := range spec.codeIDs {
+			for _, codeID := range spec.storedCodeIDs {
 				require.NoError(t, keeper.importCode(ctx, codeID,
 					types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode)),
 					wasmCode),
@@ -335,17 +380,13 @@ func TestQueryCodeList(t *testing.T) {
 			}
 			// when
 			q := NewQuerier(keeper)
-			got, err := q.Codes(sdk.WrapSDKContext(ctx), nil)
+			got, err := q.Codes(sdk.WrapSDKContext(ctx), &spec.req)
 
 			// then
-			if len(spec.codeIDs) == 0 {
-				require.Error(t, err)
-				return
-			}
 			require.NoError(t, err)
-
-			require.Len(t, got.CodeInfos, len(spec.codeIDs))
-			for i, exp := range spec.codeIDs {
+			require.NotNil(t, got.CodeInfos)
+			require.Len(t, got.CodeInfos, len(spec.expCodeIDs))
+			for i, exp := range spec.expCodeIDs {
 				assert.EqualValues(t, exp, got.CodeInfos[i].CodeID)
 			}
 		})

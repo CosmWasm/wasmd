@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -130,6 +132,24 @@ func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 	return admin
 }
 
+// NewAbsoluteTxPosition gets a block position from the context
+func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
+	// we must safely handle nil gas meters
+	var index uint64
+	meter := ctx.BlockGasMeter()
+	if meter != nil {
+		index = meter.GasConsumed()
+	}
+	height := ctx.BlockHeight()
+	if height < 0 {
+		panic(fmt.Sprintf("unsupported height: %d", height))
+	}
+	return &AbsoluteTxPosition{
+		BlockHeight: uint64(height),
+		TxIndex:     index,
+	}
+}
+
 // LessThan can be used to sort
 func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 	if a == nil {
@@ -141,18 +161,18 @@ func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 	return a.BlockHeight < b.BlockHeight || (a.BlockHeight == b.BlockHeight && a.TxIndex < b.TxIndex)
 }
 
-// NewAbsoluteTxPosition gets a timestamp from the context
-func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
-	// we must safely handle nil gas meters
-	var index uint64
-	meter := ctx.BlockGasMeter()
-	if meter != nil {
-		index = meter.GasConsumed()
+// AbsoluteTxPositionLen number of elements in byte representation
+const AbsoluteTxPositionLen = 16
+
+// Bytes encodes the object into a 16 byte representation with big endian block height adn tx index.
+func (a *AbsoluteTxPosition) Bytes() []byte {
+	r := make([]byte, AbsoluteTxPositionLen)
+	if a == nil { // must not happen
+		return r
 	}
-	return &AbsoluteTxPosition{
-		BlockHeight: ctx.BlockHeight(),
-		TxIndex:     index,
-	}
+	copy(r[0:], sdk.Uint64ToBigEndian(a.BlockHeight))
+	copy(r[8:], sdk.Uint64ToBigEndian(a.TxIndex))
+	return r
 }
 
 // NewEnv initializes the environment for a contract instance

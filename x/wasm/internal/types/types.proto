@@ -58,6 +58,8 @@ message CodeInfo {
 
 // ContractInfo stores a WASM contract instance
 message ContractInfo {
+    option (gogoproto.equal)           = true;
+
     // CodeID is the reference to the stored Wasm code
     uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
     // Creator address who initially instantiated the contract
@@ -100,10 +102,10 @@ message ContractCodeHistoryEntry {
 
 }
 
-// AbsoluteTxPosition can be used to sort contracts
+// AbsoluteTxPosition is a block position that can be used to sort contracts
 message AbsoluteTxPosition {
     // BlockHeight is the block the contract was created at
-    int64 block_height = 1;
+    uint64 block_height = 1;
     // TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed)
     uint64 tx_index = 2;
 }

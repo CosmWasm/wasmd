@@ -278,7 +278,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x115e6), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11db6), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
@@ -872,6 +872,31 @@ func TestMigrate(t *testing.T) {
 	}
 }
 
+func TestMigrateReplacesTheSecondIndex(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	example := InstantiateHackatomExampleContract(t, ctx, keepers)
+
+	// then assert a second index exists
+	store := ctx.KVStore(keepers.WasmKeeper.storeKey)
+	oldContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
+	require.NotNil(t, oldContractInfo)
+	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	require.True(t, exists)
+
+	// when do migrate
+	newCodeExample := StoreBurnerExampleContract(t, ctx, keepers)
+	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
+	_, err := keepers.WasmKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
+	require.NoError(t, err)
+	// then new index exists
+	newContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, newContractInfo))
+	require.True(t, exists)
+	// and old index removed
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	require.False(t, exists)
+}
+
 func TestMigrateWithDispatchedMessage(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
@@ -896,18 +921,13 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 		Verifier:    fred,
 		Beneficiary: fred,
 	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
+	initMsgBz := initMsg.GetBytes(t)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	contractAddr, err := keeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
 	require.NoError(t, err)
 
-	migMsg := struct {
-		Payout sdk.AccAddress `json:"payout"`
-	}{Payout: myPayoutAddr}
-	migMsgBz, err := json.Marshal(migMsg)
-	require.NoError(t, err)
+	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	res, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)

@@ -2,19 +2,22 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"sort"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	prototypes "github.com/gogo/protobuf/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
+
+var _ types.QueryServer = &grpcQuerier{}
 
 type grpcQuerier struct {
 	keeper *Keeper
 }
 
-// todo: this needs proper tests and doc
 func NewQuerier(keeper *Keeper) grpcQuerier {
 	return grpcQuerier{keeper: keeper}
 }
@@ -59,15 +62,31 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 	if req.CodeId == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
 	}
-	rsp, err := queryContractListByCode(sdk.UnwrapSDKContext(c), req.CodeId, *q.keeper)
-	switch {
-	case err != nil:
+	ctx := sdk.UnwrapSDKContext(c)
+	r := make([]types.ContractInfoWithAddress, 0)
+
+	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+		var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
+		c := q.keeper.GetContractInfo(ctx, contractAddr)
+		if c == nil {
+			return false, types.ErrNotFound
+		}
+		c.Created = nil
+		if accumulate {
+			r = append(r, types.ContractInfoWithAddress{
+				Address:      contractAddr.String(),
+				ContractInfo: c,
+			})
+		}
+		return true, nil
+	})
+	if err != nil {
 		return nil, err
-	case rsp == nil:
-		return nil, types.ErrNotFound
 	}
 	return &types.QueryContractsByCodeResponse{
-		ContractInfos: rsp,
+		ContractInfos: r,
+		Pagination:    pageRes,
 	}, nil
 }
 
@@ -76,19 +95,30 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	if err != nil {
 		return nil, err
 	}
-
 	ctx := sdk.UnwrapSDKContext(c)
+
 	if !q.keeper.containsContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
-	var resultData []types.Model
-	for iter := q.keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
-		resultData = append(resultData, types.Model{
-			Key:   iter.Key(),
-			Value: iter.Value(),
-		})
+
+	r := make([]types.Model, 0)
+	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractStorePrefixKey(contractAddr))
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			r = append(r, types.Model{
+				Key:   key,
+				Value: value,
+			})
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return &types.QueryAllContractStateResponse{Models: resultData}, nil
+	return &types.QueryAllContractStateResponse{
+		Models:     r,
+		Pagination: pageRes,
+	}, nil
 }
 
 func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawContractStateRequest) (*types.QueryRawContractStateResponse, error) {
@@ -141,15 +171,30 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 	}, nil
 }
 
-func (q grpcQuerier) Codes(c context.Context, _ *prototypes.Empty) (*types.QueryCodesResponse, error) {
-	rsp, err := queryCodeList(sdk.UnwrapSDKContext(c), *q.keeper)
-	switch {
-	case err != nil:
+func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*types.QueryCodesResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	r := make([]types.CodeInfoResponse, 0)
+	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.CodeKeyPrefix)
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+		var c types.CodeInfo
+		if err := q.keeper.cdc.UnmarshalBinaryBare(value, &c); err != nil {
+			return false, err
+		}
+		if accumulate {
+			r = append(r, types.CodeInfoResponse{
+				CodeID:   binary.BigEndian.Uint64(key),
+				Creator:  c.Creator,
+				DataHash: c.CodeHash,
+				Source:   c.Source,
+				Builder:  c.Builder,
+			})
+		}
+		return true, nil
+	})
+	if err != nil {
 		return nil, err
-	case rsp == nil:
-		return nil, types.ErrNotFound
 	}
-	return &types.QueryCodesResponse{CodeInfos: rsp}, nil
+	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper Keeper) (*types.ContractInfoWithAddress, error) {

@@ -56,7 +56,7 @@ func TestGenesisExportImport(t *testing.T) {
 		require.NoError(t, err)
 		contract.CodeID = codeID
 		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
-		srcKeeper.setContractInfo(srcCtx, contractAddr, &contract)
+		srcKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		srcKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
@@ -79,10 +79,11 @@ func TestGenesisExportImport(t *testing.T) {
 	exportedGenesis, err := json.Marshal(exportedState)
 	require.NoError(t, err)
 
-	// reset contract history in source DB for comparision with dest DB
+	// reset contract history in source DB for comparison with dest DB
 	srcKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
+		srcKeeper.deleteContractSecondIndex(srcCtx, address, &info)
 		info.ResetFromGenesis(srcCtx)
-		srcKeeper.setContractInfo(srcCtx, address, &info)
+		srcKeeper.storeContractInfo(srcCtx, address, &info)
 		return false
 	})
 
@@ -102,7 +103,11 @@ func TestGenesisExportImport(t *testing.T) {
 
 		for i := 0; srcIT.Valid(); i++ {
 			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %s", srcStoreKeys[j].Name(), srcIT.Key())
+			//if bytes.HasPrefix(srcIT.Key(), types.ContractByCodeIDAndCreatedSecondaryIndexPrefix) {
+			// handle second index containing absoluteTxPos
+			//} else {
 			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
+			//}
 
 			isContractHistory := srcStoreKeys[j].Name() == types.StoreKey && bytes.HasPrefix(srcIT.Key(), types.ContractHistoryStorePrefix)
 			if !isContractHistory { // only skip history entries because we know they are different
