@@ -278,7 +278,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11db6), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11d5c), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
@@ -293,7 +293,7 @@ func TestInstantiate(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       json.RawMessage(initMsgBz),
 	}}
-	assert.Equal(t, exp, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
+	assert.Equal(t, exp, keeper.GetContractHistory(ctx, contractAddr))
 }
 
 func TestInstantiateWithDeposit(t *testing.T) {
@@ -860,7 +860,7 @@ func TestMigrate(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       spec.migrateMsg,
 			}}
-			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
+			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 
 			raw := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 			var stored map[string][]byte

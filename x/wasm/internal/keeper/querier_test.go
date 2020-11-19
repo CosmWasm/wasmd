@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -29,9 +28,10 @@ func TestQueryAllContractState(t *testing.T) {
 
 	q := NewQuerier(keeper)
 	specs := map[string]struct {
-		srcQuery         *types.QueryAllContractStateRequest
-		expModelContains []types.Model
-		expErr           *sdkErrors.Error
+		srcQuery            *types.QueryAllContractStateRequest
+		expModelContains    []types.Model
+		expModelContainsNot []types.Model
+		expErr              *sdkErrors.Error
 	}{
 		"query all": {
 			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
@@ -48,8 +48,11 @@ func TestQueryAllContractState(t *testing.T) {
 					Offset: 1,
 				},
 			},
-			expModelContains:  []types.Model{
+			expModelContains: []types.Model{
 				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+			},
+			expModelContainsNot: []types.Model{
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 			},
 		},
 		"with pagination limit": {
@@ -59,8 +62,11 @@ func TestQueryAllContractState(t *testing.T) {
 					Limit: 1,
 				},
 			},
-			expModelContains:  []types.Model{
+			expModelContains: []types.Model{
 				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
+			},
+			expModelContainsNot: []types.Model{
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
 			},
 		},
 	}
@@ -73,6 +79,9 @@ func TestQueryAllContractState(t *testing.T) {
 			}
 			for _, exp := range spec.expModelContains {
 				assert.Contains(t, got.Models, exp)
+			}
+			for _, exp := range spec.expModelContainsNot {
+				assert.NotContains(t, got.Models, exp)
 			}
 		})
 	}
@@ -143,7 +152,7 @@ func TestQueryRawContractState(t *testing.T) {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
 			expData:  []byte(`"bar"`),
 		},
-		"query raw binary key": {
+		"query raw contract binary key": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte{0x0, 0x1}},
 			expData:  []byte(`{"count":8}`),
 		},
@@ -240,13 +249,14 @@ func TestQueryContractHistory(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	var (
-		otherAddr sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		myContractBech32Addr = RandomBech32AccountAddress(t)
+		otherBech32Addr      = RandomBech32AccountAddress(t)
 	)
 
 	specs := map[string]struct {
-		srcQueryAddr sdk.AccAddress
-		srcHistory   []types.ContractCodeHistoryEntry
-		expContent   []types.ContractCodeHistoryEntry
+		srcHistory []types.ContractCodeHistoryEntry
+		req        types.QueryContractHistoryRequest
+		expContent []types.ContractCodeHistoryEntry
 	}{
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
@@ -255,6 +265,7 @@ func TestQueryContractHistory(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
+			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
@@ -278,6 +289,7 @@ func TestQueryContractHistory(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"migrate message 2"`),
 			}},
+			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
@@ -292,8 +304,56 @@ func TestQueryContractHistory(t *testing.T) {
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 		},
+		"with pagination offset": {
+			srcHistory: []types.ContractCodeHistoryEntry{{
+				Operation: types.ContractCodeHistoryOperationTypeInit,
+				CodeID:    firstCodeID,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       []byte(`"init message"`),
+			}, {
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
+				CodeID:    2,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       []byte(`"migrate message 1"`),
+			}},
+			req: types.QueryContractHistoryRequest{
+				Address: myContractBech32Addr,
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expContent: []types.ContractCodeHistoryEntry{{
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
+				CodeID:    2,
+				Msg:       []byte(`"migrate message 1"`),
+			}},
+		},
+		"with pagination limit": {
+			srcHistory: []types.ContractCodeHistoryEntry{{
+				Operation: types.ContractCodeHistoryOperationTypeInit,
+				CodeID:    firstCodeID,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       []byte(`"init message"`),
+			}, {
+				Operation: types.ContractCodeHistoryOperationTypeMigrate,
+				CodeID:    2,
+				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Msg:       []byte(`"migrate message 1"`),
+			}},
+			req: types.QueryContractHistoryRequest{
+				Address: myContractBech32Addr,
+				Pagination: &query.PageRequest{
+					Limit: 1,
+				},
+			},
+			expContent: []types.ContractCodeHistoryEntry{{
+				Operation: types.ContractCodeHistoryOperationTypeInit,
+				CodeID:    firstCodeID,
+				Msg:       []byte(`"init message"`),
+			}},
+		},
 		"unknown contract address": {
-			srcQueryAddr: otherAddr,
+			req: types.QueryContractHistoryRequest{Address: otherBech32Addr},
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
@@ -305,18 +365,14 @@ func TestQueryContractHistory(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			_, _, myContractAddr := keyPubAddr()
-			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
+			xCtx, _ := ctx.CacheContext()
 
-			queryContractAddr := spec.srcQueryAddr
-			if queryContractAddr == nil {
-				queryContractAddr = myContractAddr
-			}
-			req := &types.QueryContractHistoryRequest{Address: queryContractAddr.String()}
+			cAddr, _ := sdk.AccAddressFromBech32(myContractBech32Addr)
+			keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...)
 
 			// when
 			q := NewQuerier(keeper)
-			got, err := q.ContractHistory(sdk.WrapSDKContext(ctx), req)
+			got, err := q.ContractHistory(sdk.WrapSDKContext(xCtx), &spec.req)
 
 			// then
 			if spec.expContent == nil {
@@ -332,6 +388,9 @@ func TestQueryContractHistory(t *testing.T) {
 func TestQueryCodeList(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
+
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
 
 	specs := map[string]struct {
 		storedCodeIDs []uint64
@@ -369,18 +428,17 @@ func TestQueryCodeList(t *testing.T) {
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
-			keeper := keepers.WasmKeeper
+			xCtx, _ := ctx.CacheContext()
 
 			for _, codeID := range spec.storedCodeIDs {
-				require.NoError(t, keeper.importCode(ctx, codeID,
+				require.NoError(t, keeper.importCode(xCtx, codeID,
 					types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode)),
 					wasmCode),
 				)
 			}
 			// when
 			q := NewQuerier(keeper)
-			got, err := q.Codes(sdk.WrapSDKContext(ctx), &spec.req)
+			got, err := q.Codes(sdk.WrapSDKContext(xCtx), &spec.req)
 
 			// then
 			require.NoError(t, err)

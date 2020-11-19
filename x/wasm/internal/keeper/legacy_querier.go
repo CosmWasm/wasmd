@@ -118,3 +118,27 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	}
 	return bz, nil
 }
+
+func queryCodeList(ctx sdk.Context, keeper Keeper) ([]types.CodeInfoResponse, error) {
+	var info []types.CodeInfoResponse
+	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
+		info = append(info, types.CodeInfoResponse{
+			CodeID:   i,
+			Creator:  res.Creator,
+			DataHash: res.CodeHash,
+			Source:   res.Source,
+			Builder:  res.Builder,
+		})
+		return false
+	})
+	return info, nil
+}
+
+func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper Keeper) ([]types.ContractCodeHistoryEntry, error) {
+	history := keeper.GetContractHistory(ctx, contractAddr)
+	// redact response
+	for i := range history {
+		history[i].Updated = nil
+	}
+	return history, nil
+}

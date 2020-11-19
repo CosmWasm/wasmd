@@ -52,7 +52,6 @@
     - [AccessTypeParam](#wasmd.x.wasmd.v1beta1.AccessTypeParam)
     - [CodeInfo](#wasmd.x.wasmd.v1beta1.CodeInfo)
     - [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry)
-    - [ContractHistory](#wasmd.x.wasmd.v1beta1.ContractHistory)
     - [ContractInfo](#wasmd.x.wasmd.v1beta1.ContractInfo)
     - [Model](#wasmd.x.wasmd.v1beta1.Model)
     - [Params](#wasmd.x.wasmd.v1beta1.Params)
@@ -530,7 +529,8 @@ QueryContractHistoryRequest is the request type for the Query/ContractHistory RP
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| address | [string](#string) |  | address is the address of the contract to query |
+| address | [string](#string) |  | address is the address of the contract to query´ |
+| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
 
@@ -546,6 +546,7 @@ QueryContractHistoryResponse is the response type for the Query/ContractHistory 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | entries | [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry) | repeated |  |
+| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -640,7 +641,6 @@ QueryRawContractStateResponse is the response type for the Query/RawContractStat
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  | Data contains the raw store data |
-| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -657,7 +657,6 @@ QuerySmartContractStateRequest is the request type for the Query/SmartContractSt
 | ----- | ---- | ----- | ----------- |
 | address | [string](#string) |  | address is the address of the contract |
 | query_data | [bytes](#bytes) |  | QueryData contains the query data passed to the contract |
-| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
 
@@ -673,7 +672,6 @@ QuerySmartContractStateResponse is the response type for the Query/SmartContract
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data | [bytes](#bytes) |  | Data contains the json data returned from the smart contract |
-| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -791,21 +789,6 @@ ContractCodeHistoryEntry metadata to a contract.
 | code_id | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | updated | [AbsoluteTxPosition](#wasmd.x.wasmd.v1beta1.AbsoluteTxPosition) |  | Updated Tx position when the operation was executed. |
 | msg | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="wasmd.x.wasmd.v1beta1.ContractHistory"></a>
-
-### ContractHistory
-ContractHistory contains a sorted list of code updates to a contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code_history_entries | [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry) | repeated |  |
 
 
 

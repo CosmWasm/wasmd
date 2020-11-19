@@ -46,15 +46,27 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 		return nil, err
 	}
 
-	rsp, err := queryContractHistory(sdk.UnwrapSDKContext(c), contractAddr, *q.keeper)
-	switch {
-	case err != nil:
+	ctx := sdk.UnwrapSDKContext(c)
+	r := make([]types.ContractCodeHistoryEntry, 0)
+
+	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			var e types.ContractCodeHistoryEntry
+			if err := q.keeper.cdc.UnmarshalBinaryBare(value, &e); err != nil {
+				return false, err
+			}
+			e.Updated = nil // redact
+			r = append(r, e)
+		}
+		return true, nil
+	})
+	if err != nil {
 		return nil, err
-	case rsp == nil:
-		return nil, types.ErrNotFound
 	}
 	return &types.QueryContractHistoryResponse{
-		Entries: rsp,
+		Entries:    r,
+		Pagination: pageRes,
 	}, nil
 }
 
@@ -72,7 +84,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		if c == nil {
 			return false, types.ErrNotFound
 		}
-		c.Created = nil
+		c.Created = nil // redact
 		if accumulate {
 			r = append(r, types.ContractInfoWithAddress{
 				Address:      contractAddr.String(),
@@ -96,7 +108,6 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(c)
-
 	if !q.keeper.containsContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
@@ -176,11 +187,11 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	r := make([]types.CodeInfoResponse, 0)
 	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.CodeKeyPrefix)
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
-		var c types.CodeInfo
-		if err := q.keeper.cdc.UnmarshalBinaryBare(value, &c); err != nil {
-			return false, err
-		}
 		if accumulate {
+			var c types.CodeInfo
+			if err := q.keeper.cdc.UnmarshalBinaryBare(value, &c); err != nil {
+				return false, err
+			}
 			r = append(r, types.CodeInfoResponse{
 				CodeID:   binary.BigEndian.Uint64(key),
 				Creator:  c.Creator,
@@ -258,32 +269,4 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper *Keeper) (*types.QueryCode
 	}
 
 	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil
-}
-
-func queryCodeList(ctx sdk.Context, keeper Keeper) ([]types.CodeInfoResponse, error) {
-	var info []types.CodeInfoResponse
-	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
-		info = append(info, types.CodeInfoResponse{
-			CodeID:   i,
-			Creator:  res.Creator,
-			DataHash: res.CodeHash,
-			Source:   res.Source,
-			Builder:  res.Builder,
-		})
-		return false
-	})
-	return info, nil
-}
-
-func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper Keeper) ([]types.ContractCodeHistoryEntry, error) {
-	history := keeper.GetContractHistory(ctx, contractAddr)
-	if history.CodeHistoryEntries == nil {
-		// nil, nil leads to 404 in rest handler
-		return nil, nil
-	}
-	// redact response
-	for i := range history.CodeHistoryEntries {
-		history.CodeHistoryEntries[i].Updated = nil
-	}
-	return history.CodeHistoryEntries, nil
 }

@@ -409,20 +409,34 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 }
 
 func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
-	history := k.GetContractHistory(ctx, contractAddr)
-	history.CodeHistoryEntries = append(history.CodeHistoryEntries, newEntries...)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
-	prefixStore.Set(contractAddr, k.cdc.MustMarshalBinaryBare(&history))
+	store := ctx.KVStore(k.storeKey)
+	// find last element position
+	var pos uint64
+	prefixStore := prefix.NewStore(store, types.GetContractCodeHistoryElementPrefix(contractAddr))
+	if iter := prefixStore.ReverseIterator(nil, nil); iter.Valid() {
+		pos = sdk.BigEndianToUint64(iter.Value())
+	}
+	// then store with incrementing position
+	for _, e := range newEntries {
+		pos++
+		key := types.GetContractCodeHistoryElementKey(contractAddr, pos)
+		if store.Has(key) { // should never happen
+			panic("must not overwrite code history element")
+		}
+		store.Set(key, k.cdc.MustMarshalBinaryBare(&e))
+	}
 }
 
-func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) types.ContractHistory {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractHistoryStorePrefix)
-	bz := prefixStore.Get(contractAddr)
-	var history types.ContractHistory
-	if len(bz) != 0 {
-		k.cdc.MustUnmarshalBinaryBare(bz, &history)
+func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
+	r := make([]types.ContractCodeHistoryEntry, 0)
+	iter := prefixStore.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		var e types.ContractCodeHistoryEntry
+		k.cdc.MustUnmarshalBinaryBare(iter.Value(), &e)
+		r = append(r, e)
 	}
-	return history
+	return r
 }
 
 // QuerySmart queries the smart contract itself.

@@ -79,7 +79,7 @@ func TestGenesisExportImport(t *testing.T) {
 	exportedGenesis, err := json.Marshal(exportedState)
 	require.NoError(t, err)
 
-	// reset contract history in source DB for comparison with dest DB
+	// reset ContractInfo in source DB for comparison with dest DB
 	srcKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
 		srcKeeper.deleteContractSecondIndex(srcCtx, address, &info)
 		info.ResetFromGenesis(srcCtx)
@@ -102,19 +102,21 @@ func TestGenesisExportImport(t *testing.T) {
 		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
 		for i := 0; srcIT.Valid(); i++ {
-			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %s", srcStoreKeys[j].Name(), srcIT.Key())
-			//if bytes.HasPrefix(srcIT.Key(), types.ContractByCodeIDAndCreatedSecondaryIndexPrefix) {
-			// handle second index containing absoluteTxPos
-			//} else {
-			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-			//}
-
-			isContractHistory := srcStoreKeys[j].Name() == types.StoreKey && bytes.HasPrefix(srcIT.Key(), types.ContractHistoryStorePrefix)
-			if !isContractHistory { // only skip history entries because we know they are different
-				require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())
+			isContractHistory := srcStoreKeys[j].Name() == types.StoreKey && bytes.HasPrefix(srcIT.Key(), types.ContractCodeHistoryElementPrefix)
+			if isContractHistory {
+				// only skip history entries because we know they are different
+				// from genesis they are merged into 1 single entry
+				srcIT.Next()
+				if bytes.HasPrefix(dstIT.Key(), types.ContractCodeHistoryElementPrefix) {
+					dstIT.Next()
+				}
+				continue
 			}
-			srcIT.Next()
+			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", srcStoreKeys[j].Name(), srcIT.Key())
+			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
+			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())
 			dstIT.Next()
+			srcIT.Next()
 		}
 		if !assert.False(t, dstIT.Valid()) {
 			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
@@ -477,7 +479,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	},
 	}
-	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
+	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 }
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey, func()) {

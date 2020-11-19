@@ -53,10 +53,6 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder
 
 var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{ContractCodeHistoryOperationTypeGenesis, ContractCodeHistoryOperationTypeInit, ContractCodeHistoryOperationTypeMigrate}
 
-func (c *ContractHistory) AppendCodeHistory(newEntries ...ContractCodeHistoryEntry) {
-	c.CodeHistoryEntries = append(c.CodeHistoryEntries, newEntries...)
-}
-
 // NewContractInfo creates a new instance of a given WASM contract info
 func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string, createdAt *AbsoluteTxPosition) ContractInfo {
 	var adminAddr string
@@ -134,7 +130,7 @@ func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 
 // NewAbsoluteTxPosition gets a block position from the context
 func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
-	// we must safely handle nil gas meters
+	// we muxst safely handle nil gas meters
 	var index uint64
 	meter := ctx.BlockGasMeter()
 	if meter != nil {
@@ -166,10 +162,10 @@ const AbsoluteTxPositionLen = 16
 
 // Bytes encodes the object into a 16 byte representation with big endian block height adn tx index.
 func (a *AbsoluteTxPosition) Bytes() []byte {
-	r := make([]byte, AbsoluteTxPositionLen)
-	if a == nil { // must not happen
-		return r
+	if a == nil {
+		panic("object must not be nil")
 	}
+	r := make([]byte, AbsoluteTxPositionLen)
 	copy(r[0:], sdk.Uint64ToBigEndian(a.BlockHeight))
 	copy(r[8:], sdk.Uint64ToBigEndian(a.TxIndex))
 	return r

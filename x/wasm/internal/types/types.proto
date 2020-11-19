@@ -86,11 +86,6 @@ enum ContractCodeHistoryOperationType {
     CONTRACT_CODE_HISTORY_OPERATION_TYPE_GENESIS = 3 [(gogoproto.enumvalue_customname) = "ContractCodeHistoryOperationTypeGenesis"];
 }
 
-// ContractHistory contains a sorted list of code updates to a contract
-message ContractHistory {
-    repeated ContractCodeHistoryEntry code_history_entries = 1 [(gogoproto.nullable) = false];
-}
-
 // ContractCodeHistoryEntry metadata to a contract.
 message ContractCodeHistoryEntry {
     ContractCodeHistoryOperationType operation = 1;
