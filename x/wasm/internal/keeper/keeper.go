@@ -420,9 +420,6 @@ func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAdd
 	for _, e := range newEntries {
 		pos++
 		key := types.GetContractCodeHistoryElementKey(contractAddr, pos)
-		if store.Has(key) { // should never happen
-			panic("must not overwrite code history element")
-		}
 		store.Set(key, k.cdc.MustMarshalBinaryBare(&e))
 	}
 }

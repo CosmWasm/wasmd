@@ -278,7 +278,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x11d5c), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11974), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
@@ -888,11 +888,11 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
 	_, err := keepers.WasmKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
 	require.NoError(t, err)
-	// then new index exists
+	// then the new index exists
 	newContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
 	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, newContractInfo))
 	require.True(t, exists)
-	// and old index removed
+	// and the old index was removed
 	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
 	require.False(t, exists)
 }
