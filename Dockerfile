@@ -1,24 +1,11 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM cosmwasm/go-ext-builder:0002-alpine AS rust-builder
+FROM golang:1.14-alpine3.12 AS go-builder
 
-RUN apk add git
-
-# copy all code into /code
-WORKDIR /code
-COPY go.* /code/
-
-# download all deps
-RUN go mod download github.com/CosmWasm/wasmvm
-
-# build wasmvm *.a and install it
-RUN export GO_WASM_DIR=$(go list -f "{{ .Dir }}" -m github.com/CosmWasm/wasmvm) && \
-    cd ${GO_WASM_DIR} && \
-    cargo build --release --features backtraces --example muslc && \
-    mv ${GO_WASM_DIR}/target/release/examples/libmuslc.a /lib/libwasmvm_muslc.a
-
-# --------------------------------------------------------
-FROM cosmwasm/go-ext-builder:0002-alpine AS go-builder
+# this comes from standard alpine nightly file
+#  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
+# with some changes to support our toolchain, etc
+RUN set -eux; apk add --no-cache ca-certificates build-base;
 
 RUN apk add git
 # NOTE: add these to run with LEDGER_ENABLED=true
@@ -27,7 +14,9 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-COPY --from=rust-builder /lib/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+# See https://github.com/CosmWasm/wasmvm/releases
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.12.0/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep 00ee24fefe094d919f5f83bf1b32948b1083245479dad8ccd5654c7204827765
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
