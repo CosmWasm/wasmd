@@ -14,9 +14,16 @@ coverage:
       default:
         threshold: 1% # allow this much decrease on project
       app:
-        target: 80%
-        paths: "app/"
-
+        target: 70%
+        flags:
+          - app
+      modules:
+        target: 70%
+        flags:
+          - modules
+      client:
+        flags:
+          - client
     changes: false
 
 comment:
@@ -24,10 +31,27 @@ comment:
   behavior: default # update if exists else create new
   require_changes: true
 
+flags:
+  app:
+    paths:
+      - "app/"
+  modules:
+    paths:
+      - "x/"
+      - "!x/**/client/" # ignore client package
+  client:
+    paths:
+      - "x/**/client/"
+
 ignore:
-  - "*.md"
-  - "*.rst"
   - "cmd/"
   - "contrib/"
   - "docs/"
-  - "networks/"
+  - "docker/"
+  - "scripts/"
+  - "*.md"
+  - "*.rst"
+  - "x/**/*.pb.go"
+  - "x/**/*.pb.gw.go"
+  - "x/**/test_common.go"
+  - "x/**/testdata/"
