@@ -15,12 +15,15 @@ coverage:
         threshold: 1% # allow this much decrease on project
       app:
         target: 70%
-        flags: app
+        flags:
+          - app
       modules:
         target: 70%
-        flags: modules
+        flags:
+          - modules
       client:
-        flags: client
+        flags:
+          - client
     changes: false
 
 comment:
@@ -51,4 +54,4 @@ ignore:
   - "x/**/*.pb.go"
   - "x/**/*.pb.gw.go"
   - "x/**/test_common.go"
-  - "x/**/testdata/**/*"
+  - "x/**/testdata/"
