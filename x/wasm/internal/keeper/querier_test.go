@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -67,6 +68,20 @@ func TestQueryAllContractState(t *testing.T) {
 			},
 			expModelContainsNot: []types.Model{
 				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+			},
+		},
+		"with pagination next key": {
+			srcQuery: &types.QueryAllContractStateRequest{
+				Address: contractAddr.String(),
+				Pagination: &query.PageRequest{
+					Key: fromBase64("Y29uZmln"),
+				},
+			},
+			expModelContains: []types.Model{
+				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+			},
+			expModelContainsNot: []types.Model{
+				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 			},
 		},
 	}
@@ -424,6 +439,15 @@ func TestQueryCodeList(t *testing.T) {
 			},
 			expCodeIDs: []uint64{1, 2},
 		},
+		"with pagination next key": {
+			storedCodeIDs: []uint64{1, 2, 3},
+			req: types.QueryCodesRequest{
+				Pagination: &query.PageRequest{
+					Key: fromBase64("AAAAAAAAAAI="),
+				},
+			},
+			expCodeIDs: []uint64{2, 3},
+		},
 	}
 
 	for msg, spec := range specs {
@@ -449,4 +473,12 @@ func TestQueryCodeList(t *testing.T) {
 			}
 		})
 	}
+}
+
+func fromBase64(s string) []byte {
+	r, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return r
 }

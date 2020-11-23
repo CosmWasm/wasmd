@@ -52,7 +52,7 @@ func GetCmdListCode() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
@@ -93,7 +93,7 @@ func GetCmdListContractByCode() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
@@ -228,7 +228,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
@@ -361,7 +361,7 @@ func GetCmdGetContractHistory() *cobra.Command {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
@@ -450,4 +450,18 @@ func (x VanillaStdJsonMarshaller) UnmarshalJSON(bz []byte, ptr proto.Message) er
 
 func (x VanillaStdJsonMarshaller) MustUnmarshalJSON(bz []byte, ptr proto.Message) {
 	panic("not supported")
+}
+
+// sdk ReadPageRequest expects binary but we encoded to base64 in our marshaller
+func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
+	encoded, err := flagSet.GetString(flags.FlagPageKey)
+	if err != nil {
+		panic(err.Error())
+	}
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		panic(err.Error())
+	}
+	flagSet.Set(flags.FlagPageKey, string(raw))
+	return flagSet
 }
