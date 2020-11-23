@@ -340,28 +340,36 @@ func RandomBech32AccountAddress(_ *testing.T) string {
 	return addr.String()
 }
 
-type HackatomExampleContract struct {
+type ExampleContract struct {
 	InitialAmount sdk.Coins
 	Creator       crypto.PrivKey
 	CreatorAddr   sdk.AccAddress
 	CodeID        uint64
 }
 
-func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) HackatomExampleContract {
+func StoreHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContract(t, ctx, keepers, "./testdata/hackatom.wasm")
+}
+
+func StoreBurnerExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContract(t, ctx, keepers, "./testdata/burner.wasm")
+}
+
+func StoreExampleContract(t *testing.T, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := ioutil.ReadFile(wasmFile)
 	require.NoError(t, err)
 
 	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	return HackatomExampleContract{anyAmount, creator, creatorAddr, codeID}
+	return ExampleContract{anyAmount, creator, creatorAddr, codeID}
 }
 
 type HackatomExampleInstance struct {
-	HackatomExampleContract
+	ExampleContract
 	Contract        sdk.AccAddress
 	Verifier        crypto.PrivKey
 	VerifierAddr    sdk.AccAddress
@@ -382,15 +390,17 @@ func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers T
 		Beneficiary: beneficiaryAddr,
 	}.GetBytes(t)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, nil, initMsgBz, "demo contract to query", initialAmount)
+
+	adminAddr := contract.CreatorAddr
+	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, "demo contract to query", initialAmount)
 	require.NoError(t, err)
 	return HackatomExampleInstance{
-		HackatomExampleContract: contract,
-		Contract:                contractAddr,
-		Verifier:                verifier,
-		VerifierAddr:            verifierAddr,
-		Beneficiary:             beneficiary,
-		BeneficiaryAddr:         beneficiaryAddr,
+		ExampleContract: contract,
+		Contract:        contractAddr,
+		Verifier:        verifier,
+		VerifierAddr:    verifierAddr,
+		Beneficiary:     beneficiary,
+		BeneficiaryAddr: beneficiaryAddr,
 	}
 }
 
@@ -400,6 +410,16 @@ type HackatomExampleInitMsg struct {
 }
 
 func (m HackatomExampleInitMsg) GetBytes(t *testing.T) []byte {
+	initMsgBz, err := json.Marshal(m)
+	require.NoError(t, err)
+	return initMsgBz
+}
+
+type BurnerExampleInitMsg struct {
+	Payout sdk.AccAddress `json:"payout"`
+}
+
+func (m BurnerExampleInitMsg) GetBytes(t *testing.T) []byte {
 	initMsgBz, err := json.Marshal(m)
 	require.NoError(t, err)
 	return initMsgBz

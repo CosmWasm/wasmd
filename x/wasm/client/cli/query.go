@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -9,11 +10,11 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )
@@ -51,16 +52,25 @@ func GetCmdListCode() *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, keeper.QueryListCode)
-			res, _, err := clientCtx.Query(route)
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res)) // TODO: here and others: handle output format proper. See clientCtx.PrintOutput(string(res))
-			return nil
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.Codes(
+				context.Background(),
+				&types.QueryCodesRequest{
+					Pagination: pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list codes")
 	return cmd
 }
 
@@ -83,16 +93,26 @@ func GetCmdListContractByCode() *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryListContractByCode, codeID)
-			res, _, err := clientCtx.Query(route)
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res))
-			return nil
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ContractsByCode(
+				context.Background(),
+				&types.QueryContractsByCodeRequest{
+					CodeId:     codeID,
+					Pagination: pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list contracts by code")
 	return cmd
 }
 
@@ -115,26 +135,22 @@ func GetCmdQueryCode() *cobra.Command {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s/%d", types.QuerierRoute, keeper.QueryGetCode, codeID)
-			res, _, err := clientCtx.Query(route)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.Code(
+				context.Background(),
+				&types.QueryCodeRequest{
+					CodeId: codeID,
+				},
+			)
 			if err != nil {
 				return err
 			}
-			if len(res) == 0 {
-				return fmt.Errorf("contract not found")
-			}
-			var code types.QueryCodeResponse
-			err = json.Unmarshal(res, &code)
-			if err != nil {
-				return err
-			}
-
-			if len(code.Data) == 0 {
+			if len(res.Data) == 0 {
 				return fmt.Errorf("contract not found")
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], code.Data, 0644)
+			return ioutil.WriteFile(args[1], res.Data, 0644)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -155,18 +171,21 @@ func GetCmdGetContractInfo() *cobra.Command {
 				return err
 			}
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
-
-			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContract, addr.String())
-			res, _, err := clientCtx.Query(route)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ContractInfo(
+				context.Background(),
+				&types.QueryContractInfoRequest{
+					Address: args[0],
+				},
+			)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res))
-			return nil
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -204,21 +223,31 @@ func GetCmdGetContractStateAll() *cobra.Command {
 				return err
 			}
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateAll)
-			res, _, err := clientCtx.Query(route)
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res))
-			return nil
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.AllContractState(
+				context.Background(),
+				&types.QueryAllContractStateRequest{
+					Address:    args[0],
+					Pagination: pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "contract state")
 	return cmd
 }
 
@@ -236,7 +265,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 				return err
 			}
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
@@ -244,13 +273,19 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateRaw)
-			res, _, err := clientCtx.QueryWithData(route, queryData)
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.RawContractState(
+				context.Background(),
+				&types.QueryRawContractStateRequest{
+					Address:   args[0],
+					QueryData: queryData,
+				},
+			)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res))
-			return nil
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
@@ -260,7 +295,6 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 
 func GetCmdGetContractStateSmart() *cobra.Command {
 	decoder := newArgDecoder(asciiDecodeString)
-
 	cmd := &cobra.Command{
 		Use:   "smart [bech32_address] [query]",
 		Short: "Calls contract with given address with query data and prints the returned result",
@@ -273,15 +307,13 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 				return err
 			}
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			_, err = sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
-			key := args[1]
-			if key == "" {
-				return errors.New("key must not be empty")
+			if args[1] == "" {
+				return errors.New("query data must not be empty")
 			}
-			route := fmt.Sprintf("custom/%s/%s/%s/%s", types.QuerierRoute, keeper.QueryGetContractState, addr.String(), keeper.QueryMethodContractStateSmart)
 
 			queryData, err := decoder.DecodeString(args[1])
 			if err != nil {
@@ -290,12 +322,19 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 			if !json.Valid(queryData) {
 				return errors.New("query data must be json")
 			}
-			res, _, err := clientCtx.QueryWithData(route, queryData)
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.SmartContractState(
+				context.Background(),
+				&types.QuerySmartContractStateRequest{
+					Address:   args[0],
+					QueryData: queryData,
+				},
+			)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(res))
-			return nil
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
@@ -317,21 +356,33 @@ func GetCmdGetContractHistory() *cobra.Command {
 				return err
 			}
 
-			addr, err := sdk.AccAddressFromBech32(args[0])
+			_, err = sdk.AccAddressFromBech32(args[0])
+			if err == nil {
+				return err
+			}
+
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ContractHistory(
+				context.Background(),
+				&types.QueryContractHistoryRequest{
+					Address:    args[0],
+					Pagination: pageReq,
+				},
+			)
 			if err != nil {
 				return err
 			}
 
-			route := fmt.Sprintf("custom/%s/%s/%s", types.QuerierRoute, keeper.QueryContractHistory, addr.String())
-			res, _, err := clientCtx.Query(route)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(res))
-			return nil
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
 		},
 	}
+
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "contract history")
 	return cmd
 }
 
@@ -376,4 +427,41 @@ func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
 
 func asciiDecodeString(s string) ([]byte, error) {
 	return []byte(s), nil
+}
+
+type VanillaStdJsonMarshaller struct {
+}
+
+func (x VanillaStdJsonMarshaller) MarshalJSON(o proto.Message) ([]byte, error) {
+	return json.Marshal(o)
+}
+
+func (x VanillaStdJsonMarshaller) MustMarshalJSON(o proto.Message) []byte {
+	b, err := x.MarshalJSON(o)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (x VanillaStdJsonMarshaller) UnmarshalJSON(bz []byte, ptr proto.Message) error {
+	panic("not supported")
+}
+
+func (x VanillaStdJsonMarshaller) MustUnmarshalJSON(bz []byte, ptr proto.Message) {
+	panic("not supported")
+}
+
+// sdk ReadPageRequest expects binary but we encoded to base64 in our marshaller
+func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
+	encoded, err := flagSet.GetString(flags.FlagPageKey)
+	if err != nil {
+		panic(err.Error())
+	}
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		panic(err.Error())
+	}
+	flagSet.Set(flags.FlagPageKey, string(raw))
+	return flagSet
 }

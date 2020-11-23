@@ -280,7 +280,7 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
-			expContent: nil,
+			expContent: []types.ContractCodeHistoryEntry{},
 		},
 	}
 	for msg, spec := range specs {
@@ -300,10 +300,6 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			if spec.expContent == nil {
-				require.Nil(t, resData)
-				return
-			}
 			var got []types.ContractCodeHistoryEntry
 			err = json.Unmarshal(resData, &got)
 			require.NoError(t, err)

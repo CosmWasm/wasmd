@@ -21,7 +21,6 @@ grpcurl -plaintext -import-path $COSMOS_SDK_DIR/third_party/proto -import-path $
   -d "{\"address\": \"$CONTRACT\"}" localhost:9090  wasmd.x.wasmd.v1beta1.Query/ContractHistory | jq
 
 echo "### Show contract state"
-CONTRACT=$(echo $RESP | jq -r ".contractInfos[-1].address")
 grpcurl -plaintext -import-path $COSMOS_SDK_DIR/third_party/proto -import-path $COSMOS_SDK_DIR/proto -import-path . -proto ./x/wasm/internal/types/query.proto \
   -d "{\"address\": \"$CONTRACT\"}" localhost:9090  wasmd.x.wasmd.v1beta1.Query/AllContractState | jq
 

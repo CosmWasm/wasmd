@@ -278,7 +278,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
-	require.Equal(t, uint64(0x115e6), gasAfter-gasBefore)
+	require.Equal(t, uint64(0x11974), gasAfter-gasBefore)
 
 	// ensure it is stored properly
 	info := keeper.GetContractInfo(ctx, contractAddr)
@@ -293,7 +293,7 @@ func TestInstantiate(t *testing.T) {
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       json.RawMessage(initMsgBz),
 	}}
-	assert.Equal(t, exp, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
+	assert.Equal(t, exp, keeper.GetContractHistory(ctx, contractAddr))
 }
 
 func TestInstantiateWithDeposit(t *testing.T) {
@@ -860,7 +860,7 @@ func TestMigrate(t *testing.T) {
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       spec.migrateMsg,
 			}}
-			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr).CodeHistoryEntries)
+			assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 
 			raw := keeper.QueryRaw(ctx, contractAddr, []byte("config"))
 			var stored map[string][]byte
@@ -870,6 +870,31 @@ func TestMigrate(t *testing.T) {
 			assert.Equal(t, spec.expVerifier, sdk.AccAddress(stored["verifier"]))
 		})
 	}
+}
+
+func TestMigrateReplacesTheSecondIndex(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	example := InstantiateHackatomExampleContract(t, ctx, keepers)
+
+	// then assert a second index exists
+	store := ctx.KVStore(keepers.WasmKeeper.storeKey)
+	oldContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
+	require.NotNil(t, oldContractInfo)
+	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	require.True(t, exists)
+
+	// when do migrate
+	newCodeExample := StoreBurnerExampleContract(t, ctx, keepers)
+	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
+	_, err := keepers.WasmKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
+	require.NoError(t, err)
+	// then the new index exists
+	newContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, newContractInfo))
+	require.True(t, exists)
+	// and the old index was removed
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	require.False(t, exists)
 }
 
 func TestMigrateWithDispatchedMessage(t *testing.T) {
@@ -896,18 +921,13 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 		Verifier:    fred,
 		Beneficiary: fred,
 	}
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
+	initMsgBz := initMsg.GetBytes(t)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	contractAddr, err := keeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
 	require.NoError(t, err)
 
-	migMsg := struct {
-		Payout sdk.AccAddress `json:"payout"`
-	}{Payout: myPayoutAddr}
-	migMsgBz, err := json.Marshal(migMsg)
-	require.NoError(t, err)
+	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	res, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)

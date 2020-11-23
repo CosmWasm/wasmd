@@ -31,6 +31,7 @@
     - [QueryAllContractStateResponse](#wasmd.x.wasmd.v1beta1.QueryAllContractStateResponse)
     - [QueryCodeRequest](#wasmd.x.wasmd.v1beta1.QueryCodeRequest)
     - [QueryCodeResponse](#wasmd.x.wasmd.v1beta1.QueryCodeResponse)
+    - [QueryCodesRequest](#wasmd.x.wasmd.v1beta1.QueryCodesRequest)
     - [QueryCodesResponse](#wasmd.x.wasmd.v1beta1.QueryCodesResponse)
     - [QueryContractHistoryRequest](#wasmd.x.wasmd.v1beta1.QueryContractHistoryRequest)
     - [QueryContractHistoryResponse](#wasmd.x.wasmd.v1beta1.QueryContractHistoryResponse)
@@ -51,7 +52,6 @@
     - [AccessTypeParam](#wasmd.x.wasmd.v1beta1.AccessTypeParam)
     - [CodeInfo](#wasmd.x.wasmd.v1beta1.CodeInfo)
     - [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry)
-    - [ContractHistory](#wasmd.x.wasmd.v1beta1.ContractHistory)
     - [ContractInfo](#wasmd.x.wasmd.v1beta1.ContractInfo)
     - [Model](#wasmd.x.wasmd.v1beta1.Model)
     - [Params](#wasmd.x.wasmd.v1beta1.Params)
@@ -436,6 +436,7 @@ QueryAllContractStateRequest is the request type for the Query/AllContractState 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | address | [string](#string) |  | address is the address of the contract |
+| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
 
@@ -451,6 +452,7 @@ QueryAllContractStateResponse is the response type for the Query/AllContractStat
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | models | [Model](#wasmd.x.wasmd.v1beta1.Model) | repeated |  |
+| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -488,6 +490,21 @@ QueryCodeResponse is the response type for the Query/Code RPC method
 
 
 
+<a name="wasmd.x.wasmd.v1beta1.QueryCodesRequest"></a>
+
+### QueryCodesRequest
+QueryCodesRequest is the request type for the Query/Codes RPC method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
+
+
+
+
+
+
 <a name="wasmd.x.wasmd.v1beta1.QueryCodesResponse"></a>
 
 ### QueryCodesResponse
@@ -497,6 +514,7 @@ QueryCodesResponse is the response type for the Query/Codes RPC method
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | code_infos | [CodeInfoResponse](#wasmd.x.wasmd.v1beta1.CodeInfoResponse) | repeated |  |
+| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -512,6 +530,7 @@ QueryContractHistoryRequest is the request type for the Query/ContractHistory RP
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | address | [string](#string) |  | address is the address of the contract to query |
+| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
 
@@ -527,6 +546,7 @@ QueryContractHistoryResponse is the response type for the Query/ContractHistory 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | entries | [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry) | repeated |  |
+| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -573,6 +593,7 @@ QueryContractsByCodeRequest is the request type for the Query/ContractsByCode RP
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | code_id | [uint64](#uint64) |  | grpc-gateway_out does not support Go style CodID |
+| pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
 
@@ -588,6 +609,7 @@ QueryContractsByCodeResponse is the response type for the Query/ContractsByCode 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | contract_infos | [ContractInfoWithAddress](#wasmd.x.wasmd.v1beta1.ContractInfoWithAddress) | repeated |  |
+| pagination | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 
 
@@ -676,7 +698,7 @@ Query provides defines the gRPC querier service
 | RawContractState | [QueryRawContractStateRequest](#wasmd.x.wasmd.v1beta1.QueryRawContractStateRequest) | [QueryRawContractStateResponse](#wasmd.x.wasmd.v1beta1.QueryRawContractStateResponse) | RawContractState gets single key from the raw store data of a contract |
 | SmartContractState | [QuerySmartContractStateRequest](#wasmd.x.wasmd.v1beta1.QuerySmartContractStateRequest) | [QuerySmartContractStateResponse](#wasmd.x.wasmd.v1beta1.QuerySmartContractStateResponse) | SmartContractState get smart query result from the contract |
 | Code | [QueryCodeRequest](#wasmd.x.wasmd.v1beta1.QueryCodeRequest) | [QueryCodeResponse](#wasmd.x.wasmd.v1beta1.QueryCodeResponse) | Code gets the binary code and metadata for a singe wasm code |
-| Codes | [.google.protobuf.Empty](#google.protobuf.Empty) | [QueryCodesResponse](#wasmd.x.wasmd.v1beta1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes |
+| Codes | [QueryCodesRequest](#wasmd.x.wasmd.v1beta1.QueryCodesRequest) | [QueryCodesResponse](#wasmd.x.wasmd.v1beta1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes |
 
  
 
@@ -692,12 +714,12 @@ Query provides defines the gRPC querier service
 <a name="wasmd.x.wasmd.v1beta1.AbsoluteTxPosition"></a>
 
 ### AbsoluteTxPosition
-AbsoluteTxPosition can be used to sort contracts
+AbsoluteTxPosition is a unique transaction position that allows for global ordering of transactions.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| block_height | [int64](#int64) |  | BlockHeight is the block the contract was created at |
+| block_height | [uint64](#uint64) |  | BlockHeight is the block the contract was created at |
 | tx_index | [uint64](#uint64) |  | TxIndex is a monotonic counter within the block (actual transaction index, or gas consumed) |
 
 
@@ -767,21 +789,6 @@ ContractCodeHistoryEntry metadata to a contract.
 | code_id | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | updated | [AbsoluteTxPosition](#wasmd.x.wasmd.v1beta1.AbsoluteTxPosition) |  | Updated Tx position when the operation was executed. |
 | msg | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="wasmd.x.wasmd.v1beta1.ContractHistory"></a>
-
-### ContractHistory
-ContractHistory contains a sorted list of code updates to a contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code_history_entries | [ContractCodeHistoryEntry](#wasmd.x.wasmd.v1beta1.ContractCodeHistoryEntry) | repeated |  |
 
 
 

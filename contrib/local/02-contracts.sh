@@ -16,7 +16,7 @@ wasmd q wasm code "$CODE_ID" "$TMPDIR"
 rm -f "$TMPDIR"
 echo "-----------------------"
 echo "## List code"
-wasmd query wasm list-code --node=http://localhost:26657 --chain-id=testing | jq
+wasmd query wasm list-code --node=http://localhost:26657 --chain-id=testing -o json | jq
 
 echo "-----------------------"
 echo "## Create new contract instance"
@@ -25,16 +25,16 @@ wasmd tx wasm instantiate "$CODE_ID" "$INIT" --admin=$(wasmd keys show validator
   --from validator --amount="100ustake" --label "local0.1.0" \
   --gas 1000000 -y --chain-id=testing -b block | jq
 
-CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.[0].address')
+CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.contract_infos[-1].address')
 echo "* Contract address: $CONTRACT"
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)
-echo "$RESP"
+echo "$RESP" | jq
 echo "### Query smart"
 wasmd query wasm contract-state smart "$CONTRACT" '{"verifier":{}}' -o json | jq
 echo "### Query raw"
-KEY=$(echo "$RESP" | jq -r ".[0].key")
-wasmd query wasm contract-state raw "$CONTRACT" "$KEY" -o json
+KEY=$(echo "$RESP" | jq -r ".models[0].key")
+wasmd query wasm contract-state raw "$CONTRACT" "$KEY" -o json | jq
 
 
 echo "-----------------------"
@@ -47,7 +47,7 @@ wasmd tx wasm execute "$CONTRACT" "$MSG" \
 
 echo "-----------------------"
 echo "## Set new admin"
-echo "### Query old admin: $(wasmd q wasm contract $CONTRACT -o json | jq -r '.admin')"
+echo "### Query old admin: $(wasmd q wasm contract $CONTRACT -o json | jq -r '.contract_info.admin')"
 echo "### Update contract"
 wasmd tx wasm set-contract-admin "$CONTRACT" $(wasmd keys show fred -a) \
   --from validator -y --chain-id=testing -b block | jq
