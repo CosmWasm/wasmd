@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
+	"runtime/debug"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -146,21 +147,41 @@ func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 	return &types.QueryRawContractStateResponse{Data: rsp}, nil
 }
 
-func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (*types.QuerySmartContractStateResponse, error) {
+func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(sdk.NewGasMeter(q.keeper.queryGasLimit))
+	// recover from out-of-gas panic
+	defer func() {
+		if r := recover(); r != nil {
+			switch rType := r.(type) {
+			case sdk.ErrorOutOfGas:
+				err = sdkerrors.Wrapf(sdkerrors.ErrOutOfGas,
+					"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
+					rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
+				)
+			default:
+				err = sdkerrors.ErrPanic
+			}
+			rsp = nil
+			q.keeper.Logger(ctx).
+				Debug("smart query contract",
+					"error", "recovering panic",
+					"contract-address", req.Address,
+					"stacktrace", string(debug.Stack()))
+		}
+	}()
 
-	rsp, err := q.keeper.QuerySmart(ctx, contractAddr, req.QueryData)
+	bz, err := q.keeper.QuerySmart(ctx, contractAddr, req.QueryData)
 	switch {
 	case err != nil:
 		return nil, err
-	case rsp == nil:
+	case bz == nil:
 		return nil, types.ErrNotFound
 	}
-	return &types.QuerySmartContractStateResponse{Data: rsp}, nil
+	return &types.QuerySmartContractStateResponse{Data: bz}, nil
 
 }
 
