@@ -348,7 +348,7 @@ func (m *ContractCodeHistoryEntry) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractCodeHistoryEntry proto.InternalMessageInfo
 
-// AbsoluteTxPosition is a block position that can be used to sort contracts
+// AbsoluteTxPosition is a unique transaction position that allows for global ordering of transactions.
 type AbsoluteTxPosition struct {
 	// BlockHeight is the block the contract was created at
 	BlockHeight uint64 `protobuf:"varint,1,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`

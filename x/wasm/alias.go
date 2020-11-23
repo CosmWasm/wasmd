@@ -49,7 +49,7 @@ var (
 	ConvertToProposals        = types.ConvertToProposals
 	GetCodeKey                = types.GetCodeKey
 	GetContractAddressKey     = types.GetContractAddressKey
-	GetContractStorePrefixKey = types.GetContractStorePrefixKey
+	GetContractStorePrefixKey = types.GetContractStorePrefix
 	NewCodeInfo               = types.NewCodeInfo
 	NewAbsoluteTxPosition     = types.NewAbsoluteTxPosition
 	NewContractInfo           = types.NewContractInfo

@@ -3,7 +3,9 @@ package keeper
 import (
 	"encoding/json"
 	"reflect"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -141,4 +143,34 @@ func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper K
 		history[i].Updated = nil
 	}
 	return history, nil
+}
+
+func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]types.ContractInfoWithAddress, error) {
+	var contracts []types.ContractInfoWithAddress
+	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
+		if info.CodeID == codeID {
+			// and add the address
+			infoWithAddress := types.ContractInfoWithAddress{
+				Address:      addr.String(),
+				ContractInfo: &info,
+			}
+			contracts = append(contracts, infoWithAddress)
+		}
+		return false
+	})
+
+	// now we sort them by AbsoluteTxPosition
+	sort.Slice(contracts, func(i, j int) bool {
+		this := contracts[i].ContractInfo.Created
+		other := contracts[j].ContractInfo.Created
+		if this.Equal(other) {
+			return strings.Compare(contracts[i].Address, contracts[j].Address) < 0
+		}
+		return this.LessThan(other)
+	})
+
+	for i := range contracts {
+		contracts[i].Created = nil
+	}
+	return contracts, nil
 }

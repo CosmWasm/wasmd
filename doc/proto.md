@@ -529,7 +529,7 @@ QueryContractHistoryRequest is the request type for the Query/ContractHistory RP
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| address | [string](#string) |  | address is the address of the contract to query´ |
+| address | [string](#string) |  | address is the address of the contract to query |
 | pagination | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | pagination defines an optional pagination for the request. |
 
 
@@ -714,7 +714,7 @@ Query provides defines the gRPC querier service
 <a name="wasmd.x.wasmd.v1beta1.AbsoluteTxPosition"></a>
 
 ### AbsoluteTxPosition
-AbsoluteTxPosition is a block position that can be used to sort contracts
+AbsoluteTxPosition is a unique transaction position that allows for global ordering of transactions.
 
 
 | Field | Type | Label | Description |

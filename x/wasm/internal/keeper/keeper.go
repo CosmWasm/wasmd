@@ -233,7 +233,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// create prefixed data store
 	// 0x03 | contractAddress (sdk.AccAddress)
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
 	// prepare querier
@@ -351,7 +351,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		Plugins: k.queryPlugins,
 	}
 
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	gas := gasForContract(ctx)
 	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash, env, info, msg, &prefixStore, cosmwasmAPI, &querier, gasMeter(ctx), gas)
@@ -464,7 +464,7 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 	if key == nil {
 		return nil
 	}
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	return prefixStore.Get(key)
 }
@@ -485,7 +485,7 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	return codeInfo, prefixStore, nil
 }
@@ -526,13 +526,13 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, typ
 }
 
 func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.Iterator {
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	return prefixStore.Iterator(nil, nil)
 }
 
 func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) error {
-	prefixStoreKey := types.GetContractStorePrefixKey(contractAddress)
+	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	for _, model := range models {
 		if model.Value == nil {

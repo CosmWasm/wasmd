@@ -114,7 +114,7 @@ var xxx_messageInfo_QueryContractInfoResponse proto.InternalMessageInfo
 
 // QueryContractHistoryRequest is the request type for the Query/ContractHistory RPC method
 type QueryContractHistoryRequest struct {
-	// address is the address of the contract to query´
+	// address is the address of the contract to query
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`

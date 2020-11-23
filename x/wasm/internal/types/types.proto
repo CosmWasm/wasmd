@@ -97,7 +97,7 @@ message ContractCodeHistoryEntry {
 
 }
 
-// AbsoluteTxPosition is a block position that can be used to sort contracts
+// AbsoluteTxPosition is a unique transaction position that allows for global ordering of transactions.
 message AbsoluteTxPosition {
     // BlockHeight is the block the contract was created at
     uint64 block_height = 1;

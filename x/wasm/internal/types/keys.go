@@ -51,8 +51,8 @@ func GetContractAddressKey(addr sdk.AccAddress) []byte {
 	return append(ContractKeyPrefix, addr...)
 }
 
-// GetContractStorePrefixKey returns the store prefix for the WASM contract instance
-func GetContractStorePrefixKey(addr sdk.AccAddress) []byte {
+// GetContractStorePrefix returns the store prefix for the WASM contract instance
+func GetContractStorePrefix(addr sdk.AccAddress) []byte {
 	return append(ContractStorePrefix, addr...)
 }
 

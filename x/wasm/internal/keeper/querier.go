@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
-	"sort"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -113,7 +112,7 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}
 
 	r := make([]types.Model, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractStorePrefixKey(contractAddr))
+	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractStorePrefix(contractAddr))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, types.Model{
@@ -219,31 +218,6 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper Keeper) (*ty
 		Address:      addr.String(),
 		ContractInfo: info,
 	}, nil
-}
-
-func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]types.ContractInfoWithAddress, error) {
-	var contracts []types.ContractInfoWithAddress
-	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
-		if info.CodeID == codeID {
-			// and add the address
-			infoWithAddress := types.ContractInfoWithAddress{
-				Address:      addr.String(),
-				ContractInfo: &info,
-			}
-			contracts = append(contracts, infoWithAddress)
-		}
-		return false
-	})
-
-	// now we sort them by AbsoluteTxPosition
-	sort.Slice(contracts, func(i, j int) bool {
-		return contracts[i].ContractInfo.Created.LessThan(contracts[j].ContractInfo.Created)
-	})
-
-	for i := range contracts {
-		contracts[i].Created = nil
-	}
-	return contracts, nil
 }
 
 func queryCode(ctx sdk.Context, codeID uint64, keeper *Keeper) (*types.QueryCodeResponse, error) {

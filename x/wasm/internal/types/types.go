@@ -130,7 +130,7 @@ func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 
 // NewAbsoluteTxPosition gets a block position from the context
 func NewAbsoluteTxPosition(ctx sdk.Context) *AbsoluteTxPosition {
-	// we muxst safely handle nil gas meters
+	// we must safely handle nil gas meters
 	var index uint64
 	meter := ctx.BlockGasMeter()
 	if meter != nil {
@@ -160,7 +160,7 @@ func (a *AbsoluteTxPosition) LessThan(b *AbsoluteTxPosition) bool {
 // AbsoluteTxPositionLen number of elements in byte representation
 const AbsoluteTxPositionLen = 16
 
-// Bytes encodes the object into a 16 byte representation with big endian block height adn tx index.
+// Bytes encodes the object into a 16 byte representation with big endian block height and tx index.
 func (a *AbsoluteTxPosition) Bytes() []byte {
 	if a == nil {
 		panic("object must not be nil")
