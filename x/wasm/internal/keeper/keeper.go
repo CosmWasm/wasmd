@@ -3,6 +3,7 @@ package keeper
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"path/filepath"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -18,6 +19,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 // GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
@@ -709,4 +711,9 @@ func gasMeter(ctx sdk.Context) MultipiedGasMeter {
 	return MultipiedGasMeter{
 		originalMeter: ctx.GasMeter(),
 	}
+}
+
+// Logger returns a module-specific logger.
+func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }

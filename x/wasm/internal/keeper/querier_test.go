@@ -8,11 +8,14 @@ import (
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 func TestQueryAllContractState(t *testing.T) {
@@ -136,11 +139,50 @@ func TestQuerySmartContractState(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
+			require.True(t, spec.expErr.Is(err), "but got %+v", err)
 			if spec.expErr != nil {
 				return
 			}
 			assert.JSONEq(t, string(got.Data), spec.expResp)
+		})
+	}
+}
+
+func TestQuerySmartContractPanics(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(InstanceCost)).WithLogger(log.TestingLogger())
+
+	specs := map[string]struct {
+		doInContract func()
+		expErr       *sdkErrors.Error
+	}{
+		"out of gas": {
+			doInContract: func() {
+				ctx.GasMeter().ConsumeGas(ctx.GasMeter().Limit()+1, "test - consume more than limit")
+			},
+			expErr: sdkErrors.ErrOutOfGas,
+		},
+		"other panic": {
+			doInContract: func() {
+				panic("my panic")
+			},
+			expErr: sdkErrors.ErrPanic,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			keepers.WasmKeeper.wasmer = &MockWasmer{QueryFn: func(code cosmwasm.CodeID, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+				spec.doInContract()
+				return nil, 0, nil
+			}}
+			// when
+			q := NewQuerier(keepers.WasmKeeper)
+			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), &types.QuerySmartContractStateRequest{
+				Address: exampleContract.Contract.String(),
+			})
+			require.True(t, spec.expErr.Is(err), "got error: %+v", err)
+			assert.Nil(t, got)
 		})
 	}
 }
