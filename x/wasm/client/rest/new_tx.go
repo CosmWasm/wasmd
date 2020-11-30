@@ -42,7 +42,7 @@ func setContractAdminHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := &types.MsgUpdateAdmin{
-			Sender:   cliCtx.GetFromAddress().String(),
+			Sender:   req.BaseReq.From,
 			NewAdmin: req.Admin,
 			Contract: contractAddr,
 		}
@@ -70,7 +70,7 @@ func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := &types.MsgMigrateContract{
-			Sender:     cliCtx.GetFromAddress().String(),
+			Sender:     req.BaseReq.From,
 			Contract:   contractAddr,
 			CodeID:     req.CodeID,
 			MigrateMsg: req.MigrateMsg,
