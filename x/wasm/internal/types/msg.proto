@@ -1,5 +1,5 @@
 syntax = "proto3";
-package wasmd.x.wasmd.v1beta1;
+package cosmwasm.wasm.v1beta1;
 
 
 import "gogoproto/gogo.proto";
