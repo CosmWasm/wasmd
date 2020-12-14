@@ -12,6 +12,8 @@ import (
 //
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error {
+	keeper.setParams(ctx, data.Params)
+
 	var maxCodeID uint64
 	for i, code := range data.Codes {
 		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)
@@ -50,7 +52,6 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error
 	if keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID) <= uint64(maxContractID) {
 		return sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastInstanceID), maxContractID)
 	}
-	keeper.setParams(ctx, data.Params)
 
 	return nil
 }

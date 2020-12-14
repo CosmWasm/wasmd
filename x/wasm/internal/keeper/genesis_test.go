@@ -32,13 +32,16 @@ import (
 const firstCodeID = 1
 
 func TestGenesisExportImport(t *testing.T) {
-	srcKeeper, srcCtx, srcStoreKeys, srcCleanup := setupKeeper(t)
-	defer srcCleanup()
+	srcKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
+
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	// store some test data
 	f := fuzz.New().Funcs(ModelFuzzers...)
+
+	srcKeeper.setParams(srcCtx, types.DefaultParams())
+
 	for i := 0; i < 25; i++ {
 		var (
 			codeInfo    types.CodeInfo
@@ -88,8 +91,7 @@ func TestGenesisExportImport(t *testing.T) {
 	})
 
 	// re-import
-	dstKeeper, dstCtx, dstStoreKeys, dstCleanup := setupKeeper(t)
-	defer dstCleanup()
+	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
 
 	var importState wasmTypes.GenesisState
 	err = json.Unmarshal(exportedGenesis, &importState)
@@ -357,8 +359,7 @@ func TestFailFastImport(t *testing.T) {
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keeper, ctx, _, cleanup := setupKeeper(t)
-			defer cleanup()
+			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
 			got := InitGenesis(ctx, keeper, spec.src)
@@ -413,8 +414,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
   {"id_key": %q, "value": "2"}
   ]
 }`
-	keeper, ctx, _, dstCleanup := setupKeeper(t)
-	defer dstCleanup()
+	keeper, ctx, _ := setupKeeper(t)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -482,12 +482,11 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 }
 
-func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey, func()) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	t.Helper()
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
-	cleanup := func() { os.RemoveAll(tempDir) }
-	//t.Cleanup(cleanup) todo: add with Go 1.14
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	var (
 		keyParams  = sdk.NewKVStoreKey(paramtypes.StoreKey)
 		tkeyParams = sdk.NewTransientStoreKey(paramtypes.TStoreKey)
@@ -511,7 +510,5 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey, func()) {
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
 	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
-	srcKeeper.setParams(ctx, wasmTypes.DefaultParams())
-
-	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}, cleanup
+	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
 }
