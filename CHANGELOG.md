@@ -4,21 +4,15 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.13.0...HEAD)
 
+**Features:**
+- Upgrade to cosmos-sdk v0.40.0-rc5 [\#344](https://github.com/CosmWasm/wasmd/issues/344)
+- Add Dependabot to keep dependencies secure and up-to-date [\#336](https://github.com/CosmWasm/wasmd/issues/336)
+
 **Fixed bugs:**
 
 - Dependabot can't resolve your Go dependency files [\#339](https://github.com/CosmWasm/wasmd/issues/339)
 - Errors in `InitGenesis` [\#335](https://github.com/CosmWasm/wasmd/issues/335)
 - Invalid homeDir for export command [\#334](https://github.com/CosmWasm/wasmd/issues/334)
-
-**Closed issues:**
-
-- Add Dependabot to keep dependencies secure and up-to-date [\#336](https://github.com/CosmWasm/wasmd/issues/336)
-
-**Merged pull requests:**
-
-- Upgrade grpc lib to v1.34.0 [\#340](https://github.com/CosmWasm/wasmd/pull/340) ([alpe](https://github.com/alpe))
-- Fix param usage issue in genesis import [\#338](https://github.com/CosmWasm/wasmd/pull/338) ([alpe](https://github.com/alpe))
-- Fix home dir issue in export command [\#337](https://github.com/CosmWasm/wasmd/pull/337) ([alpe](https://github.com/alpe))
 
 ## [v0.13.0](https://github.com/CosmWasm/wasmd/tree/v0.13.0) (2020-12-04)
 
