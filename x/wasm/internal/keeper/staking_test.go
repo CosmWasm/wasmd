@@ -7,7 +7,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -610,17 +610,14 @@ func TestQueryStakingPlugin(t *testing.T) {
 
 // adds a few validators and returns a list of validators that are registered
 func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, value sdk.Coin) sdk.ValAddress {
-	_, pub, accAddr := keyPubAddr()
-
-	addr := sdk.ValAddress(accAddr)
-
 	owner := createFakeFundedAccount(t, ctx, accountKeeper, bankKeeper, sdk.Coins{value})
 
-	pk, err := ed25519.FromTmEd25519(pub)
-	require.NoError(t, err)
-	pkAny, err := codectypes.PackAny(pk)
-	require.NoError(t, err)
+	privKey := secp256k1.GenPrivKey()
+	pubKey := privKey.PubKey()
+	addr := sdk.ValAddress(pubKey.Address())
 
+	pkAny, err := codectypes.PackAny(pubKey)
+	require.NoError(t, err)
 	msg := stakingtypes.MsgCreateValidator{
 		Description: types.Description{
 			Moniker: "Validator power",

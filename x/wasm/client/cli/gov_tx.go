@@ -18,8 +18,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -41,7 +40,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				InstantiatePermission: src.InstantiatePermission,
 			}
 
-			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
+			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
 			if err != nil {
 				return err
 			}
@@ -79,8 +78,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -103,7 +101,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				InitFunds:   src.InitFunds,
 			}
 
-			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
+			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
 			if err != nil {
 				return err
 			}
@@ -140,8 +138,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 		Short: "Submit a migrate wasm contract to a new code version proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -164,7 +161,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				RunAs:       viper.GetString(flagRunAs),
 			}
 
-			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
+			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
 			if err != nil {
 				return err
 			}
@@ -198,8 +195,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 		Short: "Submit a new admin for a contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -216,7 +212,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				NewAdmin:    src.NewAdmin,
 			}
 
-			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
+			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
 			if err != nil {
 				return err
 			}
@@ -248,8 +244,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -260,7 +255,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				Contract:    args[0],
 			}
 
-			deposit, err := sdk.ParseCoins(viper.GetString(cli.FlagDeposit))
+			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
 			if err != nil {
 				return err
 			}
