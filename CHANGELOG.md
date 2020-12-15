@@ -1,162 +1,87 @@
-<!--
-Guiding Principles:
-
-Changelogs are for humans, not machines.
-There should be an entry for every single version.
-The same types of changes should be grouped.
-Versions and sections should be linkable.
-The latest version comes first.
-The release date of each version is displayed.
-Mention whether you follow Semantic Versioning.
-
-Usage:
-
-Change log entries are to be added to the Unreleased section under the
-appropriate stanza (see below). Each entry should ideally include a tag and
-the Github issue reference in the following format:
-
-* (<tag>) \#<issue-number> message
-
-The issue numbers will later be link-ified during the release process so you do
-not have to worry about including a link manually, but you can if you wish.
-
-Types of changes (Stanzas):
-
-"Features" for new features.
-"Improvements" for changes in existing functionality.
-"Deprecated" for soon-to-be removed features.
-"Bug Fixes" for any bug fixes.
-"Client Breaking" for breaking CLI commands and REST routes.
-"State Machine Breaking" for breaking the AppState
-
-Ref: https://keepachangelog.com/en/1.0.0/
--->
-
 # Changelog
 
-## [Unreleased]
+## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-### Features
-* (wasmd) [\#196](https://github.com/CosmWasm/wasmd/issues/196) Move history of contract code migrations to their own prefix store
-* (wasmd) [\#130](https://github.com/CosmWasm/wasmd/issues/130) Full history of contract code migrations
-* (wasmd) [\#187](https://github.com/CosmWasm/wasmd/issues/187) Introduce wasmgovd binary
-* (wasmd) [\#178](https://github.com/CosmWasm/wasmd/issues/178) Add cli support for wasm gov proposals
-* (wasmd) [\#163](https://github.com/CosmWasm/wasmd/issues/163) Control who can instantiate code
-* (wasmd) [\#164](https://github.com/CosmWasm/wasmd/issues/164) Control who can upload code
-* (wasmd) [\#173](https://github.com/CosmWasm/wasmd/issues/173) Gov proposal types and handler
-* (wasmd) [\#122](https://github.com/CosmWasm/wasmd/pull/122]) Migrate contract backend functionality with wasmvm stub impl
-* (wasmd)[\#2](https://github.com/cosmwasm/wasmd/pull/22)  Improve wasm contract queries (all, raw, smart)
-* (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--inter-block-cache` CLI
-flag and configuration.
-* (wasmcli) [\#132](https://github.com/cosmwasm/wasmd/pull/132) Add `tx decode` command to decode
-Base64 encoded transactions.
-* (modules) [\#190](https://github.com/cosmwasm/wasmd/pull/190) Introduce use of the `x/evidence` module.
-* (wasmd) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add debug commands to wasmd: 
-    - `pubkey`: decode pubkey from base64, hex or bech32
-    - `addr`: convert a address between hex and bech32
-    - `raw-bytes` convert raw-bytes to hex
-* (wasmcli) [\#191](https://github.com/cosmwasm/wasmd/pull/191) Add cmd `decode-tx`, decodes a tx from hex or base64
-* (wasmd) [\#9](https://github.com/cosmwasm/wasmd/pull/9) Allow gzip data in tx body on Create 
-* (wasmd) [\#124](https://github.com/CosmWasm/wasmd/pull/124) Update contract admin
-* (wasmd) [\#131](https://github.com/CosmWasm/wasmd/pull/131) Implement REST server support for new messages
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.13.0...HEAD)
 
-## [v2.0.3] - 2019-11-04
+**Fixed bugs:**
 
-### Improvements
+- Dependabot can't resolve your Go dependency files [\#339](https://github.com/CosmWasm/wasmd/issues/339)
+- Errors in `InitGenesis` [\#335](https://github.com/CosmWasm/wasmd/issues/335)
+- Invalid homeDir for export command [\#334](https://github.com/CosmWasm/wasmd/issues/334)
 
-* (sdk) Bump SDK version to [v0.37.4](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.4).
-* (tendermint) Bump Tendermint version to [v0.32.7](https://github.com/tendermint/tendermint/releases/tag/v0.32.7).
+**Closed issues:**
 
-## [v2.0.2] - 2019-10-12
+- Add Dependabot to keep dependencies secure and up-to-date [\#336](https://github.com/CosmWasm/wasmd/issues/336)
 
-### Improvements
+**Merged pull requests:**
 
-* (sdk) Bump SDK version to [v0.37.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.37.3).
-* (tendermint) Bump Tendermint version to [v0.32.6](https://github.com/tendermint/tendermint/releases/tag/v0.32.6).
+- Upgrade grpc lib to v1.34.0 [\#340](https://github.com/CosmWasm/wasmd/pull/340) ([alpe](https://github.com/alpe))
+- Fix param usage issue in genesis import [\#338](https://github.com/CosmWasm/wasmd/pull/338) ([alpe](https://github.com/alpe))
+- Fix home dir issue in export command [\#337](https://github.com/CosmWasm/wasmd/pull/337) ([alpe](https://github.com/alpe))
 
-## [v2.0.1] - 2019-09-20
+## [v0.13.0](https://github.com/CosmWasm/wasmd/tree/v0.13.0) (2020-12-04)
 
-### Features
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.12.1...v0.13.0)
 
-* (wasmd) [\#119](https://github.com/cosmwasm/wasmd/pull/119) Add support for the `--halt-time` CLI flag and configuration.
+**Fixed bugs:**
 
-### Improvements
+- REST handler wrong `Sender` source [\#324](https://github.com/CosmWasm/wasmd/issues/324)
 
-* [\#119](https://github.com/cosmwasm/wasmd/pull/119) Refactor and upgrade Circle CI
-configuration.
-* (sdk) Update SDK version to v0.37.1
+**Closed issues:**
 
-## [v2.0.0] - 2019-08-22
+- Change proto package to match \<organisation\>.\<module\>.\<version\> [\#329](https://github.com/CosmWasm/wasmd/issues/329)
+- Out of gas causes panic when external contract store query executed [\#321](https://github.com/CosmWasm/wasmd/issues/321)
+- Check codecov report [\#298](https://github.com/CosmWasm/wasmd/issues/298)
+- cosmwasm.GoAPI will not work on sdk.ValAddress [\#264](https://github.com/CosmWasm/wasmd/issues/264)
+- Stargate: Add pagination support for queries [\#242](https://github.com/CosmWasm/wasmd/issues/242)
 
-### Bug Fixes
+**Merged pull requests:**
 
-* [\#104](https://github.com/cosmwasm/wasmd/issues/104) Fix `ModuleAccountAddrs` to
-not rely on the `x/supply` keeper to get module account addresses for blacklisting.
+- Rename protobuf package [\#330](https://github.com/CosmWasm/wasmd/pull/330) ([alpe](https://github.com/alpe))
+- Use base request data for sender [\#325](https://github.com/CosmWasm/wasmd/pull/325) ([alpe](https://github.com/alpe))
+- Handle panics in query contract smart [\#322](https://github.com/CosmWasm/wasmd/pull/322) ([alpe](https://github.com/alpe))
 
-### State Machine Breaking Changes
+## [v0.12.1](https://github.com/CosmWasm/wasmd/tree/v0.12.1) (2020-11-23)
 
-* (sdk) Update SDK version to v0.37.0
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.12.0...v0.12.1)
 
-## [v1.0.0] - 2019-08-13
+**Closed issues:**
 
-### Bug Fixes
+- Complete IBC Mock testing [\#255](https://github.com/CosmWasm/wasmd/issues/255)
+- Idea: do multiple queries in one API call [\#72](https://github.com/CosmWasm/wasmd/issues/72)
 
-* (wasmd) [\#4113](https://github.com/cosmos/cosmos-sdk/issues/4113) Fix incorrect `$GOBIN` in `Install Go`
-* (wasmcli) [\#3945](https://github.com/cosmos/cosmos-sdk/issues/3945) There's no check for chain-id in TxBuilder.SignStdTx
-* (wasmcli) [\#4190](https://github.com/cosmos/cosmos-sdk/issues/4190) Fix redelegations-from by using the correct params and query endpoint.
-* (wasmcli) [\#4219](https://github.com/cosmos/cosmos-sdk/issues/4219) Return an error when an empty mnemonic is provided during key recovery.
-* (wasmcli) [\#4345](https://github.com/cosmos/cosmos-sdk/issues/4345) Improved Ledger Nano X detection
+**Merged pull requests:**
 
-### Breaking Changes
+- Exclude generate proto code files in coverage [\#320](https://github.com/CosmWasm/wasmd/pull/320) ([alpe](https://github.com/alpe))
+- Upgrade wasmvm to 0.12.0 [\#319](https://github.com/CosmWasm/wasmd/pull/319) ([webmaster128](https://github.com/webmaster128))
+- Fix chain id setup in contrib/local/setup\_wasmd.sh [\#318](https://github.com/CosmWasm/wasmd/pull/318) ([orkunkl](https://github.com/orkunkl))
+- Add pagination to grpc queries [\#317](https://github.com/CosmWasm/wasmd/pull/317) ([alpe](https://github.com/alpe))
 
-* (sdk) Update SDK version to v0.36.0
-* (wasmd) [\#3985](https://github.com/cosmos/cosmos-sdk/issues/3985) ValidatorPowerRank uses potential consensus power
-* (wasmd) [\#4027](https://github.com/cosmos/cosmos-sdk/issues/4027) wasmd version command does not return the checksum of the go.sum file shipped along with the source release tarball.
-  Go modules feature guarantees dependencies reproducibility and as long as binaries are built via the Makefile shipped with the sources, no dependendencies can break such guarantee.
-* (wasmd) [\#4159](https://github.com/cosmos/cosmos-sdk/issues/4159) use module pattern and module manager for initialization
-* (wasmd) [\#4272](https://github.com/cosmos/cosmos-sdk/issues/4272) Merge gaiareplay functionality into wasmd replay.
-  Drop `gaiareplay` in favor of new `wasmd replay` command.
-* (wasmcli) [\#3715](https://github.com/cosmos/cosmos-sdk/issues/3715) query distr rewards returns per-validator
-  rewards along with rewards total amount.
-* (wasmcli) [\#40](https://github.com/cosmos/cosmos-sdk/issues/40) rest-server's --cors option is now gone.
-* (wasmcli) [\#4027](https://github.com/cosmos/cosmos-sdk/issues/4027) wasmcli version command dooes not return the checksum of the go.sum file anymore.
-* (wasmcli) [\#4142](https://github.com/cosmos/cosmos-sdk/issues/4142) Turn wasmcli tx send's --from into a required argument.
-  New shorter syntax: `wasmcli tx send FROM TO AMOUNT`
-* (wasmcli) [\#4228](https://github.com/cosmos/cosmos-sdk/issues/4228) Merge gaiakeyutil functionality into wasmcli keys.
-  Drop `gaiakeyutil` in favor of new `wasmcli keys parse` command. Syntax and semantic are preserved.
-* (rest) [\#3715](https://github.com/cosmos/cosmos-sdk/issues/3715) Update /distribution/delegators/{delegatorAddr}/rewards GET endpoint
-  as per new specs. For a given delegation, the endpoint now returns the
-  comprehensive list of validator-reward tuples along with the grand total.
-* (rest) [\#3942](https://github.com/cosmos/cosmos-sdk/issues/3942) Update pagination data in txs query.
-* (rest) [\#4049](https://github.com/cosmos/cosmos-sdk/issues/4049) update tag MsgWithdrawValidatorCommission to match type
-* (rest) The `/auth/accounts/{address}` now returns a `height` in the response. The
-  account is now nested under `account`.
+## [v0.12.0](https://github.com/CosmWasm/wasmd/tree/v0.12.0) (2020-11-17)
 
-### Features
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.12.0-alpha1...v0.12.0)
 
-* (wasmd) Add `migrate` command to `wasmd` to provide the ability to migrate exported
-  genesis state from one version to another.
-* (wasmd) Update Gaia for community pool spend proposals per Cosmos Hub governance proposal [\#7](https://github.com/cosmos/cosmos-sdk/issues/7) "Activate the Community Pool"
+**Closed issues:**
 
-### Improvements
+- Merge wasmd and wasmcli into a single binary [\#308](https://github.com/CosmWasm/wasmd/issues/308)
+- Change bech32 prefix for wasmd [\#313](https://github.com/CosmWasm/wasmd/issues/313)
+- Upgrade go-cowasmwasm to wasmvm 0.12 [\#309](https://github.com/CosmWasm/wasmd/issues/309)
+- Use string type for AccAddresses in proto  [\#306](https://github.com/CosmWasm/wasmd/issues/306)
+- Upgrade to cosmos/sdk v0.40.0-rc2 [\#296](https://github.com/CosmWasm/wasmd/issues/296)
+- Generate protobuf outputs in a container [\#295](https://github.com/CosmWasm/wasmd/issues/295)
+- Instantiate contract process ordering [\#292](https://github.com/CosmWasm/wasmd/issues/292)
+- Make Wasm maxSize a configuration option [\#289](https://github.com/CosmWasm/wasmd/issues/289)
+- Return error if wasm to big [\#287](https://github.com/CosmWasm/wasmd/issues/287)
 
-* (wasmd) [\#4042](https://github.com/cosmos/cosmos-sdk/issues/4042) Update docs and scripts to include the correct `GO111MODULE=on` environment variable.
-* (wasmd) [\#4066](https://github.com/cosmos/cosmos-sdk/issues/4066) Fix 'ExportGenesisFile() incorrectly overwrites genesis'
-* (wasmd) [\#4064](https://github.com/cosmos/cosmos-sdk/issues/4064) Remove `dep` and `vendor` from `doc` and `version`.
-* (wasmd) [\#4080](https://github.com/cosmos/cosmos-sdk/issues/4080) add missing invariants during simulations
-* (wasmd) [\#4343](https://github.com/cosmos/cosmos-sdk/issues/4343) Upgrade toolchain to Go 1.12.5.
-* (wasmcli) [\#4068](https://github.com/cosmos/cosmos-sdk/issues/4068) Remove redundant account check on `wasmcli`
-* (wasmcli) [\#4227](https://github.com/cosmos/cosmos-sdk/issues/4227) Support for Ledger App v1.5
-* (rest) [\#2007](https://github.com/cosmos/cosmos-sdk/issues/2007) Return 200 status code on empty results
-* (rest) [\#4123](https://github.com/cosmos/cosmos-sdk/issues/4123) Fix typo, url error and outdated command description of doc clients.
-* (rest) [\#4129](https://github.com/cosmos/cosmos-sdk/issues/4129) Translate doc clients to chinese.
-* (rest) [\#4141](https://github.com/cosmos/cosmos-sdk/issues/4141) Fix /txs/encode endpoint
+**Merged pull requests:**
 
-<!-- Release links -->
-
-[Unreleased]: https://github.com/cosmwasm/wasmd/compare/v2.0.3...HEAD
-[v2.0.3]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.3
-[v2.0.2]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.2
-[v2.0.1]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.1
-[v2.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v2.0.0
-[v1.0.0]: https://github.com/cosmwasm/wasmd/releases/tag/v1.0.0
+- Set bech32 prefix [\#316](https://github.com/CosmWasm/wasmd/pull/316) ([alpe](https://github.com/alpe))
+- Replace sdk.AccAddress with bech32 string [\#314](https://github.com/CosmWasm/wasmd/pull/314) ([alpe](https://github.com/alpe))
+- Integrate wasmcli into wasmd [\#312](https://github.com/CosmWasm/wasmd/pull/312) ([alpe](https://github.com/alpe))
+- Upgrade wasmvm aka go-cosmwasm [\#311](https://github.com/CosmWasm/wasmd/pull/311) ([alpe](https://github.com/alpe))
+- Upgrade to Stargate RC3 [\#305](https://github.com/CosmWasm/wasmd/pull/305) ([alpe](https://github.com/alpe))
+- Containerized Protobuf generation  [\#304](https://github.com/CosmWasm/wasmd/pull/304) ([alpe](https://github.com/alpe))
+- Reject wasm code exceeding limit  [\#302](https://github.com/CosmWasm/wasmd/pull/302) ([alpe](https://github.com/alpe))
+- Support self calling contract on instantiation [\#300](https://github.com/CosmWasm/wasmd/pull/300) ([alpe](https://github.com/alpe))
+- Upgrade to Stargate RC2 [\#299](https://github.com/CosmWasm/wasmd/pull/299) ([alpe](https://github.com/alpe))
