@@ -79,7 +79,7 @@ func TestInitGenesis(t *testing.T) {
 	q2 := newData.module.LegacyQuerierHandler(nil)
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, &newData.keeper, *genState)
+	InitGenesis(newData.ctx, &newData.keeper, *genState, newData.stakingKeeper, newData.module.Route().Handler())
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
 	assertCodeList(t, q2, newData.ctx, 1)

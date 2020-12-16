@@ -282,20 +282,36 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 func TestHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
 		switch msg := msg.(type) {
+		case *types.MsgStoreCode:
+			return handleStoreCode(ctx, k, msg)
 		case *types.MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
-
 		case *types.MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
-
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 		}
 	}
 }
+
+func handleStoreCode(ctx sdk.Context, k *Keeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "sender")
+	}
+	codeID, err := k.Create(ctx, senderAddr, msg.WASMByteCode, msg.Source, msg.Builder, msg.InstantiatePermission)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdk.Result{
+		Data:   []byte(fmt.Sprintf("%d", codeID)),
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
+}
+
 
 func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)

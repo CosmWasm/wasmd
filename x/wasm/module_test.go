@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,23 +23,24 @@ import (
 )
 
 type testData struct {
-	module     module.AppModule
-	ctx        sdk.Context
-	acctKeeper authkeeper.AccountKeeper
-	keeper     Keeper
-	bankKeeper bankkeeper.Keeper
+	module        module.AppModule
+	ctx           sdk.Context
+	acctKeeper    authkeeper.AccountKeeper
+	keeper        Keeper
+	bankKeeper    bankkeeper.Keeper
+	stakingKeeper stakingkeeper.Keeper
 }
 
 // returns a cleanup function, which must be defered on
 func setupTest(t *testing.T) testData {
 	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
-	acctKeeper, wasmKeeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 	data := testData{
-		module:     NewAppModule(wasmKeeper),
-		ctx:        ctx,
-		acctKeeper: acctKeeper,
-		keeper:     *wasmKeeper,
-		bankKeeper: bankKeeper,
+		module:        NewAppModule(keepers.WasmKeeper, keepers.StakingKeeper),
+		ctx:           ctx,
+		acctKeeper:    keepers.AccountKeeper,
+		keeper:        *keepers.WasmKeeper,
+		bankKeeper:    keepers.BankKeeper,
+		stakingKeeper: keepers.StakingKeeper,
 	}
 	return data
 }

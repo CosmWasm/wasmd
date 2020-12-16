@@ -4,21 +4,27 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	abci "github.com/tendermint/tendermint/abci/types"
 	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
 	// "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
+// ValidatorSetSource is a subset of the staking keeper
+type ValidatorSetSource interface {
+	ApplyAndReturnValidatorSetUpdates(sdk.Context) (updates []abci.ValidatorUpdate, err error)
+}
+
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error {
+func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, stakingKeeper ValidatorSetSource, msgHandler sdk.Handler) ([]abci.ValidatorUpdate, error) {
 	keeper.setParams(ctx, data.Params)
 
 	var maxCodeID uint64
 	for i, code := range data.Codes {
 		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "code %d with id: %d", i, code.CodeID)
+			return nil, sdkerrors.Wrapf(err, "code %d with id: %d", i, code.CodeID)
 		}
 		if code.CodeID > maxCodeID {
 			maxCodeID = code.CodeID
@@ -29,11 +35,11 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error
 	for i, contract := range data.Contracts {
 		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractAddress)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "address in contract number %d", i)
+			return nil, sdkerrors.Wrapf(err, "address in contract number %d", i)
 		}
 		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "contract number %d", i)
+			return nil, sdkerrors.Wrapf(err, "contract number %d", i)
 		}
 		maxContractID = i + 1 // not ideal but max(contractID) is not persisted otherwise
 	}
@@ -41,18 +47,44 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) error
 	for i, seq := range data.Sequences {
 		err := keeper.importAutoIncrementID(ctx, seq.IDKey, seq.Value)
 		if err != nil {
-			return sdkerrors.Wrapf(err, "sequence number %d", i)
+			return nil, sdkerrors.Wrapf(err, "sequence number %d", i)
 		}
 	}
 
 	// sanity check seq values
 	if keeper.peekAutoIncrementID(ctx, types.KeyLastCodeID) <= maxCodeID {
-		return sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastCodeID), maxCodeID)
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastCodeID), maxCodeID)
 	}
 	if keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID) <= uint64(maxContractID) {
-		return sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastInstanceID), maxContractID)
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastInstanceID), maxContractID)
 	}
 
+	if len(data.GenMsgs) == 0 {
+		return nil, nil
+	}
+	for _, genTx := range data.GenMsgs {
+		msg := asMsg(genTx)
+		if msg == nil {
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
+		}
+		_, err := msgHandler(ctx, msg)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, "genesis")
+		}
+	}
+	return stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+}
+
+func asMsg(genTx types.GenesisState_GenMsgs) sdk.Msg {
+	if msg := genTx.GetStoreCode(); msg != nil {
+		return msg
+	}
+	if msg := genTx.GetInstantiateContract(); msg != nil {
+		return msg
+	}
+	if msg := genTx.GetExecuteContract(); msg != nil {
+		return msg
+	}
 	return nil
 }
 

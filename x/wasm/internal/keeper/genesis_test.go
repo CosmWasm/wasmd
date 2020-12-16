@@ -24,6 +24,7 @@ import (
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -96,7 +97,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = json.Unmarshal(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	InitGenesis(dstCtx, dstKeeper, importState, StakingKeeperMock{}, TestHandler(dstKeeper))
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -362,7 +363,7 @@ func TestFailFastImport(t *testing.T) {
 			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			got := InitGenesis(ctx, keeper, spec.src)
+			_, got := InitGenesis(ctx, keeper, spec.src, StakingKeeperMock{}, TestHandler(keeper))
 			if spec.expSuccess {
 				require.NoError(t, got)
 				return
@@ -433,7 +434,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	err = InitGenesis(ctx, keeper, importState)
+	_, err = InitGenesis(ctx, keeper, importState, StakingKeeperMock{}, TestHandler(keeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -482,6 +483,42 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 }
 
+func TestImportWithGenMsg(t *testing.T) {
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	myAddress := RandomBech32AccountAddress(t)
+	importState := types.GenesisState{
+		Params: types.DefaultParams(),
+		GenMsgs: []types.GenesisState_GenMsgs{
+			{
+				Sum: &types.GenesisState_GenMsgs_StoreCode{
+					StoreCode: &types.MsgStoreCode{
+						Sender:       myAddress,
+						WASMByteCode: wasmCode,
+					},
+				},
+			},
+			// todo: test other messages
+		},
+	}
+	require.NoError(t, importState.ValidateBasic())
+	keeper, ctx, _ := setupKeeper(t)
+
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+
+	// when
+	_, err = InitGenesis(ctx, keeper, importState, StakingKeeperMock{}, TestHandler(keeper))
+	require.NoError(t, err)
+
+	// verify wasm code
+	gotWasmCode, err := keeper.GetByteCode(ctx, 1)
+	require.NoError(t, err)
+	assert.Equal(t, wasmCode, gotWasmCode)
+	codeInfo := keeper.GetCodeInfo(ctx, 1)
+	require.NotNil(t, codeInfo)
+}
+
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	t.Helper()
 	tempDir, err := ioutil.TempDir("", "wasm")
@@ -511,4 +548,13 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 
 	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, tempDir, wasmConfig, "", nil, nil)
 	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
+}
+
+type StakingKeeperMock struct {
+	err             error
+	validatorUpdate []abci.ValidatorUpdate
+}
+
+func (s StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+	return s.validatorUpdate, s.err
 }
