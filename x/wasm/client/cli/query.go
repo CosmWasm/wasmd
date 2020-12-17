@@ -13,6 +13,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -46,8 +47,8 @@ func GetCmdListCode() *cobra.Command {
 		Long:  "List all wasm bytecode on the chain",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -66,7 +67,7 @@ func GetCmdListCode() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -82,8 +83,8 @@ func GetCmdListContractByCode() *cobra.Command {
 		Long:  "List wasm all bytecode on the chain for given code id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -108,7 +109,7 @@ func GetCmdListContractByCode() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -124,8 +125,8 @@ func GetCmdQueryCode() *cobra.Command {
 		Long:  "Downloads wasm bytecode for given code id",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -165,8 +166,8 @@ func GetCmdGetContractInfo() *cobra.Command {
 		Long:  "Prints out metadata of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -185,7 +186,7 @@ func GetCmdGetContractInfo() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -217,8 +218,8 @@ func GetCmdGetContractStateAll() *cobra.Command {
 		Long:  "Prints out all internal state of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -243,7 +244,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -259,8 +260,8 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 		Long:  "Prints out internal state for of a contract given its address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -285,7 +286,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
@@ -301,8 +302,8 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 		Long:  "Calls contract with given address with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
@@ -334,7 +335,7 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
@@ -350,14 +351,13 @@ func GetCmdGetContractHistory() *cobra.Command {
 		Long:  "Prints out the code history for a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
 			_, err = sdk.AccAddressFromBech32(args[0])
-			if err == nil {
+			if err != nil {
 				return err
 			}
 
@@ -377,7 +377,7 @@ func GetCmdGetContractHistory() *cobra.Command {
 				return err
 			}
 
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintOutput(res)
+			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
 		},
 	}
 
@@ -432,8 +432,16 @@ func asciiDecodeString(s string) ([]byte, error) {
 type VanillaStdJsonMarshaller struct {
 }
 
+func (x VanillaStdJsonMarshaller) MarshalInterfaceJSON(i proto.Message) ([]byte, error) {
+	any, err := codectypes.NewAnyWithValue(i)
+	if err != nil {
+		return nil, err
+	}
+	return x.MarshalJSON(any)
+}
+
 func (x VanillaStdJsonMarshaller) MarshalJSON(o proto.Message) ([]byte, error) {
-	return json.Marshal(o)
+	return json.MarshalIndent(o, "", " ")
 }
 
 func (x VanillaStdJsonMarshaller) MustMarshalJSON(o proto.Message) []byte {
@@ -442,6 +450,10 @@ func (x VanillaStdJsonMarshaller) MustMarshalJSON(o proto.Message) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func (x VanillaStdJsonMarshaller) UnmarshalInterfaceJSON(bz []byte, ptr interface{}) error {
+	panic("not supported")
 }
 
 func (x VanillaStdJsonMarshaller) UnmarshalJSON(bz []byte, ptr proto.Message) error {

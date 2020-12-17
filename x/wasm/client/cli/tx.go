@@ -55,8 +55,7 @@ func StoreCodeCmd() *cobra.Command {
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 
 			msg, err := parseStoreCodeArgs(args, clientCtx)
 			if err != nil {
@@ -124,8 +123,8 @@ func InstantiateContractCmd() *cobra.Command {
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientTxContext(cmd)
 
 			msg, err := parseInstantiateArgs(args, clientCtx)
 			if err != nil {
@@ -153,7 +152,7 @@ func parseInstantiateArgs(args []string, cliCtx client.Context) (types.MsgInstan
 	}
 
 	amounstStr := viper.GetString(flagAmount)
-	amount, err := sdk.ParseCoins(amounstStr)
+	amount, err := sdk.ParseCoinsNormalized(amounstStr)
 	if err != nil {
 		return types.MsgInstantiateContract{}, err
 	}
@@ -184,12 +183,12 @@ func ExecuteContractCmd() *cobra.Command {
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+
+			clientCtx, err := client.GetClientTxContext(cmd)
 
 			// get the id of the code to instantiate
 			amounstStr := viper.GetString(flagAmount)
-			amount, err := sdk.ParseCoins(amounstStr)
+			amount, err := sdk.ParseCoinsNormalized(amounstStr)
 			if err != nil {
 				return err
 			}

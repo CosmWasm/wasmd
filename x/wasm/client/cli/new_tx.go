@@ -18,8 +18,7 @@ func MigrateContractCmd() *cobra.Command {
 		Short: "Migrate a wasm contract to a new code version",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 
 			msg, err := parseMigrateContractArgs(args, clientCtx)
 			if err != nil {
@@ -60,8 +59,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 		Short: "Set new admin for a contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 
 			msg, err := parseUpdateContractAdminArgs(args, clientCtx)
 			if err != nil {
@@ -93,8 +91,7 @@ func ClearContractAdminCmd() *cobra.Command {
 		Short: "Clears admin for a contract to prevent further migrations",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
