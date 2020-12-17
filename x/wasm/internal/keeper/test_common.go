@@ -312,7 +312,6 @@ func handleStoreCode(ctx sdk.Context, k *Keeper, msg *types.MsgStoreCode) (*sdk.
 	}, nil
 }
 
-
 func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {

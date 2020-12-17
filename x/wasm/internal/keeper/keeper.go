@@ -633,7 +633,6 @@ func contractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	// overflow 32 bits. This is highly improbable, but something that could be refactored.
 	contractID := codeID<<32 + instanceID
 	return addrFromUint64(contractID)
-
 }
 
 func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {

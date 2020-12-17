@@ -23,7 +23,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseStoreCodeArgs(args, clientCtx)
+			src, err := parseStoreCodeArgs(args[0], clientCtx.FromAddress)
 			if err != nil {
 				return err
 			}
@@ -83,7 +83,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args, clientCtx)
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress)
 			if err != nil {
 				return err
 			}
