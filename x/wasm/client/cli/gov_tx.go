@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -9,7 +11,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func ProposalStoreCodeCmd() *cobra.Command {
@@ -23,27 +24,44 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseStoreCodeArgs(args[0], clientCtx.FromAddress)
+			src, err := parseStoreCodeArgs(args[0], clientCtx.FromAddress, cmd.Flags())
 			if err != nil {
 				return err
 			}
-			if len(viper.GetString(flagRunAs)) == 0 {
+			runAs, err := cmd.Flags().GetString(flagRunAs)
+			if err != nil {
+				return fmt.Errorf("run-as: %s", err)
+			}
+			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			if err != nil {
+				return err
+			}
+
 			content := types.StoreCodeProposal{
-				Title:                 viper.GetString(cli.FlagTitle),
-				Description:           viper.GetString(cli.FlagDescription),
-				RunAs:                 viper.GetString(flagRunAs),
+				Title:                 proposalTitle,
+				Description:           proposalDescr,
+				RunAs:                 runAs,
 				WASMByteCode:          src.WASMByteCode,
 				Source:                src.Source,
 				Builder:               src.Builder,
 				InstantiatePermission: src.InstantiatePermission,
 			}
 
-			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
-			if err != nil {
-				return err
-			}
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
@@ -83,27 +101,44 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress)
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress, cmd.Flags())
 			if err != nil {
 				return err
 			}
-			if len(viper.GetString(flagRunAs)) == 0 {
-				return errors.New("creator address is required")
+
+			runAs, err := cmd.Flags().GetString(flagRunAs)
+			if err != nil {
+				return fmt.Errorf("run-as: %s", err)
 			}
+			if len(runAs) == 0 {
+				return errors.New("run-as address is required")
+			}
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			if err != nil {
+				return err
+			}
+
 			content := types.InstantiateContractProposal{
-				Title:       viper.GetString(cli.FlagTitle),
-				Description: viper.GetString(cli.FlagDescription),
-				RunAs:       viper.GetString(flagRunAs),
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				RunAs:       runAs,
 				Admin:       src.Admin,
 				CodeID:      src.CodeID,
 				Label:       src.Label,
 				InitMsg:     src.InitMsg,
 				InitFunds:   src.InitFunds,
-			}
-
-			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
-			if err != nil {
-				return err
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -148,22 +183,37 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			if len(viper.GetString(flagRunAs)) == 0 {
+			runAs, err := cmd.Flags().GetString(flagRunAs)
+			if err != nil {
+				return fmt.Errorf("run-as: %s", err)
+			}
+			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
+			}
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return err
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			if err != nil {
+				return err
 			}
 
 			content := types.MigrateContractProposal{
-				Title:       viper.GetString(cli.FlagTitle),
-				Description: viper.GetString(cli.FlagDescription),
+				Title:       proposalTitle,
+				Description: proposalDescr,
 				Contract:    src.Contract,
 				CodeID:      src.CodeID,
 				MigrateMsg:  src.MigrateMsg,
-				RunAs:       viper.GetString(flagRunAs),
-			}
-
-			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
-			if err != nil {
-				return err
+				RunAs:       runAs,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -205,16 +255,28 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			content := types.UpdateAdminProposal{
-				Title:       viper.GetString(cli.FlagTitle),
-				Description: viper.GetString(cli.FlagDescription),
-				Contract:    src.Contract,
-				NewAdmin:    src.NewAdmin,
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
 			}
-
-			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return fmt.Errorf("deposit: %s", err)
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
+			}
+
+			content := types.UpdateAdminProposal{
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				Contract:    src.Contract,
+				NewAdmin:    src.NewAdmin,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -249,15 +311,27 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			content := types.ClearAdminProposal{
-				Title:       viper.GetString(cli.FlagTitle),
-				Description: viper.GetString(cli.FlagDescription),
-				Contract:    args[0],
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
 			}
-
-			deposit, err := sdk.ParseCoinsNormalized(viper.GetString(cli.FlagDeposit))
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return fmt.Errorf("deposit: %s", err)
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
+			}
+
+			content := types.ClearAdminProposal{
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				Contract:    args[0],
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())

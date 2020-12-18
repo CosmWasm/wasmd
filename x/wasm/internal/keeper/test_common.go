@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -84,10 +83,11 @@ var ModuleBasics = module.NewBasicManager(
 	transfer.AppModuleBasic{},
 )
 
-func MakeTestCodec() codec.Marshaler {
-	return MakeEncodingConfig().Marshaler
+func MakeTestCodec(t *testing.T) codec.Marshaler {
+	return MakeEncodingConfig(t).Marshaler
 }
-func MakeEncodingConfig() params2.EncodingConfig {
+
+func MakeEncodingConfig(_ *testing.T) params2.EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
@@ -125,9 +125,7 @@ type TestKeepers struct {
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	tempDir := t.TempDir()
 
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
@@ -154,7 +152,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tkeyParams)
@@ -216,7 +214,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
-	err = bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
+	err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
 		sdk.NewCoin("stake", sdk.NewInt(2000000)),
 	))
 	require.NoError(t, err)

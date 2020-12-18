@@ -19,7 +19,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
 )
 
@@ -29,12 +28,12 @@ func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd, viper.GetString(flagRunAs))
+			senderAddr, err := getActorAddress(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg, err := parseStoreCodeArgs(args[0], senderAddr)
+			msg, err := parseStoreCodeArgs(args[0], senderAddr, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -70,12 +69,12 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd, viper.GetString(flagRunAs))
+			senderAddr, err := getActorAddress(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg, err := parseInstantiateArgs(args[0], args[1], senderAddr)
+			msg, err := parseInstantiateArgs(args[0], args[1], senderAddr, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -114,12 +113,12 @@ func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd, viper.GetString(flagRunAs))
+			senderAddr, err := getActorAddress(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg, err := parseExecuteArgs(args[0], args[1], senderAddr)
+			msg, err := parseExecuteArgs(args[0], args[1], senderAddr, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -210,7 +209,7 @@ func GenesisListContractsCmd(defaultNodeHome string) *cobra.Command {
 func GenesisListCodesCmd(defaultNodeHome string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-codes ",
-		Short: "Lists all codes from genesis contract dump and queued messages",
+		Short: "Lists all codes from genesis code dump and queued messages",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			type CodeMeta struct {
@@ -353,7 +352,11 @@ func codeSeqValue(state *types.GenesisState) uint64 {
 	return seq
 }
 
-func getActorAddress(cmd *cobra.Command, actorArg string) (sdk.AccAddress, error) {
+func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
+	actorArg, err := cmd.Flags().GetString(flagRunAs)
+	if err != nil {
+		return nil, fmt.Errorf("run-as: %s", err.Error())
+	}
 	if len(actorArg) == 0 {
 		return nil, errors.New("run-as address is required")
 	}

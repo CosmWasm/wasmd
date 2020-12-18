@@ -30,7 +30,7 @@ func TestGovRestHandlers(t *testing.T) {
 			"fees":           []dict{{"denom": "ustake", "amount": "1000000"}},
 		}
 	)
-	encodingConfig := keeper.MakeEncodingConfig()
+	encodingConfig := keeper.MakeEncodingConfig(t)
 	clientCtx := client.Context{}.
 		WithJSONMarshaler(encodingConfig.Marshaler).
 		WithTxConfig(encodingConfig.TxConfig).
