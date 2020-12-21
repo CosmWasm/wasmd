@@ -14,6 +14,7 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 		numCodes     = 2
 		numContracts = 2
 		numSequences = 2
+		numMsg       = 3
 	)
 
 	fixture := GenesisState{
@@ -33,6 +34,11 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 			IDKey: randBytes(5),
 			Value: uint64(i),
 		}
+	}
+	fixture.GenMsgs = []GenesisState_GenMsgs{
+		{Sum: &GenesisState_GenMsgs_StoreCode{StoreCode: MsgStoreCodeFixture()}},
+		{Sum: &GenesisState_GenMsgs_InstantiateContract{InstantiateContract: MsgInstantiateContractFixture()}},
+		{Sum: &GenesisState_GenMsgs_ExecuteContract{ExecuteContract: MsgExecuteContractFixture()}},
 	}
 	for _, m := range mutators {
 		m(&fixture)
@@ -118,6 +124,61 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 		codeHash := sha256.Sum256(wasmCode)
 		info.CodeHash = codeHash[:]
 	}
+}
+
+func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
+	var wasmIdent = []byte("\x00\x61\x73\x6D")
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+	r := &MsgStoreCode{
+		Sender:                anyAddress,
+		WASMByteCode:          wasmIdent,
+		Source:                "https://example.com/code",
+		Builder:               "foo/bar:latest",
+		InstantiatePermission: &AllowEverybody,
+	}
+	for _, m := range mutators {
+		m(r)
+	}
+	return r
+}
+
+func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *MsgInstantiateContract {
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+	r := &MsgInstantiateContract{
+		Sender:  anyAddress,
+		Admin:   anyAddress,
+		CodeID:  1,
+		Label:   "testing",
+		InitMsg: []byte(`{"foo":"bar"}`),
+		InitFunds: sdk.Coins{{
+			Denom:  "stake",
+			Amount: sdk.NewInt(1),
+		}},
+	}
+	for _, m := range mutators {
+		m(r)
+	}
+	return r
+}
+
+func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecuteContract {
+	const (
+		anyAddress           = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
+		firstContractAddress = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+	)
+	r := &MsgExecuteContract{
+		Sender:   anyAddress,
+		Contract: firstContractAddress,
+		Msg:      []byte(`{"do":"something"}`),
+		SentFunds: sdk.Coins{{
+			Denom:  "stake",
+			Amount: sdk.NewInt(1),
+		}},
+	}
+	for _, m := range mutators {
+		m(r)
+	}
+	return r
 }
 
 func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {

@@ -15,7 +15,7 @@ message GenesisState {
     repeated Sequence sequences = 4 [(gogoproto.nullable) = false, (gogoproto.jsontag) = "sequences,omitempty"];
     repeated GenMsgs gen_msgs = 5 [(gogoproto.nullable) = false, (gogoproto.jsontag) = "gen_msgs,omitempty"];
 
-    // GenMsgs define the messages that can be executed during genesis phase.
+    // GenMsgs define the messages that can be executed during genesis phase in order.
     // The intention is to have more human readable data that is auditable.
     message GenMsgs {
         // sum is a single message

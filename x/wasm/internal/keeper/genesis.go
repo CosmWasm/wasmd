@@ -63,7 +63,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		return nil, nil
 	}
 	for _, genTx := range data.GenMsgs {
-		msg := asMsg(genTx)
+		msg := genTx.AsMsg()
 		if msg == nil {
 			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
 		}
@@ -73,19 +73,6 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		}
 	}
 	return stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
-}
-
-func asMsg(genTx types.GenesisState_GenMsgs) sdk.Msg {
-	if msg := genTx.GetStoreCode(); msg != nil {
-		return msg
-	}
-	if msg := genTx.GetInstantiateContract(); msg != nil {
-		return msg
-	}
-	if msg := genTx.GetExecuteContract(); msg != nil {
-		return msg
-	}
-	return nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
