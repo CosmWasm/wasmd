@@ -41,8 +41,6 @@ func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			// todo: check conditions to fail fast
-			// - does owner account exists?
 			return alterModuleState(cmd, func(s *types.GenesisState) error {
 				s.GenMsgs = append(s.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_StoreCode{StoreCode: &msg},
@@ -84,11 +82,27 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 
 			// todo: check conditions to fail fast
 			// - does actor account exists?
-			// - permissions correct?
 			// - enough balance to succeed for init coins
-			// - does code id exists?
-
 			return alterModuleState(cmd, func(s *types.GenesisState) error {
+				//  does code id exists?
+				codeInfos, err := getAllCodes(s)
+				if err != nil {
+					return err
+				}
+				var codeInfo *CodeMeta
+				for i := range codeInfos {
+					if codeInfos[i].CodeID == msg.CodeID {
+						codeInfo = &codeInfos[i]
+						break
+					}
+				}
+				if codeInfo == nil {
+					return fmt.Errorf("unknown code id: %d", msg.CodeID)
+				}
+				// permissions correct?
+				if !codeInfo.Info.InstantiateConfig.Allowed(senderAddr) {
+					return fmt.Errorf("permissions were not granted for %s", senderAddr)
+				}
 				s.GenMsgs = append(s.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &msg},
 				})
@@ -163,7 +177,7 @@ func GenesisListContractsCmd(defaultNodeHome string) *cobra.Command {
 				Info            types.ContractInfo `json:"info"`
 			}
 			var all []ContractMeta
-			err := alterModuleState(cmd, func(state *types.GenesisState) error {
+			err := readModuleState(cmd, func(state *types.GenesisState) error {
 				for _, c := range state.Contracts {
 					all = append(all, ContractMeta{
 						ContractAddress: c.ContractAddress,
@@ -212,49 +226,10 @@ func GenesisListCodesCmd(defaultNodeHome string) *cobra.Command {
 		Short: "Lists all codes from genesis code dump and queued messages",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			type CodeMeta struct {
-				CodeID uint64         `json:"code_id"`
-				Info   types.CodeInfo `json:"info"`
-			}
 			var all []CodeMeta
-			err := alterModuleState(cmd, func(state *types.GenesisState) error {
-				for _, c := range state.Codes {
-					all = append(all, CodeMeta{
-						CodeID: c.CodeID,
-						Info:   c.CodeInfo,
-					})
-				}
-				// add inflight
-				seq := codeSeqValue(state)
-				for _, m := range state.GenMsgs {
-					if msg := m.GetStoreCode(); msg != nil {
-						var accessConfig types.AccessConfig
-						if msg.InstantiatePermission != nil {
-							accessConfig = *msg.InstantiatePermission
-						} else {
-							// default
-							creator, err := sdk.AccAddressFromBech32(msg.Sender)
-							if err != nil {
-								return fmt.Errorf("sender: %s", err)
-							}
-							accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
-						}
-						hash := sha256.Sum256(msg.WASMByteCode)
-						all = append(all, CodeMeta{
-							CodeID: seq,
-							Info: types.CodeInfo{
-								CodeHash:          hash[:],
-								Creator:           msg.Sender,
-								Source:            msg.Source,
-								Builder:           msg.Builder,
-								InstantiateConfig: accessConfig,
-							},
-						})
-						seq++
-					}
-				}
-
-				return nil
+			err := readModuleState(cmd, func(state *types.GenesisState) (err error) {
+				all, err = getAllCodes(state)
+				return
 			})
 			if err != nil {
 				return err
@@ -273,6 +248,51 @@ func GenesisListCodesCmd(defaultNodeHome string) *cobra.Command {
 	return cmd
 }
 
+type CodeMeta struct {
+	CodeID uint64         `json:"code_id"`
+	Info   types.CodeInfo `json:"info"`
+}
+
+func getAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
+	var all []CodeMeta
+	for _, c := range state.Codes {
+		all = append(all, CodeMeta{
+			CodeID: c.CodeID,
+			Info:   c.CodeInfo,
+		})
+	}
+	// add inflight
+	seq := codeSeqValue(state)
+	for _, m := range state.GenMsgs {
+		if msg := m.GetStoreCode(); msg != nil {
+			var accessConfig types.AccessConfig
+			if msg.InstantiatePermission != nil {
+				accessConfig = *msg.InstantiatePermission
+			} else {
+				// default
+				creator, err := sdk.AccAddressFromBech32(msg.Sender)
+				if err != nil {
+					return nil, fmt.Errorf("sender: %s", err)
+				}
+				accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
+			}
+			hash := sha256.Sum256(msg.WASMByteCode)
+			all = append(all, CodeMeta{
+				CodeID: seq,
+				Info: types.CodeInfo{
+					CodeHash:          hash[:],
+					Creator:           msg.Sender,
+					Source:            msg.Source,
+					Builder:           msg.Builder,
+					InstantiateConfig: accessConfig,
+				},
+			})
+			seq++
+		}
+	}
+	return all, nil
+}
+
 func hasContract(state *types.GenesisState, contractAddr string) bool {
 	for _, c := range state.Contracts {
 		if c.ContractAddress == contractAddr {
@@ -289,6 +309,26 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 		}
 	}
 	return false
+}
+
+// readModuleState read only version of alterModuleState
+func readModuleState(cmd *cobra.Command, callback func(s *types.GenesisState) error) error {
+	clientCtx := client.GetClientContextFromCmd(cmd)
+	serverCtx := server.GetServerContextFromCmd(cmd)
+	config := serverCtx.Config
+	config.SetRoot(clientCtx.HomeDir)
+
+	genFile := config.GenesisFile()
+	appState, _, err := genutiltypes.GenesisStateFromGenFile(genFile)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal genesis state: %w", err)
+	}
+
+	var wasmGenesisState types.GenesisState
+	if appState[types.ModuleName] != nil {
+		clientCtx.JSONMarshaler.MustUnmarshalJSON(appState[types.ModuleName], &wasmGenesisState)
+	}
+	return callback(&wasmGenesisState)
 }
 
 // alterModuleState loads the genesis from the default or set home dir,
@@ -311,8 +351,10 @@ func alterModuleState(cmd *cobra.Command, callback func(s *types.GenesisState) e
 	if appState[types.ModuleName] != nil {
 		clientCtx.JSONMarshaler.MustUnmarshalJSON(appState[types.ModuleName], &wasmGenesisState)
 	}
-
 	if err := callback(&wasmGenesisState); err != nil {
+		return err
+	}
+	if err := wasmGenesisState.ValidateBasic(); err != nil {
 		return err
 	}
 	wasmGenStateBz, err := clientCtx.JSONMarshaler.MarshalJSON(&wasmGenesisState)
