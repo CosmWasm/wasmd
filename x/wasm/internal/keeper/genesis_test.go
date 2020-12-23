@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -26,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -97,7 +99,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = json.Unmarshal(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState, StakingKeeperMock{}, TestHandler(dstKeeper))
+	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(dstKeeper))
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -127,14 +129,16 @@ func TestGenesisExportImport(t *testing.T) {
 	}
 }
 
-func TestFailFastImport(t *testing.T) {
+func TestGenesisInit(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
 	specs := map[string]struct {
-		src        types.GenesisState
-		expSuccess bool
+		src            types.GenesisState
+		stakingMock    StakingKeeperMock
+		msgHandlerMock MockMsgHandler
+		expSuccess     bool
 	}{
 		"happy path: code info correct": {
 			src: types.GenesisState{
@@ -356,19 +360,51 @@ func TestFailFastImport(t *testing.T) {
 				Params: types.DefaultParams(),
 			},
 		},
+		"validator set update called for any genesis messages": {
+			src: wasmTypes.GenesisState{
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_StoreCode{
+						StoreCode: types.MsgStoreCodeFixture(),
+					}},
+				},
+				Params: types.DefaultParams(),
+			},
+			stakingMock: StakingKeeperMock{expCalls: 1, validatorUpdate: []abci.ValidatorUpdate{
+				{PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
+					Ed25519: []byte("a valid key")}},
+					Power: 100,
+				},
+			}},
+			msgHandlerMock: MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
+			expSuccess:     true,
+		},
+		"validator set update not called on genesis msg handler errors": {
+			src: wasmTypes.GenesisState{
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_StoreCode{
+						StoreCode: types.MsgStoreCodeFixture(),
+					}},
+				},
+				Params: types.DefaultParams(),
+			},
+			msgHandlerMock: MockMsgHandler{expCalls: 1, err: errors.New("test error response")},
+			stakingMock:    StakingKeeperMock{expCalls: 0},
+		},
 	}
-
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			_, got := InitGenesis(ctx, keeper, spec.src, StakingKeeperMock{}, TestHandler(keeper))
-			if spec.expSuccess {
-				require.NoError(t, got)
+			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, &spec.stakingMock, spec.msgHandlerMock.Handle)
+			if !spec.expSuccess {
+				require.Error(t, gotErr)
 				return
 			}
-			require.Error(t, got)
+			require.NoError(t, gotErr)
+			spec.msgHandlerMock.verifyCalls(t)
+			spec.stakingMock.verifyCalls(t)
+			assert.Equal(t, spec.stakingMock.validatorUpdate, gotValidatorSet)
 		})
 	}
 }
@@ -434,7 +470,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, StakingKeeperMock{}, TestHandler(keeper))
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -508,7 +544,7 @@ func TestImportWithGenMsg(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, StakingKeeperMock{}, TestHandler(keeper))
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -553,8 +589,35 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 type StakingKeeperMock struct {
 	err             error
 	validatorUpdate []abci.ValidatorUpdate
+	expCalls        int
+	gotCalls        int
 }
 
-func (s StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]abci.ValidatorUpdate, error) {
+	s.gotCalls++
 	return s.validatorUpdate, s.err
+}
+
+func (s *StakingKeeperMock) verifyCalls(t *testing.T) {
+	assert.Equal(t, s.expCalls, s.gotCalls, "number calls")
+}
+
+type MockMsgHandler struct {
+	result   *sdk.Result
+	err      error
+	expCalls int
+	gotCalls int
+	expMsg sdk.Msg
+	gotMsg sdk.Msg
+}
+
+func (m *MockMsgHandler) Handle(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+	m.gotCalls++
+	m.gotMsg = msg
+	return m.result, m.err
+}
+
+func (m *MockMsgHandler) verifyCalls(t *testing.T) {
+	assert.Equal(t, m.expMsg, m.gotMsg, "message param")
+	assert.Equal(t, m.expCalls, m.gotCalls, "number calls")
 }

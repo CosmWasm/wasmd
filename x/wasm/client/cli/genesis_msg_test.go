@@ -1,4 +1,4 @@
-package cli_test
+package cli
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,9 +17,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +31,8 @@ import (
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")
+
+var myWellFundedAccount = keeper.RandomBech32AccountAddress(nil)
 
 const defaultTestKeyName = "my-key-name"
 
@@ -47,7 +50,6 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 		mutator    func(cmd *cobra.Command)
 		expError   bool
 	}{
-
 		"all good with actor address": {
 			srcGenesis: minimalWasmGenesis,
 			mutator: func(cmd *cobra.Command) {
@@ -99,7 +101,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 			homeDir := setupGenesis(t, spec.srcGenesis)
 
 			// when
-			cmd := cli.GenesisStoreCodeCmd(homeDir)
+			cmd := GenesisStoreCodeCmd(homeDir)
 			spec.mutator(cmd)
 			err := executeCmdWithContext(t, homeDir, cmd)
 			if spec.expError {
@@ -150,7 +152,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 1,
 		},
@@ -165,7 +167,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 2,
 		},
@@ -183,7 +185,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{"100", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 2,
 		},
@@ -193,7 +195,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{"2", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expError: true,
 		},
@@ -210,6 +212,31 @@ func TestInstantiateContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
+				flagSet.Set("run-as", myWellFundedAccount)
+			},
+			expError: true,
+		},
+		"fails without a sender balance": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID: 1,
+						CodeInfo: types.CodeInfo{
+							CodeHash: []byte("a-valid-code-hash"),
+							Creator:  keeper.RandomBech32AccountAddress(t),
+							InstantiateConfig: types.AccessConfig{
+								Permission: types.AccessTypeEverybody,
+							},
+						},
+						CodeBytes: wasmIdent,
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{"1", `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 			},
 			expError: true,
@@ -220,7 +247,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 			homeDir := setupGenesis(t, spec.srcGenesis)
 
 			// when
-			cmd := cli.GenesisInstantiateContractCmd(homeDir)
+			cmd := GenesisInstantiateContractCmd(homeDir)
 			spec.mutator(cmd)
 			err := executeCmdWithContext(t, homeDir, cmd)
 			if spec.expError {
@@ -274,7 +301,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{firstContractAddress, `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 1,
 		},
@@ -295,7 +322,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{firstContractAddress, `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 2,
 		},
@@ -319,7 +346,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"cosmos1weh0k0l6t6v4jkmkde8e90tzkw2c59g42ccl62", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 2,
 		},
@@ -327,6 +354,33 @@ func TestExecuteContractCmd(t *testing.T) {
 			srcGenesis: minimalWasmGenesis,
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{keeper.RandomBech32AccountAddress(t), `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("run-as", myWellFundedAccount)
+			},
+			expError: true,
+		},
+		"fails without enough sender balance": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID:    1,
+						CodeInfo:  types.CodeInfoFixture(),
+						CodeBytes: wasmIdent,
+					},
+				},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: firstContractAddress,
+						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
+							info.Created = nil
+						}),
+						ContractState: []types.Model{},
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{firstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 			},
@@ -336,10 +390,10 @@ func TestExecuteContractCmd(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			homeDir := setupGenesis(t, spec.srcGenesis)
+			cmd := GenesisExecuteContractCmd(homeDir)
+			spec.mutator(cmd)
 
 			// when
-			cmd := cli.GenesisExecuteContractCmd(homeDir)
-			spec.mutator(cmd)
 			err := executeCmdWithContext(t, homeDir, cmd)
 			if spec.expError {
 				require.Error(t, err)
@@ -352,6 +406,104 @@ func TestExecuteContractCmd(t *testing.T) {
 		})
 	}
 }
+func TestGetAllContracts(t *testing.T) {
+	specs := map[string]struct {
+		src types.GenesisState
+		exp []contractMeta
+	}{
+		"read from contracts state": {
+			src: types.GenesisState{
+				Contracts: []types.Contract{
+					{
+						ContractAddress: "first-contract",
+						ContractInfo:    types.ContractInfo{Label: "first"},
+					},
+					{
+						ContractAddress: "second-contract",
+						ContractInfo:    types.ContractInfo{Label: "second"},
+					},
+				},
+			},
+			exp: []contractMeta{
+				{
+					ContractAddress: "first-contract",
+					Info:            types.ContractInfo{Label: "first"},
+				},
+				{
+					ContractAddress: "second-contract",
+					Info:            types.ContractInfo{Label: "second"},
+				},
+			},
+		},
+		"read from message state": {
+			src: types.GenesisState{
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "first"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
+				},
+			},
+			exp: []contractMeta{
+				{
+					ContractAddress: contractAddress(0, 1).String(),
+					Info:            types.ContractInfo{Label: "first"},
+				},
+				{
+					ContractAddress: contractAddress(0, 2).String(),
+					Info:            types.ContractInfo{Label: "second"},
+				},
+			},
+		},
+		"read from message state with contract sequence": {
+			src: types.GenesisState{
+				Sequences: []types.Sequence{
+					{IDKey: types.KeyLastInstanceID, Value: 100},
+				},
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+				},
+			},
+			exp: []contractMeta{
+				{
+					ContractAddress: contractAddress(0, 100).String(),
+					Info:            types.ContractInfo{Label: "hundred"},
+				},
+			},
+		},
+		"read from contract and message state with contract sequence": {
+			src: types.GenesisState{
+				Contracts: []types.Contract{
+					{
+						ContractAddress: "first-contract",
+						ContractInfo:    types.ContractInfo{Label: "first"},
+					},
+				},
+				Sequences: []types.Sequence{
+					{IDKey: types.KeyLastInstanceID, Value: 100},
+				},
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+				},
+			},
+			exp: []contractMeta{
+				{
+					ContractAddress: "first-contract",
+					Info:            types.ContractInfo{Label: "first"},
+				},
+				{
+					ContractAddress: contractAddress(0, 100).String(),
+					Info:            types.ContractInfo{Label: "hundred"},
+				},
+			},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got := getAllContracts(&spec.src)
+			assert.Equal(t, spec.exp, got)
+		})
+	}
+
+}
 
 func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
@@ -361,6 +513,15 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	genFilename := path.Join(homeDir, "config", "genesis.json")
 	appState := make(map[string]json.RawMessage)
 	appState[types.ModuleName] = appCodec.MustMarshalJSON(&wasmGenesis)
+
+	bankGenesis := banktypes.DefaultGenesisState()
+	bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
+		// add a balance for the default sender account
+		Address: myWellFundedAccount,
+		Coins:   sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(10000000000))),
+	})
+	appState[banktypes.ModuleName] = appCodec.MustMarshalJSON(bankGenesis)
+	appState[stakingtypes.ModuleName] = appCodec.MustMarshalJSON(stakingtypes.DefaultGenesisState())
 
 	appStateBz, err := json.Marshal(appState)
 	require.NoError(t, err)
