@@ -5,8 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
-	// authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	// "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 )
 
 // ValidatorSetSource is a subset of the staking keeper

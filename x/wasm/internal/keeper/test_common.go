@@ -123,6 +123,11 @@ type TestKeepers struct {
 	WasmKeeper    *Keeper
 }
 
+// CreateDefaultTestInput common settings for CreateTestInput
+func CreateDefaultTestInput(t *testing.T) (sdk.Context, TestKeepers) {
+	return CreateTestInput(t, false, "staking", nil, nil)
+}
+
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
 	tempDir := t.TempDir()
@@ -315,10 +320,13 @@ func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateCont
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
 	}
-	adminAddr, err := sdk.AccAddressFromBech32(msg.Admin)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "admin")
+	var adminAddr sdk.AccAddress
+	if msg.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return nil, sdkerrors.Wrap(err, "admin")
+		}
 	}
+
 	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err
