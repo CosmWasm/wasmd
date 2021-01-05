@@ -4,8 +4,8 @@ go 1.15
 
 require (
 	github.com/CosmWasm/wasmvm v0.12.0
-	github.com/cosmos/cosmos-sdk v0.40.0-rc5
-	github.com/cosmos/iavl v0.15.0-rc5
+	github.com/cosmos/cosmos-sdk v0.40.0-rc6
+	github.com/cosmos/iavl v0.15.3
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.3
@@ -26,9 +26,9 @@ require (
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
 	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/text v0.3.4 // indirect
-	google.golang.org/genproto v0.0.0-20201211151036-40ec1c210f7a
+	google.golang.org/genproto v0.0.0-20201214200347-8c77b98c765d
 	google.golang.org/grpc v1.34.0
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
