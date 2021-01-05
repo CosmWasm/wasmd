@@ -616,7 +616,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 	pubKey := privKey.PubKey()
 	addr := sdk.ValAddress(pubKey.Address())
 
-	pkAny, err := codectypes.PackAny(pubKey)
+	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
 	msg := stakingtypes.MsgCreateValidator{
 		Description: types.Description{
