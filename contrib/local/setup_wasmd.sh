@@ -22,5 +22,8 @@ for addr in "$@"; do
   wasmd add-genesis-account "$addr" "1000000000$STAKE,1000000000$FEE"
 done
 # submit a genesis validator tx
-(echo "$PASSWORD"; echo "$PASSWORD"; echo "$PASSWORD") | wasmd gentx validator --chain-id="$CHAIN_ID" --amount "250000000$STAKE"
+## Workraround for https://github.com/cosmos/cosmos-sdk/issues/8251
+(echo "$PASSWORD"; echo "$PASSWORD"; echo "$PASSWORD") | wasmd gentx validator "250000000$STAKE" --chain-id="$CHAIN_ID" --amount="250000000$STAKE"
+## should be:
+# (echo "$PASSWORD"; echo "$PASSWORD"; echo "$PASSWORD") | wasmd gentx validator "250000000$STAKE" --chain-id="$CHAIN_ID"
 wasmd collect-gentxs
