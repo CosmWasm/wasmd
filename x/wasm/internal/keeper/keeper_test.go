@@ -639,7 +639,8 @@ func TestExecuteWithPanic(t *testing.T) {
 	_, err = keeper.Execute(ctx, addr, fred, []byte(`{"panic":{}}`), topUp)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrExecuteFailed))
-	require.Equal(t, "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: unreachable: execute wasm contract failed", err.Error())
+	// test with contains as "Display" implementation of the Wasmer "RuntimeError" is different for Mac and Linux
+	assert.Contains(t, err.Error(), "Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: unreachable")
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
