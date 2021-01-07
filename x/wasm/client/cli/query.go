@@ -47,7 +47,6 @@ func GetCmdListCode() *cobra.Command {
 		Long:  "List all wasm bytecode on the chain",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -83,7 +82,6 @@ func GetCmdListContractByCode() *cobra.Command {
 		Long:  "List wasm all bytecode on the chain for given code id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -125,7 +123,6 @@ func GetCmdQueryCode() *cobra.Command {
 		Long:  "Downloads wasm bytecode for given code id",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -218,7 +215,6 @@ func GetCmdGetContractStateAll() *cobra.Command {
 		Long:  "Prints out all internal state of a contract given its address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -260,7 +256,6 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 		Long:  "Prints out internal state for of a contract given its address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -302,7 +297,6 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 		Long:  "Calls contract with given address with query data and prints the returned result",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err

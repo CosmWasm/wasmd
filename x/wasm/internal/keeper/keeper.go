@@ -628,14 +628,17 @@ func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccA
 	return contractAddress(codeID, instanceID)
 }
 
+// contractAddress builds an sdk account address for a contract.
+// Intentionally kept private as this is module internal logic.
 func contractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
 	// overflow 32 bits. This is highly improbable, but something that could be refactored.
 	contractID := codeID<<32 + instanceID
 	return addrFromUint64(contractID)
-
 }
 
+// GetNextCodeID reads the next sequence id used for storing wasm code.
+// Read only operation.
 func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.KeyLastCodeID)

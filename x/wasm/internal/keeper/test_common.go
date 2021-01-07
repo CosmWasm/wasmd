@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -84,10 +83,11 @@ var ModuleBasics = module.NewBasicManager(
 	transfer.AppModuleBasic{},
 )
 
-func MakeTestCodec() codec.Marshaler {
-	return MakeEncodingConfig().Marshaler
+func MakeTestCodec(t *testing.T) codec.Marshaler {
+	return MakeEncodingConfig(t).Marshaler
 }
-func MakeEncodingConfig() params2.EncodingConfig {
+
+func MakeEncodingConfig(_ *testing.T) params2.EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
@@ -123,11 +123,14 @@ type TestKeepers struct {
 	WasmKeeper    *Keeper
 }
 
+// CreateDefaultTestInput common settings for CreateTestInput
+func CreateDefaultTestInput(t *testing.T) (sdk.Context, TestKeepers) {
+	return CreateTestInput(t, false, "staking", nil, nil)
+}
+
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
-	tempDir, err := ioutil.TempDir("", "wasm")
-	require.NoError(t, err)
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	tempDir := t.TempDir()
 
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	keyAcc := sdk.NewKVStoreKey(authtypes.StoreKey)
@@ -154,7 +157,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, keyParams, tkeyParams)
@@ -216,7 +219,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
-	err = bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
+	err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
 		sdk.NewCoin("stake", sdk.NewInt(2000000)),
 	))
 	require.NoError(t, err)
@@ -282,14 +285,13 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 func TestHandler(k *Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-
 		switch msg := msg.(type) {
+		case *types.MsgStoreCode:
+			return handleStoreCode(ctx, k, msg)
 		case *types.MsgInstantiateContract:
 			return handleInstantiate(ctx, k, msg)
-
 		case *types.MsgExecuteContract:
 			return handleExecute(ctx, k, msg)
-
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
@@ -297,15 +299,34 @@ func TestHandler(k *Keeper) sdk.Handler {
 	}
 }
 
+func handleStoreCode(ctx sdk.Context, k *Keeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "sender")
+	}
+	codeID, err := k.Create(ctx, senderAddr, msg.WASMByteCode, msg.Source, msg.Builder, msg.InstantiatePermission)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sdk.Result{
+		Data:   []byte(fmt.Sprintf("%d", codeID)),
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
+}
+
 func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
 	}
-	adminAddr, err := sdk.AccAddressFromBech32(msg.Admin)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "admin")
+	var adminAddr sdk.AccAddress
+	if msg.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return nil, sdkerrors.Wrap(err, "admin")
+		}
 	}
+
 	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.InitFunds)
 	if err != nil {
 		return nil, err

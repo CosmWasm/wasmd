@@ -7,6 +7,7 @@
     - [Code](#cosmwasm.wasm.v1beta1.Code)
     - [Contract](#cosmwasm.wasm.v1beta1.Contract)
     - [GenesisState](#cosmwasm.wasm.v1beta1.GenesisState)
+    - [GenesisState.GenMsgs](#cosmwasm.wasm.v1beta1.GenesisState.GenMsgs)
     - [Sequence](#cosmwasm.wasm.v1beta1.Sequence)
   
 - [x/wasm/internal/types/msg.proto](#x/wasm/internal/types/msg.proto)
@@ -116,6 +117,25 @@ GenesisState - genesis state of x/wasm
 | codes | [Code](#cosmwasm.wasm.v1beta1.Code) | repeated |  |
 | contracts | [Contract](#cosmwasm.wasm.v1beta1.Contract) | repeated |  |
 | sequences | [Sequence](#cosmwasm.wasm.v1beta1.Sequence) | repeated |  |
+| gen_msgs | [GenesisState.GenMsgs](#cosmwasm.wasm.v1beta1.GenesisState.GenMsgs) | repeated |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1beta1.GenesisState.GenMsgs"></a>
+
+### GenesisState.GenMsgs
+GenMsgs define the messages that can be executed during genesis phase.
+The intention is to have more human readable data that is auditable.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| store_code | [MsgStoreCode](#cosmwasm.wasm.v1beta1.MsgStoreCode) |  |  |
+| instantiate_contract | [MsgInstantiateContract](#cosmwasm.wasm.v1beta1.MsgInstantiateContract) |  |  |
+| execute_contract | [MsgExecuteContract](#cosmwasm.wasm.v1beta1.MsgExecuteContract) |  |  |
 
 
 

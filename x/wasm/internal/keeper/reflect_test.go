@@ -72,7 +72,7 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const MaskFeatures = "staking,mask"
 
 func TestMaskReflectContractSend(t *testing.T) {
-	cdc := MakeTestCodec()
+	cdc := MakeTestCodec(t)
 	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(cdc), nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
@@ -154,7 +154,7 @@ func TestMaskReflectContractSend(t *testing.T) {
 }
 
 func TestMaskReflectCustomMsg(t *testing.T) {
-	cdc := MakeTestCodec()
+	cdc := MakeTestCodec(t)
 	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(cdc), maskPlugins())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
@@ -248,7 +248,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeTestCodec()
+	cdc := MakeTestCodec(t)
 	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(cdc), maskPlugins())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
@@ -302,7 +302,7 @@ type maskState struct {
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(MakeTestCodec(t)), nil)
 	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -373,7 +373,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(MakeTestCodec()), nil)
+	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(MakeTestCodec(t)), nil)
 	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

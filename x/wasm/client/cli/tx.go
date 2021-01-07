@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	flag "github.com/spf13/pflag"
 )
 
 const (
@@ -56,8 +57,7 @@ func StoreCodeCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
-
-			msg, err := parseStoreCodeArgs(args, clientCtx)
+			msg, err := parseStoreCodeArgs(args[0], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -76,8 +76,8 @@ func StoreCodeCmd() *cobra.Command {
 	return cmd
 }
 
-func parseStoreCodeArgs(args []string, cliCtx client.Context) (types.MsgStoreCode, error) {
-	wasm, err := ioutil.ReadFile(args[0])
+func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgStoreCode, error) {
+	wasm, err := ioutil.ReadFile(file)
 	if err != nil {
 		return types.MsgStoreCode{}, err
 	}
@@ -94,23 +94,48 @@ func parseStoreCodeArgs(args []string, cliCtx client.Context) (types.MsgStoreCod
 	}
 
 	var perm *types.AccessConfig
-	if onlyAddrStr := viper.GetString(flagInstantiateByAddress); onlyAddrStr != "" {
+	onlyAddrStr, err := flags.GetString(flagInstantiateByAddress)
+	if err != nil {
+		return types.MsgStoreCode{}, fmt.Errorf("instantiate by address: %s", err)
+	}
+	if onlyAddrStr != "" {
 		allowedAddr, err := sdk.AccAddressFromBech32(onlyAddrStr)
 		if err != nil {
 			return types.MsgStoreCode{}, sdkerrors.Wrap(err, flagInstantiateByAddress)
 		}
 		x := types.AccessTypeOnlyAddress.With(allowedAddr)
 		perm = &x
-	} else if everybody := viper.GetBool(flagInstantiateByEverybody); everybody {
-		perm = &types.AllowEverybody
+	} else {
+		everybodyStr, err := flags.GetString(flagInstantiateByEverybody)
+		if err != nil {
+			return types.MsgStoreCode{}, fmt.Errorf("instantiate by everybody: %s", err)
+		}
+		if everybodyStr != "" {
+			ok, err := strconv.ParseBool(everybodyStr)
+			if err != nil {
+				return types.MsgStoreCode{}, fmt.Errorf("boolean value expected for instantiate by everybody: %s", err)
+			}
+			if ok {
+				perm = &types.AllowEverybody
+			}
+		}
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
+	source, err := flags.GetString(flagSource)
+	if err != nil {
+		return types.MsgStoreCode{}, fmt.Errorf("source: %s", err)
+	}
+	builder, err := flags.GetString(flagBuilder)
+	if err != nil {
+		return types.MsgStoreCode{}, fmt.Errorf("builder: %s", err)
+	}
+
 	msg := types.MsgStoreCode{
-		Sender:                cliCtx.GetFromAddress().String(),
+		Sender:                sender.String(),
 		WASMByteCode:          wasm,
-		Source:                viper.GetString(flagSource),
-		Builder:               viper.GetString(flagBuilder),
+		Source:                source,
+		Builder:               builder,
 		InstantiatePermission: perm,
 	}
 	return msg, nil
@@ -126,7 +151,7 @@ func InstantiateContractCmd() *cobra.Command {
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 
-			msg, err := parseInstantiateArgs(args, clientCtx)
+			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -144,29 +169,36 @@ func InstantiateContractCmd() *cobra.Command {
 	return cmd
 }
 
-func parseInstantiateArgs(args []string, cliCtx client.Context) (types.MsgInstantiateContract, error) {
+func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgInstantiateContract, error) {
 	// get the id of the code to instantiate
-	codeID, err := strconv.ParseUint(args[0], 10, 64)
+	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
 		return types.MsgInstantiateContract{}, err
 	}
 
-	amounstStr := viper.GetString(flagAmount)
-	amount, err := sdk.ParseCoinsNormalized(amounstStr)
+	amountStr, err := flags.GetString(flagAmount)
 	if err != nil {
-		return types.MsgInstantiateContract{}, err
+		return types.MsgInstantiateContract{}, fmt.Errorf("amount: %s", err)
 	}
-
-	label := viper.GetString(flagLabel)
+	amount, err := sdk.ParseCoinsNormalized(amountStr)
+	if err != nil {
+		return types.MsgInstantiateContract{}, fmt.Errorf("amount: %s", err)
+	}
+	label, err := flags.GetString(flagLabel)
+	if err != nil {
+		return types.MsgInstantiateContract{}, fmt.Errorf("label: %s", err)
+	}
 	if label == "" {
-		return types.MsgInstantiateContract{}, fmt.Errorf("Label is required on all contracts")
+		return types.MsgInstantiateContract{}, errors.New("label is required on all contracts")
+	}
+	adminStr, err := flags.GetString(flagAdmin)
+	if err != nil {
+		return types.MsgInstantiateContract{}, fmt.Errorf("admin: %s", err)
 	}
 
-	initMsg := args[1]
-	adminStr := viper.GetString(flagAdmin)
 	// build and sign the transaction, then broadcast to Tendermint
 	msg := types.MsgInstantiateContract{
-		Sender:    cliCtx.GetFromAddress().String(),
+		Sender:    sender.String(),
 		CodeID:    codeID,
 		Label:     label,
 		InitFunds: amount,
@@ -179,28 +211,15 @@ func parseInstantiateArgs(args []string, cliCtx client.Context) (types.MsgInstan
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute [contract_addr_bech32] [json_encoded_send_args]",
+		Use:   "execute [contract_addr_bech32] [json_encoded_send_args] --amount [coins,optional]",
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientTxContext(cmd)
 
-			// get the id of the code to instantiate
-			amounstStr := viper.GetString(flagAmount)
-			amount, err := sdk.ParseCoinsNormalized(amounstStr)
+			msg, err := parseExecuteArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
-			}
-
-			execMsg := args[1]
-
-			// build and sign the transaction, then broadcast to Tendermint
-			msg := types.MsgExecuteContract{
-				Sender:    clientCtx.GetFromAddress().String(),
-				Contract:  args[0],
-				SentFunds: amount,
-				Msg:       []byte(execMsg),
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -212,4 +231,23 @@ func ExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract along with command")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
+}
+
+func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgExecuteContract, error) {
+	amountStr, err := flags.GetString(flagAmount)
+	if err != nil {
+		return types.MsgExecuteContract{}, fmt.Errorf("amount: %s", err)
+	}
+
+	amount, err := sdk.ParseCoinsNormalized(amountStr)
+	if err != nil {
+		return types.MsgExecuteContract{}, err
+	}
+
+	return types.MsgExecuteContract{
+		Sender:    sender.String(),
+		Contract:  contractAddr,
+		SentFunds: amount,
+		Msg:       []byte(execMsg),
+	}, nil
 }
