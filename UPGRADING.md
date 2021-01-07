@@ -248,6 +248,39 @@ On a real network, operators will have to be awake when the upgrade plan is acti
 and manually perform this switch, or use some automated tooling like 
 [cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/master/cosmovisor/README.md).
 
+**WARNING** the described path above will fail. There is some breaking changes we do
+not handle. Here is the error message when starting the new chain:
+
+```
+$ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
+>     --mount type=volume,source=musselnet,target=/root \
+>     wasmd:musselnet-v2 /opt/run_wasmd.sh
+
+8:04PM INF starting ABCI with Tendermint
+8:04PM INF Starting multiAppConn service impl={"Logger":{}} module=proxy
+8:04PM INF Starting localClient service connection=query impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
+8:04PM INF Starting localClient service connection=snapshot impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
+8:04PM INF Starting localClient service connection=mempool impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
+8:04PM INF Starting localClient service connection=consensus impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
+8:04PM INF Starting EventBus service impl={"Logger":{}} module=events
+8:04PM INF Starting PubSub service impl={"Logger":{}} module=pubsub
+8:04PM INF Starting IndexerService service impl={"Logger":{}} module=txindex
+8:04PM INF ABCI Handshake App Info hash=BF31EF7E9B8D1273E338C7C1CF2A21EA878DC9E6195ECE3289C0D35DC5582F03 height=499 module=consensus protocol-version=0 software-version=
+8:04PM INF ABCI Replay Blocks appHeight=499 module=consensus stateHeight=499 storeHeight=500
+8:04PM INF Replay last block using real app module=consensus
+8:04PM INF applying upgrade "musselnet-v2" at height: 500
+8:04PM INF minted coins from module account amount=41ustake from=mint module=x/bank
+panic: Validator consensus-address wasmvalcons1r0lklmvxkhf7lwcjeeqp5vf68mlvqk2wwmg7l0 not found
+
+goroutine 1 [running]:
+github.com/cosmos/cosmos-sdk/x/slashing/keeper.Keeper.HandleValidatorSignature(0x295c3c0, 0xc0001151f0, 0x2993580, 0xc000694190, 0x298dc20, 0xc00023e480, 0x29810c0, 0xc00018b5c0, 0x297ce00, 0xc000042038, ...)
+        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/keeper/infractions.go:19 +0x22d7
+github.com/cosmos/cosmos-sdk/x/slashing.BeginBlocker(0x297ce00, 0xc000042038, 0x2992f00, 0xc0011320c0, 0xb, 0x0, 0xc0004dec58, 0x7, 0x1f4, 0x1a385af2, ...)
+        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/abci.go:23 +0x287
+github.com/cosmos/cosmos-sdk/x/slashing.AppModule.BeginBlock(...)
+        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/module.go:164
+```
+
 ## Check final state
 
 Now that we have upgraded, we can use the new client version. Let's do a brief
