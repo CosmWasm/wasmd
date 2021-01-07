@@ -20,7 +20,7 @@ addition of the `x/wasm` module.
 ## Compatibility
 
 A VM can support one or more contract-VM interface versions. The interface
-version is communicated by the contract via a Wasm import. This is the current
+version is communicated by the contract via a Wasm export. This is the current
 compatibility list:
 
 | wasmd | cosmwasm-vm | cosmwasm-std |

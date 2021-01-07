@@ -14,14 +14,14 @@ hardware it runs on.
 
 | wasmd | Cosmos SDK |
 |:-----:|:----------:|
-| v0.7  | v0.38.3 |
-| v0.8  | v0.38.3 |
-| v0.9  | v0.38.3 |
-| v0.10 | v0.39.1 |
-| v0.11 | v0.39.1 |
-| v0.12 | v0.40.0-rc3 |
-| v0.13 | v0.40.0-rc3 |
 | v0.14 | v0.40.0-rc6 |
+| v0.13 | v0.40.0-rc3 |
+| v0.12 | v0.40.0-rc3 |
+| v0.11 | v0.39.1 |
+| v0.10 | v0.39.1 |
+| v0.9  | v0.38.3 |
+| v0.8  | v0.38.3 |
+| v0.7  | v0.38.3 |
 
 We currently only support Intel/AMD64 CPUs and OSX or Linux. For Linux, the standard build
 commands work for `glibc` systems (Ubuntu, Debian, CentOS, etc). If you wish to compile
