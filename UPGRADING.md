@@ -224,12 +224,12 @@ docker run --rm -it \
 After this, we just let the chain run and open the terminal so you can see the log files.
 It should keep producing blocks until it hits height 500 (or whatever you set there),
 when the process will print a huge stacktrace and hang. Immediately before the stack trace, you
-should see a line like:
+should see a line like this (burried under tons of tendermint logs):
 
-`E[2021-01-07|20:02:20.508] UPGRADE "musselnet-v2" NEEDED at height: 500:  module=main `
+`8:50PM ERR UPGRADE "musselnet-v2" NEEDED at height: 100:`
 
 Kill it with Ctrl-C, and then try to restart with the pre-upgrade version and it should
-immediately fail on startup, with the same error message as above:
+immediately fail on startup, with the same error message as above.
 
 ```sh
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
