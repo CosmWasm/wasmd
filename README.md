@@ -15,6 +15,30 @@ addition of the `x/wasm` module.
 
 **Note**: Requires [Go 1.15+](https://golang.org/dl/)
 
+## Compatibility with CosmWasm contracts
+
+## Compatibility
+
+A VM can support one or more contract-VM interface versions. The interface
+version is communicated by the contract via a Wasm import. This is the current
+compatibility list:
+
+| wasmd | cosmwasm-vm | cosmwasm-std |
+| ----- | ----------- | ------------ |
+| 0.14  | 0.13        | 0.11-0.13    |
+| 0.13  | 0.12        | 0.11-0.13    |
+| 0.12  | 0.12        | 0.11-0.13    |
+| 0.11  | 0.11        | 0.11-0.13    |
+| 0.10  | 0.10        | 0.10         |
+| 0.9   | 0.9         | 0.9          |
+| 0.8   | 0.8         | 0.8          |
+
+Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
+have been compiled with one of the supported `cosmwasm-std` versions, or will be rejeted upon upload (with some error
+message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
+breaking change to switch runtimes (you will need to organize a chain upgrade). As of `cosmwasm-vm 0.13` we are
+using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly more performant than the older versions.
+
 ## Supported Systems
 
 The supported systems are limited by the dlls created in [`wasmvm`](https://github.com/CosmWasm/wasmvm). In particular, **we only support MacOS and Linux**.
