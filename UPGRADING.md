@@ -99,7 +99,7 @@ docker run --rm -it \
     --mount type=volume,source=musselnet,target=/root \
     cosmwasm/wasmd:v0.12.1 sed -ie 's/172800s/300s/' /root/.wasmd/config/genesis.json
 
-# This will start both wasmd and rest-server, only rest-serve output is shown on the screen
+# start up the blockchain and all embedded servers as one process
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=musselnet,target=/root \
     cosmwasm/wasmd:v0.12.1 /opt/run_wasmd.sh
@@ -107,16 +107,170 @@ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
 
 ## Sanity checks
 
-**TODO** move some tokens around
+Let's use our client node to query the current state and send some tokens to a
+random address:
+
+```sh
+RCPT=wasm1pypadqklna33nv3gl063rd8z9q8nvauaalz820
+
+# note --network=host so it can connect to the other docker image
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query bank balances $CLIENT
+
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query bank balances $RCPT
+
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    tx send validator $RCPT 500000ucosm,600000ustake --chain-id testing
+
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query bank balances $RCPT
+```
+
+## Take majority control of the chain
+
+In genesis we have a valiator with 250 million `ustake` bonded. We want to be easily
+able to pass a proposal with our client. Let us bond 700 million `ustake` to ensure
+we have > 67% of the voting power and will pass with the validator not voting.
+
+```sh
+# get the "operator_address" (wasmvaloper...) from here
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query staking validators
+VALIDATOR=......
+
+# and stake here
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    tx staking delegate $VALIDATOR 750000000ustake \
+    --from validator --chain-id testing
+```
 
 ## Vote on the upgrade
 
-**TODO**
+Now that we see the chain is running and producing blocks, and our client has
+enough token to control the netwrok, let's create a governance
+upgrade proposal for the new chain to move to `musselnet-v2` (this must be the
+same name as we use in the handler we created above, change this to match what
+you put in your handler):
+
+```sh
+# create the proposal
+# check the current height and add 100-200 or so for the upgrade time
+# (the voting period is ~60 blocks)
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    tx gov submit-proposal software-upgrade musselnet-v2 \
+    --upgrade-height=500 --deposit=10000000ustake \
+    --title="Upgrade" --description="Upgrade to musselnet-v2" \
+    --from validator --chain-id testing
+
+# make sure it looks good
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query gov proposal 1
+
+# vote for it
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    tx gov vote 1 yes \
+    --from validator --chain-id testing
+
+# ensure vote was counted
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query gov votes 1
+```
 
 ## Swap out binaries
 
-**TODO**
+Now, we just wait about 5 minutes for the vote to pass, and ensure it is passed:
+
+```sh
+# make sure it looks good
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.12.1 wasmd \
+    query gov proposal 1
+```
+
+After this, we just let the chain run and open the terminal so you can see the log files.
+It should keep producing blocks until it hits height 500 (or whatever you set there),
+when the process will print a huge stacktrace and hang. Immediately before the stack trace, you
+should see a line like:
+
+`E[2021-01-07|20:02:20.508] UPGRADE "musselnet-v2" NEEDED at height: 500:  module=main `
+
+Kill it with Ctrl-C, and then try to restart with the pre-upgrade version and it should
+immediately fail on startup, with the same error message as above:
+
+```sh
+docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
+    --mount type=volume,source=musselnet,target=/root \
+    cosmwasm/wasmd:v0.12.1 /opt/run_wasmd.sh
+```
+
+Then, we start with the post-upgrade version and see it properly update:
+
+```sh
+docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
+    --mount type=volume,source=musselnet,target=/root \
+    wasmd:musselnet-v2 /opt/run_wasmd.sh
+```
+
+On a real network, operators will have to be awake when the upgrade plan is activated
+and manually perform this switch, or use some automated tooling like 
+[cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/master/cosmovisor/README.md).
 
 ## Check final state
 
-**TODO** Same balances in the final one
+Now that we have upgraded, we can use the new client version. Let's do a brief
+sanity check to ensure our balances are proper, and our stake remains
+delegated. That and continued block production should be a good sign the upgrade
+was successful:
+
+```sh
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    wasmd:musselnet-v2 wasmd \
+    query bank balances $CLIENT
+
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    wasmd:musselnet-v2 wasmd \
+    query bank balances $RCPT
+
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    wasmd:musselnet-v2 wasmd \
+    query staking delegations $CLIENT
+```
