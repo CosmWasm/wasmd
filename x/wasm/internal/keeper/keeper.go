@@ -42,6 +42,10 @@ const InstanceCost uint64 = 40_000
 // CompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
 const CompileCost uint64 = 2
 
+// contractMemoryLimit is the memory limit of each contract execution (in MiB)
+// constant value so all nodes run with the same limit.
+const contractMemoryLimit = 32
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey      sdk.StoreKey
@@ -75,7 +79,7 @@ func NewKeeper(
 	customEncoders *MessageEncoders,
 	customPlugins *QueryPlugins,
 ) Keeper {
-	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
 		panic(err)
 	}
