@@ -21,8 +21,7 @@ We need to have two different versions of `wasmd` which depend on state-compatib
 versions of the Cosmos SDK. We only focus on upgrade starting with stargate. You will
 have to use the "dump state and restart" approach to move from launchpad to stargate.
 
-For this demo, we will show an upgrade to our Musselnet going from `v0.12.1` to
-`v0.14.0`.
+For this demo, we will show an upgrade from `v0.14.0` to musselnet branch.
 
 ### Handler
 
@@ -42,7 +41,9 @@ Let's get the two binaries we want to test, the pre-upgrade and the post-upgrade
 binaries. In this case the pre-release is already a published to docker hub and
 can be downloaded simply via:
 
-`docker pull cosmwasm/wasmd:v0.12.1`
+`docker pull cosmwasm/wasmd:v0.14.0`
+
+(If this is not yet released, build it from the tip of master)
 
 The post-release is not published, so we can build it ourselves. Check out this
 `wasmd` repo, and the proper `musselnet` branch:
@@ -56,7 +57,7 @@ docker build . -t wasmd:musselnet-v2
 Verify they are both working for you locally:
 
 ```
-docker run cosmwasm/wasmd:v0.12.1 wasmd version
+docker run cosmwasm/wasmd:v0.14.0 wasmd version
 docker run wasmd:musselnet-v2 wasmd version
 ```
 
@@ -74,12 +75,12 @@ docker volume rm -f musselnet_client
 docker run --rm -it \
     -e PASSWORD=1234567890 \
     --mount type=volume,source=musselnet_client,target=/root \
-    cosmwasm/wasmd:v0.12.1 /opt/setup_wasmd.sh
+    cosmwasm/wasmd:v0.14.0 /opt/setup_wasmd.sh
 
 # enter "1234567890" when prompted
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
-    cosmwasm/wasmd:v0.12.1 wasmd keys show -a validator
+    cosmwasm/wasmd:v0.14.0 wasmd keys show -a validator
 # use the address returned above here
 CLIENT=wasm1anavj4eyxkdljp27sedrdlt9dm26c8a7a8p44l
 ```
@@ -92,17 +93,17 @@ docker volume rm -f musselnet
 # add your testing address here, so you can do something with the client
 docker run --rm -it \
     --mount type=volume,source=musselnet,target=/root \
-    cosmwasm/wasmd:v0.12.1 /opt/setup_wasmd.sh $CLIENT
+    cosmwasm/wasmd:v0.14.0 /opt/setup_wasmd.sh $CLIENT
 
 # Update the voting times in the genesis file
 docker run --rm -it \
     --mount type=volume,source=musselnet,target=/root \
-    cosmwasm/wasmd:v0.12.1 sed -ie 's/172800s/300s/' /root/.wasmd/config/genesis.json
+    cosmwasm/wasmd:v0.14.0 sed -ie 's/172800s/300s/' /root/.wasmd/config/genesis.json
 
 # start up the blockchain and all embedded servers as one process
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=musselnet,target=/root \
-    cosmwasm/wasmd:v0.12.1 /opt/run_wasmd.sh
+    cosmwasm/wasmd:v0.14.0 /opt/run_wasmd.sh
 ```
 
 ## Sanity checks
@@ -117,25 +118,25 @@ RCPT=wasm1pypadqklna33nv3gl063rd8z9q8nvauaalz820
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query bank balances $CLIENT
 
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query bank balances $RCPT
 
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     tx send validator $RCPT 500000ucosm,600000ustake --chain-id testing
 
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query bank balances $RCPT
 ```
 
@@ -150,7 +151,7 @@ we have > 67% of the voting power and will pass with the validator not voting.
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query staking validators
 VALIDATOR=......
 
@@ -158,7 +159,7 @@ VALIDATOR=......
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     tx staking delegate $VALIDATOR 750000000ustake \
     --from validator --chain-id testing
 ```
@@ -178,7 +179,7 @@ you put in your handler):
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     tx gov submit-proposal software-upgrade musselnet-v2 \
     --upgrade-height=500 --deposit=10000000ustake \
     --title="Upgrade" --description="Upgrade to musselnet-v2" \
@@ -188,14 +189,14 @@ docker run --rm -it \
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query gov proposal 1
 
 # vote for it
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     tx gov vote 1 yes \
     --from validator --chain-id testing
 
@@ -203,7 +204,7 @@ docker run --rm -it \
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query gov votes 1
 ```
 
@@ -216,24 +217,24 @@ Now, we just wait about 5 minutes for the vote to pass, and ensure it is passed:
 docker run --rm -it \
     --mount type=volume,source=musselnet_client,target=/root \
     --network=host \
-    cosmwasm/wasmd:v0.12.1 wasmd \
+    cosmwasm/wasmd:v0.14.0 wasmd \
     query gov proposal 1
 ```
 
 After this, we just let the chain run and open the terminal so you can see the log files.
 It should keep producing blocks until it hits height 500 (or whatever you set there),
 when the process will print a huge stacktrace and hang. Immediately before the stack trace, you
-should see a line like:
+should see a line like this (burried under tons of tendermint logs):
 
-`E[2021-01-07|20:02:20.508] UPGRADE "musselnet-v2" NEEDED at height: 500:  module=main `
+`8:50PM ERR UPGRADE "musselnet-v2" NEEDED at height: 100:`
 
 Kill it with Ctrl-C, and then try to restart with the pre-upgrade version and it should
-immediately fail on startup, with the same error message as above:
+immediately fail on startup, with the same error message as above.
 
 ```sh
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=musselnet,target=/root \
-    cosmwasm/wasmd:v0.12.1 /opt/run_wasmd.sh
+    cosmwasm/wasmd:v0.14.0 /opt/run_wasmd.sh
 ```
 
 Then, we start with the post-upgrade version and see it properly update:
@@ -247,39 +248,6 @@ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
 On a real network, operators will have to be awake when the upgrade plan is activated
 and manually perform this switch, or use some automated tooling like 
 [cosmosvisor](https://github.com/cosmos/cosmos-sdk/blob/master/cosmovisor/README.md).
-
-**WARNING** the described path above will fail. There is some breaking changes we do
-not handle. Here is the error message when starting the new chain:
-
-```
-$ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
->     --mount type=volume,source=musselnet,target=/root \
->     wasmd:musselnet-v2 /opt/run_wasmd.sh
-
-8:04PM INF starting ABCI with Tendermint
-8:04PM INF Starting multiAppConn service impl={"Logger":{}} module=proxy
-8:04PM INF Starting localClient service connection=query impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
-8:04PM INF Starting localClient service connection=snapshot impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
-8:04PM INF Starting localClient service connection=mempool impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
-8:04PM INF Starting localClient service connection=consensus impl="marshaling error: json: unsupported type: abcicli.Callback" module=abci-client
-8:04PM INF Starting EventBus service impl={"Logger":{}} module=events
-8:04PM INF Starting PubSub service impl={"Logger":{}} module=pubsub
-8:04PM INF Starting IndexerService service impl={"Logger":{}} module=txindex
-8:04PM INF ABCI Handshake App Info hash=BF31EF7E9B8D1273E338C7C1CF2A21EA878DC9E6195ECE3289C0D35DC5582F03 height=499 module=consensus protocol-version=0 software-version=
-8:04PM INF ABCI Replay Blocks appHeight=499 module=consensus stateHeight=499 storeHeight=500
-8:04PM INF Replay last block using real app module=consensus
-8:04PM INF applying upgrade "musselnet-v2" at height: 500
-8:04PM INF minted coins from module account amount=41ustake from=mint module=x/bank
-panic: Validator consensus-address wasmvalcons1r0lklmvxkhf7lwcjeeqp5vf68mlvqk2wwmg7l0 not found
-
-goroutine 1 [running]:
-github.com/cosmos/cosmos-sdk/x/slashing/keeper.Keeper.HandleValidatorSignature(0x295c3c0, 0xc0001151f0, 0x2993580, 0xc000694190, 0x298dc20, 0xc00023e480, 0x29810c0, 0xc00018b5c0, 0x297ce00, 0xc000042038, ...)
-        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/keeper/infractions.go:19 +0x22d7
-github.com/cosmos/cosmos-sdk/x/slashing.BeginBlocker(0x297ce00, 0xc000042038, 0x2992f00, 0xc0011320c0, 0xb, 0x0, 0xc0004dec58, 0x7, 0x1f4, 0x1a385af2, ...)
-        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/abci.go:23 +0x287
-github.com/cosmos/cosmos-sdk/x/slashing.AppModule.BeginBlock(...)
-        github.com/cosmos/cosmos-sdk@v0.40.0-rc6/x/slashing/module.go:164
-```
 
 ## Check final state
 
