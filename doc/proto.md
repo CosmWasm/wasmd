@@ -915,7 +915,7 @@ MsgMigrateContractResponse returns contract migration result data.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| data | [bytes](#bytes) |  | Data contains base64-encoded bytes returned from the wasm contract. |
+| data | [bytes](#bytes) |  | Data contains same raw bytes returned as data from the wasm contract. (May be empty) |
 
 
 

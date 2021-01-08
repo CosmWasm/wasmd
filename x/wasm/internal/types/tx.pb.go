@@ -336,7 +336,8 @@ var xxx_messageInfo_MsgMigrateContract proto.InternalMessageInfo
 
 // MsgMigrateContractResponse returns contract migration result data.
 type MsgMigrateContractResponse struct {
-	// Data contains base64-encoded bytes returned from the wasm contract.
+	// Data contains same raw bytes returned as data from the wasm contract.
+	// (May be empty)
 	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 }
 
