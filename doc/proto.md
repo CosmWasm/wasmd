@@ -41,11 +41,19 @@
   
 - [x/wasm/internal/types/tx.proto](#x/wasm/internal/types/tx.proto)
     - [MsgClearAdmin](#cosmwasm.wasm.v1beta1.MsgClearAdmin)
+    - [MsgClearAdminResponse](#cosmwasm.wasm.v1beta1.MsgClearAdminResponse)
     - [MsgExecuteContract](#cosmwasm.wasm.v1beta1.MsgExecuteContract)
+    - [MsgExecuteContractResponse](#cosmwasm.wasm.v1beta1.MsgExecuteContractResponse)
     - [MsgInstantiateContract](#cosmwasm.wasm.v1beta1.MsgInstantiateContract)
+    - [MsgInstantiateContractResponse](#cosmwasm.wasm.v1beta1.MsgInstantiateContractResponse)
     - [MsgMigrateContract](#cosmwasm.wasm.v1beta1.MsgMigrateContract)
+    - [MsgMigrateContractResponse](#cosmwasm.wasm.v1beta1.MsgMigrateContractResponse)
     - [MsgStoreCode](#cosmwasm.wasm.v1beta1.MsgStoreCode)
+    - [MsgStoreCodeResponse](#cosmwasm.wasm.v1beta1.MsgStoreCodeResponse)
     - [MsgUpdateAdmin](#cosmwasm.wasm.v1beta1.MsgUpdateAdmin)
+    - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1beta1.MsgUpdateAdminResponse)
+  
+    - [Msg](#cosmwasm.wasm.v1beta1.Msg)
   
 - [x/wasm/internal/types/types.proto](#x/wasm/internal/types/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1beta1.AbsoluteTxPosition)
@@ -623,6 +631,16 @@ MsgClearAdmin removes any admin stored for a smart contract
 
 
 
+<a name="cosmwasm.wasm.v1beta1.MsgClearAdminResponse"></a>
+
+### MsgClearAdminResponse
+MsgClearAdminResponse returns empty data
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1beta1.MsgExecuteContract"></a>
 
 ### MsgExecuteContract
@@ -635,6 +653,21 @@ MsgExecuteContract submits the given message data to a smart contract
 | contract | [string](#string) |  | Contract is the address of the smart contract |
 | msg | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract |
 | sent_funds | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | SentFunds coins that are transferred to the contract on execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1beta1.MsgExecuteContractResponse"></a>
+
+### MsgExecuteContractResponse
+MsgExecuteContractResponse returns execution result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
 
 
 
@@ -661,6 +694,21 @@ MsgInstantiateContract create a new smart contract instance for the given code i
 
 
 
+<a name="cosmwasm.wasm.v1beta1.MsgInstantiateContractResponse"></a>
+
+### MsgInstantiateContractResponse
+MsgInstantiateContractResponse return instantiation result data
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [string](#string) |  | Address is the address of the new contract instance. |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1beta1.MsgMigrateContract"></a>
 
 ### MsgMigrateContract
@@ -673,6 +721,21 @@ MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 | contract | [string](#string) |  | Contract is the address of the smart contract |
 | code_id | [uint64](#uint64) |  | CodeID references the new WASM code |
 | migrate_msg | [bytes](#bytes) |  | MigrateMsg json encoded message to be passed to the contract on migration |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1beta1.MsgMigrateContractResponse"></a>
+
+### MsgMigrateContractResponse
+MsgMigrateContractResponse returns contract migration result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  | Data contains base64-encoded bytes returned from the wasm contract. |
 
 
 
@@ -698,6 +761,21 @@ MsgStoreCode submit Wasm code to the system
 
 
 
+<a name="cosmwasm.wasm.v1beta1.MsgStoreCodeResponse"></a>
+
+### MsgStoreCodeResponse
+MsgStoreCodeResponse returns store result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code_id | [string](#string) |  | CodeID is the reference to the stored WASM code |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1beta1.MsgUpdateAdmin"></a>
 
 ### MsgUpdateAdmin
@@ -714,11 +792,36 @@ MsgUpdateAdmin sets a new admin for a smart contract
 
 
 
- 
+
+<a name="cosmwasm.wasm.v1beta1.MsgUpdateAdminResponse"></a>
+
+### MsgUpdateAdminResponse
+MsgUpdateAdminResponse returns empty data
+
+
+
+
 
  
 
  
+
+ 
+
+
+<a name="cosmwasm.wasm.v1beta1.Msg"></a>
+
+### Msg
+Msg defines the wasm Msg service.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| StoreCode | [MsgStoreCode](#cosmwasm.wasm.v1beta1.MsgStoreCode) | [MsgStoreCodeResponse](#cosmwasm.wasm.v1beta1.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system |
+| InstantiateContract | [MsgInstantiateContract](#cosmwasm.wasm.v1beta1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#cosmwasm.wasm.v1beta1.MsgInstantiateContractResponse) | Instantiate creates a new smart contract instance for the given code id. |
+| ExecuteContract | [MsgExecuteContract](#cosmwasm.wasm.v1beta1.MsgExecuteContract) | [MsgExecuteContractResponse](#cosmwasm.wasm.v1beta1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract |
+| MigrateContract | [MsgMigrateContract](#cosmwasm.wasm.v1beta1.MsgMigrateContract) | [MsgMigrateContractResponse](#cosmwasm.wasm.v1beta1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract |
+| UpdateAdmin | [MsgUpdateAdmin](#cosmwasm.wasm.v1beta1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1beta1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract |
+| ClearAdmin | [MsgClearAdmin](#cosmwasm.wasm.v1beta1.MsgClearAdmin) | [MsgClearAdminResponse](#cosmwasm.wasm.v1beta1.MsgClearAdminResponse) | ClearAdmin removes any admin stored for a smart contract |
 
  
 

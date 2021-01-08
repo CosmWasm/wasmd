@@ -107,8 +107,9 @@ func NewAppModule(keeper *Keeper, validatorSetSource keeper.ValidatorSetSource) 
 	}
 }
 
-func (am AppModule) RegisterServices(configurator module.Configurator) {
-	types.RegisterQueryServer(configurator.QueryServer(), NewQuerier(am.keeper))
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 }
 
 func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {

@@ -30,7 +30,10 @@ func TestInitGenesis(t *testing.T) {
 
 	res, err := h(data.ctx, &msg)
 	require.NoError(t, err)
-	require.Equal(t, res.Data, []byte("1"))
+
+	var pStoreResp MsgStoreCodeResponse
+	require.NoError(t, pStoreResp.Unmarshal(res.Data))
+	require.Equal(t, pStoreResp.CodeID, "1")
 
 	_, _, bob := keyPubAddr()
 	initMsg := initMsg{
@@ -48,7 +51,9 @@ func TestInitGenesis(t *testing.T) {
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractBech32Addr := string(res.Data)
+	var pInstResp MsgInstantiateContractResponse
+	require.NoError(t, pInstResp.Unmarshal(res.Data))
+	contractBech32Addr := pInstResp.Address
 
 	execCmd := MsgExecuteContract{
 		Sender:    fred.String(),
@@ -58,6 +63,9 @@ func TestInitGenesis(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
+	var pExecResp MsgExecuteContractResponse
+	require.NoError(t, pExecResp.Unmarshal(res.Data))
+	require.NotEmpty(t, pExecResp.Data)
 
 	// ensure all contract state is as after init
 	assertCodeList(t, q, data.ctx, 1)

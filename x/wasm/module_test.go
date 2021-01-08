@@ -154,7 +154,9 @@ func TestHandleInstantiate(t *testing.T) {
 	}
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
-	require.Equal(t, res.Data, []byte("1"))
+	var pStoreResp MsgStoreCodeResponse
+	require.NoError(t, pStoreResp.Unmarshal(res.Data))
+	require.Equal(t, pStoreResp.CodeID, "1")
 
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
@@ -175,7 +177,10 @@ func TestHandleInstantiate(t *testing.T) {
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractBech32Addr := string(res.Data)
+	var pInstResp MsgInstantiateContractResponse
+	require.NoError(t, pInstResp.Unmarshal(res.Data))
+	contractBech32Addr := pInstResp.Address
+
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractBech32Addr)
 	// this should be standard x/wasm init event, nothing from contract
 	require.Equal(t, 2, len(res.Events), prettyEvents(res.Events))
@@ -213,7 +218,9 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
-	require.Equal(t, res.Data, []byte("1"))
+	var pStoreResp MsgStoreCodeResponse
+	require.NoError(t, pStoreResp.Unmarshal(res.Data))
+	require.Equal(t, pStoreResp.CodeID, "1")
 
 	_, _, bob := keyPubAddr()
 	initMsg := initMsg{
@@ -231,7 +238,10 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractBech32Addr := string(res.Data)
+	var pInstResp MsgInstantiateContractResponse
+	require.NoError(t, pInstResp.Unmarshal(res.Data))
+	contractBech32Addr := pInstResp.Address
+
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractBech32Addr)
 	// this should be standard x/wasm init event, plus a bank send event (2), with no custom contract events
 	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
@@ -265,6 +275,10 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
+	var pExecResp MsgExecuteContractResponse
+	require.NoError(t, pExecResp.Unmarshal(res.Data))
+	require.NotEmpty(t, pExecResp.Data)
+
 	// this should be standard x/wasm init event, plus 2 bank send event, plus a special event from the contract
 	require.Equal(t, 4, len(res.Events), prettyEvents(res.Events))
 
@@ -327,7 +341,6 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	}
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
-	require.Equal(t, res.Data, []byte("1"))
 
 	_, _, bob := keyPubAddr()
 	initMsg := map[string]interface{}{
@@ -345,7 +358,9 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractBech32Addr := string(res.Data)
+	var pInstResp MsgInstantiateContractResponse
+	require.NoError(t, pInstResp.Unmarshal(res.Data))
+	contractBech32Addr := pInstResp.Address
 	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", contractBech32Addr)
 
 	handleMsg := map[string]interface{}{
@@ -362,6 +377,9 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
+	var pExecResp MsgExecuteContractResponse
+	require.NoError(t, pExecResp.Unmarshal(res.Data))
+	require.NotEmpty(t, pExecResp.Data)
 
 	// ensure bob now exists and got both payments released
 	bobAcct := data.acctKeeper.GetAccount(data.ctx, bob)
