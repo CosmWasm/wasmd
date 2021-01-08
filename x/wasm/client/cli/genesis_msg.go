@@ -317,6 +317,10 @@ func getAllContracts(state *types.GenesisState) []contractMeta {
 }
 
 func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, sender sdk.AccAddress, coins sdk.Coins) (bool, error) {
+	// no coins needed, no account needed
+	if coins.IsZero() {
+		return true, nil
+	}
 	clientCtx, err := client.GetClientQueryContext(cmd)
 	if err != nil {
 		return false, err
