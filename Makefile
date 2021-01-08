@@ -7,7 +7,7 @@ LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 
 # for dockerized protobuf tools
-PROTO_CONTAINER := cosmwasm/prototools-docker:latest
+PROTO_CONTAINER := cosmwasm/prototools-docker:v0.1.0
 DOCKER_BUF := docker run --rm -v $(shell pwd)/buf.yaml:/workspace/buf.yaml -v $(shell go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk):/workspace/cosmos_sdk_dir -v $(shell pwd):/workspace/wasmd  --workdir /workspace $(PROTO_CONTAINER)
 HTTPS_GIT := https://github.com/CosmWasm/wasmd.git
 

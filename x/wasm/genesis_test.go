@@ -22,7 +22,7 @@ func TestInitGenesis(t *testing.T) {
 	msg := MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
-		Source:       "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/escrow.wasm",
+		Source:       "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/hackatom.wasm",
 		Builder:      "confio/cosmwasm-opt:0.7.0",
 	}
 	err := msg.ValidateBasic()
@@ -30,7 +30,7 @@ func TestInitGenesis(t *testing.T) {
 
 	res, err := h(data.ctx, &msg)
 	require.NoError(t, err)
-	require.Equal(t, res.Data, []byte("1"))
+	assertStoreCodeResponse(t, res.Data, 1)
 
 	_, _, bob := keyPubAddr()
 	initMsg := initMsg{
@@ -48,7 +48,7 @@ func TestInitGenesis(t *testing.T) {
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
-	contractBech32Addr := string(res.Data)
+	contractBech32Addr := parseInitResponse(t, res.Data)
 
 	execCmd := MsgExecuteContract{
 		Sender:    fred.String(),
@@ -58,6 +58,8 @@ func TestInitGenesis(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
+	// from https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/src/contract.rs#L167
+	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
 
 	// ensure all contract state is as after init
 	assertCodeList(t, q, data.ctx, 1)
