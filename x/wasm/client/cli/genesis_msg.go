@@ -45,8 +45,8 @@ func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(s *types.GenesisState, _ map[string]json.RawMessage) error {
-				s.GenMsgs = append(s.GenMsgs, types.GenesisState_GenMsgs{
+			return alterModuleState(cmd, func(state *types.GenesisState, _ map[string]json.RawMessage) error {
+				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_StoreCode{StoreCode: &msg},
 				})
 				return nil
@@ -86,9 +86,9 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(s *types.GenesisState, a map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance although it may be consumed by a previous message already
-				switch ok, err := hasAccountBalance(cmd, a, senderAddr, msg.InitFunds); {
+			return alterModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
+				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
+				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.InitFunds); {
 				case err != nil:
 					return err
 				case !ok:
@@ -96,7 +96,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 				}
 
 				//  does code id exists?
-				codeInfos, err := getAllCodes(s)
+				codeInfos, err := getAllCodes(state)
 				if err != nil {
 					return err
 				}
@@ -112,9 +112,9 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 				}
 				// permissions correct?
 				if !codeInfo.Info.InstantiateConfig.Allowed(senderAddr) {
-					return fmt.Errorf("permissions were not granted for %s", senderAddr)
+					return fmt.Errorf("permissions were not granted for %state", senderAddr)
 				}
-				s.GenMsgs = append(s.GenMsgs, types.GenesisState_GenMsgs{
+				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &msg},
 				})
 				return nil
@@ -153,9 +153,9 @@ func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(s *types.GenesisState, a map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance although it may be consumed by a previous message already
-				switch ok, err := hasAccountBalance(cmd, a, senderAddr, msg.SentFunds); {
+			return alterModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
+				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
+				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.SentFunds); {
 				case err != nil:
 					return err
 				case !ok:
@@ -163,10 +163,10 @@ func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
 				}
 
 				// - does contract address exists?
-				if !hasContract(s, msg.Contract) {
-					return fmt.Errorf("unknown contract: %s", msg.Contract)
+				if !hasContract(state, msg.Contract) {
+					return fmt.Errorf("unknown contract: %state", msg.Contract)
 				}
-				s.GenMsgs = append(s.GenMsgs, types.GenesisState_GenMsgs{
+				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_ExecuteContract{ExecuteContract: &msg},
 				})
 				return nil
@@ -316,14 +316,14 @@ func getAllContracts(state *types.GenesisState) []contractMeta {
 	return all
 }
 
-func hasAccountBalance(cmd *cobra.Command, a map[string]json.RawMessage, sender sdk.AccAddress, coins sdk.Coins) (bool, error) {
+func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, sender sdk.AccAddress, coins sdk.Coins) (bool, error) {
 	clientCtx, err := client.GetClientQueryContext(cmd)
 	if err != nil {
 		return false, err
 	}
 	cdc := clientCtx.JSONMarshaler
 	var genBalIterator banktypes.GenesisBalancesIterator
-	err = genutil.ValidateAccountInGenesis(a, genBalIterator, sender, coins, cdc)
+	err = genutil.ValidateAccountInGenesis(appState, genBalIterator, sender, coins, cdc)
 	if err != nil {
 		return false, err
 	}
@@ -385,7 +385,7 @@ func readGenesis(cmd *cobra.Command) (*genesisData, error) {
 // unmarshalls the wasm module section into the object representation
 // calls the callback function to modify it
 // and marshals the modified state back into the genesis file
-func alterModuleState(cmd *cobra.Command, callback func(s *types.GenesisState, a map[string]json.RawMessage) error) error {
+func alterModuleState(cmd *cobra.Command, callback func(state *types.GenesisState, appState map[string]json.RawMessage) error) error {
 	g, err := readGenesis(cmd)
 	if err != nil {
 		return err
