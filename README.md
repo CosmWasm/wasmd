@@ -119,17 +119,12 @@ docker volume rm -f wasmd_data
 docker run --rm -it \
     -e PASSWORD=xxxxxxxxx \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest ./setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd:latest /opt/setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
-# This will start both wasmd and rest-server, only rest-serve output is shown on the screen
+# This will start both wasmd and rest-server, both are logged
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest ./run_all.sh
-
-# view wasmd logs in another shell
-docker run --rm -it \
-    --mount type=volume,source=wasmd_data,target=/root,readonly \
-    cosmwasm/wasmd:latest ./logs.sh
+    cosmwasm/wasmd:latest /opt/run_wasmd.sh
 ```
 
 ### CI
@@ -142,7 +137,7 @@ rm -rf ./template && mkdir ./template
 docker run --rm -it \
     -e PASSWORD=xxxxxxxxx \
     --mount type=bind,source=$(pwd)/template,target=/root \
-    cosmwasm/wasmd:latest ./setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
+    cosmwasm/wasmd:latest /opt/setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
 
 sudo chown -R $(id -u):$(id -g) ./template
 
@@ -153,17 +148,12 @@ docker volume rm -f wasmd_data
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 9090:9090 \
     --mount type=bind,source=$(pwd)/template,target=/template \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest ./run_all.sh /template
+    cosmwasm/wasmd:latest /opt/run_wasmd.sh /template
 
 # RESTART CHAIN with existing state
 docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
     --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest ./run_all.sh
-
-# view wasmd logs in another shell
-docker run --rm -it \
-    --mount type=volume,source=wasmd_data,target=/root,readonly \
-    cosmwasm/wasmd:latest ./logs.sh
+    cosmwasm/wasmd:latest /opt/run_wasmd.sh
 ```
 
 ## Runtime flags
