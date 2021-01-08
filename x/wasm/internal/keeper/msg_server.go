@@ -37,7 +37,7 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	))
 
 	return &types.MsgStoreCodeResponse{
-		CodeID: fmt.Sprintf("%d", codeID),
+		CodeID: codeID,
 	}, nil
 }
 

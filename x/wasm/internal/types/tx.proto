@@ -41,7 +41,7 @@ message MsgStoreCode {
 // MsgStoreCodeResponse returns store result data.
 message MsgStoreCodeResponse{
   // CodeID is the reference to the stored WASM code
-  string code_id = 1  [(gogoproto.customname) = "CodeID"];
+  uint64 code_id = 1  [(gogoproto.customname) = "CodeID"];
 }
 
 // MsgInstantiateContract create a new smart contract instance for the given code id.

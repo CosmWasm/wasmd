@@ -3,16 +3,14 @@ package wasm
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"strconv"
 	"testing"
 )
 
 // ensure store code returns the expected response
-func assertStoreCodeResponse(t *testing.T, data []byte, expected int64) {
+func assertStoreCodeResponse(t *testing.T, data []byte, expected uint64) {
 	var pStoreResp MsgStoreCodeResponse
 	require.NoError(t, pStoreResp.Unmarshal(data))
-	// TODO: change this when it we store int natively
-	require.Equal(t, pStoreResp.CodeID, strconv.FormatInt(expected, 10))
+	require.Equal(t, pStoreResp.CodeID, expected)
 }
 
 // ensure execution returns the expected data
