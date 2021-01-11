@@ -216,7 +216,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 			},
 			expError: true,
 		},
-		"fails without a sender balance": {
+		"succeeds with unknown account when no init_funds": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
 				Codes: []types.Code{
@@ -238,6 +238,58 @@ func TestInstantiateContractCmd(t *testing.T) {
 				flagSet := cmd.Flags()
 				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+			},
+			expMsgCount: 1,
+		},
+		"succeeds with funds from well funded account": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID: 1,
+						CodeInfo: types.CodeInfo{
+							CodeHash: []byte("a-valid-code-hash"),
+							Creator:  keeper.RandomBech32AccountAddress(t),
+							InstantiateConfig: types.AccessConfig{
+								Permission: types.AccessTypeEverybody,
+							},
+						},
+						CodeBytes: wasmIdent,
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{"1", `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("label", "testing")
+				flagSet.Set("run-as", myWellFundedAccount)
+				flagSet.Set("amount", "100stake")
+			},
+			expMsgCount: 1,
+		},
+		"fails without enough sender balance": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID: 1,
+						CodeInfo: types.CodeInfo{
+							CodeHash: []byte("a-valid-code-hash"),
+							Creator:  keeper.RandomBech32AccountAddress(t),
+							InstantiateConfig: types.AccessConfig{
+								Permission: types.AccessTypeEverybody,
+							},
+						},
+						CodeBytes: wasmIdent,
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{"1", `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("label", "testing")
+				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("amount", "10stake")
 			},
 			expError: true,
 		},
@@ -359,6 +411,61 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			expError: true,
 		},
+		"succeeds with unknown account when no sent_funds": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID:    1,
+						CodeInfo:  types.CodeInfoFixture(),
+						CodeBytes: wasmIdent,
+					},
+				},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: firstContractAddress,
+						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
+							info.Created = nil
+						}),
+						ContractState: []types.Model{},
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+			},
+			expMsgCount: 1,
+		},
+		"succeeds with funds from well funded account": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				Codes: []types.Code{
+					{
+						CodeID:    1,
+						CodeInfo:  types.CodeInfoFixture(),
+						CodeBytes: wasmIdent,
+					},
+				},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: firstContractAddress,
+						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
+							info.Created = nil
+						}),
+						ContractState: []types.Model{},
+					},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("run-as", myWellFundedAccount)
+				flagSet.Set("amount", "100stake")
+			},
+			expMsgCount: 1,
+		},
 		"fails without enough sender balance": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
@@ -383,6 +490,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				cmd.SetArgs([]string{firstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
+				flagSet.Set("amount", "10stake")
 			},
 			expError: true,
 		},
