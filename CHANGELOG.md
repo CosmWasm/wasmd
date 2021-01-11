@@ -6,6 +6,7 @@
 
 
 **Features:**
+- Upgrade to cosmos-sdk v0.40.0 final [\#354](https://github.com/CosmWasm/wasmd/pull/369)
 - Refactor to GRPC message server [\#366](https://github.com/CosmWasm/wasmd/pull/366)
 - Make it easy to initialize contracts in genesis file with new CLI commands[\#326](https://github.com/CosmWasm/wasmd/issues/326)
 - Upgrade to WasmVM v0.13.0 [\#358](https://github.com/CosmWasm/wasmd/pull/358)
