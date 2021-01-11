@@ -7,7 +7,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.40.0-rc7
 	github.com/cosmos/iavl v0.15.3
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/google/gofuzz v1.2.0
 	github.com/gorilla/mux v1.8.0
