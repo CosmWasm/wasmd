@@ -21,7 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1
-	github.com/tendermint/tendermint v0.34.1
+	github.com/tendermint/tendermint v0.34.2
 	github.com/tendermint/tm-db v0.6.3
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
 	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
