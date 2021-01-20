@@ -2,7 +2,14 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...HEAD)
+
+## [v0.14.1](https://github.com/CosmWasm/wasmd/tree/v0.14.1) (2021-01-20)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.0...v0.14.1)
+
+**Features:**
+- Upgrade to cosmos-sdk v0.40.1 final + Tendermint 0.34.3 [\#380](https://github.com/CosmWasm/wasmd/pull/380)
 
 ## [v0.14.0](https://github.com/CosmWasm/wasmd/tree/v0.14.0) (2021-01-11)
 
