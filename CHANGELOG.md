@@ -4,6 +4,9 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...HEAD)
 
+**Features:**
+- Upgrade to cosmos-sdk v0.41.0 [\#390](https://github.com/CosmWasm/wasmd/pull/390)
+
 ## [v0.14.1](https://github.com/CosmWasm/wasmd/tree/v0.14.1) (2021-01-20)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.0...v0.14.1)
