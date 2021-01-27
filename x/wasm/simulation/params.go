@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 
@@ -14,19 +15,20 @@ func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyUploadAccess),
 			func(r *rand.Rand) string {
 				param := RandomizeAccessConfig(r)
-				return fmt.Sprintf(`{"code_upload_access":"%s"}`, param.String())
+				jsonBz, _ := json.Marshal(&param)
+				return string(jsonBz)
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyInstantiateAccess),
 			func(r *rand.Rand) string {
 				param := RandomizeAccessType(r)
-				return fmt.Sprintf(`{"instantiate_default_permission":"%s"}`, param.String())
+				return fmt.Sprintf("%q", param.String())
 			},
 		),
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyMaxWasmCodeSize),
 			func(r *rand.Rand) string {
 				param := RandomizeMaxWasmCodeSize(r)
-				return fmt.Sprintf(`{"max_wasm_code_size":"%d"`, param)
+				return fmt.Sprintf("%d", param)
 			},
 		),
 	}
