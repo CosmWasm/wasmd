@@ -78,13 +78,14 @@ func TestOnConnectChannel(t *testing.T) {
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
-		contractAddr       sdk.AccAddress
-		contractGas        sdk.Gas
-		contractResp       *wasmvmtypes.IBCBasicResponse
-		contractErr        error
-		overwriteMessenger messenger
-		expErr             bool
-		expEvents          int
+		contractAddr          sdk.AccAddress
+		contractGas           sdk.Gas
+		contractResp          *wasmvmtypes.IBCBasicResponse
+		contractErr           error
+		overwriteMessenger    messenger
+		expErr                bool
+		expContractEventAttrs int
+		expNoEvents           bool
 	}{
 		"consume contract gas": {
 			contractAddr: example.Contract,
@@ -100,6 +101,7 @@ func TestOnConnectChannel(t *testing.T) {
 			},
 			contractErr: errors.New("test, ignore"),
 			expErr:      true,
+			expNoEvents: true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr: example.Contract,
@@ -114,7 +116,7 @@ func TestOnConnectChannel(t *testing.T) {
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			expEvents: 1,
+			expContractEventAttrs: 1,
 		},
 		"messenger errors returned, events stored": {
 			contractAddr: example.Contract,
@@ -128,12 +130,13 @@ func TestOnConnectChannel(t *testing.T) {
 					return errors.New("test, ignore")
 				},
 			},
-			expErr:    true,
-			expEvents: 1,
+			expErr:                true,
+			expContractEventAttrs: 1,
 		},
 		"unknown contract address": {
 			contractAddr: RandomAccountAddress(t),
 			expErr:       true,
+			expNoEvents:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -145,6 +148,7 @@ func TestOnConnectChannel(t *testing.T) {
 			}
 
 			ctx, cancel := parentCtx.CacheContext()
+			ctx = ctx.WithEventManager(sdk.NewEventManager())
 			defer cancel()
 			before := ctx.GasMeter().GasConsumed()
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
@@ -158,10 +162,16 @@ func TestOnConnectChannel(t *testing.T) {
 			err := keepers.WasmKeeper.OnConnectChannel(ctx, spec.contractAddr, myChannel)
 
 			// then
+			events := ctx.EventManager().Events()
 			if spec.expErr {
 				require.Error(t, err)
-				assert.Empty(t, capturedMsgs)                              // no messages captured on error
-				assert.Len(t, ctx.EventManager().Events(), spec.expEvents) // expected events on error
+				assert.Empty(t, capturedMsgs) // no messages captured on error
+				if spec.expNoEvents {
+					require.Len(t, events, 0)
+				} else {
+					require.Len(t, events, 1)
+					assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -170,7 +180,7 @@ func TestOnConnectChannel(t *testing.T) {
 			assert.Equal(t, spec.contractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
 			// verify msgs dispatched
 			assert.Equal(t, spec.contractResp.Messages, *capturedMsgs)
-			assert.Len(t, ctx.EventManager().Events(), spec.expEvents)
+			assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
 		})
 	}
 }
@@ -182,13 +192,14 @@ func TestOnCloseChannel(t *testing.T) {
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
-		contractAddr       sdk.AccAddress
-		contractGas        sdk.Gas
-		contractResp       *wasmvmtypes.IBCBasicResponse
-		contractErr        error
-		overwriteMessenger messenger
-		expErr             bool
-		expEvents          int
+		contractAddr          sdk.AccAddress
+		contractGas           sdk.Gas
+		contractResp          *wasmvmtypes.IBCBasicResponse
+		contractErr           error
+		overwriteMessenger    messenger
+		expErr                bool
+		expContractEventAttrs int
+		expNoEvents           bool
 	}{
 		"consume contract gas": {
 			contractAddr: example.Contract,
@@ -204,6 +215,7 @@ func TestOnCloseChannel(t *testing.T) {
 			},
 			contractErr: errors.New("test, ignore"),
 			expErr:      true,
+			expNoEvents: true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr: example.Contract,
@@ -218,7 +230,7 @@ func TestOnCloseChannel(t *testing.T) {
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			expEvents: 1,
+			expContractEventAttrs: 1,
 		},
 		"messenger errors returned, events stored": {
 			contractAddr: example.Contract,
@@ -232,12 +244,13 @@ func TestOnCloseChannel(t *testing.T) {
 					return errors.New("test, ignore")
 				},
 			},
-			expErr:    true,
-			expEvents: 1,
+			expErr:                true,
+			expContractEventAttrs: 1,
 		},
 		"unknown contract address": {
 			contractAddr: RandomAccountAddress(t),
 			expErr:       true,
+			expNoEvents:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -262,10 +275,16 @@ func TestOnCloseChannel(t *testing.T) {
 			err := keepers.WasmKeeper.OnCloseChannel(ctx, spec.contractAddr, myChannel)
 
 			// then
+			events := ctx.EventManager().Events()
 			if spec.expErr {
 				require.Error(t, err)
-				assert.Empty(t, capturedMsgs)                              // no messages captured on error
-				assert.Len(t, ctx.EventManager().Events(), spec.expEvents) // expected events on error
+				assert.Empty(t, capturedMsgs) // no messages captured on error
+				if spec.expNoEvents {
+					require.Len(t, events, 0)
+				} else {
+					require.Len(t, events, 1)
+					assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -274,7 +293,8 @@ func TestOnCloseChannel(t *testing.T) {
 			assert.Equal(t, spec.contractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
 			// verify msgs dispatched
 			assert.Equal(t, spec.contractResp.Messages, *capturedMsgs)
-			assert.Len(t, ctx.EventManager().Events(), spec.expEvents)
+			require.Len(t, events, 1)
+			assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
 		})
 	}
 }
@@ -286,13 +306,14 @@ func TestOnRecvPacket(t *testing.T) {
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
-		contractAddr       sdk.AccAddress
-		contractGas        sdk.Gas
-		contractResp       *wasmvmtypes.IBCReceiveResponse
-		contractErr        error
-		overwriteMessenger messenger
-		expErr             bool
-		expEvents          int
+		contractAddr          sdk.AccAddress
+		contractGas           sdk.Gas
+		contractResp          *wasmvmtypes.IBCReceiveResponse
+		contractErr           error
+		overwriteMessenger    messenger
+		expErr                bool
+		expContractEventAttrs int
+		expNoEvents           bool
 	}{
 		"consume contract gas": {
 			contractAddr: example.Contract,
@@ -316,6 +337,7 @@ func TestOnRecvPacket(t *testing.T) {
 			},
 			contractErr: errors.New("test, ignore"),
 			expErr:      true,
+			expNoEvents: true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr: example.Contract,
@@ -332,7 +354,7 @@ func TestOnRecvPacket(t *testing.T) {
 				Acknowledgement: []byte("myAck"),
 				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			expEvents: 1,
+			expContractEventAttrs: 1,
 		},
 		"messenger errors returned, events stored": {
 			contractAddr: example.Contract,
@@ -347,12 +369,13 @@ func TestOnRecvPacket(t *testing.T) {
 					return errors.New("test, ignore")
 				},
 			},
-			expErr:    true,
-			expEvents: 1,
+			expErr:                true,
+			expContractEventAttrs: 1,
 		},
 		"unknown contract address": {
 			contractAddr: RandomAccountAddress(t),
 			expErr:       true,
+			expNoEvents:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -379,10 +402,16 @@ func TestOnRecvPacket(t *testing.T) {
 			gotAck, err := keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, myPacket)
 
 			// then
+			events := ctx.EventManager().Events()
 			if spec.expErr {
 				require.Error(t, err)
-				assert.Empty(t, capturedMsgs)                              // no messages captured on error
-				assert.Len(t, ctx.EventManager().Events(), spec.expEvents) // expected events on error
+				assert.Empty(t, capturedMsgs) // no messages captured on error
+				if spec.expNoEvents {
+					require.Len(t, events, 0)
+				} else {
+					require.Len(t, events, 1)
+					assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -393,7 +422,8 @@ func TestOnRecvPacket(t *testing.T) {
 			assert.Equal(t, spec.contractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
 			// verify msgs dispatched
 			assert.Equal(t, spec.contractResp.Messages, *capturedMsgs)
-			assert.Len(t, ctx.EventManager().Events(), spec.expEvents)
+			require.Len(t, events, 1)
+			assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
 		})
 	}
 }
@@ -405,13 +435,14 @@ func TestOnAckPacket(t *testing.T) {
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
-		contractAddr       sdk.AccAddress
-		contractGas        sdk.Gas
-		contractResp       *wasmvmtypes.IBCBasicResponse
-		contractErr        error
-		overwriteMessenger messenger
-		expErr             bool
-		expEvents          int
+		contractAddr          sdk.AccAddress
+		contractGas           sdk.Gas
+		contractResp          *wasmvmtypes.IBCBasicResponse
+		contractErr           error
+		overwriteMessenger    messenger
+		expErr                bool
+		expContractEventAttrs int
+		expNoEvents           bool
 	}{
 		"consume contract gas": {
 			contractAddr: example.Contract,
@@ -427,6 +458,7 @@ func TestOnAckPacket(t *testing.T) {
 			},
 			contractErr: errors.New("test, ignore"),
 			expErr:      true,
+			expNoEvents: true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr: example.Contract,
@@ -441,7 +473,7 @@ func TestOnAckPacket(t *testing.T) {
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			expEvents: 1,
+			expContractEventAttrs: 1,
 		},
 		"messenger errors returned, events stored": {
 			contractAddr: example.Contract,
@@ -455,12 +487,13 @@ func TestOnAckPacket(t *testing.T) {
 					return errors.New("test, ignore")
 				},
 			},
-			expErr:    true,
-			expEvents: 1,
+			expErr:                true,
+			expContractEventAttrs: 1,
 		},
 		"unknown contract address": {
 			contractAddr: RandomAccountAddress(t),
 			expErr:       true,
+			expNoEvents:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -486,10 +519,16 @@ func TestOnAckPacket(t *testing.T) {
 			err := keepers.WasmKeeper.OnAckPacket(ctx, spec.contractAddr, myAck)
 
 			// then
+			events := ctx.EventManager().Events()
 			if spec.expErr {
 				require.Error(t, err)
-				assert.Empty(t, capturedMsgs)                              // no messages captured on error
-				assert.Len(t, ctx.EventManager().Events(), spec.expEvents) // expected events on error
+				assert.Empty(t, capturedMsgs) // no messages captured on error
+				if spec.expNoEvents {
+					require.Len(t, events, 0)
+				} else {
+					require.Len(t, events, 1)
+					assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -498,7 +537,8 @@ func TestOnAckPacket(t *testing.T) {
 			assert.Equal(t, spec.contractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
 			// verify msgs dispatched
 			assert.Equal(t, spec.contractResp.Messages, *capturedMsgs)
-			assert.Len(t, ctx.EventManager().Events(), spec.expEvents)
+			require.Len(t, events, 1)
+			assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
 		})
 	}
 }
@@ -510,13 +550,14 @@ func TestOnTimeoutPacket(t *testing.T) {
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
-		contractAddr       sdk.AccAddress
-		contractGas        sdk.Gas
-		contractResp       *wasmvmtypes.IBCBasicResponse
-		contractErr        error
-		overwriteMessenger messenger
-		expErr             bool
-		expEvents          int
+		contractAddr          sdk.AccAddress
+		contractGas           sdk.Gas
+		contractResp          *wasmvmtypes.IBCBasicResponse
+		contractErr           error
+		overwriteMessenger    messenger
+		expErr                bool
+		expContractEventAttrs int
+		expNoEvents           bool
 	}{
 		"consume contract gas": {
 			contractAddr: example.Contract,
@@ -532,6 +573,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 			},
 			contractErr: errors.New("test, ignore"),
 			expErr:      true,
+			expNoEvents: true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr: example.Contract,
@@ -546,7 +588,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			expEvents: 1,
+			expContractEventAttrs: 1,
 		},
 		"messenger errors returned, events stored": {
 			contractAddr: example.Contract,
@@ -560,12 +602,13 @@ func TestOnTimeoutPacket(t *testing.T) {
 					return errors.New("test, ignore")
 				},
 			},
-			expErr:    true,
-			expEvents: 1,
+			expErr:                true,
+			expContractEventAttrs: 1,
 		},
 		"unknown contract address": {
 			contractAddr: RandomAccountAddress(t),
 			expErr:       true,
+			expNoEvents:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -590,10 +633,16 @@ func TestOnTimeoutPacket(t *testing.T) {
 			err := keepers.WasmKeeper.OnTimeoutPacket(ctx, spec.contractAddr, myPacket)
 
 			// then
+			events := ctx.EventManager().Events()
 			if spec.expErr {
 				require.Error(t, err)
-				assert.Empty(t, capturedMsgs)                              // no messages captured on error
-				assert.Len(t, ctx.EventManager().Events(), spec.expEvents) // expected events on error
+				assert.Empty(t, capturedMsgs) // no messages captured on error
+				if spec.expNoEvents {
+					require.Len(t, events, 0)
+				} else {
+					require.Len(t, events, 1)
+					assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -602,7 +651,8 @@ func TestOnTimeoutPacket(t *testing.T) {
 			assert.Equal(t, spec.contractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
 			// verify msgs dispatched
 			assert.Equal(t, spec.contractResp.Messages, *capturedMsgs)
-			assert.Len(t, ctx.EventManager().Events(), spec.expEvents)
+			require.Len(t, events, 1)
+			assert.Len(t, events[0].Attributes, 1+spec.expContractEventAttrs)
 		})
 	}
 }
