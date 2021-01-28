@@ -244,7 +244,7 @@ var ( // store keys
 	confirmedBallsCountKey = []byte("confBalls")
 )
 
-// OnIBCPacketReceive receives the hit and serves a response hit via `cosmwasmv2.IBCMsg`
+// IBCPacketReceive receives the hit and serves a response hit via `wasmvmtypes.IBCPacket`
 func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
 	// parse received data and store
 	var receivedBall hit
