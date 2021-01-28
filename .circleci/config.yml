@@ -182,7 +182,7 @@ jobs:
           at: /go/bin
       - run:
           name: Run relayer integration tests
-          command:
+          command: |
             - make test-relayer-integration
 
 workflows:
