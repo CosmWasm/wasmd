@@ -217,4 +217,4 @@ proto-check-breaking:
 .PHONY: all build-linux install install-debug \
 	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race \
-	test-sim-multi-seed-long \
+	test-sim-import-export \
