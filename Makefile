@@ -168,6 +168,9 @@ test-race:
 test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
+test-relayer-integration:
+	./integration/init_two_chainz_relayer.sh
+	./integration/test_ibc_transfer.sh
 
 benchmark:
 	@go test -mod=readonly -bench=. ./...
@@ -208,4 +211,4 @@ proto-check-breaking:
 
 .PHONY: all build-linux install install-debug \
 	go-mod-cache draw-deps clean build format \
-	test test-all test-build test-cover test-unit test-race
+	test test-all test-build test-cover test-unit test-race test-relayer-integration
