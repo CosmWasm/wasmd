@@ -184,12 +184,6 @@ jobs:
           name: Run relayer integration tests
           command:
             - make test-relayer-integration
-      - persist_to_workspace:
-          root: /tmp/workspace
-          paths:
-            - "profiles/*"
-      - store_artifacts:
-          path: /tmp/logs
 
 workflows:
   version: 2
