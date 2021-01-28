@@ -45,7 +45,7 @@ jobs:
           command: make go-mod-cache
       - run:
           name: Build
-          command: make build
+          command: make install
       - run:
           name: "Git garbage collection"
           command: git gc
@@ -59,6 +59,10 @@ jobs:
           key: go-src-v1-{{ .Revision }}
           paths:
             - ".git"
+      - persist_to_workspace:
+          root: /go/bin
+          paths:
+            - "wasmd"
 
   test-cover:
     executor: golang
@@ -144,6 +148,48 @@ jobs:
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
 
+  install-relayer:
+    executor: golang
+    environment:
+      RELAYER_VERISON: master
+      RELAYER_REPO: github.com/cosmos/relayer
+    steps:
+      - restore_cache:
+          name: "Restore go modules cache"
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Cache go modules
+          command: make go-mod-cache
+      - run:
+          name: Install relayer
+          command: go get $RELAYER_REPO@$RELAYER_VERSION
+      - save_cache:
+          name: "Save go modules cache"
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+      - persist_to_workspace:
+          root: /go/bin
+          paths:
+            - "rly"
+
+  test-relayer-it:
+    executor: golang
+    steps:
+      - attach_workspace:
+          at: /go/bin
+      - run:
+          name: Run relayer integration tests
+          command:
+            - make test-relayer-integration
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - "profiles/*"
+      - store_artifacts:
+          path: /tmp/logs
+
 workflows:
   version: 2
   test-suite:
@@ -175,6 +221,10 @@ workflows:
       - test-cover:
           requires:
             - setup-dependencies
+      - test-relayer-it:
+          requires:
+            - setup-dependencies
+            - install-relayer
       - upload-coverage:
           requires:
             - test-cover
