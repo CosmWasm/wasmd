@@ -154,6 +154,8 @@ jobs:
       RELAYER_VERISON: master
       RELAYER_REPO: github.com/cosmos/relayer
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - restore_cache:
           name: "Restore go modules cache"
           keys:
@@ -218,6 +220,7 @@ workflows:
             - setup-dependencies
       - install-relayer:
           requires:
+            - test-cover
             - setup-dependencies
       - test-relayer-it:
           requires:
