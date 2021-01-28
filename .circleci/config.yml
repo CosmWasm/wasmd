@@ -216,6 +216,7 @@ workflows:
       - test-cover:
           requires:
             - setup-dependencies
+      - install-relayer:
       - test-relayer-it:
           requires:
             - setup-dependencies
