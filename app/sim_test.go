@@ -26,6 +26,11 @@ import (
 	"testing"
 )
 
+// Get flags every time the simulator is run
+func init() {
+	simapp.GetSimulatorFlags()
+}
+
 type StoreKeysPrefixes struct {
 	A        sdk.StoreKey
 	B        sdk.StoreKey
@@ -35,6 +40,9 @@ type StoreKeysPrefixes struct {
 // SetupSimulation wraps simapp.SetupSimulation in order to create any export directory if they do not exist yet
 func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string, log.Logger, bool, error) {
 	config, db, dir, logger, skip, err := simapp.SetupSimulation(dirPrefix, dbName)
+	if err != nil {
+		return simtypes.Config{}, nil, "", nil, false, err
+	}
 
 	paths := []string{config.ExportParamsPath, config.ExportStatePath, config.ExportStatsPath}
 	for _, path := range paths {
