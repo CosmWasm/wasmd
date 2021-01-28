@@ -5,6 +5,8 @@ VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
+BINDIR ?= $(GOPATH)/bin
+SIMAPP = ./app
 
 # for dockerized protobuf tools
 PROTO_CONTAINER := cosmwasm/prototools-docker:v0.1.0
@@ -94,6 +96,9 @@ BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)' -trimpath
 CORAL_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(coral_ldflags)' -trimpath
 FLEX_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(flex_ldflags)' -trimpath
 
+# The below include contains the tools and runsim targets.
+include contrib/devtools/Makefile
+
 all: install lint test
 
 build: go.sum
@@ -172,6 +177,10 @@ test-cover:
 benchmark:
 	@go test -mod=readonly -bench=. ./...
 
+test-sim-multi-seed-long: runsim
+	@echo "Running long multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 500 50 TestFullAppSimulation
+
 
 ###############################################################################
 ###                                Linting                                  ###
@@ -208,4 +217,5 @@ proto-check-breaking:
 
 .PHONY: all build-linux install install-debug \
 	go-mod-cache draw-deps clean build format \
-	test test-all test-build test-cover test-unit test-race
+	test test-all test-build test-cover test-unit test-race \
+	test-sim-multi-seed-long \
