@@ -177,6 +177,7 @@ jobs:
   test-relayer-it:
     executor: golang
     steps:
+      - checkout
       - attach_workspace:
           at: /go/bin
       - run:
