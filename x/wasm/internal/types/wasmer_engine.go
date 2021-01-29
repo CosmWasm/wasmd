@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/CosmWasm/wasmvm"
-	"github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 )
 
 // WasmerEngine defines the WASM contract runtime engine.
@@ -16,7 +16,11 @@ type WasmerEngine interface {
 	// For example, the code for all ERC-20 contracts should be the same.
 	// This function stores the code for that contract only once, but it can
 	// be instantiated with custom inputs in the future.
-	Create(code cosmwasm.WasmCode) (cosmwasm.CodeID, error)
+	Create(code wasmvm.WasmCode) (wasmvm.Checksum, error)
+
+	// This will statically analyze the code.
+	// Currently just reports if it exposes all IBC entry points.
+	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
 
 	// Instantiate will create a new contract based on the given codeID.
 	// We can set the initMsg (contract "genesis") here, and it then receives
@@ -27,16 +31,16 @@ type WasmerEngine interface {
 	// Under the hood, we may recompile the wasm, use a cached native compile, or even use a cached instance
 	// for performance.
 	Instantiate(
-		code cosmwasm.CodeID,
-		env types.Env,
-		info types.MessageInfo,
+		code wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		info wasmvmtypes.MessageInfo,
 		initMsg []byte,
-		store cosmwasm.KVStore,
-		goapi cosmwasm.GoAPI,
-		querier cosmwasm.Querier,
-		gasMeter cosmwasm.GasMeter,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*types.InitResponse, uint64, error)
+	) (*wasmvmtypes.InitResponse, uint64, error)
 
 	// Execute calls a given contract. Since the only difference between contracts with the same CodeID is the
 	// data in their local storage, and their address in the outside world, we need no ContractID here.
@@ -45,28 +49,28 @@ type WasmerEngine interface {
 	// The caller is responsible for passing the correct `store` (which must have been initialized exactly once),
 	// and setting the env with relevent info on this instance (address, balance, etc)
 	Execute(
-		code cosmwasm.CodeID,
-		env types.Env,
-		info types.MessageInfo,
+		code wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		info wasmvmtypes.MessageInfo,
 		executeMsg []byte,
-		store cosmwasm.KVStore,
-		goapi cosmwasm.GoAPI,
-		querier cosmwasm.Querier,
-		gasMeter cosmwasm.GasMeter,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*types.HandleResponse, uint64, error)
+	) (*wasmvmtypes.HandleResponse, uint64, error)
 
 	// Query allows a client to execute a contract-specific query. If the result is not empty, it should be
 	// valid json-encoded data to return to the client.
 	// The meaning of path and data can be determined by the code. Path is the suffix of the abci.QueryRequest.Path
 	Query(
-		code cosmwasm.CodeID,
-		env types.Env,
+		code wasmvm.Checksum,
+		env wasmvmtypes.Env,
 		queryMsg []byte,
-		store cosmwasm.KVStore,
-		goapi cosmwasm.GoAPI,
-		querier cosmwasm.Querier,
-		gasMeter cosmwasm.GasMeter,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
 	) ([]byte, uint64, error)
 
@@ -77,16 +81,15 @@ type WasmerEngine interface {
 	//
 	// MigrateMsg has some data on how to perform the migration.
 	Migrate(
-		code cosmwasm.CodeID,
-		env types.Env,
-		info types.MessageInfo,
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
 		migrateMsg []byte,
-		store cosmwasm.KVStore,
-		goapi cosmwasm.GoAPI,
-		querier cosmwasm.Querier,
-		gasMeter cosmwasm.GasMeter,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*types.MigrateResponse, uint64, error)
+	) (*wasmvmtypes.MigrateResponse, uint64, error)
 
 	// GetCode will load the original wasm code for the given code id.
 	// This will only succeed if that code id was previously returned from
@@ -95,8 +98,87 @@ type WasmerEngine interface {
 	// This can be used so that the (short) code id (hash) is stored in the iavl tree
 	// and the larger binary blobs (wasm and pre-compiles) are all managed by the
 	// rust library
-	GetCode(code cosmwasm.CodeID) (cosmwasm.WasmCode, error)
+	GetCode(code wasmvm.Checksum) (wasmvm.WasmCode, error)
 
 	// Cleanup should be called when no longer using this to free resources on the rust-side
 	Cleanup()
+
+	// IBCChannelOpen is available on IBC-enabled contracts and is a hook to call into
+	// during the handshake pahse
+	IBCChannelOpen(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		channel wasmvmtypes.IBCChannel,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (uint64, error)
+
+	// IBCChannelConnect is available on IBC-enabled contracts and is a hook to call into
+	// during the handshake pahse
+	IBCChannelConnect(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		channel wasmvmtypes.IBCChannel,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+
+	// IBCChannelClose is available on IBC-enabled contracts and is a hook to call into
+	// at the end of the channel lifetime
+	IBCChannelClose(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		channel wasmvmtypes.IBCChannel,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+
+	// IBCPacketReceive is available on IBC-enabled contracts and is called when an incoming
+	// packet is received on a channel belonging to this contract
+	IBCPacketReceive(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		packet wasmvmtypes.IBCPacket,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.IBCReceiveResponse, uint64, error)
+	// IBCPacketAck is available on IBC-enabled contracts and is called when an
+	// the response for an outgoing packet (previously sent by this contract)
+	// is received
+	IBCPacketAck(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		ack wasmvmtypes.IBCAcknowledgement,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+
+	// IBCPacketTimeout is available on IBC-enabled contracts and is called when an
+	// outgoing packet (previously sent by this contract) will provably never be executed.
+	// Usually handled like ack returning an error
+	IBCPacketTimeout(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		packet wasmvmtypes.IBCPacket,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
 }

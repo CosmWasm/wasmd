@@ -46,16 +46,28 @@ const CompileCost uint64 = 2
 // constant value so all nodes run with the same limit.
 const contractMemoryLimit = 32
 
+// Option is an extension point to instantiate keeper with non default values
+type Option interface {
+	apply(*Keeper)
+}
+
+type messenger interface {
+	Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error
+}
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
-	storeKey      sdk.StoreKey
-	cdc           codec.Marshaler
-	accountKeeper authkeeper.AccountKeeper
-	bankKeeper    bankkeeper.Keeper
+	storeKey         sdk.StoreKey
+	cdc              codec.Marshaler
+	accountKeeper    authkeeper.AccountKeeper
+	bankKeeper       bankkeeper.Keeper
+	ChannelKeeper    types.ChannelKeeper
+	portKeeper       types.PortKeeper
+	capabilityKeeper types.CapabilityKeeper
 
 	wasmer       types.WasmerEngine
 	queryPlugins QueryPlugins
-	messenger    MessageHandler
+	messenger    messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	authZPolicy   AuthorizationPolicy
@@ -72,12 +84,16 @@ func NewKeeper(
 	bankKeeper bankkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 	distKeeper distributionkeeper.Keeper,
+	channelKeeper types.ChannelKeeper,
+	portKeeper types.PortKeeper,
+	capabilityKeeper types.CapabilityKeeper,
 	router sdk.Router,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	supportedFeatures string,
 	customEncoders *MessageEncoders,
 	customPlugins *QueryPlugins,
+	opts ...Option,
 ) Keeper {
 	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
@@ -89,18 +105,25 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
+	messageEncoders := DefaultEncoders(channelKeeper, capabilityKeeper).Merge(customEncoders)
 	keeper := Keeper{
-		storeKey:      storeKey,
-		cdc:           cdc,
-		wasmer:        wasmer,
-		accountKeeper: accountKeeper,
-		bankKeeper:    bankKeeper,
-		messenger:     NewMessageHandler(router, customEncoders),
-		queryGasLimit: wasmConfig.SmartQueryGasLimit,
-		authZPolicy:   DefaultAuthorizationPolicy{},
-		paramSpace:    paramSpace,
+		storeKey:         storeKey,
+		cdc:              cdc,
+		wasmer:           wasmer,
+		accountKeeper:    accountKeeper,
+		bankKeeper:       bankKeeper,
+		ChannelKeeper:    channelKeeper,
+		portKeeper:       portKeeper,
+		capabilityKeeper: capabilityKeeper,
+		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, &messageEncoders),
+		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
+		authZPolicy:      DefaultAuthorizationPolicy{},
+		paramSpace:       paramSpace,
 	}
 	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, &keeper).Merge(customPlugins)
+	for _, o := range opts {
+		o.apply(&keeper)
+	}
 	return keeper
 }
 
@@ -150,20 +173,22 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 
 	codeHash, err := k.wasmer.Create(wasmCode)
 	if err != nil {
-		// return 0, sdkerrors.Wrap(err, "cosmwasm create")
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	store := ctx.KVStore(k.storeKey)
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
 	if instantiateAccess == nil {
 		defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
 		instantiateAccess = &defaultAccessConfig
 	}
 	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder, *instantiateAccess)
+	k.storeCodeInfo(ctx, codeID, codeInfo)
+	return codeID, nil
+}
+
+func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
+	store := ctx.KVStore(k.storeKey)
 	// 0x01 | codeID (uint64) -> ContractInfo
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshalBinaryBare(&codeInfo))
-
-	return codeID, nil
 }
 
 func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
@@ -263,11 +288,26 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(ctx)
 	contractInfo := types.NewContractInfo(codeID, creator, admin, label, createdAt)
+
+	// check for IBC flag
+	report, err := k.wasmer.AnalyzeCode(codeInfo.CodeHash)
+	if err != nil {
+		return contractAddress, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
+	}
+	if report.HasIBCEntryPoints {
+		// register IBC port
+		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		if err != nil {
+			return nil, err
+		}
+		contractInfo.IBCPortID = ibcPort
+	}
+
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 	k.appendToContractHistory(ctx, contractAddress, contractInfo.InitialHistory(initMsg))
 
 	// then dispatch so that contract could be called back
-	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
+	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +319,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
 	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: execute")
 
-	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +344,6 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		Ctx:     ctx,
 		Plugins: k.queryPlugins,
 	}
-
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
@@ -316,7 +355,7 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	err = k.dispatchMessages(ctx, contractAddress, res.Messages)
+	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
 	if err != nil {
 		return nil, err
 	}
@@ -347,9 +386,23 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
-	var noDeposit sdk.Coins
+	// check for IBC flag
+	switch report, err := k.wasmer.AnalyzeCode(newCodeInfo.CodeHash); {
+	case err != nil:
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
+	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
+		// prevent update to non ibc contract
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, "requires ibc callbacks")
+	case report.HasIBCEntryPoints && contractInfo.IBCPortID == "":
+		// add ibc port
+		ibcPort, err := k.ensureIbcPort(ctx, contractAddress)
+		if err != nil {
+			return nil, err
+		}
+		contractInfo.IBCPortID = ibcPort
+	}
+
 	env := types.NewEnv(ctx, contractAddress)
-	info := types.NewInfo(caller, noDeposit)
 
 	// prepare querier
 	querier := QueryHandler{
@@ -360,7 +413,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	gas := gasForContract(ctx)
-	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash, env, info, msg, &prefixStore, cosmwasmAPI, &querier, gasMeter(ctx), gas)
+	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash, env, msg, &prefixStore, cosmwasmAPI, &querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
@@ -378,7 +431,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
 	// then dispatch
-	if err := k.dispatchMessages(ctx, contractAddress, res.Messages); err != nil {
+	if err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages); err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -446,7 +499,7 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: query")
 
-	codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	_, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -475,25 +528,25 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 	return prefixStore.Get(key)
 }
 
-func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.CodeInfo, prefix.Store, error) {
+func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractInfo, types.CodeInfo, prefix.Store, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
-		return types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract")
+		return types.ContractInfo{}, types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract")
 	}
-	var contract types.ContractInfo
-	k.cdc.MustUnmarshalBinaryBare(contractBz, &contract)
+	var contractInfo types.ContractInfo
+	k.cdc.MustUnmarshalBinaryBare(contractBz, &contractInfo)
 
-	contractInfoBz := store.Get(types.GetCodeKey(contract.CodeID))
+	contractInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
 	if contractInfoBz == nil {
-		return types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract info")
+		return contractInfo, types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract info")
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return codeInfo, prefixStore, nil
+	return contractInfo, codeInfo, prefixStore, nil
 }
 
 func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
@@ -592,9 +645,9 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	return k.wasmer.GetCode(codeInfo.CodeHash)
 }
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) error {
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
 	for _, msg := range msgs {
-		if err := k.messenger.Dispatch(ctx, contractAddr, msg); err != nil {
+		if err := k.messenger.Dispatch(ctx, contractAddr, ibcPort, msg); err != nil {
 			return err
 		}
 	}
@@ -618,7 +671,7 @@ func consumeGas(ctx sdk.Context, gas uint64) {
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
 	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
 	if ctx.GasMeter().IsOutOfGas() {
-		panic(sdk.ErrorOutOfGas{"Wasmer function execution"})
+		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
 	}
 }
 

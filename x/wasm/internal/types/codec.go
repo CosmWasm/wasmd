@@ -34,6 +34,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgMigrateContract{},
 		&MsgUpdateAdmin{},
 		&MsgClearAdmin{},
+		&MsgIBCCloseChannel{},
+		&MsgIBCSend{},
 	)
 	registry.RegisterImplementations(
 		(*govtypes.Content)(nil),
