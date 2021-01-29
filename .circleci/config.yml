@@ -153,6 +153,7 @@ jobs:
     environment:
       RELAYER_VERISON: master
       RELAYER_REPO: github.com/cosmos/relayer
+      GO111MODULE: "on"
     steps:
       - attach_workspace:
           at: /tmp/workspace
