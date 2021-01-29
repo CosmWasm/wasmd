@@ -151,7 +151,7 @@ jobs:
   install-relayer:
     executor: golang
     environment:
-      RELAYER_VERISON: master
+      RELAYER_VERSION: master
       RELAYER_REPO: github.com/cosmos/relayer
       GO111MODULE: "on"
     steps:
