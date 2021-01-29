@@ -156,21 +156,9 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - restore_cache:
-          name: "Restore go modules cache"
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-      - run:
-          name: Cache go modules
-          command: make go-mod-cache
       - run:
           name: Install relayer
           command: go get $RELAYER_REPO@$RELAYER_VERSION
-      - save_cache:
-          name: "Save go modules cache"
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
       - persist_to_workspace:
           root: /go/bin
           paths:
