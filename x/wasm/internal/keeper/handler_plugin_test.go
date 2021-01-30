@@ -3,6 +3,12 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
+	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
+	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -16,19 +22,21 @@ import (
 )
 
 func TestEncoding(t *testing.T) {
-	_, _, addr1 := keyPubAddr()
-	_, _, addr2 := keyPubAddr()
+	addr1 := RandomAccountAddress(t)
+	addr2 := RandomAccountAddress(t)
 	invalidAddr := "xrnd1d02kd90n38qvr3qb9qof83fn2d2"
 	valAddr := make(sdk.ValAddress, sdk.AddrLen)
 	valAddr[0] = 12
 	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
 	valAddr2[1] = 123
+	var timeoutVal uint64 = 100
 
 	jsonMsg := json.RawMessage(`{"foo": 123}`)
 
 	cases := map[string]struct {
-		sender sdk.AccAddress
-		input  wasmvmtypes.CosmosMsg
+		sender     sdk.AccAddress
+		srcMsg     wasmvmtypes.CosmosMsg
+		srcIBCPort string
 		// set if valid
 		output []sdk.Msg
 		// set if invalid
@@ -36,11 +44,10 @@ func TestEncoding(t *testing.T) {
 	}{
 		"simple send": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Bank: &wasmvmtypes.BankMsg{
 					Send: &wasmvmtypes.SendMsg{
-						FromAddress: addr1.String(),
-						ToAddress:   addr2.String(),
+						ToAddress: addr2.String(),
 						Amount: []wasmvmtypes.Coin{
 							{
 								Denom:  "uatom",
@@ -67,11 +74,10 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid send amount": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Bank: &wasmvmtypes.BankMsg{
 					Send: &wasmvmtypes.SendMsg{
-						FromAddress: addr1.String(),
-						ToAddress:   addr2.String(),
+						ToAddress: addr2.String(),
 						Amount: []wasmvmtypes.Coin{
 							{
 								Denom:  "uatom",
@@ -85,11 +91,10 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid address": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Bank: &wasmvmtypes.BankMsg{
 					Send: &wasmvmtypes.SendMsg{
-						FromAddress: addr1.String(),
-						ToAddress:   invalidAddr,
+						ToAddress: invalidAddr,
 						Amount: []wasmvmtypes.Coin{
 							{
 								Denom:  "uatom",
@@ -112,7 +117,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm execute": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Wasm: &wasmvmtypes.WasmMsg{
 					Execute: &wasmvmtypes.ExecuteMsg{
 						ContractAddr: addr2.String(),
@@ -134,7 +139,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm instantiate": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Wasm: &wasmvmtypes.WasmMsg{
 					Instantiate: &wasmvmtypes.InstantiateMsg{
 						CodeID: 7,
@@ -158,7 +163,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking delegate": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Delegate: &wasmvmtypes.DelegateMsg{
 						Validator: valAddr.String(),
@@ -176,7 +181,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking delegate to non-validator": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Delegate: &wasmvmtypes.DelegateMsg{
 						Validator: addr2.String(),
@@ -195,7 +200,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking undelegate": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Undelegate: &wasmvmtypes.UndelegateMsg{
 						Validator: valAddr.String(),
@@ -213,7 +218,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking redelegate": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Redelegate: &wasmvmtypes.RedelegateMsg{
 						SrcValidator: valAddr.String(),
@@ -233,7 +238,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking withdraw (implicit recipient)": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Withdraw: &wasmvmtypes.WithdrawMsg{
 						Validator: valAddr2.String(),
@@ -253,7 +258,7 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking withdraw (explicit recipient)": {
 			sender: addr1,
-			input: wasmvmtypes.CosmosMsg{
+			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
 					Withdraw: &wasmvmtypes.WithdrawMsg{
 						Validator: valAddr2.String(),
@@ -272,13 +277,91 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"IBC transfer with block timeout": {
+			sender:     addr1,
+			srcIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					Transfer: &wasmvmtypes.TransferMsg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Amount: wasmvmtypes.Coin{
+							Denom:  "ALX",
+							Amount: "1",
+						},
+						TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "transfer",
+					SourceChannel: "myChanID",
+					Token: sdk.Coin{
+						Denom:  "ALX",
+						Amount: sdk.NewInt(1),
+					},
+					Sender:        addr1.String(),
+					Receiver:      addr2.String(),
+					TimeoutHeight: clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
+				},
+			},
+		},
+		"IBC transfer with time timeout": {
+			sender:     addr1,
+			srcIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					Transfer: &wasmvmtypes.TransferMsg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Amount: wasmvmtypes.Coin{
+							Denom:  "ALX",
+							Amount: "1",
+						},
+						TimeoutTimestamp: &timeoutVal,
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "transfer",
+					SourceChannel: "myChanID",
+					Token: sdk.Coin{
+						Denom:  "ALX",
+						Amount: sdk.NewInt(1),
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+				},
+			},
+		},
+		"IBC close channel": {
+			sender:     addr1,
+			srcIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					CloseChannel: &wasmvmtypes.CloseChannelMsg{
+						ChannelID: "channel-1",
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&channeltypes.MsgChannelCloseInit{
+					PortId:    "wasm." + addr1.String(),
+					ChannelId: "channel-1",
+					Signer:    addr1.String(),
+				},
+			},
+		},
 	}
-
-	encoder := DefaultEncoders()
+	encoder := DefaultEncoders(nil, nil)
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			res, err := encoder.Encode(tc.sender, tc.input)
+			var ctx sdk.Context
+			res, err := encoder.Encode(ctx, tc.sender, tc.srcIBCPort, tc.srcMsg)
 			if tc.isError {
 				require.Error(t, err)
 			} else {
@@ -287,5 +370,63 @@ func TestEncoding(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestEncodeIBCSendPacket(t *testing.T) {
+	ibcPort := "contractsIBCPort"
+	var ctx sdk.Context
+	specs := map[string]struct {
+		srcMsg        wasmvmtypes.SendPacketMsg
+		expPacketSent channeltypes.Packet
+	}{
+		"all good": {
+			srcMsg: wasmvmtypes.SendPacketMsg{
+				ChannelID:    "channel-1",
+				Data:         []byte("myData"),
+				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+			},
+			expPacketSent: channeltypes.Packet{
+				Sequence:           1,
+				SourcePort:         ibcPort,
+				SourceChannel:      "channel-1",
+				DestinationPort:    "other-port",
+				DestinationChannel: "other-channel-1",
+				Data:               []byte("myData"),
+				TimeoutHeight:      clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var gotPacket ibcexported.PacketI
+
+			var chanKeeper types.ChannelKeeper = &wasmtesting.MockChannelKeeper{
+				GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
+					return 1, true
+				},
+				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
+					return channeltypes.Channel{
+						Counterparty: channeltypes.NewCounterparty(
+							"other-port",
+							"other-channel-1",
+						)}, true
+				},
+				SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
+					gotPacket = packet
+					return nil
+				},
+			}
+			var capKeeper types.CapabilityKeeper = &wasmtesting.MockCapabilityKeeper{
+				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
+					return &capabilitytypes.Capability{}, true
+				},
+			}
+			sender := RandomAccountAddress(t)
+			res, err := EncodeIBCMsg(chanKeeper, capKeeper)(ctx, sender, ibcPort, &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg})
+
+			require.NoError(t, err)
+			assert.Nil(t, res)
+			assert.Equal(t, spec.expPacketSent, gotPacket)
+		})
+	}
 }

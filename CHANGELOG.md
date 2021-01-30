@@ -2,7 +2,16 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...HEAD)
+
+- Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394)
+
+## [v0.15.0](https://github.com/CosmWasm/wasmd/tree/v0.15.0) (2021-01-27)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...v0.15.0)
+
+**Features:**
+- Upgrade to cosmos-sdk v0.41.0 [\#390](https://github.com/CosmWasm/wasmd/pull/390)
 
 ## [v0.14.1](https://github.com/CosmWasm/wasmd/tree/v0.14.1) (2021-01-20)
 

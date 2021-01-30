@@ -71,6 +71,7 @@ message ContractInfo {
     // Created Tx position when the contract was instantiated.
     // This data should kept internal and not be exposed via query results. Just use for sorting
     AbsoluteTxPosition created = 5;
+    string ibc_port_id = 6 [(gogoproto.customname) = "IBCPortID"];
 }
 
 // ContractCodeHistoryOperationType actions that caused a code change

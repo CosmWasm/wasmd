@@ -69,7 +69,7 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 	require.NoError(t, err)
 }
 
-const MaskFeatures = "staking,mask"
+const MaskFeatures = "staking,mask,stargate"
 
 func TestMaskReflectContractSend(t *testing.T) {
 	cdc := MakeTestCodec(t)
@@ -196,8 +196,7 @@ func TestMaskReflectCustomMsg(t *testing.T) {
 	msgs := []wasmvmtypes.CosmosMsg{{
 		Bank: &wasmvmtypes.BankMsg{
 			Send: &wasmvmtypes.SendMsg{
-				FromAddress: contractAddr.String(),
-				ToAddress:   fred.String(),
+				ToAddress: fred.String(),
 				Amount: []wasmvmtypes.Coin{{
 					Denom:  "denom",
 					Amount: "15000",

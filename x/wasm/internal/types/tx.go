@@ -251,3 +251,43 @@ func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{senderAddr}
 
 }
+
+func (msg MsgIBCSend) Route() string {
+	return RouterKey
+}
+
+func (msg MsgIBCSend) Type() string {
+	return "wasm-ibc-send"
+}
+
+func (msg MsgIBCSend) ValidateBasic() error {
+	return nil
+}
+
+func (msg MsgIBCSend) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgIBCSend) GetSigners() []sdk.AccAddress {
+	return nil
+}
+
+func (msg MsgIBCCloseChannel) Route() string {
+	return RouterKey
+}
+
+func (msg MsgIBCCloseChannel) Type() string {
+	return "wasm-ibc-close"
+}
+
+func (msg MsgIBCCloseChannel) ValidateBasic() error {
+	return nil
+}
+
+func (msg MsgIBCCloseChannel) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgIBCCloseChannel) GetSigners() []sdk.AccAddress {
+	return nil
+}

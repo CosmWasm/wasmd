@@ -60,7 +60,7 @@ var (
 	DefaultParams             = types.DefaultParams
 	InitGenesis               = keeper.InitGenesis
 	ExportGenesis             = keeper.ExportGenesis
-	NewMessageHandler         = keeper.NewMessageHandler
+	NewMessageHandler         = keeper.NewDefaultMessageHandler
 	DefaultEncoders           = keeper.DefaultEncoders
 	EncodeBankMsg             = keeper.EncodeBankMsg
 	NoCustomMsg               = keeper.NoCustomMsg
@@ -77,6 +77,8 @@ var (
 	TestHandler               = keeper.TestHandler
 	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
 	NewQuerier                = keeper.NewQuerier
+	ContractFromPortID        = keeper.ContractFromPortID
+	WithWasmEngine            = keeper.WithWasmEngine
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc
@@ -115,6 +117,7 @@ type (
 	MsgUpdateAdmin                 = types.MsgUpdateAdmin
 	MsgUpdateAdminResponse         = types.MsgUpdateAdminResponse
 	MsgClearAdmin                  = types.MsgClearAdmin
+	MsgWasmIBCCall                 = types.MsgIBCSend
 	MsgClearAdminResponse          = types.MsgClearAdminResponse
 	MsgServer                      = types.MsgServer
 	Model                          = types.Model
@@ -124,7 +127,7 @@ type (
 	Config                         = types.WasmConfig
 	ContractInfoWithAddress        = types.ContractInfoWithAddress
 	CodeInfoResponse               = types.CodeInfoResponse
-	MessageHandler                 = keeper.MessageHandler
+	MessageHandler                 = keeper.DefaultMessageHandler
 	BankEncoder                    = keeper.BankEncoder
 	CustomEncoder                  = keeper.CustomEncoder
 	StakingEncoder                 = keeper.StakingEncoder
@@ -134,4 +137,5 @@ type (
 	QueryHandler                   = keeper.QueryHandler
 	CustomQuerier                  = keeper.CustomQuerier
 	QueryPlugins                   = keeper.QueryPlugins
+	Option                         = keeper.Option
 )
