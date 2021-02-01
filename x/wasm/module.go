@@ -3,13 +3,13 @@ package wasm
 import (
 	"context"
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"math/rand"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -95,14 +95,16 @@ func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
 	AppModuleBasic
+	cdc                codec.Marshaler
 	keeper             *Keeper
 	validatorSetSource keeper.ValidatorSetSource
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper *Keeper, validatorSetSource keeper.ValidatorSetSource) AppModule {
+func NewAppModule(cdc codec.Marshaler, keeper *Keeper, validatorSetSource keeper.ValidatorSetSource) AppModule {
 	return AppModule{
 		AppModuleBasic:     AppModuleBasic{},
+		cdc:                cdc,
 		keeper:             keeper,
 		validatorSetSource: validatorSetSource,
 	}
@@ -173,8 +175,8 @@ func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.We
 }
 
 // RandomizedParams creates randomized bank param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
-	return simulation.ParamChanges(r)
+func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+	return simulation.ParamChanges(r, am.cdc)
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types
