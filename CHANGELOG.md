@@ -4,7 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...HEAD)
 
-- Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394)
+- Support custom MessageHandler [\#327](https://github.com/CosmWasm/wasmd/issues/327)
+- 🎉 Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394)
 
 ## [v0.15.0](https://github.com/CosmWasm/wasmd/tree/v0.15.0) (2021-01-27)
 
