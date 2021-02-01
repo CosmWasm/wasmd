@@ -7,12 +7,9 @@ import (
 
 // RandomizeGenState generates a random GenesisState for wasm
 func RandomizedGenState(simstate *module.SimulationState) {
+	params := RandomParams(simstate.Rand)
 	wasmGenesis := types.GenesisState{
-		Params: types.Params{
-			CodeUploadAccess:             RandomizeAccessConfig(simstate.Rand),
-			InstantiateDefaultPermission: RandomizeAccessType(simstate.Rand),
-			MaxWasmCodeSize:              RandomizeMaxWasmCodeSize(simstate.Rand),
-		},
+		Params:    params,
 		Codes:     nil,
 		Contracts: nil,
 		Sequences: nil,
