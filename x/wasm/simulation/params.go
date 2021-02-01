@@ -3,10 +3,12 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
+
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"math/rand"
 )
 
 func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
@@ -14,7 +16,10 @@ func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
 	return []simtypes.ParamChange{
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyUploadAccess),
 			func(r *rand.Rand) string {
-				jsonBz, _ := json.Marshal(&params.CodeUploadAccess)
+				jsonBz, err := cdc.MarshalJSON(&params.CodeUploadAccess)
+				if err != nil {
+					panic(err)
+				}
 				return string(jsonBz)
 			},
 		),
