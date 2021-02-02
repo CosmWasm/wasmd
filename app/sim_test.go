@@ -189,3 +189,42 @@ func TestAppImportExport(t *testing.T) {
 		require.Len(t, failedKVAs, 0, GetSimulationLog(skp.A.Name(), app.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
 }
+
+func TestFullAppSimulation(t *testing.T) {
+	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if skip {
+		t.Skip("skipping application simulation")
+	}
+	require.NoError(t, err, "simulation setup failed")
+
+	defer func() {
+		db.Close()
+		require.NoError(t, os.RemoveAll(dir))
+	}()
+
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue,
+		wasm.EnableAllProposals, simapp.EmptyAppOptions{}, nil, fauxMerkleModeOpt)
+	require.Equal(t, "WasmApp", app.Name())
+
+	// run randomized simulation
+	_, simParams, simErr := simulation.SimulateFromSeed(
+		t,
+		os.Stdout,
+		app.BaseApp,
+		simapp.AppStateFn(app.appCodec, app.SimulationManager()),
+		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
+		simapp.SimulationOperations(app, app.AppCodec(), config),
+		app.ModuleAccountAddrs(),
+		config,
+		app.AppCodec(),
+	)
+
+	// export state and simParams before the simulation error is checked
+	err = simapp.CheckExportSimulation(app, config, simParams)
+	require.NoError(t, err)
+	require.NoError(t, simErr)
+
+	if config.Commit {
+		simapp.PrintStats(db)
+	}
+}
