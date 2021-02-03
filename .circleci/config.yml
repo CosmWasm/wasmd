@@ -45,7 +45,7 @@ jobs:
           command: make go-mod-cache
       - run:
           name: Build
-          command: make install
+          command: make build
       - run:
           name: "Git garbage collection"
           command: git gc
@@ -59,10 +59,6 @@ jobs:
           key: go-src-v1-{{ .Revision }}
           paths:
             - ".git"
-      - persist_to_workspace:
-          root: /go/bin
-          paths:
-            - "wasmd"
 
   test-cover:
     executor: golang
@@ -148,34 +144,6 @@ jobs:
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
 
-  install-relayer:
-    executor: golang
-    environment:
-      RELAYER_VERSION: master
-      RELAYER_REPO: github.com/cosmos/relayer
-      GO111MODULE: "on"
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          name: Install relayer
-          command: go get $RELAYER_REPO@$RELAYER_VERSION
-      - persist_to_workspace:
-          root: /go/bin
-          paths:
-            - "rly"
-
-  test-relayer-it:
-    executor: golang
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /go/bin
-      - run:
-          name: Run relayer integration tests
-          command: |
-            - make test-relayer-integration
-
 workflows:
   version: 2
   test-suite:
@@ -207,14 +175,6 @@ workflows:
       - test-cover:
           requires:
             - setup-dependencies
-      - install-relayer:
-          requires:
-            - test-cover
-            - setup-dependencies
-      - test-relayer-it:
-          requires:
-            - setup-dependencies
-            - install-relayer
       - upload-coverage:
           requires:
             - test-cover
