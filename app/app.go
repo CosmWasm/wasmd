@@ -659,7 +659,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 }
 
 func (app *WasmApp) registerUpgradePlans() {
-	app.upgradeKeeper.SetUpgradeHandler("v0.15.1", func(ctx sdk.Context, plan upgradetypes.Plan) {
+	app.upgradeKeeper.SetUpgradeHandler("musselnet-3", func(ctx sdk.Context, plan upgradetypes.Plan) {
 		// do nothing
 	})
 }
