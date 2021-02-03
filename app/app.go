@@ -309,6 +309,9 @@ func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	)
 	app.upgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights, keys[upgradetypes.StoreKey], appCodec, homePath)
 
+	// register upgrade plans
+	app.registerUpgradePlans()
+
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.stakingKeeper = *stakingKeeper.SetHooks(
@@ -653,4 +656,10 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
+}
+
+func (app *WasmApp) registerUpgradePlans() {
+	app.upgradeKeeper.SetUpgradeHandler("v0.15.1", func(ctx sdk.Context, plan upgradetypes.Plan) {
+		// do nothing
+	})
 }
