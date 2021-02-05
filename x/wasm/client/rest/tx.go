@@ -19,9 +19,6 @@ func registerTxRoutes(cliCtx client.Context, r *mux.Router) {
 	r.HandleFunc("/wasm/contract/{contractAddr}", executeContractHandlerFn(cliCtx)).Methods("POST")
 }
 
-// limit max bytes read to prevent gzip bombs
-const maxSize = 400 * 1024
-
 type storeCodeReq struct {
 	BaseReq   rest.BaseReq `json:"base_req" yaml:"base_req"`
 	WasmBytes []byte       `json:"wasm_bytes"`
@@ -55,10 +52,6 @@ func storeCodeHandlerFn(cliCtx client.Context) http.HandlerFunc {
 
 		var err error
 		wasm := req.WasmBytes
-		if len(wasm) > maxSize {
-			rest.WriteErrorResponse(w, http.StatusBadRequest, "Binary size exceeds maximum limit")
-			return
-		}
 
 		// gzip the wasm file
 		if wasmUtils.IsWasm(wasm) {
