@@ -173,7 +173,6 @@ test-race:
 test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
 
-
 benchmark:
 	@go test -mod=readonly -bench=. ./...
 
