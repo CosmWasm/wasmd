@@ -7,6 +7,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/libs/rand"
 )
 
 var _ types.WasmerEngine = &MockWasmer{}
@@ -274,6 +275,10 @@ func HashOnlyCreateFn(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
 
 func NoOpInstantiateFn(wasmvm.Checksum, wasmvmtypes.Env, wasmvmtypes.MessageInfo, []byte, wasmvm.KVStore, wasmvm.GoAPI, wasmvm.Querier, wasmvm.GasMeter, uint64) (*wasmvmtypes.InitResponse, uint64, error) {
 	return &wasmvmtypes.InitResponse{}, 0, nil
+}
+
+func NoOpCreateFn(_ wasmvm.WasmCode) (wasmvm.Checksum, error) {
+	return rand.Bytes(32), nil
 }
 
 func HasIBCAnalyzeFn(wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {

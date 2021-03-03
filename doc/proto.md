@@ -756,6 +756,7 @@ MsgInstantiateContractResponse return instantiation result data
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | address | [string](#string) |  | Address is the bech32 address of the new contract instance. |
+| data | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
 
 
 

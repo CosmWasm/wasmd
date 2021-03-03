@@ -353,7 +353,7 @@ func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateCont
 		}
 	}
 
-	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.Funds)
+	contractAddr, _, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.Funds)
 	if err != nil {
 		return nil, err
 	}
@@ -442,6 +442,19 @@ type ExampleContractInstance struct {
 
 // SeedNewContractInstance sets the mock wasmerEngine in keeper and calls store + instantiate to init the contract's metadata
 func SeedNewContractInstance(t *testing.T, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
+	t.Helper()
+	exampleContract := StoreRandomContract(t, ctx, keepers, mock)
+	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
+	require.NoError(t, err)
+	return ExampleContractInstance{
+		ExampleContract: exampleContract,
+		Contract:        contractAddr,
+	}
+}
+
+// StoreRandomContract sets the mock wasmerEngine in keeper and calls store
+func StoreRandomContract(t *testing.T, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+	t.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
@@ -449,12 +462,8 @@ func SeedNewContractInstance(t *testing.T, ctx sdk.Context, keepers TestKeepers,
 	wasmCode := append(wasmIdent, rand.Bytes(10)...)
 	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, codeID, creatorAddr, creatorAddr, []byte(`{}`), "", nil)
-	require.NoError(t, err)
-	return ExampleContractInstance{
-		ExampleContract: ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID},
-		Contract:        contractAddr,
-	}
+	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
+	return exampleContract
 }
 
 type HackatomExampleInstance struct {
@@ -481,7 +490,7 @@ func InstantiateHackatomExampleContract(t *testing.T, ctx sdk.Context, keepers T
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 
 	adminAddr := contract.CreatorAddr
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, "demo contract to query", initialAmount)
+	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, "demo contract to query", initialAmount)
 	require.NoError(t, err)
 	return HackatomExampleInstance{
 		ExampleContract: contract,
@@ -521,7 +530,7 @@ func InstantiateIBCReflectContract(t *testing.T, ctx sdk.Context, keepers TestKe
 	}.GetBytes(t)
 	adminAddr := RandomAccountAddress(t)
 
-	contractAddr, err := keepers.WasmKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
+	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
 	require.NoError(t, err)
 	return IBCReflectExampleInstance{
 		Admin:         adminAddr,
