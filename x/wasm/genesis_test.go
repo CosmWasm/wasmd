@@ -41,20 +41,20 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:    creator.String(),
-		CodeID:    firstCodeID,
-		InitMsg:   initMsgBz,
-		InitFunds: deposit,
+		Sender:  creator.String(),
+		CodeID:  firstCodeID,
+		InitMsg: initMsgBz,
+		Funds:   deposit,
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
 	execCmd := MsgExecuteContract{
-		Sender:    fred.String(),
-		Contract:  contractBech32Addr,
-		Msg:       []byte(`{"release":{}}`),
-		SentFunds: topUp,
+		Sender:   fred.String(),
+		Contract: contractBech32Addr,
+		Msg:      []byte(`{"release":{}}`),
+		Funds:    topUp,
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)

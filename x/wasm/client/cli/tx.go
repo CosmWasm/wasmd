@@ -198,12 +198,12 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 
 	// build and sign the transaction, then broadcast to Tendermint
 	msg := types.MsgInstantiateContract{
-		Sender:    sender.String(),
-		CodeID:    codeID,
-		Label:     label,
-		InitFunds: amount,
-		InitMsg:   []byte(initMsg),
-		Admin:     adminStr,
+		Sender:  sender.String(),
+		CodeID:  codeID,
+		Label:   label,
+		Funds:   amount,
+		InitMsg: []byte(initMsg),
+		Admin:   adminStr,
 	}
 	return msg, nil
 }
@@ -245,9 +245,9 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 	}
 
 	return types.MsgExecuteContract{
-		Sender:    sender.String(),
-		Contract:  contractAddr,
-		SentFunds: amount,
-		Msg:       []byte(execMsg),
+		Sender:   sender.String(),
+		Contract: contractAddr,
+		Funds:    amount,
+		Msg:      []byte(execMsg),
 	}, nil
 }

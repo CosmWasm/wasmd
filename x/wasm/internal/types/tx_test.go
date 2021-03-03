@@ -189,11 +189,11 @@ func TestInstantiateContractValidation(t *testing.T) {
 		},
 		"correct maximal": {
 			msg: MsgInstantiateContract{
-				Sender:    goodAddress,
-				CodeID:    firstCodeID,
-				Label:     "foo",
-				InitMsg:   []byte(`{"some": "data"}`),
-				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Sender:  goodAddress,
+				CodeID:  firstCodeID,
+				Label:   "foo",
+				InitMsg: []byte(`{"some": "data"}`),
+				Funds:   sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -204,7 +204,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 				Label:   "foo",
 				InitMsg: []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				InitFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
 			},
 			valid: false,
 		},
@@ -264,10 +264,10 @@ func TestExecuteContractValidation(t *testing.T) {
 		},
 		"correct all": {
 			msg: MsgExecuteContract{
-				Sender:    goodAddress,
-				Contract:  goodAddress,
-				Msg:       []byte(`{"some": "data"}`),
-				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Sender:   goodAddress,
+				Contract: goodAddress,
+				Msg:      []byte(`{"some": "data"}`),
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -303,19 +303,19 @@ func TestExecuteContractValidation(t *testing.T) {
 		},
 		"negative funds": {
 			msg: MsgExecuteContract{
-				Sender:    goodAddress,
-				Contract:  goodAddress,
-				Msg:       []byte(`{"some": "data"}`),
-				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-1)}},
+				Sender:   goodAddress,
+				Contract: goodAddress,
+				Msg:      []byte(`{"some": "data"}`),
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-1)}},
 			},
 			valid: false,
 		},
 		"duplicate funds": {
 			msg: MsgExecuteContract{
-				Sender:    goodAddress,
-				Contract:  goodAddress,
-				Msg:       []byte(`{"some": "data"}`),
-				SentFunds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
+				Sender:   goodAddress,
+				Contract: goodAddress,
+				Msg:      []byte(`{"some": "data"}`),
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
 			},
 			valid: false,
 		},

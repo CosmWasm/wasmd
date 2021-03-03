@@ -549,7 +549,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 							Verifier:    verifierAddress,
 							Beneficiary: beneficiaryAddress,
 						}.GetBytes(t),
-						InitFunds: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+						Funds: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
 					},
 				},
 			},

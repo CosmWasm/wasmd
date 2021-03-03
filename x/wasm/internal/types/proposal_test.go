@@ -202,7 +202,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"without init funds": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitFunds = nil
+				p.Funds = nil
 			}),
 		},
 		"base data missing": {
@@ -243,13 +243,13 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"init funds negative": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitFunds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
 			}),
 			expErr: true,
 		},
 		"init funds with duplicates": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitFunds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
 			}),
 			expErr: true,
 		},
@@ -450,7 +450,7 @@ func TestProposalStrings(t *testing.T) {
 		},
 		"instantiate contract": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitFunds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
 			}),
 			exp: `Instantiate Code Proposal:
   Title:       Foo
@@ -460,11 +460,11 @@ func TestProposalStrings(t *testing.T) {
   Code id:     1
   Label:       testing
   InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
-  InitFunds:   1foo,2bar
+  Funds:       1foo,2bar
 `,
 		},
 		"instantiate contract without funds": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.InitFunds = nil }),
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Funds = nil }),
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
@@ -473,7 +473,7 @@ func TestProposalStrings(t *testing.T) {
   Code id:     1
   Label:       testing
   InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
-  InitFunds:   
+  Funds:       
 `,
 		},
 		"instantiate contract without admin": {
@@ -486,7 +486,7 @@ func TestProposalStrings(t *testing.T) {
   Code id:     1
   Label:       testing
   InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
-  InitFunds:   
+  Funds:       
 `,
 		},
 		"migrate contract": {
@@ -545,7 +545,7 @@ instantiate_permission: null
 		},
 		"instantiate contract": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitFunds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
 			}),
 			exp: `title: Foo
 description: Bar
@@ -554,7 +554,7 @@ admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
 init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
-init_funds:
+funds:
 - denom: foo
   amount: "1"
 - denom: bar
@@ -562,7 +562,7 @@ init_funds:
 `,
 		},
 		"instantiate contract without funds": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.InitFunds = nil }),
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Funds = nil }),
 			exp: `title: Foo
 description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
@@ -570,7 +570,7 @@ admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
 init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
-init_funds: []
+funds: []
 `,
 		},
 		"instantiate contract without admin": {
@@ -582,7 +582,7 @@ admin: ""
 code_id: 1
 label: testing
 init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
-init_funds: []
+funds: []
 `,
 		},
 		"migrate contract": {

@@ -101,12 +101,12 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := types.MsgInstantiateContract{
-			Sender:    req.BaseReq.From,
-			CodeID:    codeID,
-			Label:     req.Label,
-			InitFunds: req.Deposit,
-			InitMsg:   req.InitMsg,
-			Admin:     req.Admin,
+			Sender:  req.BaseReq.From,
+			CodeID:  codeID,
+			Label:   req.Label,
+			Funds:   req.Deposit,
+			InitMsg: req.InitMsg,
+			Admin:   req.Admin,
 		}
 
 		if err := msg.ValidateBasic(); err != nil {
@@ -133,10 +133,10 @@ func executeContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := types.MsgExecuteContract{
-			Sender:    req.BaseReq.From,
-			Contract:  contractAddr,
-			Msg:       req.ExecMsg,
-			SentFunds: req.Amount,
+			Sender:   req.BaseReq.From,
+			Contract: contractAddr,
+			Msg:      req.ExecMsg,
+			Funds:    req.Amount,
 		}
 
 		if err := msg.ValidateBasic(); err != nil {

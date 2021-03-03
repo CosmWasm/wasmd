@@ -353,7 +353,7 @@ func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateCont
 		}
 	}
 
-	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.InitFunds)
+	contractAddr, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.InitMsg, msg.Label, msg.Funds)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "admin")
 	}
-	res, err := k.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.SentFunds)
+	res, err := k.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
 	if err != nil {
 		return nil, err
 	}
