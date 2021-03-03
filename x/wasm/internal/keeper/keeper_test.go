@@ -1026,7 +1026,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 }
 
 type sudoMsg struct {
-	StealFunds stealFundsMsg `json:"StealFunds"`
+	StealFunds stealFundsMsg `json:"steal_funds"`
 }
 
 type stealFundsMsg struct {
