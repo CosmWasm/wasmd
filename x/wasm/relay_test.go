@@ -315,7 +315,7 @@ type sendViaIBCTransferContract struct {
 	t *testing.T
 }
 
-func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error) {
+func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
 	var in startTransfer
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
@@ -332,7 +332,7 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 		},
 	}
 
-	return &wasmvmtypes.HandleResponse{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
 }
 
 var _ wasmtesting.IBCContractCallbacks = &sendEmulatedIBCTransferContract{}
@@ -345,7 +345,7 @@ type sendEmulatedIBCTransferContract struct {
 	contractAddr string
 }
 
-func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error) {
+func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
 	var in startTransfer
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
@@ -365,7 +365,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 			TimeoutTimestamp: &in.Timeout,
 		},
 	}
-	return &wasmvmtypes.HandleResponse{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
 }
 
 func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {

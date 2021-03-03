@@ -199,8 +199,8 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 // NewInfo initializes the MessageInfo for a contract instance
 func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmvmtypes.MessageInfo {
 	return wasmvmtypes.MessageInfo{
-		Sender:    creator.String(),
-		SentFunds: NewWasmCoins(deposit),
+		Sender: creator.String(),
+		Funds:  NewWasmCoins(deposit),
 	}
 }
 

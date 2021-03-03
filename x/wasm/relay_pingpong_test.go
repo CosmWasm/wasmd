@@ -145,10 +145,10 @@ type player struct {
 
 // Execute starts the ping pong game
 // Contracts finds all connected channels and broadcasts a ping message
-func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.HandleResponse, uint64, error) {
+func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
 	p.execCalls++
 	if p.execCalls%2 == 1 { // skip checkTx step because of no rollback with `chain.GetContext()`
-		return &wasmvmtypes.HandleResponse{}, 0, nil
+		return &wasmvmtypes.Response{}, 0, nil
 	}
 	// start game
 	var start startGame
@@ -164,7 +164,7 @@ func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmt
 
 	p.incrementCounter(sentBallsCountKey, store)
 	store.Set(lastBallSentKey, sdk.Uint64ToBigEndian(start.Value))
-	return &wasmvmtypes.HandleResponse{
+	return &wasmvmtypes.Response{
 		Messages: []wasmvmtypes.CosmosMsg{
 			{
 				IBC: &wasmvmtypes.IBCMsg{
