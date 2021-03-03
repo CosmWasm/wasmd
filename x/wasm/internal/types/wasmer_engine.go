@@ -91,6 +91,22 @@ type WasmerEngine interface {
 		gasLimit uint64,
 	) (*wasmvmtypes.Response, uint64, error)
 
+	// Sudo runs an existing contract in read/write mode (like Execute), but is never exposed to external callers
+	// (either transactions or government proposals), but can only be called by other native Go modules directly.
+	//
+	// This allows a contract to expose custom "super user" functions or priviledged operations that can be
+	// deeply integrated with native modules.
+	Sudo(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		sudoMsg []byte,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.Response, uint64, error)
+
 	// GetCode will load the original wasm code for the given code id.
 	// This will only succeed if that code id was previously returned from
 	// a call to Create.

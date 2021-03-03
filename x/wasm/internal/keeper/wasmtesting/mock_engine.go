@@ -21,6 +21,7 @@ type MockWasmer struct {
 	ExecuteFn           func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error)
 	QueryFn             func(codeID wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) ([]byte, uint64, error)
 	MigrateFn           func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error)
+	SudoFn              func(codeID wasmvm.Checksum, env wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error)
 	GetCodeFn           func(codeID wasmvm.Checksum) (wasmvm.WasmCode, error)
 	CleanupFn           func()
 	IBCChannelOpenFn    func(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (uint64, error)
@@ -113,6 +114,14 @@ func (m *MockWasmer) Migrate(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrat
 		panic("not supposed to be called!")
 	}
 	return m.MigrateFn(codeID, env, migrateMsg, store, goapi, querier, gasMeter, gasLimit)
+}
+
+func (m *MockWasmer) Sudo(codeID wasmvm.Checksum, env wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
+	if m.SudoFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.SudoFn(codeID, env, sudoMsg, store, goapi, querier, gasMeter, gasLimit)
+
 }
 
 func (m *MockWasmer) GetCode(codeID wasmvm.Checksum) (wasmvm.WasmCode, error) {
