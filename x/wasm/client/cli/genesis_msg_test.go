@@ -216,7 +216,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 			},
 			expError: true,
 		},
-		"succeeds with unknown account when no init_funds": {
+		"succeeds with unknown account when no funds": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
 				Codes: []types.Code{
@@ -411,7 +411,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			expError: true,
 		},
-		"succeeds with unknown account when no sent_funds": {
+		"succeeds with unknown account when no funds": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
 				Codes: []types.Code{

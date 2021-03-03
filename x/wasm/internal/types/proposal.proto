@@ -44,8 +44,8 @@ message InstantiateContractProposal {
     string label = 6;
     // InitMsg json encoded message to be passed to the contract on instantiation
     bytes init_msg = 7 [(gogoproto.casttype) = "encoding/json.RawMessage"];
-    // InitFunds coins that are transferred to the contract on instantiation
-    repeated cosmos.base.v1beta1.Coin init_funds = 8 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+    // Funds coins that are transferred to the contract on instantiation
+    repeated cosmos.base.v1beta1.Coin funds = 8 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
 }
 
 // MigrateContractProposal gov proposal content type to migrate a contract.

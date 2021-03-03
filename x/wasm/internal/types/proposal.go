@@ -167,7 +167,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return err
 	}
 
-	if !p.InitFunds.IsValid() {
+	if !p.Funds.IsValid() {
 		return sdkerrors.ErrInvalidCoins
 	}
 
@@ -190,8 +190,8 @@ func (p InstantiateContractProposal) String() string {
   Code id:     %d
   Label:       %s
   InitMsg:     %q
-  InitFunds:   %s
-`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.InitMsg, p.InitFunds)
+  Funds:       %s
+`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.InitMsg, p.Funds)
 }
 
 // MarshalYAML pretty prints the init message
@@ -204,7 +204,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		CodeID      uint64    `yaml:"code_id"`
 		Label       string    `yaml:"label"`
 		InitMsg     string    `yaml:"init_msg"`
-		InitFunds   sdk.Coins `yaml:"init_funds"`
+		Funds       sdk.Coins `yaml:"funds"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
@@ -213,7 +213,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		CodeID:      p.CodeID,
 		Label:       p.Label,
 		InitMsg:     string(p.InitMsg),
-		InitFunds:   p.InitFunds,
+		Funds:       p.Funds,
 	}, nil
 }
 

@@ -159,7 +159,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"code_id":     "1",
 				"label":       "https://example.com/",
 				"init_msg":    "my/builder:tag",
-				"init_funds":  []dict{{"denom": "ustake", "amount": "100"}},
+				"funds":       []dict{{"denom": "ustake", "amount": "100"}},
 				"deposit":     []dict{{"denom": "ustake", "amount": "10"}},
 				"proposer":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
 				"base_req":    aBaseReq,

@@ -130,10 +130,10 @@ func TestEncoding(t *testing.T) {
 			},
 			output: []sdk.Msg{
 				&types.MsgExecuteContract{
-					Sender:    addr1.String(),
-					Contract:  addr2.String(),
-					Msg:       jsonMsg,
-					SentFunds: sdk.NewCoins(sdk.NewInt64Coin("eth", 12)),
+					Sender:   addr1.String(),
+					Contract: addr2.String(),
+					Msg:      jsonMsg,
+					Funds:    sdk.NewCoins(sdk.NewInt64Coin("eth", 12)),
 				},
 			},
 		},
@@ -155,9 +155,9 @@ func TestEncoding(t *testing.T) {
 					Sender: addr1.String(),
 					CodeID: 7,
 					// TODO: fix this
-					Label:     fmt.Sprintf("Auto-created by %s", addr1),
-					InitMsg:   jsonMsg,
-					InitFunds: sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
+					Label:   fmt.Sprintf("Auto-created by %s", addr1),
+					InitMsg: jsonMsg,
+					Funds:   sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
 				},
 			},
 		},

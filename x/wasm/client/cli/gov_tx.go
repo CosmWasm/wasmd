@@ -138,7 +138,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				CodeID:      src.CodeID,
 				Label:       src.Label,
 				InitMsg:     src.InitMsg,
-				InitFunds:   src.InitFunds,
+				Funds:       src.Funds,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())

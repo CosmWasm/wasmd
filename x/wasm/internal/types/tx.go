@@ -75,7 +75,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 
 	}
 
-	if !msg.InitFunds.IsValid() {
+	if !msg.Funds.IsValid() {
 		return sdkerrors.ErrInvalidCoins
 	}
 
@@ -120,7 +120,7 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "contract")
 	}
 
-	if !msg.SentFunds.IsValid() {
+	if !msg.Funds.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
 	}
 	if !json.Valid(msg.Msg) {
