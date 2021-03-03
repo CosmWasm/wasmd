@@ -63,6 +63,8 @@ message MsgInstantiateContract {
 message MsgInstantiateContractResponse {
   // Address is the bech32 address of the new contract instance.
   string address = 1;
+  // Data contains base64-encoded bytes to returned from the contract
+  bytes data = 3;
 }
 
 // MsgExecuteContract submits the given message data to a smart contract
