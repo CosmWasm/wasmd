@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
@@ -147,15 +146,15 @@ func TestEncoding(t *testing.T) {
 						Send: []wasmvmtypes.Coin{
 							wasmvmtypes.NewCoin(123, "eth"),
 						},
+						Label: "myLabel",
 					},
 				},
 			},
 			output: []sdk.Msg{
 				&types.MsgInstantiateContract{
-					Sender: addr1.String(),
-					CodeID: 7,
-					// TODO: fix this
-					Label:   fmt.Sprintf("Auto-created by %s", addr1),
+					Sender:  addr1.String(),
+					CodeID:  7,
+					Label:   "myLabel",
 					InitMsg: jsonMsg,
 					Funds:   sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
 				},
