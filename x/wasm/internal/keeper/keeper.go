@@ -443,7 +443,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 // Sudo allows priviledged access to a contract. This can never be called by governance or external tx, but only by
 // another native Go module directly. Thus, the keeper doesn't place any access controls on it, that is the
 // responsibility or the app developer (who passes the wasm.Keeper in app.go)
-func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) (*sdk.Result, error) {
+func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) (*sdk.Result, error) {
 	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: sudo")
 
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
