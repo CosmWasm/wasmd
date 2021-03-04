@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -20,8 +22,8 @@ type DefaultMessageHandler struct {
 	encoders MessageEncoders
 }
 
-func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, customEncoders *MessageEncoders) DefaultMessageHandler {
-	encoders := DefaultEncoders(channelKeeper, capabilityKeeper).Merge(customEncoders)
+func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, customEncoders *MessageEncoders) DefaultMessageHandler {
+	encoders := DefaultEncoders(channelKeeper, capabilityKeeper, unpacker).Merge(customEncoders)
 	return DefaultMessageHandler{
 		router:   router,
 		encoders: encoders,
@@ -44,13 +46,13 @@ type MessageEncoders struct {
 	Wasm     WasmEncoder
 }
 
-func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) MessageEncoders {
+func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker) MessageEncoders {
 	return MessageEncoders{
 		Bank:     EncodeBankMsg,
 		Custom:   NoCustomMsg,
 		IBC:      EncodeIBCMsg(channelKeeper, capabilityKeeper),
 		Staking:  EncodeStakingMsg,
-		Stargate: EncodeStargateMsg,
+		Stargate: EncodeStargateMsg(unpacker),
 		Wasm:     EncodeWasmMsg,
 	}
 }
@@ -178,11 +180,18 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 	}
 }
 
-func EncodeStargateMsg(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error) {
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "StargateMsg not yet supported")
-	//url := msg.TypeURL
-	// TODO: parse the value
-	//return []sdk.Msg{&sdkMsg}, nil
+func EncodeStargateMsg(unpacker codectypes.AnyUnpacker) StargateEncoder {
+	return func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error) {
+		any := codectypes.Any{
+			TypeUrl: msg.TypeURL,
+			Value:   msg.Value,
+		}
+		var sdkMsg sdk.Msg
+		if err := unpacker.UnpackAny(&any, &sdkMsg); err != nil {
+			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
+		}
+		return []sdk.Msg{sdkMsg}, nil
+	}
 }
 
 func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error) {
