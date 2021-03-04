@@ -288,6 +288,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		// TODO: alpe? can you add an example with sub-interfaces (where the UnpackInterfaces call would be needed)
 		"stargate encoded bank msg": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
