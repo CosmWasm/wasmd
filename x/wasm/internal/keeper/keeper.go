@@ -106,7 +106,6 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
-	messageEncoders := DefaultEncoders(channelKeeper, capabilityKeeper, cdc).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
@@ -116,7 +115,7 @@ func NewKeeper(
 		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, &messageEncoders),
+		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, customEncoders),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		authZPolicy:      DefaultAuthorizationPolicy{},
 		paramSpace:       paramSpace,
