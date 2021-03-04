@@ -18,6 +18,15 @@ import (
 type QueryHandler struct {
 	Ctx     sdk.Context
 	Plugins QueryPlugins
+	Caller  sdk.AccAddress
+}
+
+func NewQueryHandler(ctx sdk.Context, plugins QueryPlugins, caller sdk.AccAddress) QueryHandler {
+	return QueryHandler{
+		Ctx:     ctx,
+		Plugins: plugins,
+		Caller:  caller,
+	}
 }
 
 // -- interfaces from baseapp - so we can use the GPRQueryRouter --
@@ -51,6 +60,9 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	if request.Custom != nil {
 		return q.Plugins.Custom(subctx, request.Custom)
 	}
+	if request.IBC != nil {
+		return q.Plugins.IBC(subctx, q.Caller, request.IBC)
+	}
 	if request.Staking != nil {
 		return q.Plugins.Staking(subctx, request.Staking)
 	}
@@ -72,6 +84,7 @@ type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error
 type QueryPlugins struct {
 	Bank     func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
 	Custom   CustomQuerier
+	IBC      func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error)
 	Staking  func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
 	Stargate func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
 	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
@@ -81,6 +94,7 @@ func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keepe
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
+		IBC:      IBCQuerier(wasm),
 		Staking:  StakingQuerier(staking, distKeeper),
 		Stargate: StargateQuerier(queryRouter),
 		Wasm:     WasmQuerier(wasm),
@@ -97,6 +111,9 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	}
 	if o.Custom != nil {
 		e.Custom = o.Custom
+	}
+	if o.IBC != nil {
+		e.IBC = o.IBC
 	}
 	if o.Staking != nil {
 		e.Staking = o.Staking
@@ -144,6 +161,53 @@ func BankQuerier(bankKeeper bankkeeper.ViewKeeper) func(ctx sdk.Context, request
 
 func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+}
+
+func IBCQuerier(wasm *Keeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
+	return func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
+		if request.PortID != nil {
+			contractInfo := wasm.GetContractInfo(ctx, caller)
+			res := wasmvmtypes.PortIDResponse{
+				PortID: contractInfo.IBCPortID,
+			}
+			return json.Marshal(res)
+		}
+		if request.ListChannels != nil {
+			portID := request.ListChannels.PortID
+			if portID == "" {
+				contractInfo := wasm.GetContractInfo(ctx, caller)
+				portID = contractInfo.IBCPortID
+			}
+			// TODO: query the channels for this port
+			res := wasmvmtypes.ListChannelsResponse{
+				Channels: wasmvmtypes.IBCEndpoints{},
+			}
+			return json.Marshal(res)
+		}
+		if request.Channel != nil {
+			channelID := request.Channel.ChannelID
+			_ = channelID
+			portID := request.Channel.PortID
+			if portID == "" {
+				contractInfo := wasm.GetContractInfo(ctx, caller)
+				portID = contractInfo.IBCPortID
+			}
+			// TODO: query the (port, channel) info
+			channel := &wasmvmtypes.IBCChannel{
+				Endpoint:             wasmvmtypes.IBCEndpoint{},
+				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{},
+				Order:                "",
+				Version:              "",
+				CounterpartyVersion:  "",
+				ConnectionID:         "",
+			}
+			res := wasmvmtypes.ChannelResponse{
+				Channel: channel,
+			}
+			return json.Marshal(res)
+		}
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown IBCQuery variant"}
+	}
 }
 
 func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
