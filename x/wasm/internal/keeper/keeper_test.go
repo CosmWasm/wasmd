@@ -1025,6 +1025,77 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	assert.Equal(t, deposit, balance)
 }
 
+type sudoMsg struct {
+	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
+	// Here we show that some priviledged Go module can make a call that should never be exposed
+	// to end users (via Tx/Execute).
+	//
+	// The contract developer can choose to expose anything to sudo. This functionality is not a true
+	// backdoor (it can never be called by end users), but allows the developers of the native blockchain
+	// code to make special calls. This can also be used as an authentication mechanism, if you want to expose
+	// some callback that only can be triggered by some system module and not faked by external users.
+	StealFunds stealFundsMsg `json:"steal_funds"`
+}
+
+type stealFundsMsg struct {
+	Recipient string            `json:"recipient"`
+	Amount    wasmvmtypes.Coins `json:"amount"`
+}
+
+func TestSudo(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+	contractID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	_, _, fred := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	addr, _, err := keeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
+	require.NoError(t, err)
+	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+
+	// the community is broke
+	_, _, community := keyPubAddr()
+	comAcct := accKeeper.GetAccount(ctx, community)
+	require.Nil(t, comAcct)
+
+	// now the community wants to get paid via sudo
+	msg := sudoMsg{
+		// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
+		// Here we show that some priviledged Go module can make a call that should never be exposed
+		// to end users (via Tx/Execute).
+		StealFunds: stealFundsMsg{
+			Recipient: community.String(),
+			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(76543, "denom")},
+		},
+	}
+	sudoMsg, err := json.Marshal(msg)
+	require.NoError(t, err)
+
+	res, err := keeper.Sudo(ctx, addr, sudoMsg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	// ensure community now exists and got paid
+	comAcct = accKeeper.GetAccount(ctx, community)
+	require.NotNil(t, comAcct)
+	balance := bankKeeper.GetBalance(ctx, comAcct.GetAddress(), "denom")
+	assert.Equal(t, sdk.NewInt64Coin("denom", 76543), balance)
+}
+
 func prettyEvents(t *testing.T, events sdk.Events) string {
 	t.Helper()
 	type prettyEvent struct {

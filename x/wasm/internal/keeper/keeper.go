@@ -440,6 +440,45 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}, nil
 }
 
+// Sudo allows priviledged access to a contract. This can never be called by governance or external tx, but only by
+// another native Go module directly. Thus, the keeper doesn't place any access controls on it, that is the
+// responsibility or the app developer (who passes the wasm.Keeper in app.go)
+func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) (*sdk.Result, error) {
+	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: sudo")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	env := types.NewEnv(ctx, contractAddress)
+
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+	gas := gasForContract(ctx)
+	res, gasUsed, execErr := k.wasmer.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Attributes, contractAddress)
+	ctx.EventManager().EmitEvents(events)
+
+	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "dispatch")
+	}
+
+	return &sdk.Result{
+		Data: res.Data,
+	}, nil
+}
+
 func (k Keeper) deleteContractSecondIndex(ctx sdk.Context, contractAddress sdk.AccAddress, contractInfo *types.ContractInfo) {
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, contractInfo))
 }

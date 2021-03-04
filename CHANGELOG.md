@@ -4,6 +4,8 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...HEAD)
 
+- Upgrade to CosmWasm v0.14.0 [\#432](https://github.com/CosmWasm/wasmd/pull/432)
+- Expose Sudo contract entry point on Keeper [\#433](https://github.com/CosmWasm/wasmd/pull/433)
 - Support custom MessageHandler [\#327](https://github.com/CosmWasm/wasmd/issues/327)
 - 🎉 Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394)
 
