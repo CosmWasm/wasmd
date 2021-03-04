@@ -40,7 +40,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*wasmvmtypes.InitResponse, uint64, error)
+	) (*wasmvmtypes.Response, uint64, error)
 
 	// Execute calls a given contract. Since the only difference between contracts with the same CodeID is the
 	// data in their local storage, and their address in the outside world, we need no ContractID here.
@@ -58,7 +58,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*wasmvmtypes.HandleResponse, uint64, error)
+	) (*wasmvmtypes.Response, uint64, error)
 
 	// Query allows a client to execute a contract-specific query. If the result is not empty, it should be
 	// valid json-encoded data to return to the client.
@@ -89,7 +89,7 @@ type WasmerEngine interface {
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-	) (*wasmvmtypes.MigrateResponse, uint64, error)
+	) (*wasmvmtypes.Response, uint64, error)
 
 	// GetCode will load the original wasm code for the given code id.
 	// This will only succeed if that code id was previously returned from

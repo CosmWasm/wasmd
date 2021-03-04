@@ -45,7 +45,7 @@ func TestConstructorOptions(t *testing.T) {
 				nil,
 				"tempDir",
 				types.DefaultWasmConfig(),
-				"",
+				SupportedFeatures,
 				nil,
 				nil,
 				spec.srcOpt,
