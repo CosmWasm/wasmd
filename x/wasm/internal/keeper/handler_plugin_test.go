@@ -8,6 +8,7 @@ import (
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
+	"github.com/golang/protobuf/proto"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -31,6 +32,17 @@ func TestEncoding(t *testing.T) {
 	var timeoutVal uint64 = 100
 
 	jsonMsg := json.RawMessage(`{"foo": 123}`)
+
+	bankMsg := &banktypes.MsgSend{
+		FromAddress: addr2.String(),
+		ToAddress:   addr1.String(),
+		Amount: sdk.Coins{
+			sdk.NewInt64Coin("uatom", 12345),
+			sdk.NewInt64Coin("utgd", 54321),
+		},
+	}
+	bankMsgBin, err := proto.Marshal(bankMsg)
+	require.NoError(t, err)
 
 	cases := map[string]struct {
 		sender     sdk.AccAddress
@@ -276,6 +288,27 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		// TODO: alpe? can you add an example with sub-interfaces (where the UnpackInterfaces call would be needed)
+		"stargate encoded bank msg": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Stargate: &wasmvmtypes.StargateMsg{
+					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
+					Value:   bankMsgBin,
+				},
+			},
+			output: []sdk.Msg{bankMsg},
+		},
+		"stargate encoded invalid typeUrl": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Stargate: &wasmvmtypes.StargateMsg{
+					TypeURL: "/cosmos.bank.v2.MsgSend",
+					Value:   bankMsgBin,
+				},
+			},
+			isError: true,
+		},
 		"IBC transfer with block timeout": {
 			sender:     addr1,
 			srcIBCPort: "myIBCPort",
@@ -355,7 +388,8 @@ func TestEncoding(t *testing.T) {
 			},
 		},
 	}
-	encoder := DefaultEncoders(nil, nil)
+	encodingConfig := MakeEncodingConfig(t)
+	encoder := DefaultEncoders(nil, nil, encodingConfig.Marshaler)
 	for name, tc := range cases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {

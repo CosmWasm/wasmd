@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -294,6 +295,79 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	err = json.Unmarshal(custom, &resp)
 	require.NoError(t, err)
 	assert.Equal(t, resp.Text, "ALL CAPS NOW")
+}
+
+func TestReflectStargateQuery(t *testing.T) {
+	cdc := MakeTestCodec(t)
+	ctx, keepers := CreateTestInput(t, false, MaskFeatures, maskEncoders(cdc), maskPlugins())
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+
+	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	expectedBalance := funds.Sub(contractStart)
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, funds)
+
+	// upload code
+	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "mask contract 1", contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// first, normal query for the bank balance (to make sure our query is proper)
+	bankQuery := wasmvmtypes.QueryRequest{
+		Bank: &wasmvmtypes.BankQuery{
+			AllBalances: &wasmvmtypes.AllBalancesQuery{
+				Address: creator.String(),
+			},
+		},
+	}
+	simpleQueryBz, err := json.Marshal(MaskQueryMsg{
+		Chain: &ChainQuery{Request: &bankQuery},
+	})
+	require.NoError(t, err)
+	simpleRes, err := keeper.QuerySmart(ctx, contractAddr, simpleQueryBz)
+	require.NoError(t, err)
+	var simpleChain ChainResponse
+	mustParse(t, simpleRes, &simpleChain)
+	var simpleBalance wasmvmtypes.AllBalancesResponse
+	mustParse(t, simpleChain.Data, &simpleBalance)
+	require.Equal(t, len(expectedBalance), len(simpleBalance.Amount))
+	assert.Equal(t, simpleBalance.Amount[0].Amount, expectedBalance[0].Amount.String())
+	assert.Equal(t, simpleBalance.Amount[0].Denom, expectedBalance[0].Denom)
+
+	// now, try to build a protobuf query
+	protoQuery := banktypes.QueryAllBalancesRequest{
+		Address: creator.String(),
+	}
+	protoQueryBin, err := proto.Marshal(&protoQuery)
+	protoRequest := wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
+			Data: protoQueryBin,
+		},
+	}
+	protoQueryBz, err := json.Marshal(MaskQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain
+	protoRes, err := keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
+	require.NoError(t, err)
+	var protoChain ChainResponse
+	mustParse(t, protoRes, &protoChain)
+
+	// unmarshal raw protobuf response
+	var protoResult banktypes.QueryAllBalancesResponse
+	err = proto.Unmarshal(protoChain.Data, &protoResult)
+	require.NoError(t, err)
+	assert.Equal(t, expectedBalance, protoResult.Balances)
 }
 
 type maskState struct {

@@ -88,6 +88,7 @@ func NewKeeper(
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	router sdk.Router,
+	queryRouter GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	supportedFeatures string,
@@ -105,7 +106,6 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
-	messageEncoders := DefaultEncoders(channelKeeper, capabilityKeeper).Merge(customEncoders)
 	keeper := Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
@@ -115,12 +115,12 @@ func NewKeeper(
 		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, &messageEncoders),
+		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, customEncoders),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		authZPolicy:      DefaultAuthorizationPolicy{},
 		paramSpace:       paramSpace,
 	}
-	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, &keeper).Merge(customPlugins)
+	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, queryRouter, &keeper).Merge(customPlugins)
 	for _, o := range opts {
 		o.apply(&keeper)
 	}
