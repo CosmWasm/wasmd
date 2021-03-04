@@ -1026,6 +1026,14 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 }
 
 type sudoMsg struct {
+	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
+	// Here we show that some priviledged Go module can make a call that should never be exposed
+	// to end users (via Tx/Execute).
+	//
+	// The contract developer can choose to expose anything to sudo. This functionality is not a true
+	// backdoor (it can never be called by end users), but allows the developers of the native blockchain
+	// code to make special calls. This can also be used as an authentication mechanism, if you want to expose
+	// some callback that only can be triggered by some system module and not faked by external users.
 	StealFunds stealFundsMsg `json:"steal_funds"`
 }
 
@@ -1066,6 +1074,9 @@ func TestSudo(t *testing.T) {
 
 	// now the community wants to get paid via sudo
 	msg := sudoMsg{
+		// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
+		// Here we show that some priviledged Go module can make a call that should never be exposed
+		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
 			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(76543, "denom")},
