@@ -190,6 +190,9 @@ func EncodeStargateMsg(unpacker codectypes.AnyUnpacker) StargateEncoder {
 		if err := unpacker.UnpackAny(&any, &sdkMsg); err != nil {
 			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 		}
+		if err := codectypes.UnpackInterfaces(sdkMsg, unpacker); err != nil {
+			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("UnpackInterfaces inside msg: %s", err))
+		}
 		return []sdk.Msg{sdkMsg}, nil
 	}
 }
