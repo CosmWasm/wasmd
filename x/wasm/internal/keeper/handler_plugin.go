@@ -31,24 +31,27 @@ func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeep
 type BankEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
 type CustomEncoder func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
 type StakingEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
+type StargateEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
 type WasmEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
 type IBCEncoder func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
 
 type MessageEncoders struct {
-	Bank    BankEncoder
-	Custom  CustomEncoder
-	Staking StakingEncoder
-	Wasm    WasmEncoder
-	IBC     IBCEncoder
+	Bank     BankEncoder
+	Custom   CustomEncoder
+	IBC      IBCEncoder
+	Staking  StakingEncoder
+	Stargate StargateEncoder
+	Wasm     WasmEncoder
 }
 
 func DefaultEncoders(channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) MessageEncoders {
 	return MessageEncoders{
-		Bank:    EncodeBankMsg,
-		Custom:  NoCustomMsg,
-		Staking: EncodeStakingMsg,
-		Wasm:    EncodeWasmMsg,
-		IBC:     EncodeIBCMsg(channelKeeper, capabilityKeeper),
+		Bank:     EncodeBankMsg,
+		Custom:   NoCustomMsg,
+		IBC:      EncodeIBCMsg(channelKeeper, capabilityKeeper),
+		Staking:  EncodeStakingMsg,
+		Stargate: EncodeStargateMsg,
+		Wasm:     EncodeWasmMsg,
 	}
 }
 
@@ -62,14 +65,17 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	if o.Custom != nil {
 		e.Custom = o.Custom
 	}
+	if o.IBC != nil {
+		e.IBC = o.IBC
+	}
 	if o.Staking != nil {
 		e.Staking = o.Staking
 	}
+	if o.Stargate != nil {
+		e.Stargate = o.Stargate
+	}
 	if o.Wasm != nil {
 		e.Wasm = o.Wasm
-	}
-	if o.IBC != nil {
-		e.IBC = o.IBC
 	}
 	return e
 }
@@ -80,12 +86,14 @@ func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, co
 		return e.Bank(contractAddr, msg.Bank)
 	case msg.Custom != nil:
 		return e.Custom(contractAddr, msg.Custom)
-	case msg.Staking != nil:
-		return e.Staking(contractAddr, msg.Staking)
-	case msg.Wasm != nil:
-		return e.Wasm(contractAddr, msg.Wasm)
 	case msg.IBC != nil:
 		return e.IBC(ctx, contractAddr, contractIBCPortID, msg.IBC)
+	case msg.Staking != nil:
+		return e.Staking(contractAddr, msg.Staking)
+	case msg.Stargate != nil:
+		return e.Stargate(contractAddr, msg.Stargate)
+	case msg.Wasm != nil:
+		return e.Wasm(contractAddr, msg.Wasm)
 	}
 	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 }
@@ -168,6 +176,13 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 	default:
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Staking")
 	}
+}
+
+func EncodeStargateMsg(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error) {
+	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "StargateMsg not yet supported")
+	//url := msg.TypeURL
+	// TODO: parse the value
+	//return []sdk.Msg{&sdkMsg}, nil
 }
 
 func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error) {

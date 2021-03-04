@@ -40,6 +40,9 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	if request.Staking != nil {
 		return q.Plugins.Staking(subctx, request.Staking)
 	}
+	if request.Stargate != nil {
+		return q.Plugins.Stargate(subctx, request.Stargate)
+	}
 	if request.Wasm != nil {
 		return q.Plugins.Wasm(subctx, request.Wasm)
 	}
@@ -53,18 +56,20 @@ func (q QueryHandler) GasConsumed() uint64 {
 type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
 
 type QueryPlugins struct {
-	Bank    func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
-	Custom  CustomQuerier
-	Staking func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
-	Wasm    func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
+	Bank     func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
+	Custom   CustomQuerier
+	Staking  func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
+	Stargate func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
+	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 }
 
 func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
-		Bank:    BankQuerier(bank),
-		Custom:  NoCustomQuerier,
-		Staking: StakingQuerier(staking, distKeeper),
-		Wasm:    WasmQuerier(wasm),
+		Bank:     BankQuerier(bank),
+		Custom:   NoCustomQuerier,
+		Staking:  StakingQuerier(staking, distKeeper),
+		Stargate: StargateQuerier,
+		Wasm:     WasmQuerier(wasm),
 	}
 }
 
@@ -81,6 +86,9 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	}
 	if o.Staking != nil {
 		e.Staking = o.Staking
+	}
+	if o.Stargate != nil {
+		e.Stargate = o.Stargate
 	}
 	if o.Wasm != nil {
 		e.Wasm = o.Wasm
@@ -121,6 +129,10 @@ func BankQuerier(bankKeeper bankkeeper.ViewKeeper) func(ctx sdk.Context, request
 }
 
 func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+}
+
+func StargateQuerier(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
 }
 
