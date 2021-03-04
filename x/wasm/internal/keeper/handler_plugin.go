@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
-
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -194,10 +192,9 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 		}
 
 		sdkMsg := types.MsgInstantiateContract{
-			Sender: sender.String(),
-			CodeID: msg.Instantiate.CodeID,
-			// TODO: add this to CosmWasm
-			Label:   fmt.Sprintf("Auto-created by %s", sender),
+			Sender:  sender.String(),
+			CodeID:  msg.Instantiate.CodeID,
+			Label:   msg.Instantiate.Label,
 			InitMsg: msg.Instantiate.Msg,
 			Funds:   coins,
 		}
