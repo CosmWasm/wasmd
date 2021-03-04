@@ -255,6 +255,11 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 	dh := distribution.NewHandler(distKeeper)
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
 
+	querier := baseapp.NewGRPCQueryRouter()
+	banktypes.RegisterQueryServer(querier, bankKeeper)
+	stakingtypes.RegisterQueryServer(querier, stakingkeeper.Querier{Keeper: stakingKeeper})
+	distributiontypes.RegisterQueryServer(querier, distKeeper)
+
 	// Load default wasm config
 	wasmConfig := types.DefaultWasmConfig()
 
@@ -270,6 +275,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, supportedFeatures string, enc
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,
 		router,
+		querier,
 		tempDir,
 		wasmConfig,
 		supportedFeatures,

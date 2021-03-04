@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,12 +12,25 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type QueryHandler struct {
 	Ctx     sdk.Context
 	Plugins QueryPlugins
 }
+
+// -- interfaces from baseapp - so we can use the GPRQueryRouter --
+
+// GRPCQueryHandler defines a function type which handles ABCI Query requests
+// using gRPC
+type GRPCQueryHandler = func(ctx sdk.Context, req abci.RequestQuery) (abci.ResponseQuery, error)
+
+type GRPCQueryRouter interface {
+	Route(path string) GRPCQueryHandler
+}
+
+// -- end baseapp interfaces --
 
 var _ wasmvmtypes.Querier = QueryHandler{}
 
@@ -63,12 +77,12 @@ type QueryPlugins struct {
 	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, wasm *Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
 		Staking:  StakingQuerier(staking, distKeeper),
-		Stargate: StargateQuerier,
+		Stargate: StargateQuerier(queryRouter),
 		Wasm:     WasmQuerier(wasm),
 	}
 }
@@ -132,8 +146,22 @@ func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
 }
 
-func StargateQuerier(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+	return func(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
+		route := queryRouter.Route(msg.Path)
+		if route == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", msg.Path)}
+		}
+		req := abci.RequestQuery{
+			Data: msg.Data,
+			Path: msg.Path,
+		}
+		res, err := route(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return res.Value, nil
+	}
 }
 
 func StakingQuerier(keeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper) func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
