@@ -120,7 +120,7 @@ func NewKeeper(
 		authZPolicy:      DefaultAuthorizationPolicy{},
 		paramSpace:       paramSpace,
 	}
-	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, queryRouter, &keeper).Merge(customPlugins)
+	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, &keeper).Merge(customPlugins)
 	for _, o := range opts {
 		o.apply(&keeper)
 	}

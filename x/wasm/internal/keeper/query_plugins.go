@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,11 +91,11 @@ type QueryPlugins struct {
 	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, channelKeeper types.ChannelKeeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
-		IBC:      IBCQuerier(wasm),
+		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
 		Stargate: StargateQuerier(queryRouter),
 		Wasm:     WasmQuerier(wasm),
@@ -163,7 +164,7 @@ func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
 }
 
-func IBCQuerier(wasm *Keeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
+func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
 	return func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
 		if request.PortID != nil {
 			contractInfo := wasm.GetContractInfo(ctx, caller)
@@ -192,14 +193,23 @@ func IBCQuerier(wasm *Keeper) func(ctx sdk.Context, caller sdk.AccAddress, reque
 				contractInfo := wasm.GetContractInfo(ctx, caller)
 				portID = contractInfo.IBCPortID
 			}
-			// TODO: query the (port, channel) info
-			channel := &wasmvmtypes.IBCChannel{
-				Endpoint:             wasmvmtypes.IBCEndpoint{},
-				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{},
-				Order:                "",
-				Version:              "",
-				CounterpartyVersion:  "",
-				ConnectionID:         "",
+			got, found := channelKeeper.GetChannel(ctx, portID, channelID)
+			var channel *wasmvmtypes.IBCChannel
+			if found {
+				channel = &wasmvmtypes.IBCChannel{
+					Endpoint: wasmvmtypes.IBCEndpoint{
+						PortID:    portID,
+						ChannelID: channelID,
+					},
+					CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+						PortID:    got.Counterparty.PortId,
+						ChannelID: got.Counterparty.ChannelId,
+					},
+					Order:               got.Ordering.String(),
+					Version:             got.Version,
+					CounterpartyVersion: got.Version, // FIXME: maybe we change the type? This data is not stored AFAIK
+					ConnectionID:        got.ConnectionHops[0],
+				}
 			}
 			res := wasmvmtypes.ChannelResponse{
 				Channel: channel,
