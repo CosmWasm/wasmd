@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"io/ioutil"
 	"testing"
 
@@ -343,6 +346,181 @@ func TestUpdateParamsProposal(t *testing.T) {
 			assert.True(t, spec.expUploadConfig.Equals(wasmKeeper.getUploadAccessConfig(ctx)),
 				"got %#v not %#v", wasmKeeper.getUploadAccessConfig(ctx), spec.expUploadConfig)
 			assert.Equal(t, spec.expInstantiateType, wasmKeeper.getInstantiateAccessConfig(ctx))
+		})
+	}
+}
+
+func TestPinCodesProposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
+
+	mock := wasmtesting.MockWasmer{
+		CreateFn:      wasmtesting.NoOpCreateFn,
+		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
+	}
+	var (
+		hackatom           = StoreHackatomExampleContract(t, ctx, keepers)
+		hackatomDuplicate  = StoreHackatomExampleContract(t, ctx, keepers)
+		otherContract      = StoreRandomContract(t, ctx, keepers, &mock)
+		gotPinnedChecksums []wasmvm.Checksum
+	)
+	checksumCollector := func(checksum wasmvm.Checksum) error {
+		gotPinnedChecksums = append(gotPinnedChecksums, checksum)
+		return nil
+	}
+	specs := map[string]struct {
+		srcCodeIDs []uint64
+		mockFn     func(checksum wasmvm.Checksum) error
+		expPinned  []wasmvm.Checksum
+		expErr     bool
+	}{
+		"pin one": {
+			srcCodeIDs: []uint64{hackatom.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"pin multiple": {
+			srcCodeIDs: []uint64{hackatom.CodeID, otherContract.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"pin same code id": {
+			srcCodeIDs: []uint64{hackatom.CodeID, hackatomDuplicate.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"pin non existing code id": {
+			srcCodeIDs: []uint64{999},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"pin empty code id list": {
+			srcCodeIDs: []uint64{},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"wasmvm failed with error": {
+			srcCodeIDs: []uint64{hackatom.CodeID},
+			mockFn: func(_ wasmvm.Checksum) error {
+				return errors.New("test, ignore")
+			},
+			expErr: true,
+		},
+	}
+	parentCtx := ctx
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			gotPinnedChecksums = nil
+			ctx, _ := parentCtx.CacheContext()
+			mock.PinFn = spec.mockFn
+			proposal := types.PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     spec.srcCodeIDs,
+			}
+
+			// when stored
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			gotErr = handler(ctx, storedProposal.GetContent())
+			require.NoError(t, gotErr)
+
+			// then
+			for i := range spec.srcCodeIDs {
+				c := wasmKeeper.GetCodeInfo(ctx, spec.srcCodeIDs[i])
+				require.Equal(t, wasmvm.Checksum(c.CodeHash), gotPinnedChecksums[i])
+			}
+		})
+	}
+}
+func TestUnpinCodesProposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
+
+	mock := wasmtesting.MockWasmer{
+		CreateFn:      wasmtesting.NoOpCreateFn,
+		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
+	}
+	var (
+		hackatom             = StoreHackatomExampleContract(t, ctx, keepers)
+		hackatomDuplicate    = StoreHackatomExampleContract(t, ctx, keepers)
+		otherContract        = StoreRandomContract(t, ctx, keepers, &mock)
+		gotUnpinnedChecksums []wasmvm.Checksum
+	)
+	checksumCollector := func(checksum wasmvm.Checksum) error {
+		gotUnpinnedChecksums = append(gotUnpinnedChecksums, checksum)
+		return nil
+	}
+	specs := map[string]struct {
+		srcCodeIDs  []uint64
+		mockFn      func(checksum wasmvm.Checksum) error
+		expUnpinned []wasmvm.Checksum
+		expErr      bool
+	}{
+		"unpin one": {
+			srcCodeIDs: []uint64{hackatom.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"unpin multiple": {
+			srcCodeIDs: []uint64{hackatom.CodeID, otherContract.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"unpin same code id": {
+			srcCodeIDs: []uint64{hackatom.CodeID, hackatomDuplicate.CodeID},
+			mockFn:     checksumCollector,
+		},
+		"unpin non existing code id": {
+			srcCodeIDs: []uint64{999},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"unpin empty code id list": {
+			srcCodeIDs: []uint64{},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"wasmvm failed with error": {
+			srcCodeIDs: []uint64{hackatom.CodeID},
+			mockFn: func(_ wasmvm.Checksum) error {
+				return errors.New("test, ignore")
+			},
+			expErr: true,
+		},
+	}
+	parentCtx := ctx
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			gotUnpinnedChecksums = nil
+			ctx, _ := parentCtx.CacheContext()
+			mock.UnpinFn = spec.mockFn
+			proposal := types.UnpinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     spec.srcCodeIDs,
+			}
+
+			// when stored
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			gotErr = handler(ctx, storedProposal.GetContent())
+			require.NoError(t, gotErr)
+
+			// then
+			for i := range spec.srcCodeIDs {
+				c := wasmKeeper.GetCodeInfo(ctx, spec.srcCodeIDs[i])
+				require.Equal(t, wasmvm.Checksum(c.CodeHash), gotUnpinnedChecksums[i])
+			}
 		})
 	}
 }

@@ -30,6 +30,8 @@ type MockWasmer struct {
 	IBCPacketReceiveFn  func(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCReceiveResponse, uint64, error)
 	IBCPacketAckFn      func(codeID wasmvm.Checksum, env wasmvmtypes.Env, ack wasmvmtypes.IBCAcknowledgement, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error)
 	IBCPacketTimeoutFn  func(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+	PinFn               func(checksum wasmvm.Checksum) error
+	UnpinFn             func(checksum wasmvm.Checksum) error
 }
 
 func (m *MockWasmer) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (uint64, error) {
@@ -136,6 +138,20 @@ func (m *MockWasmer) Cleanup() {
 		panic("not supposed to be called!")
 	}
 	m.CleanupFn()
+}
+
+func (m *MockWasmer) Pin(checksum wasmvm.Checksum) error {
+	if m.PinFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.PinFn(checksum)
+}
+
+func (m *MockWasmer) Unpin(checksum wasmvm.Checksum) error {
+	if m.UnpinFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.UnpinFn(checksum)
 }
 
 var AlwaysPanicMockWasmer = &MockWasmer{}

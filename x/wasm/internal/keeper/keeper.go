@@ -100,7 +100,6 @@ func NewKeeper(
 	if err != nil {
 		panic(err)
 	}
-
 	// set KeyTable if it has not already been set
 	if !paramSpace.HasKeyTable() {
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
@@ -220,7 +219,9 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 }
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
-	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: init")
+	if !k.IsPinnedCode(ctx, codeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: init")
+	}
 
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
@@ -317,11 +318,13 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 // Execute executes the contract instance
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
-	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: execute")
-
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
+	}
+
+	if !k.IsPinnedCode(ctx, contractInfo.CodeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: execute")
 	}
 
 	// add more funds
@@ -371,7 +374,9 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 }
 
 func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error) {
-	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: migrate")
+	if !k.IsPinnedCode(ctx, newCodeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: migrate")
+	}
 
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -444,11 +449,13 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 // another native Go module directly. Thus, the keeper doesn't place any access controls on it, that is the
 // responsibility or the app developer (who passes the wasm.Keeper in app.go)
 func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) (*sdk.Result, error) {
-	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: sudo")
-
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
+	}
+
+	if !k.IsPinnedCode(ctx, contractInfo.CodeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: sudo")
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
@@ -536,12 +543,14 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 
 // QuerySmart queries the smart contract itself.
 func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
-	ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: query")
-
-	_, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
 	}
+	if !k.IsPinnedCode(ctx, contractInfo.CodeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: query")
+	}
+
 	// prepare querier
 	querier := QueryHandler{
 		Ctx:     ctx,
@@ -577,12 +586,12 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 	var contractInfo types.ContractInfo
 	k.cdc.MustUnmarshalBinaryBare(contractBz, &contractInfo)
 
-	contractInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
-	if contractInfoBz == nil {
-		return contractInfo, types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "contract info")
+	codeInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
+	if codeInfoBz == nil {
+		return contractInfo, types.CodeInfo{}, prefix.Store{}, sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
 	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshalBinaryBare(contractInfoBz, &codeInfo)
+	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	return contractInfo, codeInfo, prefixStore, nil
@@ -688,6 +697,59 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, i
 	for _, msg := range msgs {
 		if err := k.messenger.Dispatch(ctx, contractAddr, ibcPort, msg); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// PinCode pins the wasm contract in wasmvm cache
+func (k Keeper) PinCode(ctx sdk.Context, codeID uint64) error {
+	codeInfo := k.GetCodeInfo(ctx, codeID)
+	if codeInfo == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+	}
+
+	if err := k.wasmer.Pin(codeInfo.CodeHash); err != nil {
+		return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
+	}
+	store := ctx.KVStore(k.storeKey)
+	// store 1 byte to not run into `nil` debugging issues
+	store.Set(types.GetPinnedCodeIndexPrefix(codeID), []byte{1})
+	return nil
+}
+
+// UnpinCode removes the wasm contract from wasmvm cache
+func (k Keeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
+	codeInfo := k.GetCodeInfo(ctx, codeID)
+	if codeInfo == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+	}
+	if err := k.wasmer.Unpin(codeInfo.CodeHash); err != nil {
+		return sdkerrors.Wrap(types.ErrUnpinContractFailed, err.Error())
+	}
+
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetPinnedCodeIndexPrefix(codeID))
+	return nil
+}
+
+// IsPinnedCode returns true when codeID is pinned in wasmvm cache
+func (k Keeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.GetPinnedCodeIndexPrefix(codeID))
+}
+
+// InitializePinnedCodes updates wasmvm to pin to cache all contracts marked as pinned
+func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PinnedCodeIndexPrefix)
+	iter := store.Iterator(nil, nil)
+	for ; iter.Valid(); iter.Next() {
+		codeInfo := k.GetCodeInfo(ctx, types.ParsePinnedCodeIndex(iter.Value()))
+		if codeInfo == nil {
+			return sdkerrors.Wrap(types.ErrNotFound, "code info")
+		}
+		if err := k.wasmer.Pin(codeInfo.CodeHash); err != nil {
+			return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
 		}
 	}
 	return nil

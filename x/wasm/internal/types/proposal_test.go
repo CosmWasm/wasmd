@@ -517,6 +517,30 @@ func TestProposalStrings(t *testing.T) {
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 `,
 		},
+		"pin codes": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{1, 2, 3},
+			},
+			exp: `Pin Wasm Codes Proposal:
+  Title:       Foo
+  Description: Bar
+  Codes:       [1 2 3]
+`,
+		},
+		"unpin codes": {
+			src: &UnpinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{3, 2, 1},
+			},
+			exp: `Unpin Wasm Codes Proposal:
+  Title:       Foo
+  Description: Bar
+  Codes:       [3 2 1]
+`,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -608,6 +632,20 @@ contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
 			exp: `title: Foo
 description: Bar
 contract: cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
+`,
+		},
+		"pin codes": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{1, 2, 3},
+			},
+			exp: `title: Foo
+description: Bar
+code_ids:
+- 1
+- 2
+- 3
 `,
 		},
 	}
