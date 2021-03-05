@@ -6,11 +6,16 @@ import (
 )
 
 type MockMessageHandler struct {
-	DispatchFn func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error
+	DispatchFn    func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error
+	DispatchMsgFn func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
 func (m *MockMessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
 	return m.DispatchFn(ctx, contractAddr, contractIBCPortID, msgs...)
+}
+
+func (m *MockMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+	return m.DispatchMsgFn(ctx, contractAddr, contractIBCPortID, msg)
 }
 
 func NewCapturingMessageHandler() (*MockMessageHandler, *[]wasmvmtypes.CosmosMsg) {
@@ -19,6 +24,11 @@ func NewCapturingMessageHandler() (*MockMessageHandler, *[]wasmvmtypes.CosmosMsg
 		DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
 			messages = append(messages, msgs...)
 			return nil
+		},
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+			messages = append(messages, msg)
+			// return one data item so that this doesn't cause an error in submessage processing (it takes the first element from data)
+			return nil, [][]byte{{1}}, nil
 		},
 	}, &messages
 }
