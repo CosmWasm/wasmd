@@ -307,17 +307,10 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 	k.appendToContractHistory(ctx, contractAddress, contractInfo.InitialHistory(initMsg))
 
-	// first dispatch all submessages (and the replies).
-	// we can catch errors and they must have isolated storage space
-	err = k.dispatchSubmessages(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages)
+	// dispatch submessages then messages
+	err = k.dispatchAll(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages)
 	if err != nil {
-		return nil, nil, err
-	}
-
-	// then dispatch all the normal messages (abort this tx on fail)
-	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
-	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
 	return contractAddress, res.Data, nil
@@ -362,9 +355,10 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
+	// dispatch submessages then messages
+	err = k.dispatchAll(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages)
 	if err != nil {
-		return nil, err
+		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
 	return &sdk.Result{
@@ -436,8 +430,9 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
-	// then dispatch
-	if err := k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages); err != nil {
+	// dispatch submessages then messages
+	err = k.dispatchAll(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages)
+	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
@@ -474,7 +469,8 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
+	// dispatch submessages then messages
+	err = k.dispatchAll(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -513,7 +509,8 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	events := types.ParseEvents(res.Attributes, contractAddress)
 	ctx.EventManager().EmitEvents(events)
 
-	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
+	// dispatch submessages then messages
+	err = k.dispatchAll(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -727,15 +724,6 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 	return k.wasmer.GetCode(codeInfo.CodeHash)
 }
 
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		if err := k.messenger.Dispatch(ctx, contractAddr, ibcPort, msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // PinCode pins the wasm contract in wasmvm cache
 func (k Keeper) PinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
@@ -789,6 +777,18 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 	return nil
 }
 
+func (k Keeper) dispatchAll(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, subMsgs []wasmvmtypes.SubMsg, msgs []wasmvmtypes.CosmosMsg) error {
+	// first dispatch all submessages (and the replies).
+	err := k.dispatchSubmessages(ctx, contractAddr, ibcPort, subMsgs)
+	if err != nil {
+		return err
+	}
+	// then dispatch all the normal messages
+	return k.messenger.Dispatch(ctx, contractAddr, ibcPort, msgs...)
+}
+
+// dispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
+// that dispatched them, both on success as well as failure
 func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) error {
 	for _, msg := range msgs {
 		// first, we build a sub-context which we can use inside the submessages
