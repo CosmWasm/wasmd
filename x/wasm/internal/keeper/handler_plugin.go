@@ -226,6 +226,14 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			Funds:   coins,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
+	case msg.Migrate != nil:
+		sdkMsg := types.MsgMigrateContract{
+			Sender:     sender.String(),
+			Contract:   msg.Migrate.ContractAddr,
+			CodeID:     msg.Migrate.NewCodeID,
+			MigrateMsg: msg.Migrate.Msg,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
 	default:
 		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown variant of Wasm")
 	}

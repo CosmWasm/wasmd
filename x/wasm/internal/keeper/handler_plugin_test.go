@@ -172,6 +172,26 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"wasm migrate": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Wasm: &wasmvmtypes.WasmMsg{
+					Migrate: &wasmvmtypes.MigrateMsg{
+						ContractAddr: addr1.String(),
+						NewCodeID:    12,
+						Msg:          jsonMsg,
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&types.MsgMigrateContract{
+					Sender:     addr2.String(),
+					Contract:   addr1.String(),
+					CodeID:     12,
+					MigrateMsg: jsonMsg,
+				},
+			},
+		},
 		"staking delegate": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
