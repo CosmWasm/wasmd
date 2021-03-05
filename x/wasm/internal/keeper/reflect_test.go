@@ -24,8 +24,9 @@ import (
 
 // ReflectHandleMsg is used to encode handle messages
 type ReflectHandleMsg struct {
-	Reflect *reflectPayload `json:"reflect_msg,omitempty"`
-	Change  *ownerPayload   `json:"change_owner,omitempty"`
+	Reflect        *reflectPayload    `json:"reflect_msg,omitempty"`
+	ReflectSubCall *reflectSubPayload `json:"reflect_sub_call,omitempty"`
+	Change         *ownerPayload      `json:"change_owner,omitempty"`
 }
 
 type ownerPayload struct {
@@ -36,11 +37,16 @@ type reflectPayload struct {
 	Msgs []wasmvmtypes.CosmosMsg `json:"msgs"`
 }
 
+type reflectSubPayload struct {
+	Msgs []wasmvmtypes.SubMsg `json:"msgs"`
+}
+
 // ReflectQueryMsg is used to encode query messages
 type ReflectQueryMsg struct {
-	Owner       *struct{}   `json:"owner,omitempty"`
-	Capitalized *Text       `json:"capitalized,omitempty"`
-	Chain       *ChainQuery `json:"chain,omitempty"`
+	Owner         *struct{}   `json:"owner,omitempty"`
+	Capitalized   *Text       `json:"capitalized,omitempty"`
+	Chain         *ChainQuery `json:"chain,omitempty"`
+	SubCallResult *SubCall    `json:"sub_call_result,omitempty"`
 }
 
 type ChainQuery struct {
@@ -49,6 +55,10 @@ type ChainQuery struct {
 
 type Text struct {
 	Text string `json:"text"`
+}
+
+type SubCall struct {
+	ID uint64 `json:"id"`
 }
 
 type OwnerResponse struct {
