@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"path/filepath"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -53,6 +54,7 @@ type Option interface {
 
 type messenger interface {
 	Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error
+	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
 // Keeper will have a reference to Wasmer with it's own data directory.
@@ -301,10 +303,18 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		contractInfo.IBCPortID = ibcPort
 	}
 
+	// store contract before dispatch so that contract could be called back
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 	k.appendToContractHistory(ctx, contractAddress, contractInfo.InitialHistory(initMsg))
 
-	// then dispatch so that contract could be called back
+	// first dispatch all submessages (and the replies).
+	// we can catch errors and they must have isolated storage space
+	err = k.dispatchSubmessages(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// then dispatch all the normal messages (abort this tx on fail)
 	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
 	if err != nil {
 		return nil, nil, err
@@ -455,6 +465,45 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddress)
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	consumeGas(ctx, gasUsed)
+	if execErr != nil {
+		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+	}
+
+	// emit all events from this contract itself
+	events := types.ParseEvents(res.Attributes, contractAddress)
+	ctx.EventManager().EmitEvents(events)
+
+	err = k.dispatchMessages(ctx, contractAddress, contractInfo.IBCPortID, res.Messages)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "dispatch")
+	}
+
+	return &sdk.Result{
+		Data: res.Data,
+	}, nil
+}
+
+// reply is only called from keeper internal functions (dispatchSubmessages) after processing the submessage
+// it
+func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
+	// we can assume this is still in cache and not charge again for returning the reply. correct?
+	//ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: reply")
+
+	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	env := types.NewEnv(ctx, contractAddress)
+
+	// prepare querier
+	querier := QueryHandler{
+		Ctx:     ctx,
+		Plugins: k.queryPlugins,
+	}
+	gas := gasForContract(ctx)
+	res, gasUsed, execErr := k.wasmer.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -738,6 +787,91 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 		}
 	}
 	return nil
+}
+
+func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) error {
+	for _, msg := range msgs {
+		// first, we build a sub-context which we can use inside the submessages
+		subCtx, commit := ctx.CacheContext()
+
+		// check how much gas left locally, optionally wrap the gas meter
+		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
+		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
+		if limitGas {
+			// FIXME: do I need to wrap the BlockGasMeter in the same way?
+			limitedMeter := sdk.NewGasMeter(*msg.GasLimit)
+			subCtx = subCtx.WithGasMeter(limitedMeter)
+		}
+
+		// run this message and get all events.
+		// if it converted into multiple sdk messages, we have multiple data fields
+		// TODO: handle out-of-gas panic?? - only if we have limitGas!
+		events, data, err := k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg.Msg)
+
+		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
+		if err == nil {
+			commit()
+			ctx.EventManager().EmitEvents(events)
+		}
+		// on failure, revert state from sandbox, and ignore events (just skip doing the above)
+
+		// if we have a sub-gas limit, make sure we charge the parent what was spent
+		if limitGas {
+			spent := subCtx.GasMeter().GasConsumed()
+			ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
+		}
+
+		var result wasmvmtypes.SubcallResult
+		if err == nil {
+			result = wasmvmtypes.SubcallResult{
+				Ok: &wasmvmtypes.SubcallResponse{
+					Events: sdkEventsToWasmVmEvents(events),
+					// just take the first one for now
+					Data: data[0],
+				},
+			}
+		} else {
+			result = wasmvmtypes.SubcallResult{
+				Err: err.Error(),
+			}
+		}
+
+		// now handle the reply, we use the parent context, and abort on error
+		reply := wasmvmtypes.Reply{
+			ID:     msg.ID,
+			Result: result,
+		}
+
+		// we can ignore any result returned as there is nothing to do with the data
+		// and the events are already in the ctx.EventManager()
+		_, err = k.reply(ctx, contractAddr, reply)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func sdkEventsToWasmVmEvents(events []sdk.Event) []wasmvmtypes.Event {
+	res := make([]wasmvmtypes.Event, len(events))
+	for i, ev := range events {
+		res[i] = wasmvmtypes.Event{
+			Type:       ev.Type,
+			Attributes: sdkAttributesToWasmVmAttributes(ev.Attributes),
+		}
+	}
+	return res
+}
+
+func sdkAttributesToWasmVmAttributes(attrs []abci.EventAttribute) []wasmvmtypes.EventAttribute {
+	res := make([]wasmvmtypes.EventAttribute, len(attrs))
+	for i, attr := range attrs {
+		res[i] = wasmvmtypes.EventAttribute{
+			Key:   string(attr.Key),
+			Value: string(attr.Value),
+		}
+	}
+	return res
 }
 
 func gasForContract(ctx sdk.Context) uint64 {

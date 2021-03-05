@@ -107,6 +107,18 @@ type WasmerEngine interface {
 		gasLimit uint64,
 	) (*wasmvmtypes.Response, uint64, error)
 
+	// Reply is called on the original dispatching contract after running a submessage
+	Reply(
+		codeID wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		reply wasmvmtypes.Reply,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+	) (*wasmvmtypes.Response, uint64, error)
+
 	// GetCode will load the original wasm code for the given code id.
 	// This will only succeed if that code id was previously returned from
 	// a call to Create.

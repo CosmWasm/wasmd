@@ -322,48 +322,59 @@ func convertWasmIBCTimeoutTimestampToCosmosTimestamp(timestamp *uint64) uint64 {
 
 func (h DefaultMessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
 	for _, msg := range msgs {
-		sdkMsgs, err := h.encoders.Encode(ctx, contractAddr, contractIBCPortID, msg)
+		events, _, err := h.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 		if err != nil {
 			return err
 		}
-		for _, sdkMsg := range sdkMsgs {
-			if err := h.handleSdkMessage(ctx, contractAddr, sdkMsg); err != nil {
-				return err
-			}
-		}
+		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
+		ctx.EventManager().EmitEvents(events)
 	}
 	return nil
 }
 
-func (h DefaultMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) error {
+func (h DefaultMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+	sdkMsgs, err := h.encoders.Encode(ctx, contractAddr, contractIBCPortID, msg)
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, sdkMsg := range sdkMsgs {
+		res, err := h.handleSdkMessage(ctx, contractAddr, sdkMsg)
+		if err != nil {
+			return nil, nil, err
+		}
+		// append data
+		data = append(data, res.Data)
+		// append events
+		sdkEvents := make([]sdk.Event, len(res.Events))
+		for i := range res.Events {
+			sdkEvents[i] = sdk.Event(res.Events[i])
+		}
+		events = append(events, sdkEvents...)
+	}
+	return
+}
+
+func (h DefaultMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Address, msg sdk.Msg) (*sdk.Result, error) {
 	if err := msg.ValidateBasic(); err != nil {
-		return err
+		return nil, err
 	}
 	// make sure this account can send it
 	for _, acct := range msg.GetSigners() {
 		if !acct.Equals(contractAddr) {
-			return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
+			return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "contract doesn't have permission")
 		}
 	}
 
 	// find the handler and execute it
 	handler := h.router.Route(ctx, msg.Route())
 	if handler == nil {
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
 	}
 	res, err := handler(ctx, msg)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	events := make(sdk.Events, len(res.Events))
-	for i := range res.Events {
-		events[i] = sdk.Event(res.Events[i])
-	}
-	// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-	ctx.EventManager().EmitEvents(events)
-
-	return nil
+	return res, nil
 }
 
 func convertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
