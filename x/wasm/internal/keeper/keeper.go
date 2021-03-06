@@ -221,7 +221,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
 	if !k.IsPinnedCode(ctx, codeID) {
-		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: init")
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: instanitate")
 	}
 
 	// create contract address

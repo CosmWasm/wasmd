@@ -135,7 +135,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, uploader, reflectCode, "", "", nil)
+	reflectID, err := keeper.Create(ctx, uploader, reflectCode, "", "", nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
@@ -193,6 +193,18 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
+	instantiateContract := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
+		return wasmvmtypes.CosmosMsg{
+			Wasm: &wasmvmtypes.WasmMsg{
+				Instantiate: &wasmvmtypes.InstantiateMsg{
+					CodeID: reflectID,
+					Msg:    []byte("{}"),
+					Label:  "subcall reflect",
+				},
+			},
+		}
+	}
+
 	type assertion func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult)
 
 	assertReturnedEvents := func(expectedEvents int) assertion {
@@ -213,6 +225,21 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
 			assert.Contains(t, response.Err, shouldContain)
 		}
+	}
+
+	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
+		// should get the events emitted on new contract
+		event := response.Ok.Events[0]
+		assert.Equal(t, event.Type, "wasm")
+		assert.Equal(t, event.Attributes[0].Key, "contract_address")
+		eventAddr := event.Attributes[0].Value
+		assert.NotEqual(t, contract, eventAddr)
+
+		// data field is the raw canonical address
+		// QUESTION: why not types.MsgInstantiateContractResponse? difference between calling Router and Service?
+		assert.Len(t, response.Ok.Data, 20)
+		resAddr := sdk.AccAddress(response.Ok.Data)
+		assert.Equal(t, eventAddr, resAddr.String())
 	}
 
 	cases := map[string]struct {
@@ -264,12 +291,18 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
-			id:          7,
+			id:          17,
 			msg:         infiniteLoop,
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses all the subGasLimit, plus the 50k or so for the main contract
 			resultAssertions: []assertion{assertGasUsed(subGasLimit+51000, subGasLimit+53000), assertErrorString("out of gas")},
+		},
+
+		"instantiate contract gets address in data and events": {
+			id:               21,
+			msg:              instantiateContract,
+			resultAssertions: []assertion{assertReturnedEvents(1), assertGotContractAddr},
 		},
 	}
 
@@ -278,7 +311,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, contractStart)
 			_, _, empty := keyPubAddr()
 
-			contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
+			contractAddr, _, err := keeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
 			require.NoError(t, err)
 
 			msg := tc.msg(contractAddr.String(), empty.String())
@@ -340,5 +373,3 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		})
 	}
 }
-
-// TODO: handle multi-message cases
