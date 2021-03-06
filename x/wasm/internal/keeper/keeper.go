@@ -798,6 +798,31 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, i
 	return nil
 }
 
+func (k Keeper) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
+	// FIXME: do I need to wrap the BlockGasMeter in the same way?
+	limitedMeter := sdk.NewGasMeter(gasLimit)
+	subCtx := ctx.WithGasMeter(limitedMeter)
+
+	// catch out of gas panic and just charge the entire gas limit
+	defer func(){
+		fmt.Println("Got gas limit defer")
+		if r := recover(); r != nil {
+			fmt.Println("Recovering...")
+			// TODO: check for out of gas, not any panic
+			//ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
+			err = sdkerrors.Wrap(sdkerrors.ErrorInvalidGasAdjustment, "SubMsg hit gas limit")
+			fmt.Println("Finished recovering...")
+		}
+	}()
+	events, data, err = k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
+
+	// make sure we charge the parent what was spent
+	spent := subCtx.GasMeter().GasConsumed()
+	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
+
+	return events, data, err
+}
+
 // dispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
 func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) error {
@@ -808,16 +833,25 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		// check how much gas left locally, optionally wrap the gas meter
 		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
 		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
+
+		var printLimit uint64
+		if msg.GasLimit != nil {
+			printLimit = *msg.GasLimit
+		}
+		fmt.Printf("GasRemaining: %d / LimitRequested: %d\n", gasRemaining, printLimit)
+		fmt.Printf("Enforcing Limit: %t\n", limitGas)
+
+		var err error
+		var events []sdk.Event
+		var data [][]byte
 		if limitGas {
-			// FIXME: do I need to wrap the BlockGasMeter in the same way?
-			limitedMeter := sdk.NewGasMeter(*msg.GasLimit)
-			subCtx = subCtx.WithGasMeter(limitedMeter)
+			events, data, err = k.dispatchMsgWithGasLimit(subCtx, contractAddr, ibcPort, msg.Msg, *msg.GasLimit)
+		} else {
+			events, data, err = k.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
 		}
 
-		// run this message and get all events.
-		// if it converted into multiple sdk messages, we have multiple data fields
-		// TODO: handle out-of-gas panic?? - only if we have limitGas!
-		events, data, err := k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg.Msg)
+		finalGasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
+		fmt.Printf("Remaining after submsg: %d", finalGasRemaining)
 
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
 		if err == nil {
@@ -826,18 +860,12 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		}
 		// on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
-		// if we have a sub-gas limit, make sure we charge the parent what was spent
-		if limitGas {
-			spent := subCtx.GasMeter().GasConsumed()
-			ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
-		}
-
 		var result wasmvmtypes.SubcallResult
 		if err == nil {
 			result = wasmvmtypes.SubcallResult{
 				Ok: &wasmvmtypes.SubcallResponse{
 					Events: sdkEventsToWasmVmEvents(events),
-					// just take the first one for now
+					// just take the first one for now if there are multiple sub-sdk messages
 					Data: data[0],
 				},
 			}

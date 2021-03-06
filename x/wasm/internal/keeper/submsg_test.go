@@ -121,18 +121,36 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	fundedDenom := "funds"
 	fundedAmount := 1_000_000
-	largeGasLimit := uint64(500_000)
+	ctxGasLimit := uint64(1_000_000)
+	subGasLimit := uint64(300_000)
 
 	// prep - create one chain and upload the code
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(fundedDenom, int64(fundedAmount)))
-	uploader := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, contractStart)
+	uploader := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, contractStart.Add(contractStart...))
 
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keeper.Create(ctx, uploader, reflectCode, "", "", nil)
+	require.NoError(t, err)
+
+	// create hackatom contract for testing (for infinite loop)
+	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+	hackatomID, err := keeper.Create(ctx, uploader, hackatomCode, "", "", nil)
+	require.NoError(t, err)
+	_, _, bob := keyPubAddr()
+	_, _, fred := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    fred,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+	hackatomAddr, _, err := keeper.Instantiate(ctx, hackatomID, uploader, nil, initMsgBz, "hackatom demo", contractStart)
 	require.NoError(t, err)
 
 	validBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
@@ -158,6 +176,17 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 						Denom:  fundedDenom,
 						Amount: strconv.Itoa(fundedAmount * 2),
 					}},
+				},
+			},
+		}
+	}
+
+	infiniteLoop := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
+		return wasmvmtypes.CosmosMsg{
+			Wasm: &wasmvmtypes.WasmMsg{
+				Execute: &wasmvmtypes.ExecuteMsg{
+					ContractAddr: hackatomAddr.String(),
+					Msg:          []byte(`{"cpu_loop":{}}`),
 				},
 			},
 		}
@@ -190,22 +219,33 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			successAssertions: assertReturnedEvents(3),
 		},
 		"not enough tokens": {
-			id:          5,
+			id:          6,
 			msg:         invalidBankSend,
 			subMsgError: true,
+		},
+		"out of gas panic with no gas limit": {
+			id:              7,
+			msg:             infiniteLoop,
+			isOutOfGasPanic: true,
 		},
 
 		"send tokens with limit": {
-			id:                5,
+			id:                15,
 			msg:               validBankSend,
 			successAssertions: assertReturnedEvents(3),
-			gasLimit:          &largeGasLimit,
+			gasLimit:          &subGasLimit,
 		},
 		"not enough tokens with limit": {
-			id:          5,
+			id:          16,
 			msg:         invalidBankSend,
 			subMsgError: true,
-			gasLimit:    &largeGasLimit,
+			gasLimit:    &subGasLimit,
+		},
+		"out of gas caught with gas limit": {
+			id:          7,
+			msg:         infiniteLoop,
+			subMsgError: true,
+			gasLimit: &subGasLimit,
 		},
 	}
 
@@ -223,16 +263,23 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 					Msgs: []wasmvmtypes.SubMsg{{
 						ID:  tc.id,
 						Msg: msg,
+						GasLimit: tc.gasLimit,
 					}},
 				},
 			}
 			reflectSendBz, err := json.Marshal(reflectSend)
 			require.NoError(t, err)
 
+			execCtx := ctx.WithGasMeter(sdk.NewGasMeter(ctxGasLimit))
 			defer func() {
-				// TODO: check out of gas panic
+				if tc.isOutOfGasPanic {
+					r := recover()
+					require.NotNil(t, r, "expected out of gas panic")
+					fmt.Printf("Recover: %#v\n", r)
+					// TODO: ensure proper type
+				}
 			}()
-			_, err = keeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+			_, err = keeper.Execute(execCtx, contractAddr, creator, reflectSendBz, nil)
 
 			if tc.executeError {
 				require.Error(t, err)
@@ -255,6 +302,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				if tc.subMsgError {
 					require.NotEmpty(t, res.Result.Err)
 					require.Nil(t, res.Result.Ok)
+					fmt.Println(res.Result.Err)
 				} else {
 					require.Empty(t, res.Result.Err)
 					require.NotNil(t, res.Result.Ok)
