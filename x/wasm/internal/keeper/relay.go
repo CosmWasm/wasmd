@@ -103,7 +103,8 @@ func (k Keeper) OnCloseChannel(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.messenger.Dispatch(ctx, contractAddr, contractInfo.IBCPortID, res.Messages...); err != nil {
+	// TODO: add submessages support here (and everywhere else) once https://github.com/CosmWasm/cosmwasm/issues/822 is merged
+	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, nil, res.Messages); err != nil {
 		return err
 	}
 	return nil
@@ -139,7 +140,8 @@ func (k Keeper) OnRecvPacket(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.messenger.Dispatch(ctx, contractAddr, contractInfo.IBCPortID, res.Messages...); err != nil {
+	// TODO: add submessages support here (and everywhere else) once https://github.com/CosmWasm/cosmwasm/issues/822 is merged
+	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, nil, res.Messages); err != nil {
 		return nil, err
 	}
 	return res.Acknowledgement, nil
@@ -176,7 +178,8 @@ func (k Keeper) OnAckPacket(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.messenger.Dispatch(ctx, contractAddr, contractInfo.IBCPortID, res.Messages...); err != nil {
+	// TODO: add submessages support here (and everywhere else) once https://github.com/CosmWasm/cosmwasm/issues/822 is merged
+	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, nil, res.Messages); err != nil {
 		return err
 	}
 	return nil
@@ -209,7 +212,8 @@ func (k Keeper) OnTimeoutPacket(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.messenger.Dispatch(ctx, contractAddr, contractInfo.IBCPortID, res.Messages...); err != nil {
+	// TODO: add submessages support here (and everywhere else) once https://github.com/CosmWasm/cosmwasm/issues/822 is merged
+	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, nil, res.Messages); err != nil {
 		return err
 	}
 	return nil

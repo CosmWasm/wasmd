@@ -320,18 +320,6 @@ func convertWasmIBCTimeoutTimestampToCosmosTimestamp(timestamp *uint64) uint64 {
 	return *timestamp
 }
 
-func (h DefaultMessageHandler) Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		events, _, err := h.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
-		if err != nil {
-			return err
-		}
-		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-		ctx.EventManager().EmitEvents(events)
-	}
-	return nil
-}
-
 func (h DefaultMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 	sdkMsgs, err := h.encoders.Encode(ctx, contractAddr, contractIBCPortID, msg)
 	if err != nil {

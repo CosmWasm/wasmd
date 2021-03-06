@@ -53,7 +53,6 @@ type Option interface {
 }
 
 type messenger interface {
-	Dispatch(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
@@ -784,7 +783,19 @@ func (k Keeper) dispatchAll(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPor
 		return err
 	}
 	// then dispatch all the normal messages
-	return k.messenger.Dispatch(ctx, contractAddr, ibcPort, msgs...)
+	return k.dispatchMessages(ctx, contractAddr, ibcPort, msgs)
+}
+
+func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
+	for _, msg := range msgs {
+		events, _, err := k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
+		if err != nil {
+			return err
+		}
+		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
+		ctx.EventManager().EmitEvents(events)
+	}
+	return nil
 }
 
 // dispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
