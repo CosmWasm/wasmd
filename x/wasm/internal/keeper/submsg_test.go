@@ -121,6 +121,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	fundedDenom := "funds"
 	fundedAmount := 1_000_000
+	largeGasLimit := uint64(500_000)
 
 	// prep - create one chain and upload the code
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
@@ -148,6 +149,20 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
+	invalidBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
+		return wasmvmtypes.CosmosMsg{
+			Bank: &wasmvmtypes.BankMsg{
+				Send: &wasmvmtypes.SendMsg{
+					ToAddress: emptyAccount,
+					Amount: []wasmvmtypes.Coin{{
+						Denom:  fundedDenom,
+						Amount: strconv.Itoa(fundedAmount * 2),
+					}},
+				},
+			},
+		}
+	}
+
 	assertReturnedEvents := func(expectedEvents int) func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse) {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse) {
 			assert.Len(t, response.Events, expectedEvents)
@@ -169,10 +184,28 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		// if submsg is a success, we make this assertion
 		successAssertions func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse)
 	}{
-		"success": {
+		"send tokens": {
 			id:                5,
 			msg:               validBankSend,
 			successAssertions: assertReturnedEvents(3),
+		},
+		"not enough tokens": {
+			id:          5,
+			msg:         invalidBankSend,
+			subMsgError: true,
+		},
+
+		"send tokens with limit": {
+			id:                5,
+			msg:               validBankSend,
+			successAssertions: assertReturnedEvents(3),
+			gasLimit:          &largeGasLimit,
+		},
+		"not enough tokens with limit": {
+			id:          5,
+			msg:         invalidBankSend,
+			subMsgError: true,
+			gasLimit:    &largeGasLimit,
 		},
 	}
 
