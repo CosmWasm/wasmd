@@ -804,17 +804,18 @@ func (k Keeper) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAdd
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
 	// catch out of gas panic and just charge the entire gas limit
-	defer func(){
-		fmt.Println("Got gas limit defer")
+	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Recovering...")
-			// TODO: check for out of gas, not any panic
-			//ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			err = sdkerrors.Wrap(sdkerrors.ErrorInvalidGasAdjustment, "SubMsg hit gas limit")
-			fmt.Println("Finished recovering...")
+			// if it's not an OutOfGas error, raise it again
+			// FIXME: do I need to do something special to get the proper stack trace here?
+			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+				panic(r)
+			}
+			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
+			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
 		}
 	}()
-	events, data, err = k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
+	events, data, err = k.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
 
 	// make sure we charge the parent what was spent
 	spent := subCtx.GasMeter().GasConsumed()
@@ -834,13 +835,6 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
 		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
 
-		var printLimit uint64
-		if msg.GasLimit != nil {
-			printLimit = *msg.GasLimit
-		}
-		fmt.Printf("GasRemaining: %d / LimitRequested: %d\n", gasRemaining, printLimit)
-		fmt.Printf("Enforcing Limit: %t\n", limitGas)
-
 		var err error
 		var events []sdk.Event
 		var data [][]byte
@@ -849,9 +843,6 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		} else {
 			events, data, err = k.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
 		}
-
-		finalGasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
-		fmt.Printf("Remaining after submsg: %d", finalGasRemaining)
 
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
 		if err == nil {

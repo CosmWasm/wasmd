@@ -127,6 +127,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	// prep - create one chain and upload the code
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(fundedDenom, int64(fundedAmount)))
 	uploader := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, contractStart.Add(contractStart...))
@@ -192,9 +193,25 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
-	assertReturnedEvents := func(expectedEvents int) func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse) {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse) {
-			assert.Len(t, response.Events, expectedEvents)
+	type assertion func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult)
+
+	assertReturnedEvents := func(expectedEvents int) assertion {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
+			assert.Len(t, response.Ok.Events, expectedEvents)
+		}
+	}
+
+	assertGasUsed := func(minGas, maxGas uint64) assertion {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
+			gasUsed := ctx.GasMeter().GasConsumed()
+			assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
+			assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)
+		}
+	}
+
+	assertErrorString := func(shouldContain string) assertion {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
+			assert.Contains(t, response.Err, shouldContain)
 		}
 	}
 
@@ -210,18 +227,20 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		executeError bool
 		// true if we expect submessage to return an error (but execute to return success)
 		subMsgError bool
-		// if submsg is a success, we make this assertion
-		successAssertions func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response *wasmvmtypes.SubcallResponse)
+		// make assertions after dispatch
+		resultAssertions []assertion
 	}{
 		"send tokens": {
-			id:                5,
-			msg:               validBankSend,
-			successAssertions: assertReturnedEvents(3),
+			id:               5,
+			msg:              validBankSend,
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
 		},
 		"not enough tokens": {
 			id:          6,
 			msg:         invalidBankSend,
 			subMsgError: true,
+			// uses less gas than the send tokens (cost of bank transfer)
+			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
 		},
 		"out of gas panic with no gas limit": {
 			id:              7,
@@ -230,22 +249,27 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		},
 
 		"send tokens with limit": {
-			id:                15,
-			msg:               validBankSend,
-			successAssertions: assertReturnedEvents(3),
-			gasLimit:          &subGasLimit,
+			id:       15,
+			msg:      validBankSend,
+			gasLimit: &subGasLimit,
+			// uses same gas as call without limit
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
 		},
 		"not enough tokens with limit": {
 			id:          16,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
+			// uses same gas as call without limit
+			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
 			id:          7,
 			msg:         infiniteLoop,
 			subMsgError: true,
-			gasLimit: &subGasLimit,
+			gasLimit:    &subGasLimit,
+			// uses all the subGasLimit, plus the 50k or so for the main contract
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+51000, subGasLimit+53000), assertErrorString("out of gas")},
 		},
 	}
 
@@ -261,8 +285,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			reflectSend := ReflectHandleMsg{
 				ReflectSubCall: &reflectSubPayload{
 					Msgs: []wasmvmtypes.SubMsg{{
-						ID:  tc.id,
-						Msg: msg,
+						ID:       tc.id,
+						Msg:      msg,
 						GasLimit: tc.gasLimit,
 					}},
 				},
@@ -274,9 +298,10 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			defer func() {
 				if tc.isOutOfGasPanic {
 					r := recover()
-					require.NotNil(t, r, "expected out of gas panic")
-					fmt.Printf("Recover: %#v\n", r)
-					// TODO: ensure proper type
+					require.NotNil(t, r, "expected panic")
+					if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+						t.Fatalf("Expected OutOfGas panic, got: %#v\n", r)
+					}
 				}
 			}()
 			_, err = keeper.Execute(execCtx, contractAddr, creator, reflectSendBz, nil)
@@ -302,11 +327,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				if tc.subMsgError {
 					require.NotEmpty(t, res.Result.Err)
 					require.Nil(t, res.Result.Ok)
-					fmt.Println(res.Result.Err)
 				} else {
 					require.Empty(t, res.Result.Err)
 					require.NotNil(t, res.Result.Ok)
-					tc.successAssertions(t, ctx, contractAddr.String(), empty.String(), res.Result.Ok)
+				}
+
+				for _, assertion := range tc.resultAssertions {
+					assertion(t, execCtx, contractAddr.String(), empty.String(), res.Result)
 				}
 
 			}
