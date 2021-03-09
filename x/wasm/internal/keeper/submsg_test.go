@@ -75,7 +75,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
 	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
 
-	// TODO: query the reflect state to ensure the result was stored
+	// query the reflect state to ensure the result was stored
 	query := ReflectQueryMsg{
 		SubCallResult: &SubCall{ID: 7},
 	}
@@ -372,4 +372,80 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test an error case, where the Encoded doesn't return any sdk.Msg and we trigger(ed) a null pointer exception.
+// This occurs with the IBC encoder. Test this.
+func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
+	// fake out the bank handle to return success with no data
+	nilEncoder := func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error) {
+		return nil, nil
+	}
+	customEncoders := &MessageEncoders{
+		Bank: nilEncoder,
+	}
+
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, customEncoders, nil)
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	_, _, fred := keyPubAddr()
+
+	// upload code
+	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keeper.Create(ctx, creator, reflectCode, "", "", nil)
+	require.NoError(t, err)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// creator can send contract's tokens to fred (using SendMsg)
+	msg := wasmvmtypes.CosmosMsg{
+		Bank: &wasmvmtypes.BankMsg{
+			Send: &wasmvmtypes.SendMsg{
+				ToAddress: fred.String(),
+				Amount: []wasmvmtypes.Coin{{
+					Denom:  "denom",
+					Amount: "15000",
+				}},
+			},
+		},
+	}
+	reflectSend := ReflectHandleMsg{
+		ReflectSubCall: &reflectSubPayload{
+			Msgs: []wasmvmtypes.SubMsg{{
+				ID:  7,
+				Msg: msg,
+			}},
+		},
+	}
+	reflectSendBz, err := json.Marshal(reflectSend)
+	require.NoError(t, err)
+	_, err = keeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+	require.NoError(t, err)
+
+	// query the reflect state to ensure the result was stored
+	query := ReflectQueryMsg{
+		SubCallResult: &SubCall{ID: 7},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+	queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
+	require.NoError(t, err)
+
+	var res wasmvmtypes.Reply
+	err = json.Unmarshal(queryRes, &res)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(7), res.ID)
+	assert.Empty(t, res.Result.Err)
+	require.NotNil(t, res.Result.Ok)
+	sub := res.Result.Ok
+	assert.Empty(t, sub.Data)
+	require.Len(t, sub.Events, 0)
 }
