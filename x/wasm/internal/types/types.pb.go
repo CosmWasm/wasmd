@@ -212,7 +212,7 @@ var xxx_messageInfo_Params proto.InternalMessageInfo
 
 // CodeInfo is data for the uploaded contract WASM code
 type CodeInfo struct {
-	// CodeHash is the unique CodeID
+	// CodeHash is the unique identifier created by wasmvm
 	CodeHash []byte `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
 	// Creator address who initially stored the code
 	Creator string `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`

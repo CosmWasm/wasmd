@@ -85,3 +85,29 @@ message ClearAdminProposal {
     // Contract is the address of the smart contract
     string contract = 3;
 }
+
+// PinCodesProposal gov proposal content type to pin a set of code ids in the wasmvm cache.
+message PinCodesProposal {
+    // Title is a short summary
+    string title = 1 [(gogoproto.moretags) = "yaml:\"title\""];
+    // Description is a human readable text
+    string description = 2 [(gogoproto.moretags) = "yaml:\"description\""];
+    // CodeIDs references the new WASM codes
+    repeated uint64 code_ids = 3 [
+        (gogoproto.customname) = "CodeIDs",
+        (gogoproto.moretags) = "yaml:\"code_ids\""
+    ];
+}
+
+// UnpinCodesProposal gov proposal content type to unpin a set of code ids in the wasmvm cache.
+message UnpinCodesProposal {
+    // Title is a short summary
+    string title = 1 [(gogoproto.moretags) = "yaml:\"title\""];
+    // Description is a human readable text
+    string description = 2 [(gogoproto.moretags) = "yaml:\"description\""];
+    // CodeIDs references the WASM codes
+    repeated uint64 code_ids = 3 [
+        (gogoproto.customname) = "CodeIDs",
+        (gogoproto.moretags) = "yaml:\"code_ids\""
+    ];
+}

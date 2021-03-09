@@ -57,4 +57,10 @@ var (
 
 	// ErrUnsupportedForContract error when a feature is used that is not supported for/ by this contract
 	ErrUnsupportedForContract = sdkErrors.Register(DefaultCodespace, 17, "unsupported for this contract")
+
+	// ErrPinContractFailed error for pinning contract failures
+	ErrPinContractFailed = sdkErrors.Register(DefaultCodespace, 18, "pinning contract failed")
+
+	// ErrUnpinContractFailed error for unpinning contract failures
+	ErrUnpinContractFailed = sdkErrors.Register(DefaultCodespace, 19, "unpinning contract failed")
 )

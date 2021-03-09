@@ -27,6 +27,11 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		if code.CodeID > maxCodeID {
 			maxCodeID = code.CodeID
 		}
+		if code.Pinned {
+			if err := keeper.PinCode(ctx, code.CodeID); err != nil {
+				return nil, sdkerrors.Wrapf(err, "contract number %d", i)
+			}
+		}
 	}
 
 	var maxContractID int
@@ -88,6 +93,7 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			CodeID:    codeID,
 			CodeInfo:  info,
 			CodeBytes: bytecode,
+			Pinned:    keeper.IsPinnedCode(ctx, codeID),
 		})
 		return false
 	})
@@ -104,7 +110,6 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 		}
 		// redact contract info
 		contract.Created = nil
-
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr.String(),
 			ContractInfo:    contract,

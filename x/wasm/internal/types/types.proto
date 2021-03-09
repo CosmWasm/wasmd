@@ -44,7 +44,7 @@ message Params {
 
 // CodeInfo is data for the uploaded contract WASM code
 message CodeInfo {
-    // CodeHash is the unique CodeID
+    // CodeHash is the unique identifier created by wasmvm
     bytes code_hash = 1;
     // Creator address who initially stored the code
     string creator = 2;

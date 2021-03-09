@@ -21,12 +21,6 @@ const (
 	RouterKey = ModuleName
 )
 
-const ( // event attributes
-	AttributeKeyContract = "contract_address"
-	AttributeKeyCodeID   = "code_id"
-	AttributeKeySigner   = "signer"
-)
-
 // nolint
 var (
 	CodeKeyPrefix                                  = []byte{0x01}
@@ -35,6 +29,7 @@ var (
 	SequenceKeyPrefix                              = []byte{0x04}
 	ContractCodeHistoryElementPrefix               = []byte{0x05}
 	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x06}
+	PinnedCodeIndexPrefix                          = []byte{0x07}
 
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
@@ -95,4 +90,18 @@ func GetContractCodeHistoryElementPrefix(contractAddr sdk.AccAddress) []byte {
 	copy(r[0:], ContractCodeHistoryElementPrefix)
 	copy(r[prefixLen:], contractAddr)
 	return r
+}
+
+// GetPinnedCodeIndexPrefix returns the key prefix for a code id pinned into the wasmvm cache
+func GetPinnedCodeIndexPrefix(codeID uint64) []byte {
+	prefixLen := len(PinnedCodeIndexPrefix)
+	r := make([]byte, prefixLen+8)
+	copy(r[0:], PinnedCodeIndexPrefix)
+	copy(r[prefixLen:], sdk.Uint64ToBigEndian(codeID))
+	return r
+}
+
+// ParsePinnedCodeIndex converts the serialized code ID back.
+func ParsePinnedCodeIndex(s []byte) uint64 {
+	return sdk.BigEndianToUint64(s)
 }

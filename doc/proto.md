@@ -18,7 +18,9 @@
     - [ClearAdminProposal](#cosmwasm.wasm.v1beta1.ClearAdminProposal)
     - [InstantiateContractProposal](#cosmwasm.wasm.v1beta1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1beta1.MigrateContractProposal)
+    - [PinCodesProposal](#cosmwasm.wasm.v1beta1.PinCodesProposal)
     - [StoreCodeProposal](#cosmwasm.wasm.v1beta1.StoreCodeProposal)
+    - [UnpinCodesProposal](#cosmwasm.wasm.v1beta1.UnpinCodesProposal)
     - [UpdateAdminProposal](#cosmwasm.wasm.v1beta1.UpdateAdminProposal)
   
 - [x/wasm/internal/types/query.proto](#x/wasm/internal/types/query.proto)
@@ -94,6 +96,7 @@ Code struct encompasses CodeInfo and CodeBytes
 | code_id | [uint64](#uint64) |  |  |
 | code_info | [CodeInfo](#cosmwasm.wasm.v1beta1.CodeInfo) |  |  |
 | code_bytes | [bytes](#bytes) |  |  |
+| pinned | [bool](#bool) |  | Pinned to wasmvm cache |
 
 
 
@@ -294,6 +297,23 @@ MigrateContractProposal gov proposal content type to migrate a contract.
 
 
 
+<a name="cosmwasm.wasm.v1beta1.PinCodesProposal"></a>
+
+### PinCodesProposal
+PinCodesProposal gov proposal content type to pin a set of code ids in the wasmvm cache.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| title | [string](#string) |  | Title is a short summary |
+| description | [string](#string) |  | Description is a human readable text |
+| code_ids | [uint64](#uint64) | repeated | CodeIDs references the new WASM codes |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1beta1.StoreCodeProposal"></a>
 
 ### StoreCodeProposal
@@ -309,6 +329,23 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | source | [string](#string) |  | Source is a valid absolute HTTPS URI to the contract&#39;s source code, optional |
 | builder | [string](#string) |  | Builder is a valid docker image name with tag, optional |
 | instantiate_permission | [AccessConfig](#cosmwasm.wasm.v1beta1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1beta1.UnpinCodesProposal"></a>
+
+### UnpinCodesProposal
+UnpinCodesProposal gov proposal content type to unpin a set of code ids in the wasmvm cache.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| title | [string](#string) |  | Title is a short summary |
+| description | [string](#string) |  | Description is a human readable text |
+| code_ids | [uint64](#uint64) | repeated | CodeIDs references the WASM codes |
 
 
 
@@ -943,7 +980,7 @@ CodeInfo is data for the uploaded contract WASM code
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| code_hash | [bytes](#bytes) |  | CodeHash is the unique CodeID |
+| code_hash | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm |
 | creator | [string](#string) |  | Creator address who initially stored the code |
 | source | [string](#string) |  | Source is a valid absolute HTTPS URI to the contract&#39;s source code, optional |
 | builder | [string](#string) |  | Builder is a valid docker image name with tag, optional |

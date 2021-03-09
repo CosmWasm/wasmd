@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,8 +11,18 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
+// governing contains a subset of the wasm keeper used by gov processes
+type governing interface {
+	create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error)
+	instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error)
+	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error)
+	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error
+	PinCode(ctx sdk.Context, codeID uint64) error
+	UnpinCode(ctx sdk.Context, codeID uint64) error
+}
+
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
-func NewWasmProposalHandler(k Keeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+func NewWasmProposalHandler(k governing, enabledProposalTypes []types.ProposalType) govtypes.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
@@ -33,13 +45,17 @@ func NewWasmProposalHandler(k Keeper, enabledProposalTypes []types.ProposalType)
 			return handleUpdateAdminProposal(ctx, k, *c)
 		case *types.ClearAdminProposal:
 			return handleClearAdminProposal(ctx, k, *c)
+		case *types.PinCodesProposal:
+			return handlePinCodesProposal(ctx, k, *c)
+		case *types.UnpinCodesProposal:
+			return handleUnpinCodesProposal(ctx, k, *c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
 	}
 }
 
-func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposal) error {
+func handleStoreCodeProposal(ctx sdk.Context, k governing, p types.StoreCodeProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -62,7 +78,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k Keeper, p types.StoreCodeProposa
 	return nil
 }
 
-func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateContractProposal) error {
+func handleInstantiateProposal(ctx sdk.Context, k governing, p types.InstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -90,7 +106,7 @@ func handleInstantiateProposal(ctx sdk.Context, k Keeper, p types.InstantiateCon
 	return nil
 }
 
-func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractProposal) error {
+func handleMigrateProposal(ctx sdk.Context, k governing, p types.MigrateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -125,7 +141,7 @@ func handleMigrateProposal(ctx sdk.Context, k Keeper, p types.MigrateContractPro
 	return nil
 }
 
-func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminProposal) error {
+func handleUpdateAdminProposal(ctx sdk.Context, k governing, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -151,7 +167,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k Keeper, p types.UpdateAdminPro
 	return nil
 }
 
-func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminProposal) error {
+func handleClearAdminProposal(ctx sdk.Context, k governing, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -169,5 +185,51 @@ func handleClearAdminProposal(ctx sdk.Context, k Keeper, p types.ClearAdminPropo
 		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
+	return nil
+}
+
+func handlePinCodesProposal(ctx sdk.Context, k governing, p types.PinCodesProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, v := range p.CodeIDs {
+		if err := k.PinCode(ctx, v); err != nil {
+			return sdkerrors.Wrapf(err, "code id: %d", v)
+		}
+	}
+	s := make([]string, len(p.CodeIDs))
+	for i, v := range p.CodeIDs {
+		s[i] = strconv.FormatUint(v, 10)
+	}
+	ourEvent := sdk.NewEvent(
+		types.EventTypePinCode,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyCodeIDs, strings.Join(s, ",")),
+	)
+	ctx.EventManager().EmitEvent(ourEvent)
+
+	return nil
+}
+
+func handleUnpinCodesProposal(ctx sdk.Context, k governing, p types.UnpinCodesProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, v := range p.CodeIDs {
+		if err := k.UnpinCode(ctx, v); err != nil {
+			return sdkerrors.Wrapf(err, "code id: %d", v)
+		}
+	}
+	s := make([]string, len(p.CodeIDs))
+	for i, v := range p.CodeIDs {
+		s[i] = strconv.FormatUint(v, 10)
+	}
+	ourEvent := sdk.NewEvent(
+		types.EventTypeUnpinCode,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyCodeIDs, strings.Join(s, ",")),
+	)
+	ctx.EventManager().EmitEvent(ourEvent)
+
 	return nil
 }

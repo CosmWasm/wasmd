@@ -51,15 +51,21 @@ func TestGenesisExportImport(t *testing.T) {
 			contract    types.ContractInfo
 			stateModels []types.Model
 			history     []types.ContractCodeHistoryEntry
+			pinned      bool
 		)
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
 		f.NilChance(0).Fuzz(&history)
+		f.Fuzz(&pinned)
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
 		codeID, err := srcKeeper.Create(srcCtx, creatorAddr, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
+		if pinned {
+			srcKeeper.PinCode(srcCtx, codeID)
+		}
+
 		contract.CodeID = codeID
 		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
 		srcKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
@@ -217,6 +223,24 @@ func TestGenesisInit(t *testing.T) {
 			},
 			Params: types.DefaultParams(),
 		}},
+		"codes with same checksum can be pinned": {
+			src: types.GenesisState{
+				Codes: []types.Code{
+					{
+						CodeID:    firstCodeID,
+						CodeInfo:  myCodeInfo,
+						CodeBytes: wasmCode,
+						Pinned:    true,
+					},
+					{
+						CodeID:    2,
+						CodeInfo:  myCodeInfo,
+						CodeBytes: wasmCode,
+						Pinned:    true,
+					},
+				},
+				Params: types.DefaultParams(),
+			}},
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
@@ -405,6 +429,9 @@ func TestGenesisInit(t *testing.T) {
 			spec.msgHandlerMock.verifyCalls(t)
 			spec.stakingMock.verifyCalls(t)
 			assert.Equal(t, spec.stakingMock.validatorUpdate, gotValidatorSet)
+			for _, c := range spec.src.Codes {
+				assert.Equal(t, c.Pinned, keeper.IsPinnedCode(ctx, c.CodeID))
+			}
 		})
 	}
 }
