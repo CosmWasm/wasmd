@@ -258,16 +258,17 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		resultAssertions []assertion
 	}{
 		"send tokens": {
-			submsgID:         5,
-			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
+			submsgID: 5,
+			msg:      validBankSend,
+			// note we charge another 40k for the reply call
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(123000, 125000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(97000, 99000), assertErrorString("insufficient funds")},
 		},
 		"out of gas panic with no gas limit": {
 			submsgID:        7,
@@ -280,7 +281,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(123000, 125000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -288,15 +289,15 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(97000, 99000), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,
 			msg:         infiniteLoop,
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
-			// uses all the subGasLimit, plus the 50k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+51000, subGasLimit+53000), assertErrorString("out of gas")},
+			// uses all the subGasLimit, plus the 92k or so for the main contract
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+92000, subGasLimit+94000), assertErrorString("out of gas")},
 		},
 
 		"instantiate contract gets address in data and events": {

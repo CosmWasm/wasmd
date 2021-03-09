@@ -482,12 +482,14 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 // reply is only called from keeper internal functions (dispatchSubmessages) after processing the submessage
 // it
 func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-	// we can assume this is still in cache and not charge again for returning the reply. correct?
-	//ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: reply")
-
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
+	}
+
+	// current thought is to charge gas like a fresh run, we can revisit whether to give it a discount later
+	if !k.IsPinnedCode(ctx, contractInfo.CodeID) {
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: reply")
 	}
 
 	env := types.NewEnv(ctx, contractAddress)
