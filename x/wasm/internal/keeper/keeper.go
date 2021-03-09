@@ -853,11 +853,16 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 
 		var result wasmvmtypes.SubcallResult
 		if err == nil {
+			// just take the first one for now if there are multiple sub-sdk messages
+			// and safely return nothing if no data
+			var responseData []byte
+			if len(data) > 0 {
+				responseData = data[0]
+			}
 			result = wasmvmtypes.SubcallResult{
 				Ok: &wasmvmtypes.SubcallResponse{
 					Events: sdkEventsToWasmVmEvents(events),
-					// just take the first one for now if there are multiple sub-sdk messages
-					Data: data[0],
+					Data:   responseData,
 				},
 			}
 		} else {
