@@ -16,7 +16,11 @@ type ChannelKeeper interface {
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
 	SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error
 	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
+	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
+	IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
 }
+
+type IdentifiedChannel = channeltypes.IdentifiedChannel
 
 // ClientKeeper defines the expected IBC client keeper
 type ClientKeeper interface {

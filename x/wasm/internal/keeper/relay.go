@@ -23,10 +23,7 @@ func (k Keeper) OnOpenChannel(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	gasUsed, execErr := k.wasmer.IBCChannelOpen(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
@@ -56,10 +53,7 @@ func (k Keeper) OnConnectChannel(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.IBCChannelConnect(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
@@ -95,10 +89,7 @@ func (k Keeper) OnCloseChannel(
 	}
 
 	params := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.IBCChannelClose(codeInfo.CodeHash, params, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
@@ -134,10 +125,7 @@ func (k Keeper) OnRecvPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.IBCPacketReceive(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
@@ -174,10 +162,7 @@ func (k Keeper) OnAckPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.IBCPacketAck(codeInfo.CodeHash, env, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
@@ -210,10 +195,7 @@ func (k Keeper) OnTimeoutPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := QueryHandler{
-		Ctx:     ctx,
-		Plugins: k.queryPlugins,
-	}
+	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
 
 	gas := gasForContract(ctx)
 	res, gasUsed, execErr := k.wasmer.IBCPacketTimeout(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
