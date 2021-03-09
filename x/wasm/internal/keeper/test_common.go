@@ -101,6 +101,9 @@ func MakeEncodingConfig(_ *testing.T) params2.EncodingConfig {
 
 	ModuleBasics.RegisterLegacyAminoCodec(amino)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	types.RegisterInterfaces(interfaceRegistry)
+	types.RegisterLegacyAminoCodec(amino)
+
 	return params2.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Marshaler:         marshaler,

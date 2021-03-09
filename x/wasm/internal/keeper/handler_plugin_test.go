@@ -3,7 +3,9 @@ package keeper
 import (
 	"encoding/json"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
@@ -42,6 +44,17 @@ func TestEncoding(t *testing.T) {
 		},
 	}
 	bankMsgBin, err := proto.Marshal(bankMsg)
+	require.NoError(t, err)
+
+	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
+	require.NoError(t, err)
+
+	proposalMsg := &govtypes.MsgSubmitProposal{
+		Proposer:       addr1.String(),
+		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
+		Content:        content,
+	}
+	proposalMsgBin, err := proto.Marshal(proposalMsg)
 	require.NoError(t, err)
 
 	cases := map[string]struct {
@@ -308,7 +321,6 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
-		// TODO: alpe? can you add an example with sub-interfaces (where the UnpackInterfaces call would be needed)
 		"stargate encoded bank msg": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
@@ -318,6 +330,16 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{bankMsg},
+		},
+		"stargate encoded msg with any type": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Stargate: &wasmvmtypes.StargateMsg{
+					TypeURL: "/cosmos.gov.v1beta1.MsgSubmitProposal",
+					Value:   proposalMsgBin,
+				},
+			},
+			output: []sdk.Msg{proposalMsg},
 		},
 		"stargate encoded invalid typeUrl": {
 			sender: addr2,
