@@ -243,7 +243,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		id uint64
+		submsgID uint64
 		// we will generate message from the
 		msg      func(contract, emptyAccount string) wasmvmtypes.CosmosMsg
 		gasLimit *uint64
@@ -258,32 +258,32 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		resultAssertions []assertion
 	}{
 		"send tokens": {
-			id:               5,
+			submsgID:         5,
 			msg:              validBankSend,
 			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
 		},
 		"not enough tokens": {
-			id:          6,
+			submsgID:    6,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
 			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
 		},
 		"out of gas panic with no gas limit": {
-			id:              7,
+			submsgID:        7,
 			msg:             infiniteLoop,
 			isOutOfGasPanic: true,
 		},
 
 		"send tokens with limit": {
-			id:       15,
+			submsgID: 15,
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
 			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(81000, 83000)},
 		},
 		"not enough tokens with limit": {
-			id:          16,
+			submsgID:    16,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
@@ -291,7 +291,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			resultAssertions: []assertion{assertGasUsed(55000, 57000), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
-			id:          17,
+			submsgID:    17,
 			msg:         infiniteLoop,
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
@@ -300,7 +300,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		},
 
 		"instantiate contract gets address in data and events": {
-			id:               21,
+			submsgID:         21,
 			msg:              instantiateContract,
 			resultAssertions: []assertion{assertReturnedEvents(1), assertGotContractAddr},
 		},
@@ -318,7 +318,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			reflectSend := ReflectHandleMsg{
 				ReflectSubCall: &reflectSubPayload{
 					Msgs: []wasmvmtypes.SubMsg{{
-						ID:       tc.id,
+						ID:       tc.submsgID,
 						Msg:      msg,
 						GasLimit: tc.gasLimit,
 					}},
@@ -346,7 +346,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 				// query the reply
 				query := ReflectQueryMsg{
-					SubCallResult: &SubCall{ID: tc.id},
+					SubCallResult: &SubCall{ID: tc.submsgID},
 				}
 				queryBz, err := json.Marshal(query)
 				require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				var res wasmvmtypes.Reply
 				err = json.Unmarshal(queryRes, &res)
 				require.NoError(t, err)
-				assert.Equal(t, tc.id, res.ID)
+				assert.Equal(t, tc.submsgID, res.ID)
 
 				if tc.subMsgError {
 					require.NotEmpty(t, res.Result.Err)

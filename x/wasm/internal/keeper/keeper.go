@@ -221,7 +221,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
 	if !k.IsPinnedCode(ctx, codeID) {
-		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: instanitate")
+		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: instantiate")
 	}
 
 	// create contract address
@@ -799,7 +799,6 @@ func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, i
 }
 
 func (k Keeper) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
-	// FIXME: do I need to wrap the BlockGasMeter in the same way?
 	limitedMeter := sdk.NewGasMeter(gasLimit)
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
@@ -807,8 +806,9 @@ func (k Keeper) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAdd
 	defer func() {
 		if r := recover(); r != nil {
 			// if it's not an OutOfGas error, raise it again
-			// FIXME: do I need to do something special to get the proper stack trace here?
 			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
+				k.Logger(ctx).Info("SubMsg rethrowing panic: %#v", r)
 				panic(r)
 			}
 			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
