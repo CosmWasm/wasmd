@@ -173,9 +173,6 @@ func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Co
 			}
 			return json.Marshal(res)
 		}
-		// I just discovered we cannot query by port (how odd since they store it like this)
-		// Anyway, I will allow Port as an optional filter
-		// TODO: let's revisit this query (if needed, if we should change it)
 		if request.ListChannels != nil {
 			portID := request.ListChannels.PortID
 			var channels wasmvmtypes.IBCEndpoints
@@ -196,7 +193,6 @@ func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Co
 		}
 		if request.Channel != nil {
 			channelID := request.Channel.ChannelID
-			_ = channelID
 			portID := request.Channel.PortID
 			if portID == "" {
 				contractInfo := wasm.GetContractInfo(ctx, caller)
@@ -216,7 +212,7 @@ func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Co
 					},
 					Order:               got.Ordering.String(),
 					Version:             got.Version,
-					CounterpartyVersion: got.Version, // FIXME: maybe we change the type? This data is not stored AFAIK
+					CounterpartyVersion: "",
 					ConnectionID:        got.ConnectionHops[0],
 				}
 			}
