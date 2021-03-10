@@ -53,12 +53,17 @@ type messenger interface {
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
+type coinTransferrer interface {
+	// TransferCoins sends the coin amounts from the source to the destination with rules applied.
+	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+}
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey         sdk.StoreKey
 	cdc              codec.Marshaler
 	accountKeeper    types.AccountKeeper
-	bankKeeper       types.BankKeeper
+	bank             coinTransferrer
 	ChannelKeeper    types.ChannelKeeper
 	portKeeper       types.PortKeeper
 	capabilityKeeper types.CapabilityKeeper
@@ -108,7 +113,7 @@ func NewKeeper(
 		cdc:              cdc,
 		wasmer:           wasmer,
 		accountKeeper:    accountKeeper,
-		bankKeeper:       bankKeeper,
+		bank:             NewBankCoinTransferrer(bankKeeper),
 		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
@@ -230,13 +235,10 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// deposit initial contract funds
 	if !deposit.IsZero() {
-		if k.bankKeeper.BlockedAddr(creator) {
-			return nil, nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "blocked address can not be used")
+		if err := k.bank.TransferCoins(ctx, creator, contractAddress, deposit); err != nil {
+			return nil, nil, err
 		}
-		sdkerr := k.bankKeeper.SendCoins(ctx, creator, contractAddress, deposit)
-		if sdkerr != nil {
-			return nil, nil, sdkerr
-		}
+
 	} else {
 		// create an empty account (so we don't have issues later)
 		// TODO: can we remove this?
@@ -325,13 +327,8 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 	// add more funds
 	if !coins.IsZero() {
-		if k.bankKeeper.BlockedAddr(caller) {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "blocked address can not be used")
-		}
-
-		sdkerr := k.bankKeeper.SendCoins(ctx, caller, contractAddress, coins)
-		if sdkerr != nil {
-			return nil, sdkerr
+		if err := k.bank.TransferCoins(ctx, caller, contractAddress, coins); err != nil {
+			return nil, err
 		}
 	}
 
@@ -1011,18 +1008,18 @@ func addrFromUint64(id uint64) sdk.AccAddress {
 }
 
 // MultipliedGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
-type MultipiedGasMeter struct {
+type MultipliedGasMeter struct {
 	originalMeter sdk.GasMeter
 }
 
-var _ wasmvm.GasMeter = MultipiedGasMeter{}
+var _ wasmvm.GasMeter = MultipliedGasMeter{}
 
-func (m MultipiedGasMeter) GasConsumed() sdk.Gas {
+func (m MultipliedGasMeter) GasConsumed() sdk.Gas {
 	return m.originalMeter.GasConsumed() * GasMultiplier
 }
 
-func gasMeter(ctx sdk.Context) MultipiedGasMeter {
-	return MultipiedGasMeter{
+func gasMeter(ctx sdk.Context) MultipliedGasMeter {
+	return MultipliedGasMeter{
 		originalMeter: ctx.GasMeter(),
 	}
 }
@@ -1030,4 +1027,32 @@ func gasMeter(ctx sdk.Context) MultipiedGasMeter {
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// CoinTransferrer replicates the cosmos-sdk behaviour as in
+// https://github.com/cosmos/cosmos-sdk/blob/v0.41.4/x/bank/keeper/msg_server.go#L26
+type CoinTransferrer struct {
+	keeper types.BankKeeper
+}
+
+func NewBankCoinTransferrer(keeper types.BankKeeper) CoinTransferrer {
+	return CoinTransferrer{
+		keeper: keeper,
+	}
+}
+
+// TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
+// is not in the blocked address list.
+func (c CoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
+		return err
+	}
+	if c.keeper.BlockedAddr(fromAddr) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "blocked address can not be used")
+	}
+	sdkerr := c.keeper.SendCoins(ctx, fromAddr, toAddr, amt)
+	if sdkerr != nil {
+		return sdkerr
+	}
+	return nil
 }

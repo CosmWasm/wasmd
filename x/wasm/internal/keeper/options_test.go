@@ -28,6 +28,12 @@ func TestConstructorOptions(t *testing.T) {
 				assert.IsType(t, k.messenger, &wasmtesting.MockMessageHandler{})
 			},
 		},
+		"coin transferrer": {
+			srcOpt: WithCoinTransferrer(&wasmtesting.MockCoinTransferrer{}),
+			verify: func(k Keeper) {
+				assert.IsType(t, k.bank, &wasmtesting.MockCoinTransferrer{})
+			},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
