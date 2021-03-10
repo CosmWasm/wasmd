@@ -125,11 +125,7 @@ func TestOnConnectChannel(t *testing.T) {
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			overwriteMessenger: &wasmtesting.MockMessageHandler{
-				DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-					return errors.New("test, ignore")
-				},
-			},
+			overwriteMessenger:    wasmtesting.NewErroringMessageHandler(),
 			expErr:                true,
 			expContractEventAttrs: 1,
 		},
@@ -239,11 +235,7 @@ func TestOnCloseChannel(t *testing.T) {
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			overwriteMessenger: &wasmtesting.MockMessageHandler{
-				DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-					return errors.New("test, ignore")
-				},
-			},
+			overwriteMessenger:    wasmtesting.NewErroringMessageHandler(),
 			expErr:                true,
 			expContractEventAttrs: 1,
 		},
@@ -364,11 +356,7 @@ func TestOnRecvPacket(t *testing.T) {
 				Messages:        []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			overwriteMessenger: &wasmtesting.MockMessageHandler{
-				DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-					return errors.New("test, ignore")
-				},
-			},
+			overwriteMessenger:    wasmtesting.NewErroringMessageHandler(),
 			expErr:                true,
 			expContractEventAttrs: 1,
 		},
@@ -482,11 +470,7 @@ func TestOnAckPacket(t *testing.T) {
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			overwriteMessenger: &wasmtesting.MockMessageHandler{
-				DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-					return errors.New("test, ignore")
-				},
-			},
+			overwriteMessenger:    wasmtesting.NewErroringMessageHandler(),
 			expErr:                true,
 			expContractEventAttrs: 1,
 		},
@@ -597,11 +581,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
-			overwriteMessenger: &wasmtesting.MockMessageHandler{
-				DispatchFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msgs ...wasmvmtypes.CosmosMsg) error {
-					return errors.New("test, ignore")
-				},
-			},
+			overwriteMessenger:    wasmtesting.NewErroringMessageHandler(),
 			expErr:                true,
 			expContractEventAttrs: 1,
 		},
