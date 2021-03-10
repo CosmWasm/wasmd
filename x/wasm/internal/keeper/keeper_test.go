@@ -7,6 +7,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -515,7 +516,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x12121), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x12963), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -543,10 +544,11 @@ func TestExecuteWithDeposit(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		srcActor    sdk.AccAddress
-		beneficiary sdk.AccAddress
-		expError    bool
-		fundAddr    bool
+		srcActor      sdk.AccAddress
+		beneficiary   sdk.AccAddress
+		newBankParams *banktypes.Params
+		expError      bool
+		fundAddr      bool
 	}{
 		"actor with funds": {
 			srcActor:    bob,
@@ -564,6 +566,23 @@ func TestExecuteWithDeposit(t *testing.T) {
 			beneficiary: fred,
 			expError:    true,
 		},
+		"coin transfer with all transfers disabled": {
+			srcActor:      bob,
+			fundAddr:      true,
+			beneficiary:   fred,
+			newBankParams: &banktypes.Params{DefaultSendEnabled: false},
+			expError:      true,
+		},
+		"coin transfer with transfer denom disabled": {
+			srcActor:    bob,
+			fundAddr:    true,
+			beneficiary: fred,
+			newBankParams: &banktypes.Params{
+				DefaultSendEnabled: true,
+				SendEnabled:        []*banktypes.SendEnabled{{Denom: "denom", Enabled: false}},
+			},
+			expError: true,
+		},
 		"blocked address as beneficiary": {
 			srcActor:    bob,
 			fundAddr:    true,
@@ -575,7 +594,9 @@ func TestExecuteWithDeposit(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.WasmKeeper
-
+			if spec.newBankParams != nil {
+				bankKeeper.SetParams(ctx, *spec.newBankParams)
+			}
 			if spec.fundAddr {
 				fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
 			}

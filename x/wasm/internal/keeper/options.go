@@ -17,8 +17,15 @@ func WithWasmEngine(x types.WasmerEngine) Option {
 }
 
 // WithMessageHandler is an optional constructor parameter to set a custom message handler.
-func WithMessageHandler(n messenger) Option {
+func WithMessageHandler(x messenger) Option {
 	return optsFn(func(k *Keeper) {
-		k.messenger = n
+		k.messenger = x
+	})
+}
+
+// WithCoinTransferrer is an optional constructor parameter to set a custom coin transferrer
+func WithCoinTransferrer(x coinTransferrer) Option {
+	return optsFn(func(k *Keeper) {
+		k.bank = x
 	})
 }
