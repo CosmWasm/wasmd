@@ -15,23 +15,16 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.13.0/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep 39dc389cc6b556280cbeaebeda2b62cf884993137b83f90d1398ac47d09d3900
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.14.0-beta1/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep b69cf9ffbdfb2f1bd1e6f730ecee1eb0d06a1473840a24709aec7a7df5907d45
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
-# we also (temporarily?) build the testnet binaries here
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-coral
-RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build-gaiaflex
 
 # --------------------------------------------------------
 FROM alpine:3.12
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
-
-# testnet
-COPY --from=go-builder /code/build/corald /usr/bin/corald
-COPY --from=go-builder /code/build/gaiaflexd /usr/bin/gaiaflexd
 
 COPY docker/* /opt/
 RUN chmod +x /opt/*.sh

@@ -173,12 +173,21 @@ func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Co
 		}
 		if request.ListChannels != nil {
 			portID := request.ListChannels.PortID
-			var channels wasmvmtypes.IBCEndpoints
+			channels := make(wasmvmtypes.IBCChannels, 0)
 			channelKeeper.IterateChannels(ctx, func(ch channeltypes.IdentifiedChannel) bool {
 				if portID == "" || portID == ch.PortId {
-					newChan := wasmvmtypes.IBCEndpoint{
-						PortID:    ch.PortId,
-						ChannelID: ch.ChannelId,
+					newChan := wasmvmtypes.IBCChannel{
+						Endpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    ch.PortId,
+							ChannelID: ch.ChannelId,
+						},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    ch.Counterparty.PortId,
+							ChannelID: ch.Counterparty.ChannelId,
+						},
+						Order:        ch.Ordering.String(),
+						Version:      ch.Version,
+						ConnectionID: ch.ConnectionHops[0],
 					}
 					channels = append(channels, newChan)
 				}
