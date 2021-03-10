@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -91,7 +89,7 @@ type QueryPlugins struct {
 	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank bankkeeper.ViewKeeper, staking stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, channelKeeper types.ChannelKeeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
+func DefaultQueryPlugins(bank types.BankViewKeeper, staking types.StakingKeeper, distKeeper types.DistributionKeeper, channelKeeper types.ChannelKeeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
@@ -128,7 +126,7 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	return e
 }
 
-func BankQuerier(bankKeeper bankkeeper.ViewKeeper) func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error) {
+func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error) {
 		if request.AllBalances != nil {
 			addr, err := sdk.AccAddressFromBech32(request.AllBalances.Address)
@@ -176,7 +174,7 @@ func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Co
 		if request.ListChannels != nil {
 			portID := request.ListChannels.PortID
 			var channels wasmvmtypes.IBCEndpoints
-			channelKeeper.IterateChannels(ctx, func(ch types.IdentifiedChannel) bool {
+			channelKeeper.IterateChannels(ctx, func(ch channeltypes.IdentifiedChannel) bool {
 				if portID == "" || portID == ch.PortId {
 					newChan := wasmvmtypes.IBCEndpoint{
 						PortID:    ch.PortId,
@@ -243,7 +241,7 @@ func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request 
 	}
 }
 
-func StakingQuerier(keeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper) func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
+func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKeeper) func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
 		if request.BondedDenom != nil {
 			denom := keeper.BondDenom(ctx)
@@ -308,7 +306,7 @@ func StakingQuerier(keeper stakingkeeper.Keeper, distKeeper distributionkeeper.K
 	}
 }
 
-func sdkToDelegations(ctx sdk.Context, keeper stakingkeeper.Keeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Delegations, error) {
+func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Delegations, error) {
 	result := make([]wasmvmtypes.Delegation, len(delegations))
 	bondDenom := keeper.BondDenom(ctx)
 
@@ -339,7 +337,7 @@ func sdkToDelegations(ctx sdk.Context, keeper stakingkeeper.Keeper, delegations 
 	return result, nil
 }
 
-func sdkToFullDelegation(ctx sdk.Context, keeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, delegation stakingtypes.Delegation) (*wasmvmtypes.FullDelegation, error) {
+func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) (*wasmvmtypes.FullDelegation, error) {
 	delAddr, err := sdk.AccAddressFromBech32(delegation.DelegatorAddress)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "delegator address")
@@ -387,7 +385,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper stakingkeeper.Keeper, distKeepe
 
 // FIXME: simplify this enormously when
 // https://github.com/cosmos/cosmos-sdk/issues/7466 is merged
-func getAccumulatedRewards(ctx sdk.Context, distKeeper distributionkeeper.Keeper, delegation stakingtypes.Delegation) ([]wasmvmtypes.Coin, error) {
+func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) ([]wasmvmtypes.Coin, error) {
 	// Try to get *delegator* reward info!
 	params := distributiontypes.QueryDelegationRewardsRequest{
 		DelegatorAddress: delegation.DelegatorAddress,
