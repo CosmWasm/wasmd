@@ -45,7 +45,11 @@ func TestBlockedAddrs(t *testing.T) {
 	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
 
 	for acc := range maccPerms {
-		require.Equal(t, !allowedReceivingModAcc[acc], gapp.bankKeeper.BlockedAddr(gapp.accountKeeper.GetModuleAddress(acc)))
+		t.Run(acc, func(t *testing.T) {
+			require.True(t, gapp.bankKeeper.BlockedAddr(gapp.accountKeeper.GetModuleAddress(acc)),
+				"ensure that blocked addresses are properly set in bank keeper",
+			)
+		})
 	}
 }
 
