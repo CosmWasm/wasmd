@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"runtime/debug"
 
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
@@ -23,6 +25,9 @@ func NewQuerier(keeper *Keeper) grpcQuerier {
 }
 
 func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
@@ -41,6 +46,9 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 }
 
 func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContractHistoryRequest) (*types.QueryContractHistoryResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
@@ -71,6 +79,9 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 }
 
 func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContractsByCodeRequest) (*types.QueryContractsByCodeResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	if req.CodeId == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
 	}
@@ -103,6 +114,9 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 }
 
 func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllContractStateRequest) (*types.QueryAllContractStateResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
@@ -133,6 +147,9 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 }
 
 func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawContractStateRequest) (*types.QueryRawContractStateResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
@@ -148,6 +165,9 @@ func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 }
 
 func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
@@ -186,6 +206,9 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 }
 
 func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*types.QueryCodeResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	if req.CodeId == 0 {
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
 	}
@@ -203,6 +226,9 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 }
 
 func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*types.QueryCodesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.CodeInfoResponse, 0)
 	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.CodeKeyPrefix)
