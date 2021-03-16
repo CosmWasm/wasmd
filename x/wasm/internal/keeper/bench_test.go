@@ -40,7 +40,7 @@ func BenchmarkExecution(b *testing.B) {
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
 			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			ctx, keepers := createTestInput(b, false, SupportedFeatures, nil, nil, wasmConfig, spec.db())
+			ctx, keepers := createTestInput(b, false, SupportedFeatures, wasmConfig, spec.db())
 			example := InstantiateHackatomExampleContract(b, ctx, keepers)
 			if spec.pinned {
 				require.NoError(b, keepers.WasmKeeper.PinCode(ctx, example.CodeID))

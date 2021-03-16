@@ -63,4 +63,7 @@ var (
 
 	// ErrUnpinContractFailed error for unpinning contract failures
 	ErrUnpinContractFailed = sdkErrors.Register(DefaultCodespace, 19, "unpinning contract failed")
+
+	// ErrUnknownMsg error by a message handler to show that it is not responsible for this message type
+	ErrUnknownMsg = sdkErrors.Register(DefaultCodespace, 20, "unknown message from the contract")
 )

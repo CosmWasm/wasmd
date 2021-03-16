@@ -19,7 +19,7 @@ import (
 )
 
 func TestStoreCodeProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
@@ -60,7 +60,7 @@ func TestStoreCodeProposal(t *testing.T) {
 }
 
 func TestInstantiateProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
@@ -116,7 +116,7 @@ func TestInstantiateProposal(t *testing.T) {
 }
 
 func TestMigrateProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 	wasmKeeper.setParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
@@ -249,7 +249,7 @@ func TestAdminProposals(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+			ctx, keepers := CreateTestInput(t, false, "staking")
 			govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 			wasmKeeper.setParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowNobody,
@@ -279,7 +279,7 @@ func TestAdminProposals(t *testing.T) {
 }
 
 func TestUpdateParamsProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 
 	var (
@@ -351,7 +351,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 }
 
 func TestPinCodesProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
@@ -438,7 +438,7 @@ func TestPinCodesProposal(t *testing.T) {
 	}
 }
 func TestUnpinCodesProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{

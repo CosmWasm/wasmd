@@ -15,7 +15,7 @@ import (
 func TestOnOpenChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -74,7 +74,7 @@ func TestOnOpenChannel(t *testing.T) {
 func TestOnConnectChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -184,7 +184,7 @@ func TestOnConnectChannel(t *testing.T) {
 func TestOnCloseChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -294,7 +294,7 @@ func TestOnCloseChannel(t *testing.T) {
 func TestOnRecvPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -419,7 +419,7 @@ func TestOnRecvPacket(t *testing.T) {
 func TestOnAckPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -530,7 +530,7 @@ func TestOnAckPacket(t *testing.T) {
 func TestOnTimeoutPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {

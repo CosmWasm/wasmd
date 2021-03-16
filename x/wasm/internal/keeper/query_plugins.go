@@ -16,14 +16,14 @@ import (
 
 type QueryHandler struct {
 	Ctx     sdk.Context
-	Plugins QueryPlugins
+	Plugins wasmVMQueryHandler
 	Caller  sdk.AccAddress
 }
 
-func NewQueryHandler(ctx sdk.Context, plugins QueryPlugins, caller sdk.AccAddress) QueryHandler {
+func NewQueryHandler(ctx sdk.Context, vmQueryHandler wasmVMQueryHandler, caller sdk.AccAddress) QueryHandler {
 	return QueryHandler{
 		Ctx:     ctx,
-		Plugins: plugins,
+		Plugins: vmQueryHandler,
 		Caller:  caller,
 	}
 }
@@ -51,27 +51,7 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	defer func() {
 		q.Ctx.GasMeter().ConsumeGas(subctx.GasMeter().GasConsumed(), "contract sub-query")
 	}()
-
-	// do the query
-	if request.Bank != nil {
-		return q.Plugins.Bank(subctx, request.Bank)
-	}
-	if request.Custom != nil {
-		return q.Plugins.Custom(subctx, request.Custom)
-	}
-	if request.IBC != nil {
-		return q.Plugins.IBC(subctx, q.Caller, request.IBC)
-	}
-	if request.Staking != nil {
-		return q.Plugins.Staking(subctx, request.Staking)
-	}
-	if request.Stargate != nil {
-		return q.Plugins.Stargate(subctx, request.Stargate)
-	}
-	if request.Wasm != nil {
-		return q.Plugins.Wasm(subctx, request.Wasm)
-	}
-	return nil, wasmvmtypes.Unknown{}
+	return q.Plugins.HandleQuery(subctx, q.Caller, request)
 }
 
 func (q QueryHandler) GasConsumed() uint64 {
@@ -89,7 +69,24 @@ type QueryPlugins struct {
 	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
 }
 
-func DefaultQueryPlugins(bank types.BankViewKeeper, staking types.StakingKeeper, distKeeper types.DistributionKeeper, channelKeeper types.ChannelKeeper, queryRouter GRPCQueryRouter, wasm *Keeper) QueryPlugins {
+type contractMetaDataSource interface {
+	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+}
+
+type wasmQueryKeeper interface {
+	contractMetaDataSource
+	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+}
+
+func DefaultQueryPlugins(
+	bank types.BankViewKeeper,
+	staking types.StakingKeeper,
+	distKeeper types.DistributionKeeper,
+	channelKeeper types.ChannelKeeper,
+	queryRouter GRPCQueryRouter,
+	wasm wasmQueryKeeper,
+) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
@@ -124,6 +121,30 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 		e.Wasm = o.Wasm
 	}
 	return e
+}
+
+// HandleQuery executes the requested query
+func (e QueryPlugins) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+	// do the query
+	if request.Bank != nil {
+		return e.Bank(ctx, request.Bank)
+	}
+	if request.Custom != nil {
+		return e.Custom(ctx, request.Custom)
+	}
+	if request.IBC != nil {
+		return e.IBC(ctx, caller, request.IBC)
+	}
+	if request.Staking != nil {
+		return e.Staking(ctx, request.Staking)
+	}
+	if request.Stargate != nil {
+		return e.Stargate(ctx, request.Stargate)
+	}
+	if request.Wasm != nil {
+		return e.Wasm(ctx, request.Wasm)
+	}
+	return nil, wasmvmtypes.Unknown{}
 }
 
 func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error) {
@@ -162,7 +183,7 @@ func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
 	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
 }
 
-func IBCQuerier(wasm *Keeper, channelKeeper types.ChannelKeeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
+func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
 	return func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
 		if request.PortID != nil {
 			contractInfo := wasm.GetContractInfo(ctx, caller)
@@ -417,7 +438,7 @@ func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper,
 	return rewards, nil
 }
 
-func WasmQuerier(wasm *Keeper) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
+func WasmQuerier(wasm wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
 		if request.Smart != nil {
 			addr, err := sdk.AccAddressFromBech32(request.Smart.ContractAddr)

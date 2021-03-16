@@ -19,13 +19,19 @@ func TestConstructorOptions(t *testing.T) {
 		"wasm engine": {
 			srcOpt: WithWasmEngine(&wasmtesting.MockWasmer{}),
 			verify: func(k Keeper) {
-				assert.IsType(t, k.wasmer, &wasmtesting.MockWasmer{})
+				assert.IsType(t, k.wasmVM, &wasmtesting.MockWasmer{})
 			},
 		},
 		"message handler": {
 			srcOpt: WithMessageHandler(&wasmtesting.MockMessageHandler{}),
 			verify: func(k Keeper) {
 				assert.IsType(t, k.messenger, &wasmtesting.MockMessageHandler{})
+			},
+		},
+		"query plugins": {
+			srcOpt: WithQueryHandler(&wasmtesting.MockQueryHandler{}),
+			verify: func(k Keeper) {
+				assert.IsType(t, k.wasmVMQueryHandler, &wasmtesting.MockQueryHandler{})
 			},
 		},
 		"coin transferrer": {
@@ -37,26 +43,7 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(
-				nil,
-				nil,
-				paramtypes.NewSubspace(nil, nil, nil, nil, ""),
-				authkeeper.AccountKeeper{},
-				nil,
-				stakingkeeper.Keeper{},
-				distributionkeeper.Keeper{},
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
-				"tempDir",
-				types.DefaultWasmConfig(),
-				SupportedFeatures,
-				nil,
-				nil,
-				spec.srcOpt,
-			)
+			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), SupportedFeatures, spec.srcOpt)
 			spec.verify(k)
 		})
 	}

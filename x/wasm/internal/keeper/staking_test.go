@@ -90,7 +90,7 @@ type InvestmentResponse struct {
 }
 
 func TestInitializeStaking(t *testing.T) {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1234567))
@@ -163,7 +163,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1000000))

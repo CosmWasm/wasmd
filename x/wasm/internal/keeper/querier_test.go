@@ -20,7 +20,7 @@ import (
 )
 
 func TestQueryAllContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -107,7 +107,7 @@ func TestQueryAllContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -150,7 +150,7 @@ func TestQuerySmartContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractPanics(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	contractAddr := contractAddress(1, 1)
 	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
 	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
@@ -178,7 +178,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keepers.WasmKeeper.wasmer = &wasmtesting.MockWasmer{QueryFn: func(checksum cosmwasm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
+			keepers.WasmKeeper.wasmVM = &wasmtesting.MockWasmer{QueryFn: func(checksum cosmwasm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store cosmwasm.KVStore, goapi cosmwasm.GoAPI, querier cosmwasm.Querier, gasMeter cosmwasm.GasMeter, gasLimit uint64) ([]byte, uint64, error) {
 				spec.doInContract()
 				return nil, 0, nil
 			}}
@@ -194,7 +194,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 }
 
 func TestQueryRawContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -249,7 +249,7 @@ func TestQueryRawContractState(t *testing.T) {
 }
 
 func TestQueryContractListByCodeOrdering(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
@@ -308,7 +308,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 }
 
 func TestQueryContractHistory(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.WasmKeeper
 
 	var (
@@ -452,7 +452,7 @@ func TestQueryCodeList(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.WasmKeeper
 
 	specs := map[string]struct {
