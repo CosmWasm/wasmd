@@ -49,7 +49,15 @@ type Option interface {
 	apply(*Keeper)
 }
 
+// WasmVMQueryHandler is an extension point for custom query handler implementations
+type wasmVMQueryHandler interface {
+	// HandleQuery executes the requested query
+	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
+}
+
+// messenger is an extension point for custom wasmVM message handling
 type messenger interface {
+	// DispatchMsg encodes the wasmVM message and dispatches it.
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
@@ -60,17 +68,16 @@ type coinTransferrer interface {
 
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
-	storeKey         sdk.StoreKey
-	cdc              codec.Marshaler
-	accountKeeper    types.AccountKeeper
-	bank             coinTransferrer
-	ChannelKeeper    types.ChannelKeeper
-	portKeeper       types.PortKeeper
-	capabilityKeeper types.CapabilityKeeper
-
-	wasmer       types.WasmerEngine
-	queryPlugins QueryPlugins
-	messenger    messenger
+	storeKey           sdk.StoreKey
+	cdc                codec.Marshaler
+	accountKeeper      types.AccountKeeper
+	bank               coinTransferrer
+	ChannelKeeper      types.ChannelKeeper
+	portKeeper         types.PortKeeper
+	capabilityKeeper   types.CapabilityKeeper
+	wasmVM             types.WasmerEngine
+	wasmVMQueryHandler wasmVMQueryHandler
+	messenger          messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	authZPolicy   AuthorizationPolicy
@@ -95,8 +102,6 @@ func NewKeeper(
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	supportedFeatures string,
-	customEncoders *MessageEncoders,
-	customPlugins *QueryPlugins,
 	opts ...Option,
 ) Keeper {
 	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
@@ -111,18 +116,18 @@ func NewKeeper(
 	keeper := Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
-		wasmer:           wasmer,
+		wasmVM:           wasmer,
 		accountKeeper:    accountKeeper,
 		bank:             NewBankCoinTransferrer(bankKeeper),
 		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, customEncoders),
+		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		authZPolicy:      DefaultAuthorizationPolicy{},
 		paramSpace:       paramSpace,
 	}
-	keeper.queryPlugins = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, &keeper).Merge(customPlugins)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, &keeper)
 	for _, o := range opts {
 		o.apply(&keeper)
 	}
@@ -173,7 +178,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	ctx.GasMeter().ConsumeGas(CompileCost*uint64(len(wasmCode)), "Compiling WASM Bytecode")
 
-	codeHash, err := k.wasmer.Create(wasmCode)
+	codeHash, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
@@ -198,7 +203,7 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	newCodeHash, err := k.wasmer.Create(wasmCode)
+	newCodeHash, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
@@ -269,11 +274,11 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
 	// prepare querier
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddress)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddress)
 
 	// instantiate wasm contract
 	gas := gasForContract(ctx)
-	res, gasUsed, err := k.wasmer.Instantiate(codeInfo.CodeHash, env, info, initMsg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if err != nil {
 		return contractAddress, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
@@ -288,7 +293,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	contractInfo := types.NewContractInfo(codeID, creator, admin, label, createdAt)
 
 	// check for IBC flag
-	report, err := k.wasmer.AnalyzeCode(codeInfo.CodeHash)
+	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
 	if err != nil {
 		return contractAddress, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
@@ -336,9 +341,9 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	info := types.NewInfo(caller, coins)
 
 	// prepare querier
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddress)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddress)
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -383,7 +388,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// check for IBC flag
-	switch report, err := k.wasmer.AnalyzeCode(newCodeInfo.CodeHash); {
+	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
 	case err != nil:
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	case !report.HasIBCEntryPoints && contractInfo.IBCPortID != "":
@@ -401,12 +406,12 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	env := types.NewEnv(ctx, contractAddress)
 
 	// prepare querier
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddress)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddress)
 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	gas := gasForContract(ctx)
-	res, gasUsed, err := k.wasmer.Migrate(newCodeInfo.CodeHash, env, msg, &prefixStore, cosmwasmAPI, &querier, gasMeter(ctx), gas)
+	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, &prefixStore, cosmwasmAPI, &querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
@@ -450,9 +455,9 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	env := types.NewEnv(ctx, contractAddress)
 
 	// prepare querier
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddress)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddress)
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -491,10 +496,10 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	// prepare querier
 	querier := QueryHandler{
 		Ctx:     ctx,
-		Plugins: k.queryPlugins,
+		Plugins: k.wasmVMQueryHandler,
 	}
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
+	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -581,10 +586,10 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	}
 
 	// prepare querier
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	env := types.NewEnv(ctx, contractAddr)
-	queryResult, gasUsed, qErr := k.wasmer.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gasForContract(ctx))
+	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, gasMeter(ctx), gasForContract(ctx))
 	consumeGas(ctx, gasUsed)
 	if qErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrQueryFailed, qErr.Error())
@@ -716,7 +721,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 		return nil, nil
 	}
 	k.cdc.MustUnmarshalBinaryBare(codeInfoBz, &codeInfo)
-	return k.wasmer.GetCode(codeInfo.CodeHash)
+	return k.wasmVM.GetCode(codeInfo.CodeHash)
 }
 
 // PinCode pins the wasm contract in wasmvm cache
@@ -726,7 +731,7 @@ func (k Keeper) PinCode(ctx sdk.Context, codeID uint64) error {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
 
-	if err := k.wasmer.Pin(codeInfo.CodeHash); err != nil {
+	if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
 		return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
 	}
 	store := ctx.KVStore(k.storeKey)
@@ -741,7 +746,7 @@ func (k Keeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
 	if codeInfo == nil {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
-	if err := k.wasmer.Unpin(codeInfo.CodeHash); err != nil {
+	if err := k.wasmVM.Unpin(codeInfo.CodeHash); err != nil {
 		return sdkerrors.Wrap(types.ErrUnpinContractFailed, err.Error())
 	}
 
@@ -765,7 +770,7 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 		if codeInfo == nil {
 			return sdkerrors.Wrap(types.ErrNotFound, "code info")
 		}
-		if err := k.wasmer.Pin(codeInfo.CodeHash); err != nil {
+		if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
 			return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
 		}
 	}

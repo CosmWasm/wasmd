@@ -83,8 +83,8 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate"
 
 func TestReflectContractSend(t *testing.T) {
-	cdc := MakeTestCodec(t)
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(cdc), nil)
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -165,8 +165,8 @@ func TestReflectContractSend(t *testing.T) {
 }
 
 func TestReflectCustomMsg(t *testing.T) {
-	cdc := MakeTestCodec(t)
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(cdc), reflectPlugins())
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -258,8 +258,8 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeTestCodec(t)
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(cdc), reflectPlugins())
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -308,8 +308,8 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-	cdc := MakeTestCodec(t)
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(cdc), reflectPlugins())
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -385,7 +385,8 @@ type reflectState struct {
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(MakeTestCodec(t)), nil)
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -456,7 +457,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, reflectEncoders(MakeTestCodec(t)), nil)
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper := keepers.AccountKeeper, keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

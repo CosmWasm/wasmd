@@ -10,14 +10,14 @@ import (
 )
 
 func TestDontBindPortNonIBCContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // ensure we bound the port
 	_, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.Error(t, err)
 }
 
 func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := InstantiateIBCReflectContract(t, ctx, keepers) // ensure we bound the port
 	owner, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.NoError(t, err)

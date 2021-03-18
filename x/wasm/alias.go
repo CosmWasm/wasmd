@@ -127,7 +127,7 @@ type (
 	Config                         = types.WasmConfig
 	ContractInfoWithAddress        = types.ContractInfoWithAddress
 	CodeInfoResponse               = types.CodeInfoResponse
-	MessageHandler                 = keeper.DefaultMessageHandler
+	MessageHandler                 = keeper.SDKMessageHandler
 	BankEncoder                    = keeper.BankEncoder
 	CustomEncoder                  = keeper.CustomEncoder
 	StakingEncoder                 = keeper.StakingEncoder

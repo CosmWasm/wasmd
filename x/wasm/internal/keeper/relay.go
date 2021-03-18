@@ -23,10 +23,10 @@ func (k Keeper) OnOpenChannel(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	gasUsed, execErr := k.wasmer.IBCChannelOpen(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -53,10 +53,10 @@ func (k Keeper) OnConnectChannel(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.IBCChannelConnect(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := k.wasmVM.IBCChannelConnect(codeInfo.CodeHash, env, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -89,10 +89,10 @@ func (k Keeper) OnCloseChannel(
 	}
 
 	params := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.IBCChannelClose(codeInfo.CodeHash, params, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, params, channel, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -125,10 +125,10 @@ func (k Keeper) OnRecvPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.IBCPacketReceive(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -162,10 +162,10 @@ func (k Keeper) OnAckPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.IBCPacketAck(codeInfo.CodeHash, env, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := k.wasmVM.IBCPacketAck(codeInfo.CodeHash, env, acknowledgement, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -195,10 +195,10 @@ func (k Keeper) OnTimeoutPacket(
 	}
 
 	env := types.NewEnv(ctx, contractAddr)
-	querier := NewQueryHandler(ctx, k.queryPlugins, contractAddr)
+	querier := NewQueryHandler(ctx, k.wasmVMQueryHandler, contractAddr)
 
 	gas := gasForContract(ctx)
-	res, gasUsed, execErr := k.wasmer.IBCPacketTimeout(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
+	res, gasUsed, execErr := k.wasmVM.IBCPacketTimeout(codeInfo.CodeHash, env, packet, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas)
 	consumeGas(ctx, gasUsed)
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())

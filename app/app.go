@@ -371,8 +371,6 @@ func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
-		nil,
-		nil,
 		wasmOpts...,
 	)
 

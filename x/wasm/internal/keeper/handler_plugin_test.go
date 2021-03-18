@@ -3,456 +3,247 @@ package keeper
 import (
 	"encoding/json"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
-	"github.com/golang/protobuf/proto"
-	"testing"
-
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
-func TestEncoding(t *testing.T) {
-	addr1 := RandomAccountAddress(t)
-	addr2 := RandomAccountAddress(t)
-	invalidAddr := "xrnd1d02kd90n38qvr3qb9qof83fn2d2"
-	valAddr := make(sdk.ValAddress, sdk.AddrLen)
-	valAddr[0] = 12
-	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
-	valAddr2[1] = 123
-	var timeoutVal uint64 = 100
+func TestMessageHandlerChainDispatch(t *testing.T) {
+	capturingHandler, gotMsgs := wasmtesting.NewCapturingMessageHandler()
 
-	jsonMsg := json.RawMessage(`{"foo": 123}`)
+	alwaysUnknownMsgHandler := &wasmtesting.MockMessageHandler{
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+			return nil, nil, types.ErrUnknownMsg
+		}}
 
-	bankMsg := &banktypes.MsgSend{
-		FromAddress: addr2.String(),
-		ToAddress:   addr1.String(),
-		Amount: sdk.Coins{
-			sdk.NewInt64Coin("uatom", 12345),
-			sdk.NewInt64Coin("utgd", 54321),
-		},
-	}
-	bankMsgBin, err := proto.Marshal(bankMsg)
-	require.NoError(t, err)
+	assertNotCalledHandler := &wasmtesting.MockMessageHandler{
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+			t.Fatal("not expected to be called")
+			return
+		}}
 
-	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
-	require.NoError(t, err)
-
-	proposalMsg := &govtypes.MsgSubmitProposal{
-		Proposer:       addr1.String(),
-		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
-		Content:        content,
-	}
-	proposalMsgBin, err := proto.Marshal(proposalMsg)
-	require.NoError(t, err)
-
-	cases := map[string]struct {
-		sender     sdk.AccAddress
-		srcMsg     wasmvmtypes.CosmosMsg
-		srcIBCPort string
-		// set if valid
-		output []sdk.Msg
-		// set if invalid
-		isError bool
+	myMsg := wasmvmtypes.CosmosMsg{Custom: []byte(`{}`)}
+	specs := map[string]struct {
+		handlers  []messenger
+		expErr    *sdkerrors.Error
+		expEvents []sdk.Event
 	}{
-		"simple send": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
-						ToAddress: addr2.String(),
-						Amount: []wasmvmtypes.Coin{
-							{
-								Denom:  "uatom",
-								Amount: "12345",
-							},
-							{
-								Denom:  "usdt",
-								Amount: "54321",
-							},
-						},
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: addr1.String(),
-					ToAddress:   addr2.String(),
-					Amount: sdk.Coins{
-						sdk.NewInt64Coin("uatom", 12345),
-						sdk.NewInt64Coin("usdt", 54321),
-					},
-				},
-			},
+		"single handler": {
+			handlers: []messenger{capturingHandler},
 		},
-		"invalid send amount": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
-						ToAddress: addr2.String(),
-						Amount: []wasmvmtypes.Coin{
-							{
-								Denom:  "uatom",
-								Amount: "123.456",
-							},
-						},
-					},
-				},
-			},
-			isError: true,
+		"passed to next handler": {
+			handlers: []messenger{alwaysUnknownMsgHandler, capturingHandler},
 		},
-		"invalid address": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
-						ToAddress: invalidAddr,
-						Amount: []wasmvmtypes.Coin{
-							{
-								Denom:  "uatom",
-								Amount: "7890",
-							},
-						},
-					},
-				},
-			},
-			isError: false, // addresses are checked in the handler
-			output: []sdk.Msg{
-				&banktypes.MsgSend{
-					FromAddress: addr1.String(),
-					ToAddress:   invalidAddr,
-					Amount: sdk.Coins{
-						sdk.NewInt64Coin("uatom", 7890),
-					},
-				},
-			},
+		"stops iteration when handled": {
+			handlers: []messenger{capturingHandler, assertNotCalledHandler},
 		},
-		"wasm execute": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Execute: &wasmvmtypes.ExecuteMsg{
-						ContractAddr: addr2.String(),
-						Msg:          jsonMsg,
-						Send: []wasmvmtypes.Coin{
-							wasmvmtypes.NewCoin(12, "eth"),
-						},
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&types.MsgExecuteContract{
-					Sender:   addr1.String(),
-					Contract: addr2.String(),
-					Msg:      jsonMsg,
-					Funds:    sdk.NewCoins(sdk.NewInt64Coin("eth", 12)),
-				},
-			},
+		"stops iteration on handler error": {
+			handlers: []messenger{&wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					return nil, nil, types.ErrInvalidMsg
+				}}, assertNotCalledHandler},
+			expErr: types.ErrInvalidMsg,
 		},
-		"wasm instantiate": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Instantiate: &wasmvmtypes.InstantiateMsg{
-						CodeID: 7,
-						Msg:    jsonMsg,
-						Send: []wasmvmtypes.Coin{
-							wasmvmtypes.NewCoin(123, "eth"),
-						},
-						Label: "myLabel",
-					},
-				},
+		"return events when handle": {
+			handlers: []messenger{&wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
+					return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
+				}},
 			},
-			output: []sdk.Msg{
-				&types.MsgInstantiateContract{
-					Sender:  addr1.String(),
-					CodeID:  7,
-					Label:   "myLabel",
-					InitMsg: jsonMsg,
-					Funds:   sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
-				},
-			},
+			expEvents: []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))},
 		},
-		"wasm migrate": {
-			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Migrate: &wasmvmtypes.MigrateMsg{
-						ContractAddr: addr1.String(),
-						NewCodeID:    12,
-						Msg:          jsonMsg,
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&types.MsgMigrateContract{
-					Sender:     addr2.String(),
-					Contract:   addr1.String(),
-					CodeID:     12,
-					MigrateMsg: jsonMsg,
-				},
-			},
-		},
-		"staking delegate": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Delegate: &wasmvmtypes.DelegateMsg{
-						Validator: valAddr.String(),
-						Amount:    wasmvmtypes.NewCoin(777, "stake"),
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&stakingtypes.MsgDelegate{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: valAddr.String(),
-					Amount:           sdk.NewInt64Coin("stake", 777),
-				},
-			},
-		},
-		"staking delegate to non-validator": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Delegate: &wasmvmtypes.DelegateMsg{
-						Validator: addr2.String(),
-						Amount:    wasmvmtypes.NewCoin(777, "stake"),
-					},
-				},
-			},
-			isError: false, // fails in the handler
-			output: []sdk.Msg{
-				&stakingtypes.MsgDelegate{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: addr2.String(),
-					Amount:           sdk.NewInt64Coin("stake", 777),
-				},
-			},
-		},
-		"staking undelegate": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Undelegate: &wasmvmtypes.UndelegateMsg{
-						Validator: valAddr.String(),
-						Amount:    wasmvmtypes.NewCoin(555, "stake"),
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&stakingtypes.MsgUndelegate{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: valAddr.String(),
-					Amount:           sdk.NewInt64Coin("stake", 555),
-				},
-			},
-		},
-		"staking redelegate": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Redelegate: &wasmvmtypes.RedelegateMsg{
-						SrcValidator: valAddr.String(),
-						DstValidator: valAddr2.String(),
-						Amount:       wasmvmtypes.NewCoin(222, "stake"),
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&stakingtypes.MsgBeginRedelegate{
-					DelegatorAddress:    addr1.String(),
-					ValidatorSrcAddress: valAddr.String(),
-					ValidatorDstAddress: valAddr2.String(),
-					Amount:              sdk.NewInt64Coin("stake", 222),
-				},
-			},
-		},
-		"staking withdraw (implicit recipient)": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Withdraw: &wasmvmtypes.WithdrawMsg{
-						Validator: valAddr2.String(),
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&distributiontypes.MsgSetWithdrawAddress{
-					DelegatorAddress: addr1.String(),
-					WithdrawAddress:  addr1.String(),
-				},
-				&distributiontypes.MsgWithdrawDelegatorReward{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: valAddr2.String(),
-				},
-			},
-		},
-		"staking withdraw (explicit recipient)": {
-			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Withdraw: &wasmvmtypes.WithdrawMsg{
-						Validator: valAddr2.String(),
-						Recipient: addr2.String(),
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&distributiontypes.MsgSetWithdrawAddress{
-					DelegatorAddress: addr1.String(),
-					WithdrawAddress:  addr2.String(),
-				},
-				&distributiontypes.MsgWithdrawDelegatorReward{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: valAddr2.String(),
-				},
-			},
-		},
-		"stargate encoded bank msg": {
-			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
-					Value:   bankMsgBin,
-				},
-			},
-			output: []sdk.Msg{bankMsg},
-		},
-		"stargate encoded msg with any type": {
-			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.gov.v1beta1.MsgSubmitProposal",
-					Value:   proposalMsgBin,
-				},
-			},
-			output: []sdk.Msg{proposalMsg},
-		},
-		"stargate encoded invalid typeUrl": {
-			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.bank.v2.MsgSend",
-					Value:   bankMsgBin,
-				},
-			},
-			isError: true,
-		},
-		"IBC transfer with block timeout": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					Transfer: &wasmvmtypes.TransferMsg{
-						ChannelID: "myChanID",
-						ToAddress: addr2.String(),
-						Amount: wasmvmtypes.Coin{
-							Denom:  "ALX",
-							Amount: "1",
-						},
-						TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibctransfertypes.MsgTransfer{
-					SourcePort:    "transfer",
-					SourceChannel: "myChanID",
-					Token: sdk.Coin{
-						Denom:  "ALX",
-						Amount: sdk.NewInt(1),
-					},
-					Sender:        addr1.String(),
-					Receiver:      addr2.String(),
-					TimeoutHeight: clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
-				},
-			},
-		},
-		"IBC transfer with time timeout": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					Transfer: &wasmvmtypes.TransferMsg{
-						ChannelID: "myChanID",
-						ToAddress: addr2.String(),
-						Amount: wasmvmtypes.Coin{
-							Denom:  "ALX",
-							Amount: "1",
-						},
-						TimeoutTimestamp: &timeoutVal,
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&ibctransfertypes.MsgTransfer{
-					SourcePort:    "transfer",
-					SourceChannel: "myChanID",
-					Token: sdk.Coin{
-						Denom:  "ALX",
-						Amount: sdk.NewInt(1),
-					},
-					Sender:           addr1.String(),
-					Receiver:         addr2.String(),
-					TimeoutTimestamp: 100,
-				},
-			},
-		},
-		"IBC close channel": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					CloseChannel: &wasmvmtypes.CloseChannelMsg{
-						ChannelID: "channel-1",
-					},
-				},
-			},
-			output: []sdk.Msg{
-				&channeltypes.MsgChannelCloseInit{
-					PortId:    "wasm." + addr1.String(),
-					ChannelId: "channel-1",
-					Signer:    addr1.String(),
-				},
-			},
+		"return error when none can handle": {
+			handlers: []messenger{alwaysUnknownMsgHandler},
+			expErr:   types.ErrUnknownMsg,
 		},
 	}
-	encodingConfig := MakeEncodingConfig(t)
-	encoder := DefaultEncoders(nil, nil, encodingConfig.Marshaler)
-	for name, tc := range cases {
-		tc := tc
+	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			var ctx sdk.Context
-			res, err := encoder.Encode(ctx, tc.sender, tc.srcIBCPort, tc.srcMsg)
-			if tc.isError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.output, res)
+			*gotMsgs = make([]wasmvmtypes.CosmosMsg, 0)
+
+			// when
+			h := MessageHandlerChain{spec.handlers}
+			gotEvents, gotData, gotErr := h.DispatchMsg(sdk.Context{}, RandomAccountAddress(t), "anyPort", myMsg)
+
+			// then
+			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
+			if spec.expErr != nil {
+				return
+			}
+			assert.Equal(t, []wasmvmtypes.CosmosMsg{myMsg}, *gotMsgs)
+			assert.Equal(t, [][]byte{{1}}, gotData) // {1} is default in capturing handler
+			assert.Equal(t, spec.expEvents, gotEvents)
+		})
+	}
+}
+
+func TestSDKMessageHandlerDispatch(t *testing.T) {
+	myEvent := sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))
+	const myData = "myData"
+	myRouterResult := sdk.Result{
+		Data:   []byte(myData),
+		Events: sdk.Events{myEvent}.ToABCIEvents(),
+	}
+
+	var gotMsg []sdk.Msg
+	capturingRouteFn := func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		gotMsg = append(gotMsg, msg)
+		return &myRouterResult, nil
+	}
+
+	myContractAddr := RandomAccountAddress(t)
+	myContractMessage := wasmvmtypes.CosmosMsg{Custom: []byte("{}")}
+
+	specs := map[string]struct {
+		srcRoute         sdk.Route
+		srcEncoder       CustomEncoder
+		expErr           *sdkerrors.Error
+		expMsgDispatched int
+	}{
+		"all good": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&myMsg}, nil
+			},
+			expMsgDispatched: 1,
+		},
+		"multiple output msgs": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				first := &types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				second := &types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{first, second}, nil
+			},
+			expMsgDispatched: 2,
+		},
+		"invalid sdk message rejected": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				invalidMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("INVALID_JSON"),
+				}
+				return []sdk.Msg{&invalidMsg}, nil
+			},
+			expErr: types.ErrInvalid,
+		},
+		"invalid sender rejected": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				invalidMsg := types.MsgExecuteContract{
+					Sender:   RandomBech32AccountAddress(t),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&invalidMsg}, nil
+			},
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"unroutable message rejected": {
+			srcRoute: sdk.NewRoute("nothing", capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&myMsg}, nil
+			},
+			expErr: sdkerrors.ErrUnknownRequest,
+		},
+		"encoding error passed": {
+			srcRoute: sdk.NewRoute("nothing", capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myErr := types.ErrUnpinContractFailed
+				return nil, myErr
+			},
+			expErr: types.ErrUnpinContractFailed,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotMsg = make([]sdk.Msg, 0)
+			router := baseapp.NewRouter()
+			router.AddRoute(spec.srcRoute)
+
+			// when
+			ctx := sdk.Context{}
+			h := NewSDKMessageHandler(router, MessageEncoders{Custom: spec.srcEncoder})
+			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
+
+			// then
+			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
+			if spec.expErr != nil {
+				require.Len(t, gotMsg, 0)
+				return
+			}
+			assert.Len(t, gotMsg, spec.expMsgDispatched)
+			for i := 0; i < spec.expMsgDispatched; i++ {
+				assert.Equal(t, myEvent, gotEvents[i])
+				assert.Equal(t, []byte(myData), gotData[i])
 			}
 		})
 	}
 }
 
-func TestEncodeIBCSendPacket(t *testing.T) {
+func TestIBCRawPacketHandler(t *testing.T) {
 	ibcPort := "contractsIBCPort"
 	var ctx sdk.Context
+
+	var capturedPacket ibcexported.PacketI
+
+	chanKeeper := &wasmtesting.MockChannelKeeper{
+		GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
+			return 1, true
+		},
+		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
+			return channeltypes.Channel{
+				Counterparty: channeltypes.NewCounterparty(
+					"other-port",
+					"other-channel-1",
+				)}, true
+		},
+		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
+			capturedPacket = packet
+			return nil
+		},
+	}
+	capKeeper := &wasmtesting.MockCapabilityKeeper{
+		GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
+			return &capabilitytypes.Capability{}, true
+		},
+	}
+
 	specs := map[string]struct {
 		srcMsg        wasmvmtypes.SendPacketMsg
+		chanKeeper    types.ChannelKeeper
+		capKeeper     types.CapabilityKeeper
 		expPacketSent channeltypes.Packet
+		expErr        *sdkerrors.Error
 	}{
 		"all good": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
@@ -460,6 +251,8 @@ func TestEncodeIBCSendPacket(t *testing.T) {
 				Data:         []byte("myData"),
 				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
 			},
+			chanKeeper: chanKeeper,
+			capKeeper:  capKeeper,
 			expPacketSent: channeltypes.Packet{
 				Sequence:           1,
 				SourcePort:         ibcPort,
@@ -470,38 +263,46 @@ func TestEncodeIBCSendPacket(t *testing.T) {
 				TimeoutHeight:      clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
 			},
 		},
+		"sequence not found returns error": {
+			srcMsg: wasmvmtypes.SendPacketMsg{
+				ChannelID:    "channel-1",
+				Data:         []byte("myData"),
+				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+			},
+			chanKeeper: &wasmtesting.MockChannelKeeper{
+				GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
+					return 0, false
+				}},
+			expErr: channeltypes.ErrSequenceSendNotFound,
+		},
+		"capability not found returns error": {
+			srcMsg: wasmvmtypes.SendPacketMsg{
+				ChannelID:    "channel-1",
+				Data:         []byte("myData"),
+				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+			},
+			chanKeeper: chanKeeper,
+			capKeeper: wasmtesting.MockCapabilityKeeper{
+				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
+					return nil, false
+				}},
+			expErr: channeltypes.ErrChannelCapabilityNotFound,
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			var gotPacket ibcexported.PacketI
-
-			var chanKeeper types.ChannelKeeper = &wasmtesting.MockChannelKeeper{
-				GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
-					return 1, true
-				},
-				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
-					return channeltypes.Channel{
-						Counterparty: channeltypes.NewCounterparty(
-							"other-port",
-							"other-channel-1",
-						)}, true
-				},
-				SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-					gotPacket = packet
-					return nil
-				},
+			capturedPacket = nil
+			// when
+			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.capKeeper)
+			data, evts, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
+			// then
+			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
+			if spec.expErr != nil {
+				return
 			}
-			var capKeeper types.CapabilityKeeper = &wasmtesting.MockCapabilityKeeper{
-				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
-					return &capabilitytypes.Capability{}, true
-				},
-			}
-			sender := RandomAccountAddress(t)
-			res, err := EncodeIBCMsg(chanKeeper, capKeeper)(ctx, sender, ibcPort, &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg})
-
-			require.NoError(t, err)
-			assert.Nil(t, res)
-			assert.Equal(t, spec.expPacketSent, gotPacket)
+			assert.Nil(t, data)
+			assert.Nil(t, evts)
+			assert.Equal(t, spec.expPacketSent, capturedPacket)
 		})
 	}
 }

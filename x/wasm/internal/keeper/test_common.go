@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	types "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -133,19 +133,18 @@ type TestKeepers struct {
 	GovKeeper     govkeeper.Keeper
 	WasmKeeper    *Keeper
 	IBCKeeper     *ibckeeper.Keeper
+	Router        *baseapp.Router
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t TestingT) (sdk.Context, TestKeepers) {
-	return CreateTestInput(t, false, "staking", nil, nil)
+	return CreateTestInput(t, false, "staking")
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t TestingT, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins) (sdk.Context, TestKeepers) {
+func CreateTestInput(t TestingT, isCheckTx bool, supportedFeatures string, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
-	wasmConfig := types.DefaultWasmConfig()
-	db := dbm.NewMemDB()
-	return createTestInput(t, isCheckTx, supportedFeatures, encoders, queriers, wasmConfig, db)
+	return createTestInput(t, isCheckTx, supportedFeatures, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -153,10 +152,9 @@ func createTestInput(
 	t TestingT,
 	isCheckTx bool,
 	supportedFeatures string,
-	encoders *MessageEncoders,
-	queriers *QueryPlugins,
 	wasmConfig types.WasmConfig,
 	db dbm.DB,
+	opts ...Option,
 ) (sdk.Context, TestKeepers) {
 	tempDir := t.TempDir()
 
@@ -299,8 +297,7 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		supportedFeatures,
-		encoders,
-		queriers,
+		opts...,
 	)
 	keeper.setParams(ctx, types.DefaultParams())
 	// add wasm handler so we can loop-back (contracts calling contracts)
@@ -329,6 +326,7 @@ func createTestInput(
 		BankKeeper:    bankKeeper,
 		GovKeeper:     govKeeper,
 		IBCKeeper:     ibcKeeper,
+		Router:        router,
 	}
 	return ctx, keepers
 }
@@ -484,7 +482,7 @@ func StoreRandomContract(t TestingT, ctx sdk.Context, keepers TestKeepers, mock 
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
-	keepers.WasmKeeper.wasmer = mock
+	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...)
 	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
