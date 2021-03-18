@@ -32,11 +32,11 @@ type MessageEncoders struct {
 	Wasm     func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
 }
 
-func DefaultEncoders(unpacker codectypes.AnyUnpacker) MessageEncoders {
+func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
 	return MessageEncoders{
 		Bank:     EncodeBankMsg,
 		Custom:   NoCustomMsg,
-		IBC:      EncodeIBCMsg,
+		IBC:      EncodeIBCMsg(portSource),
 		Staking:  EncodeStakingMsg,
 		Stargate: EncodeStargateMsg(unpacker),
 		Wasm:     EncodeWasmMsg,
@@ -225,32 +225,33 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 	}
 }
 
-func EncodeIBCMsg(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
-	switch {
-	case msg.CloseChannel != nil:
-		return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
-			PortId:    PortIDForContract(sender),
-			ChannelId: msg.CloseChannel.ChannelID,
-			Signer:    sender.String(),
-		}}, nil
-	case msg.Transfer != nil:
-		amount, err := convertWasmCoinToSdkCoin(msg.Transfer.Amount)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "amount")
+func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
+	return func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
+		switch {
+		case msg.CloseChannel != nil:
+			return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
+				PortId:    PortIDForContract(sender),
+				ChannelId: msg.CloseChannel.ChannelID,
+				Signer:    sender.String(),
+			}}, nil
+		case msg.Transfer != nil:
+			amount, err := convertWasmCoinToSdkCoin(msg.Transfer.Amount)
+			if err != nil {
+				return nil, sdkerrors.Wrap(err, "amount")
+			}
+			msg := &ibctransfertypes.MsgTransfer{
+				SourcePort:       portSource.GetPort(ctx),
+				SourceChannel:    msg.Transfer.ChannelID,
+				Token:            amount,
+				Sender:           sender.String(),
+				Receiver:         msg.Transfer.ToAddress,
+				TimeoutHeight:    convertWasmIBCTimeoutHeightToCosmosHeight(msg.Transfer.TimeoutBlock),
+				TimeoutTimestamp: convertWasmIBCTimeoutTimestampToCosmosTimestamp(msg.Transfer.TimeoutTimestamp),
+			}
+			return []sdk.Msg{msg}, nil
+		default:
+			return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "Unknown variant of IBC")
 		}
-		portID := ibctransfertypes.ModuleName //todo: port can be customized in genesis. make this more flexible
-		msg := &ibctransfertypes.MsgTransfer{
-			SourcePort:       portID,
-			SourceChannel:    msg.Transfer.ChannelID,
-			Token:            amount,
-			Sender:           sender.String(),
-			Receiver:         msg.Transfer.ToAddress,
-			TimeoutHeight:    convertWasmIBCTimeoutHeightToCosmosHeight(msg.Transfer.TimeoutBlock),
-			TimeoutTimestamp: convertWasmIBCTimeoutTimestampToCosmosTimestamp(msg.Transfer.TimeoutTimestamp),
-		}
-		return []sdk.Msg{msg}, nil
-	default:
-		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "Unknown variant of IBC")
 	}
 }
 

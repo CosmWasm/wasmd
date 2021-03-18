@@ -1,6 +1,7 @@
 package wasmtesting
 
 import (
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
@@ -87,7 +88,6 @@ func (m MockCapabilityKeeper) ClaimCapability(ctx sdk.Context, cap *capabilityty
 		panic("not supposed to be called!")
 	}
 	return m.ClaimCapabilityFn(ctx, cap, name)
-
 }
 
 func (m MockCapabilityKeeper) AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool {
@@ -95,5 +95,17 @@ func (m MockCapabilityKeeper) AuthenticateCapability(ctx sdk.Context, capability
 		panic("not supposed to be called!")
 	}
 	return m.AuthenticateCapabilityFn(ctx, capability, name)
+}
 
+var _ types.ICS20TransferPortSource = &MockIBCTransferKeeper{}
+
+type MockIBCTransferKeeper struct {
+	GetPortFn func(ctx sdk.Context) string
+}
+
+func (m MockIBCTransferKeeper) GetPort(ctx sdk.Context) string {
+	if m.GetPortFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetPortFn(ctx)
 }

@@ -24,8 +24,8 @@ type SDKMessageHandler struct {
 	encoders msgEncoder
 }
 
-func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, customEncoders ...*MessageEncoders) messenger {
-	encoders := DefaultEncoders(unpacker)
+func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource, customEncoders ...*MessageEncoders) messenger {
+	encoders := DefaultEncoders(unpacker, portSource)
 	for _, e := range customEncoders {
 		encoders = encoders.Merge(e)
 	}
