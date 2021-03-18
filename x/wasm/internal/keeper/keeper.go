@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"path/filepath"
-
 	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
+	"path/filepath"
+	"time"
 )
 
 // GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
@@ -227,6 +228,7 @@ func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 }
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 	if !k.IsPinnedCode(ctx, codeID) {
 		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: instantiate")
 	}
@@ -321,6 +323,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 // Execute executes the contract instance
 func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
@@ -370,6 +373,7 @@ func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 }
 
 func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
 	if !k.IsPinnedCode(ctx, newCodeID) {
 		ctx.GasMeter().ConsumeGas(InstanceCost, "Loading CosmWasm module: migrate")
 	}
@@ -443,6 +447,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 // another native Go module directly. Thus, the keeper doesn't place any access controls on it, that is the
 // responsibility or the app developer (who passes the wasm.Keeper in app.go)
 func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) (*sdk.Result, error) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "sudo")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
@@ -577,6 +582,7 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 
 // QuerySmart queries the smart contract itself.
 func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-smart")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return nil, err
@@ -599,6 +605,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 
 // QueryRaw returns the contract's state for give key. Returns `nil` when key is `nil`.
 func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
+	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "query-raw")
 	if key == nil {
 		return nil
 	}
