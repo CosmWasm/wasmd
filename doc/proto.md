@@ -3,18 +3,18 @@
 
 ## Table of Contents
 
-- [x/wasm/internal/types/genesis.proto](#x/wasm/internal/types/genesis.proto)
+- [x/wasm/types/genesis.proto](#x/wasm/types/genesis.proto)
     - [Code](#cosmwasm.wasm.v1beta1.Code)
     - [Contract](#cosmwasm.wasm.v1beta1.Contract)
     - [GenesisState](#cosmwasm.wasm.v1beta1.GenesisState)
     - [GenesisState.GenMsgs](#cosmwasm.wasm.v1beta1.GenesisState.GenMsgs)
     - [Sequence](#cosmwasm.wasm.v1beta1.Sequence)
   
-- [x/wasm/internal/types/ibc.proto](#x/wasm/internal/types/ibc.proto)
+- [x/wasm/types/ibc.proto](#x/wasm/types/ibc.proto)
     - [MsgIBCCloseChannel](#cosmwasm.wasm.v1beta1.MsgIBCCloseChannel)
     - [MsgIBCSend](#cosmwasm.wasm.v1beta1.MsgIBCSend)
   
-- [x/wasm/internal/types/proposal.proto](#x/wasm/internal/types/proposal.proto)
+- [x/wasm/types/proposal.proto](#x/wasm/types/proposal.proto)
     - [ClearAdminProposal](#cosmwasm.wasm.v1beta1.ClearAdminProposal)
     - [InstantiateContractProposal](#cosmwasm.wasm.v1beta1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1beta1.MigrateContractProposal)
@@ -23,7 +23,7 @@
     - [UnpinCodesProposal](#cosmwasm.wasm.v1beta1.UnpinCodesProposal)
     - [UpdateAdminProposal](#cosmwasm.wasm.v1beta1.UpdateAdminProposal)
   
-- [x/wasm/internal/types/query.proto](#x/wasm/internal/types/query.proto)
+- [x/wasm/types/query.proto](#x/wasm/types/query.proto)
     - [CodeInfoResponse](#cosmwasm.wasm.v1beta1.CodeInfoResponse)
     - [ContractInfoWithAddress](#cosmwasm.wasm.v1beta1.ContractInfoWithAddress)
     - [QueryAllContractStateRequest](#cosmwasm.wasm.v1beta1.QueryAllContractStateRequest)
@@ -45,7 +45,7 @@
   
     - [Query](#cosmwasm.wasm.v1beta1.Query)
   
-- [x/wasm/internal/types/tx.proto](#x/wasm/internal/types/tx.proto)
+- [x/wasm/types/tx.proto](#x/wasm/types/tx.proto)
     - [MsgClearAdmin](#cosmwasm.wasm.v1beta1.MsgClearAdmin)
     - [MsgClearAdminResponse](#cosmwasm.wasm.v1beta1.MsgClearAdminResponse)
     - [MsgExecuteContract](#cosmwasm.wasm.v1beta1.MsgExecuteContract)
@@ -61,7 +61,7 @@
   
     - [Msg](#cosmwasm.wasm.v1beta1.Msg)
   
-- [x/wasm/internal/types/types.proto](#x/wasm/internal/types/types.proto)
+- [x/wasm/types/types.proto](#x/wasm/types/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1beta1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1beta1.AccessConfig)
     - [AccessTypeParam](#cosmwasm.wasm.v1beta1.AccessTypeParam)
@@ -78,10 +78,10 @@
 
 
 
-<a name="x/wasm/internal/types/genesis.proto"></a>
+<a name="x/wasm/types/genesis.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/genesis.proto
+## x/wasm/types/genesis.proto
 
 
 
@@ -182,10 +182,10 @@ Sequence key and value of an id generation counter
 
 
 
-<a name="x/wasm/internal/types/ibc.proto"></a>
+<a name="x/wasm/types/ibc.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/ibc.proto
+## x/wasm/types/ibc.proto
 
 
 
@@ -231,10 +231,10 @@ MsgIBCSend
 
 
 
-<a name="x/wasm/internal/types/proposal.proto"></a>
+<a name="x/wasm/types/proposal.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/proposal.proto
+## x/wasm/types/proposal.proto
 
 
 
@@ -379,10 +379,10 @@ UpdateAdminProposal gov proposal content type to set an admin for a contract.
 
 
 
-<a name="x/wasm/internal/types/query.proto"></a>
+<a name="x/wasm/types/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/query.proto
+## x/wasm/types/query.proto
 
 
 
@@ -698,10 +698,10 @@ Query provides defines the gRPC querier service
 
 
 
-<a name="x/wasm/internal/types/tx.proto"></a>
+<a name="x/wasm/types/tx.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/tx.proto
+## x/wasm/types/tx.proto
 
 
 
@@ -918,10 +918,10 @@ Msg defines the wasm Msg service.
 
 
 
-<a name="x/wasm/internal/types/types.proto"></a>
+<a name="x/wasm/types/types.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## x/wasm/internal/types/types.proto
+## x/wasm/types/types.proto
 
 
 

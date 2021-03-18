@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 echo "-----------------------"
 echo "## Add new CosmWasm contract"
-RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/internal/keeper/testdata/hackatom.wasm" \
+RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" \
   --from validator --gas 1500000 -y --chain-id=testing --node=http://localhost:26657 -b block)
 
 CODE_ID=$(echo "$RESP" | jq -r '.logs[0].events[0].attributes[-1].value')
@@ -57,7 +57,7 @@ echo "### Query new admin: $(wasmd q wasm contract $CONTRACT -o json | jq -r '.a
 echo "-----------------------"
 echo "## Migrate contract"
 echo "### Upload new code"
-RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/internal/keeper/testdata/burner.wasm" \
+RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/keeper/testdata/burner.wasm" \
   --from validator --gas 1000000 -y --chain-id=testing --node=http://localhost:26657 -b block)
 
 BURNER_CODE_ID=$(echo "$RESP" | jq -r '.logs[0].events[0].attributes[-1].value')

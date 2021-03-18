@@ -7,8 +7,8 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

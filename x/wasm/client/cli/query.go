@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

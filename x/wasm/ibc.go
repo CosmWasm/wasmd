@@ -1,7 +1,7 @@
 package wasm
 
 import (
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

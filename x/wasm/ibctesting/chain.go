@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
 	"io/ioutil"
 	"os"

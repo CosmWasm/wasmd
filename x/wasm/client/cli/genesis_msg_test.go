@@ -8,8 +8,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
