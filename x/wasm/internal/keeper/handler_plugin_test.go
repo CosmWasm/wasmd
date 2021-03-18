@@ -1,19 +1,20 @@
 package keeper
 
 import (
+	"encoding/json"
 	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
-	"testing"
-
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestMessageHandlerChainDispatch(t *testing.T) {
@@ -32,8 +33,9 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 
 	myMsg := wasmvmtypes.CosmosMsg{Custom: []byte(`{}`)}
 	specs := map[string]struct {
-		handlers []messenger
-		expErr   *sdkerrors.Error
+		handlers  []messenger
+		expErr    *sdkerrors.Error
+		expEvents []sdk.Event
 	}{
 		"single handler": {
 			handlers: []messenger{capturingHandler},
@@ -50,6 +52,15 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 					return nil, nil, types.ErrInvalidMsg
 				}}, assertNotCalledHandler},
 			expErr: types.ErrInvalidMsg,
+		},
+		"return events when handle": {
+			handlers: []messenger{&wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
+					return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
+				}},
+			},
+			expEvents: []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))},
 		},
 		"return error when none can handle": {
 			handlers: []messenger{alwaysUnknownMsgHandler},
@@ -70,8 +81,131 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 				return
 			}
 			assert.Equal(t, []wasmvmtypes.CosmosMsg{myMsg}, *gotMsgs)
-			assert.Equal(t, [][]byte{{1}}, gotData)
-			assert.Nil(t, gotEvents)
+			assert.Equal(t, [][]byte{{1}}, gotData) // {1} is default in capturing handler
+			assert.Equal(t, spec.expEvents, gotEvents)
+		})
+	}
+}
+
+func TestSDKMessageHandlerDispatch(t *testing.T) {
+	myEvent := sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))
+	const myData = "myData"
+	myRouterResult := sdk.Result{
+		Data:   []byte(myData),
+		Events: sdk.Events{myEvent}.ToABCIEvents(),
+	}
+
+	var gotMsg []sdk.Msg
+	capturingRouteFn := func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
+		gotMsg = append(gotMsg, msg)
+		return &myRouterResult, nil
+	}
+
+	myContractAddr := RandomAccountAddress(t)
+	myContractMessage := wasmvmtypes.CosmosMsg{Custom: []byte("{}")}
+
+	specs := map[string]struct {
+		srcRoute         sdk.Route
+		srcEncoder       CustomEncoder
+		expErr           *sdkerrors.Error
+		expMsgDispatched int
+	}{
+		"all good": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&myMsg}, nil
+			},
+			expMsgDispatched: 1,
+		},
+		"multiple output msgs": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				first := &types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				second := &types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{first, second}, nil
+			},
+			expMsgDispatched: 2,
+		},
+		"invalid sdk message rejected": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				invalidMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("INVALID_JSON"),
+				}
+				return []sdk.Msg{&invalidMsg}, nil
+			},
+			expErr: types.ErrInvalid,
+		},
+		"invalid sender rejected": {
+			srcRoute: sdk.NewRoute(types.RouterKey, capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				invalidMsg := types.MsgExecuteContract{
+					Sender:   RandomBech32AccountAddress(t),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&invalidMsg}, nil
+			},
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"unroutable message rejected": {
+			srcRoute: sdk.NewRoute("nothing", capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myMsg := types.MsgExecuteContract{
+					Sender:   myContractAddr.String(),
+					Contract: RandomBech32AccountAddress(t),
+					Msg:      []byte("{}"),
+				}
+				return []sdk.Msg{&myMsg}, nil
+			},
+			expErr: sdkerrors.ErrUnknownRequest,
+		},
+		"encoding error passed": {
+			srcRoute: sdk.NewRoute("nothing", capturingRouteFn),
+			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+				myErr := types.ErrUnpinContractFailed
+				return nil, myErr
+			},
+			expErr: types.ErrUnpinContractFailed,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotMsg = make([]sdk.Msg, 0)
+			router := baseapp.NewRouter()
+			router.AddRoute(spec.srcRoute)
+
+			// when
+			ctx := sdk.Context{}
+			h := NewSDKMessageHandler(router, MessageEncoders{Custom: spec.srcEncoder})
+			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
+
+			// then
+			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
+			if spec.expErr != nil {
+				require.Len(t, gotMsg, 0)
+				return
+			}
+			assert.Len(t, gotMsg, spec.expMsgDispatched)
+			for i := 0; i < spec.expMsgDispatched; i++ {
+				assert.Equal(t, myEvent, gotEvents[i])
+				assert.Equal(t, []byte(myData), gotData[i])
+			}
 		})
 	}
 }

@@ -13,6 +13,7 @@ type MockChannelKeeper struct {
 	SendPacketFn          func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error
 	ChanCloseInitFn       func(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
 	GetAllChannelsFn      func(ctx sdk.Context) []channeltypes.IdentifiedChannel
+	IterateChannelsFn     func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
 }
 
 func (m *MockChannelKeeper) GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
@@ -27,17 +28,6 @@ func (m *MockChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.Ident
 		panic("not supposed to be called!")
 	}
 	return m.GetAllChannelsFn(ctx)
-}
-
-// Auto-implemented from GetAllChannels data
-func (m *MockChannelKeeper) IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
-	channels := m.GetAllChannels(ctx)
-	for _, channel := range channels {
-		stop := cb(channel)
-		if stop {
-			break
-		}
-	}
 }
 
 func (m *MockChannelKeeper) GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool) {
@@ -59,6 +49,24 @@ func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID str
 		panic("not supposed to be called!")
 	}
 	return m.ChanCloseInitFn(ctx, portID, channelID, chanCap)
+}
+
+func (m *MockChannelKeeper) IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
+	if m.IterateChannelsFn == nil {
+		panic("not expected to be called")
+	}
+	m.IterateChannelsFn(ctx, cb)
+}
+
+func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
+	return func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
+		for _, channel := range s {
+			stop := cb(channel)
+			if stop {
+				break
+			}
+		}
+	}
 }
 
 type MockCapabilityKeeper struct {
