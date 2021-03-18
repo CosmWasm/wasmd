@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
@@ -55,9 +56,10 @@ func TestEncoding(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := map[string]struct {
-		sender     sdk.AccAddress
-		srcMsg     wasmvmtypes.CosmosMsg
-		srcIBCPort string
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		srcContractIBCPort string
+		transferPortSource types.ICS20TransferPortSource
 		// set if valid
 		output []sdk.Msg
 		// set if invalid
@@ -349,8 +351,8 @@ func TestEncoding(t *testing.T) {
 			isError: true,
 		},
 		"IBC transfer with block timeout": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC: &wasmvmtypes.IBCMsg{
 					Transfer: &wasmvmtypes.TransferMsg{
@@ -364,9 +366,12 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
 			output: []sdk.Msg{
 				&ibctransfertypes.MsgTransfer{
-					SourcePort:    "transfer",
+					SourcePort:    "myTransferPort",
 					SourceChannel: "myChanID",
 					Token: sdk.Coin{
 						Denom:  "ALX",
@@ -379,8 +384,8 @@ func TestEncoding(t *testing.T) {
 			},
 		},
 		"IBC transfer with time timeout": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC: &wasmvmtypes.IBCMsg{
 					Transfer: &wasmvmtypes.TransferMsg{
@@ -394,6 +399,9 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "transfer"
+			}},
 			output: []sdk.Msg{
 				&ibctransfertypes.MsgTransfer{
 					SourcePort:    "transfer",
@@ -409,8 +417,8 @@ func TestEncoding(t *testing.T) {
 			},
 		},
 		"IBC close channel": {
-			sender:     addr1,
-			srcIBCPort: "myIBCPort",
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
 			srcMsg: wasmvmtypes.CosmosMsg{
 				IBC: &wasmvmtypes.IBCMsg{
 					CloseChannel: &wasmvmtypes.CloseChannelMsg{
@@ -428,12 +436,11 @@ func TestEncoding(t *testing.T) {
 		},
 	}
 	encodingConfig := MakeEncodingConfig(t)
-	encoder := DefaultEncoders(encodingConfig.Marshaler)
 	for name, tc := range cases {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			res, err := encoder.Encode(ctx, tc.sender, tc.srcIBCPort, tc.srcMsg)
+			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.isError {
 				require.Error(t, err)
 			} else {

@@ -88,3 +88,8 @@ type CapabilityKeeper interface {
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 	AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool
 }
+
+// ICS20TransferPortSource is a subset of the ibc transfer keeper.
+type ICS20TransferPortSource interface {
+	GetPort(ctx sdk.Context) string
+}

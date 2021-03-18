@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper/wasmtesting"
 	types "github.com/CosmWasm/wasmd/x/wasm/internal/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -292,6 +293,7 @@ func createTestInput(
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,
+		wasmtesting.MockIBCTransferKeeper{},
 		router,
 		querier,
 		tempDir,
