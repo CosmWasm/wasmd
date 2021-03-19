@@ -167,7 +167,7 @@ Available flags:
 
  
 * `-X github.com/CosmWasm/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
-* `-X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `cosmos`)
+* `-X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
 * `-X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
 * `-X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
     enable a subset of the x/wasm governance proposal types (overrides `ProposalsEnabled`)
@@ -175,8 +175,6 @@ Available flags:
 Examples:
 
 * [`wasmd`](./Makefile#L50-L55) is a generic, permissionless version using the `cosmos` bech32 prefix
-* [`gaiaflex`](./Makefile#L78-L87) is a generic, *permissioned* version using the `cosmos` bech32 prefix
-* [`coral`](./Makefile#L63-L71) is a permissionless version designed for a specific testnet, with a `coral` bech32 prefix
 
 ## Genesis Configuration
 
