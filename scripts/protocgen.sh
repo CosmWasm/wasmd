@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-PROJECT_PROTO_DIR=x/wasm/internal/types/
+PROJECT_PROTO_DIR=x/wasm/types/
 COSMOS_SDK_DIR=${COSMOS_SDK_DIR:-$(go list -f "{{ .Dir }}" -m github.com/cosmos/cosmos-sdk)}
 
 # Generate Go types from protobuf

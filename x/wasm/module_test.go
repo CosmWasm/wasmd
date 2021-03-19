@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/internal/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/internal/types"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -64,8 +64,8 @@ func mustLoad(path string) []byte {
 var (
 	_, _, addrAcc1 = keyPubAddr()
 	addr1          = addrAcc1.String()
-	testContract   = mustLoad("./internal/keeper/testdata/hackatom.wasm")
-	maskContract   = mustLoad("./internal/keeper/testdata/reflect.wasm")
+	testContract   = mustLoad("./keeper/testdata/hackatom.wasm")
+	maskContract   = mustLoad("./keeper/testdata/reflect.wasm")
 	oldContract    = mustLoad("./testdata/escrow_0.7.wasm")
 )
 

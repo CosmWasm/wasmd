@@ -6,7 +6,7 @@ BASE_ACCOUNT=$(wasmd keys show validator -a)
 
 echo "-----------------------"
 echo "## Genesis CosmWasm contract"
-wasmd add-wasm-genesis-message store  "$DIR/../../x/wasm/internal/keeper/testdata/hackatom.wasm" --instantiate-everybody true --builder=foo/bar:latest --run-as validator
+wasmd add-wasm-genesis-message store  "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" --instantiate-everybody true --builder=foo/bar:latest --run-as validator
 
 echo "-----------------------"
 echo "## Genesis CosmWasm instance"
