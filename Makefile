@@ -67,34 +67,7 @@ endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-coral_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=coral \
-				  -X github.com/cosmos/cosmos-sdk/version.AppName=corald \
-				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-				  -X github.com/CosmWasm/wasmd/app.NodeDir=.corald \
-				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral \
-				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
-# we could consider enabling governance override?
-#				  -X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin \
-
-coral_ldflags += $(LDFLAGS)
-coral_ldflags := $(strip $(coral_ldflags))
-
-flex_ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=gaiaflex \
-				  -X github.com/cosmos/cosmos-sdk/version.AppName=gaiaflexd \
-				  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-				  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-				  -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true \
-				  -X github.com/CosmWasm/wasmd/app.NodeDir=.gaiaflexd \
-				  -X github.com/CosmWasm/wasmd/app.Bech32Prefix=cosmos \
-				  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
-
-flex_ldflags += $(LDFLAGS)
-flex_ldflags := $(strip $(flex_ldflags))
-
 BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)' -trimpath
-CORAL_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(coral_ldflags)' -trimpath
-FLEX_BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(flex_ldflags)' -trimpath
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
@@ -107,23 +80,6 @@ ifeq ($(OS),Windows_NT)
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
 endif
-
-build-coral: go.sum
-ifeq ($(OS),Windows_NT)
-	exit 1
-else
-	go build -mod=readonly $(CORAL_BUILD_FLAGS) -o build/corald ./cmd/wasmd
-endif
-
-build-gaiaflex: go.sum
-ifeq ($(OS),Windows_NT)
-	exit 1
-else
-	go build -mod=readonly $(FLEX_BUILD_FLAGS) -o build/gaiaflexd ./cmd/wasmd
-endif
-
-build-linux: go.sum
-	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
