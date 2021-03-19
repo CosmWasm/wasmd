@@ -1,7 +1,6 @@
 syntax = "proto3";
 package cosmwasm.wasm.v1beta1;
 
-
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "cosmwasm/wasm/v1beta1/types.proto";
@@ -14,7 +13,8 @@ service Msg {
   // StoreCode to submit Wasm code to the system
   rpc StoreCode(MsgStoreCode) returns (MsgStoreCodeResponse);
   //  Instantiate creates a new smart contract instance for the given code id.
-  rpc InstantiateContract(MsgInstantiateContract) returns (MsgInstantiateContractResponse);
+  rpc InstantiateContract(MsgInstantiateContract)
+      returns (MsgInstantiateContractResponse);
   // Execute submits the given message data to a smart contract
   rpc ExecuteContract(MsgExecuteContract) returns (MsgExecuteContractResponse);
   // Migrate runs a code upgrade/ downgrade for a smart contract
@@ -30,34 +30,40 @@ message MsgStoreCode {
   // Sender is the that actor that signed the messages
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
-  bytes wasm_byte_code = 2 [(gogoproto.customname) = "WASMByteCode"];
-  // Source is a valid absolute HTTPS URI to the contract's source code, optional
+  bytes wasm_byte_code = 2 [ (gogoproto.customname) = "WASMByteCode" ];
+  // Source is a valid absolute HTTPS URI to the contract's source code,
+  // optional
   string source = 3;
   // Builder is a valid docker image name with tag, optional
   string builder = 4;
-  // InstantiatePermission access control to apply on contract creation, optional
+  // InstantiatePermission access control to apply on contract creation,
+  // optional
   AccessConfig instantiate_permission = 5;
 }
 // MsgStoreCodeResponse returns store result data.
-message MsgStoreCodeResponse{
+message MsgStoreCodeResponse {
   // CodeID is the reference to the stored WASM code
-  uint64 code_id = 1  [(gogoproto.customname) = "CodeID"];
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
 }
 
-// MsgInstantiateContract create a new smart contract instance for the given code id.
+// MsgInstantiateContract create a new smart contract instance for the given
+// code id.
 message MsgInstantiateContract {
   // Sender is the that actor that signed the messages
   string sender = 1;
   // Admin is an optional address that can execute migrations
   string admin = 2;
   // CodeID is the reference to the stored WASM code
-  uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
+  uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
   // Label is optional metadata to be stored with a contract instance.
   string label = 4;
   // InitMsg json encoded message to be passed to the contract on instantiation
-  bytes init_msg = 5 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+  bytes init_msg = 5 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
   // Funds coins that are transferred to the contract on instantiation
-  repeated cosmos.base.v1beta1.Coin funds = 6 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin funds = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 // MsgInstantiateContractResponse return instantiation result data
 message MsgInstantiateContractResponse {
@@ -74,9 +80,12 @@ message MsgExecuteContract {
   // Contract is the address of the smart contract
   string contract = 2;
   // Msg json encoded message to be passed to the contract
-  bytes msg = 3 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+  bytes msg = 3 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
   // Funds coins that are transferred to the contract on execution
-  repeated cosmos.base.v1beta1.Coin funds = 5 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  repeated cosmos.base.v1beta1.Coin funds = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 // MsgExecuteContractResponse returns execution result data.
@@ -92,9 +101,9 @@ message MsgMigrateContract {
   // Contract is the address of the smart contract
   string contract = 2;
   // CodeID references the new WASM code
-  uint64 code_id = 3 [(gogoproto.customname) = "CodeID"];
+  uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
   // MigrateMsg json encoded message to be passed to the contract on migration
-  bytes migrate_msg = 4 [(gogoproto.casttype) = "encoding/json.RawMessage"];
+  bytes migrate_msg = 4 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
 }
 
 // MsgMigrateContractResponse returns contract migration result data.
@@ -115,7 +124,7 @@ message MsgUpdateAdmin {
 }
 
 // MsgUpdateAdminResponse returns empty data
-message MsgUpdateAdminResponse{}
+message MsgUpdateAdminResponse {}
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
@@ -126,4 +135,4 @@ message MsgClearAdmin {
 }
 
 // MsgClearAdminResponse returns empty data
-message MsgClearAdminResponse{}
+message MsgClearAdminResponse {}
