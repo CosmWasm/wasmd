@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"

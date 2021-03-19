@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
+**Extendability:**
+- Remove `internal` package for better integration [\464](https://github.com/CosmWasm/wasmd/pull/464)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...HEAD)
 
