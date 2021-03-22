@@ -1,12 +1,11 @@
 version: v1beta1
+
 build:
   roots:
-    # Note: these are not local path. These roots are mounted into the docker container
-    - wasmd/
-    - cosmos_sdk_dir/third_party/proto/
-    - cosmos_sdk_dir/proto/
+    - proto
+    - third_party/proto
   excludes:
-#    - cosmos_sdk_dir
+    - third_party/proto/google/protobuf
 lint:
   use:
     - DEFAULT
@@ -20,6 +19,8 @@ lint:
     - RPC_REQUEST_STANDARD_NAME
     - PACKAGE_DIRECTORY_MATCH
   ignore:
+    - cosmos
+    - ibc
     - tendermint
     - gogoproto
     - cosmos_proto
@@ -29,6 +30,8 @@ breaking:
   use:
     - FILE
   ignore:
+    - cosmos
+    - ibc
     - tendermint
     - gogoproto
     - cosmos_proto
