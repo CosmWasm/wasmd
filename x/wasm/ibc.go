@@ -1,7 +1,7 @@
 package wasm
 
 import (
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	types "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -15,12 +15,12 @@ import (
 var _ porttypes.IBCModule = IBCHandler{}
 
 type IBCHandler struct {
-	keeper        Keeper
-	channelKeeper wasmTypes.ChannelKeeper
+	keeper        types.IBCContractKeeper
+	channelKeeper types.ChannelKeeper
 }
 
-func NewIBCHandler(keeper Keeper) IBCHandler {
-	return IBCHandler{keeper: keeper, channelKeeper: keeper.ChannelKeeper}
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper) IBCHandler {
+	return IBCHandler{keeper: k, channelKeeper: ck}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -265,7 +265,7 @@ func ValidateChannelParams(channelID string) error {
 		return err
 	}
 	if channelSequence > math.MaxUint32 {
-		return sdkerrors.Wrapf(wasmTypes.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
+		return sdkerrors.Wrapf(types.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
 	}
 	return nil
 }

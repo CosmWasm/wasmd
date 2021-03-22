@@ -12,7 +12,7 @@ import (
 )
 
 // NewHandler returns a handler for "bank" type messages.
-func NewHandler(k *Keeper) sdk.Handler {
+func NewHandler(k types.MsgOpsKeeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {

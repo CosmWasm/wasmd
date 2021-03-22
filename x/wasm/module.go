@@ -116,7 +116,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
-	return keeper.NewLegacyQuerier(am.keeper)
+	return keeper.NewLegacyQuerier(am.keeper, am.keeper.QueryGasLimit())
 }
 
 // RegisterInvariants registers the wasm module invariants.

@@ -21,7 +21,7 @@ func WithWasmEngine(x types.WasmerEngine) Option {
 
 // WithMessageHandler is an optional constructor parameter to set a custom handler for wasmVM messages.
 // This option should not be combined with Option `WithMessageEncoders`.
-func WithMessageHandler(x messenger) Option {
+func WithMessageHandler(x Messenger) Option {
 	return optsFn(func(k *Keeper) {
 		k.messenger = x
 	})
@@ -29,7 +29,7 @@ func WithMessageHandler(x messenger) Option {
 
 // WithQueryHandler is an optional constructor parameter to set custom query handler for wasmVM requests.
 // This option should not be combined with Option `WithQueryPlugins`.
-func WithQueryHandler(x wasmVMQueryHandler) Option {
+func WithQueryHandler(x WASMVMQueryHandler) Option {
 	return optsFn(func(k *Keeper) {
 		k.wasmVMQueryHandler = x
 	})

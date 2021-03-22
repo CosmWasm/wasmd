@@ -189,9 +189,6 @@ func TestGasOnExternalQuery(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			// set the external gas limit (normally from config file)
-			keeper.queryGasLimit = tc.gasLimit
-
 			recurse := tc.msg
 			recurse.Contract = contractAddr
 			msg := buildRecurseQuery(t, recurse)
@@ -202,12 +199,12 @@ func TestGasOnExternalQuery(t *testing.T) {
 			if tc.expectPanic {
 				require.Panics(t, func() {
 					// this should run out of gas
-					_, err := NewLegacyQuerier(keeper)(ctx, path, req)
+					_, err := NewLegacyQuerier(keeper, tc.gasLimit)(ctx, path, req)
 					t.Logf("%v", err)
 				})
 			} else {
 				// otherwise, make sure we get a good success
-				_, err := NewLegacyQuerier(keeper)(ctx, path, req)
+				_, err := NewLegacyQuerier(keeper, tc.gasLimit)(ctx, path, req)
 				require.NoError(t, err)
 			}
 		})

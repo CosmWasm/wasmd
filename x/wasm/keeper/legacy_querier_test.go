@@ -48,7 +48,9 @@ func TestLegacyQueryContractState(t *testing.T) {
 	keeper.importContractState(ctx, addr, contractModel)
 
 	// this gets us full error, not redacted sdk.Error
-	q := NewLegacyQuerier(keeper)
+	var defaultQueryGasLimit sdk.Gas = 3000000
+	q := NewLegacyQuerier(keeper, defaultQueryGasLimit)
+
 	specs := map[string]struct {
 		srcPath []string
 		srcReq  abci.RequestQuery
@@ -195,7 +197,9 @@ func TestLegacyQueryContractListByCodeOrdering(t *testing.T) {
 	}
 
 	// query and check the results are properly sorted
-	q := NewLegacyQuerier(keeper)
+	var defaultQueryGasLimit sdk.Gas = 3000000
+	q := NewLegacyQuerier(keeper, defaultQueryGasLimit)
+
 	query := []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}
 	data := abci.RequestQuery{}
 	res, err := q(ctx, query, data)
@@ -287,7 +291,9 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			_, _, myContractAddr := keyPubAddr()
 			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
-			q := NewLegacyQuerier(keeper)
+
+			var defaultQueryGasLimit sdk.Gas = 3000000
+			q := NewLegacyQuerier(keeper, defaultQueryGasLimit)
 			queryContractAddr := spec.srcQueryAddr
 			if queryContractAddr == nil {
 				queryContractAddr = myContractAddr
@@ -336,7 +342,8 @@ func TestLegacyQueryCodeList(t *testing.T) {
 					wasmCode),
 				)
 			}
-			q := NewLegacyQuerier(keeper)
+			var defaultQueryGasLimit sdk.Gas = 3000000
+			q := NewLegacyQuerier(keeper, defaultQueryGasLimit)
 			// when
 			query := []string{QueryListCode}
 			data := abci.RequestQuery{}

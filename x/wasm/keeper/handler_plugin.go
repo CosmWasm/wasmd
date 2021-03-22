@@ -24,7 +24,7 @@ type SDKMessageHandler struct {
 	encoders msgEncoder
 }
 
-func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource, customEncoders ...*MessageEncoders) messenger {
+func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource, customEncoders ...*MessageEncoders) Messenger {
 	encoders := DefaultEncoders(unpacker, portSource)
 	for _, e := range customEncoders {
 		encoders = encoders.Merge(e)
@@ -89,11 +89,11 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 
 // MessageHandlerChain defines a chain of handlers that are called one by one until it can be handled.
 type MessageHandlerChain struct {
-	handlers []messenger
+	handlers []Messenger
 }
 
-func NewMessageHandlerChain(first messenger, others ...messenger) *MessageHandlerChain {
-	r := &MessageHandlerChain{handlers: append([]messenger{first}, others...)}
+func NewMessageHandlerChain(first Messenger, others ...Messenger) *MessageHandlerChain {
+	r := &MessageHandlerChain{handlers: append([]Messenger{first}, others...)}
 	for i := range r.handlers {
 		if r.handlers[i] == nil {
 			panic(fmt.Sprintf("handler must not be nil at position : %d", i))

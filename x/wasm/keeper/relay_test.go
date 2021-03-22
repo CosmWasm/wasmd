@@ -82,7 +82,7 @@ func TestOnConnectChannel(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    messenger
+		overwriteMessenger    Messenger
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -192,7 +192,7 @@ func TestOnCloseChannel(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    messenger
+		overwriteMessenger    Messenger
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -302,7 +302,7 @@ func TestOnRecvPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCReceiveResponse
 		contractErr           error
-		overwriteMessenger    messenger
+		overwriteMessenger    Messenger
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -427,7 +427,7 @@ func TestOnAckPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    messenger
+		overwriteMessenger    Messenger
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -538,7 +538,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    messenger
+		overwriteMessenger    Messenger
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool

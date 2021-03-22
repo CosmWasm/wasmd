@@ -51,13 +51,13 @@ type Option interface {
 }
 
 // WasmVMQueryHandler is an extension point for custom query handler implementations
-type wasmVMQueryHandler interface {
+type WASMVMQueryHandler interface {
 	// HandleQuery executes the requested query
 	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
 }
 
-// messenger is an extension point for custom wasmVM message handling
-type messenger interface {
+// Messenger is an extension point for custom wasmVM message handling
+type Messenger interface {
 	// DispatchMsg encodes the wasmVM message and dispatches it.
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
@@ -73,12 +73,11 @@ type Keeper struct {
 	cdc                codec.Marshaler
 	accountKeeper      types.AccountKeeper
 	bank               coinTransferrer
-	ChannelKeeper      types.ChannelKeeper
 	portKeeper         types.PortKeeper
 	capabilityKeeper   types.CapabilityKeeper
 	wasmVM             types.WasmerEngine
-	wasmVMQueryHandler wasmVMQueryHandler
-	messenger          messenger
+	wasmVMQueryHandler WASMVMQueryHandler
+	messenger          Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	authZPolicy   AuthorizationPolicy
@@ -121,7 +120,6 @@ func NewKeeper(
 		wasmVM:           wasmer,
 		accountKeeper:    accountKeeper,
 		bank:             NewBankCoinTransferrer(bankKeeper),
-		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
 		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, portSource),
@@ -647,7 +645,7 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	return &contract
 }
 
-func (k Keeper) containsContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+func (k Keeper) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetContractAddressKey(contractAddress))
 }
@@ -1003,7 +1001,7 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
 	}
-	if k.containsContractInfo(ctx, contractAddr) {
+	if k.HasContractInfo(ctx, contractAddr) {
 		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
 	}
 
@@ -1039,7 +1037,21 @@ func gasMeter(ctx sdk.Context) MultipliedGasMeter {
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return moduleLogger(ctx)
+}
+
+func moduleLogger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// Querier creates a new grpc querier instance
+func Querier(k *Keeper) *grpcQuerier {
+	return NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
+}
+
+// QueryGasLimit returns the gas limit for smart queries.
+func (k Keeper) QueryGasLimit() sdk.Gas {
+	return k.queryGasLimit
 }
 
 // CoinTransferrer replicates the cosmos-sdk behaviour as in

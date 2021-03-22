@@ -29,7 +29,7 @@ const (
 )
 
 // NewLegacyQuerier creates a new querier
-func NewLegacyQuerier(keeper *Keeper) sdk.Querier {
+func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		var (
 			rsp interface{}
@@ -41,18 +41,18 @@ func NewLegacyQuerier(keeper *Keeper) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractInfo(ctx, addr, *keeper)
+			rsp, err = queryContractInfo(ctx, addr, keeper)
 		case QueryListContractByCode:
 			codeID, err := strconv.ParseUint(path[1], 10, 64)
 			if err != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
 			}
-			rsp, err = queryContractListByCode(ctx, codeID, *keeper)
+			rsp, err = queryContractListByCode(ctx, codeID, keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 			}
-			return queryContractState(ctx, path[1], path[2], req.Data, keeper)
+			return queryContractState(ctx, path[1], path[2], req.Data, gasLimit, keeper)
 		case QueryGetCode:
 			codeID, err := strconv.ParseUint(path[1], 10, 64)
 			if err != nil {
@@ -60,13 +60,13 @@ func NewLegacyQuerier(keeper *Keeper) sdk.Querier {
 			}
 			rsp, err = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
-			rsp, err = queryCodeList(ctx, *keeper)
+			rsp, err = queryCodeList(ctx, keeper)
 		case QueryContractHistory:
 			contractAddr, err := sdk.AccAddressFromBech32(path[1])
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractHistory(ctx, contractAddr, *keeper)
+			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
@@ -84,7 +84,7 @@ func NewLegacyQuerier(keeper *Keeper) sdk.Querier {
 	}
 }
 
-func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, keeper *Keeper) (json.RawMessage, error) {
+func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, gasLimit sdk.Gas, keeper types.ViewKeeper) (json.RawMessage, error) {
 	contractAddr, err := sdk.AccAddressFromBech32(bech)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, bech)
@@ -108,7 +108,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 		return keeper.QueryRaw(ctx, contractAddr, data), nil
 	case QueryMethodContractStateSmart:
 		// we enforce a subjective gas limit on all queries to avoid infinite loops
-		ctx = ctx.WithGasMeter(sdk.NewGasMeter(keeper.queryGasLimit))
+		ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
 		// this returns raw bytes (must be base64-encoded)
 		return keeper.QuerySmart(ctx, contractAddr, data)
 	default:
@@ -121,7 +121,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	return bz, nil
 }
 
-func queryCodeList(ctx sdk.Context, keeper Keeper) ([]types.CodeInfoResponse, error) {
+func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoResponse, error) {
 	var info []types.CodeInfoResponse
 	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
 		info = append(info, types.CodeInfoResponse{
@@ -136,7 +136,7 @@ func queryCodeList(ctx sdk.Context, keeper Keeper) ([]types.CodeInfoResponse, er
 	return info, nil
 }
 
-func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper Keeper) ([]types.ContractCodeHistoryEntry, error) {
+func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) ([]types.ContractCodeHistoryEntry, error) {
 	history := keeper.GetContractHistory(ctx, contractAddr)
 	// redact response
 	for i := range history {
@@ -145,7 +145,7 @@ func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper K
 	return history, nil
 }
 
-func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper Keeper) ([]types.ContractInfoWithAddress, error) {
+func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) ([]types.ContractInfoWithAddress, error) {
 	var contracts []types.ContractInfoWithAddress
 	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
 		if info.CodeID == codeID {
