@@ -1,0 +1,68 @@
+package keeper
+
+import (
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+var _ types.ContractOpsKeeper = PermissionedKeeper{}
+
+// decoratedKeeper contains a subset of the wasm keeper that are already or can be guarded by an authorization policy in the future
+type decoratedKeeper interface {
+	create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error)
+	instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error)
+	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error)
+	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error
+	pinCode(ctx sdk.Context, codeID uint64) error
+	unpinCode(ctx sdk.Context, codeID uint64) error
+	execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error)
+}
+
+type PermissionedKeeper struct {
+	authZPolicy AuthorizationPolicy
+	nested      decoratedKeeper
+}
+
+func NewPermissionedKeeper(nested decoratedKeeper, authZPolicy AuthorizationPolicy) *PermissionedKeeper {
+	return &PermissionedKeeper{authZPolicy: authZPolicy, nested: nested}
+}
+
+func NewGovPermissionKeeper(nested decoratedKeeper) *PermissionedKeeper {
+	return NewPermissionedKeeper(nested, GovAuthorizationPolicy{})
+}
+
+func NewDefaultPermissionKeeper(nested decoratedKeeper) *PermissionedKeeper {
+	return NewPermissionedKeeper(nested, DefaultAuthorizationPolicy{})
+}
+
+func (p PermissionedKeeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig) (codeID uint64, err error) {
+	return p.nested.create(ctx, creator, wasmCode, source, builder, instantiateAccess, p.authZPolicy)
+}
+
+func (p PermissionedKeeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
+	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, p.authZPolicy)
+}
+
+func (p PermissionedKeeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
+	return p.nested.execute(ctx, contractAddress, caller, msg, coins)
+}
+
+func (p PermissionedKeeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) (*sdk.Result, error) {
+	return p.nested.migrate(ctx, contractAddress, caller, newCodeID, msg, p.authZPolicy)
+}
+
+func (p PermissionedKeeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
+	return p.nested.setContractAdmin(ctx, contractAddress, caller, newAdmin, p.authZPolicy)
+}
+
+func (p PermissionedKeeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
+	return p.nested.setContractAdmin(ctx, contractAddress, caller, nil, p.authZPolicy)
+}
+
+func (p PermissionedKeeper) PinCode(ctx sdk.Context, codeID uint64) error {
+	return p.nested.pinCode(ctx, codeID)
+}
+
+func (p PermissionedKeeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
+	return p.nested.unpinCode(ctx, codeID)
+}

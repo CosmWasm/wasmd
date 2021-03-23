@@ -30,12 +30,12 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, creator, reflectCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
 	// creator instantiates a contract and gives it tokens
-	contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -66,7 +66,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	}
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+	_, err = keepers.ContractKeeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// fred got coins
@@ -135,13 +135,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	reflectID, err := keeper.Create(ctx, uploader, reflectCode, "", "", nil)
+	reflectID, err := keepers.ContractKeeper.Create(ctx, uploader, reflectCode, "", "", nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
 	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	hackatomID, err := keeper.Create(ctx, uploader, hackatomCode, "", "", nil)
+	hackatomID, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, "", "", nil)
 	require.NoError(t, err)
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
@@ -151,7 +151,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
-	hackatomAddr, _, err := keeper.Instantiate(ctx, hackatomID, uploader, nil, initMsgBz, "hackatom demo", contractStart)
+	hackatomAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, hackatomID, uploader, nil, initMsgBz, "hackatom demo", contractStart)
 	require.NoError(t, err)
 
 	validBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
@@ -312,7 +312,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, contractStart)
 			_, _, empty := keyPubAddr()
 
-			contractAddr, _, err := keeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
+			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
 			require.NoError(t, err)
 
 			msg := tc.msg(contractAddr.String(), empty.String())
@@ -338,7 +338,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 					}
 				}
 			}()
-			_, err = keeper.Execute(execCtx, contractAddr, creator, reflectSendBz, nil)
+			_, err = keepers.ContractKeeper.Execute(execCtx, contractAddr, creator, reflectSendBz, nil)
 
 			if tc.executeError {
 				require.Error(t, err)
@@ -398,11 +398,11 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, creator, reflectCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
-	contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
 	require.NoError(t, err)
 	require.NotEmpty(t, contractAddr)
 
@@ -428,7 +428,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	}
 	reflectSendBz, err := json.Marshal(reflectSend)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+	_, err = keepers.ContractKeeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
 	require.NoError(t, err)
 
 	// query the reflect state to ensure the result was stored

@@ -127,14 +127,15 @@ var TestingStakeParams = stakingtypes.Params{
 }
 
 type TestKeepers struct {
-	AccountKeeper authkeeper.AccountKeeper
-	StakingKeeper stakingkeeper.Keeper
-	DistKeeper    distributionkeeper.Keeper
-	BankKeeper    bankkeeper.Keeper
-	GovKeeper     govkeeper.Keeper
-	WasmKeeper    *Keeper
-	IBCKeeper     *ibckeeper.Keeper
-	Router        *baseapp.Router
+	AccountKeeper  authkeeper.AccountKeeper
+	StakingKeeper  stakingkeeper.Keeper
+	DistKeeper     distributionkeeper.Keeper
+	BankKeeper     bankkeeper.Keeper
+	GovKeeper      govkeeper.Keeper
+	ContractKeeper types.ContractOpsKeeper
+	WasmKeeper     *Keeper
+	IBCKeeper      *ibckeeper.Keeper
+	Router         *baseapp.Router
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -303,7 +304,8 @@ func createTestInput(
 	)
 	keeper.setParams(ctx, types.DefaultParams())
 	// add wasm handler so we can loop-back (contracts calling contracts)
-	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(&keeper)))
+	contractKeeper := NewDefaultPermissionKeeper(&keeper)
+	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
 
 	govRouter := govtypes.NewRouter().
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
@@ -321,20 +323,21 @@ func createTestInput(
 	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
 	keepers := TestKeepers{
-		AccountKeeper: authKeeper,
-		StakingKeeper: stakingKeeper,
-		DistKeeper:    distKeeper,
-		WasmKeeper:    &keeper,
-		BankKeeper:    bankKeeper,
-		GovKeeper:     govKeeper,
-		IBCKeeper:     ibcKeeper,
-		Router:        router,
+		AccountKeeper:  authKeeper,
+		StakingKeeper:  stakingKeeper,
+		DistKeeper:     distKeeper,
+		ContractKeeper: contractKeeper,
+		WasmKeeper:     &keeper,
+		BankKeeper:     bankKeeper,
+		GovKeeper:      govKeeper,
+		IBCKeeper:      ibcKeeper,
+		Router:         router,
 	}
 	return ctx, keepers
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
-func TestHandler(k *Keeper) sdk.Handler {
+func TestHandler(k types.ContractOpsKeeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
@@ -351,7 +354,7 @@ func TestHandler(k *Keeper) sdk.Handler {
 	}
 }
 
-func handleStoreCode(ctx sdk.Context, k *Keeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
+func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
@@ -367,7 +370,7 @@ func handleStoreCode(ctx sdk.Context, k *Keeper, msg *types.MsgStoreCode) (*sdk.
 	}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
@@ -390,7 +393,7 @@ func handleInstantiate(ctx sdk.Context, k *Keeper, msg *types.MsgInstantiateCont
 	}, nil
 }
 
-func handleExecute(ctx sdk.Context, k *Keeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
@@ -441,7 +444,7 @@ func StoreReflectContract(t TestingT, ctx sdk.Context, keepers TestKeepers) uint
 	require.NoError(t, err)
 
 	_, _, creatorAddr := keyPubAddr()
-	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
 	return codeID
 }
@@ -454,7 +457,7 @@ func StoreExampleContract(t TestingT, ctx sdk.Context, keepers TestKeepers, wasm
 	wasmCode, err := ioutil.ReadFile(wasmFile)
 	require.NoError(t, err)
 
-	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
 	return ExampleContract{anyAmount, creator, creatorAddr, codeID}
 }
@@ -470,7 +473,7 @@ type ExampleContractInstance struct {
 func SeedNewContractInstance(t TestingT, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
 	t.Helper()
 	exampleContract := StoreRandomContract(t, ctx, keepers, mock)
-	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
 	require.NoError(t, err)
 	return ExampleContractInstance{
 		ExampleContract: exampleContract,
@@ -486,7 +489,7 @@ func StoreRandomContract(t TestingT, ctx sdk.Context, keepers TestKeepers, mock 
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...)
-	codeID, err := keepers.WasmKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
 	return exampleContract
@@ -516,7 +519,7 @@ func InstantiateHackatomExampleContract(t TestingT, ctx sdk.Context, keepers Tes
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 
 	adminAddr := contract.CreatorAddr
-	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, "demo contract to query", initialAmount)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, "demo contract to query", initialAmount)
 	require.NoError(t, err)
 	return HackatomExampleInstance{
 		ExampleContract: contract,
@@ -556,7 +559,7 @@ func InstantiateIBCReflectContract(t TestingT, ctx sdk.Context, keepers TestKeep
 	}.GetBytes(t)
 	adminAddr := RandomAccountAddress(t)
 
-	contractAddr, _, err := keepers.WasmKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
 	require.NoError(t, err)
 	return IBCReflectExampleInstance{
 		Admin:         adminAddr,
