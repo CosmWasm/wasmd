@@ -26,7 +26,7 @@ import (
 // A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
 // Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 //
-// Please not that all gas prices returned to the wasmer engine should have this multiplied
+// Please note that all gas prices returned to the wasmer engine should have this multiplied
 const GasMultiplier uint64 = 100
 
 // MaxGas for a contract is 10 billion wasmer gas (enforced in rust to prevent overflow)
