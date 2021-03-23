@@ -69,7 +69,7 @@ func WithMessageEncoders(x *MessageEncoders) Option {
 }
 
 // WithCoinTransferrer is an optional constructor parameter to set a custom coin transferrer
-func WithCoinTransferrer(x coinTransferrer) Option {
+func WithCoinTransferrer(x CoinTransferrer) Option {
 	return optsFn(func(k *Keeper) {
 		k.bank = x
 	})

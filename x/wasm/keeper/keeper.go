@@ -62,7 +62,7 @@ type Messenger interface {
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
-type coinTransferrer interface {
+type CoinTransferrer interface {
 	// TransferCoins sends the coin amounts from the source to the destination with rules applied.
 	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
@@ -72,7 +72,7 @@ type Keeper struct {
 	storeKey           sdk.StoreKey
 	cdc                codec.Marshaler
 	accountKeeper      types.AccountKeeper
-	bank               coinTransferrer
+	bank               CoinTransferrer
 	portKeeper         types.PortKeeper
 	capabilityKeeper   types.CapabilityKeeper
 	wasmVM             types.WasmerEngine
@@ -1027,21 +1027,21 @@ func (k Keeper) QueryGasLimit() sdk.Gas {
 	return k.queryGasLimit
 }
 
-// CoinTransferrer replicates the cosmos-sdk behaviour as in
+// BankCoinTransferrer replicates the cosmos-sdk behaviour as in
 // https://github.com/cosmos/cosmos-sdk/blob/v0.41.4/x/bank/keeper/msg_server.go#L26
-type CoinTransferrer struct {
+type BankCoinTransferrer struct {
 	keeper types.BankKeeper
 }
 
-func NewBankCoinTransferrer(keeper types.BankKeeper) CoinTransferrer {
-	return CoinTransferrer{
+func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
+	return BankCoinTransferrer{
 		keeper: keeper,
 	}
 }
 
 // TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
 // is not in the blocked address list.
-func (c CoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
