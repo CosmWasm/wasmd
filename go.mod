@@ -14,7 +14,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
 	github.com/rakyll/statik v0.1.7
-	github.com/rs/zerolog v1.20.0
+	github.com/rs/zerolog v1.21.0
 	github.com/snikch/goodman v0.0.0-20171125024755-10e37e294daa
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.3
@@ -25,7 +25,6 @@ require (
 	github.com/tendermint/tendermint v0.34.8
 	github.com/tendermint/tm-db v0.6.4
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
-	golang.org/x/sys v0.0.0-20201211090839-8ad439b19e0f // indirect
 	golang.org/x/text v0.3.4 // indirect
 	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
 	google.golang.org/grpc v1.36.0
