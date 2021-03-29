@@ -11,8 +11,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler returns a handler for "bank" type messages.
-func NewHandler(k *Keeper) sdk.Handler {
+// NewHandler returns a handler for "wasm" type messages.
+func NewHandler(k types.ContractOpsKeeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 
 	return func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {

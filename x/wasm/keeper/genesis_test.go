@@ -35,7 +35,8 @@ import (
 const firstCodeID = 1
 
 func TestGenesisExportImport(t *testing.T) {
-	srcKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
+	wasmKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
+	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -43,7 +44,7 @@ func TestGenesisExportImport(t *testing.T) {
 	// store some test data
 	f := fuzz.New().Funcs(ModelFuzzers...)
 
-	srcKeeper.setParams(srcCtx, types.DefaultParams())
+	wasmKeeper.setParams(srcCtx, types.DefaultParams())
 
 	for i := 0; i < 25; i++ {
 		var (
@@ -60,24 +61,24 @@ func TestGenesisExportImport(t *testing.T) {
 		f.Fuzz(&pinned)
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
-		codeID, err := srcKeeper.Create(srcCtx, creatorAddr, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
+		codeID, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
-			srcKeeper.PinCode(srcCtx, codeID)
+			contractKeeper.PinCode(srcCtx, codeID)
 		}
 
 		contract.CodeID = codeID
-		contractAddr := srcKeeper.generateContractAddress(srcCtx, codeID)
-		srcKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
-		srcKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
-		srcKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		contractAddr := wasmKeeper.generateContractAddress(srcCtx, codeID)
+		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
+		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
+		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
 	}
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
-	srcKeeper.setParams(srcCtx, wasmParams)
+	wasmKeeper.setParams(srcCtx, wasmParams)
 
 	// export
-	exportedState := ExportGenesis(srcCtx, srcKeeper)
+	exportedState := ExportGenesis(srcCtx, wasmKeeper)
 	// order should not matter
 	rand.Shuffle(len(exportedState.Codes), func(i, j int) {
 		exportedState.Codes[i], exportedState.Codes[j] = exportedState.Codes[j], exportedState.Codes[i]
@@ -92,10 +93,10 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// reset ContractInfo in source DB for comparison with dest DB
-	srcKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
-		srcKeeper.deleteContractSecondIndex(srcCtx, address, &info)
+	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
+		wasmKeeper.deleteContractSecondIndex(srcCtx, address, &info)
 		info.ResetFromGenesis(srcCtx)
-		srcKeeper.storeContractInfo(srcCtx, address, &info)
+		wasmKeeper.storeContractInfo(srcCtx, address, &info)
 		return false
 	})
 
@@ -105,7 +106,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = json.Unmarshal(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(dstKeeper))
+	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -479,6 +480,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
   ]
 }`
 	keeper, ctx, _ := setupKeeper(t)
+	contractKeeper := NewGovPermissionKeeper(keeper)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -497,7 +499,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keeper))
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -597,7 +599,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, myAddress, sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(100))))
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keeper))
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keepers.ContractKeeper))
 	require.NoError(t, err)
 
 	// verify code stored

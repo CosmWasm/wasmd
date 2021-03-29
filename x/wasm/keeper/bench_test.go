@@ -43,7 +43,7 @@ func BenchmarkExecution(b *testing.B) {
 			ctx, keepers := createTestInput(b, false, SupportedFeatures, wasmConfig, spec.db())
 			example := InstantiateHackatomExampleContract(b, ctx, keepers)
 			if spec.pinned {
-				require.NoError(b, keepers.WasmKeeper.PinCode(ctx, example.CodeID))
+				require.NoError(b, keepers.ContractKeeper.PinCode(ctx, example.CodeID))
 			}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {

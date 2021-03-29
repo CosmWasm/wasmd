@@ -51,18 +51,18 @@ type Option interface {
 }
 
 // WasmVMQueryHandler is an extension point for custom query handler implementations
-type wasmVMQueryHandler interface {
+type WASMVMQueryHandler interface {
 	// HandleQuery executes the requested query
 	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
 }
 
-// messenger is an extension point for custom wasmVM message handling
-type messenger interface {
+// Messenger is an extension point for custom wasmVM message handling
+type Messenger interface {
 	// DispatchMsg encodes the wasmVM message and dispatches it.
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
-type coinTransferrer interface {
+type CoinTransferrer interface {
 	// TransferCoins sends the coin amounts from the source to the destination with rules applied.
 	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
@@ -72,16 +72,14 @@ type Keeper struct {
 	storeKey           sdk.StoreKey
 	cdc                codec.Marshaler
 	accountKeeper      types.AccountKeeper
-	bank               coinTransferrer
-	ChannelKeeper      types.ChannelKeeper
+	bank               CoinTransferrer
 	portKeeper         types.PortKeeper
 	capabilityKeeper   types.CapabilityKeeper
 	wasmVM             types.WasmerEngine
-	wasmVMQueryHandler wasmVMQueryHandler
-	messenger          messenger
+	wasmVMQueryHandler WASMVMQueryHandler
+	messenger          Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
-	authZPolicy   AuthorizationPolicy
 	paramSpace    paramtypes.Subspace
 }
 
@@ -121,12 +119,10 @@ func NewKeeper(
 		wasmVM:           wasmer,
 		accountKeeper:    accountKeeper,
 		bank:             NewBankCoinTransferrer(bankKeeper),
-		ChannelKeeper:    channelKeeper,
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
 		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, cdc, portSource),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
-		authZPolicy:      DefaultAuthorizationPolicy{},
 		paramSpace:       paramSpace,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, &keeper)
@@ -163,11 +159,6 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 
 func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
-}
-
-// Create uploads and compiles a WASM contract, returning a short identifier for the contract
-func (k Keeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig) (codeID uint64, err error) {
-	return k.create(ctx, creator, wasmCode, source, builder, instantiateAccess, k.authZPolicy)
 }
 
 func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
@@ -221,11 +212,6 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 	// 0x01 | codeID (uint64) -> ContractInfo
 	store.Set(key, k.cdc.MustMarshalBinaryBare(&codeInfo))
 	return nil
-}
-
-// Instantiate creates an instance of a WASM contract
-func (k Keeper) Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, []byte, error) {
-	return k.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, k.authZPolicy)
 }
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
@@ -323,7 +309,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 }
 
 // Execute executes the contract instance
-func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
+func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) (*sdk.Result, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
@@ -366,11 +352,6 @@ func (k Keeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return &sdk.Result{
 		Data: res.Data,
 	}, nil
-}
-
-// Migrate allows to upgrade a contract to a new code with data migration.
-func (k Keeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) (*sdk.Result, error) {
-	return k.migrate(ctx, contractAddress, caller, newCodeID, msg, k.authZPolicy)
 }
 
 func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error) {
@@ -530,16 +511,6 @@ func (k Keeper) deleteContractSecondIndex(ctx sdk.Context, contractAddress sdk.A
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, contractInfo))
 }
 
-// UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
-func (k Keeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
-	return k.setContractAdmin(ctx, contractAddress, caller, newAdmin, k.authZPolicy)
-}
-
-// ClearContractAdmin sets the admin value on the ContractInfo to nil, to disable further migrations/ updates.
-func (k Keeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
-	return k.setContractAdmin(ctx, contractAddress, caller, nil, k.authZPolicy)
-}
-
 func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -647,7 +618,7 @@ func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress)
 	return &contract
 }
 
-func (k Keeper) containsContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
+func (k Keeper) HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.GetContractAddressKey(contractAddress))
 }
@@ -733,7 +704,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 }
 
 // PinCode pins the wasm contract in wasmvm cache
-func (k Keeper) PinCode(ctx sdk.Context, codeID uint64) error {
+func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
@@ -749,7 +720,7 @@ func (k Keeper) PinCode(ctx sdk.Context, codeID uint64) error {
 }
 
 // UnpinCode removes the wasm contract from wasmvm cache
-func (k Keeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
+func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
@@ -1003,7 +974,7 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
 	}
-	if k.containsContractInfo(ctx, contractAddr) {
+	if k.HasContractInfo(ctx, contractAddr) {
 		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
 	}
 
@@ -1039,24 +1010,38 @@ func gasMeter(ctx sdk.Context) MultipliedGasMeter {
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+	return moduleLogger(ctx)
+}
+
+func moduleLogger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// CoinTransferrer replicates the cosmos-sdk behaviour as in
+// Querier creates a new grpc querier instance
+func Querier(k *Keeper) *grpcQuerier {
+	return NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
+}
+
+// QueryGasLimit returns the gas limit for smart queries.
+func (k Keeper) QueryGasLimit() sdk.Gas {
+	return k.queryGasLimit
+}
+
+// BankCoinTransferrer replicates the cosmos-sdk behaviour as in
 // https://github.com/cosmos/cosmos-sdk/blob/v0.41.4/x/bank/keeper/msg_server.go#L26
-type CoinTransferrer struct {
+type BankCoinTransferrer struct {
 	keeper types.BankKeeper
 }
 
-func NewBankCoinTransferrer(keeper types.BankKeeper) CoinTransferrer {
-	return CoinTransferrer{
+func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
+	return BankCoinTransferrer{
 		keeper: keeper,
 	}
 }
 
 // TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
 // is not in the blocked address list.
-func (c CoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}

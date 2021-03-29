@@ -31,7 +31,7 @@ func TestQueryAllContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
 
-	q := NewQuerier(keeper)
+	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery            *types.QueryAllContractStateRequest
 		expModelContains    []types.Model
@@ -113,7 +113,7 @@ func TestQuerySmartContractState(t *testing.T) {
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract.String()
 
-	q := NewQuerier(keeper)
+	q := Querier(keeper)
 	specs := map[string]struct {
 		srcAddr  sdk.AccAddress
 		srcQuery *types.QuerySmartContractStateRequest
@@ -183,7 +183,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 				return nil, 0, nil
 			}}
 			// when
-			q := NewQuerier(keepers.WasmKeeper)
+			q := Querier(keepers.WasmKeeper)
 			got, err := q.SmartContractState(sdk.WrapSDKContext(ctx), &types.QuerySmartContractStateRequest{
 				Address: contractAddr.String(),
 			})
@@ -205,7 +205,7 @@ func TestQueryRawContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, exampleContract.Contract, contractModel))
 
-	q := NewQuerier(keeper)
+	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery *types.QueryRawContractStateRequest
 		expData  []byte
@@ -260,7 +260,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keeper.Create(ctx, creator, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, "", "", nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -288,12 +288,12 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 			ctx = setBlock(ctx, h)
 			h++
 		}
-		_, _, err = keeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
 		require.NoError(t, err)
 	}
 
 	// query and check the results are properly sorted
-	q := NewQuerier(keeper)
+	q := Querier(keeper)
 	res, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), &types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
 
@@ -434,7 +434,7 @@ func TestQueryContractHistory(t *testing.T) {
 			keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...)
 
 			// when
-			q := NewQuerier(keeper)
+			q := Querier(keeper)
 			got, err := q.ContractHistory(sdk.WrapSDKContext(xCtx), &spec.req)
 
 			// then
@@ -509,7 +509,7 @@ func TestQueryCodeList(t *testing.T) {
 				)
 			}
 			// when
-			q := NewQuerier(keeper)
+			q := Querier(keeper)
 			got, err := q.Codes(sdk.WrapSDKContext(xCtx), &spec.req)
 
 			// then

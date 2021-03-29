@@ -2,27 +2,20 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"strconv"
 )
 
-// governing contains a subset of the wasm keeper used by gov processes
-type governing interface {
-	create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error)
-	instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error)
-	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) (*sdk.Result, error)
-	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error
-	PinCode(ctx sdk.Context, codeID uint64) error
-	UnpinCode(ctx sdk.Context, codeID uint64) error
+// NewWasmProposalHandler creates a new governance Handler for wasm proposals
+func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+	return NewWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
 }
 
-// NewWasmProposalHandler creates a new governance Handler for wasm proposals
-func NewWasmProposalHandler(k governing, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+// NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
+func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
@@ -55,7 +48,7 @@ func NewWasmProposalHandler(k governing, enabledProposalTypes []types.ProposalTy
 	}
 }
 
-func handleStoreCodeProposal(ctx sdk.Context, k governing, p types.StoreCodeProposal) error {
+func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreCodeProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -64,7 +57,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k governing, p types.StoreCodeProp
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	codeID, err := k.create(ctx, runAsAddr, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission, GovAuthorizationPolicy{})
+	codeID, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.Source, p.Builder, p.InstantiatePermission)
 	if err != nil {
 		return err
 	}
@@ -78,7 +71,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k governing, p types.StoreCodeProp
 	return nil
 }
 
-func handleInstantiateProposal(ctx sdk.Context, k governing, p types.InstantiateContractProposal) error {
+func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -91,7 +84,7 @@ func handleInstantiateProposal(ctx sdk.Context, k governing, p types.Instantiate
 		return sdkerrors.Wrap(err, "admin")
 	}
 
-	contractAddr, _, err := k.instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.InitMsg, p.Label, p.Funds, GovAuthorizationPolicy{})
+	contractAddr, _, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.InitMsg, p.Label, p.Funds)
 	if err != nil {
 		return err
 	}
@@ -106,7 +99,7 @@ func handleInstantiateProposal(ctx sdk.Context, k governing, p types.Instantiate
 	return nil
 }
 
-func handleMigrateProposal(ctx sdk.Context, k governing, p types.MigrateContractProposal) error {
+func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.MigrateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -119,7 +112,7 @@ func handleMigrateProposal(ctx sdk.Context, k governing, p types.MigrateContract
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	res, err := k.migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.MigrateMsg, GovAuthorizationPolicy{})
+	res, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.MigrateMsg)
 	if err != nil {
 		return err
 	}
@@ -141,7 +134,7 @@ func handleMigrateProposal(ctx sdk.Context, k governing, p types.MigrateContract
 	return nil
 }
 
-func handleUpdateAdminProposal(ctx sdk.Context, k governing, p types.UpdateAdminProposal) error {
+func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -154,7 +147,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k governing, p types.UpdateAdmin
 		return sdkerrors.Wrap(err, "run as address")
 	}
 
-	if err := k.setContractAdmin(ctx, contractAddr, nil, newAdminAddr, GovAuthorizationPolicy{}); err != nil {
+	if err := k.UpdateContractAdmin(ctx, contractAddr, nil, newAdminAddr); err != nil {
 		return err
 	}
 
@@ -167,7 +160,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k governing, p types.UpdateAdmin
 	return nil
 }
 
-func handleClearAdminProposal(ctx sdk.Context, k governing, p types.ClearAdminProposal) error {
+func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -176,7 +169,7 @@ func handleClearAdminProposal(ctx sdk.Context, k governing, p types.ClearAdminPr
 	if err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err := k.setContractAdmin(ctx, contractAddr, nil, nil, GovAuthorizationPolicy{}); err != nil {
+	if err := k.ClearContractAdmin(ctx, contractAddr, nil); err != nil {
 		return err
 	}
 	ourEvent := sdk.NewEvent(
@@ -188,7 +181,7 @@ func handleClearAdminProposal(ctx sdk.Context, k governing, p types.ClearAdminPr
 	return nil
 }
 
-func handlePinCodesProposal(ctx sdk.Context, k governing, p types.PinCodesProposal) error {
+func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -197,21 +190,18 @@ func handlePinCodesProposal(ctx sdk.Context, k governing, p types.PinCodesPropos
 			return sdkerrors.Wrapf(err, "code id: %d", v)
 		}
 	}
-	s := make([]string, len(p.CodeIDs))
-	for i, v := range p.CodeIDs {
-		s[i] = strconv.FormatUint(v, 10)
+	for _, v := range p.CodeIDs {
+		ourEvent := sdk.NewEvent(
+			types.EventTypePinCode,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(v, 10)),
+		)
+		ctx.EventManager().EmitEvent(ourEvent)
 	}
-	ourEvent := sdk.NewEvent(
-		types.EventTypePinCode,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyCodeIDs, strings.Join(s, ",")),
-	)
-	ctx.EventManager().EmitEvent(ourEvent)
-
 	return nil
 }
 
-func handleUnpinCodesProposal(ctx sdk.Context, k governing, p types.UnpinCodesProposal) error {
+func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UnpinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -220,16 +210,13 @@ func handleUnpinCodesProposal(ctx sdk.Context, k governing, p types.UnpinCodesPr
 			return sdkerrors.Wrapf(err, "code id: %d", v)
 		}
 	}
-	s := make([]string, len(p.CodeIDs))
-	for i, v := range p.CodeIDs {
-		s[i] = strconv.FormatUint(v, 10)
+	for _, v := range p.CodeIDs {
+		ourEvent := sdk.NewEvent(
+			types.EventTypeUnpinCode,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(v, 10)),
+		)
+		ctx.EventManager().EmitEvent(ourEvent)
 	}
-	ourEvent := sdk.NewEvent(
-		types.EventTypeUnpinCode,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeyCodeIDs, strings.Join(s, ",")),
-	)
-	ctx.EventManager().EmitEvent(ourEvent)
-
 	return nil
 }

@@ -11,10 +11,10 @@ import (
 var _ types.MsgServer = msgServer{}
 
 type msgServer struct {
-	keeper *Keeper
+	keeper types.ContractOpsKeeper
 }
 
-func NewMsgServerImpl(k *Keeper) types.MsgServer {
+func NewMsgServerImpl(k types.ContractOpsKeeper) types.MsgServer {
 	return &msgServer{keeper: k}
 }
 

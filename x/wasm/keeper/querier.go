@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"runtime/debug"
@@ -17,11 +18,14 @@ import (
 var _ types.QueryServer = &grpcQuerier{}
 
 type grpcQuerier struct {
-	keeper *Keeper
+	cdc           codec.Marshaler
+	storeKey      sdk.StoreKey
+	keeper        types.ViewKeeper
+	queryGasLimit sdk.Gas
 }
 
-func NewQuerier(keeper *Keeper) grpcQuerier {
-	return grpcQuerier{keeper: keeper}
+func NewGrpcQuerier(cdc codec.Marshaler, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier {
+	return &grpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
 func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
@@ -32,7 +36,7 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	if err != nil {
 		return nil, err
 	}
-	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), contractAddr, *q.keeper)
+	rsp, err := queryContractInfo(sdk.UnwrapSDKContext(c), contractAddr, q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
@@ -57,11 +61,11 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.ContractCodeHistoryEntry, 0)
 
-	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var e types.ContractCodeHistoryEntry
-			if err := q.keeper.cdc.UnmarshalBinaryBare(value, &e); err != nil {
+			if err := q.cdc.UnmarshalBinaryBare(value, &e); err != nil {
 				return false, err
 			}
 			e.Updated = nil // redact
@@ -88,7 +92,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.ContractInfoWithAddress, 0)
 
-	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
 		c := q.keeper.GetContractInfo(ctx, contractAddr)
@@ -122,12 +126,12 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(c)
-	if !q.keeper.containsContractInfo(ctx, contractAddr) {
+	if !q.keeper.HasContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
 
 	r := make([]types.Model, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.GetContractStorePrefix(contractAddr))
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractStorePrefix(contractAddr))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, types.Model{
@@ -157,7 +161,7 @@ func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 		return nil, err
 	}
 
-	if !q.keeper.containsContractInfo(ctx, contractAddr) {
+	if !q.keeper.HasContractInfo(ctx, contractAddr) {
 		return nil, types.ErrNotFound
 	}
 	rsp := q.keeper.QueryRaw(ctx, contractAddr, req.QueryData)
@@ -172,7 +176,7 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	if err != nil {
 		return nil, err
 	}
-	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(sdk.NewGasMeter(q.keeper.queryGasLimit))
+	ctx := sdk.UnwrapSDKContext(c).WithGasMeter(sdk.NewGasMeter(q.queryGasLimit))
 	// recover from out-of-gas panic
 	defer func() {
 		if r := recover(); r != nil {
@@ -186,7 +190,7 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 				err = sdkerrors.ErrPanic
 			}
 			rsp = nil
-			q.keeper.Logger(ctx).
+			moduleLogger(ctx).
 				Debug("smart query contract",
 					"error", "recovering panic",
 					"contract-address", req.Address,
@@ -231,11 +235,11 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.CodeInfoResponse, 0)
-	prefixStore := prefix.NewStore(ctx.KVStore(q.keeper.storeKey), types.CodeKeyPrefix)
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.CodeKeyPrefix)
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var c types.CodeInfo
-			if err := q.keeper.cdc.UnmarshalBinaryBare(value, &c); err != nil {
+			if err := q.cdc.UnmarshalBinaryBare(value, &c); err != nil {
 				return false, err
 			}
 			r = append(r, types.CodeInfoResponse{
@@ -254,7 +258,7 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
-func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper Keeper) (*types.ContractInfoWithAddress, error) {
+func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.ContractInfoWithAddress, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
 		return nil, types.ErrNotFound
@@ -267,7 +271,7 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper Keeper) (*ty
 	}, nil
 }
 
-func queryCode(ctx sdk.Context, codeID uint64, keeper *Keeper) (*types.QueryCodeResponse, error) {
+func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
 	if codeID == 0 {
 		return nil, nil
 	}

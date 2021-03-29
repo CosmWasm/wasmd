@@ -33,28 +33,28 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 
 	myMsg := wasmvmtypes.CosmosMsg{Custom: []byte(`{}`)}
 	specs := map[string]struct {
-		handlers  []messenger
+		handlers  []Messenger
 		expErr    *sdkerrors.Error
 		expEvents []sdk.Event
 	}{
 		"single handler": {
-			handlers: []messenger{capturingHandler},
+			handlers: []Messenger{capturingHandler},
 		},
 		"passed to next handler": {
-			handlers: []messenger{alwaysUnknownMsgHandler, capturingHandler},
+			handlers: []Messenger{alwaysUnknownMsgHandler, capturingHandler},
 		},
 		"stops iteration when handled": {
-			handlers: []messenger{capturingHandler, assertNotCalledHandler},
+			handlers: []Messenger{capturingHandler, assertNotCalledHandler},
 		},
 		"stops iteration on handler error": {
-			handlers: []messenger{&wasmtesting.MockMessageHandler{
+			handlers: []Messenger{&wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 					return nil, nil, types.ErrInvalidMsg
 				}}, assertNotCalledHandler},
 			expErr: types.ErrInvalidMsg,
 		},
 		"return events when handle": {
-			handlers: []messenger{&wasmtesting.MockMessageHandler{
+			handlers: []Messenger{&wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 					_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 					return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
@@ -63,7 +63,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 			expEvents: []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))},
 		},
 		"return error when none can handle": {
-			handlers: []messenger{alwaysUnknownMsgHandler},
+			handlers: []Messenger{alwaysUnknownMsgHandler},
 			expErr:   types.ErrUnknownMsg,
 		},
 	}

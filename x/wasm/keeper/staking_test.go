@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"io/ioutil"
 	"testing"
 
@@ -91,7 +92,7 @@ type InvestmentResponse struct {
 
 func TestInitializeStaking(t *testing.T) {
 	ctx, k := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
+	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1234567))
 	ctx = nextBlock(ctx, stakingKeeper)
@@ -121,7 +122,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := keeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -141,7 +142,7 @@ func TestInitializeStaking(t *testing.T) {
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, _, err = keeper.Instantiate(ctx, stakingID, creator, nil, badBz, "missing validator", nil)
+	_, _, err = k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, badBz, "missing validator", nil)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -154,12 +155,13 @@ type initInfo struct {
 	creator      sdk.AccAddress
 	contractAddr sdk.AccAddress
 
-	ctx           sdk.Context
-	accKeeper     authkeeper.AccountKeeper
-	stakingKeeper stakingkeeper.Keeper
-	distKeeper    distributionkeeper.Keeper
-	wasmKeeper    Keeper
-	bankKeeper    bankkeeper.Keeper
+	ctx            sdk.Context
+	accKeeper      authkeeper.AccountKeeper
+	stakingKeeper  stakingkeeper.Keeper
+	distKeeper     distributionkeeper.Keeper
+	wasmKeeper     Keeper
+	contractKeeper wasmtypes.ContractOpsKeeper
+	bankKeeper     bankkeeper.Keeper
 }
 
 func initializeStaking(t *testing.T) initInfo {
@@ -186,7 +188,7 @@ func initializeStaking(t *testing.T) initInfo {
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := keeper.Create(ctx, creator, stakingCode, "", "", nil)
+	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, "", "", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
@@ -202,20 +204,21 @@ func initializeStaking(t *testing.T) initInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := keeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
 	return initInfo{
-		valAddr:       valAddr,
-		creator:       creator,
-		contractAddr:  stakingAddr,
-		ctx:           ctx,
-		accKeeper:     accKeeper,
-		stakingKeeper: stakingKeeper,
-		wasmKeeper:    *keeper,
-		distKeeper:    k.DistKeeper,
-		bankKeeper:    bankKeeper,
+		valAddr:        valAddr,
+		creator:        creator,
+		contractAddr:   stakingAddr,
+		ctx:            ctx,
+		accKeeper:      accKeeper,
+		stakingKeeper:  stakingKeeper,
+		wasmKeeper:     *keeper,
+		distKeeper:     k.DistKeeper,
+		bankKeeper:     bankKeeper,
+		contractKeeper: k.ContractKeeper,
 	}
 }
 
@@ -244,7 +247,7 @@ func TestBonding(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
@@ -287,7 +290,7 @@ func TestUnbonding(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 	require.NoError(t, err)
 
 	// update height a bit
@@ -301,7 +304,7 @@ func TestUnbonding(t *testing.T) {
 	}
 	unbondBz, err := json.Marshal(unbond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, unbondBz, nil)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, unbondBz, nil)
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
@@ -356,7 +359,7 @@ func TestReinvest(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
@@ -370,7 +373,7 @@ func TestReinvest(t *testing.T) {
 	}
 	reinvestBz, err := json.Marshal(reinvest)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, reinvestBz, nil)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, reinvestBz, nil)
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
@@ -424,7 +427,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
@@ -442,12 +445,12 @@ func TestQueryStakingInfo(t *testing.T) {
 	// upload mask code
 	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	maskID, err := keeper.Create(ctx, creator, maskCode, "", "", nil)
+	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, "", "", nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), maskID)
 
 	// creator instantiates a contract and gives it tokens
-	maskAddr, _, err := keeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", nil)
+	maskAddr, _, err := initInfo.contractKeeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, maskAddr)
 
@@ -546,7 +549,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+	stakingKeeper, accKeeper := initInfo.stakingKeeper, initInfo.accKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
@@ -566,7 +569,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = keeper.Execute(ctx, contractAddr, bob, bondBz, funds)
+	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
