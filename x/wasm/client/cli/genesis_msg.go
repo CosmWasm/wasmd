@@ -24,9 +24,24 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+// GenesisReader reads genesis data. Extension point for custom genesis state readers.
+type GenesisReader interface {
+	ReadWasmGenesis(cmd *cobra.Command) (*GenesisData, error)
+}
+
+// GenesisMutator extension point to modify the wasm module genesis state.
+// This gives flexibility to customize the data structure in the genesis file a bit.
+type GenesisMutator interface {
+	// AlterModuleState loads the genesis from the default or set home dir,
+	// unmarshalls the wasm module section into the object representation
+	// calls the callback function to modify it
+	// and marshals the modified state back into the genesis file
+	AlterWasmModuleState(cmd *cobra.Command, callback func(state *types.GenesisState, appState map[string]json.RawMessage) error) error
+}
+
 // GenesisStoreCodeCmd cli command to add a `MsgStoreCode` to the wasm section of the genesis
 // that is executed on block 0.
-func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
+func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store [wasm file] --source [source] --builder [builder] --run-as [owner_address_or_key_name]\",",
 		Short: "Upload a wasm binary",
@@ -45,7 +60,7 @@ func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(state *types.GenesisState, _ map[string]json.RawMessage) error {
+			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, _ map[string]json.RawMessage) error {
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_StoreCode{StoreCode: &msg},
 				})
@@ -67,7 +82,7 @@ func GenesisStoreCodeCmd(defaultNodeHome string) *cobra.Command {
 
 // GenesisInstantiateContractCmd cli command to add a `MsgInstantiateContract` to the wasm section of the genesis
 // that is executed on block 0.
-func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
+func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator GenesisMutator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Instantiate a wasm contract",
@@ -86,7 +101,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
+			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
 				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
 				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
 				case err != nil:
@@ -134,7 +149,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string) *cobra.Command {
 
 // GenesisInstantiateContractCmd cli command to add a `MsgExecuteContract` to the wasm section of the genesis
 // that is executed on block 0.
-func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
+func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMutator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "execute [contract_addr_bech32] [json_encoded_send_args] --run-as [address] --amount [coins,optional]",
 		Short: "Execute a command on a wasm contract",
@@ -153,7 +168,7 @@ func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
 				return err
 			}
 
-			return alterModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
+			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
 				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
 				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
 				case err != nil:
@@ -184,17 +199,17 @@ func GenesisExecuteContractCmd(defaultNodeHome string) *cobra.Command {
 
 // GenesisListCodesCmd cli command to list all codes stored in the genesis wasm.code section
 // as well as from messages that are queued in the wasm.genMsgs section.
-func GenesisListCodesCmd(defaultNodeHome string) *cobra.Command {
+func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-codes ",
 		Short: "Lists all codes from genesis code dump and queued messages",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			g, err := readGenesis(cmd)
+			g, err := genReader.ReadWasmGenesis(cmd)
 			if err != nil {
 				return err
 			}
-			all, err := getAllCodes(g.wasmModuleState)
+			all, err := getAllCodes(g.WasmModuleState)
 			if err != nil {
 				return err
 			}
@@ -209,17 +224,17 @@ func GenesisListCodesCmd(defaultNodeHome string) *cobra.Command {
 
 // GenesisListContractsCmd cli command to list all contracts stored in the genesis wasm.contract section
 // as well as from messages that are queued in the wasm.genMsgs section.
-func GenesisListContractsCmd(defaultNodeHome string) *cobra.Command {
+func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-contracts ",
 		Short: "Lists all contracts from genesis contract dump and queued messages",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			g, err := readGenesis(cmd)
+			g, err := genReader.ReadWasmGenesis(cmd)
 			if err != nil {
 				return err
 			}
-			state := g.wasmModuleState
+			state := g.WasmModuleState
 			all := getAllContracts(state)
 			return printJsonOutput(cmd, all)
 		},
@@ -352,15 +367,21 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 	return false
 }
 
-// genesisData contains raw and unmarshalled data from the genesis file
-type genesisData struct {
-	genesisFile     string
-	genDoc          *tmtypes.GenesisDoc
-	appState        map[string]json.RawMessage
-	wasmModuleState *types.GenesisState
+// GenesisData contains raw and unmarshalled data from the genesis file
+type GenesisData struct {
+	GenesisFile     string
+	GenDoc          *tmtypes.GenesisDoc
+	AppState        map[string]json.RawMessage
+	WasmModuleState *types.GenesisState
 }
 
-func readGenesis(cmd *cobra.Command) (*genesisData, error) {
+func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, wasmModuleState *types.GenesisState) *GenesisData {
+	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, WasmModuleState: wasmModuleState}
+}
+
+type DefaultGenesisReader struct{}
+
+func (d DefaultGenesisReader) ReadWasmGenesis(cmd *cobra.Command) (*GenesisData, error) {
 	clientCtx := client.GetClientContextFromCmd(cmd)
 	serverCtx := server.GetServerContextFromCmd(cmd)
 	config := serverCtx.Config
@@ -377,44 +398,58 @@ func readGenesis(cmd *cobra.Command) (*genesisData, error) {
 		clientCtx.JSONMarshaler.MustUnmarshalJSON(appState[types.ModuleName], &wasmGenesisState)
 	}
 
-	return &genesisData{
-		genesisFile:     genFile,
-		genDoc:          genDoc,
-		appState:        appState,
-		wasmModuleState: &wasmGenesisState,
-	}, nil
+	return NewGenesisData(
+		genFile,
+		genDoc,
+		appState,
+		&wasmGenesisState,
+	), nil
 }
 
-// alterModuleState loads the genesis from the default or set home dir,
+var _ GenesisReader = DefaultGenesisIO{}
+var _ GenesisMutator = DefaultGenesisIO{}
+
+// DefaultGenesisIO implements both interfaces to read and modify the genesis state for this module.
+// This implementation uses the default data structure that is used by the module.go genesis import/ export.
+type DefaultGenesisIO struct {
+	DefaultGenesisReader
+}
+
+// NewDefaultGenesisIO constructor to create a new instance
+func NewDefaultGenesisIO() *DefaultGenesisIO {
+	return &DefaultGenesisIO{DefaultGenesisReader: DefaultGenesisReader{}}
+}
+
+// AlterModuleState loads the genesis from the default or set home dir,
 // unmarshalls the wasm module section into the object representation
 // calls the callback function to modify it
 // and marshals the modified state back into the genesis file
-func alterModuleState(cmd *cobra.Command, callback func(state *types.GenesisState, appState map[string]json.RawMessage) error) error {
-	g, err := readGenesis(cmd)
+func (x DefaultGenesisIO) AlterWasmModuleState(cmd *cobra.Command, callback func(state *types.GenesisState, appState map[string]json.RawMessage) error) error {
+	g, err := x.ReadWasmGenesis(cmd)
 	if err != nil {
 		return err
 	}
-	if err := callback(g.wasmModuleState, g.appState); err != nil {
+	if err := callback(g.WasmModuleState, g.AppState); err != nil {
 		return err
 	}
 	// and store update
-	if err := g.wasmModuleState.ValidateBasic(); err != nil {
+	if err := g.WasmModuleState.ValidateBasic(); err != nil {
 		return err
 	}
 	clientCtx := client.GetClientContextFromCmd(cmd)
-	wasmGenStateBz, err := clientCtx.JSONMarshaler.MarshalJSON(g.wasmModuleState)
+	wasmGenStateBz, err := clientCtx.JSONMarshaler.MarshalJSON(g.WasmModuleState)
 	if err != nil {
 		return sdkerrors.Wrap(err, "marshal wasm genesis state")
 	}
 
-	g.appState[types.ModuleName] = wasmGenStateBz
-	appStateJSON, err := json.Marshal(g.appState)
+	g.AppState[types.ModuleName] = wasmGenStateBz
+	appStateJSON, err := json.Marshal(g.AppState)
 	if err != nil {
 		return sdkerrors.Wrap(err, "marshal application genesis state")
 	}
 
-	g.genDoc.AppState = appStateJSON
-	return genutil.ExportGenesisFile(g.genDoc, g.genesisFile)
+	g.GenDoc.AppState = appStateJSON
+	return genutil.ExportGenesisFile(g.GenDoc, g.GenesisFile)
 }
 
 // contractSeqValue reads the contract sequence from the genesis or
