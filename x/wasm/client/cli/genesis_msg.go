@@ -412,12 +412,12 @@ var _ GenesisMutator = DefaultGenesisIO{}
 // DefaultGenesisIO implements both interfaces to read and modify the genesis state for this module.
 // This implementation uses the default data structure that is used by the module.go genesis import/ export.
 type DefaultGenesisIO struct {
-	GenesisReader
+	DefaultGenesisReader
 }
 
 // NewDefaultGenesisIO constructor to create a new instance
 func NewDefaultGenesisIO() *DefaultGenesisIO {
-	return &DefaultGenesisIO{GenesisReader: DefaultGenesisReader{}}
+	return &DefaultGenesisIO{DefaultGenesisReader: DefaultGenesisReader{}}
 }
 
 // AlterModuleState loads the genesis from the default or set home dir,
