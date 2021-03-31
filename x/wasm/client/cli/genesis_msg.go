@@ -29,7 +29,8 @@ type GenesisReader interface {
 	ReadWasmGenesis(cmd *cobra.Command) (*GenesisData, error)
 }
 
-// GenesisMutator extension point to modify the wasm module genesis state
+// GenesisMutator extension point to modify the wasm module genesis state.
+// This gives flexibility to customize the data structure in the genesis file a bit.
 type GenesisMutator interface {
 	// AlterModuleState loads the genesis from the default or set home dir,
 	// unmarshalls the wasm module section into the object representation
@@ -405,10 +406,16 @@ func (d DefaultGenesisReader) ReadWasmGenesis(cmd *cobra.Command) (*GenesisData,
 	), nil
 }
 
+var _ GenesisReader = DefaultGenesisIO{}
+var _ GenesisMutator = DefaultGenesisIO{}
+
+// DefaultGenesisIO implements both interfaces to read and modify the genesis state for this module.
+// This implementation uses the default data structure that is used by the module.go genesis import/ export.
 type DefaultGenesisIO struct {
 	GenesisReader
 }
 
+// NewDefaultGenesisIO constructor to create a new instance
 func NewDefaultGenesisIO() *DefaultGenesisIO {
 	return &DefaultGenesisIO{GenesisReader: DefaultGenesisReader{}}
 }
