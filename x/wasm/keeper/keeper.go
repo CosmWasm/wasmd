@@ -831,6 +831,15 @@ func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress
 		}
 		// on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
+		// we only callback if requested. Short-circuit here the two cases we don't want to
+		if msg.ReplyOn == wasmvmtypes.ReplySuccess && err != nil {
+			return err
+		}
+		if msg.ReplyOn == wasmvmtypes.ReplyError && err == nil {
+			return nil
+		}
+
+		// otherwise, we create a SubcallResult and pass it into the calling contract
 		var result wasmvmtypes.SubcallResult
 		if err == nil {
 			// just take the first one for now if there are multiple sub-sdk messages
