@@ -8,7 +8,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -135,9 +134,9 @@ type initMsg struct {
 }
 
 type state struct {
-	Verifier    wasmvmtypes.CanonicalAddress `json:"verifier"`
-	Beneficiary wasmvmtypes.CanonicalAddress `json:"beneficiary"`
-	Funder      wasmvmtypes.CanonicalAddress `json:"funder"`
+	Verifier    string `json:"verifier"`
+	Beneficiary string `json:"beneficiary"`
+	Funder      string `json:"funder"`
 }
 
 func TestHandleInstantiate(t *testing.T) {
@@ -192,9 +191,9 @@ func TestHandleInstantiate(t *testing.T) {
 	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
 	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
-		Verifier:    []byte(fred),
-		Beneficiary: []byte(bob),
-		Funder:      []byte(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	})
 }
 
@@ -311,9 +310,9 @@ func TestHandleExecute(t *testing.T) {
 	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
 	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
-		Verifier:    []byte(fred),
-		Beneficiary: []byte(bob),
-		Funder:      []byte(creator),
+		Verifier:    fred.String(),
+		Beneficiary: bob.String(),
+		Funder:      creator.String(),
 	})
 }
 

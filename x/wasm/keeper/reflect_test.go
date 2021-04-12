@@ -381,7 +381,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 type reflectState struct {
-	Owner []byte `json:"owner"`
+	Owner string `json:"owner"`
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
@@ -418,7 +418,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	raw := keeper.QueryRaw(ctx, reflectAddr, configKey)
 	var stateRes reflectState
 	mustParse(t, raw, &stateRes)
-	require.Equal(t, stateRes.Owner, []byte(creator))
+	require.Equal(t, stateRes.Owner, creator.String())
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
 	reflectOwnerQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
@@ -453,7 +453,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	// now, with the raw data, we can parse it into state
 	var reflectStateRes reflectState
 	mustParse(t, reflectRawRes.Data, &reflectStateRes)
-	require.Equal(t, reflectStateRes.Owner, []byte(creator))
+	require.Equal(t, reflectStateRes.Owner, creator.String())
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {

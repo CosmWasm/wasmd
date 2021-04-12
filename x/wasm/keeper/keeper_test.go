@@ -933,11 +933,11 @@ func TestMigrate(t *testing.T) {
 
 			// and verify contract state
 			raw := keepers.WasmKeeper.QueryRaw(ctx, contractAddr, []byte("config"))
-			var stored map[string][]byte
+			var stored map[string]string
 			require.NoError(t, json.Unmarshal(raw, &stored))
 			require.Contains(t, stored, "verifier")
 			require.NoError(t, err)
-			assert.Equal(t, spec.expVerifier, sdk.AccAddress(stored["verifier"]))
+			assert.Equal(t, spec.expVerifier.String(), stored["verifier"])
 		})
 	}
 }

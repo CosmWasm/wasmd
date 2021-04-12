@@ -61,6 +61,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 			Msgs: []wasmvmtypes.SubMsg{{
 				ID:  7,
 				Msg: msg,
+				ReplyOn: wasmvmtypes.ReplyAlways,
 			}},
 		},
 	}
@@ -322,6 +323,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 						ID:       tc.submsgID,
 						Msg:      msg,
 						GasLimit: tc.gasLimit,
+						ReplyOn: wasmvmtypes.ReplyAlways,
 					}},
 				},
 			}
@@ -423,6 +425,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 			Msgs: []wasmvmtypes.SubMsg{{
 				ID:  7,
 				Msg: msg,
+				ReplyOn: wasmvmtypes.ReplyAlways,
 			}},
 		},
 	}
