@@ -28,7 +28,7 @@ func NewDefaultMessageHandler(
 	router sdk.Router,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
-	bankKeeper types.Coiner,
+	bankKeeper types.Burner,
 	unpacker codectypes.AnyUnpacker,
 	portSource types.ICS20TransferPortSource,
 	customEncoders ...*MessageEncoders,
@@ -188,17 +188,17 @@ func (m MessageHandlerFunc) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAdd
 }
 
 // NewBurnCoinMessageHandler handles wasmvm.BurnMsg messages
-func NewBurnCoinMessageHandler(coiner types.Coiner) MessageHandlerFunc {
+func NewBurnCoinMessageHandler(burner types.Burner) MessageHandlerFunc {
 	return func(ctx sdk.Context, contractAddr sdk.AccAddress, _ string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 		if msg.Bank != nil && msg.Bank.Burn != nil {
 			coins, err := convertWasmCoinsToSdkCoins(msg.Bank.Burn.Amount)
 			if err != nil {
 				return nil, nil, err
 			}
-			if err := coiner.SendCoinsFromAccountToModule(ctx, contractAddr, types.ModuleName, coins); err != nil {
+			if err := burner.SendCoinsFromAccountToModule(ctx, contractAddr, types.ModuleName, coins); err != nil {
 				return nil, nil, sdkerrors.Wrap(err, "transfer to module")
 			}
-			if err := coiner.BurnCoins(ctx, types.ModuleName, coins); err != nil {
+			if err := burner.BurnCoins(ctx, types.ModuleName, coins); err != nil {
 				return nil, nil, sdkerrors.Wrap(err, "burn coins")
 			}
 			moduleLogger(ctx).Info("Burned", "amount", coins)
