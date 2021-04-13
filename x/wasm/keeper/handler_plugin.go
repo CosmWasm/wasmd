@@ -24,7 +24,15 @@ type SDKMessageHandler struct {
 	encoders msgEncoder
 }
 
-func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper, unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource, customEncoders ...*MessageEncoders) Messenger {
+func NewDefaultMessageHandler(
+	router sdk.Router,
+	channelKeeper types.ChannelKeeper,
+	capabilityKeeper types.CapabilityKeeper,
+	bankKeeper types.Burner,
+	unpacker codectypes.AnyUnpacker,
+	portSource types.ICS20TransferPortSource,
+	customEncoders ...*MessageEncoders,
+) Messenger {
 	encoders := DefaultEncoders(unpacker, portSource)
 	for _, e := range customEncoders {
 		encoders = encoders.Merge(e)
@@ -32,6 +40,7 @@ func NewDefaultMessageHandler(router sdk.Router, channelKeeper types.ChannelKeep
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
 		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
+		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
 
@@ -167,4 +176,34 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		convertWasmIBCTimeoutTimestampToCosmosTimestamp(msg.IBC.SendPacket.TimeoutTimestamp),
 	)
 	return nil, nil, h.channelKeeper.SendPacket(ctx, channelCap, packet)
+}
+
+var _ Messenger = MessageHandlerFunc(nil)
+
+// MessageHandlerFunc is a helper to construct simple function based message handler
+type MessageHandlerFunc func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
+
+func (m MessageHandlerFunc) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+	return m(ctx, contractAddr, contractIBCPortID, msg)
+}
+
+// NewBurnCoinMessageHandler handles wasmvm.BurnMsg messages
+func NewBurnCoinMessageHandler(burner types.Burner) MessageHandlerFunc {
+	return func(ctx sdk.Context, contractAddr sdk.AccAddress, _ string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+		if msg.Bank != nil && msg.Bank.Burn != nil {
+			coins, err := convertWasmCoinsToSdkCoins(msg.Bank.Burn.Amount)
+			if err != nil {
+				return nil, nil, err
+			}
+			if err := burner.SendCoinsFromAccountToModule(ctx, contractAddr, types.ModuleName, coins); err != nil {
+				return nil, nil, sdkerrors.Wrap(err, "transfer to module")
+			}
+			if err := burner.BurnCoins(ctx, types.ModuleName, coins); err != nil {
+				return nil, nil, sdkerrors.Wrap(err, "burn coins")
+			}
+			moduleLogger(ctx).Info("Burned", "amount", coins)
+			return nil, nil, nil
+		}
+		return nil, nil, types.ErrUnknownMsg
+	}
 }

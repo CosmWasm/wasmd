@@ -59,8 +59,9 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	reflectSend := ReflectHandleMsg{
 		ReflectSubCall: &reflectSubPayload{
 			Msgs: []wasmvmtypes.SubMsg{{
-				ID:  7,
-				Msg: msg,
+				ID:      7,
+				Msg:     msg,
+				ReplyOn: wasmvmtypes.ReplyAlways,
 			}},
 		},
 	}
@@ -322,6 +323,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 						ID:       tc.submsgID,
 						Msg:      msg,
 						GasLimit: tc.gasLimit,
+						ReplyOn:  wasmvmtypes.ReplyAlways,
 					}},
 				},
 			}
@@ -421,8 +423,9 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	reflectSend := ReflectHandleMsg{
 		ReflectSubCall: &reflectSubPayload{
 			Msgs: []wasmvmtypes.SubMsg{{
-				ID:  7,
-				Msg: msg,
+				ID:      7,
+				Msg:     msg,
+				ReplyOn: wasmvmtypes.ReplyAlways,
 			}},
 		},
 	}
@@ -449,4 +452,133 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	sub := res.Result.Ok
 	assert.Empty(t, sub.Data)
 	require.Len(t, sub.Events, 0)
+}
+
+// Try a simple send, no gas limit to for a sanity check before trying table tests
+func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+
+	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	_, _, fred := keyPubAddr()
+
+	// upload code
+	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
+	require.NoError(t, err)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
+	require.NoError(t, err)
+
+	goodSend := wasmvmtypes.CosmosMsg{
+		Bank: &wasmvmtypes.BankMsg{
+			Send: &wasmvmtypes.SendMsg{
+				ToAddress: fred.String(),
+				Amount: []wasmvmtypes.Coin{{
+					Denom:  "denom",
+					Amount: "1000",
+				}},
+			},
+		},
+	}
+	failSend := wasmvmtypes.CosmosMsg{
+		Bank: &wasmvmtypes.BankMsg{
+			Send: &wasmvmtypes.SendMsg{
+				ToAddress: fred.String(),
+				Amount: []wasmvmtypes.Coin{{
+					Denom:  "no-such-token",
+					Amount: "777777",
+				}},
+			},
+		},
+	}
+
+	cases := map[string]struct {
+		// true for wasmvmtypes.ReplySuccess, false for wasmvmtypes.ReplyError
+		replyOnSuccess bool
+		msg            wasmvmtypes.CosmosMsg
+		// true if the call should return an error (it wasn't handled)
+		expectError bool
+		// true if the reflect contract wrote the response (success or error) - it was captured
+		writeResult bool
+	}{
+		"all good, reply success": {
+			replyOnSuccess: true,
+			msg:            goodSend,
+			expectError:    false,
+			writeResult:    true,
+		},
+		"all good, reply error": {
+			replyOnSuccess: false,
+			msg:            goodSend,
+			expectError:    false,
+			writeResult:    false,
+		},
+		"bad msg, reply success": {
+			replyOnSuccess: true,
+			msg:            failSend,
+			expectError:    true,
+			writeResult:    false,
+		},
+		"bad msg, reply error": {
+			replyOnSuccess: false,
+			msg:            failSend,
+			expectError:    false,
+			writeResult:    true,
+		},
+	}
+
+	var id uint64 = 0
+	for name, tc := range cases {
+		id++
+		t.Run(name, func(t *testing.T) {
+			subMsg := wasmvmtypes.SubMsg{
+				ID:      id,
+				Msg:     tc.msg,
+				ReplyOn: wasmvmtypes.ReplySuccess,
+			}
+			if !tc.replyOnSuccess {
+				subMsg.ReplyOn = wasmvmtypes.ReplyError
+			}
+
+			reflectSend := ReflectHandleMsg{
+				ReflectSubCall: &reflectSubPayload{
+					Msgs: []wasmvmtypes.SubMsg{subMsg},
+				},
+			}
+			reflectSendBz, err := json.Marshal(reflectSend)
+			require.NoError(t, err)
+			_, err = keepers.ContractKeeper.Execute(ctx, contractAddr, creator, reflectSendBz, nil)
+
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			// query the reflect state to check if the result was stored
+			query := ReflectQueryMsg{
+				SubCallResult: &SubCall{ID: id},
+			}
+			queryBz, err := json.Marshal(query)
+			require.NoError(t, err)
+			queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
+			if tc.writeResult {
+				// we got some data for this call
+				require.NoError(t, err)
+				var res wasmvmtypes.Reply
+				err = json.Unmarshal(queryRes, &res)
+				require.NoError(t, err)
+				require.Equal(t, id, res.ID)
+			} else {
+				// nothing should be there -> error
+				require.Error(t, err)
+			}
+		})
+	}
 }

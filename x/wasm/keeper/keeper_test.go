@@ -283,7 +283,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x11ca8), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1229f), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -516,7 +516,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x12963), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x12916), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -933,11 +933,11 @@ func TestMigrate(t *testing.T) {
 
 			// and verify contract state
 			raw := keepers.WasmKeeper.QueryRaw(ctx, contractAddr, []byte("config"))
-			var stored map[string][]byte
+			var stored map[string]string
 			require.NoError(t, json.Unmarshal(raw, &stored))
 			require.Contains(t, stored, "verifier")
 			require.NoError(t, err)
-			assert.Equal(t, spec.expVerifier, sdk.AccAddress(stored["verifier"]))
+			assert.Equal(t, spec.expVerifier.String(), stored["verifier"])
 		})
 	}
 }
