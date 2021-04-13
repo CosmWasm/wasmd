@@ -32,7 +32,7 @@ type GenesisReader interface {
 // GenesisMutator extension point to modify the wasm module genesis state.
 // This gives flexibility to customize the data structure in the genesis file a bit.
 type GenesisMutator interface {
-	// AlterModuleState loads the genesis from the default or set home dir,
+	// AlterWasmModuleState loads the genesis from the default or set home dir,
 	// unmarshalls the wasm module section into the object representation
 	// calls the callback function to modify it
 	// and marshals the modified state back into the genesis file
@@ -147,7 +147,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 	return cmd
 }
 
-// GenesisInstantiateContractCmd cli command to add a `MsgExecuteContract` to the wasm section of the genesis
+// GenesisExecuteContractCmd cli command to add a `MsgExecuteContract` to the wasm section of the genesis
 // that is executed on block 0.
 func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMutator) *cobra.Command {
 	cmd := &cobra.Command{
@@ -420,7 +420,7 @@ func NewDefaultGenesisIO() *DefaultGenesisIO {
 	return &DefaultGenesisIO{DefaultGenesisReader: DefaultGenesisReader{}}
 }
 
-// AlterModuleState loads the genesis from the default or set home dir,
+// AlterWasmModuleState loads the genesis from the default or set home dir,
 // unmarshalls the wasm module section into the object representation
 // calls the callback function to modify it
 // and marshals the modified state back into the genesis file

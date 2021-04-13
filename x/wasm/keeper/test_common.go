@@ -136,6 +136,7 @@ type TestKeepers struct {
 	WasmKeeper     *Keeper
 	IBCKeeper      *ibckeeper.Keeper
 	Router         *baseapp.Router
+	EncodingConfig params2.EncodingConfig
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -334,6 +335,7 @@ func createTestInput(
 		GovKeeper:      govKeeper,
 		IBCKeeper:      ibcKeeper,
 		Router:         router,
+		EncodingConfig: encodingConfig,
 	}
 	return ctx, keepers
 }

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -48,23 +48,34 @@ func TestGenesisExportImport(t *testing.T) {
 
 	for i := 0; i < 25; i++ {
 		var (
-			codeInfo    types.CodeInfo
-			contract    types.ContractInfo
-			stateModels []types.Model
-			history     []types.ContractCodeHistoryEntry
-			pinned      bool
+			codeInfo          types.CodeInfo
+			contract          types.ContractInfo
+			stateModels       []types.Model
+			history           []types.ContractCodeHistoryEntry
+			pinned            bool
+			contractExtension bool
 		)
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
 		f.NilChance(0).Fuzz(&history)
 		f.Fuzz(&pinned)
+		f.Fuzz(&contractExtension)
+
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
 		codeID, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, codeInfo.Source, codeInfo.Builder, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
 			contractKeeper.PinCode(srcCtx, codeID)
+		}
+		if contractExtension {
+			anyTime := time.Now().UTC()
+			var nestedType govtypes.TextProposal
+			f.NilChance(0).Fuzz(&nestedType)
+			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime)
+			require.NoError(t, err)
+			contract.SetExtension(&myExtension)
 		}
 
 		contract.CodeID = codeID
@@ -89,7 +100,7 @@ func TestGenesisExportImport(t *testing.T) {
 	rand.Shuffle(len(exportedState.Sequences), func(i, j int) {
 		exportedState.Sequences[i], exportedState.Sequences[j] = exportedState.Sequences[j], exportedState.Sequences[i]
 	})
-	exportedGenesis, err := json.Marshal(exportedState)
+	exportedGenesis, err := wasmKeeper.cdc.MarshalJSON(exportedState)
 	require.NoError(t, err)
 
 	// reset ContractInfo in source DB for comparison with dest DB
@@ -104,7 +115,7 @@ func TestGenesisExportImport(t *testing.T) {
 	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
 
 	var importState wasmTypes.GenesisState
-	err = json.Unmarshal(exportedGenesis, &importState)
+	err = wasmKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
 	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 
@@ -642,6 +653,14 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	}, false, log.NewNopLogger())
 
 	encodingConfig := MakeEncodingConfig(t)
+	// register an example extension. must be protobuf
+	encodingConfig.InterfaceRegistry.RegisterImplementations(
+		(*types.ContractInfoExtension)(nil),
+		&govtypes.Proposal{},
+	)
+	// also registering gov interfaces for nested Any type
+	govtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 

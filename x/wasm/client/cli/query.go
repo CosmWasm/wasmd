@@ -13,9 +13,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 )
@@ -66,7 +64,7 @@ func GetCmdListCode() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -107,7 +105,7 @@ func GetCmdListContractByCode() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -183,7 +181,7 @@ func GetCmdGetContractInfo() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -240,7 +238,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -281,7 +279,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
@@ -329,7 +327,7 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
@@ -371,7 +369,7 @@ func GetCmdGetContractHistory() *cobra.Command {
 				return err
 			}
 
-			return clientCtx.WithJSONMarshaler(&VanillaStdJsonMarshaller{}).PrintProto(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 
@@ -421,41 +419,6 @@ func (a *argumentDecoder) DecodeString(s string) ([]byte, error) {
 
 func asciiDecodeString(s string) ([]byte, error) {
 	return []byte(s), nil
-}
-
-type VanillaStdJsonMarshaller struct {
-}
-
-func (x VanillaStdJsonMarshaller) MarshalInterfaceJSON(i proto.Message) ([]byte, error) {
-	any, err := codectypes.NewAnyWithValue(i)
-	if err != nil {
-		return nil, err
-	}
-	return x.MarshalJSON(any)
-}
-
-func (x VanillaStdJsonMarshaller) MarshalJSON(o proto.Message) ([]byte, error) {
-	return json.MarshalIndent(o, "", " ")
-}
-
-func (x VanillaStdJsonMarshaller) MustMarshalJSON(o proto.Message) []byte {
-	b, err := x.MarshalJSON(o)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func (x VanillaStdJsonMarshaller) UnmarshalInterfaceJSON(bz []byte, ptr interface{}) error {
-	panic("not supported")
-}
-
-func (x VanillaStdJsonMarshaller) UnmarshalJSON(bz []byte, ptr proto.Message) error {
-	panic("not supported")
-}
-
-func (x VanillaStdJsonMarshaller) MustUnmarshalJSON(bz []byte, ptr proto.Message) {
-	panic("not supported")
 }
 
 // sdk ReadPageRequest expects binary but we encoded to base64 in our marshaller

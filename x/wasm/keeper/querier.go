@@ -103,7 +103,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		if accumulate {
 			r = append(r, types.ContractInfoWithAddress{
 				Address:      contractAddr.String(),
-				ContractInfo: c,
+				ContractInfo: *c,
 			})
 		}
 		return true, nil
@@ -267,7 +267,7 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	info.Created = nil
 	return &types.ContractInfoWithAddress{
 		Address:      addr.String(),
-		ContractInfo: info,
+		ContractInfo: *info,
 	}, nil
 }
 

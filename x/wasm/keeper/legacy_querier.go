@@ -152,7 +152,7 @@ func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKe
 			// and add the address
 			infoWithAddress := types.ContractInfoWithAddress{
 				Address:      addr.String(),
-				ContractInfo: &info,
+				ContractInfo: info,
 			}
 			contracts = append(contracts, infoWithAddress)
 		}
