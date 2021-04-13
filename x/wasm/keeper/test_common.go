@@ -213,6 +213,7 @@ func createTestInput(
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		types.ModuleName:               {authtypes.Burner},
 	}
 	authSubsp, _ := paramsKeeper.GetSubspace(authtypes.ModuleName)
 	authKeeper := authkeeper.NewAccountKeeper(
@@ -237,9 +238,10 @@ func createTestInput(
 		blockedAddrs,
 	)
 	bankParams := banktypes.DefaultParams()
-	bankParams = bankParams.SetSendEnabledParam("stake", true)
 	bankKeeper.SetParams(ctx, bankParams)
-
+	bankKeeper.SetSupply(ctx, banktypes.NewSupply(sdk.NewCoins(
+		sdk.NewCoin("denom", sdk.NewInt(10000)),
+	)))
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)

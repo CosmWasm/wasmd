@@ -12,14 +12,21 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// BankKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
+// BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
 type BankViewKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+}
+
+// Burner is a subset of the sdk bank keeper methods
+type Burner interface {
+	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 }
 
 // BankKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
 type BankKeeper interface {
 	BankViewKeeper
+	Burner
 	SendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
 	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
