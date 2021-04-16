@@ -182,7 +182,7 @@ proto-lint:
 proto-check-breaking:
 	@$(DOCKER_BUF) check breaking --against-input $(HTTPS_GIT)#branch=master
 
-.PHONY: all build-linux install install-debug \
+.PHONY: all install install-debug \
 	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race \
 	test-sim-import-export \
