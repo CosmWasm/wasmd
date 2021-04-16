@@ -1,10 +1,17 @@
 package types
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/rand"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/require"
+	"time"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {
@@ -40,6 +47,23 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"label exceeds limit": {
 			srcMutator: func(c *ContractInfo) { c.Label = strings.Repeat("a", MaxLabelSize+1) },
 			expError:   true,
+		},
+		"invalid extension": {
+			srcMutator: func(c *ContractInfo) {
+				// any protobuf type with ValidateBasic method
+				any, err := codectypes.NewAnyWithValue(&govtypes.TextProposal{})
+				require.NoError(t, err)
+				c.Extension = any
+			},
+			expError: true,
+		},
+		"not validatable extension": {
+			srcMutator: func(c *ContractInfo) {
+				// any protobuf type with ValidateBasic method
+				any, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
+				require.NoError(t, err)
+				c.Extension = any
+			},
 		},
 	}
 	for msg, spec := range specs {
@@ -114,6 +138,173 @@ func TestCodeInfoValidateBasic(t *testing.T) {
 				return
 			}
 			require.NoError(t, got)
+		})
+	}
+}
+
+func TestContractInfoSetExtension(t *testing.T) {
+	anyTime := time.Now().UTC()
+	aNestedProtobufExt := func() ContractInfoExtension {
+		// using gov proposal here as a random protobuf types as it contains an Any type inside for nested unpacking
+		myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
+		require.NoError(t, err)
+		myExtension.TotalDeposit = nil
+		return &myExtension
+	}
+
+	specs := map[string]struct {
+		src    ContractInfoExtension
+		expErr bool
+		expNil bool
+	}{
+		"all good with any proto extension": {
+			src: aNestedProtobufExt(),
+		},
+		"nil allowed": {
+			src:    nil,
+			expNil: true,
+		},
+		"validated and accepted": {
+			src: &govtypes.TextProposal{Title: "bar", Description: "set"},
+		},
+		"validated and rejected": {
+			src:    &govtypes.TextProposal{Title: "bar"},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var c ContractInfo
+			gotErr := c.SetExtension(spec.src)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			if spec.expNil {
+				return
+			}
+			require.NotNil(t, c.Extension)
+			assert.NotNil(t, c.Extension.GetCachedValue())
+		})
+	}
+}
+
+func TestContractInfoMarshalUnmarshal(t *testing.T) {
+	var myAddr sdk.AccAddress = rand.Bytes(sdk.AddrLen)
+	var myOtherAddr sdk.AccAddress = rand.Bytes(sdk.AddrLen)
+	var anyPos = AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
+
+	anyTime := time.Now().UTC()
+	// using gov proposal here as a random protobuf types as it contains an Any type inside for nested unpacking
+	myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
+	require.NoError(t, err)
+	myExtension.TotalDeposit = nil
+
+	src := NewContractInfo(1, myAddr, myOtherAddr, "bar", &anyPos)
+	err = src.SetExtension(&myExtension)
+	require.NoError(t, err)
+
+	interfaceRegistry := types.NewInterfaceRegistry()
+	marshaler := codec.NewProtoCodec(interfaceRegistry)
+	RegisterInterfaces(interfaceRegistry)
+	// register proposal as extension type
+	interfaceRegistry.RegisterImplementations(
+		(*ContractInfoExtension)(nil),
+		&govtypes.Proposal{},
+	)
+	// register gov types for nested Anys
+	govtypes.RegisterInterfaces(interfaceRegistry)
+
+	// when encode
+	bz, err := marshaler.MarshalBinaryBare(&src)
+	require.NoError(t, err)
+	// and decode
+	var dest ContractInfo
+	err = marshaler.UnmarshalBinaryBare(bz, &dest)
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, src, dest)
+	// and sanity check nested any
+	var destExt govtypes.Proposal
+	require.NoError(t, dest.ReadExtension(&destExt))
+	assert.Equal(t, destExt.GetTitle(), "bar")
+}
+
+func TestContractInfoReadExtension(t *testing.T) {
+	anyTime := time.Now().UTC()
+	myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo"}, 1, anyTime, anyTime)
+	require.NoError(t, err)
+	type TestExtensionAsStruct struct {
+		ContractInfoExtension
+	}
+
+	specs := map[string]struct {
+		setup  func(*ContractInfo)
+		param  func() ContractInfoExtension
+		expVal ContractInfoExtension
+		expErr bool
+	}{
+		"all good": {
+			setup: func(i *ContractInfo) {
+				i.SetExtension(&myExtension)
+			},
+			param: func() ContractInfoExtension {
+				return &govtypes.Proposal{}
+			},
+			expVal: &myExtension,
+		},
+		"no extension set": {
+			setup: func(i *ContractInfo) {
+			},
+			param: func() ContractInfoExtension {
+				return &govtypes.Proposal{}
+			},
+			expVal: &govtypes.Proposal{},
+		},
+		"nil argument value": {
+			setup: func(i *ContractInfo) {
+				i.SetExtension(&myExtension)
+			},
+			param: func() ContractInfoExtension {
+				return nil
+			},
+			expErr: true,
+		},
+		"non matching types": {
+			setup: func(i *ContractInfo) {
+				i.SetExtension(&myExtension)
+			},
+			param: func() ContractInfoExtension {
+				return &govtypes.TextProposal{}
+			},
+			expErr: true,
+		},
+		"not a pointer argument": {
+			setup: func(i *ContractInfo) {
+			},
+			param: func() ContractInfoExtension {
+				return TestExtensionAsStruct{}
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var c ContractInfo
+			spec.setup(&c)
+			// when
+
+			gotValue := spec.param()
+			gotErr := c.ReadExtension(gotValue)
+
+			// then
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expVal, gotValue)
 		})
 	}
 }

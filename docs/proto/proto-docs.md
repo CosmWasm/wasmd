@@ -185,6 +185,7 @@ ContractInfo stores a WASM contract instance
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1beta1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. This data should kept internal and not be exposed via query results. Just use for sorting |
 | `ibc_port_id` | [string](#string) |  |  |
+| `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
 
 
 

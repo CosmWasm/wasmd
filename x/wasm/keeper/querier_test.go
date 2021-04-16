@@ -5,18 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"io/ioutil"
-	"testing"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
+	"io/ioutil"
+	"testing"
+	"time"
 )
 
 func TestQueryAllContractState(t *testing.T) {
@@ -521,6 +522,77 @@ func TestQueryCodeList(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestQueryContractInfo(t *testing.T) {
+	var (
+		contractAddr = RandomAccountAddress(t)
+		anyDate      = time.Now().UTC()
+	)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	// register an example extension. must be protobuf
+	keepers.EncodingConfig.InterfaceRegistry.RegisterImplementations(
+		(*types.ContractInfoExtension)(nil),
+		&govtypes.Proposal{},
+	)
+	govtypes.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
+
+	k := keepers.WasmKeeper
+	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
+	myExtension := func(info *types.ContractInfo) {
+		// abuse gov proposal as a random protobuf extension with an Any type
+		myExt, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
+		require.NoError(t, err)
+		myExt.TotalDeposit = nil
+		info.SetExtension(&myExt)
+	}
+	specs := map[string]struct {
+		src    *types.QueryContractInfoRequest
+		stored types.ContractInfo
+		expRsp *types.QueryContractInfoResponse
+		expErr bool
+	}{
+		"found": {
+			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
+			stored: types.ContractInfoFixture(),
+			expRsp: &types.QueryContractInfoResponse{
+				Address: contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
+					info.Created = nil // not returned on queries
+				}),
+			},
+		},
+		"with extension": {
+			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
+			stored: types.ContractInfoFixture(myExtension),
+			expRsp: &types.QueryContractInfoResponse{
+				Address: contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(myExtension, func(info *types.ContractInfo) {
+					info.Created = nil // not returned on queries
+				}),
+			},
+		},
+		"not found": {
+			src:    &types.QueryContractInfoRequest{Address: RandomBech32AccountAddress(t)},
+			stored: types.ContractInfoFixture(),
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			xCtx, _ := ctx.CacheContext()
+			k.storeContractInfo(xCtx, contractAddr, &spec.stored)
+			// when
+			gotRsp, gotErr := querier.ContractInfo(sdk.WrapSDKContext(xCtx), spec.src)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expRsp, gotRsp)
+		})
+	}
+
 }
 
 func fromBase64(s string) []byte {

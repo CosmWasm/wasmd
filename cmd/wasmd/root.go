@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
@@ -48,7 +49,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	config.Seal()
 
 	initClientCtx := client.Context{}.
-		WithJSONMarshaler(encodingConfig.Marshaler).
+		WithJSONMarshaler(clientcodec.NewProtoCodec(encodingConfig.Marshaler, encodingConfig.InterfaceRegistry)).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).

@@ -756,6 +756,19 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 	return nil
 }
 
+// setContractInfoExtension updates the extension point data that is stored with the contract info
+func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAddress, ext types.ContractInfoExtension) error {
+	info := k.GetContractInfo(ctx, contractAddr)
+	if info == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "contract info")
+	}
+	if err := info.SetExtension(ext); err != nil {
+		return err
+	}
+	k.storeContractInfo(ctx, contractAddr, info)
+	return nil
+}
+
 func (k Keeper) dispatchAll(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, subMsgs []wasmvmtypes.SubMsg, msgs []wasmvmtypes.CosmosMsg) error {
 	// first dispatch all submessages (and the replies).
 	err := k.dispatchSubmessages(ctx, contractAddr, ibcPort, subMsgs)

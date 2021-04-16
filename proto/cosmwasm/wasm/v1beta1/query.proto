@@ -67,8 +67,11 @@ message QueryContractInfoResponse {
 
   // address is the address of the contract
   string address = 1;
-  ContractInfo contract_info = 2
-      [ (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
+  ContractInfo contract_info = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = ""
+  ];
 }
 
 // QueryContractHistoryRequest is the request type for the Query/ContractHistory
@@ -103,8 +106,11 @@ message ContractInfoWithAddress {
   option (gogoproto.equal) = true;
 
   string address = 1;
-  ContractInfo contract_info = 2
-      [ (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
+  ContractInfo contract_info = 2 [
+    (gogoproto.embed) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = ""
+  ];
 }
 // QueryContractsByCodeResponse is the response type for the
 // Query/ContractsByCode RPC method

@@ -50,6 +50,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&UnpinCodesProposal{},
 	)
 
+	registry.RegisterInterface("ContractInfoExtension", (*ContractInfoExtension)(nil))
+
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
