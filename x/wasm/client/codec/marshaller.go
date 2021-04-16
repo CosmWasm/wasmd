@@ -11,7 +11,9 @@ import (
 
 var _ codec.Marshaler = (*ProtoCodec)(nil)
 
-// ProtoCodec that omits empty values
+// ProtoCodec that omits empty values.
+// This Marshaler can be used globally when setting up the client context or individually
+// for each command via `clientCtx.WithJSONMarshaler(myMarshaler)`.
 type ProtoCodec struct {
 	codec.Marshaler
 	interfaceRegistry types.InterfaceRegistry

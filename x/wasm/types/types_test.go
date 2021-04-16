@@ -57,6 +57,14 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			},
 			expError: true,
 		},
+		"not validatable extension": {
+			srcMutator: func(c *ContractInfo) {
+				// any protobuf type with ValidateBasic method
+				any, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
+				require.NoError(t, err)
+				c.Extension = any
+			},
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

@@ -70,11 +70,14 @@ func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string,
 	}
 }
 
-// validatable is an optional
+// validatable is an optional interface that can be implemented by an ContractInfoExtension to enable validation
 type validatable interface {
 	ValidateBasic() error
 }
 
+// ValidateBasic does syntax checks on the data. If an extension is set and has the `ValidateBasic() error` method, then
+// the method is called as well. It is recommend to implement `ValidateBasic` so that the data is verified in the setter
+// but also in the genesis import process.
 func (c *ContractInfo) ValidateBasic() error {
 	if c.CodeID == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code id")
@@ -93,9 +96,10 @@ func (c *ContractInfo) ValidateBasic() error {
 	if c.Extension == nil {
 		return nil
 	}
+
 	e, ok := c.Extension.GetCachedValue().(validatable)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "extension: %T", c.Extension)
+		return nil
 	}
 	if err := e.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "extension")
@@ -103,16 +107,17 @@ func (c *ContractInfo) ValidateBasic() error {
 	return nil
 }
 
-// SetExtension set new extension data
+// SetExtension set new extension data. Calls `ValidateBasic() error` on non nil values when method is implemented by
+// the extension.
 func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
+	if ext == nil {
+		c.Extension = nil
+		return nil
+	}
 	if e, ok := ext.(validatable); ok {
 		if err := e.ValidateBasic(); err != nil {
 			return err
 		}
-	}
-	if ext == nil {
-		c.Extension = nil
-		return nil
 	}
 	any, err := codectypes.NewAnyWithValue(ext)
 	if err != nil {
