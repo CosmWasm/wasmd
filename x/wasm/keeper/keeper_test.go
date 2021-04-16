@@ -1278,3 +1278,34 @@ func TestClearContractAdmin(t *testing.T) {
 		})
 	}
 }
+
+func TestInitializePinnedCodes(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k := keepers.WasmKeeper
+
+	var capturedChecksums []wasmvm.Checksum
+	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksum)
+		return nil
+	}}
+	wasmtesting.MakeIBCInstantiable(&mock)
+
+	const testItems = 3
+	myCodeIDs := make([]uint64, testItems)
+	for i := 0; i < testItems; i++ {
+		myCodeIDs[i] = StoreRandomContract(t, ctx, keepers, &mock).CodeID
+		require.NoError(t, k.pinCode(ctx, myCodeIDs[i]))
+	}
+	capturedChecksums = nil
+
+	// when
+	gotErr := k.InitializePinnedCodes(ctx)
+
+	// then
+	require.NoError(t, gotErr)
+	require.Len(t, capturedChecksums, testItems)
+	for i, c := range myCodeIDs {
+		var exp wasmvm.Checksum = k.GetCodeInfo(ctx, c).CodeHash
+		assert.Equal(t, exp, capturedChecksums[i])
+	}
+}

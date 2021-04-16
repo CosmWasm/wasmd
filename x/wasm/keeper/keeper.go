@@ -745,7 +745,7 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PinnedCodeIndexPrefix)
 	iter := store.Iterator(nil, nil)
 	for ; iter.Valid(); iter.Next() {
-		codeInfo := k.GetCodeInfo(ctx, types.ParsePinnedCodeIndex(iter.Value()))
+		codeInfo := k.GetCodeInfo(ctx, types.ParsePinnedCodeIndex(iter.Key()))
 		if codeInfo == nil {
 			return sdkerrors.Wrap(types.ErrNotFound, "code info")
 		}
