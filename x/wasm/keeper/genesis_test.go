@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	prefix2 "github.com/cosmos/cosmos-sdk/store/prefix"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"io/ioutil"
 	"math/rand"
@@ -103,19 +104,27 @@ func TestGenesisExportImport(t *testing.T) {
 	exportedGenesis, err := wasmKeeper.cdc.MarshalJSON(exportedState)
 	require.NoError(t, err)
 
-	// reset ContractInfo in source DB for comparison with dest DB
+	// setup new instances
+	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
+
+	// reset contract code index in source DB for comparison with dest DB
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
-		wasmKeeper.deleteContractSecondIndex(srcCtx, address, &info)
-		info.ResetFromGenesis(srcCtx)
-		wasmKeeper.storeContractInfo(srcCtx, address, &info)
+		wasmKeeper.removeFromContractCodeSecondaryIndex(srcCtx, address, wasmKeeper.getLastContractHistoryEntry(srcCtx, address))
+		prefix := prefix2.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
+		for iter := prefix.Iterator(nil, nil); iter.Valid(); iter.Next() {
+			prefix.Delete(iter.Key())
+		}
+		x := &info
+		newHistory := x.ResetFromGenesis(dstCtx)
+		wasmKeeper.storeContractInfo(srcCtx, address, x)
+		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, newHistory)
+		wasmKeeper.appendToContractHistory(srcCtx, address, newHistory)
 		return false
 	})
 
 	// re-import
-	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
-
 	var importState wasmTypes.GenesisState
-	err = wasmKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
+	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
 	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 
@@ -125,16 +134,6 @@ func TestGenesisExportImport(t *testing.T) {
 		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
 		for i := 0; srcIT.Valid(); i++ {
-			isContractHistory := srcStoreKeys[j].Name() == types.StoreKey && bytes.HasPrefix(srcIT.Key(), types.ContractCodeHistoryElementPrefix)
-			if isContractHistory {
-				// only skip history entries because we know they are different
-				// from genesis they are merged into 1 single entry
-				srcIT.Next()
-				if bytes.HasPrefix(dstIT.Key(), types.ContractCodeHistoryElementPrefix) {
-					dstIT.Next()
-				}
-				continue
-			}
 			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", srcStoreKeys[j].Name(), srcIT.Key())
 			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
 			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())

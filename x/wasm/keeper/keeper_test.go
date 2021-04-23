@@ -950,20 +950,29 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 	store := ctx.KVStore(keepers.WasmKeeper.storeKey)
 	oldContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
 	require.NotNil(t, oldContractInfo)
-	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	createHistoryEntry := types.ContractCodeHistoryEntry{
+		CodeID:  example.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+	}
+	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
 	require.True(t, exists)
 
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1) // increment for different block
 	// when do migrate
 	newCodeExample := StoreBurnerExampleContract(t, ctx, keepers)
 	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
 	_, err := keepers.ContractKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
 	require.NoError(t, err)
+
 	// then the new index exists
-	newContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, newContractInfo))
+	migrateHistoryEntry := types.ContractCodeHistoryEntry{
+		CodeID:  newCodeExample.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+	}
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, migrateHistoryEntry))
 	require.True(t, exists)
 	// and the old index was removed
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
 	require.False(t, exists)
 }
 

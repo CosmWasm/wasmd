@@ -29,12 +29,12 @@ func TestGetContractByCodeIDSecondaryIndexPrefix(t *testing.T) {
 }
 
 func TestGetContractByCreatedSecondaryIndexKey(t *testing.T) {
-	c := &ContractInfo{
+	e := ContractCodeHistoryEntry{
 		CodeID:  1,
-		Created: &AbsoluteTxPosition{2 + 1<<(8*7), 3 + 1<<(8*7)},
+		Updated: &AbsoluteTxPosition{2 + 1<<(8*7), 3 + 1<<(8*7)},
 	}
 	addr := bytes.Repeat([]byte{4}, sdk.AddrLen)
-	got := GetContractByCreatedSecondaryIndexKey(addr, c)
+	got := GetContractByCreatedSecondaryIndexKey(addr, e)
 	exp := []byte{6, // prefix
 		0, 0, 0, 0, 0, 0, 0, 1, // codeID
 		1, 0, 0, 0, 0, 0, 0, 2, // height
