@@ -6,20 +6,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	prefix2 "github.com/cosmos/cosmos-sdk/store/prefix"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"io/ioutil"
-	"math/rand"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -31,6 +25,11 @@ import (
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
+	"io/ioutil"
+	"math/rand"
+	"os"
+	"testing"
+	"time"
 )
 
 const firstCodeID = 1
@@ -110,9 +109,9 @@ func TestGenesisExportImport(t *testing.T) {
 	// reset contract code index in source DB for comparison with dest DB
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
 		wasmKeeper.removeFromContractCodeSecondaryIndex(srcCtx, address, wasmKeeper.getLastContractHistoryEntry(srcCtx, address))
-		prefix := prefix2.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
-		for iter := prefix.Iterator(nil, nil); iter.Valid(); iter.Next() {
-			prefix.Delete(iter.Key())
+		prefixStore := prefix.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
+		for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+			prefixStore.Delete(iter.Key())
 		}
 		x := &info
 		newHistory := x.ResetFromGenesis(dstCtx)

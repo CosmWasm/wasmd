@@ -25,7 +25,7 @@ wasmd tx wasm instantiate "$CODE_ID" "$INIT" --admin=$(wasmd keys show validator
   --from validator --amount="100ustake" --label "local0.1.0" \
   --gas 1000000 -y --chain-id=testing -b block | jq
 
-CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.contract_infos[-1].address')
+CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.contracts[-1]')
 echo "* Contract address: $CONTRACT"
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)

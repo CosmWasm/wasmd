@@ -2,15 +2,12 @@ package keeper
 
 import (
 	"encoding/json"
-	"reflect"
-	"sort"
-	"strconv"
-	"strings"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"reflect"
+	"strconv"
 )
 
 const (
@@ -47,7 +44,7 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
 			}
-			rsp, err = queryContractListByCode(ctx, codeID, keeper)
+			rsp = queryContractListByCode(ctx, codeID, keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
@@ -145,32 +142,11 @@ func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper t
 	return history, nil
 }
 
-func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) ([]types.ContractInfoWithAddress, error) {
-	var contracts []types.ContractInfoWithAddress
-	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
-		if info.CodeID == codeID {
-			// and add the address
-			infoWithAddress := types.ContractInfoWithAddress{
-				Address:      addr.String(),
-				ContractInfo: info,
-			}
-			contracts = append(contracts, infoWithAddress)
-		}
+func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) []string {
+	var contracts []string
+	keeper.IterateContractsByCode(ctx, codeID, func(addr sdk.AccAddress) bool {
+		contracts = append(contracts, addr.String())
 		return false
 	})
-
-	// now we sort them by AbsoluteTxPosition
-	sort.Slice(contracts, func(i, j int) bool {
-		this := contracts[i].ContractInfo.Created
-		other := contracts[j].ContractInfo.Created
-		if this.Equal(other) {
-			return strings.Compare(contracts[i].Address, contracts[j].Address) < 0
-		}
-		return this.LessThan(other)
-	})
-
-	for i := range contracts {
-		contracts[i].Created = nil
-	}
-	return contracts, nil
+	return contracts
 }

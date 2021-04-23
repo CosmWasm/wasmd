@@ -55,7 +55,6 @@
   
 - [cosmwasm/wasm/v1beta1/query.proto](#cosmwasm/wasm/v1beta1/query.proto)
     - [CodeInfoResponse](#cosmwasm.wasm.v1beta1.CodeInfoResponse)
-    - [ContractInfoWithAddress](#cosmwasm.wasm.v1beta1.ContractInfoWithAddress)
     - [QueryAllContractStateRequest](#cosmwasm.wasm.v1beta1.QueryAllContractStateRequest)
     - [QueryAllContractStateResponse](#cosmwasm.wasm.v1beta1.QueryAllContractStateResponse)
     - [QueryCodeRequest](#cosmwasm.wasm.v1beta1.QueryCodeRequest)
@@ -814,23 +813,6 @@ CodeInfoResponse contains code meta data from CodeInfo
 
 
 
-<a name="cosmwasm.wasm.v1beta1.ContractInfoWithAddress"></a>
-
-### ContractInfoWithAddress
-ContractInfoWithAddress adds the address (key) to the ContractInfo
-representation
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  |  |
-| `contract_info` | [ContractInfo](#cosmwasm.wasm.v1beta1.ContractInfo) |  |  |
-
-
-
-
-
-
 <a name="cosmwasm.wasm.v1beta1.QueryAllContractStateRequest"></a>
 
 ### QueryAllContractStateRequest
@@ -1020,7 +1002,7 @@ Query/ContractsByCode RPC method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `contract_infos` | [ContractInfoWithAddress](#cosmwasm.wasm.v1beta1.ContractInfoWithAddress) | repeated |  |
+| `contracts` | [string](#string) | repeated | contracts are a set of contract addresses |
 | `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | pagination defines the pagination in the response. |
 
 

@@ -521,6 +521,17 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, entry))
 }
 
+// IterateContractsByCode iterates over all contracts with given codeID ASC on code update time.
+func (k Keeper) IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(codeID))
+	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+		key := iter.Key()
+		if cb(key[types.AbsoluteTxPositionLen:]) {
+			return
+		}
+	}
+}
+
 func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error {
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -562,6 +573,7 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 	return r
 }
 
+// getLastContractHistoryEntry returns the last element from history. To be used internally only as it panics when none exists
 func (k Keeper) getLastContractHistoryEntry(ctx sdk.Context, contractAddr sdk.AccAddress) types.ContractCodeHistoryEntry {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
 	iter := prefixStore.ReverseIterator(nil, nil)

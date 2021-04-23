@@ -125,7 +125,6 @@ type (
 	ContractInfo                   = types.ContractInfo
 	CreatedAt                      = types.AbsoluteTxPosition
 	Config                         = types.WasmConfig
-	ContractInfoWithAddress        = types.ContractInfoWithAddress
 	CodeInfoResponse               = types.CodeInfoResponse
 	MessageHandler                 = keeper.SDKMessageHandler
 	BankEncoder                    = keeper.BankEncoder

@@ -43,10 +43,7 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	case rsp == nil:
 		return nil, types.ErrNotFound
 	}
-	return &types.QueryContractInfoResponse{
-		Address:      rsp.Address,
-		ContractInfo: rsp.ContractInfo,
-	}, nil
+	return rsp, nil
 }
 
 func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContractHistoryRequest) (*types.QueryContractHistoryResponse, error) {
@@ -82,6 +79,7 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 	}, nil
 }
 
+// ContractsByCode lists all smart contracts for a code id
 func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContractsByCodeRequest) (*types.QueryContractsByCodeResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -90,21 +88,13 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
-	r := make([]types.ContractInfoWithAddress, 0)
+	r := make([]string, 0)
 
 	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
-		var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
-		c := q.keeper.GetContractInfo(ctx, contractAddr)
-		if c == nil {
-			return false, types.ErrNotFound
-		}
-		c.Created = nil // redact
 		if accumulate {
-			r = append(r, types.ContractInfoWithAddress{
-				Address:      contractAddr.String(),
-				ContractInfo: *c,
-			})
+			var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
+			r = append(r, contractAddr.String())
 		}
 		return true, nil
 	})
@@ -112,8 +102,8 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		return nil, err
 	}
 	return &types.QueryContractsByCodeResponse{
-		ContractInfos: r,
-		Pagination:    pageRes,
+		Contracts:  r,
+		Pagination: pageRes,
 	}, nil
 }
 
@@ -258,14 +248,14 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
-func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.ContractInfoWithAddress, error) {
+func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
 		return nil, types.ErrNotFound
 	}
 	// redact the Created field (just used for sorting, not part of public API)
 	info.Created = nil
-	return &types.ContractInfoWithAddress{
+	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),
 		ContractInfo: *info,
 	}, nil

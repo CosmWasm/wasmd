@@ -283,13 +283,13 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	}
 
 	// create 10 contracts with real block/gas setup
-	for i := range [10]int{} {
+	for i := 0; i < 10; i++ {
 		// 3 tx per block, so we ensure both comparisons work
 		if i%3 == 0 {
 			ctx = setBlock(ctx, h)
 			h++
 		}
-		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contractAddr %d", i), topUp)
 		require.NoError(t, err)
 	}
 
@@ -298,13 +298,10 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	res, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), &types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
 
-	require.Equal(t, 10, len(res.ContractInfos))
+	require.Equal(t, 10, len(res.Contracts))
 
-	for i, contract := range res.ContractInfos {
-		assert.Equal(t, fmt.Sprintf("contract %d", i), contract.Label)
-		assert.NotEmpty(t, contract.Address)
-		// ensure these are not shown
-		assert.Nil(t, contract.Created)
+	for _, contractAddr := range res.Contracts {
+		assert.NotEmpty(t, contractAddr)
 	}
 }
 

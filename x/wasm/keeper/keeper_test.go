@@ -1055,6 +1055,47 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	assert.Equal(t, deposit, balance)
 }
 
+func TestIterateContractsByCode(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k, c := keepers.WasmKeeper, keepers.ContractKeeper
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    RandomAccountAddress(t),
+		Beneficiary: RandomAccountAddress(t),
+	}.GetBytes(t)
+	contractAddr3, _, err := c.Instantiate(ctx, example1.CodeID, example1.CreatorAddr, nil, initMsg, "foo", nil)
+	require.NoError(t, err)
+	specs := map[string]struct {
+		codeID uint64
+		exp    []sdk.AccAddress
+	}{
+		"multiple results": {
+			codeID: example1.CodeID,
+			exp:    []sdk.AccAddress{example1.Contract, contractAddr3},
+		},
+		"single results": {
+			codeID: example2.CodeID,
+			exp:    []sdk.AccAddress{example2.Contract},
+		},
+		"empty results": {
+			codeID: 99999,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var gotAddr []sdk.AccAddress
+			k.IterateContractsByCode(ctx, spec.codeID, func(address sdk.AccAddress) bool {
+				gotAddr = append(gotAddr, address)
+				return false
+			})
+			assert.Equal(t, spec.exp, gotAddr)
+		})
+	}
+}
+
 type sudoMsg struct {
 	// This is a tongue-in-check demo command. This is not the intended purpose of Sudo.
 	// Here we show that some priviledged Go module can make a call that should never be exposed
