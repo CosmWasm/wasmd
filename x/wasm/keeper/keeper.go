@@ -14,7 +14,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
 	"path/filepath"
@@ -56,28 +55,36 @@ type WasmVMQueryHandler interface {
 	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
 }
 
-// Messenger is an extension point for custom wasmVM message handling
-type Messenger interface {
-	// DispatchMsg encodes the wasmVM message and dispatches it.
-	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
-}
-
 type CoinTransferrer interface {
 	// TransferCoins sends the coin amounts from the source to the destination with rules applied.
 	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
+// WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
+type WasmVMResponseHandler interface {
+	// Handle processes the data returned by a contract invocation.
+	Handle(
+		ctx sdk.Context,
+		contractAddr sdk.AccAddress,
+		ibcPort string,
+		submessages []wasmvmtypes.SubMsg,
+		messages []wasmvmtypes.CosmosMsg,
+		origRspData []byte,
+	) ([]byte, error)
+}
+
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
-	storeKey           sdk.StoreKey
-	cdc                codec.Marshaler
-	accountKeeper      types.AccountKeeper
-	bank               CoinTransferrer
-	portKeeper         types.PortKeeper
-	capabilityKeeper   types.CapabilityKeeper
-	wasmVM             types.WasmerEngine
-	wasmVMQueryHandler WasmVMQueryHandler
-	messenger          Messenger
+	storeKey              sdk.StoreKey
+	cdc                   codec.Marshaler
+	accountKeeper         types.AccountKeeper
+	bank                  CoinTransferrer
+	portKeeper            types.PortKeeper
+	capabilityKeeper      types.CapabilityKeeper
+	wasmVM                types.WasmerEngine
+	wasmVMQueryHandler    WasmVMQueryHandler
+	wasmVMResponseHandler WasmVMResponseHandler
+	messenger             Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64
 	paramSpace    paramtypes.Subspace
@@ -113,7 +120,7 @@ func NewKeeper(
 		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
-	keeper := Keeper{
+	keeper := &Keeper{
 		storeKey:         storeKey,
 		cdc:              cdc,
 		wasmVM:           wasmer,
@@ -125,11 +132,14 @@ func NewKeeper(
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		paramSpace:       paramSpace,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, &keeper)
+
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
 	for _, o := range opts {
-		o.apply(&keeper)
+		o.apply(keeper)
 	}
-	return keeper
+	// not updateable, yet
+	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
+	return *keeper
 }
 
 func (k Keeper) getUploadAccessConfig(ctx sdk.Context) types.AccessConfig {
@@ -769,161 +779,8 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 }
 
 // handleContractResponse processes the contract response
-func (k Keeper) handleContractResponse(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, res *wasmvmtypes.Response) ([]byte, error) {
-	return k.handleContractResponseX(ctx, contractAddr, ibcPort, res.Submessages, res.Messages, res.Data)
-}
-
-func (k Keeper) handleContractResponseX(
-	ctx sdk.Context,
-	contractAddr sdk.AccAddress,
-	ibcPort string,
-	submessages []wasmvmtypes.SubMsg,
-	messages []wasmvmtypes.CosmosMsg,
-	data []byte,
-) ([]byte, error) {
-	result := data
-	switch rsp, err := k.dispatchSubmessages(ctx, contractAddr, ibcPort, submessages); {
-	case err != nil:
-		return nil, sdkerrors.Wrap(err, "submessages")
-	case rsp != nil:
-		result = rsp
-	}
-	// then dispatch all the normal messages
-	return result, sdkerrors.Wrap(k.dispatchMessages(ctx, contractAddr, ibcPort, messages), "messages")
-}
-
-func (k Keeper) dispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		events, _, err := k.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
-		if err != nil {
-			return err
-		}
-		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-		ctx.EventManager().EmitEvents(events)
-	}
-	return nil
-}
-
-func (k Keeper) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
-	limitedMeter := sdk.NewGasMeter(gasLimit)
-	subCtx := ctx.WithGasMeter(limitedMeter)
-
-	// catch out of gas panic and just charge the entire gas limit
-	defer func() {
-		if r := recover(); r != nil {
-			// if it's not an OutOfGas error, raise it again
-			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
-				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
-				k.Logger(ctx).Info("SubMsg rethrowing panic: %#v", r)
-				panic(r)
-			}
-			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
-		}
-	}()
-	events, data, err = k.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
-
-	// make sure we charge the parent what was spent
-	spent := subCtx.GasMeter().GasConsumed()
-	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
-
-	return events, data, err
-}
-
-// dispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
-// that dispatched them, both on success as well as failure
-func (k Keeper) dispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
-	var rsp []byte
-	for _, msg := range msgs {
-		// first, we build a sub-context which we can use inside the submessages
-		subCtx, commit := ctx.CacheContext()
-
-		// check how much gas left locally, optionally wrap the gas meter
-		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
-		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
-
-		var err error
-		var events []sdk.Event
-		var data [][]byte
-		if limitGas {
-			events, data, err = k.dispatchMsgWithGasLimit(subCtx, contractAddr, ibcPort, msg.Msg, *msg.GasLimit)
-		} else {
-			events, data, err = k.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
-		}
-
-		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
-		if err == nil {
-			commit()
-			ctx.EventManager().EmitEvents(events)
-		}
-		// on failure, revert state from sandbox, and ignore events (just skip doing the above)
-
-		// we only callback if requested. Short-circuit here the two cases we don't want to
-		if msg.ReplyOn == wasmvmtypes.ReplySuccess && err != nil {
-			return nil, err
-		}
-		if msg.ReplyOn == wasmvmtypes.ReplyError && err == nil {
-			continue
-		}
-
-		// otherwise, we create a SubcallResult and pass it into the calling contract
-		var result wasmvmtypes.SubcallResult
-		if err == nil {
-			// just take the first one for now if there are multiple sub-sdk messages
-			// and safely return nothing if no data
-			var responseData []byte
-			if len(data) > 0 {
-				responseData = data[0]
-			}
-			result = wasmvmtypes.SubcallResult{
-				Ok: &wasmvmtypes.SubcallResponse{
-					Events: sdkEventsToWasmVmEvents(events),
-					Data:   responseData,
-				},
-			}
-		} else {
-			result = wasmvmtypes.SubcallResult{
-				Err: err.Error(),
-			}
-		}
-
-		// now handle the reply, we use the parent context, and abort on error
-		reply := wasmvmtypes.Reply{
-			ID:     msg.ID,
-			Result: result,
-		}
-
-		// we can ignore any result returned as there is nothing to do with the data
-		// and the events are already in the ctx.EventManager()
-		rData, err := k.reply(ctx, contractAddr, reply)
-		if err != nil {
-			return nil, err
-		}
-		rsp = rData.Data
-	}
-	return rsp, nil
-}
-
-func sdkEventsToWasmVmEvents(events []sdk.Event) []wasmvmtypes.Event {
-	res := make([]wasmvmtypes.Event, len(events))
-	for i, ev := range events {
-		res[i] = wasmvmtypes.Event{
-			Type:       ev.Type,
-			Attributes: sdkAttributesToWasmVmAttributes(ev.Attributes),
-		}
-	}
-	return res
-}
-
-func sdkAttributesToWasmVmAttributes(attrs []abci.EventAttribute) []wasmvmtypes.EventAttribute {
-	res := make([]wasmvmtypes.EventAttribute, len(attrs))
-	for i, attr := range attrs {
-		res[i] = wasmvmtypes.EventAttribute{
-			Key:   string(attr.Key),
-			Value: string(attr.Value),
-		}
-	}
-	return res
+func (k *Keeper) handleContractResponse(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, res *wasmvmtypes.Response) ([]byte, error) {
+	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, ibcPort, res.Submessages, res.Messages, res.Data)
 }
 
 func gasForContract(ctx sdk.Context) uint64 {
@@ -1090,4 +947,39 @@ func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddr
 		return sdkerr
 	}
 	return nil
+}
+
+type msgDispatcher interface {
+	DispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error
+	DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error)
+}
+
+// DefaultWasmVMContractResponseHandler default implementation that first dispatches submessage then normal messages.
+// The Submessage execution may include an success/failure response handling by the contract that can overwrite the
+// original
+type DefaultWasmVMContractResponseHandler struct {
+	md msgDispatcher
+}
+
+func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMContractResponseHandler {
+	return &DefaultWasmVMContractResponseHandler{md: md}
+}
+
+func (h DefaultWasmVMContractResponseHandler) Handle(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	ibcPort string,
+	submessages []wasmvmtypes.SubMsg,
+	messages []wasmvmtypes.CosmosMsg,
+	origRspData []byte,
+) ([]byte, error) {
+	result := origRspData
+	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, submessages); {
+	case err != nil:
+		return nil, sdkerrors.Wrap(err, "submessages")
+	case rsp != nil:
+		result = rsp
+	}
+	// then dispatch all the normal messages
+	return result, sdkerrors.Wrap(h.md.DispatchMessages(ctx, contractAddr, ibcPort, messages), "messages")
 }

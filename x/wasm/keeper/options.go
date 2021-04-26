@@ -11,7 +11,7 @@ func (f optsFn) apply(keeper *Keeper) {
 	f(keeper)
 }
 
-// WithMessageHandler is an optional constructor parameter to replace the default wasmVM engine with the
+// WithWasmEngine is an optional constructor parameter to replace the default wasmVM engine with the
 // given one.
 func WithWasmEngine(x types.WasmerEngine) Option {
 	return optsFn(func(k *Keeper) {
