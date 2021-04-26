@@ -18,28 +18,31 @@ import (
 
 type BankEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
 type CustomEncoder func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
+type DistributionEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error)
 type StakingEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
 type StargateEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
 type WasmEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
 type IBCEncoder func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
 
 type MessageEncoders struct {
-	Bank     func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
-	Custom   func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
-	IBC      func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
-	Staking  func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
-	Stargate func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
-	Wasm     func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
+	Bank         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
+	Custom       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
+	Distribution func(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error)
+	IBC          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
+	Staking      func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
+	Stargate     func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
+	Wasm         func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
 }
 
 func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
 	return MessageEncoders{
-		Bank:     EncodeBankMsg,
-		Custom:   NoCustomMsg,
-		IBC:      EncodeIBCMsg(portSource),
-		Staking:  EncodeStakingMsg,
-		Stargate: EncodeStargateMsg(unpacker),
-		Wasm:     EncodeWasmMsg,
+		Bank:         EncodeBankMsg,
+		Custom:       NoCustomMsg,
+		Distribution: EncodeDistributionMsg,
+		IBC:          EncodeIBCMsg(portSource),
+		Staking:      EncodeStakingMsg,
+		Stargate:     EncodeStargateMsg(unpacker),
+		Wasm:         EncodeWasmMsg,
 	}
 }
 
@@ -52,6 +55,9 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	}
 	if o.Custom != nil {
 		e.Custom = o.Custom
+	}
+	if o.Distribution != nil {
+		e.Distribution = o.Distribution
 	}
 	if o.IBC != nil {
 		e.IBC = o.IBC
@@ -74,6 +80,8 @@ func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, co
 		return e.Bank(contractAddr, msg.Bank)
 	case msg.Custom != nil:
 		return e.Custom(contractAddr, msg.Custom)
+	case msg.Distribution != nil:
+		return e.Distribution(contractAddr, msg.Distribution)
 	case msg.IBC != nil:
 		return e.IBC(ctx, contractAddr, contractIBCPortID, msg.IBC)
 	case msg.Staking != nil:
@@ -107,6 +115,25 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, 
 
 func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 	return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "custom variant not supported")
+}
+
+func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error) {
+	switch {
+	case msg.SetWithdrawAddress != nil:
+		setMsg := distributiontypes.MsgSetWithdrawAddress{
+			DelegatorAddress: sender.String(),
+			WithdrawAddress:  msg.SetWithdrawAddress.Address,
+		}
+		return []sdk.Msg{&setMsg}, nil
+	case msg.WithdrawDelegatorReward != nil:
+		withdrawMsg := distributiontypes.MsgWithdrawDelegatorReward{
+			DelegatorAddress: sender.String(),
+			ValidatorAddress: msg.WithdrawDelegatorReward.Validator,
+		}
+		return []sdk.Msg{&withdrawMsg}, nil
+	default:
+		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Distribution")
+	}
 }
 
 func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error) {
@@ -146,21 +173,6 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 			Amount:           coin,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
-	case msg.Withdraw != nil:
-		senderAddr := sender.String()
-		rcpt := senderAddr
-		if len(msg.Withdraw.Recipient) != 0 {
-			rcpt = msg.Withdraw.Recipient
-		}
-		setMsg := distributiontypes.MsgSetWithdrawAddress{
-			DelegatorAddress: senderAddr,
-			WithdrawAddress:  rcpt,
-		}
-		withdrawMsg := distributiontypes.MsgWithdrawDelegatorReward{
-			DelegatorAddress: senderAddr,
-			ValidatorAddress: msg.Withdraw.Validator,
-		}
-		return []sdk.Msg{&setMsg, &withdrawMsg}, nil
 	default:
 		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Staking")
 	}

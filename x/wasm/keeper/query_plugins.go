@@ -280,7 +280,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			}
 			return json.Marshal(res)
 		}
-		if request.Validators != nil {
+		if request.AllValidators != nil {
 			validators := keeper.GetBondedValidatorsByPower(ctx)
 			//validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmvmtypes.Validator, len(validators))
@@ -292,8 +292,25 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 					MaxChangeRate: v.Commission.MaxChangeRate.String(),
 				}
 			}
-			res := wasmvmtypes.ValidatorsResponse{
+			res := wasmvmtypes.AllValidatorsResponse{
 				Validators: wasmVals,
+			}
+			return json.Marshal(res)
+		}
+		if request.Validator != nil {
+			valAddr, err := sdk.ValAddressFromBech32(request.Validator.Address)
+			if err != nil {
+				return nil, err
+			}
+			v, found := keeper.GetValidator(ctx, valAddr)
+			res := wasmvmtypes.ValidatorResponse{}
+			if !found {
+				res.Validator = &wasmvmtypes.Validator{
+					Address:       v.OperatorAddress,
+					Commission:    v.Commission.Rate.String(),
+					MaxCommission: v.Commission.MaxRate.String(),
+					MaxChangeRate: v.Commission.MaxChangeRate.String(),
+				}
 			}
 			return json.Marshal(res)
 		}
