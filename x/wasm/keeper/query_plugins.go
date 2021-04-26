@@ -304,7 +304,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			}
 			v, found := keeper.GetValidator(ctx, valAddr)
 			res := wasmvmtypes.ValidatorResponse{}
-			if !found {
+			if found {
 				res.Validator = &wasmvmtypes.Validator{
 					Address:       v.OperatorAddress,
 					Commission:    v.Commission.Rate.String(),

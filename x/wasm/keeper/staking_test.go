@@ -471,14 +471,14 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
 	reflectValidatorsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
-		Validators: &wasmvmtypes.ValidatorsQuery{},
+		AllValidators: &wasmvmtypes.AllValidatorsQuery{},
 	}}}}
 	reflectValidatorsBin := buildReflectQuery(t, &reflectValidatorsQuery)
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectValidatorsBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
-	var validatorRes wasmvmtypes.ValidatorsResponse
+	var validatorRes wasmvmtypes.AllValidatorsResponse
 	mustParse(t, reflectRes.Data, &validatorRes)
 	require.Len(t, validatorRes.Validators, 1)
 	valInfo := validatorRes.Validators[0]
@@ -487,6 +487,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Contains(t, valInfo.Commission, "0.100")
 	require.Contains(t, valInfo.MaxCommission, "0.200")
 	require.Contains(t, valInfo.MaxChangeRate, "0.010")
+
+	// TODO: get one validator
 
 	// test to get all my delegations
 	reflectAllDelegationsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
