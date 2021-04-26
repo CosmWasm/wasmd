@@ -51,7 +51,7 @@ type Option interface {
 }
 
 // WasmVMQueryHandler is an extension point for custom query handler implementations
-type WASMVMQueryHandler interface {
+type WasmVMQueryHandler interface {
 	// HandleQuery executes the requested query
 	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
 }
@@ -76,7 +76,7 @@ type Keeper struct {
 	portKeeper         types.PortKeeper
 	capabilityKeeper   types.CapabilityKeeper
 	wasmVM             types.WasmerEngine
-	wasmVMQueryHandler WASMVMQueryHandler
+	wasmVMQueryHandler WasmVMQueryHandler
 	messenger          Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit uint64

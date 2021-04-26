@@ -29,7 +29,7 @@ func WithMessageHandler(x Messenger) Option {
 
 // WithQueryHandler is an optional constructor parameter to set custom query handler for wasmVM requests.
 // This option should not be combined with Option `WithQueryPlugins`.
-func WithQueryHandler(x WASMVMQueryHandler) Option {
+func WithQueryHandler(x WasmVMQueryHandler) Option {
 	return optsFn(func(k *Keeper) {
 		k.wasmVMQueryHandler = x
 	})
