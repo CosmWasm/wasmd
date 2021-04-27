@@ -279,33 +279,28 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
-		"staking withdraw (implicit recipient)": {
+		"staking withdraw (explicit recipient)": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Withdraw: &wasmvmtypes.WithdrawMsg{
+				Distribution: &wasmvmtypes.DistributionMsg{
+					WithdrawDelegatorReward: &wasmvmtypes.WithdrawDelegatorRewardMsg{
 						Validator: valAddr2.String(),
 					},
 				},
 			},
 			output: []sdk.Msg{
-				&distributiontypes.MsgSetWithdrawAddress{
-					DelegatorAddress: addr1.String(),
-					WithdrawAddress:  addr1.String(),
-				},
 				&distributiontypes.MsgWithdrawDelegatorReward{
 					DelegatorAddress: addr1.String(),
 					ValidatorAddress: valAddr2.String(),
 				},
 			},
 		},
-		"staking withdraw (explicit recipient)": {
+		"staking set withdraw address": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Withdraw: &wasmvmtypes.WithdrawMsg{
-						Validator: valAddr2.String(),
-						Recipient: addr2.String(),
+				Distribution: &wasmvmtypes.DistributionMsg{
+					SetWithdrawAddress: &wasmvmtypes.SetWithdrawAddressMsg{
+						Address: addr2.String(),
 					},
 				},
 			},
@@ -313,10 +308,6 @@ func TestEncoding(t *testing.T) {
 				&distributiontypes.MsgSetWithdrawAddress{
 					DelegatorAddress: addr1.String(),
 					WithdrawAddress:  addr2.String(),
-				},
-				&distributiontypes.MsgWithdrawDelegatorReward{
-					DelegatorAddress: addr1.String(),
-					ValidatorAddress: valAddr2.String(),
 				},
 			},
 		},
