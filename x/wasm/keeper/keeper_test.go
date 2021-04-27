@@ -1309,3 +1309,90 @@ func TestInitializePinnedCodes(t *testing.T) {
 		assert.Equal(t, exp, capturedChecksums[i])
 	}
 }
+
+func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
+	noopDMsgs := func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
+		return nil
+	}
+
+	specs := map[string]struct {
+		srcData []byte
+		setup   func(m *wasmtesting.MockMsgDispatcher)
+		expErr  bool
+		expData []byte
+	}{
+		"submessage overwrites result when set": {
+			srcData: []byte("otherData"),
+			setup: func(m *wasmtesting.MockMsgDispatcher) {
+				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+					return []byte("mySubMsgData"), nil
+				}
+				m.DispatchMessagesFn = noopDMsgs
+			},
+			expErr:  false,
+			expData: []byte("mySubMsgData"),
+		},
+		"submessage overwrites result when empty": {
+			srcData: []byte("otherData"),
+			setup: func(m *wasmtesting.MockMsgDispatcher) {
+				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+					return []byte(""), nil
+				}
+				m.DispatchMessagesFn = noopDMsgs
+			},
+			expErr:  false,
+			expData: []byte(""),
+		},
+		"submessage do not overwrite result when nil": {
+			srcData: []byte("otherData"),
+			setup: func(m *wasmtesting.MockMsgDispatcher) {
+				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+					return nil, nil
+				}
+				m.DispatchMessagesFn = noopDMsgs
+			},
+			expErr:  false,
+			expData: []byte("otherData"),
+		},
+		"submessage error aborts process": {
+			setup: func(m *wasmtesting.MockMsgDispatcher) {
+				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+					return nil, errors.New("test - ignore")
+				}
+			},
+			expErr: true,
+		},
+		"message error aborts process": {
+			setup: func(m *wasmtesting.MockMsgDispatcher) {
+				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+					return []byte("mySubMsgData"), nil
+				}
+				m.DispatchMessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
+					return errors.New("test - ignore")
+				}
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var (
+				subMsgs []wasmvmtypes.SubMsg
+				msgs    []wasmvmtypes.CosmosMsg
+			)
+			var mock wasmtesting.MockMsgDispatcher
+			spec.setup(&mock)
+			d := NewDefaultWasmVMContractResponseHandler(&mock)
+			// when
+
+			gotData, gotErr := d.Handle(sdk.Context{}, RandomAccountAddress(t), "ibc-port", subMsgs, msgs, spec.srcData)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expData, gotData)
+		})
+	}
+
+}

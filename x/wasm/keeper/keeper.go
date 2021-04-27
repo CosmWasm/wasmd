@@ -965,6 +965,7 @@ func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMCon
 	return &DefaultWasmVMContractResponseHandler{md: md}
 }
 
+// Handle processes the data returned by a contract invocation.
 func (h DefaultWasmVMContractResponseHandler) Handle(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
