@@ -171,9 +171,11 @@ func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmt
 					SendPacket: &wasmvmtypes.SendPacketMsg{
 						ChannelID: start.ChannelID,
 						Data:      service.GetBytes(),
-						TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{
-							Revision: doNotTimeout.RevisionNumber,
-							Height:   doNotTimeout.RevisionHeight,
+						Timeout: wasmvmtypes.IBCTimeout{
+							Block: &wasmvmtypes.IBCTimeoutBlock{
+								Revision: doNotTimeout.RevisionNumber,
+								Height:   doNotTimeout.RevisionHeight,
+							},
 						},
 					},
 				},
@@ -271,9 +273,11 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, pa
 	respHit := &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
 		ChannelID: packet.Src.ChannelID,
 		Data:      newHit.GetBytes(),
-		TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{
-			Revision: doNotTimeout.RevisionNumber,
-			Height:   doNotTimeout.RevisionHeight,
+		Timeout: wasmvmtypes.IBCTimeout{
+			Block: &wasmvmtypes.IBCTimeoutBlock{
+				Revision: doNotTimeout.RevisionNumber,
+				Height:   doNotTimeout.RevisionHeight,
+			},
 		},
 	}}
 	p.incrementCounter(sentBallsCountKey, store)

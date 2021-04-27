@@ -265,7 +265,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "amount")
 			}
-			timestamp, height := convertWasmIBCTimeout(msg.Transfer.Timeout)
+			timestamp, height := ConvertWasmIBCTimeout(msg.Transfer.Timeout)
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
 				SourceChannel:    msg.Transfer.ChannelID,
@@ -283,7 +283,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 }
 
 // returns timestamp, block timeout pair
-func convertWasmIBCTimeout(ibcTimeout wasmvmtypes.IBCTimeout) (uint64, ibcclienttypes.Height) {
+func ConvertWasmIBCTimeout(ibcTimeout wasmvmtypes.IBCTimeout) (uint64, ibcclienttypes.Height) {
 	var timestamp uint64
 	var height ibcclienttypes.Height
 

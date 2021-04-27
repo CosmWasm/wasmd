@@ -389,7 +389,9 @@ func TestEncoding(t *testing.T) {
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+						Timeout: wasmvmtypes.IBCTimeout{
+							Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+						},
 					},
 				},
 			},
@@ -422,7 +424,9 @@ func TestEncoding(t *testing.T) {
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						TimeoutTimestamp: &timeoutVal,
+						Timeout: wasmvmtypes.IBCTimeout{
+							Timestamp: &timeoutVal,
+						},
 					},
 				},
 			},

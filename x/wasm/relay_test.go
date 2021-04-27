@@ -325,9 +325,11 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 			ToAddress: in.ReceiverAddr,
 			Amount:    wasmvmtypes.NewCoin(in.CoinsToSend.Amount.Uint64(), in.CoinsToSend.Denom),
 			ChannelID: in.ChannelID,
-			TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{
-				Revision: 0,
-				Height:   110,
+			Timeout: wasmvmtypes.IBCTimeout{
+				Block: &wasmvmtypes.IBCTimeoutBlock{
+					Revision: 0,
+					Height:   110,
+				},
 			},
 		},
 	}
@@ -360,9 +362,11 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 
 	ibcMsg := &wasmvmtypes.IBCMsg{
 		SendPacket: &wasmvmtypes.SendPacketMsg{
-			ChannelID:        in.ChannelID,
-			Data:             dataPacket.GetBytes(),
-			TimeoutTimestamp: &in.Timeout,
+			ChannelID: in.ChannelID,
+			Data:      dataPacket.GetBytes(),
+			Timeout: wasmvmtypes.IBCTimeout{
+				Timestamp: &in.Timeout,
+			},
 		},
 	}
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
@@ -479,10 +483,7 @@ func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.
 }
 
 func toIBCPacket(p wasmvmtypes.IBCPacket) channeltypes.Packet {
-	var timeout uint64
-	if p.TimeoutTimestamp != nil {
-		timeout = *p.TimeoutTimestamp
-	}
+	timeout, height := wasmkeeper.ConvertWasmIBCTimeout(p.Timeout)
 	return channeltypes.Packet{
 		Sequence:           p.Sequence,
 		SourcePort:         p.Src.PortID,
@@ -490,7 +491,7 @@ func toIBCPacket(p wasmvmtypes.IBCPacket) channeltypes.Packet {
 		DestinationPort:    p.Dest.PortID,
 		DestinationChannel: p.Dest.ChannelID,
 		Data:               p.Data,
-		TimeoutHeight:      clienttypes.NewHeight(p.TimeoutBlock.Revision, p.TimeoutBlock.Height),
+		TimeoutHeight:      height,
 		TimeoutTimestamp:   timeout,
 	}
 }
