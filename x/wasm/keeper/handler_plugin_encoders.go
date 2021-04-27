@@ -221,6 +221,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			CodeID:  msg.Instantiate.CodeID,
 			Label:   msg.Instantiate.Label,
 			InitMsg: msg.Instantiate.Msg,
+			Admin:   msg.Instantiate.Admin,
 			Funds:   coins,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
@@ -230,6 +231,19 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			Contract:   msg.Migrate.ContractAddr,
 			CodeID:     msg.Migrate.NewCodeID,
 			MigrateMsg: msg.Migrate.Msg,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.ClearAdmin != nil:
+		sdkMsg := types.MsgClearAdmin{
+			Sender:   sender.String(),
+			Contract: msg.ClearAdmin.ContractAddr,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.UpdateAdmin != nil:
+		sdkMsg := types.MsgUpdateAdmin{
+			Sender:   sender.String(),
+			Contract: msg.UpdateAdmin.ContractAddr,
+			NewAdmin: msg.UpdateAdmin.Admin,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
 	default:

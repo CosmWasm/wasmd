@@ -171,6 +171,7 @@ func TestEncoding(t *testing.T) {
 							wasmvmtypes.NewCoin(123, "eth"),
 						},
 						Label: "myLabel",
+						Admin: addr2.String(),
 					},
 				},
 			},
@@ -181,6 +182,7 @@ func TestEncoding(t *testing.T) {
 					Label:   "myLabel",
 					InitMsg: jsonMsg,
 					Funds:   sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
+					Admin:   addr2.String(),
 				},
 			},
 		},
@@ -201,6 +203,40 @@ func TestEncoding(t *testing.T) {
 					Contract:   addr1.String(),
 					CodeID:     12,
 					MigrateMsg: jsonMsg,
+				},
+			},
+		},
+		"wasm update admin": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Wasm: &wasmvmtypes.WasmMsg{
+					UpdateAdmin: &wasmvmtypes.UpdateAdminMsg{
+						ContractAddr: addr1.String(),
+						Admin:        addr2.String(),
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&types.MsgUpdateAdmin{
+					Sender:   addr2.String(),
+					Contract: addr1.String(),
+					NewAdmin: addr2.String(),
+				},
+			},
+		},
+		"wasm clear admin": {
+			sender: addr2,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Wasm: &wasmvmtypes.WasmMsg{
+					ClearAdmin: &wasmvmtypes.ClearAdminMsg{
+						ContractAddr: addr1.String(),
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&types.MsgClearAdmin{
+					Sender:   addr2.String(),
+					Contract: addr1.String(),
 				},
 			},
 		},
