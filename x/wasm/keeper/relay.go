@@ -71,7 +71,7 @@ func (k Keeper) OnConnectChannel(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages); err != nil {
+	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
 		return err
 	}
 	return nil
@@ -109,7 +109,7 @@ func (k Keeper) OnCloseChannel(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages); err != nil {
+	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
 		return err
 	}
 	return nil
@@ -145,11 +145,7 @@ func (k Keeper) OnRecvPacket(
 	// emit all events from this contract itself
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
-
-	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages); err != nil {
-		return nil, err
-	}
-	return res.Acknowledgement, nil
+	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Acknowledgement)
 }
 
 // OnAckPacket calls the contract to handle the "acknowledgement" data which can contain success or failure of a packet
@@ -184,7 +180,7 @@ func (k Keeper) OnAckPacket(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages); err != nil {
+	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
 		return err
 	}
 	return nil
@@ -219,7 +215,7 @@ func (k Keeper) OnTimeoutPacket(
 	events := types.ParseEvents(res.Attributes, contractAddr)
 	ctx.EventManager().EmitEvents(events)
 
-	if err := k.dispatchAll(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages); err != nil {
+	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
 		return err
 	}
 	return nil

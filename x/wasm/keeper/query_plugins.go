@@ -16,11 +16,11 @@ import (
 
 type QueryHandler struct {
 	Ctx     sdk.Context
-	Plugins WASMVMQueryHandler
+	Plugins WasmVMQueryHandler
 	Caller  sdk.AccAddress
 }
 
-func NewQueryHandler(ctx sdk.Context, vmQueryHandler WASMVMQueryHandler, caller sdk.AccAddress) QueryHandler {
+func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller sdk.AccAddress) QueryHandler {
 	return QueryHandler{
 		Ctx:     ctx,
 		Plugins: vmQueryHandler,

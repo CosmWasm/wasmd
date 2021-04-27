@@ -15,7 +15,8 @@ import (
 func TestOnOpenChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -74,7 +75,8 @@ func TestOnOpenChannel(t *testing.T) {
 func TestOnConnectChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -82,7 +84,7 @@ func TestOnConnectChannel(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    Messenger
+		overwriteMessenger    *wasmtesting.MockMessageHandler
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -148,10 +150,9 @@ func TestOnConnectChannel(t *testing.T) {
 			defer cancel()
 			before := ctx.GasMeter().GasConsumed()
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
-			keepers.WasmKeeper.messenger = msger
-
+			*messenger = *msger
 			if spec.overwriteMessenger != nil {
-				keepers.WasmKeeper.messenger = spec.overwriteMessenger
+				*messenger = *spec.overwriteMessenger
 			}
 
 			// when
@@ -184,7 +185,8 @@ func TestOnConnectChannel(t *testing.T) {
 func TestOnCloseChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -192,7 +194,7 @@ func TestOnCloseChannel(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    Messenger
+		overwriteMessenger    *wasmtesting.MockMessageHandler
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -257,10 +259,10 @@ func TestOnCloseChannel(t *testing.T) {
 			defer cancel()
 			before := ctx.GasMeter().GasConsumed()
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
-			keepers.WasmKeeper.messenger = msger
+			*messenger = *msger
 
 			if spec.overwriteMessenger != nil {
-				keepers.WasmKeeper.messenger = spec.overwriteMessenger
+				*messenger = *spec.overwriteMessenger
 			}
 
 			// when
@@ -294,7 +296,8 @@ func TestOnCloseChannel(t *testing.T) {
 func TestOnRecvPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -302,7 +305,7 @@ func TestOnRecvPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCReceiveResponse
 		contractErr           error
-		overwriteMessenger    Messenger
+		overwriteMessenger    *wasmtesting.MockMessageHandler
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -380,10 +383,10 @@ func TestOnRecvPacket(t *testing.T) {
 			before := ctx.GasMeter().GasConsumed()
 
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
-			keepers.WasmKeeper.messenger = msger
+			*messenger = *msger
 
 			if spec.overwriteMessenger != nil {
-				keepers.WasmKeeper.messenger = spec.overwriteMessenger
+				*messenger = *spec.overwriteMessenger
 			}
 
 			// when
@@ -419,7 +422,8 @@ func TestOnRecvPacket(t *testing.T) {
 func TestOnAckPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -427,7 +431,7 @@ func TestOnAckPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    Messenger
+		overwriteMessenger    *wasmtesting.MockMessageHandler
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -493,10 +497,10 @@ func TestOnAckPacket(t *testing.T) {
 			defer cancel()
 			before := ctx.GasMeter().GasConsumed()
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
-			keepers.WasmKeeper.messenger = msger
+			*messenger = *msger
 
 			if spec.overwriteMessenger != nil {
-				keepers.WasmKeeper.messenger = spec.overwriteMessenger
+				*messenger = *spec.overwriteMessenger
 			}
 
 			// when
@@ -530,7 +534,8 @@ func TestOnAckPacket(t *testing.T) {
 func TestOnTimeoutPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var messenger = &wasmtesting.MockMessageHandler{}
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 
 	specs := map[string]struct {
@@ -538,7 +543,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 		contractGas           sdk.Gas
 		contractResp          *wasmvmtypes.IBCBasicResponse
 		contractErr           error
-		overwriteMessenger    Messenger
+		overwriteMessenger    *wasmtesting.MockMessageHandler
 		expErr                bool
 		expContractEventAttrs int
 		expNoEvents           bool
@@ -603,10 +608,10 @@ func TestOnTimeoutPacket(t *testing.T) {
 			defer cancel()
 			before := ctx.GasMeter().GasConsumed()
 			msger, capturedMsgs := wasmtesting.NewCapturingMessageHandler()
-			keepers.WasmKeeper.messenger = msger
+			*messenger = *msger
 
 			if spec.overwriteMessenger != nil {
-				keepers.WasmKeeper.messenger = spec.overwriteMessenger
+				*messenger = *spec.overwriteMessenger
 			}
 
 			// when
