@@ -100,23 +100,12 @@ message QueryContractsByCodeRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// ContractInfoWithAddress adds the address (key) to the ContractInfo
-// representation
-message ContractInfoWithAddress {
-  option (gogoproto.equal) = true;
-
-  string address = 1;
-  ContractInfo contract_info = 2 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false,
-    (gogoproto.jsontag) = ""
-  ];
-}
 // QueryContractsByCodeResponse is the response type for the
 // Query/ContractsByCode RPC method
 message QueryContractsByCodeResponse {
-  repeated ContractInfoWithAddress contract_infos = 1
-      [ (gogoproto.nullable) = false ];
+  // contracts are a set of contract addresses
+  repeated string contracts = 1;
+
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

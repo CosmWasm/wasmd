@@ -950,20 +950,29 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 	store := ctx.KVStore(keepers.WasmKeeper.storeKey)
 	oldContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
 	require.NotNil(t, oldContractInfo)
-	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	createHistoryEntry := types.ContractCodeHistoryEntry{
+		CodeID:  example.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+	}
+	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
 	require.True(t, exists)
 
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1) // increment for different block
 	// when do migrate
 	newCodeExample := StoreBurnerExampleContract(t, ctx, keepers)
 	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
 	_, err := keepers.ContractKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
 	require.NoError(t, err)
+
 	// then the new index exists
-	newContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, newContractInfo))
+	migrateHistoryEntry := types.ContractCodeHistoryEntry{
+		CodeID:  newCodeExample.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+	}
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, migrateHistoryEntry))
 	require.True(t, exists)
 	// and the old index was removed
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, oldContractInfo))
+	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
 	require.False(t, exists)
 }
 
@@ -1044,6 +1053,74 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	// and all deposit tokens sent to myPayoutAddr
 	balance := bankKeeper.GetAllBalances(ctx, myPayoutAddr)
 	assert.Equal(t, deposit, balance)
+}
+
+func TestIterateContractsByCode(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k, c := keepers.WasmKeeper, keepers.ContractKeeper
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    RandomAccountAddress(t),
+		Beneficiary: RandomAccountAddress(t),
+	}.GetBytes(t)
+	contractAddr3, _, err := c.Instantiate(ctx, example1.CodeID, example1.CreatorAddr, nil, initMsg, "foo", nil)
+	require.NoError(t, err)
+	specs := map[string]struct {
+		codeID uint64
+		exp    []sdk.AccAddress
+	}{
+		"multiple results": {
+			codeID: example1.CodeID,
+			exp:    []sdk.AccAddress{example1.Contract, contractAddr3},
+		},
+		"single results": {
+			codeID: example2.CodeID,
+			exp:    []sdk.AccAddress{example2.Contract},
+		},
+		"empty results": {
+			codeID: 99999,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var gotAddr []sdk.AccAddress
+			k.IterateContractsByCode(ctx, spec.codeID, func(address sdk.AccAddress) bool {
+				gotAddr = append(gotAddr, address)
+				return false
+			})
+			assert.Equal(t, spec.exp, gotAddr)
+		})
+	}
+}
+
+func TestIterateContractsByCodeWithMigration(t *testing.T) {
+	// mock migration so that it does not fail when migrate example1 to example2.codeID
+	mockWasmVM := wasmtesting.MockWasmer{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
+		return &wasmvmtypes.Response{}, 1, nil
+	}}
+	wasmtesting.MakeInstantiable(&mockWasmVM)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, WithWasmEngine(&mockWasmVM))
+	k, c := keepers.WasmKeeper, keepers.ContractKeeper
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err := c.Migrate(ctx, example1.Contract, example1.CreatorAddr, example2.CodeID, []byte("{}"))
+	require.NoError(t, err)
+
+	// when
+	var gotAddr []sdk.AccAddress
+	k.IterateContractsByCode(ctx, example2.CodeID, func(address sdk.AccAddress) bool {
+		gotAddr = append(gotAddr, address)
+		return false
+	})
+
+	// then
+	exp := []sdk.AccAddress{example2.Contract, example1.Contract}
+	assert.Equal(t, exp, gotAddr)
 }
 
 type sudoMsg struct {

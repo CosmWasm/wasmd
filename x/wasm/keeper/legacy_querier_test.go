@@ -205,17 +205,14 @@ func TestLegacyQueryContractListByCodeOrdering(t *testing.T) {
 	res, err := q(ctx, query, data)
 	require.NoError(t, err)
 
-	var contracts []map[string]interface{}
+	var contracts []string
 	err = json.Unmarshal(res, &contracts)
 	require.NoError(t, err)
 
 	require.Equal(t, 10, len(contracts))
 
-	for i, contract := range contracts {
-		assert.Equal(t, fmt.Sprintf("contract %d", i), contract["label"])
-		assert.NotEmpty(t, contract["address"])
-		// ensure these are not shown
-		assert.Nil(t, contract["created"])
+	for _, contract := range contracts {
+		assert.NotEmpty(t, contract)
 	}
 }
 
