@@ -143,7 +143,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		rData, err := d.keeper.reply(ctx, contractAddr, reply)
 		switch {
 		case err != nil:
-			return nil, err
+			return nil, sdkerrors.Wrap(err, "reply")
 		case rData.Data != nil:
 			rsp = rData.Data
 		}
