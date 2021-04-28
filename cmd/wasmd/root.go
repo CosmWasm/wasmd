@@ -203,7 +203,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 	var wasmOpts []wasm.Option
 	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
-		wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer)
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
 	return app.NewWasmApp(logger, db, traceStore, true, skipUpgradeHeights,

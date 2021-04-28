@@ -18,7 +18,6 @@ prometheus-retention-time = 15
 `retention-time` must be >0 (see prometheus scrape config)
 
 
-
 * Edit `$HOME/config/config.toml`
 ```toml
 [instrumentation]
@@ -28,6 +27,13 @@ prometheus-retention-time = 15
 # Check out the documentation for the list of available metrics.
 prometheus = true
 ```
+
+Test manually at:
+`http://localhost:1317/metrics?format=prometheus`
+
+Note the `format` parameter in the request for the endpoint:
+
+
 # Local testing
 ## Run Prometheus
 ```sh

@@ -31,16 +31,16 @@ type WasmVMMetricsCollector struct {
 func NewWasmVMMetricsCollector(s metricSource) *WasmVMMetricsCollector {
 	return &WasmVMMetricsCollector{
 		source:             s,
-		CacheHitsDescr:     prometheus.NewDesc("wasmvm_cache_hits_total", "Total number of cache hits", nil, nil),
+		CacheHitsDescr:     prometheus.NewDesc("wasmvm_cache_hits_total", "Total number of cache hits", []string{"type"}, nil),
 		CacheMissesDescr:   prometheus.NewDesc("wasmvm_cache_misses_total", "Total number of cache misses", nil, nil),
-		CacheElementsDescr: prometheus.NewDesc("wasmvm_cache_elements_total", "Total number of elements in the cache", nil, nil),
-		CacheSizeDescr:     prometheus.NewDesc("wasmvm_cache_size_bytes", "Total number of elements in the cache", nil, nil),
+		CacheElementsDescr: prometheus.NewDesc("wasmvm_cache_elements_total", "Total number of elements in the cache", []string{"type"}, nil),
+		CacheSizeDescr:     prometheus.NewDesc("wasmvm_cache_size_bytes", "Total number of elements in the cache", []string{"type"}, nil),
 	}
 }
 
 // Register registers all metrics
 func (p *WasmVMMetricsCollector) Register(r prometheus.Registerer) {
-	r.Register(p)
+	r.MustRegister(p)
 }
 
 // Describe sends the super-set of all possible descriptors of metrics
