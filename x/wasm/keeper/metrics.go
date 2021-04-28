@@ -13,7 +13,7 @@ const (
 
 // metricSource source of wasmvm metrics
 type metricSource interface {
-	GetMetrics() wasmvmtypes.Metrics
+	GetMetrics() (*wasmvmtypes.Metrics, error)
 }
 
 var _ prometheus.Collector = (*WasmVMMetricsCollector)(nil)
@@ -53,7 +53,10 @@ func (p *WasmVMMetricsCollector) Describe(descs chan<- *prometheus.Desc) {
 
 // Collect is called by the Prometheus registry when collecting metrics.
 func (p *WasmVMMetricsCollector) Collect(c chan<- prometheus.Metric) {
-	m := p.source.GetMetrics()
+	m, err := p.source.GetMetrics()
+	if err != nil {
+		return
+	}
 	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsPinnedMemoryCache), labelPinned)
 	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsMemoryCache), labelMemory)
 	c <- prometheus.MustNewConstMetric(p.CacheHitsDescr, prometheus.CounterValue, float64(m.HitsFsCache), labelFs)

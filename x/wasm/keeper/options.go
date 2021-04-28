@@ -78,7 +78,6 @@ func WithCoinTransferrer(x CoinTransferrer) Option {
 
 func WithVMCacheMetrics(r prometheus.Registerer) Option {
 	return optsFn(func(k *Keeper) {
-		// todo: enable with beta5
-		// NewWasmVMMetricsCollector(k.wasmVM).Register(r)
+		NewWasmVMMetricsCollector(k.wasmVM).Register(r)
 	})
 }
