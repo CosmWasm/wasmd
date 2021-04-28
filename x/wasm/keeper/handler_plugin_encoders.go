@@ -221,6 +221,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			CodeID:  msg.Instantiate.CodeID,
 			Label:   msg.Instantiate.Label,
 			InitMsg: msg.Instantiate.Msg,
+			Admin:   msg.Instantiate.Admin,
 			Funds:   coins,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
@@ -230,6 +231,19 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			Contract:   msg.Migrate.ContractAddr,
 			CodeID:     msg.Migrate.NewCodeID,
 			MigrateMsg: msg.Migrate.Msg,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.ClearAdmin != nil:
+		sdkMsg := types.MsgClearAdmin{
+			Sender:   sender.String(),
+			Contract: msg.ClearAdmin.ContractAddr,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
+	case msg.UpdateAdmin != nil:
+		sdkMsg := types.MsgUpdateAdmin{
+			Sender:   sender.String(),
+			Contract: msg.UpdateAdmin.ContractAddr,
+			NewAdmin: msg.UpdateAdmin.Admin,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
 	default:
@@ -251,14 +265,15 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "amount")
 			}
+			timestamp, height := ConvertWasmIBCTimeout(msg.Transfer.Timeout)
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
 				SourceChannel:    msg.Transfer.ChannelID,
 				Token:            amount,
 				Sender:           sender.String(),
 				Receiver:         msg.Transfer.ToAddress,
-				TimeoutHeight:    convertWasmIBCTimeoutHeightToCosmosHeight(msg.Transfer.TimeoutBlock),
-				TimeoutTimestamp: convertWasmIBCTimeoutTimestampToCosmosTimestamp(msg.Transfer.TimeoutTimestamp),
+				TimeoutHeight:    height,
+				TimeoutTimestamp: timestamp,
 			}
 			return []sdk.Msg{msg}, nil
 		default:
@@ -267,18 +282,22 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 	}
 }
 
-func convertWasmIBCTimeoutHeightToCosmosHeight(ibcTimeoutBlock *wasmvmtypes.IBCTimeoutBlock) ibcclienttypes.Height {
-	if ibcTimeoutBlock == nil {
-		return ibcclienttypes.NewHeight(0, 0)
-	}
-	return ibcclienttypes.NewHeight(ibcTimeoutBlock.Revision, ibcTimeoutBlock.Height)
-}
+// ConvertWasmIBCTimeout converts the wasmvm ibc timeout type to cosmos-sdk height and relative block timeout
+func ConvertWasmIBCTimeout(ibcTimeout wasmvmtypes.IBCTimeout) (uint64, ibcclienttypes.Height) {
+	var timestamp uint64
+	var height ibcclienttypes.Height
 
-func convertWasmIBCTimeoutTimestampToCosmosTimestamp(timestamp *uint64) uint64 {
-	if timestamp == nil {
-		return 0
+	switch {
+	case ibcTimeout.Timestamp != nil:
+		timestamp = *ibcTimeout.Timestamp
+	case ibcTimeout.Block != nil:
+		height = ibcclienttypes.NewHeight(ibcTimeout.Block.Revision, ibcTimeout.Block.Height)
+	case ibcTimeout.Both != nil:
+		timestamp = ibcTimeout.Both.Timestamp
+		height = ibcclienttypes.NewHeight(ibcTimeout.Both.Block.Revision, ibcTimeout.Both.Block.Height)
 	}
-	return *timestamp
+
+	return timestamp, height
 }
 
 func convertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {

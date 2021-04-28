@@ -165,6 +165,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
+	timestamp, height := ConvertWasmIBCTimeout(msg.IBC.SendPacket.Timeout)
 	packet := channeltypes.NewPacket(
 		msg.IBC.SendPacket.Data,
 		sequence,
@@ -172,8 +173,8 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		contractIBCChannelID,
 		channelInfo.Counterparty.PortId,
 		channelInfo.Counterparty.ChannelId,
-		convertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.TimeoutBlock),
-		convertWasmIBCTimeoutTimestampToCosmosTimestamp(msg.IBC.SendPacket.TimeoutTimestamp),
+		height,
+		timestamp,
 	)
 	return nil, nil, h.channelKeeper.SendPacket(ctx, channelCap, packet)
 }
