@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/cosmos-sdk/x/ibc/applications/transfer/types"
-	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
+	ibcclienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +50,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 
 	// with the channels established, let's do a transfer via sdk transfer
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))
-	timeoutHeight := clienttypes.NewHeight(1, 110)
+	timeoutHeight := ibcclienttypes.NewHeight(1, 110)
 	msg := ibctransfertypes.NewMsgTransfer(channelA.PortID, channelA.ID, coinToSendToB, chainA.SenderAccount.GetAddress(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
 	err := coordinator.SendMsg(chainA, chainB, clientB, msg)
 	require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestContractCanUseIBCTransferMsg(t *testing.T) {
 	// send message to chainA
 	receiverAddress := chainB.SenderAccount.GetAddress()
 
-	timeoutHeight := clienttypes.NewHeight(0, 110)
+	timeoutHeight := ibcclienttypes.NewHeight(0, 110)
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 
 	// start transfer from chainA to chainB
@@ -159,7 +159,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	// send message to chainA
 	receiverAddress := chainB.SenderAccount.GetAddress()
 
-	var timeoutHeight clienttypes.Height
+	var timeoutHeight ibcclienttypes.Height
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 
@@ -240,7 +240,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 
 	// timeout packet send (by the relayer)
 	fungibleTokenPacketData := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), myContractAddr.String(), receiverAddress.String())
-	var timeoutHeight clienttypes.Height
+	var timeoutHeight ibcclienttypes.Height
 	packet := channeltypes.NewPacket(fungibleTokenPacketData.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, timeout)
 
 	err = coordinator.TimeoutPacket(chainA, chainB, clientB, packet)
@@ -325,10 +325,10 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 			ToAddress: in.ReceiverAddr,
 			Amount:    wasmvmtypes.NewCoin(in.CoinsToSend.Amount.Uint64(), in.CoinsToSend.Denom),
 			ChannelID: in.ChannelID,
-			TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{
+			Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
 				Revision: 0,
 				Height:   110,
-			},
+			}},
 		},
 	}
 
@@ -360,9 +360,9 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 
 	ibcMsg := &wasmvmtypes.IBCMsg{
 		SendPacket: &wasmvmtypes.SendPacketMsg{
-			ChannelID:        in.ChannelID,
-			Data:             dataPacket.GetBytes(),
-			TimeoutTimestamp: &in.Timeout,
+			ChannelID: in.ChannelID,
+			Data:      dataPacket.GetBytes(),
+			Timeout:   wasmvmtypes.IBCTimeout{Timestamp: &in.Timeout},
 		},
 	}
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
@@ -479,10 +479,7 @@ func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.
 }
 
 func toIBCPacket(p wasmvmtypes.IBCPacket) channeltypes.Packet {
-	var timeout uint64
-	if p.TimeoutTimestamp != nil {
-		timeout = *p.TimeoutTimestamp
-	}
+	height, timeout := convertWasmIBCTimeout(p.Timeout)
 	return channeltypes.Packet{
 		Sequence:           p.Sequence,
 		SourcePort:         p.Src.PortID,
@@ -490,7 +487,20 @@ func toIBCPacket(p wasmvmtypes.IBCPacket) channeltypes.Packet {
 		DestinationPort:    p.Dest.PortID,
 		DestinationChannel: p.Dest.ChannelID,
 		Data:               p.Data,
-		TimeoutHeight:      clienttypes.NewHeight(p.TimeoutBlock.Revision, p.TimeoutBlock.Height),
+		TimeoutHeight:      height,
 		TimeoutTimestamp:   timeout,
+	}
+}
+
+func convertWasmIBCTimeout(timeout wasmvmtypes.IBCTimeout) (ibcclienttypes.Height, uint64) {
+	switch {
+	case timeout.Both != nil:
+		return ibcclienttypes.NewHeight(timeout.Block.Revision, timeout.Block.Height), timeout.Both.Timestamp
+	case timeout.Block != nil:
+		return ibcclienttypes.NewHeight(timeout.Block.Revision, timeout.Block.Height), 0
+	case timeout.Timestamp != nil:
+		return ibcclienttypes.Height{}, *timeout.Timestamp
+	default: // let this be handled downstream
+		return ibcclienttypes.Height{}, 0
 	}
 }

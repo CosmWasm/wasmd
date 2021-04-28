@@ -243,17 +243,33 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet)
 
 }
 
+// TODO: add proper test
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
+	var timeout wasmvmtypes.IBCTimeout
+	switch {
+	case packet.TimeoutTimestamp != 0 && !packet.TimeoutHeight.IsZero():
+		timeout.Both = &wasmvmtypes.IBCTimeoutBoth{
+			Block: wasmvmtypes.IBCTimeoutBlock{
+				Revision: packet.TimeoutHeight.RevisionNumber,
+				Height:   packet.TimeoutHeight.RevisionHeight,
+			},
+			Timestamp: packet.TimeoutTimestamp,
+		}
+	case packet.TimeoutTimestamp != 0:
+		timeout.Timestamp = &packet.TimeoutTimestamp
+	case !packet.TimeoutHeight.IsZero():
+		timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
+			Revision: packet.TimeoutHeight.RevisionNumber,
+			Height:   packet.TimeoutHeight.RevisionHeight,
+		}
+	default: // either timeout or height are set in a valid packet
+	}
 	return wasmvmtypes.IBCPacket{
 		Data:     packet.Data,
 		Src:      wasmvmtypes.IBCEndpoint{ChannelID: packet.SourceChannel, PortID: packet.SourcePort},
 		Dest:     wasmvmtypes.IBCEndpoint{ChannelID: packet.DestinationChannel, PortID: packet.DestinationPort},
 		Sequence: packet.Sequence,
-		TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{
-			Height:   packet.TimeoutHeight.RevisionHeight,
-			Revision: packet.TimeoutHeight.RevisionNumber,
-		},
-		TimeoutTimestamp: &packet.TimeoutTimestamp,
+		Timeout:  timeout,
 	}
 }
 

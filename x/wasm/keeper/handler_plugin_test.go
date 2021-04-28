@@ -213,7 +213,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 }
 
 func TestIBCRawPacketHandler(t *testing.T) {
-	ibcPort := "contractsIBCPort"
+	const ibcPort = "contractsIBCPort"
 	var ctx sdk.Context
 
 	var capturedPacket ibcexported.PacketI
@@ -247,11 +247,11 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		expPacketSent channeltypes.Packet
 		expErr        *sdkerrors.Error
 	}{
-		"all good": {
+		"all good with timeout height": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
-				ChannelID:    "channel-1",
-				Data:         []byte("myData"),
-				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+				ChannelID: "channel-1",
+				Data:      []byte("myData"),
+				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
 			},
 			chanKeeper: chanKeeper,
 			capKeeper:  capKeeper,
@@ -267,9 +267,9 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 		"sequence not found returns error": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
-				ChannelID:    "channel-1",
-				Data:         []byte("myData"),
-				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+				ChannelID: "channel-1",
+				Data:      []byte("myData"),
+				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
 			},
 			chanKeeper: &wasmtesting.MockChannelKeeper{
 				GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
@@ -279,9 +279,9 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 		"capability not found returns error": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
-				ChannelID:    "channel-1",
-				Data:         []byte("myData"),
-				TimeoutBlock: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+				ChannelID: "channel-1",
+				Data:      []byte("myData"),
+				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
 			},
 			chanKeeper: chanKeeper,
 			capKeeper: wasmtesting.MockCapabilityKeeper{
