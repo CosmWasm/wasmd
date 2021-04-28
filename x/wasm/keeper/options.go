@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type optsFn func(*Keeper)
@@ -72,5 +73,11 @@ func WithMessageEncoders(x *MessageEncoders) Option {
 func WithCoinTransferrer(x CoinTransferrer) Option {
 	return optsFn(func(k *Keeper) {
 		k.bank = x
+	})
+}
+
+func WithVMCacheMetrics(r prometheus.Registerer) Option {
+	return optsFn(func(k *Keeper) {
+		NewWasmVMMetricsCollector(k.wasmVM).Register(r)
 	})
 }

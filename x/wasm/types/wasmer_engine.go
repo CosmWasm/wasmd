@@ -18,7 +18,7 @@ type WasmerEngine interface {
 	// be instantiated with custom inputs in the future.
 	Create(code wasmvm.WasmCode) (wasmvm.Checksum, error)
 
-	// This will statically analyze the code.
+	// AnalyzeCode will statically analyze the code.
 	// Currently just reports if it exposes all IBC entry points.
 	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
 
@@ -220,4 +220,7 @@ type WasmerEngine interface {
 	// the implementor's choice.
 	// Unpin is idempotent.
 	Unpin(checksum wasmvm.Checksum) error
+
+	// GetMetrics some internal metrics for monitoring purposes.
+	GetMetrics() (*wasmvmtypes.Metrics, error)
 }

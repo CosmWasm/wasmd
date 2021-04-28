@@ -33,6 +33,7 @@ type MockWasmer struct {
 	IBCPacketTimeoutFn  func(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error)
 	PinFn               func(checksum wasmvm.Checksum) error
 	UnpinFn             func(checksum wasmvm.Checksum) error
+	GetMetricsFn        func() (*wasmvmtypes.Metrics, error)
 }
 
 func (m *MockWasmer) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (uint64, error) {
@@ -162,9 +163,16 @@ func (m *MockWasmer) Unpin(checksum wasmvm.Checksum) error {
 	return m.UnpinFn(checksum)
 }
 
+func (m *MockWasmer) GetMetrics() (*wasmvmtypes.Metrics, error) {
+	if m.GetMetricsFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetMetricsFn()
+}
+
 var AlwaysPanicMockWasmer = &MockWasmer{}
 
-// selfCallingInstMockWasmer prepares a Wasmer mock that calls itself on instantiation.
+// SelfCallingInstMockWasmer prepares a Wasmer mock that calls itself on instantiation.
 func SelfCallingInstMockWasmer(executeCalled *bool) *MockWasmer {
 	return &MockWasmer{
 
