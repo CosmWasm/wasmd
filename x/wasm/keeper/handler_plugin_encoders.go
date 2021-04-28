@@ -282,7 +282,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 	}
 }
 
-// returns timestamp, block timeout pair
+// ConvertWasmIBCTimeout converts the wasmvm ibc timeout type to cosmos-sdk height and relative block timeout
 func ConvertWasmIBCTimeout(ibcTimeout wasmvmtypes.IBCTimeout) (uint64, ibcclienttypes.Height) {
 	var timestamp uint64
 	var height ibcclienttypes.Height

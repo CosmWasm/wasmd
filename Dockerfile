@@ -15,7 +15,7 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.14.0-beta3/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v0.14.0-beta5/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
 RUN sha256sum /lib/libwasmvm_muslc.a | grep adea8f977601daa8daa9885e02b31ca6dd0ab6d4dbbd8ba2ccfa447ffebda37c
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
