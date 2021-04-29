@@ -14,7 +14,7 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 		src channeltypes.Packet
 		exp wasmvmtypes.IBCPacket
 	}{
-		"with hight timeout": {
+		"with height timeout": {
 			src: IBCPacketFixture(),
 			exp: wasmvmtypes.IBCPacket{
 				Data:     []byte("myData"),
@@ -34,7 +34,7 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 				Src:      wasmvmtypes.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
 				Dest:     wasmvmtypes.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
 				Sequence: 1,
-				Timeout:  wasmvmtypes.IBCTimeout{Timestamp: &myTimestamp},
+				Timeout:  wasmvmtypes.IBCTimeout{Timestamp: myTimestamp},
 			},
 		}, "with time and height timeout": {
 			src: IBCPacketFixture(func(p *channeltypes.Packet) {
@@ -45,10 +45,10 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 				Src:      wasmvmtypes.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
 				Dest:     wasmvmtypes.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
 				Sequence: 1,
-				Timeout: wasmvmtypes.IBCTimeout{Both: &wasmvmtypes.IBCTimeoutBoth{
-					Block:     wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2},
+				Timeout: wasmvmtypes.IBCTimeout{
+					Block:     &wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2},
 					Timestamp: myTimestamp,
-				}},
+				},
 			},
 		},
 	}
