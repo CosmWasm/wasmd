@@ -103,7 +103,7 @@ type AccountQuery struct {
 }
 
 type AccountResponse struct {
-	LastUpdateTime uint64            `json:"last_update_time"`
+	LastUpdateTime uint64            `json:"last_update_time,string"`
 	RemoteAddr     string            `json:"remote_addr"`
 	RemoteBalance  wasmvmtypes.Coins `json:"remote_balance"`
 }
