@@ -11,7 +11,6 @@
 **Features:**
 - Upgrade to wasmvm v0.14.0-rc1 [\#508](https://github.com/CosmWasm/wasmd/pull/508) ([alpe](https://github.com/alpe))
 - Use the cache metrics from WasmVM [\#500](https://github.com/CosmWasm/wasmd/issues/500)
-- Improve list contracts by code query [\#497](https://github.com/CosmWasm/wasmd/pull/497) ([alpe](https://github.com/alpe))
 - Update IBC.md [\#494](https://github.com/CosmWasm/wasmd/pull/494) ([ethanfrey](https://github.com/ethanfrey))
 - Extend ContractInfo for custom data [\#492](https://github.com/CosmWasm/wasmd/pull/492) ([alpe](https://github.com/alpe))
 - Reply response on submessages can overwrite "caller" result [\#495](https://github.com/CosmWasm/wasmd/issues/495)
@@ -41,6 +40,10 @@
 - Add MsgInstantiateContractResponse.data [\#385](https://github.com/CosmWasm/wasmd/issues/385)
 - Added randomized simulation parameters generation [\#389](https://github.com/CosmWasm/wasmd/pull/389) ([bragaz](https://github.com/bragaz))
 - Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394) ([alpe](https://github.com/alpe))
+
+**Api breaking:**
+- Improve list contracts by code query [\#497](https://github.com/CosmWasm/wasmd/pull/497) ([alpe](https://github.com/alpe))
+- Rename to just `funds` [/#423](https://github.com/CosmWasm/wasmd/issues/423)
 
 **Fixed bugs:**
 
