@@ -1,15 +1,66 @@
 # Changelog
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
-**Extendability:**
-- Remove `internal` package for better integration [\464](https://github.com/CosmWasm/wasmd/pull/464)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.16.0...HEAD)
 
-- Upgrade to CosmWasm v0.14.0 [\#432](https://github.com/CosmWasm/wasmd/pull/432)
-- Expose Sudo contract entry point on Keeper [\#433](https://github.com/CosmWasm/wasmd/pull/433)
-- Support custom MessageHandler [\#327](https://github.com/CosmWasm/wasmd/issues/327)
-- 🎉 Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394)
+## [v0.16.0](https://github.com/CosmWasm/wasmd/tree/v0.16.0) (2021-04-30)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.1...v0.16.0)
+
+**Features:**
+- Upgrade to wasmvm v0.14.0-rc1 [\#508](https://github.com/CosmWasm/wasmd/pull/508) ([alpe](https://github.com/alpe))
+- Use the cache metrics from WasmVM [\#500](https://github.com/CosmWasm/wasmd/issues/500)
+- Update IBC.md [\#494](https://github.com/CosmWasm/wasmd/pull/494) ([ethanfrey](https://github.com/ethanfrey))
+- Extend ContractInfo for custom data [\#492](https://github.com/CosmWasm/wasmd/pull/492) ([alpe](https://github.com/alpe))
+- Reply response on submessages can overwrite "caller" result [\#495](https://github.com/CosmWasm/wasmd/issues/495)
+- Update to sdk 0.42.4 [\#485](https://github.com/CosmWasm/wasmd/issues/485)
+- Add extension points to the CLI [\#477](https://github.com/CosmWasm/wasmd/pull/477) ([alpe](https://github.com/alpe))
+- Simplify staking reward query [\#399](https://github.com/CosmWasm/wasmd/issues/399)
+- Update IBC.md [\#398](https://github.com/CosmWasm/wasmd/issues/398)
+- Add IBCQuery support [\#434](https://github.com/CosmWasm/wasmd/issues/434)
+- Follow proto dir best practice \(in cosmos eco\) [\#342](https://github.com/CosmWasm/wasmd/issues/342)
+- Remove internal package [\#464](https://github.com/CosmWasm/wasmd/pull/464) ([alpe](https://github.com/alpe))
+- Introduce new interfaces for extendability [\#471](https://github.com/CosmWasm/wasmd/pull/471) ([alpe](https://github.com/alpe))
+- Handle non default IBC transfer port in message encoder [\#396](https://github.com/CosmWasm/wasmd/issues/396)
+- Collect Contract Metrics [\#387](https://github.com/CosmWasm/wasmd/issues/387)
+- Add Submessages for IBC callbacks [\#449](https://github.com/CosmWasm/wasmd/issues/449)
+- Handle wasmvm Burn message [\#489](https://github.com/CosmWasm/wasmd/pull/489) ([alpe](https://github.com/alpe))
+- Add telemetry [\#463](https://github.com/CosmWasm/wasmd/pull/463) ([alpe](https://github.com/alpe))
+- Handle non default transfer port id [\#462](https://github.com/CosmWasm/wasmd/pull/462) ([alpe](https://github.com/alpe))
+- Allow subsecond block times [\#453](https://github.com/CosmWasm/wasmd/pull/453) ([ethanfrey](https://github.com/ethanfrey))
+- Submsg and replies [\#441](https://github.com/CosmWasm/wasmd/pull/441) ([ethanfrey](https://github.com/ethanfrey))
+- Ibc query support [\#439](https://github.com/CosmWasm/wasmd/pull/439) ([ethanfrey](https://github.com/ethanfrey))
+- Pin/Unpin contract in cache [\#436](https://github.com/CosmWasm/wasmd/pull/436) ([alpe](https://github.com/alpe))
+- Stargate msg and query [\#435](https://github.com/CosmWasm/wasmd/pull/435) ([ethanfrey](https://github.com/ethanfrey))
+- Sudo entry point [\#433](https://github.com/CosmWasm/wasmd/pull/433) ([ethanfrey](https://github.com/ethanfrey))
+- Add custom message handler option [\#402](https://github.com/CosmWasm/wasmd/pull/402) ([alpe](https://github.com/alpe))
+- Expose contract pinning [\#401](https://github.com/CosmWasm/wasmd/issues/401)
+- Add support for Stargate CosmosMsg/QueryRequest [\#388](https://github.com/CosmWasm/wasmd/issues/388)
+- Add MsgInstantiateContractResponse.data [\#385](https://github.com/CosmWasm/wasmd/issues/385)
+- Added randomized simulation parameters generation [\#389](https://github.com/CosmWasm/wasmd/pull/389) ([bragaz](https://github.com/bragaz))
+- Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394) ([alpe](https://github.com/alpe))
+
+**Api breaking:**
+- Improve list contracts by code query [\#497](https://github.com/CosmWasm/wasmd/pull/497) ([alpe](https://github.com/alpe))
+- Rename to just `funds` [/#423](https://github.com/CosmWasm/wasmd/issues/423)
+
+**Fixed bugs:**
+
+- Correct order for migrated contracts [\#323](https://github.com/CosmWasm/wasmd/issues/323)
+- Keeper Send Coins does not perform expected validation [\#414](https://github.com/CosmWasm/wasmd/issues/414)
+
+## [v0.15.1](https://github.com/CosmWasm/wasmd/tree/v0.15.1) (2021-02-18)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.0...v0.15.1)
+
+**Implemented enhancements:**
+
+- Support custom MessageHandler in wasm [\#327](https://github.com/CosmWasm/wasmd/issues/327)
+
+**Fixed bugs:**
+
+- Fix Parameter change via proposal  [\#392](https://github.com/CosmWasm/wasmd/issues/392)
 
 ## [v0.15.0](https://github.com/CosmWasm/wasmd/tree/v0.15.0) (2021-01-27)
 
