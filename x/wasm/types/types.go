@@ -260,17 +260,15 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
 	}
-	sec := ctx.BlockTime().Unix()
-	if sec < 0 {
-		panic("Block (unix) time must never be negative ")
+	nano := ctx.BlockTime().UnixNano()
+	if nano < 1 {
+		panic("Block (unix) time must never be empty or negative ")
 	}
-	nano := ctx.BlockTime().Nanosecond()
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
-			Height:    uint64(ctx.BlockHeight()),
-			Time:      uint64(sec),
-			TimeNanos: uint64(nano),
-			ChainID:   ctx.ChainID(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(nano),
+			ChainID: ctx.ChainID(),
 		},
 		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),

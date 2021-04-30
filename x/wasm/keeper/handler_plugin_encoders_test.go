@@ -9,6 +9,7 @@ import (
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -17,7 +18,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +32,6 @@ func TestEncoding(t *testing.T) {
 	valAddr[0] = 12
 	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
 	valAddr2[1] = 123
-	var timeoutVal uint64 = 100
 
 	jsonMsg := json.RawMessage(`{"foo": 123}`)
 
@@ -427,7 +426,7 @@ func TestEncoding(t *testing.T) {
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Timestamp: &timeoutVal},
+						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
 					},
 				},
 			},
@@ -447,7 +446,8 @@ func TestEncoding(t *testing.T) {
 					TimeoutTimestamp: 100,
 				},
 			},
-		}, "IBC transfer with time and height timeout": {
+		},
+		"IBC transfer with time and height timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
 			srcMsg: wasmvmtypes.CosmosMsg{
@@ -459,13 +459,7 @@ func TestEncoding(t *testing.T) {
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Both: &wasmvmtypes.IBCTimeoutBoth{
-							Block: wasmvmtypes.IBCTimeoutBlock{
-								Height:   1,
-								Revision: 2,
-							},
-							Timestamp: timeoutVal,
-						}},
+						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100, Block: &wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2}},
 					},
 				},
 			},
@@ -483,7 +477,7 @@ func TestEncoding(t *testing.T) {
 					Sender:           addr1.String(),
 					Receiver:         addr2.String(),
 					TimeoutTimestamp: 100,
-					TimeoutHeight:    clienttypes.Height{RevisionNumber: 2, RevisionHeight: 1},
+					TimeoutHeight:    clienttypes.NewHeight(2, 1),
 				},
 			},
 		},

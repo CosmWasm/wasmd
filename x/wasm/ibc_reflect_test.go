@@ -12,6 +12,13 @@ import (
 )
 
 func TestIBCReflectContract(t *testing.T) {
+	// scenario:
+	//  chain A: ibc_reflect_send.wasm
+	//  chain B: reflect.wasm + ibc_reflect.wasm
+	//
+	//  Chain A "ibc_reflect_send" sends a IBC packet "on channel connect" event to chain B "ibc_reflect"
+	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
+
 	var (
 		coordinator = ibctesting.NewCoordinator(t, 2, nil, nil)
 		chainA      = coordinator.GetChain(ibctesting.GetChainID(0))
@@ -96,7 +103,7 @@ type AccountQuery struct {
 }
 
 type AccountResponse struct {
-	LastUpdateTime uint64            `json:"last_update_time"`
+	LastUpdateTime uint64            `json:"last_update_time,string"`
 	RemoteAddr     string            `json:"remote_addr"`
 	RemoteBalance  wasmvmtypes.Coins `json:"remote_balance"`
 }

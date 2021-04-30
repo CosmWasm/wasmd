@@ -1,6 +1,7 @@
 package types
 
 import (
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -307,4 +308,34 @@ func TestContractInfoReadExtension(t *testing.T) {
 			assert.Equal(t, spec.expVal, gotValue)
 		})
 	}
+}
+
+func TestNewEnv(t *testing.T) {
+	myTime := time.Unix(0, 1619700924259075000)
+	t.Logf("++ unix: %d", myTime.UnixNano())
+	var myContractAddr sdk.AccAddress = randBytes(sdk.AddrLen)
+	specs := map[string]struct {
+		srcCtx sdk.Context
+		exp    wasmvmtypes.Env
+	}{
+		"all good": {
+			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing"),
+			exp: wasmvmtypes.Env{
+				Block: wasmvmtypes.BlockInfo{
+					Height:  1,
+					Time:    1619700924259075000,
+					ChainID: "testing",
+				},
+				Contract: wasmvmtypes.ContractInfo{
+					Address: myContractAddr.String(),
+				},
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, spec.exp, NewEnv(spec.srcCtx, myContractAddr))
+		})
+	}
+
 }

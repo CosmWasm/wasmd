@@ -244,25 +244,14 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet)
 }
 
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
-	var timeout wasmvmtypes.IBCTimeout
-	// detect set/unset
-	if packet.TimeoutHeight.RevisionHeight != 0 {
-		if packet.TimeoutTimestamp != 0 {
-			timeout.Both = &wasmvmtypes.IBCTimeoutBoth{
-				Block: wasmvmtypes.IBCTimeoutBlock{
-					Height:   packet.TimeoutHeight.RevisionHeight,
-					Revision: packet.TimeoutHeight.RevisionNumber,
-				},
-				Timestamp: packet.TimeoutTimestamp,
-			}
-		} else {
-			timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
-				Height:   packet.TimeoutHeight.RevisionHeight,
-				Revision: packet.TimeoutHeight.RevisionNumber,
-			}
+	timeout := wasmvmtypes.IBCTimeout{
+		Timestamp: packet.TimeoutTimestamp,
+	}
+	if !packet.TimeoutHeight.IsZero() {
+		timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
+			Height:   packet.TimeoutHeight.RevisionHeight,
+			Revision: packet.TimeoutHeight.RevisionNumber,
 		}
-	} else {
-		timeout.Timestamp = &packet.TimeoutTimestamp
 	}
 
 	return wasmvmtypes.IBCPacket{
