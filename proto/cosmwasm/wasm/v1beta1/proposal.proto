@@ -45,7 +45,7 @@ message InstantiateContractProposal {
   // Label is optional metadata to be stored with a constract instance.
   string label = 6;
   // InitMsg json encoded message to be passed to the contract on instantiation
-  bytes init_msg = 7 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
+  bytes init_msg = 7;
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
@@ -66,7 +66,7 @@ message MigrateContractProposal {
   // CodeID references the new WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // MigrateMsg json encoded message to be passed to the contract on migration
-  bytes migrate_msg = 6 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
+  bytes migrate_msg = 6;
 }
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.

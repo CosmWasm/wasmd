@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -199,6 +200,13 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
 				p.InitMsg = nil
 			}),
+			expErr: true,
+		},
+		"with invalid init msg": {
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
+				p.InitMsg = []byte("not a json string")
+			}),
+			expErr: true,
 		},
 		"without init funds": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
@@ -282,6 +290,13 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
 				p.MigrateMsg = nil
 			}),
+			expErr: true,
+		},
+		"migrate msg with invalid json": {
+			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
+				p.MigrateMsg = []byte("not a json message")
+			}),
+			expErr: true,
 		},
 		"base data missing": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
@@ -694,4 +709,64 @@ func TestConvertToProposals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUnmarshalContentFromJson(t *testing.T) {
+	specs := map[string]struct {
+		src string
+		got govtypes.Content
+		exp govtypes.Content
+	}{
+		"instantiate ": {
+			src: `
+{
+	"title": "foo",
+	"description": "bar",
+	"admin": "myAdminAddress",
+	"code_id": 1,
+	"funds": [{"denom": "ALX", "amount": "2"},{"denom": "BLX","amount": "3"}],
+	"init_msg": "e30=",
+	"label": "testing",
+	"run_as": "myRunAsAddress"
+}`,
+			got: &InstantiateContractProposal{},
+			exp: &InstantiateContractProposal{
+				Title:       "foo",
+				Description: "bar",
+				RunAs:       "myRunAsAddress",
+				Admin:       "myAdminAddress",
+				CodeID:      1,
+				Label:       "testing",
+				InitMsg:     []byte("{}"),
+				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdk.NewInt(2)), sdk.NewCoin("BLX", sdk.NewInt(3))),
+			},
+		},
+		"migrate ": {
+			src: `
+{
+	"title": "foo",
+	"description": "bar",
+	"code_id": 1,
+	"contract": "myContractAddr",
+	"migrate_msg": "e30=",
+	"run_as": "myRunAsAddress"
+}`,
+			got: &MigrateContractProposal{},
+			exp: &MigrateContractProposal{
+				Title:       "foo",
+				Description: "bar",
+				RunAs:       "myRunAsAddress",
+				Contract:    "myContractAddr",
+				CodeID:      1,
+				MigrateMsg:  []byte("{}"),
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			require.NoError(t, json.Unmarshal([]byte(spec.src), spec.got))
+			assert.Equal(t, spec.exp, spec.got)
+		})
+	}
+
 }
