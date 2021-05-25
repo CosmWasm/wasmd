@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -184,8 +185,11 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 			return err
 		}
 	}
-	return nil
+	if !json.Valid(p.InitMsg) {
+		return sdkerrors.Wrap(ErrInvalid, "init msg json")
+	}
 
+	return nil
 }
 
 // String implements the Stringer interface.
@@ -250,6 +254,9 @@ func (p MigrateContractProposal) ValidateBasic() error {
 	}
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(err, "run as")
+	}
+	if !json.Valid(p.MigrateMsg) {
+		return sdkerrors.Wrap(ErrInvalid, "migrate msg json")
 	}
 	return nil
 }
