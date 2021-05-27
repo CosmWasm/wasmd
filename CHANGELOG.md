@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.16.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
+
+## [v0.17.0](https://github.com/CosmWasm/wasmd/tree/v0.17.0) (2021-05-26)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...v0.16.0)
+
+**Features:**
+- Remove json type cast for contract msgs [\#520](https://github.com/CosmWasm/wasmd/pull/520) ([alpe](https://github.com/alpe))
+- Bump github.com/cosmos/cosmos-sdk from 0.42.4 to 0.42.5 [\#519](https://github.com/CosmWasm/wasmd/pull/519) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 
 ## [v0.16.0](https://github.com/CosmWasm/wasmd/tree/v0.16.0) (2021-04-30)
 
