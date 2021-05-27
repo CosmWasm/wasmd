@@ -2,7 +2,14 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.2...HEAD)
+
+## [v0.14.2](https://github.com/CosmWasm/wasmd/tree/v0.14.2) (2021-05-27)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...v0.14.2)
+
+**Features:**
+-Update wasmvm version to 0.13.1 [\#523](https://github.com/CosmWasm/wasmd/pull/523)
 
 ## [v0.14.1](https://github.com/CosmWasm/wasmd/tree/v0.14.1) (2021-01-20)
 
