@@ -552,11 +552,11 @@ func TestGetAllContracts(t *testing.T) {
 			},
 			exp: []contractMeta{
 				{
-					ContractAddress: contractAddress(0, 1).String(),
+					ContractAddress: keeper.BuildContractAddress(0, 1).String(),
 					Info:            types.ContractInfo{Label: "first"},
 				},
 				{
-					ContractAddress: contractAddress(0, 2).String(),
+					ContractAddress: keeper.BuildContractAddress(0, 2).String(),
 					Info:            types.ContractInfo{Label: "second"},
 				},
 			},
@@ -572,7 +572,7 @@ func TestGetAllContracts(t *testing.T) {
 			},
 			exp: []contractMeta{
 				{
-					ContractAddress: contractAddress(0, 100).String(),
+					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
 					Info:            types.ContractInfo{Label: "hundred"},
 				},
 			},
@@ -598,7 +598,7 @@ func TestGetAllContracts(t *testing.T) {
 					Info:            types.ContractInfo{Label: "first"},
 				},
 				{
-					ContractAddress: contractAddress(0, 100).String(),
+					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
 					Info:            types.ContractInfo{Label: "hundred"},
 				},
 			},

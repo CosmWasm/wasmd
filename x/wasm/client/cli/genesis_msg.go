@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -317,7 +318,7 @@ func getAllContracts(state *types.GenesisState) []contractMeta {
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
 			all = append(all, contractMeta{
-				ContractAddress: contractAddress(msg.CodeID, seq).String(),
+				ContractAddress: keeper.BuildContractAddress(msg.CodeID, seq).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
@@ -358,7 +359,7 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			if contractAddress(msg.CodeID, seq).String() == contractAddr {
+			if keeper.BuildContractAddress(msg.CodeID, seq).String() == contractAddr {
 				return true
 			}
 			seq++
@@ -509,14 +510,6 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 		return nil, fmt.Errorf("failed to get address from Keybase: %w", err)
 	}
 	return info.GetAddress(), nil
-}
-
-// contractAddress builds a contract address. copied from keeper
-func contractAddress(codeID, instanceID uint64) sdk.AccAddress {
-	// NOTE: It is possible to get a duplicate address if either codeID or instanceID
-	// overflow 32 bits. This is highly improbable, but something that could be refactored.
-	contractID := codeID<<32 + instanceID
-	return addrFromUint64(contractID)
 }
 
 // addrFromUint64 is a helper for address generation, copied from keeper
