@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
@@ -96,7 +95,7 @@ func NewKeeper(
 	cdc codec.Marshaler,
 	storeKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
-	accountKeeper authkeeper.AccountKeeper,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
 	distKeeper types.DistributionKeeper,
