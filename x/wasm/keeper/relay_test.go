@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math"
 	"testing"
 )
 
@@ -31,7 +32,7 @@ func TestOnOpenChannel(t *testing.T) {
 		},
 		"consume max gas": {
 			contractAddr: example.Contract,
-			contractGas:  MaxGas,
+			contractGas:  math.MaxUint64 / GasMultiplier,
 		},
 		"consume gas on error": {
 			contractAddr: example.Contract,
