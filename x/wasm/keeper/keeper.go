@@ -28,11 +28,6 @@ import (
 // Please note that all gas prices returned to the wasmer engine should have this multiplied
 const GasMultiplier uint64 = 100
 
-// MaxGas for a contract is 10 billion wasmer gas (enforced in rust to prevent overflow)
-// The limit for v0.9.3 is defined here: https://github.com/CosmWasm/cosmwasm/blob/v0.9.3/packages/vm/src/backends/singlepass.rs#L15-L23
-// (this will be increased in future releases)
-const MaxGas = 10_000_000_000
-
 // InstanceCost is how much SDK gas we charge each time we load a WASM instance.
 // Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 const InstanceCost uint64 = 40_000
@@ -823,9 +818,6 @@ func gasForContract(ctx sdk.Context) uint64 {
 		return 0
 	}
 	remaining := (meter.Limit() - meter.GasConsumedToLimit()) * GasMultiplier
-	if remaining > MaxGas {
-		return MaxGas
-	}
 	return remaining
 }
 
