@@ -1388,6 +1388,50 @@ func TestInitializePinnedCodes(t *testing.T) {
 	}
 }
 
+func TestPinnedContractLoops(t *testing.T) {
+	// a pinned contract that calls itself via submessages should terminate with an
+	// error at some point
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k := keepers.WasmKeeper
+
+	var capturedChecksums []wasmvm.Checksum
+	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+		capturedChecksums = append(capturedChecksums, checksum)
+		return nil
+	}}
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+	require.NoError(t, k.pinCode(ctx, example.CodeID))
+	var loops int
+	anyMsg := []byte(`{}`)
+	mock.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
+		loops++
+		return &wasmvmtypes.Response{
+			Submessages: []wasmvmtypes.SubMsg{
+				{
+					ID:      1,
+					ReplyOn: wasmvmtypes.ReplyError,
+					Msg: wasmvmtypes.CosmosMsg{
+						Wasm: &wasmvmtypes.WasmMsg{
+							Execute: &wasmvmtypes.ExecuteMsg{
+								ContractAddr: example.Contract.String(),
+								Msg:          anyMsg,
+							},
+						},
+					},
+				},
+			},
+		}, 0, nil
+	}
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(20000))
+	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
+		k.execute(ctx, example.Contract, RandomAccountAddress(t), anyMsg, nil)
+	})
+	assert.True(t, ctx.GasMeter().IsOutOfGas())
+	assert.Greater(t, loops, 2)
+
+}
+
 func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 	noopDMsgs := func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
 		return nil
