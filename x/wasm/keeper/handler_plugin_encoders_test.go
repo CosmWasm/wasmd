@@ -515,3 +515,59 @@ func TestEncoding(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertWasmCoinToSdkCoin(t *testing.T) {
+	specs := map[string]struct {
+		src    wasmvmtypes.Coin
+		expErr bool
+		expVal sdk.Coin
+	}{
+		"all good": {
+			src: wasmvmtypes.Coin{
+				Denom:  "foo",
+				Amount: "1",
+			},
+			expVal: sdk.NewCoin("foo", sdk.NewIntFromUint64(1)),
+		},
+		"negative amount": {
+			src: wasmvmtypes.Coin{
+				Denom:  "foo",
+				Amount: "-1",
+			},
+			expErr: true,
+		},
+		"denom to short": {
+			src: wasmvmtypes.Coin{
+				Denom:  "f",
+				Amount: "1",
+			},
+			expErr: true,
+		},
+		"invalid demum char": {
+			src: wasmvmtypes.Coin{
+				Denom:  "&fff",
+				Amount: "1",
+			},
+			expErr: true,
+		},
+		"not a number amount": {
+			src: wasmvmtypes.Coin{
+				Denom:  "foo",
+				Amount: "bar",
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotVal, gotErr := convertWasmCoinToSdkCoin(spec.src)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expVal, gotVal)
+		})
+	}
+
+}
