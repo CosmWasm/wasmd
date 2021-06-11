@@ -8,4 +8,5 @@ const ( // event attributes
 	AttributeKeyContract = "contract_address"
 	AttributeKeyCodeID   = "code_id"
 	AttributeKeySigner   = "signer"
+	AttributeResultData  = "result"
 )

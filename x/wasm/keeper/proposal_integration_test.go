@@ -86,6 +86,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.Admin = otherAddress.String()
 		p.Label = "testing"
 	})
+	em := sdk.NewEventManager()
 
 	// when stored
 	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
@@ -93,7 +94,7 @@ func TestInstantiateProposal(t *testing.T) {
 
 	// and proposal execute
 	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx, storedProposal.GetContent())
+	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
 	require.NoError(t, err)
 
 	// then
@@ -113,6 +114,9 @@ func TestInstantiateProposal(t *testing.T) {
 		Msg:       src.InitMsg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
+	// and event
+	require.Len(t, em.Events(), 2, "%#v", em.Events())
+	require.Len(t, em.Events()[1].Attributes, 4)
 }
 
 func TestMigrateProposal(t *testing.T) {
@@ -161,13 +165,15 @@ func TestMigrateProposal(t *testing.T) {
 		RunAs:       otherAddress.String(),
 	}
 
+	em := sdk.NewEventManager()
+
 	// when stored
 	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
 	require.NoError(t, err)
 
 	// and proposal execute
 	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx, storedProposal.GetContent())
+	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
 	require.NoError(t, err)
 
 	// then
@@ -188,7 +194,9 @@ func TestMigrateProposal(t *testing.T) {
 		Msg:       src.MigrateMsg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
-
+	// and events emitted
+	require.Len(t, em.Events(), 2)
+	require.Len(t, em.Events()[1].Attributes, 4)
 }
 
 func TestAdminProposals(t *testing.T) {
