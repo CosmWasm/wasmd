@@ -40,10 +40,11 @@ func GetQueryCmd() *cobra.Command {
 // GetCmdListCode lists all wasm code uploaded
 func GetCmdListCode() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list-code",
-		Short: "List all wasm bytecode on the chain",
-		Long:  "List all wasm bytecode on the chain",
-		Args:  cobra.ExactArgs(0),
+		Use:     "list-code",
+		Short:   "List all wasm bytecode on the chain",
+		Long:    "List all wasm bytecode on the chain",
+		Aliases: []string{"list-codes", "codes", "lco"},
+		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -75,10 +76,11 @@ func GetCmdListCode() *cobra.Command {
 // GetCmdListContractByCode lists all wasm code uploaded for given code id
 func GetCmdListContractByCode() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list-contract-by-code [code_id]",
-		Short: "List wasm all bytecode on the chain for given code id",
-		Long:  "List wasm all bytecode on the chain for given code id",
-		Args:  cobra.ExactArgs(1),
+		Use:     "list-contract-by-code [code_id]",
+		Short:   "List wasm all bytecode on the chain for given code id",
+		Long:    "List wasm all bytecode on the chain for given code id",
+		Aliases: []string{"list-contracts-by-code", "list-contracts", "contracts", "lca"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -116,10 +118,11 @@ func GetCmdListContractByCode() *cobra.Command {
 // GetCmdQueryCode returns the bytecode for a given contract
 func GetCmdQueryCode() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "code [code_id] [output filename]",
-		Short: "Downloads wasm bytecode for given code id",
-		Long:  "Downloads wasm bytecode for given code id",
-		Args:  cobra.ExactArgs(2),
+		Use:     "code [code_id] [output filename]",
+		Short:   "Downloads wasm bytecode for given code id",
+		Long:    "Downloads wasm bytecode for given code id",
+		Aliases: []string{"source-code", "source"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -156,10 +159,11 @@ func GetCmdQueryCode() *cobra.Command {
 // GetCmdGetContractInfo gets details about a given contract
 func GetCmdGetContractInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contract [bech32_address]",
-		Short: "Prints out metadata of a contract given its address",
-		Long:  "Prints out metadata of a contract given its address",
-		Args:  cobra.ExactArgs(1),
+		Use:     "contract [bech32_address]",
+		Short:   "Prints out metadata of a contract given its address",
+		Long:    "Prints out metadata of a contract given its address",
+		Aliases: []string{"meta", "c"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -193,6 +197,7 @@ func GetCmdGetContractState() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "contract-state",
 		Short:                      "Querying commands for the wasm module",
+		Aliases:                    []string{"state", "cs", "s"},
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -338,10 +343,11 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 // GetCmdGetContractHistory prints the code history for a given contract
 func GetCmdGetContractHistory() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contract-history [bech32_address]",
-		Short: "Prints out the code history for a contract given its address",
-		Long:  "Prints out the code history for a contract given its address",
-		Args:  cobra.ExactArgs(1),
+		Use:     "contract-history [bech32_address]",
+		Short:   "Prints out the code history for a contract given its address",
+		Long:    "Prints out the code history for a contract given its address",
+		Aliases: []string{"history", "hist", "ch"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
