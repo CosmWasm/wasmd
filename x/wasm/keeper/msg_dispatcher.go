@@ -16,7 +16,7 @@ type Messenger interface {
 
 // replyer is a subset of keeper that can handle replies to submessages
 type replyer interface {
-	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error)
+	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error)
 }
 
 // MessageDispatcher coordinates message sending and submessage reply/ state commits
@@ -140,12 +140,12 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 
 		// we can ignore any result returned as there is nothing to do with the data
 		// and the events are already in the ctx.EventManager()
-		rData, err := d.keeper.reply(ctx, contractAddr, reply)
+		rspData, err := d.keeper.reply(ctx, contractAddr, reply)
 		switch {
 		case err != nil:
 			return nil, sdkerrors.Wrap(err, "reply")
-		case rData.Data != nil:
-			rsp = rData.Data
+		case rspData != nil:
+			rsp = rspData
 		}
 	}
 	return rsp, nil
