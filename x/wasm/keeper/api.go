@@ -6,21 +6,28 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	// DefaultGasCostHumanAddress is how moch SDK gas we charge to convert to a human address format
+	DefaultGasCostHumanAddress = 5
+	// DefaultGasCostCanonicalAddress is how moch SDK gas we charge to convert to a canonical address format
+	DefaultGasCostCanonicalAddress = 4
+)
+
 var (
-	CostHumanize  = 5 * GasMultiplier
-	CostCanonical = 4 * GasMultiplier
+	costHumanize  = DefaultGasCostHumanAddress * DefaultGasMultiplier
+	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
 )
 
 func humanAddress(canon []byte) (string, uint64, error) {
 	if len(canon) != sdk.AddrLen {
-		return "", CostHumanize, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
+		return "", costHumanize, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
 	}
-	return sdk.AccAddress(canon).String(), CostHumanize, nil
+	return sdk.AccAddress(canon).String(), costHumanize, nil
 }
 
 func canonicalAddress(human string) ([]byte, uint64, error) {
 	bz, err := sdk.AccAddressFromBech32(human)
-	return bz, CostCanonical, err
+	return bz, costCanonical, err
 }
 
 var cosmwasmAPI = wasmvm.GoAPI{
