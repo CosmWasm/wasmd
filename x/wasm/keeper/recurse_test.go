@@ -145,7 +145,7 @@ func TestGasCostOnQuery(t *testing.T) {
 
 func TestGasOnExternalQuery(t *testing.T) {
 	const (
-		GasWork50 uint64 = InstanceCost + 8_464
+		GasWork50 uint64 = DefaultInstanceCost + 8_464
 	)
 
 	cases := map[string]struct {
