@@ -199,7 +199,7 @@ func TestDispatchSubmessages(t *testing.T) {
 					return nil, nil, errors.New("my error")
 				},
 			},
-			expData:    []byte{},
+			expData:    []byte("myReplyData:1"),
 			expCommits: []bool{false, false},
 		},
 		"empty replyOn rejected": {
