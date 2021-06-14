@@ -35,6 +35,9 @@ const DefaultInstanceCost uint64 = 40_000
 // DefaultCompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
 const DefaultCompileCost uint64 = 2
 
+// DefaultEventAttributeCost is how much SDK gas we charge *per byte* for attribute data in events
+const DefaultEventAttributeCost uint64 = 10
+
 // contractMemoryLimit is the memory limit of each contract execution (in MiB)
 // constant value so all nodes run with the same limit.
 const contractMemoryLimit = 32
@@ -81,11 +84,12 @@ type Keeper struct {
 	wasmVMResponseHandler WasmVMResponseHandler
 	messenger             Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
-	queryGasLimit uint64
-	paramSpace    paramtypes.Subspace
-	instanceCost  uint64
-	compileCost   uint64
-	gasMultiplier uint64
+	queryGasLimit      uint64
+	paramSpace         paramtypes.Subspace
+	instanceCost       uint64
+	compileCost        uint64
+	gasMultiplier      uint64
+	eventAttributeCost uint64
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -119,19 +123,20 @@ func NewKeeper(
 	}
 
 	keeper := &Keeper{
-		storeKey:         storeKey,
-		cdc:              cdc,
-		wasmVM:           wasmer,
-		accountKeeper:    accountKeeper,
-		bank:             NewBankCoinTransferrer(bankKeeper),
-		portKeeper:       portKeeper,
-		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
-		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
-		paramSpace:       paramSpace,
-		instanceCost:     DefaultInstanceCost,
-		compileCost:      DefaultCompileCost,
-		gasMultiplier:    DefaultGasMultiplier,
+		storeKey:           storeKey,
+		cdc:                cdc,
+		wasmVM:             wasmer,
+		accountKeeper:      accountKeeper,
+		bank:               NewBankCoinTransferrer(bankKeeper),
+		portKeeper:         portKeeper,
+		capabilityKeeper:   capabilityKeeper,
+		messenger:          NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		queryGasLimit:      wasmConfig.SmartQueryGasLimit,
+		paramSpace:         paramSpace,
+		instanceCost:       DefaultInstanceCost,
+		compileCost:        DefaultCompileCost,
+		gasMultiplier:      DefaultGasMultiplier,
+		eventAttributeCost: DefaultEventAttributeCost,
 	}
 
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
@@ -284,10 +289,6 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return contractAddress, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddress)
-	ctx.EventManager().EmitEvents(events)
-
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(ctx)
 	contractInfo := types.NewContractInfo(codeID, creator, admin, label, createdAt)
@@ -352,10 +353,6 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddress)
-	ctx.EventManager().EmitEvents(events)
-
 	// dispatch submessages then messages
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
 	if err != nil {
@@ -413,10 +410,6 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
 
-	// emit all events from this contract migration itself
-	events := types.ParseEvents(res.Attributes, contractAddress)
-	ctx.EventManager().EmitEvents(events)
-
 	// delete old secondary index entry
 	k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.getLastContractHistoryEntry(ctx, contractAddress))
 	// persist migration updates
@@ -458,10 +451,6 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddress)
-	ctx.EventManager().EmitEvents(events)
-
 	// dispatch submessages then messages
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
 	if err != nil {
@@ -496,10 +485,6 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddress)
-	ctx.EventManager().EmitEvents(events)
 
 	// dispatch submessages then messages
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
@@ -804,7 +789,24 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 
 // handleContractResponse processes the contract response
 func (k *Keeper) handleContractResponse(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, res *wasmvmtypes.Response) ([]byte, error) {
-	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, ibcPort, res.Submessages, res.Messages, res.Data)
+	return k.doHandleWasmVMResponse(ctx, contractAddr, ibcPort, res.Submessages, res.Messages, res.Attributes, res.Data)
+}
+
+// doHandleWasmVMResponse processes the contract response data by emitting events and sending sub-/messages.
+func (k *Keeper) doHandleWasmVMResponse(
+	ctx sdk.Context,
+	contractAddr sdk.AccAddress,
+	ibcPort string,
+	subMsg []wasmvmtypes.SubMsg,
+	msgs []wasmvmtypes.CosmosMsg,
+	attrs []wasmvmtypes.EventAttribute,
+	data []byte,
+) ([]byte, error) {
+	// emit all events from this contract itself
+	events, customBytesLen := types.ParseEvents(attrs, contractAddr)
+	ctx.GasMeter().ConsumeGas(k.eventAttributeCost*customBytesLen, "Custom contract event attributes")
+	ctx.EventManager().EmitEvents(events)
+	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, ibcPort, subMsg, msgs, data)
 }
 
 func (k Keeper) gasForContract(ctx sdk.Context) uint64 {

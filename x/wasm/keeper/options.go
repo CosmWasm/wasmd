@@ -83,13 +83,14 @@ func WithVMCacheMetrics(r prometheus.Registerer) Option {
 }
 
 // WithCosts sets custom gas costs and multiplier.
-// See DefaultCompileCost, DefaultInstanceCost, DefaultGasMultiplier
+// See DefaultCompileCost, DefaultInstanceCost, DefaultGasMultiplier, DefaultEventAttributeCost
 // Uses WithApiCosts with defaults and given multiplier.
-func WithCosts(compile, instance, multiplier uint64) Option {
+func WithCosts(compile, instance, multiplier, attribute uint64) Option {
 	return optsFn(func(k *Keeper) {
 		k.compileCost = compile
 		k.instanceCost = instance
 		k.gasMultiplier = multiplier
+		k.eventAttributeCost = attribute
 		WithApiCosts(
 			DefaultGasCostHumanAddress*multiplier,
 			DefaultGasCostCanonicalAddress*multiplier,

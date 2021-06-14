@@ -67,14 +67,7 @@ func (k Keeper) OnConnectChannel(
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddr)
-	ctx.EventManager().EmitEvents(events)
-
-	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
-		return err
-	}
-	return nil
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
 }
 
 // OnCloseChannel calls the contract to let it know the IBC channel is closed.
@@ -105,14 +98,7 @@ func (k Keeper) OnCloseChannel(
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddr)
-	ctx.EventManager().EmitEvents(events)
-
-	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
-		return err
-	}
-	return nil
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
 }
 
 // OnRecvPacket calls the contract to process the incoming IBC packet. The contract fully owns the data processing and
@@ -142,10 +128,7 @@ func (k Keeper) OnRecvPacket(
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddr)
-	ctx.EventManager().EmitEvents(events)
-	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Acknowledgement)
+	return k.doHandleWasmVMResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Acknowledgement)
 }
 
 // OnAckPacket calls the contract to handle the "acknowledgement" data which can contain success or failure of a packet
@@ -175,15 +158,7 @@ func (k Keeper) OnAckPacket(
 	if execErr != nil {
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddr)
-	ctx.EventManager().EmitEvents(events)
-
-	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
-		return err
-	}
-	return nil
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
 }
 
 // OnTimeoutPacket calls the contract to let it know the packet was never received on the destination chain within
@@ -211,12 +186,10 @@ func (k Keeper) OnTimeoutPacket(
 		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// emit all events from this contract itself
-	events := types.ParseEvents(res.Attributes, contractAddr)
-	ctx.EventManager().EmitEvents(events)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+}
 
-	if _, err := k.wasmVMResponseHandler.Handle(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, nil); err != nil {
-		return err
-	}
-	return nil
+func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {
+	_, err := k.doHandleWasmVMResponse(ctx, addr, id, res.Submessages, res.Messages, res.Attributes, nil)
+	return err
 }
