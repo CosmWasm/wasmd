@@ -85,7 +85,7 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		return nil, sdkerrors.Wrap(err, "contract")
 	}
 
-	res, err := m.keeper.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
+	data, err := m.keeper.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +98,8 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 	))
 
 	return &types.MsgExecuteContractResponse{
-		Data: res.Data,
+		Data: data,
 	}, nil
-
 }
 
 func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateContract) (*types.MsgMigrateContractResponse, error) {
@@ -114,7 +113,7 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, sdkerrors.Wrap(err, "contract")
 	}
 
-	res, err := m.keeper.Migrate(ctx, contractAddr, senderAddr, msg.CodeID, msg.MigrateMsg)
+	data, err := m.keeper.Migrate(ctx, contractAddr, senderAddr, msg.CodeID, msg.MigrateMsg)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 	))
 
 	return &types.MsgMigrateContractResponse{
-		Data: res.Data,
+		Data: data,
 	}, nil
 }
 

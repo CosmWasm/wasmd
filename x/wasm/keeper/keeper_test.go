@@ -1009,10 +1009,9 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 
 	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
-	res, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
+	data, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	assert.Equal(t, "burnt 1 keys", string(res.Data))
-	assert.Equal(t, "", res.Log)
+	assert.Equal(t, "burnt 1 keys", string(data))
 	type dict map[string]interface{}
 	expEvents := []dict{
 		{
@@ -1184,9 +1183,8 @@ func TestSudo(t *testing.T) {
 	sudoMsg, err := json.Marshal(msg)
 	require.NoError(t, err)
 
-	res, err := keepers.WasmKeeper.Sudo(ctx, addr, sudoMsg)
+	_, err = keepers.WasmKeeper.Sudo(ctx, addr, sudoMsg)
 	require.NoError(t, err)
-	require.NotNil(t, res)
 
 	// ensure community now exists and got paid
 	comAcct = accKeeper.GetAccount(ctx, community)

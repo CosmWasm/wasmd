@@ -50,8 +50,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				ReplyOn: wasmvmtypes.ReplySuccess,
 			}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-					return &sdk.Result{Data: []byte("myReplyData")}, nil
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return []byte("myReplyData"), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -67,8 +67,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				ReplyOn: wasmvmtypes.ReplyError,
 			}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-					return &sdk.Result{Data: []byte("myReplyData")}, nil
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return []byte("myReplyData"), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -84,8 +84,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				ReplyOn: wasmvmtypes.ReplySuccess,
 			}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-					return &sdk.Result{Data: []byte("myReplyData")}, nil
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return []byte("myReplyData"), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -106,7 +106,7 @@ func TestDispatchSubmessages(t *testing.T) {
 				ReplyOn: wasmvmtypes.ReplySuccess,
 			}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
 					return nil, errors.New("reply failed")
 				},
 			},
@@ -124,8 +124,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				ReplyOn:  wasmvmtypes.ReplyError,
 			}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-					return &sdk.Result{Data: []byte("myReplyData")}, nil
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return []byte("myReplyData"), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -154,8 +154,8 @@ func TestDispatchSubmessages(t *testing.T) {
 		"multiple msg - last reply": {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
-					return &sdk.Result{Data: []byte(fmt.Sprintf("myReplyData:%d", reply.ID))}, nil
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return []byte(fmt.Sprintf("myReplyData:%d", reply.ID)), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -169,11 +169,29 @@ func TestDispatchSubmessages(t *testing.T) {
 		"multiple msg - last reply with non nil": {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: &mockReplyer{
-				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
 					if reply.ID == 2 {
-						return &sdk.Result{}, nil
+						return nil, nil
 					}
-					return &sdk.Result{Data: []byte("myReplyData:1")}, nil
+					return []byte("myReplyData:1"), nil
+				},
+			},
+			msgHandler: &wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					return nil, nil, errors.New("my error")
+				},
+			},
+			expData:    []byte("myReplyData:1"),
+			expCommits: []bool{false, false},
+		},
+		"multiple msg - last reply can be empty to overwrite": {
+			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
+			replyer: &mockReplyer{
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					if reply.ID == 2 {
+						return []byte{}, nil
+					}
+					return []byte("myReplyData:1"), nil
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
@@ -225,10 +243,10 @@ func TestDispatchSubmessages(t *testing.T) {
 }
 
 type mockReplyer struct {
-	replyFn func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error)
+	replyFn func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error)
 }
 
-func (m mockReplyer) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) (*sdk.Result, error) {
+func (m mockReplyer) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
 	if m.replyFn == nil {
 		panic("not expected to be called")
 	}
