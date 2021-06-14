@@ -304,8 +304,9 @@ func convertWasmCoinToSdkCoin(coin wasmvmtypes.Coin) (sdk.Coin, error) {
 	if !ok {
 		return sdk.Coin{}, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
 	}
-	return sdk.Coin{
+	r := sdk.Coin{
 		Denom:  coin.Denom,
 		Amount: amount,
-	}, nil
+	}
+	return r, r.Validate()
 }
