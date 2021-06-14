@@ -5,8 +5,8 @@ const (
 	EventTypeUnpinCode = "unpin_code"
 )
 const ( // event attributes
-	AttributeKeyContract = "contract_address"
-	AttributeKeyCodeID   = "code_id"
-	AttributeKeySigner   = "signer"
-	AttributeResultData  = "result"
+	AttributeKeyContract   = "contract_address"
+	AttributeKeyCodeID     = "code_id"
+	AttributeKeySigner     = "signer"
+	AttributeResultDataHex = "result"
 )

@@ -95,7 +95,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
-		sdk.NewAttribute(types.AttributeResultData, hex.EncodeToString(data)),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -124,7 +124,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
-		sdk.NewAttribute(types.AttributeResultData, hex.EncodeToString(data)),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil

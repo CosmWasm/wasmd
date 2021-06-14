@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -66,6 +67,7 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
 		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	))
 
 	return &types.MsgInstantiateContractResponse{
@@ -95,6 +97,7 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	))
 
 	return &types.MsgExecuteContractResponse{
@@ -122,7 +125,9 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, msg.Contract),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	))
 
 	return &types.MsgMigrateContractResponse{
