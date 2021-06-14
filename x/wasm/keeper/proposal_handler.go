@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -84,7 +85,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 		return sdkerrors.Wrap(err, "admin")
 	}
 
-	contractAddr, _, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.InitMsg, p.Label, p.Funds)
+	contractAddr, data, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.InitMsg, p.Label, p.Funds)
 	if err != nil {
 		return err
 	}
@@ -94,6 +95,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, contractAddr.String()),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
@@ -112,7 +114,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	_, err = k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.MigrateMsg)
+	data, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.MigrateMsg)
 	if err != nil {
 		return err
 	}
@@ -120,7 +122,9 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	ourEvent := sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", p.CodeID)),
 		sdk.NewAttribute(types.AttributeKeyContract, p.Contract),
+		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
 	)
 	ctx.EventManager().EmitEvent(ourEvent)
 	return nil
