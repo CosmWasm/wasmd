@@ -58,7 +58,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
 		Short:   "Set new admin for a contract",
-		Aliases: []string{"new-admin", "set-adm", "sa"},
+		Aliases: []string{"new-admin", "admin", "set-adm", "sa"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -91,7 +91,7 @@ func ClearContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "clear-contract-admin [contract_addr_bech32]",
 		Short:   "Clears admin for a contract to prevent further migrations",
-		Aliases: []string{"clear-admin", "clr-adm", "ca"},
+		Aliases: []string{"clear-admin", "clr-adm"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

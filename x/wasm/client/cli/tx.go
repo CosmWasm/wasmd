@@ -147,7 +147,7 @@ func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional]",
 		Short:   "Instantiate a wasm contract",
-		Aliases: []string{"start", "inst", "i"},
+		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -215,7 +215,7 @@ func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "execute [contract_addr_bech32] [json_encoded_send_args] --amount [coins,optional]",
 		Short:   "Execute a command on a wasm contract",
-		Aliases: []string{"run", "exec", "ex", "e"},
+		Aliases: []string{"run", "call", "exec", "ex", "e"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
