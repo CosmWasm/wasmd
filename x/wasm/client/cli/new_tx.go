@@ -14,9 +14,10 @@ import (
 // MigrateContractCmd will migrate a contract to a new code version
 func MigrateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "migrate [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
-		Short: "Migrate a wasm contract to a new code version",
-		Args:  cobra.ExactArgs(3),
+		Use:     "migrate [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
+		Short:   "Migrate a wasm contract to a new code version",
+		Aliases: []string{"update", "mig", "m"},
+		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 
@@ -55,9 +56,10 @@ func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMi
 // UpdateContractAdminCmd sets an new admin for a contract
 func UpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
-		Short: "Set new admin for a contract",
-		Args:  cobra.ExactArgs(2),
+		Use:     "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
+		Short:   "Set new admin for a contract",
+		Aliases: []string{"new-admin", "admin", "set-adm", "sa"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 
@@ -87,9 +89,10 @@ func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.M
 // ClearContractAdminCmd clears an admin for a contract
 func ClearContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clear-contract-admin [contract_addr_bech32]",
-		Short: "Clears admin for a contract to prevent further migrations",
-		Args:  cobra.ExactArgs(1),
+		Use:     "clear-contract-admin [contract_addr_bech32]",
+		Short:   "Clears admin for a contract to prevent further migrations",
+		Aliases: []string{"clear-admin", "clr-adm"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

@@ -52,9 +52,10 @@ func GetTxCmd() *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store [wasm file] --source [source] --builder [builder]",
-		Short: "Upload a wasm binary",
-		Args:  cobra.ExactArgs(1),
+		Use:     "store [wasm file] --source [source] --builder [builder]",
+		Short:   "Upload a wasm binary",
+		Aliases: []string{"upload", "st", "s"},
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			msg, err := parseStoreCodeArgs(args[0], clientCtx.GetFromAddress(), cmd.Flags())
@@ -144,9 +145,10 @@ func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet)
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional]",
-		Short: "Instantiate a wasm contract",
-		Args:  cobra.ExactArgs(2),
+		Use:     "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional]",
+		Short:   "Instantiate a wasm contract",
+		Aliases: []string{"start", "init", "inst", "i"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -211,9 +213,10 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
 func ExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute [contract_addr_bech32] [json_encoded_send_args] --amount [coins,optional]",
-		Short: "Execute a command on a wasm contract",
-		Args:  cobra.ExactArgs(2),
+		Use:     "execute [contract_addr_bech32] [json_encoded_send_args] --amount [coins,optional]",
+		Short:   "Execute a command on a wasm contract",
+		Aliases: []string{"run", "call", "exec", "ex", "e"},
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 
