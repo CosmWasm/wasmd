@@ -41,15 +41,9 @@ func TestConstructorOptions(t *testing.T) {
 			},
 		},
 		"costs": {
-			srcOpt: WithCosts(1, 2, 3, 4),
+			srcOpt: WithGasRegister(&wasmtesting.MockGasRegister{}),
 			verify: func(t *testing.T, k Keeper) {
-				t.Cleanup(setApiDefaults)
-				assert.Equal(t, uint64(1), k.compileCost)
-				assert.Equal(t, uint64(2), k.instanceCost)
-				assert.Equal(t, uint64(3), k.gasMultiplier)
-				assert.Equal(t, uint64(4), k.eventAttributeCost)
-				assert.Equal(t, uint64(15), costHumanize)
-				assert.Equal(t, uint64(12), costCanonical)
+				assert.IsType(t, k.gasRegister, &wasmtesting.MockGasRegister{})
 			},
 		},
 		"api costs": {

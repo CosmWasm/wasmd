@@ -119,7 +119,7 @@ func TestOnConnectChannel(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
@@ -127,7 +127,7 @@ func TestOnConnectChannel(t *testing.T) {
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
@@ -230,7 +230,7 @@ func TestOnCloseChannel(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
@@ -238,7 +238,7 @@ func TestOnCloseChannel(t *testing.T) {
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
@@ -350,7 +350,7 @@ func TestOnRecvPacket(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCReceiveResponse{
 				Acknowledgement: []byte("myAck"),
 				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
@@ -359,7 +359,7 @@ func TestOnRecvPacket(t *testing.T) {
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCReceiveResponse{
 				Acknowledgement: []byte("myAck"),
 				Messages:        []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
@@ -467,7 +467,7 @@ func TestOnAckPacket(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
@@ -475,7 +475,7 @@ func TestOnAckPacket(t *testing.T) {
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
@@ -579,7 +579,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
@@ -587,7 +587,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 60,
+			expContractGas: myContractGas + 10,
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Messages:   []wasmvmtypes.CosmosMsg{{Bank: &wasmvmtypes.BankMsg{}}, {Custom: json.RawMessage(`{"foo":"bar"}`)}},
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
