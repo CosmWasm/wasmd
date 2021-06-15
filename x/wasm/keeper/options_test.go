@@ -44,10 +44,10 @@ func TestConstructorOptions(t *testing.T) {
 			srcOpt: WithCosts(1, 2, 3, 4),
 			verify: func(t *testing.T, k Keeper) {
 				t.Cleanup(setApiDefaults)
-				assert.Equal(t, uint64(1), k.compileCost)
-				assert.Equal(t, uint64(2), k.instanceCost)
-				assert.Equal(t, uint64(3), k.gasMultiplier)
-				assert.Equal(t, uint64(4), k.eventAttributeCost)
+				assert.Equal(t, uint64(1), k.gasRegister.compileCost)
+				assert.Equal(t, uint64(2), k.gasRegister.instanceCost)
+				assert.Equal(t, uint64(3), k.gasRegister.gasMultiplier)
+				assert.Equal(t, uint64(4), k.gasRegister.eventAttributeLengthCost)
 				assert.Equal(t, uint64(15), costHumanize)
 				assert.Equal(t, uint64(12), costCanonical)
 			},

@@ -87,10 +87,10 @@ func WithVMCacheMetrics(r prometheus.Registerer) Option {
 // Uses WithApiCosts with defaults and given multiplier.
 func WithCosts(compile, instance, multiplier, attribute uint64) Option {
 	return optsFn(func(k *Keeper) {
-		k.compileCost = compile
-		k.instanceCost = instance
-		k.gasMultiplier = multiplier
-		k.eventAttributeCost = attribute
+		k.gasRegister.compileCost = compile
+		k.gasRegister.instanceCost = instance
+		k.gasRegister.gasMultiplier = multiplier
+		k.gasRegister.eventAttributeLengthCost = attribute
 		WithApiCosts(
 			DefaultGasCostHumanAddress*multiplier,
 			DefaultGasCostCanonicalAddress*multiplier,
