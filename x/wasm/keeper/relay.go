@@ -128,7 +128,7 @@ func (k Keeper) OnRecvPacket(
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	return k.doHandleWasmVMResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Acknowledgement)
+	return k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Acknowledgement)
 }
 
 // OnAckPacket calls the contract to handle the "acknowledgement" data which can contain success or failure of a packet
@@ -190,6 +190,6 @@ func (k Keeper) OnTimeoutPacket(
 }
 
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {
-	_, err := k.doHandleWasmVMResponse(ctx, addr, id, res.Submessages, res.Messages, res.Attributes, nil)
+	_, err := k.handleContractResponse(ctx, addr, id, res.Submessages, res.Messages, res.Attributes, nil)
 	return err
 }

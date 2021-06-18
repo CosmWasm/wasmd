@@ -290,7 +290,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
 	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Data)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -329,7 +329,7 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	}
 
 	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Data)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -393,7 +393,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
 	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Data)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -425,7 +425,7 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	}
 
 	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Data)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -458,7 +458,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	}
 
 	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res)
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Submessages, res.Messages, res.Attributes, res.Data)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
@@ -758,13 +758,8 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 	return nil
 }
 
-// handleContractResponse processes the contract response
-func (k *Keeper) handleContractResponse(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, res *wasmvmtypes.Response) ([]byte, error) {
-	return k.doHandleWasmVMResponse(ctx, contractAddr, ibcPort, res.Submessages, res.Messages, res.Attributes, res.Data)
-}
-
-// doHandleWasmVMResponse processes the contract response data by emitting events and sending sub-/messages.
-func (k *Keeper) doHandleWasmVMResponse(
+// handleContractResponse processes the contract response data by emitting events and sending sub-/messages.
+func (k *Keeper) handleContractResponse(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	ibcPort string,
