@@ -6,52 +6,63 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// DefaultGasMultiplier is how many cosmwasm gas points = 1 sdk gas point
-// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
-// A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
-// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
-//
-// Please note that all gas prices returned to the wasmer engine should have this multiplied
-const DefaultGasMultiplier uint64 = 100
-
-// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
-// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
-const DefaultInstanceCost uint64 = 40_000
-
-// DefaultCompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
-const DefaultCompileCost uint64 = 2
-
-// DefaultEventAttributeCost is how much SDK gas we charge *per byte* for attribute data in events
-const DefaultEventAttributeCost uint64 = 10
+const (
+	// DefaultGasMultiplier is how many cosmwasm gas points = 1 sdk gas point
+	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
+	// A write at ~3000 gas and ~200us = 10 gas per us (microsecond) cpu/io
+	// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
+	//
+	// Please note that all gas prices returned to the wasmer engine should have this multiplied
+	DefaultGasMultiplier uint64 = 100
+	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
+	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
+	DefaultInstanceCost uint64 = 40_000
+	// DefaultCompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
+	DefaultCompileCost uint64 = 2
+	// DefaultEventAttributeDataCost is how much SDK gas we charge *per byte* for attribute data in events.
+	// This is len(key) + len(value)
+	DefaultEventAttributeDataCost uint64 = 1
+	// DefaultPerAttributeCost is how much SDK gas we charge per attribute count.
+	DefaultPerAttributeCost uint64 = 10
+	// DefaultEventAttributeDataFreeTier number of bytes of attribute data we do not charge.
+	DefaultEventAttributeDataFreeTier = 100
+)
 
 type GasRegister struct {
 	instanceCost  sdk.Gas
 	compileCost   sdk.Gas
 	gasMultiplier sdk.Gas
 
-	eventAttributeCountCost  sdk.Gas
-	eventAttributeLengthCost sdk.Gas
-	freeTierAttributeLength  int
+	eventPerAttributeCost      sdk.Gas
+	eventAttributeDataCost     sdk.Gas
+	eventAttributeDataFreeTier int
 }
 
 func DefaultGasRegister() GasRegister {
 	return GasRegister{
-		instanceCost:             DefaultInstanceCost,
-		compileCost:              DefaultCompileCost,
-		gasMultiplier:            DefaultGasMultiplier,
-		eventAttributeCountCost:  0,
-		eventAttributeLengthCost: DefaultEventAttributeCost,
-		freeTierAttributeLength:  0,
+		instanceCost:               DefaultInstanceCost,
+		compileCost:                DefaultCompileCost,
+		gasMultiplier:              DefaultGasMultiplier,
+		eventPerAttributeCost:      DefaultPerAttributeCost,
+		eventAttributeDataCost:     DefaultEventAttributeDataCost,
+		eventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 	}
 }
-func NewGasRegister(instanceCost sdk.Gas, compileCost sdk.Gas, gasMultiplier sdk.Gas, eventAttributeCountCost sdk.Gas, eventAttributeLengthCost sdk.Gas, freeTierAttributeLength int) GasRegister {
+func NewGasRegister(
+	instanceCost sdk.Gas,
+	compileCost sdk.Gas,
+	gasMultiplier sdk.Gas,
+	eventAttributeCountCost sdk.Gas,
+	eventAttributeLengthCost sdk.Gas,
+	freeTierAttributeData int,
+) GasRegister {
 	return GasRegister{
-		instanceCost:             instanceCost,
-		compileCost:              compileCost,
-		gasMultiplier:            gasMultiplier,
-		eventAttributeCountCost:  eventAttributeCountCost,
-		eventAttributeLengthCost: eventAttributeLengthCost,
-		freeTierAttributeLength:  freeTierAttributeLength,
+		instanceCost:               instanceCost,
+		compileCost:                compileCost,
+		gasMultiplier:              gasMultiplier,
+		eventPerAttributeCost:      eventAttributeCountCost,
+		eventAttributeDataCost:     eventAttributeLengthCost,
+		eventAttributeDataFreeTier: freeTierAttributeData,
 	}
 }
 
@@ -92,14 +103,14 @@ func (g GasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 		storedBytes += len(l.Key) + len(l.Value)
 	}
 	// apply free tier
-	if storedBytes <= g.freeTierAttributeLength {
+	if storedBytes <= g.eventAttributeDataFreeTier {
 		storedBytes = 0
 	} else {
-		storedBytes -= g.freeTierAttributeLength
+		storedBytes -= g.eventAttributeDataFreeTier
 	}
 	// total Length * costs + attribute count * costs
-	r := sdk.NewIntFromUint64(g.eventAttributeLengthCost).Mul(sdk.NewIntFromUint64(uint64(storedBytes))).
-		Add(sdk.NewIntFromUint64(g.eventAttributeCountCost).Mul(sdk.NewIntFromUint64(uint64(len(evts)))))
+	r := sdk.NewIntFromUint64(g.eventAttributeDataCost).Mul(sdk.NewIntFromUint64(uint64(storedBytes))).
+		Add(sdk.NewIntFromUint64(g.eventPerAttributeCost).Mul(sdk.NewIntFromUint64(uint64(len(evts)))))
 	if !r.IsUint64() {
 		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
 	}
