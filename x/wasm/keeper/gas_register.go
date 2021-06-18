@@ -28,7 +28,26 @@ const (
 	DefaultEventAttributeDataFreeTier = 100
 )
 
-type GasRegister struct {
+// GasRegister abstract source for gas costs
+type GasRegister interface {
+	// NewContractInstanceCosts costs to crate a new contract instance from code
+	NewContractInstanceCosts(pinned bool, msgLen int, labelLength int) sdk.Gas
+	// CompileCosts costs to persist and "compile" a new wasm contract
+	CompileCosts(byteLength int, sourceCodeUrlLen int, builderLen int) sdk.Gas
+	// InstantiateContractCosts costs when interacting with a wasm contract
+	InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas
+	// ReplyCosts costs to to handle a message reply
+	ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas
+	// EventCosts costs to persist an event
+	EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas
+	// ToWasmVMGas converts from sdk gas to wasmvm gas
+	ToWasmVMGas(source sdk.Gas) uint64
+	// FromWasmVMGas converts from wasmvm gas to sdk gas
+	FromWasmVMGas(source uint64) sdk.Gas
+}
+
+// WasmGasRegister implements GasRegister
+type WasmGasRegister struct {
 	instanceCost  sdk.Gas
 	compileCost   sdk.Gas
 	gasMultiplier sdk.Gas
@@ -38,8 +57,9 @@ type GasRegister struct {
 	eventAttributeDataFreeTier int
 }
 
-func DefaultGasRegister() GasRegister {
-	return GasRegister{
+// NewDefaultWasmGasRegister creates instance with default values
+func NewDefaultWasmGasRegister() WasmGasRegister {
+	return WasmGasRegister{
 		instanceCost:               DefaultInstanceCost,
 		compileCost:                DefaultCompileCost,
 		gasMultiplier:              DefaultGasMultiplier,
@@ -48,15 +68,17 @@ func DefaultGasRegister() GasRegister {
 		eventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 	}
 }
-func NewGasRegister(
+
+// NewWasmGasRegister constructor
+func NewWasmGasRegister(
 	instanceCost sdk.Gas,
 	compileCost sdk.Gas,
 	gasMultiplier sdk.Gas,
 	eventAttributeCountCost sdk.Gas,
 	eventAttributeLengthCost sdk.Gas,
 	freeTierAttributeData int,
-) GasRegister {
-	return GasRegister{
+) WasmGasRegister {
+	return WasmGasRegister{
 		instanceCost:               instanceCost,
 		compileCost:                compileCost,
 		gasMultiplier:              gasMultiplier,
@@ -66,22 +88,22 @@ func NewGasRegister(
 	}
 }
 
-func (g GasRegister) NewContractInstanceCost(pinned bool, msgLen int, labelLength int) storetypes.Gas {
-	return g.InstantiateContractCost(pinned, msgLen)
+func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int, labelLength int) storetypes.Gas {
+	return g.InstantiateContractCosts(pinned, msgLen)
 }
 
-func (g GasRegister) CompileCost(byteLength int, sourceCodeUrlLen int, builderLen int) storetypes.Gas {
+func (g WasmGasRegister) CompileCosts(byteLength int, sourceCodeUrlLen int, builderLen int) storetypes.Gas {
 	return g.compileCost * uint64(byteLength)
 }
 
-func (g GasRegister) InstantiateContractCost(pinned bool, msgLen int) sdk.Gas {
+func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {
 	if pinned {
 		return 0
 	}
 	return g.instanceCost
 }
 
-func (g GasRegister) ReplyCost(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
+func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
 	var eventGas sdk.Gas
 	msgLen := len(reply.Result.Err)
 	if reply.Result.Ok != nil {
@@ -91,10 +113,10 @@ func (g GasRegister) ReplyCost(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
 			eventGas += g.EventCosts(e.Attributes)
 		}
 	}
-	return eventGas + g.InstantiateContractCost(pinned, msgLen)
+	return eventGas + g.InstantiateContractCosts(pinned, msgLen)
 }
 
-func (g GasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
+func (g WasmGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 	if len(evts) == 0 {
 		return 0
 	}
@@ -118,11 +140,11 @@ func (g GasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 }
 
 // ToWasmVMGas convert to wasmVM contract runtime gas unit
-func (g GasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
+func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	return source * g.gasMultiplier
 }
 
 // FromWasmVMGas converts to SDK gas unit
-func (g GasRegister) FromWasmVMGas(source uint64) sdk.Gas {
+func (g WasmGasRegister) FromWasmVMGas(source uint64) sdk.Gas {
 	return source / g.gasMultiplier
 }

@@ -112,7 +112,7 @@ func NewKeeper(
 		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		paramSpace:       paramSpace,
-		gasRegister:      DefaultGasRegister(),
+		gasRegister:      NewDefaultWasmGasRegister(),
 	}
 
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
@@ -161,7 +161,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCost(len(wasmCode), len(source), len(builder)), "Compiling WASM Bytecode")
+	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode), len(source), len(builder)), "Compiling WASM Bytecode")
 
 	codeHash, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
@@ -209,8 +209,8 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 
-	instanceCost := k.gasRegister.NewContractInstanceCost(k.IsPinnedCode(ctx, codeID), len(initMsg), len(label))
-	ctx.GasMeter().ConsumeGas(instanceCost, "Loading CosmWasm module: instantiate")
+	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(ctx, codeID), len(initMsg), len(label))
+	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
 
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
@@ -306,8 +306,8 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, err
 	}
 
-	executeCost := k.gasRegister.InstantiateContractCost(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
-	ctx.GasMeter().ConsumeGas(executeCost, "Loading CosmWasm module: execute")
+	executeCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
+	ctx.GasMeter().ConsumeGas(executeCosts, "Loading CosmWasm module: execute")
 
 	// add more funds
 	if !coins.IsZero() {
@@ -338,8 +338,8 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 
 func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
-	migrateSetupCost := k.gasRegister.InstantiateContractCost(k.IsPinnedCode(ctx, newCodeID), len(msg))
-	ctx.GasMeter().ConsumeGas(migrateSetupCost, "Loading CosmWasm module: migrate")
+	migrateSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, newCodeID), len(msg))
+	ctx.GasMeter().ConsumeGas(migrateSetupCosts, "Loading CosmWasm module: migrate")
 
 	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
@@ -410,8 +410,8 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 		return nil, err
 	}
 
-	sudoSetupCost := k.gasRegister.InstantiateContractCost(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
-	ctx.GasMeter().ConsumeGas(sudoSetupCost, "Loading CosmWasm module: sudo")
+	sudoSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
+	ctx.GasMeter().ConsumeGas(sudoSetupCosts, "Loading CosmWasm module: sudo")
 
 	env := types.NewEnv(ctx, contractAddress)
 
@@ -440,8 +440,8 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, err
 	}
 
-	replyCost := k.gasRegister.ReplyCost(k.IsPinnedCode(ctx, contractInfo.CodeID), reply)
-	ctx.GasMeter().ConsumeGas(replyCost, "Loading CosmWasm module: reply")
+	replyCosts := k.gasRegister.ReplyCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), reply)
+	ctx.GasMeter().ConsumeGas(replyCosts, "Loading CosmWasm module: reply")
 
 	env := types.NewEnv(ctx, contractAddress)
 
@@ -549,7 +549,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 		return nil, err
 	}
 
-	smartQuerySetupCosts := k.gasRegister.InstantiateContractCost(k.IsPinnedCode(ctx, contractInfo.CodeID), len(req))
+	smartQuerySetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(req))
 	ctx.GasMeter().ConsumeGas(smartQuerySetupCosts, "Loading CosmWasm module: query")
 
 	// prepare querier
