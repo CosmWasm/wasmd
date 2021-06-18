@@ -7,8 +7,8 @@ import (
 
 // MockGasRegister mock that implements keeper.GasRegister
 type MockGasRegister struct {
-	NewContractInstanceCostFn func(pinned bool, msgLen int, labelLength int) sdk.Gas
-	CompileCostFn             func(byteLength int, sourceCodeUrlLen int, builderLen int) sdk.Gas
+	CompileCostFn             func(byteLength int) sdk.Gas
+	NewContractInstanceCostFn func(pinned bool, msgLen int) sdk.Gas
 	InstantiateContractCostFn func(pinned bool, msgLen int) sdk.Gas
 	ReplyCostFn               func(pinned bool, reply wasmvmtypes.Reply) sdk.Gas
 	EventCostsFn              func(evts []wasmvmtypes.EventAttribute) sdk.Gas
@@ -16,18 +16,18 @@ type MockGasRegister struct {
 	FromWasmVMGasFn           func(source uint64) sdk.Gas
 }
 
-func (m MockGasRegister) NewContractInstanceCosts(pinned bool, msgLen int, labelLength int) sdk.Gas {
+func (m MockGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) sdk.Gas {
 	if m.NewContractInstanceCostFn == nil {
 		panic("not expected to be called")
 	}
-	return m.NewContractInstanceCostFn(pinned, msgLen, labelLength)
+	return m.NewContractInstanceCostFn(pinned, msgLen)
 }
 
-func (m MockGasRegister) CompileCosts(byteLength int, sourceCodeUrlLen int, builderLen int) sdk.Gas {
+func (m MockGasRegister) CompileCosts(byteLength int) sdk.Gas {
 	if m.CompileCostFn == nil {
 		panic("not expected to be called")
 	}
-	return m.CompileCostFn(byteLength, sourceCodeUrlLen, builderLen)
+	return m.CompileCostFn(byteLength)
 }
 
 func (m MockGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {

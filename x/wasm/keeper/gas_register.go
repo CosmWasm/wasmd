@@ -31,9 +31,9 @@ const (
 // GasRegister abstract source for gas costs
 type GasRegister interface {
 	// NewContractInstanceCosts costs to crate a new contract instance from code
-	NewContractInstanceCosts(pinned bool, msgLen int, labelLength int) sdk.Gas
+	NewContractInstanceCosts(pinned bool, msgLen int) sdk.Gas
 	// CompileCosts costs to persist and "compile" a new wasm contract
-	CompileCosts(byteLength int, sourceCodeUrlLen int, builderLen int) sdk.Gas
+	CompileCosts(byteLength int) sdk.Gas
 	// InstantiateContractCosts costs when interacting with a wasm contract
 	InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas
 	// ReplyCosts costs to to handle a message reply
@@ -46,61 +46,59 @@ type GasRegister interface {
 	FromWasmVMGas(source uint64) sdk.Gas
 }
 
-// WasmGasRegister implements GasRegister
-type WasmGasRegister struct {
-	instanceCost  sdk.Gas
-	compileCost   sdk.Gas
-	gasMultiplier sdk.Gas
+// WasmGasRegisterConfig config type
+type WasmGasRegisterConfig struct {
+	InstanceCost  sdk.Gas
+	CompileCost   sdk.Gas
+	GasMultiplier sdk.Gas
 
-	eventPerAttributeCost      sdk.Gas
-	eventAttributeDataCost     sdk.Gas
-	eventAttributeDataFreeTier int
+	EventPerAttributeCost      sdk.Gas
+	EventAttributeDataCost     sdk.Gas
+	EventAttributeDataFreeTier int
+}
+
+// DefaultGasRegisterConfig default values
+func DefaultGasRegisterConfig() WasmGasRegisterConfig {
+	return WasmGasRegisterConfig{
+		InstanceCost:               DefaultInstanceCost,
+		CompileCost:                DefaultCompileCost,
+		GasMultiplier:              DefaultGasMultiplier,
+		EventPerAttributeCost:      DefaultPerAttributeCost,
+		EventAttributeDataCost:     DefaultEventAttributeDataCost,
+		EventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
+	}
+}
+
+// WasmGasRegister implements GasRegister interface
+type WasmGasRegister struct {
+	c WasmGasRegisterConfig
 }
 
 // NewDefaultWasmGasRegister creates instance with default values
 func NewDefaultWasmGasRegister() WasmGasRegister {
-	return WasmGasRegister{
-		instanceCost:               DefaultInstanceCost,
-		compileCost:                DefaultCompileCost,
-		gasMultiplier:              DefaultGasMultiplier,
-		eventPerAttributeCost:      DefaultPerAttributeCost,
-		eventAttributeDataCost:     DefaultEventAttributeDataCost,
-		eventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
-	}
+	return NewWasmGasRegister(DefaultGasRegisterConfig())
 }
 
 // NewWasmGasRegister constructor
-func NewWasmGasRegister(
-	instanceCost sdk.Gas,
-	compileCost sdk.Gas,
-	gasMultiplier sdk.Gas,
-	eventAttributeCountCost sdk.Gas,
-	eventAttributeLengthCost sdk.Gas,
-	freeTierAttributeData int,
-) WasmGasRegister {
+func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	return WasmGasRegister{
-		instanceCost:               instanceCost,
-		compileCost:                compileCost,
-		gasMultiplier:              gasMultiplier,
-		eventPerAttributeCost:      eventAttributeCountCost,
-		eventAttributeDataCost:     eventAttributeLengthCost,
-		eventAttributeDataFreeTier: freeTierAttributeData,
+		c: c,
 	}
 }
 
-func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int, labelLength int) storetypes.Gas {
+func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas {
 	return g.InstantiateContractCosts(pinned, msgLen)
 }
 
-func (g WasmGasRegister) CompileCosts(byteLength int, sourceCodeUrlLen int, builderLen int) storetypes.Gas {
-	return g.compileCost * uint64(byteLength)
+func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
+	return g.c.CompileCost * uint64(byteLength)
 }
 
 func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {
 	if pinned {
 		return 0
 	}
-	return g.instanceCost
+	return g.c.InstanceCost
 }
 
 func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
@@ -108,10 +106,13 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Ga
 	msgLen := len(reply.Result.Err)
 	if reply.Result.Ok != nil {
 		msgLen += len(reply.Result.Ok.Data)
+		var attrs []wasmvmtypes.EventAttribute
 		for _, e := range reply.Result.Ok.Events {
 			msgLen += len(e.Type)
-			eventGas += g.EventCosts(e.Attributes)
+			attrs = append(e.Attributes)
 		}
+		// apply free tier on the whole set not per event
+		eventGas += g.EventCosts(attrs)
 	}
 	return eventGas + g.InstantiateContractCosts(pinned, msgLen)
 }
@@ -125,14 +126,14 @@ func (g WasmGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 		storedBytes += len(l.Key) + len(l.Value)
 	}
 	// apply free tier
-	if storedBytes <= g.eventAttributeDataFreeTier {
+	if storedBytes <= g.c.EventAttributeDataFreeTier {
 		storedBytes = 0
 	} else {
-		storedBytes -= g.eventAttributeDataFreeTier
+		storedBytes -= g.c.EventAttributeDataFreeTier
 	}
 	// total Length * costs + attribute count * costs
-	r := sdk.NewIntFromUint64(g.eventAttributeDataCost).Mul(sdk.NewIntFromUint64(uint64(storedBytes))).
-		Add(sdk.NewIntFromUint64(g.eventPerAttributeCost).Mul(sdk.NewIntFromUint64(uint64(len(evts)))))
+	r := sdk.NewIntFromUint64(g.c.EventAttributeDataCost).Mul(sdk.NewIntFromUint64(uint64(storedBytes))).
+		Add(sdk.NewIntFromUint64(g.c.EventPerAttributeCost).Mul(sdk.NewIntFromUint64(uint64(len(evts)))))
 	if !r.IsUint64() {
 		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
 	}
@@ -141,10 +142,10 @@ func (g WasmGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 
 // ToWasmVMGas convert to wasmVM contract runtime gas unit
 func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
-	return source * g.gasMultiplier
+	return source * g.c.GasMultiplier
 }
 
 // FromWasmVMGas converts to SDK gas unit
 func (g WasmGasRegister) FromWasmVMGas(source uint64) sdk.Gas {
-	return source / g.gasMultiplier
+	return source / g.c.GasMultiplier
 }
