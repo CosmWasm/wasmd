@@ -19,17 +19,17 @@ const (
 	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 	DefaultInstanceCost uint64 = 40_000
-	// DefaultCompileCost is how much SDK gas we charge *per byte* for compiling WASM code.
+	// DefaultCompileCost is how much SDK gas is charged *per byte* for compiling WASM code.
 	DefaultCompileCost uint64 = 2
-	// DefaultEventAttributeDataCost is how much SDK gas we charge *per byte* for attribute data in events.
+	// DefaultEventAttributeDataCost is how much SDK gas is charged *per byte* for attribute data in events.
 	// This is used with len(key) + len(value)
 	DefaultEventAttributeDataCost uint64 = 1
-	// DefaultContractMessageDataCost is how much SDK gas we charge *per byte* of the message that goes to the contract
+	// DefaultContractMessageDataCost is how much SDK gas is charged *per byte* of the message that goes to the contract
 	// This is used with len(msg)
 	DefaultContractMessageDataCost uint64 = 1
 	// DefaultPerAttributeCost is how much SDK gas we charge per attribute count.
 	DefaultPerAttributeCost uint64 = 10
-	// DefaultEventAttributeDataFreeTier number of bytes of attribute data we do not charge.
+	// DefaultEventAttributeDataFreeTier number of bytes of total attribute data we do not charge.
 	DefaultEventAttributeDataFreeTier = 100
 )
 
@@ -53,14 +53,24 @@ type GasRegister interface {
 
 // WasmGasRegisterConfig config type
 type WasmGasRegisterConfig struct {
-	InstanceCost  sdk.Gas
-	CompileCost   sdk.Gas
+	// InstanceCost costs when interacting with a wasm contract
+	InstanceCost sdk.Gas
+	// CompileCosts costs to persist and "compile" a new wasm contract
+	CompileCost sdk.Gas
+	// GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
+	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 	GasMultiplier sdk.Gas
-
-	EventPerAttributeCost      sdk.Gas
-	EventAttributeDataCost     sdk.Gas
+	// EventPerAttributeCost is how much SDK gas is charged *per byte* for attribute data in events.
+	// This is used with len(key) + len(value)
+	EventPerAttributeCost sdk.Gas
+	// EventAttributeDataCost is how much SDK gas is charged *per byte* for attribute data in events.
+	// This is used with len(key) + len(value)
+	EventAttributeDataCost sdk.Gas
+	// EventAttributeDataFreeTier number of bytes of total attribute data that is free of charge
 	EventAttributeDataFreeTier int
-	ContractMessageDataCost    sdk.Gas
+	// ContractMessageDataCost SDK gas charged *per byte* of the message that goes to the contract
+	// This is used with len(msg)
+	ContractMessageDataCost sdk.Gas
 }
 
 // DefaultGasRegisterConfig default values
@@ -96,10 +106,12 @@ func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	}
 }
 
+// NewContractInstanceCosts costs to crate a new contract instance from code
 func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas {
 	return g.InstantiateContractCosts(pinned, msgLen)
 }
 
+// CompileCosts costs to persist and "compile" a new wasm contract
 func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 	if byteLength < 0 {
 		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
@@ -107,6 +119,7 @@ func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 	return g.c.CompileCost * uint64(byteLength)
 }
 
+// InstantiateContractCosts costs when interacting with a wasm contract
 func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {
 	if msgLen < 0 {
 		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
@@ -118,6 +131,7 @@ func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.G
 	return g.c.InstanceCost + dataCosts
 }
 
+// ReplyCosts costs to to handle a message reply
 func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
 	var eventGas sdk.Gas
 	msgLen := len(reply.Result.Err)
@@ -134,6 +148,7 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Ga
 	return eventGas + g.InstantiateContractCosts(pinned, msgLen)
 }
 
+// EventCosts costs to persist an event
 func (g WasmGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute) sdk.Gas {
 	if len(evts) == 0 {
 		return 0
