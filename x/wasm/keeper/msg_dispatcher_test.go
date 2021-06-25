@@ -166,7 +166,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte("myReplyData:2"),
 			expCommits: []bool{false, false},
 		},
-		"multiple msg - last reply with non nil": {
+		"multiple msg - last non nil reply to overwrite responose": {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: &mockReplyer{
 				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
@@ -184,7 +184,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte("myReplyData:1"),
 			expCommits: []bool{false, false},
 		},
-		"multiple msg - last reply can be empty to overwrite": {
+		"multiple msg - empty reply can overwrite result": {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyError}, {ID: 2, ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: &mockReplyer{
 				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
@@ -199,7 +199,7 @@ func TestDispatchSubmessages(t *testing.T) {
 					return nil, nil, errors.New("my error")
 				},
 			},
-			expData:    []byte("myReplyData:1"),
+			expData:    []byte{},
 			expCommits: []bool{false, false},
 		},
 		"empty replyOn rejected": {
