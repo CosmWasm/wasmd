@@ -168,7 +168,7 @@ func TestParamsUnmarshalJson(t *testing.T) {
 		"defaults": {
 			src: `{"code_upload_access": {"permission": "Everybody"},
 				"instantiate_default_permission": "Everybody",
-				"max_wasm_code_size": 614400}`,
+				"max_wasm_code_size": 1228800}`,
 			exp: DefaultParams(),
 		},
 	}
