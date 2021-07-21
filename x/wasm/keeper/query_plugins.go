@@ -240,10 +240,9 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 						PortID:    got.Counterparty.PortId,
 						ChannelID: got.Counterparty.ChannelId,
 					},
-					Order:               got.Ordering.String(),
-					Version:             got.Version,
-					CounterpartyVersion: "",
-					ConnectionID:        got.ConnectionHops[0],
+					Order:        got.Ordering.String(),
+					Version:      got.Version,
+					ConnectionID: got.ConnectionHops[0],
 				}
 			}
 			res := wasmvmtypes.ChannelResponse{
