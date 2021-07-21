@@ -3,8 +3,8 @@ module github.com/CosmWasm/wasmd
 go 1.15
 
 require (
-	github.com/CosmWasm/wasmvm v0.14.0
-	github.com/cosmos/cosmos-sdk v0.42.6
+	github.com/CosmWasm/wasmvm v0.15.1
+	github.com/cosmos/cosmos-sdk v0.42.7
 	github.com/cosmos/iavl v0.16.0
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3
