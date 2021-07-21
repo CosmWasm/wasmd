@@ -17,19 +17,19 @@ func TestHasWasmModuleEvent(t *testing.T) {
 	}{
 		"event found": {
 			srcEvents: []sdk.Event{
-				sdk.NewEvent(types.WasmModuleEventType, sdk.NewAttribute("contract_address", myContractAddr.String())),
+				sdk.NewEvent(types.WasmModuleEventType, sdk.NewAttribute("_contract_address", myContractAddr.String())),
 			},
 			exp: true,
 		},
 		"different event: not found": {
 			srcEvents: []sdk.Event{
-				sdk.NewEvent(types.CustomContractEventPrefix, sdk.NewAttribute("contract_address", myContractAddr.String())),
+				sdk.NewEvent(types.CustomContractEventPrefix, sdk.NewAttribute("_contract_address", myContractAddr.String())),
 			},
 			exp: false,
 		},
 		"event with different address: not found": {
 			srcEvents: []sdk.Event{
-				sdk.NewEvent(types.WasmModuleEventType, sdk.NewAttribute("contract_address", RandomBech32AccountAddress(t))),
+				sdk.NewEvent(types.WasmModuleEventType, sdk.NewAttribute("_contract_address", RandomBech32AccountAddress(t))),
 			},
 			exp: false,
 		},
@@ -62,7 +62,7 @@ func TestNewCustomEvents(t *testing.T) {
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("contract_address", myContract.String()),
+				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"))},
 		},
 		"multiple attributes": {
@@ -72,7 +72,7 @@ func TestNewCustomEvents(t *testing.T) {
 					{Key: "myOtherKey", Value: "myOtherVal"}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("contract_address", myContract.String()),
+				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"),
 				sdk.NewAttribute("myOtherKey", "myOtherVal"))},
 		},
@@ -85,10 +85,10 @@ func TestNewCustomEvents(t *testing.T) {
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "otherKey", Value: "otherVal"}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("contract_address", myContract.String()),
+				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal")),
 				sdk.NewEvent("wasm-bar",
-					sdk.NewAttribute("contract_address", myContract.String()),
+					sdk.NewAttribute("_contract_address", myContract.String()),
 					sdk.NewAttribute("otherKey", "otherVal"))},
 		},
 		"without attributes": {
@@ -96,7 +96,7 @@ func TestNewCustomEvents(t *testing.T) {
 				Type: "foo",
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("contract_address", myContract.String()))},
+				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
 		"min length not reached": {
 			src: wasmvmtypes.Events{{
@@ -104,13 +104,13 @@ func TestNewCustomEvents(t *testing.T) {
 			}},
 			exp: sdk.Events{},
 		},
-		"overwrite contract_address": {
+		"overwrite _contract_address": {
 			src: wasmvmtypes.Events{{
 				Type:       "foo",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "contract_address", Value: RandomBech32AccountAddress(t)}},
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("contract_address", myContract.String()))},
+				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
 	}
 	for name, spec := range specs {
@@ -130,25 +130,25 @@ func TestNewWasmModuleEvent(t *testing.T) {
 		"all good": {
 			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
-				sdk.NewAttribute("contract_address", myContract.String()),
+				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"))},
 		},
 		"multiple attributes": {
 			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"},
 				{Key: "myOtherKey", Value: "myOtherVal"}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
-				sdk.NewAttribute("contract_address", myContract.String()),
+				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"),
 				sdk.NewAttribute("myOtherKey", "myOtherVal"))},
 		},
 		"without attributes": {
 			exp: sdk.Events{sdk.NewEvent("wasm",
-				sdk.NewAttribute("contract_address", myContract.String()))},
+				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
-		"overwrite contract_address": {
-			src: []wasmvmtypes.EventAttribute{{Key: "contract_address", Value: RandomBech32AccountAddress(t)}},
+		"overwrite _contract_address": {
+			src: []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
-				sdk.NewAttribute("contract_address", myContract.String()))},
+				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
 	}
 	for name, spec := range specs {

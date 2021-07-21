@@ -50,7 +50,7 @@ func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, c
 	attrs := []sdk.Attribute{sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String())}
 	// append attributes from wasm to the sdk.Event
 	for _, l := range customAttributes {
-		// and reserve the contract_address key for our use (not contract)
+		// and reserve the _contract_address key for our use (not contract)
 		if l.Key != types.AttributeKeyContractAddr {
 			attrs = append(attrs, sdk.NewAttribute(l.Key, l.Value))
 		}
