@@ -654,7 +654,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + 10,
+			expContractGas: myContractGas + 46, // cost for custom events
 			contractResp: &wasmvmtypes.IBCBasicResponse{
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 				Events: []wasmvmtypes.Event{{
