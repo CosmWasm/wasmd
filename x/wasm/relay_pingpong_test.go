@@ -282,14 +282,13 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, ms
 // OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	// parse received data and store
-	packetAck := msg.Ack
 	var sentBall hit
-	if err := json.Unmarshal(packetAck.OriginalPacket.Data, &sentBall); err != nil {
+	if err := json.Unmarshal(msg.OriginalPacket.Data, &sentBall); err != nil {
 		return nil, 0, err
 	}
 
 	var ack hitAcknowledgement
-	if err := json.Unmarshal(packetAck.Acknowledgement.Data, &ack); err != nil {
+	if err := json.Unmarshal(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
 	if ack.Success != nil {

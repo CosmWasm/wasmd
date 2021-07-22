@@ -552,9 +552,9 @@ func TestOnAckPacket(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 
-			myAck := wasmvmtypes.IBCAcknowledgementWithPacket{Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: []byte("myAck")}}
+			myAck := wasmvmtypes.IBCPacketAckMsg{Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: []byte("myAck")}}
 			m.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-				assert.Equal(t, myAck, msg.Ack)
+				assert.Equal(t, myAck, msg)
 				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
 			}
 

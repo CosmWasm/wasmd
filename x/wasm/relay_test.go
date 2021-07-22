@@ -434,22 +434,21 @@ func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmty
 }
 
 func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-	packetAck := msg.Ack
 
 	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.OriginalPacket.Data, &data); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.Acknowledgement.Data, &ack); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
 
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	ibcPacket := toIBCPacket(packetAck.OriginalPacket)
+	ibcPacket := toIBCPacket(msg.OriginalPacket)
 	err := c.chain.TestSupport().TransferKeeper().OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
