@@ -210,7 +210,7 @@ func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes
 		return nil, sdkerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCAcknowledgementWithPacket{
+	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
 		Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
 		OriginalPacket:  newIBCPacket(packet),
 	})

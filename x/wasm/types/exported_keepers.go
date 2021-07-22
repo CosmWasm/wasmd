@@ -84,7 +84,7 @@ type IBCContractKeeper interface {
 	OnAckPacket(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		acknowledgement wasmvmtypes.IBCAcknowledgementWithPacket,
+		acknowledgement wasmvmtypes.IBCPacketAckMsg,
 	) error
 	OnTimeoutPacket(
 		ctx sdk.Context,
