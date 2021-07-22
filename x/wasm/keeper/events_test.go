@@ -84,12 +84,14 @@ func TestNewCustomEvents(t *testing.T) {
 				Type:       "bar",
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "otherKey", Value: "otherVal"}},
 			}},
-			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("_contract_address", myContract.String()),
-				sdk.NewAttribute("myKey", "myVal")),
+			exp: sdk.Events{
+				sdk.NewEvent("wasm-foo",
+					sdk.NewAttribute("_contract_address", myContract.String()),
+					sdk.NewAttribute("myKey", "myVal")),
 				sdk.NewEvent("wasm-bar",
 					sdk.NewAttribute("_contract_address", myContract.String()),
-					sdk.NewAttribute("otherKey", "otherVal"))},
+					sdk.NewAttribute("otherKey", "otherVal")),
+			},
 		},
 		"without attributes": {
 			src: wasmvmtypes.Events{{
@@ -111,6 +113,30 @@ func TestNewCustomEvents(t *testing.T) {
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()))},
+		},
+		"ignore reserved prefix": {
+			src: wasmvmtypes.Events{{
+				Type: "wasm",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "_reserved", Value: "is skipped"},
+					{Key: "normal", Value: "is used"}},
+			}},
+			exp: sdk.Events{sdk.NewEvent("wasm-wasm",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("normal", "is used"))},
+		},
+		"ignore empty attributes": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+					{Key: "key", Value: ""},
+					{Key: "", Value: "value"},
+				},
+			}},
+			exp: sdk.Events{sdk.NewEvent("wasm-boom",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("some", "data"))},
 		},
 	}
 	for name, spec := range specs {

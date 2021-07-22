@@ -5,6 +5,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"strings"
 )
 
 // newWasmModuleEvent creates with wasm module event for interacting with the given contract. Adds custom attributes
@@ -50,8 +51,9 @@ func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, c
 	attrs := []sdk.Attribute{sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String())}
 	// append attributes from wasm to the sdk.Event
 	for _, l := range customAttributes {
-		// and reserve the _contract_address key for our use (not contract)
-		if l.Key != types.AttributeKeyContractAddr {
+		// FIXME: do we want to error here on invalid events
+		// and reserve all _* keys for our use (not contract)
+		if len(l.Key) > 0 && len(l.Value) > 0 && !strings.HasPrefix(l.Key, types.AttributeReservedPrefix) {
 			attrs = append(attrs, sdk.NewAttribute(l.Key, l.Value))
 		}
 	}
