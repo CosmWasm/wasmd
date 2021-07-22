@@ -159,25 +159,9 @@ func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmt
 	}, 0, nil
 }
 
-func getOpenChannel(msg wasmvmtypes.IBCChannelOpenMsg) wasmvmtypes.IBCChannel {
-	if msg.OpenTry != nil {
-		return msg.OpenTry.Channel
-	} else {
-		return msg.OpenInit.Channel
-	}
-}
-
-func getConnectChannel(msg wasmvmtypes.IBCChannelConnectMsg) wasmvmtypes.IBCChannel {
-	if msg.OpenAck != nil {
-		return msg.OpenAck.Channel
-	} else {
-		return msg.OpenConfirm.Channel
-	}
-}
-
 // OnIBCChannelOpen ensures to accept only configured version
 func (p player) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (uint64, error) {
-	if getOpenChannel(msg).Version != p.actor {
+	if msg.GetChannel().Version != p.actor {
 		return 0, nil
 	}
 	return 0, nil
@@ -185,7 +169,7 @@ func (p player) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg 
 
 // OnIBCChannelConnect persists connection endpoints
 func (p player) IBCChannelConnect(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-	p.storeEndpoint(store, getConnectChannel(msg))
+	p.storeEndpoint(store, msg.GetChannel())
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 }
 
