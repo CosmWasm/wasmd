@@ -59,8 +59,7 @@ func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, c
 	attrs := []sdk.Attribute{sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String())}
 	// append attributes from wasm to the sdk.Event
 	for _, l := range customAttributes {
-		// FIXME: do we want to error here on invalid events
-		// and reserve all _* keys for our use (not contract)
+		// ensure key and value are non-empty (and trim what is there)
 		key := strings.TrimSpace(l.Key)
 		if len(key) == 0 {
 			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Empty attribute key. Value: %s", l.Value))
@@ -69,10 +68,11 @@ func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, c
 		if len(value) == 0 {
 			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Empty attribute value. Key: %s", key))
 		}
+		// and reserve all _* keys for our use (not contract)
 		if strings.HasPrefix(key, types.AttributeReservedPrefix) {
 			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Attribute starts with %s: %s", types.AttributeReservedPrefix, key))
 		}
-		attrs = append(attrs, sdk.NewAttribute(l.Key, l.Value))
+		attrs = append(attrs, sdk.NewAttribute(key, value))
 	}
 	return attrs, nil
 }

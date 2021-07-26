@@ -143,6 +143,44 @@ func TestNewCustomEvents(t *testing.T) {
 			}},
 			isError: true,
 		},
+		"error on whitespace type": {
+			src: wasmvmtypes.Events{{
+				Type: "    f   ",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+				},
+			}},
+			isError: true,
+		},
+		"error on only whitespace key": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+					{Key: "\n\n\n\n", Value: "value"},
+				},
+			}},
+			isError: true,
+		},
+		"error on only whitespace value": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+					{Key: "myKey", Value: " \t\r\n"},
+				},
+			}},
+			isError: true,
+		},
+		"strip out whitespace": {
+			src: wasmvmtypes.Events{{
+				Type:       "  food\n",
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "my Key", Value: "\tmyVal"}},
+			}},
+			exp: sdk.Events{sdk.NewEvent("wasm-food",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("my Key", "myVal"))},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
@@ -185,6 +223,20 @@ func TestNewWasmModuleEvent(t *testing.T) {
 		"error on _contract_address": {
 			src:     []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			isError: true,
+		},
+		"error on whitespace key": {
+			src:     []wasmvmtypes.EventAttribute{{Key: "  ", Value: "value"}},
+			isError: true,
+		},
+		"error on whitespace value": {
+			src:     []wasmvmtypes.EventAttribute{{Key: "key", Value: "\n\n\n"}},
+			isError: true,
+		},
+		"strip whitespace": {
+			src: []wasmvmtypes.EventAttribute{{Key: "   my-real-key    ", Value: "\n\n\nsome-val\t\t\t"}},
+			exp: sdk.Events{sdk.NewEvent("wasm",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("my-real-key", "some-val"))},
 		},
 	}
 	for name, spec := range specs {
