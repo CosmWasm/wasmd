@@ -142,7 +142,7 @@ type WasmerEngine interface {
 	IBCChannelOpen(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannel,
+		channel wasmvmtypes.IBCChannelOpenMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -156,7 +156,7 @@ type WasmerEngine interface {
 	IBCChannelConnect(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannel,
+		channel wasmvmtypes.IBCChannelConnectMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -170,7 +170,7 @@ type WasmerEngine interface {
 	IBCChannelClose(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannel,
+		channel wasmvmtypes.IBCChannelCloseMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -184,7 +184,7 @@ type WasmerEngine interface {
 	IBCPacketReceive(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		packet wasmvmtypes.IBCPacket,
+		packet wasmvmtypes.IBCPacketReceiveMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -199,7 +199,7 @@ type WasmerEngine interface {
 	IBCPacketAck(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		ack wasmvmtypes.IBCAcknowledgementWithPacket,
+		ack wasmvmtypes.IBCPacketAckMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
@@ -214,7 +214,7 @@ type WasmerEngine interface {
 	IBCPacketTimeout(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
-		packet wasmvmtypes.IBCPacket,
+		packet wasmvmtypes.IBCPacketTimeoutMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,

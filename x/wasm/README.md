@@ -52,7 +52,7 @@ was sent:
             "value": "1"
         },
         {
-            "key": "contract_address",
+            "key": "_contract_address",
             "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
         }
     ]
@@ -88,7 +88,7 @@ provide a initial balance in the same `MsgInstantiateContract`. We see the follo
 Finally, the contract itself can emit a "custom event" on Execute only (not on Init).
 There is one event per contract, so if one contract calls a second contract, you may receive
 one event for the original contract and one for the re-invoked contract. All attributes from the contract are passed through verbatim,
-and we add a `contract_address` attribute that contains the actual contract that emitted that event.
+and we add a `_contract_address` attribute that contains the actual contract that emitted that event.
 Here is an example from the escrow contract successfully releasing funds to the destination address:
 
 ```json
@@ -96,7 +96,7 @@ Here is an example from the escrow contract successfully releasing funds to the 
     "Type": "wasm",
     "Attr": [
         {
-            "key": "contract_address",
+            "key": "_contract_address",
             "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
         },
         {
@@ -147,7 +147,7 @@ was executed (which always appears, while 2 is optional and has information as r
         "Type": "wasm",
         "Attr": [
             {
-                "key": "contract_address",
+                "key": "_contract_address",
                 "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
             },
             {
@@ -193,7 +193,7 @@ was executed (which always appears, while 2 is optional and has information as r
                 "value": "cosmos1zm074khx32hqy20hlshlsd423n07pwlu9cpt37"
             },
             {
-                "key": "contract_address",
+                "key": "_contract_address",
                 "value": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
             }
         ]

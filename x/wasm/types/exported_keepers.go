@@ -59,16 +59,22 @@ type IBCContractKeeper interface {
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
 		channel wasmvmtypes.IBCChannel,
+		// this is unset on init, set on try
+		counterpartyVersion string,
 	) error
 	OnConnectChannel(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
 		channel wasmvmtypes.IBCChannel,
+		// this is set on ack, unset on confirm
+		counterpartyVersion string,
 	) error
 	OnCloseChannel(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
 		channel wasmvmtypes.IBCChannel,
+		// false for init, true for confirm
+		confirm bool,
 	) error
 	OnRecvPacket(
 		ctx sdk.Context,
@@ -78,7 +84,7 @@ type IBCContractKeeper interface {
 	OnAckPacket(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		acknowledgement wasmvmtypes.IBCAcknowledgementWithPacket,
+		acknowledgement wasmvmtypes.IBCPacketAckMsg,
 	) error
 	OnTimeoutPacket(
 		ctx sdk.Context,

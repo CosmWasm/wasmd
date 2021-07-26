@@ -232,7 +232,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
 		assert.Equal(t, event.Type, "wasm")
-		assert.Equal(t, event.Attributes[0].Key, "contract_address")
+		assert.Equal(t, event.Attributes[0].Key, "_contract_address")
 		eventAddr := event.Attributes[0].Value
 		assert.NotEqual(t, contract, eventAddr)
 

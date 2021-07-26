@@ -8,9 +8,16 @@ const (
 	EventTypePinCode          = "pin_code"
 	EventTypeUnpinCode        = "unpin_code"
 )
-const ( // event attributes
-	AttributeKeyContractAddr = "contract_address"
-	AttributeKeyCodeID       = "code_id"
-	AttributeKeySigner       = "signer"
-	AttributeResultDataHex   = "result"
+
+// event attributes returned from contract execution
+const (
+	AttributeReservedPrefix  = "_"
+	AttributeKeyContractAddr = "_contract_address"
+)
+
+// event attributes returned under "message" type - no prefix needed there
+const (
+	AttributeKeyCodeID     = "code_id"
+	AttributeKeySigner     = "signer"
+	AttributeResultDataHex = "result"
 )

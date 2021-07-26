@@ -181,7 +181,7 @@ func TestHandleInstantiate(t *testing.T) {
 	// this should be standard x/wasm init event, nothing from contract
 	require.Equal(t, 2, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "wasm", res.Events[0].Type)
-	assertAttribute(t, "contract_address", contractBech32Addr, res.Events[0].Attributes[0])
+	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[0].Attributes[0])
 	assert.Equal(t, "message", res.Events[1].Type)
 	assertAttribute(t, "module", "wasm", res.Events[1].Attributes[0])
 
@@ -239,7 +239,7 @@ func TestHandleExecute(t *testing.T) {
 	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "transfer", res.Events[0].Type)
 	assert.Equal(t, "wasm", res.Events[1].Type)
-	assertAttribute(t, "contract_address", contractBech32Addr, res.Events[1].Attributes[0])
+	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[1].Attributes[0])
 	assert.Equal(t, "message", res.Events[2].Type)
 	assertAttribute(t, "module", "wasm", res.Events[2].Attributes[0])
 
@@ -280,11 +280,11 @@ func TestHandleExecute(t *testing.T) {
 	assertAttribute(t, "amount", "5000denom", res.Events[0].Attributes[2])
 	// custom contract event attribute
 	assert.Equal(t, "wasm", res.Events[1].Type)
-	assertAttribute(t, "contract_address", contractBech32Addr, res.Events[1].Attributes[0])
+	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[1].Attributes[0])
 	assertAttribute(t, "action", "release", res.Events[1].Attributes[1])
 	// custom contract event
 	assert.Equal(t, "wasm-hackatom", res.Events[2].Type)
-	assertAttribute(t, "contract_address", contractBech32Addr, res.Events[1].Attributes[0])
+	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[1].Attributes[0])
 	assertAttribute(t, "action", "release", res.Events[1].Attributes[1])
 	// second transfer (this without conflicting message)
 	assert.Equal(t, "transfer", res.Events[3].Type)

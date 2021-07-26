@@ -1017,7 +1017,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 		{
 			"Type": "wasm",
 			"Attr": []dict{
-				{"contract_address": contractAddr},
+				{"_contract_address": contractAddr},
 				{"action": "burn"},
 				{"payout": myPayoutAddr},
 			},
