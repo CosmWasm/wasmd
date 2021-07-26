@@ -5,16 +5,20 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"strings"
 )
 
 // newWasmModuleEvent creates with wasm module event for interacting with the given contract. Adds custom attributes
 // to this event.
-func newWasmModuleEvent(customAttributes []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
-	attrs := contractSDKEventAttributes(customAttributes, contractAddr)
+func newWasmModuleEvent(customAttributes []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) (sdk.Events, error) {
+	attrs, err := contractSDKEventAttributes(customAttributes, contractAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	// each wasm invocation always returns one sdk.Event
-	return sdk.Events{sdk.NewEvent(types.WasmModuleEventType, attrs...)}
+	return sdk.Events{sdk.NewEvent(types.WasmModuleEventType, attrs...)}, nil
 }
 
 // returns true when a wasm module event was emitted for this contract already
@@ -34,28 +38,41 @@ func hasWasmModuleEvent(ctx sdk.Context, contractAddr sdk.AccAddress) bool {
 const eventTypeMinLength = 2
 
 // newCustomEvents converts wasmvm events from a contract response to sdk type events
-func newCustomEvents(evts wasmvmtypes.Events, contractAddr sdk.AccAddress) sdk.Events {
+func newCustomEvents(evts wasmvmtypes.Events, contractAddr sdk.AccAddress) (sdk.Events, error) {
 	events := make(sdk.Events, 0, len(evts))
 	for _, e := range evts {
-		if len(e.Type) <= eventTypeMinLength {
-			continue
+		typ := strings.TrimSpace(e.Type)
+		if len(typ) <= eventTypeMinLength {
+			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Event type too short: '%s'", typ))
 		}
-		attributes := contractSDKEventAttributes(e.Attributes, contractAddr)
-		events = append(events, sdk.NewEvent(fmt.Sprintf("%s%s", types.CustomContractEventPrefix, e.Type), attributes...))
+		attributes, err := contractSDKEventAttributes(e.Attributes, contractAddr)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, sdk.NewEvent(fmt.Sprintf("%s%s", types.CustomContractEventPrefix, typ), attributes...))
 	}
-	return events
+	return events, nil
 }
 
 // convert and add contract address issuing this event
-func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) []sdk.Attribute {
+func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) ([]sdk.Attribute, error) {
 	attrs := []sdk.Attribute{sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String())}
 	// append attributes from wasm to the sdk.Event
 	for _, l := range customAttributes {
 		// FIXME: do we want to error here on invalid events
 		// and reserve all _* keys for our use (not contract)
-		if len(l.Key) > 0 && len(l.Value) > 0 && !strings.HasPrefix(l.Key, types.AttributeReservedPrefix) {
-			attrs = append(attrs, sdk.NewAttribute(l.Key, l.Value))
+		key := strings.TrimSpace(l.Key)
+		if len(key) == 0 {
+			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Empty attribute key. Value: %s", l.Value))
 		}
+		value := strings.TrimSpace(l.Value)
+		if len(value) == 0 {
+			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Empty attribute value. Key: %s", key))
+		}
+		if strings.HasPrefix(key, types.AttributeReservedPrefix) {
+			return nil, sdkerrors.Wrap(types.ErrInvalidEvent, fmt.Sprintf("Attribute starts with %s: %s", types.AttributeReservedPrefix, key))
+		}
+		attrs = append(attrs, sdk.NewAttribute(l.Key, l.Value))
 	}
-	return attrs
+	return attrs, nil
 }
