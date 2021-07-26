@@ -771,10 +771,18 @@ func (k *Keeper) handleContractResponse(
 	ctx.GasMeter().ConsumeGas(attributeGasCost, "Custom contract event attributes")
 	// emit all events from this contract itself
 	if len(attrs) != 0 || !hasWasmModuleEvent(ctx, contractAddr) {
-		ctx.EventManager().EmitEvents(newWasmModuleEvent(attrs, contractAddr))
+		wasmEvents, err := newWasmModuleEvent(attrs, contractAddr)
+		if err != nil {
+			return nil, err
+		}
+		ctx.EventManager().EmitEvents(wasmEvents)
 	}
 	if len(evts) > 0 {
-		ctx.EventManager().EmitEvents(newCustomEvents(evts, contractAddr))
+		customEvents, err := newCustomEvents(evts, contractAddr)
+		if err != nil {
+			return nil, err
+		}
+		ctx.EventManager().EmitEvents(customEvents)
 	}
 	return k.wasmVMResponseHandler.Handle(ctx, contractAddr, ibcPort, msgs, data)
 }
