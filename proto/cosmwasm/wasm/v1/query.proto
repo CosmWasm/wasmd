@@ -175,8 +175,7 @@ message CodeInfoResponse {
   bytes data_hash = 3
       [ (gogoproto.casttype) =
             "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
-  string source = 4;
-  string builder = 5;
+  // 4 and 5 intentionally left empty (used in v1beta1)
 }
 
 // QueryCodeResponse is the response type for the Query/Code RPC method

@@ -59,11 +59,8 @@ message CodeInfo {
   bytes code_hash = 1;
   // Creator address who initially stored the code
   string creator = 2;
-  // Source is a valid absolute HTTPS URI to the contract's source code,
-  // optional
-  string source = 3;
-  // Builder is a valid docker image name with tag, optional
-  string builder = 4;
+  // 3 and 4 intentionally left empty (used in v1beta1)
+
   // InstantiateConfig access control to apply on contract creation, optional
   AccessConfig instantiate_config = 5 [ (gogoproto.nullable) = false ];
 }
