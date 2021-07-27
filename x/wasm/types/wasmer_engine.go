@@ -82,7 +82,7 @@ type WasmerEngine interface {
 	// replace it. This allows it to run a migration step if needed, or return an error if unable to migrate
 	// the given data.
 	//
-	// Msg has some data on how to perform the migration.
+	// MigrateMsg has some data on how to perform the migration.
 	Migrate(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
