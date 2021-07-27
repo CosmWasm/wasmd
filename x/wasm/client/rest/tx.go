@@ -29,7 +29,7 @@ type instantiateContractReq struct {
 	Label   string       `json:"label" yaml:"label"`
 	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
 	Admin   string       `json:"admin,omitempty" yaml:"admin"`
-	Msg     []byte       `json:"msg" yaml:"init_msg"`
+	Msg     []byte       `json:"msg" yaml:"msg"`
 }
 
 type executeContractReq struct {

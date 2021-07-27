@@ -592,7 +592,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds:
 - denom: foo
   amount: "1"
@@ -608,7 +608,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds: []
 `,
 		},
@@ -620,7 +620,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: ""
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds: []
 `,
 		},
@@ -725,7 +725,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"admin": "myAdminAddress",
 	"code_id": 1,
 	"funds": [{"denom": "ALX", "amount": "2"},{"denom": "BLX","amount": "3"}],
-	"init_msg": "e30=",
+	"msg": "e30=",
 	"label": "testing",
 	"run_as": "myRunAsAddress"
 }`,
@@ -748,7 +748,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"description": "bar",
 	"code_id": 1,
 	"contract": "myContractAddr",
-	"migrate_msg": "e30=",
+	"msg": "e30=",
 	"run_as": "myRunAsAddress"
 }`,
 			got: &MigrateContractProposal{},

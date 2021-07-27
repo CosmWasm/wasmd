@@ -19,7 +19,7 @@ type migrateContractReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 	Admin   string       `json:"admin,omitempty" yaml:"admin"`
 	CodeID  uint64       `json:"code_id" yaml:"code_id"`
-	Msg     []byte       `json:"msg,omitempty" yaml:"migrate_msg"`
+	Msg     []byte       `json:"msg,omitempty" yaml:"msg"`
 }
 
 type updateContractAdministrateReq struct {
