@@ -29,7 +29,7 @@ type instantiateContractReq struct {
 	Label   string       `json:"label" yaml:"label"`
 	Deposit sdk.Coins    `json:"deposit" yaml:"deposit"`
 	Admin   string       `json:"admin,omitempty" yaml:"admin"`
-	InitMsg []byte       `json:"init_msg" yaml:"init_msg"`
+	Msg     []byte       `json:"msg" yaml:"init_msg"`
 }
 
 type executeContractReq struct {
@@ -105,7 +105,7 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			CodeID: codeID,
 			Label:  req.Label,
 			Funds:  req.Deposit,
-			Msg:    req.InitMsg,
+			Msg:    req.Msg,
 			Admin:  req.Admin,
 		}
 

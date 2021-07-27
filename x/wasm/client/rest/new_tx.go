@@ -16,10 +16,10 @@ func registerNewTxRoutes(cliCtx client.Context, r *mux.Router) {
 }
 
 type migrateContractReq struct {
-	BaseReq    rest.BaseReq `json:"base_req" yaml:"base_req"`
-	Admin      string       `json:"admin,omitempty" yaml:"admin"`
-	CodeID     uint64       `json:"code_id" yaml:"code_id"`
-	MigrateMsg []byte       `json:"migrate_msg,omitempty" yaml:"migrate_msg"`
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+	Admin   string       `json:"admin,omitempty" yaml:"admin"`
+	CodeID  uint64       `json:"code_id" yaml:"code_id"`
+	Msg     []byte       `json:"msg,omitempty" yaml:"migrate_msg"`
 }
 
 type updateContractAdministrateReq struct {
@@ -73,7 +73,7 @@ func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			Sender:   req.BaseReq.From,
 			Contract: contractAddr,
 			CodeID:   req.CodeID,
-			Msg:      req.MigrateMsg,
+			Msg:      req.Msg,
 		}
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

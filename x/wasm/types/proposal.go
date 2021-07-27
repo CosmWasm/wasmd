@@ -215,7 +215,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Admin       string    `yaml:"admin"`
 		CodeID      uint64    `yaml:"code_id"`
 		Label       string    `yaml:"label"`
-		InitMsg     string    `yaml:"init_msg"`
+		Msg         string    `yaml:"msg"`
 		Funds       sdk.Coins `yaml:"funds"`
 	}{
 		Title:       p.Title,
@@ -224,7 +224,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Admin:       p.Admin,
 		CodeID:      p.CodeID,
 		Label:       p.Label,
-		InitMsg:     string(p.Msg),
+		Msg:         string(p.Msg),
 		Funds:       p.Funds,
 	}, nil
 }
@@ -280,14 +280,14 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 		Description string `yaml:"description"`
 		Contract    string `yaml:"contract"`
 		CodeID      uint64 `yaml:"code_id"`
-		MigrateMsg  string `yaml:"msg"`
+		Msg         string `yaml:"msg"`
 		RunAs       string `yaml:"run_as"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
 		Contract:    p.Contract,
 		CodeID:      p.CodeID,
-		MigrateMsg:  string(p.Msg),
+		Msg:         string(p.Msg),
 		RunAs:       p.RunAs,
 	}, nil
 }
