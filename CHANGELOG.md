@@ -11,6 +11,8 @@
 
 - Renamed InitMsg and MigrateMsg fields to Msg. This applies to protobuf Msg
   and Proposals, as well as REST and CLI [\#563](https://github.com/CosmWasm/wasmd/pull/563)
+- Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
+  [\#563](https://github.com/CosmWasm/wasmd/pull/563)
 
 ## [v0.17.0](https://github.com/CosmWasm/wasmd/tree/v0.17.0) (2021-05-26)
 

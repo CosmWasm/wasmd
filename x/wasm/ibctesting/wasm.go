@@ -104,7 +104,7 @@ func (c *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, respon
 
 	// TODO: what is the query?
 	res := c.App.Query(abci.RequestQuery{
-		Path: "/cosmwasm.wasm.v1beta1.Query/SmartContractState",
+		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})
 
