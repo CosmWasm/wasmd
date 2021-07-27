@@ -474,7 +474,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
-  Msg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       1foo,2bar
 `,
 		},
@@ -487,7 +487,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
-  Msg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       
 `,
 		},
@@ -500,7 +500,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       
   Code id:     1
   Label:       testing
-  Msg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       
 `,
 		},
@@ -512,7 +512,7 @@ func TestProposalStrings(t *testing.T) {
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
   Code id:     1
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
-  Msg   "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg          "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
 `,
 		},
 		"update admin": {
