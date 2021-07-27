@@ -2,6 +2,9 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Implemented Enhancements:**
+- Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
 
 ## [v0.17.0](https://github.com/CosmWasm/wasmd/tree/v0.17.0) (2021-05-26)

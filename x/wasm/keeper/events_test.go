@@ -123,7 +123,7 @@ func TestNewCustomEvents(t *testing.T) {
 			}},
 			isError: true,
 		},
-		"error on empty key": {
+		"error on empty value": {
 			src: wasmvmtypes.Events{{
 				Type: "boom",
 				Attributes: []wasmvmtypes.EventAttribute{
@@ -133,7 +133,7 @@ func TestNewCustomEvents(t *testing.T) {
 			}},
 			isError: true,
 		},
-		"error on empty value": {
+		"error on empty key": {
 			src: wasmvmtypes.Events{{
 				Type: "boom",
 				Attributes: []wasmvmtypes.EventAttribute{
