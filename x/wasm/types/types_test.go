@@ -102,29 +102,6 @@ func TestCodeInfoValidateBasic(t *testing.T) {
 			srcMutator: func(c *CodeInfo) { c.Creator = "invalid address" },
 			expError:   true,
 		},
-		"source empty": {
-			srcMutator: func(c *CodeInfo) { c.Source = "" },
-		},
-		"source not an url": {
-			srcMutator: func(c *CodeInfo) { c.Source = "invalid" },
-			expError:   true,
-		},
-		"source not an absolute url": {
-			srcMutator: func(c *CodeInfo) { c.Source = "../bar.txt" },
-			expError:   true,
-		},
-		"source not https schema url": {
-			srcMutator: func(c *CodeInfo) { c.Source = "http://example.com" },
-			expError:   true,
-		},
-		"builder tag exceeds limit": {
-			srcMutator: func(c *CodeInfo) { c.Builder = strings.Repeat("a", MaxBuildTagSize+1) },
-			expError:   true,
-		},
-		"builder tag does not match pattern": {
-			srcMutator: func(c *CodeInfo) { c.Builder = "invalid" },
-			expError:   true,
-		},
 		"Instantiate config invalid": {
 			srcMutator: func(c *CodeInfo) { c.InstantiateConfig = AccessConfig{} },
 			expError:   true,

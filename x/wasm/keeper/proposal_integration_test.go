@@ -34,8 +34,6 @@ func TestStoreCodeProposal(t *testing.T) {
 	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 		p.RunAs = myActorAddress
 		p.WASMByteCode = wasmCode
-		p.Source = "https://example.com/mysource"
-		p.Builder = "foo/bar:v0.0.0"
 	})
 
 	// when stored
@@ -51,8 +49,6 @@ func TestStoreCodeProposal(t *testing.T) {
 	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, myActorAddress, cInfo.Creator)
-	assert.Equal(t, "foo/bar:v0.0.0", cInfo.Builder)
-	assert.Equal(t, "https://example.com/mysource", cInfo.Source)
 
 	storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
 	require.NoError(t, err)

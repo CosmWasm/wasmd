@@ -30,7 +30,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -136,13 +136,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	reflectID, err := keepers.ContractKeeper.Create(ctx, uploader, reflectCode, "", "", nil)
+	reflectID, err := keepers.ContractKeeper.Create(ctx, uploader, reflectCode, nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
 	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	hackatomID, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, "", "", nil)
+	hackatomID, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
@@ -400,7 +400,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
@@ -468,7 +468,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	// upload code
 	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
