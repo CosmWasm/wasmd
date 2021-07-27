@@ -179,12 +179,12 @@ func TestEncoding(t *testing.T) {
 			},
 			output: []sdk.Msg{
 				&types.MsgInstantiateContract{
-					Sender:  addr1.String(),
-					CodeID:  7,
-					Label:   "myLabel",
-					InitMsg: jsonMsg,
-					Funds:   sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
-					Admin:   addr2.String(),
+					Sender: addr1.String(),
+					CodeID: 7,
+					Label:  "myLabel",
+					Msg:    jsonMsg,
+					Funds:  sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
+					Admin:  addr2.String(),
 				},
 			},
 		},
@@ -201,10 +201,10 @@ func TestEncoding(t *testing.T) {
 			},
 			output: []sdk.Msg{
 				&types.MsgMigrateContract{
-					Sender:     addr2.String(),
-					Contract:   addr1.String(),
-					CodeID:     12,
-					MigrateMsg: jsonMsg,
+					Sender:   addr2.String(),
+					Contract: addr1.String(),
+					CodeID:   12,
+					Msg:      jsonMsg,
 				},
 			},
 		},

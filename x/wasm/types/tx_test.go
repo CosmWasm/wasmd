@@ -149,25 +149,25 @@ func TestInstantiateContractValidation(t *testing.T) {
 		},
 		"correct minimal": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				CodeID:  firstCodeID,
-				Label:   "foo",
-				InitMsg: []byte("{}"),
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("{}"),
 			},
 			valid: true,
 		},
 		"missing code": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				Label:   "foo",
-				InitMsg: []byte("{}"),
+				Sender: goodAddress,
+				Label:  "foo",
+				Msg:    []byte("{}"),
 			},
 			valid: false,
 		},
 		"missing label": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				InitMsg: []byte("{}"),
+				Sender: goodAddress,
+				Msg:    []byte("{}"),
 			},
 			valid: false,
 		},
@@ -180,29 +180,29 @@ func TestInstantiateContractValidation(t *testing.T) {
 		},
 		"bad sender minimal": {
 			msg: MsgInstantiateContract{
-				Sender:  badAddress,
-				CodeID:  firstCodeID,
-				Label:   "foo",
-				InitMsg: []byte("{}"),
+				Sender: badAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("{}"),
 			},
 			valid: false,
 		},
 		"correct maximal": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				CodeID:  firstCodeID,
-				Label:   "foo",
-				InitMsg: []byte(`{"some": "data"}`),
-				Funds:   sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte(`{"some": "data"}`),
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
 			},
 			valid: true,
 		},
 		"negative funds": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				CodeID:  firstCodeID,
-				Label:   "foo",
-				InitMsg: []byte(`{"some": "data"}`),
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
 				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
 			},
@@ -210,10 +210,10 @@ func TestInstantiateContractValidation(t *testing.T) {
 		},
 		"non json init msg": {
 			msg: MsgInstantiateContract{
-				Sender:  goodAddress,
-				CodeID:  firstCodeID,
-				Label:   "foo",
-				InitMsg: []byte("invalid-json"),
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("invalid-json"),
 			},
 			valid: false,
 		},
@@ -485,10 +485,10 @@ func TestMsgMigrateContract(t *testing.T) {
 	}{
 		"all good": {
 			src: MsgMigrateContract{
-				Sender:     goodAddress,
-				Contract:   anotherGoodAddress,
-				CodeID:     firstCodeID,
-				MigrateMsg: []byte("{}"),
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+				CodeID:   firstCodeID,
+				Msg:      []byte("{}"),
 			},
 		},
 		"bad sender": {
@@ -530,10 +530,10 @@ func TestMsgMigrateContract(t *testing.T) {
 		},
 		"non json migrateMsg": {
 			src: MsgMigrateContract{
-				Sender:     goodAddress,
-				Contract:   anotherGoodAddress,
-				CodeID:     firstCodeID,
-				MigrateMsg: []byte("invalid json"),
+				Sender:   goodAddress,
+				Contract: anotherGoodAddress,
+				CodeID:   firstCodeID,
+				Msg:      []byte("invalid json"),
 			},
 			expErr: true,
 		},

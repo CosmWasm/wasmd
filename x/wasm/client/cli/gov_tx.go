@@ -137,7 +137,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				Admin:       src.Admin,
 				CodeID:      src.CodeID,
 				Label:       src.Label,
-				InitMsg:     src.InitMsg,
+				Msg:         src.Msg,
 				Funds:       src.Funds,
 			}
 
@@ -212,7 +212,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				Description: proposalDescr,
 				Contract:    src.Contract,
 				CodeID:      src.CodeID,
-				MigrateMsg:  src.MigrateMsg,
+				Msg:         src.Msg,
 				RunAs:       runAs,
 			}
 

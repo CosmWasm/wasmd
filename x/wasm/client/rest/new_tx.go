@@ -70,10 +70,10 @@ func migrateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		msg := &types.MsgMigrateContract{
-			Sender:     req.BaseReq.From,
-			Contract:   contractAddr,
-			CodeID:     req.CodeID,
-			MigrateMsg: req.MigrateMsg,
+			Sender:   req.BaseReq.From,
+			Contract: contractAddr,
+			CodeID:   req.CodeID,
+			Msg:      req.MigrateMsg,
 		}
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

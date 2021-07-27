@@ -84,7 +84,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 			return sdkerrors.Wrap(err, "admin")
 		}
 	}
-	if !json.Valid(msg.InitMsg) {
+	if !json.Valid(msg.Msg) {
 		return sdkerrors.Wrap(ErrInvalid, "init msg json")
 	}
 	return nil
@@ -161,7 +161,7 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if !json.Valid(msg.MigrateMsg) {
+	if !json.Valid(msg.Msg) {
 		return sdkerrors.Wrap(ErrInvalid, "migrate msg json")
 	}
 
