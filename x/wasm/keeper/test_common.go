@@ -363,7 +363,7 @@ func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgS
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
 	}
-	codeID, err := k.Create(ctx, senderAddr, msg.WASMByteCode, msg.Source, msg.Builder, msg.InstantiatePermission)
+	codeID, err := k.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +450,7 @@ func StoreReflectContract(t TestingT, ctx sdk.Context, keepers TestKeepers) uint
 	require.NoError(t, err)
 
 	_, _, creatorAddr := keyPubAddr()
-	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)
 	return codeID
 }
@@ -463,7 +463,7 @@ func StoreExampleContract(t TestingT, ctx sdk.Context, keepers TestKeepers, wasm
 	wasmCode, err := ioutil.ReadFile(wasmFile)
 	require.NoError(t, err)
 
-	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)
 	return ExampleContract{anyAmount, creator, creatorAddr, codeID}
 }
@@ -495,7 +495,7 @@ func StoreRandomContract(t TestingT, ctx sdk.Context, keepers TestKeepers, mock 
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, "", "", nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
 	return exampleContract

@@ -153,7 +153,7 @@ func (k Keeper) setParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
 
-func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, source string, builder string, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
+func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
 	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
 		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
@@ -172,7 +172,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
 		instantiateAccess = &defaultAccessConfig
 	}
-	codeInfo := types.NewCodeInfo(codeHash, creator, source, builder, *instantiateAccess)
+	codeInfo := types.NewCodeInfo(codeHash, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
 	return codeID, nil
 }

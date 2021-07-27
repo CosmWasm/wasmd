@@ -462,8 +462,6 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
       "code_info": {
         "code_hash": %q,
         "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
-        "source": "https://example.com",
-        "builder": "foo/bar:tag",
         "instantiate_config": {
           "permission": "OnlyAddress",
           "address": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"
@@ -523,8 +521,6 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	expCodeInfo := types.CodeInfo{
 		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
-		Source:   "https://example.com",
-		Builder:  "foo/bar:tag",
 		InstantiateConfig: wasmTypes.AccessConfig{
 			Permission: types.AccessTypeOnlyAddress,
 			Address:    codeCreatorAddr,
