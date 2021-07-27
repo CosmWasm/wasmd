@@ -30,25 +30,17 @@ func (c CodeInfo) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
 		return sdkerrors.Wrap(err, "creator")
 	}
-	if err := validateSourceURL(c.Source); err != nil {
-		return sdkerrors.Wrap(err, "source")
-	}
-	if err := validateBuilder(c.Builder); err != nil {
-		return sdkerrors.Wrap(err, "builder")
-	}
 	if err := c.InstantiateConfig.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "instantiate config")
 	}
 	return nil
 }
 
-// NewCodeInfo fills a new Contract struct
-func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, source string, builder string, instantiatePermission AccessConfig) CodeInfo {
+// NewCodeInfo fills a new CodeInfo struct
+func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, instantiatePermission AccessConfig) CodeInfo {
 	return CodeInfo{
 		CodeHash:          codeHash,
 		Creator:           creator.String(),
-		Source:            source,
-		Builder:           builder,
 		InstantiateConfig: instantiatePermission,
 	}
 }
