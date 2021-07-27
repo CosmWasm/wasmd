@@ -20,8 +20,6 @@ const (
 	RouterKey                       = types.RouterKey
 	MaxWasmSize                     = types.MaxWasmSize
 	MaxLabelSize                    = types.MaxLabelSize
-	BuildTagRegexp                  = types.BuildTagRegexp
-	MaxBuildTagSize                 = types.MaxBuildTagSize
 	WasmModuleEventType             = types.WasmModuleEventType
 	AttributeKeyContractAddr        = types.AttributeKeyContractAddr
 	ProposalTypeStoreCode           = types.ProposalTypeStoreCode

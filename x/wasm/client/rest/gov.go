@@ -24,10 +24,6 @@ type StoreCodeProposalJsonReq struct {
 	RunAs string `json:"run_as" yaml:"run_as"`
 	// WASMByteCode can be raw or gzip compressed
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
-	// Source is a valid absolute HTTPS URI to the contract's source code, optional
-	Source string `json:"source" yaml:"source"`
-	// Builder is a valid docker image name with tag, optional
-	Builder string `json:"builder" yaml:"builder"`
 	// InstantiatePermission to apply on contract creation, optional
 	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
@@ -38,8 +34,6 @@ func (s StoreCodeProposalJsonReq) Content() govtypes.Content {
 		Description:           s.Description,
 		RunAs:                 s.RunAs,
 		WASMByteCode:          s.WASMByteCode,
-		Source:                s.Source,
-		Builder:               s.Builder,
 		InstantiatePermission: s.InstantiatePermission,
 	}
 }

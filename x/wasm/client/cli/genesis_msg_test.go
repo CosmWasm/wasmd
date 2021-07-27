@@ -55,7 +55,6 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{anyValidWasmFile.Name()})
 				flagSet := cmd.Flags()
-				flagSet.Set("source", "https://foo.bar")
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 			},
 		},
@@ -80,18 +79,6 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 			srcGenesis: minimalWasmGenesis,
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{anyValidWasmFile.Name()})
-				flagSet := cmd.Flags()
-				flagSet.Set("source", "https://foo.bar")
-			},
-			expError: true,
-		},
-		"invalid msg data should fail": {
-			srcGenesis: minimalWasmGenesis,
-			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{anyValidWasmFile.Name()})
-				flagSet := cmd.Flags()
-				flagSet.Set("source", "not an url")
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 			},
 			expError: true,
 		},

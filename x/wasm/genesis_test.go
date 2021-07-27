@@ -22,8 +22,6 @@ func TestInitGenesis(t *testing.T) {
 	msg := MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
-		Source:       "https://github.com/CosmWasm/wasmd/blob/master/x/wasm/testdata/hackatom.wasm",
-		Builder:      "confio/cosmwasm-opt:0.7.0",
 	}
 	err := msg.ValidateBasic()
 	require.NoError(t, err)

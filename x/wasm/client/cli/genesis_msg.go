@@ -69,8 +69,6 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 			})
 		},
 	}
-	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
-	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
@@ -289,8 +287,6 @@ func getAllCodes(state *types.GenesisState) ([]codeMeta, error) {
 				Info: types.CodeInfo{
 					CodeHash:          hash[:],
 					Creator:           msg.Sender,
-					Source:            msg.Source,
-					Builder:           msg.Builder,
 					InstantiateConfig: accessConfig,
 				},
 			})
