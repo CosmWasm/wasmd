@@ -396,8 +396,8 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				// TODO: calculate desired address
-				cmd.SetArgs([]string{"cosmos1weh0k0l6t6v4jkmkde8e90tzkw2c59g42ccl62", `{}`})
+				// See TestBuildContractAddress in keeper_test.go
+				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
