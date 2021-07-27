@@ -675,7 +675,7 @@ contract.
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
-| `init_msg` | [bytes](#bytes) |  | InitMsg json encoded message to be passed to the contract on instantiation |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 
 
@@ -696,7 +696,7 @@ MigrateContractProposal gov proposal content type to migrate a contract.
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
-| `migrate_msg` | [bytes](#bytes) |  | MigrateMsg json encoded message to be passed to the contract on migration |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
 
 
 
