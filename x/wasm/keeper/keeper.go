@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -815,13 +816,46 @@ func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccA
 
 // BuildContractAddress builds an sdk account address for a contract.
 func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
-	if codeID > math.MaxUint32 || instanceID > math.MaxUint32 {
-		// NOTE: It is possible to get a duplicate address if either codeID or instanceID
-		// overflow 32 bits. This is highly improbable, but something that could be refactored.
-		panic(fmt.Sprintf("address uint32 reached: codeID: %d, instanceID: %d", codeID, instanceID))
+	contractID := make([]byte, 16)
+	binary.BigEndian.PutUint64(contractID[:8], codeID)
+	binary.BigEndian.PutUint64(contractID[8:], instanceID)
+	return Module(types.ModuleName, contractID)
+}
+
+// Hash and Module is taken from https://github.com/cosmos/cosmos-sdk/blob/v0.43.0-rc2/types/address/hash.go
+// (PR #9088 included in Cosmos SDK 0.43 - can be swapped out for the sdk version when we upgrade)
+
+// Hash creates a new address from address type and key
+func Hash(typ string, key []byte) []byte {
+	hasher := sha256.New()
+	_, err := hasher.Write([]byte(typ))
+	// the error always nil, it's here only to satisfy the io.Writer interface
+	assertNil(err)
+	th := hasher.Sum(nil)
+
+	hasher.Reset()
+	_, err = hasher.Write(th)
+	assertNil(err)
+	_, err = hasher.Write(key)
+	assertNil(err)
+	hashed := hasher.Sum(nil)
+	// 20 bytes to work with Cosmos SDK 0.42 (0.43 pushes for 32 bytes)
+	// TODO: remove truncate if we update to 0.43 before wasmd 1.0
+	return hashed[:20]
+}
+
+// Module is a specialized version of a composed address for modules. Each module account
+// is constructed from a module name and module account key.
+func Module(moduleName string, key []byte) []byte {
+	mKey := append([]byte(moduleName), 0)
+	return Hash("module", append(mKey, key...))
+}
+
+// Also from the 0.43 Cosmos SDK... sigh (sdkerrors.AssertNil)
+func assertNil(err error) {
+	if err != nil {
+		panic(fmt.Errorf("logic error - this should never happen. %w", err))
 	}
-	contractID := codeID<<32 + instanceID
-	return addrFromUint64(contractID)
 }
 
 // GetNextCodeID reads the next sequence id used for storing wasm code.
