@@ -53,8 +53,9 @@ func TestHasWasmModuleEvent(t *testing.T) {
 func TestNewCustomEvents(t *testing.T) {
 	myContract := RandomAccountAddress(t)
 	specs := map[string]struct {
-		src wasmvmtypes.Events
-		exp sdk.Events
+		src     wasmvmtypes.Events
+		exp     sdk.Events
+		isError bool
 	}{
 		"all good": {
 			src: wasmvmtypes.Events{{
@@ -100,49 +101,96 @@ func TestNewCustomEvents(t *testing.T) {
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
-		"min length not reached": {
+		"error on short event type": {
 			src: wasmvmtypes.Events{{
 				Type: "f",
 			}},
-			exp: sdk.Events{},
+			isError: true,
 		},
-		"overwrite _contract_address": {
+		"error on _contract_address": {
 			src: wasmvmtypes.Events{{
 				Type:       "foo",
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			}},
-			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-				sdk.NewAttribute("_contract_address", myContract.String()))},
+			isError: true,
 		},
-		"ignore reserved prefix": {
+		"error on reserved prefix": {
 			src: wasmvmtypes.Events{{
 				Type: "wasm",
 				Attributes: []wasmvmtypes.EventAttribute{
 					{Key: "_reserved", Value: "is skipped"},
 					{Key: "normal", Value: "is used"}},
 			}},
-			exp: sdk.Events{sdk.NewEvent("wasm-wasm",
-				sdk.NewAttribute("_contract_address", myContract.String()),
-				sdk.NewAttribute("normal", "is used"))},
+			isError: true,
 		},
-		"ignore empty attributes": {
+		"error on empty value": {
 			src: wasmvmtypes.Events{{
 				Type: "boom",
 				Attributes: []wasmvmtypes.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "key", Value: ""},
+				},
+			}},
+			isError: true,
+		},
+		"error on empty key": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
 					{Key: "", Value: "value"},
 				},
 			}},
-			exp: sdk.Events{sdk.NewEvent("wasm-boom",
+			isError: true,
+		},
+		"error on whitespace type": {
+			src: wasmvmtypes.Events{{
+				Type: "    f   ",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+				},
+			}},
+			isError: true,
+		},
+		"error on only whitespace key": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+					{Key: "\n\n\n\n", Value: "value"},
+				},
+			}},
+			isError: true,
+		},
+		"error on only whitespace value": {
+			src: wasmvmtypes.Events{{
+				Type: "boom",
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "some", Value: "data"},
+					{Key: "myKey", Value: " \t\r\n"},
+				},
+			}},
+			isError: true,
+		},
+		"strip out whitespace": {
+			src: wasmvmtypes.Events{{
+				Type:       "  food\n",
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "my Key", Value: "\tmyVal"}},
+			}},
+			exp: sdk.Events{sdk.NewEvent("wasm-food",
 				sdk.NewAttribute("_contract_address", myContract.String()),
-				sdk.NewAttribute("some", "data"))},
+				sdk.NewAttribute("my Key", "myVal"))},
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotEvent := newCustomEvents(spec.src, myContract)
-			assert.Equal(t, spec.exp, gotEvent)
+			gotEvent, err := newCustomEvents(spec.src, myContract)
+			if spec.isError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, spec.exp, gotEvent)
+			}
 		})
 	}
 }
@@ -150,8 +198,9 @@ func TestNewCustomEvents(t *testing.T) {
 func TestNewWasmModuleEvent(t *testing.T) {
 	myContract := RandomAccountAddress(t)
 	specs := map[string]struct {
-		src []wasmvmtypes.EventAttribute
-		exp sdk.Events
+		src     []wasmvmtypes.EventAttribute
+		exp     sdk.Events
+		isError bool
 	}{
 		"all good": {
 			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
@@ -171,16 +220,34 @@ func TestNewWasmModuleEvent(t *testing.T) {
 			exp: sdk.Events{sdk.NewEvent("wasm",
 				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
-		"overwrite _contract_address": {
-			src: []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
+		"error on _contract_address": {
+			src:     []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
+			isError: true,
+		},
+		"error on whitespace key": {
+			src:     []wasmvmtypes.EventAttribute{{Key: "  ", Value: "value"}},
+			isError: true,
+		},
+		"error on whitespace value": {
+			src:     []wasmvmtypes.EventAttribute{{Key: "key", Value: "\n\n\n"}},
+			isError: true,
+		},
+		"strip whitespace": {
+			src: []wasmvmtypes.EventAttribute{{Key: "   my-real-key    ", Value: "\n\n\nsome-val\t\t\t"}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
-				sdk.NewAttribute("_contract_address", myContract.String()))},
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("my-real-key", "some-val"))},
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotEvent := newWasmModuleEvent(spec.src, myContract)
-			assert.Equal(t, spec.exp, gotEvent)
+			gotEvent, err := newWasmModuleEvent(spec.src, myContract)
+			if spec.isError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, spec.exp, gotEvent)
+			}
 		})
 	}
 }

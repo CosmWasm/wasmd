@@ -66,4 +66,7 @@ var (
 
 	// ErrUnknownMsg error by a message handler to show that it is not responsible for this message type
 	ErrUnknownMsg = sdkErrors.Register(DefaultCodespace, 20, "unknown message from the contract")
+
+	// ErrInvalidEvent error if an attribute/event from the contract is invalid
+	ErrInvalidEvent = sdkErrors.Register(DefaultCodespace, 21, "invalid event")
 )
