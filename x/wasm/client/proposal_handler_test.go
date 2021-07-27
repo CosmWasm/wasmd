@@ -158,7 +158,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"admin":       "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"code_id":     "1",
 				"label":       "https://example.com/",
-				"init_msg":    "my/builder:tag",
+				"msg":         dict{"recipient": "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz"},
 				"funds":       []dict{{"denom": "ustake", "amount": "100"}},
 				"deposit":     []dict{{"denom": "ustake", "amount": "10"}},
 				"proposer":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",

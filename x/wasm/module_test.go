@@ -168,10 +168,10 @@ func TestHandleInstantiate(t *testing.T) {
 
 	// create with no balance is also legal
 	initCmd := MsgInstantiateContract{
-		Sender:  creator.String(),
-		CodeID:  firstCodeID,
-		InitMsg: initMsgBz,
-		Funds:   nil,
+		Sender: creator.String(),
+		CodeID: firstCodeID,
+		Msg:    initMsgBz,
+		Funds:  nil,
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -225,10 +225,10 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:  creator.String(),
-		CodeID:  firstCodeID,
-		InitMsg: initMsgBz,
-		Funds:   deposit,
+		Sender: creator.String(),
+		CodeID: firstCodeID,
+		Msg:    initMsgBz,
+		Funds:  deposit,
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -346,10 +346,10 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	require.NoError(t, err)
 
 	initCmd := MsgInstantiateContract{
-		Sender:  creator.String(),
-		CodeID:  firstCodeID,
-		InitMsg: initMsgBz,
-		Funds:   deposit,
+		Sender: creator.String(),
+		CodeID: firstCodeID,
+		Msg:    initMsgBz,
+		Funds:  deposit,
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)

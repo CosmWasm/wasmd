@@ -77,11 +77,11 @@ type InstantiateProposalJsonReq struct {
 
 	RunAs string `json:"run_as" yaml:"run_as"`
 	// Admin is an optional address that can execute migrations
-	Admin   string          `json:"admin,omitempty" yaml:"admin"`
-	Code    uint64          `json:"code_id" yaml:"code_id"`
-	Label   string          `json:"label" yaml:"label"`
-	InitMsg json.RawMessage `json:"init_msg" yaml:"init_msg"`
-	Funds   sdk.Coins       `json:"funds" yaml:"funds"`
+	Admin string          `json:"admin,omitempty" yaml:"admin"`
+	Code  uint64          `json:"code_id" yaml:"code_id"`
+	Label string          `json:"label" yaml:"label"`
+	Msg   json.RawMessage `json:"msg" yaml:"msg"`
+	Funds sdk.Coins       `json:"funds" yaml:"funds"`
 }
 
 func (s InstantiateProposalJsonReq) Content() govtypes.Content {
@@ -92,7 +92,7 @@ func (s InstantiateProposalJsonReq) Content() govtypes.Content {
 		Admin:       s.Admin,
 		CodeID:      s.Code,
 		Label:       s.Label,
-		InitMsg:     s.InitMsg,
+		Msg:         s.Msg,
 		Funds:       s.Funds,
 	}
 }
@@ -128,9 +128,9 @@ type MigrateProposalJsonReq struct {
 	Proposer string    `json:"proposer" yaml:"proposer"`
 	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
 
-	Contract   string          `json:"contract" yaml:"contract"`
-	Code       uint64          `json:"code_id" yaml:"code_id"`
-	MigrateMsg json.RawMessage `json:"msg" yaml:"msg"`
+	Contract string          `json:"contract" yaml:"contract"`
+	Code     uint64          `json:"code_id" yaml:"code_id"`
+	Msg      json.RawMessage `json:"msg" yaml:"msg"`
 	// RunAs is the role that is passed to the contract's environment
 	RunAs string `json:"run_as" yaml:"run_as"`
 }
@@ -141,7 +141,7 @@ func (s MigrateProposalJsonReq) Content() govtypes.Content {
 		Description: s.Description,
 		Contract:    s.Contract,
 		CodeID:      s.Code,
-		MigrateMsg:  s.MigrateMsg,
+		Msg:         s.Msg,
 		RunAs:       s.RunAs,
 	}
 }

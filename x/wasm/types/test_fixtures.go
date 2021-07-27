@@ -145,11 +145,11 @@ func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
 func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *MsgInstantiateContract {
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	r := &MsgInstantiateContract{
-		Sender:  anyAddress,
-		Admin:   anyAddress,
-		CodeID:  1,
-		Label:   "testing",
-		InitMsg: []byte(`{"foo":"bar"}`),
+		Sender: anyAddress,
+		Admin:  anyAddress,
+		CodeID: 1,
+		Label:  "testing",
+		Msg:    []byte(`{"foo":"bar"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
 			Amount: sdk.NewInt(1),
@@ -222,7 +222,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 		Admin:       anyAddress,
 		CodeID:      1,
 		Label:       "testing",
-		InitMsg:     initMsgBz,
+		Msg:         initMsgBz,
 		Funds:       nil,
 	}
 
@@ -254,7 +254,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		Description: "Bar",
 		Contract:    contractAddr,
 		CodeID:      1,
-		MigrateMsg:  migMsgBz,
+		Msg:         migMsgBz,
 		RunAs:       anyAddress,
 	}
 

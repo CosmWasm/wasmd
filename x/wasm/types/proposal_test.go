@@ -198,13 +198,13 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"without init msg": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitMsg = nil
+				p.Msg = nil
 			}),
 			expErr: true,
 		},
 		"with invalid init msg": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.InitMsg = []byte("not a json string")
+				p.Msg = []byte("not a json string")
 			}),
 			expErr: true,
 		},
@@ -288,13 +288,13 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 		},
 		"without migrate msg": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.MigrateMsg = nil
+				p.Msg = nil
 			}),
 			expErr: true,
 		},
 		"migrate msg with invalid json": {
 			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.MigrateMsg = []byte("not a json message")
+				p.Msg = []byte("not a json message")
 			}),
 			expErr: true,
 		},
@@ -474,7 +474,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
-  InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       1foo,2bar
 `,
 		},
@@ -487,7 +487,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Code id:     1
   Label:       testing
-  InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       
 `,
 		},
@@ -500,7 +500,7 @@ func TestProposalStrings(t *testing.T) {
   Admin:       
   Code id:     1
   Label:       testing
-  InitMsg:     "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
   Funds:       
 `,
 		},
@@ -512,7 +512,7 @@ func TestProposalStrings(t *testing.T) {
   Contract:    cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5
   Code id:     1
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
-  MigrateMsg   "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
+  Msg          "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
 `,
 		},
 		"update admin": {
@@ -592,7 +592,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds:
 - denom: foo
   amount: "1"
@@ -608,7 +608,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds: []
 `,
 		},
@@ -620,7 +620,7 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 admin: ""
 code_id: 1
 label: testing
-init_msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
+msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 funds: []
 `,
 		},
@@ -725,7 +725,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"admin": "myAdminAddress",
 	"code_id": 1,
 	"funds": [{"denom": "ALX", "amount": "2"},{"denom": "BLX","amount": "3"}],
-	"init_msg": "e30=",
+	"msg": "e30=",
 	"label": "testing",
 	"run_as": "myRunAsAddress"
 }`,
@@ -737,7 +737,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 				Admin:       "myAdminAddress",
 				CodeID:      1,
 				Label:       "testing",
-				InitMsg:     []byte("{}"),
+				Msg:         []byte("{}"),
 				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdk.NewInt(2)), sdk.NewCoin("BLX", sdk.NewInt(3))),
 			},
 		},
@@ -748,7 +748,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"description": "bar",
 	"code_id": 1,
 	"contract": "myContractAddr",
-	"migrate_msg": "e30=",
+	"msg": "e30=",
 	"run_as": "myRunAsAddress"
 }`,
 			got: &MigrateContractProposal{},
@@ -758,7 +758,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 				RunAs:       "myRunAsAddress",
 				Contract:    "myContractAddr",
 				CodeID:      1,
-				MigrateMsg:  []byte("{}"),
+				Msg:         []byte("{}"),
 			},
 		},
 	}

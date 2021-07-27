@@ -185,7 +185,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 			return err
 		}
 	}
-	if !json.Valid(p.InitMsg) {
+	if !json.Valid(p.Msg) {
 		return sdkerrors.Wrap(ErrInvalid, "init msg json")
 	}
 
@@ -201,9 +201,9 @@ func (p InstantiateContractProposal) String() string {
   Admin:       %s
   Code id:     %d
   Label:       %s
-  InitMsg:     %q
+  Msg:         %q
   Funds:       %s
-`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.InitMsg, p.Funds)
+`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the init message
@@ -215,7 +215,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Admin       string    `yaml:"admin"`
 		CodeID      uint64    `yaml:"code_id"`
 		Label       string    `yaml:"label"`
-		InitMsg     string    `yaml:"init_msg"`
+		Msg         string    `yaml:"msg"`
 		Funds       sdk.Coins `yaml:"funds"`
 	}{
 		Title:       p.Title,
@@ -224,7 +224,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Admin:       p.Admin,
 		CodeID:      p.CodeID,
 		Label:       p.Label,
-		InitMsg:     string(p.InitMsg),
+		Msg:         string(p.Msg),
 		Funds:       p.Funds,
 	}, nil
 }
@@ -255,7 +255,7 @@ func (p MigrateContractProposal) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(err, "run as")
 	}
-	if !json.Valid(p.MigrateMsg) {
+	if !json.Valid(p.Msg) {
 		return sdkerrors.Wrap(ErrInvalid, "migrate msg json")
 	}
 	return nil
@@ -269,8 +269,8 @@ func (p MigrateContractProposal) String() string {
   Contract:    %s
   Code id:     %d
   Run as:      %s
-  MigrateMsg   %q
-`, p.Title, p.Description, p.Contract, p.CodeID, p.RunAs, p.MigrateMsg)
+  Msg          %q
+`, p.Title, p.Description, p.Contract, p.CodeID, p.RunAs, p.Msg)
 }
 
 // MarshalYAML pretty prints the migrate message
@@ -280,14 +280,14 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 		Description string `yaml:"description"`
 		Contract    string `yaml:"contract"`
 		CodeID      uint64 `yaml:"code_id"`
-		MigrateMsg  string `yaml:"msg"`
+		Msg         string `yaml:"msg"`
 		RunAs       string `yaml:"run_as"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
 		Contract:    p.Contract,
 		CodeID:      p.CodeID,
-		MigrateMsg:  string(p.MigrateMsg),
+		Msg:         string(p.Msg),
 		RunAs:       p.RunAs,
 	}, nil
 }

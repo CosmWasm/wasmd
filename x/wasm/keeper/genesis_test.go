@@ -583,7 +583,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 						Sender: myAddress.String(),
 						CodeID: 1,
 						Label:  "testing",
-						InitMsg: HackatomExampleInitMsg{
+						Msg: HackatomExampleInitMsg{
 							Verifier:    verifierAddress,
 							Beneficiary: beneficiaryAddress,
 						}.GetBytes(t),
