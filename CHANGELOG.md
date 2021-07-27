@@ -2,18 +2,24 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Api Breaking:**
+
+- Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
+  [\#563](https://github.com/CosmWasm/wasmd/pull/563)
+- Renamed InitMsg and MigrateMsg fields to Msg. This applies to protobuf Msg
+  and Proposals, as well as REST and CLI [\#563](https://github.com/CosmWasm/wasmd/pull/563)
+- Removed source and builder fields from StoreCode and CodeInfo. They were rarely used.
+  [\#564](https://github.com/CosmWasm/wasmd/pull/564)  
+- Changed contract address derivation function. If you hardcoded the first contract
+  addresses anywhere (in scripts?), please update them.
+  [\#565](https://github.com/CosmWasm/wasmd/pull/565)
+
 **Implemented Enhancements:**
+
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
 - IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
-
-**Api Breaking:**
-
-- Renamed InitMsg and MigrateMsg fields to Msg. This applies to protobuf Msg
-  and Proposals, as well as REST and CLI [\#563](https://github.com/CosmWasm/wasmd/pull/563)
-- Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
-  [\#563](https://github.com/CosmWasm/wasmd/pull/563)
 
 ## [v0.17.0](https://github.com/CosmWasm/wasmd/tree/v0.17.0) (2021-05-26)
 
