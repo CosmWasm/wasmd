@@ -26,6 +26,7 @@ const (
 	DefaultEventAttributeDataCost uint64 = 1
 	// DefaultContractMessageDataCost is how much SDK gas is charged *per byte* of the message that goes to the contract
 	// This is used with len(msg)
+	// Note: also used for error fields on reply, and data on reply
 	DefaultContractMessageDataCost uint64 = 0
 	// DefaultPerAttributeCost is how much SDK gas we charge per attribute count.
 	DefaultPerAttributeCost uint64 = 10
@@ -144,7 +145,7 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Ga
 		msgLen += len(reply.Result.Ok.Data)
 		var attrs []wasmvmtypes.EventAttribute
 		for _, e := range reply.Result.Ok.Events {
-			msgLen += len(e.Type)
+			eventGas += sdk.Gas(len(e.Type)) * g.c.EventAttributeDataCost
 			attrs = append(e.Attributes)
 		}
 		// apply free tier on the whole set not per event
