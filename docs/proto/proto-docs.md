@@ -142,9 +142,7 @@ CodeInfo is data for the uploaded contract WASM code
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm |
-| `creator` | [string](#string) |  | Creator address who initially stored the code
-
-3 and 4 intentionally left empty (used in v1beta1) |
+| `creator` | [string](#string) |  | Creator address who initially stored the code |
 | `instantiate_config` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiateConfig access control to apply on contract creation, optional |
 
 
@@ -406,9 +404,7 @@ MsgStoreCode submit Wasm code to the system
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed
-
-3 and 4 intentionally left empty (used in v1beta1) |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
 
 
@@ -732,9 +728,7 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
-| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed
-
-5 and 6 intentionally left empty (used in v1beta1) |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 
 
@@ -804,7 +798,7 @@ CodeInfoResponse contains code meta data from CodeInfo
 | ----- | ---- | ----- | ----------- |
 | `code_id` | [uint64](#uint64) |  | id for legacy support |
 | `creator` | [string](#string) |  |  |
-| `data_hash` | [bytes](#bytes) |  | 4 and 5 intentionally left empty (used in v1beta1) |
+| `data_hash` | [bytes](#bytes) |  |  |
 
 
 
