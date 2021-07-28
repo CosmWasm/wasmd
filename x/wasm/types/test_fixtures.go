@@ -164,7 +164,7 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecuteContract {
 	const (
 		anyAddress           = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
-		firstContractAddress = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+		firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
 	)
 	r := &MsgExecuteContract{
 		Sender:   anyAddress,
@@ -246,7 +246,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		panic(err)
 	}
 	const (
-		contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
 		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	)
 	p := &MigrateContractProposal{
@@ -266,7 +266,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 
 func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *UpdateAdminProposal {
 	const (
-		contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
 		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	)
 
@@ -283,7 +283,7 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *Updat
 }
 
 func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) *ClearAdminProposal {
-	const contractAddr = "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5"
+	const contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
 	p := &ClearAdminProposal{
 		Title:       "Foo",
 		Description: "Bar",

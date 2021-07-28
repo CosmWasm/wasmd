@@ -280,7 +280,7 @@ func TestInstantiate(t *testing.T) {
 	// create with no balance is also legal
 	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", gotContractAddr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
@@ -481,7 +481,7 @@ func TestExecute(t *testing.T) {
 
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
 
 	// ensure bob doesn't exist
 	bobAcct := accKeeper.GetAccount(ctx, bob)
@@ -1163,7 +1163,7 @@ func TestSudo(t *testing.T) {
 
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
 
 	// the community is broke
 	_, _, community := keyPubAddr()
@@ -1501,9 +1501,18 @@ func TestBuildContractAddress(t *testing.T) {
 	specs := map[string]struct {
 		srcCodeID     uint64
 		srcInstanceID uint64
-		expPanic      bool
+		expectedAddr  string
 	}{
-		"both empty": {},
+		"initial contract": {
+			srcCodeID:     1,
+			srcInstanceID: 1,
+			expectedAddr:  "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6",
+		},
+		"demo value": {
+			srcCodeID:     1,
+			srcInstanceID: 100,
+			expectedAddr:  "cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg",
+		},
 		"both below max": {
 			srcCodeID:     math.MaxUint32 - 1,
 			srcInstanceID: math.MaxUint32 - 1,
@@ -1512,26 +1521,25 @@ func TestBuildContractAddress(t *testing.T) {
 			srcCodeID:     math.MaxUint32,
 			srcInstanceID: math.MaxUint32,
 		},
-		"codeID > max": {
-			srcCodeID: math.MaxUint32 + 1,
-			expPanic:  true,
+		"codeID > max u32": {
+			srcCodeID:     math.MaxUint32 + 1,
+			srcInstanceID: 17,
+			expectedAddr:  "cosmos1673hrexz4h6s0ft04l96ygq667djzh2nvy7fsu",
 		},
-		"instanceID > max": {
+		"instanceID > max u32": {
+			srcCodeID:     22,
 			srcInstanceID: math.MaxUint32 + 1,
-			expPanic:      true,
+			expectedAddr:  "cosmos10q3pgfvmeyy0veekgtqhxujxkhz0vm9z65ckqh",
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			if spec.expPanic {
-				require.Panics(t, func() {
-					BuildContractAddress(spec.srcCodeID, spec.srcInstanceID)
-				})
-				return
-			}
 			gotAddr := BuildContractAddress(spec.srcCodeID, spec.srcInstanceID)
 			require.NotNil(t, gotAddr)
 			assert.Nil(t, sdk.VerifyAddressFormat(gotAddr))
+			if len(spec.expectedAddr) > 0 {
+				require.Equal(t, spec.expectedAddr, gotAddr.String())
+			}
 		})
 	}
 }
