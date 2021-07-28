@@ -4,6 +4,7 @@
 
 **Implemented Enhancements:**
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
+- IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
 
