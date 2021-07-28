@@ -59,13 +59,13 @@ func TestNewContractInstanceCosts(t *testing.T) {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(1),
+			exp:       DefaultContractMessageDataCost,
 		},
 		"big msg - pinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(math.MaxUint32),
+			exp:       DefaultContractMessageDataCost * sdk.Gas(math.MaxUint32),
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
@@ -76,18 +76,17 @@ func TestNewContractInstanceCosts(t *testing.T) {
 		"small msg - unpinned": {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
-			pinned:    true,
-			exp:       sdk.Gas(1),
+			exp:       DefaultContractMessageDataCost + DefaultInstanceCost,
 		},
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(math.MaxUint32 + 40_000),
+			exp:       sdk.Gas(DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost),
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000),
+			exp:       sdk.Gas(DefaultInstanceCost),
 		},
 
 		"negative len": {
@@ -123,13 +122,13 @@ func TestContractInstanceCosts(t *testing.T) {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(1),
+			exp:       DefaultContractMessageDataCost,
 		},
 		"big msg - pinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(math.MaxUint32),
+			exp:       sdk.Gas(DefaultContractMessageDataCost * math.MaxUint32),
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
@@ -140,18 +139,17 @@ func TestContractInstanceCosts(t *testing.T) {
 		"small msg - unpinned": {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
-			pinned:    true,
-			exp:       sdk.Gas(1),
+			exp:       DefaultContractMessageDataCost + DefaultInstanceCost,
 		},
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(math.MaxUint32 + 40_000),
+			exp:       sdk.Gas(DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost),
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000),
+			exp:       sdk.Gas(DefaultInstanceCost),
 		},
 
 		"negative len": {
@@ -195,7 +193,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3 + 10 + 1), // len("foo") + 1 * DefaultPerAttributeCost + len(data)
+			exp:       sdk.Gas(3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost), // 3 == len("foo")
 		},
 		"subcall response with events - pinned": {
 			src: wasmvmtypes.Reply{
@@ -209,7 +207,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3 + 10), // len("foo") + 1 * DefaultPerAttributeCost
+			exp:       sdk.Gas(3*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo")
 		},
 		"subcall response with events exceeds free tier- pinned": {
 			src: wasmvmtypes.Reply{
@@ -223,7 +221,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3 + 10 + 6), // len("foo") + 1 * DefaultPerAttributeCost + len("myData")
+			exp:       sdk.Gas((3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - pinned": {
 			src: wasmvmtypes.Reply{
@@ -233,7 +231,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3), // len("foo")
+			exp:       3 * DefaultContractMessageDataCost,
 		},
 		"subcall response with events and data - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -247,7 +245,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000 + 3 + 10 + 1), // DefaultInstanceCost len("foo") + 1 * DefaultPerAttributeCost + len(data)
+			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost),
 		},
 		"subcall response with events - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -260,7 +258,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000 + 3 + 10), // DefaultInstanceCost + len("foo") + 1 * DefaultPerAttributeCost
+			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost),
 		},
 		"subcall response with events exceeds free tier- unpinned": {
 			src: wasmvmtypes.Reply{
@@ -273,7 +271,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000 + 3 + 10 + 6), // DefaultInstanceCost + len("foo") + 1 * DefaultPerAttributeCost + len("myData")
+			exp:       sdk.Gas(DefaultInstanceCost + (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -282,7 +280,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(40_000 + 3), // DefaultInstanceCost + len("foo")
+			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultContractMessageDataCost),
 		},
 	}
 	for name, spec := range specs {
