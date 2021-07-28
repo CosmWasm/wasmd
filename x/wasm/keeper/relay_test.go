@@ -62,7 +62,13 @@ func TestOnOpenChannel(t *testing.T) {
 			before := ctx.GasMeter().GasConsumed()
 
 			// when
-			err := keepers.WasmKeeper.OnOpenChannel(ctx, spec.contractAddr, myChannel, "foo")
+			msg := wasmvmtypes.IBCChannelOpenMsg{
+				OpenTry: &wasmvmtypes.IBCOpenTry{
+					Channel:             myChannel,
+					CounterpartyVersion: "foo",
+				},
+			}
+			err := keepers.WasmKeeper.OnOpenChannel(ctx, spec.contractAddr, msg)
 
 			// then
 			if spec.expErr {
@@ -163,7 +169,12 @@ func TestOnConnectChannel(t *testing.T) {
 			}
 
 			// when
-			err := keepers.WasmKeeper.OnConnectChannel(ctx, spec.contractAddr, myChannel, "")
+			msg := wasmvmtypes.IBCChannelConnectMsg{
+				OpenConfirm: &wasmvmtypes.IBCOpenConfirm{
+					Channel: myChannel,
+				},
+			}
+			err := keepers.WasmKeeper.OnConnectChannel(ctx, spec.contractAddr, msg)
 
 			// then
 			events := ctx.EventManager().Events()
@@ -279,7 +290,12 @@ func TestOnCloseChannel(t *testing.T) {
 			}
 
 			// when
-			err := keepers.WasmKeeper.OnCloseChannel(ctx, spec.contractAddr, myChannel, false)
+			msg := wasmvmtypes.IBCChannelCloseMsg{
+				CloseInit: &wasmvmtypes.IBCCloseInit{
+					Channel: myChannel,
+				},
+			}
+			err := keepers.WasmKeeper.OnCloseChannel(ctx, spec.contractAddr, msg)
 
 			// then
 			events := ctx.EventManager().Events()
@@ -453,7 +469,8 @@ func TestOnRecvPacket(t *testing.T) {
 			}
 
 			// when
-			gotAck, err := keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, myPacket)
+			msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: myPacket}
+			gotAck, err := keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, msg)
 
 			// then
 			events := ctx.EventManager().Events()
@@ -704,7 +721,8 @@ func TestOnTimeoutPacket(t *testing.T) {
 			}
 
 			// when
-			err := keepers.WasmKeeper.OnTimeoutPacket(ctx, spec.contractAddr, myPacket)
+			msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: myPacket}
+			err := keepers.WasmKeeper.OnTimeoutPacket(ctx, spec.contractAddr, msg)
 
 			// then
 			events := ctx.EventManager().Events()
