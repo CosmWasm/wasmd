@@ -19,8 +19,6 @@ import (
 
 const (
 	flagAmount                 = "amount"
-	flagSource                 = "source"
-	flagBuilder                = "builder"
 	flagLabel                  = "label"
 	flagAdmin                  = "admin"
 	flagRunAs                  = "run-as"
@@ -69,8 +67,6 @@ func StoreCodeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
-	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	flags.AddTxFlagsToCmd(cmd)
@@ -122,21 +118,9 @@ func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet)
 		}
 	}
 
-	// build and sign the transaction, then broadcast to Tendermint
-	source, err := flags.GetString(flagSource)
-	if err != nil {
-		return types.MsgStoreCode{}, fmt.Errorf("source: %s", err)
-	}
-	builder, err := flags.GetString(flagBuilder)
-	if err != nil {
-		return types.MsgStoreCode{}, fmt.Errorf("builder: %s", err)
-	}
-
 	msg := types.MsgStoreCode{
 		Sender:                sender.String(),
 		WASMByteCode:          wasm,
-		Source:                source,
-		Builder:               builder,
 		InstantiatePermission: perm,
 	}
 	return msg, nil

@@ -12,33 +12,6 @@ import (
 
 const firstCodeID = 1
 
-func TestBuilderRegexp(t *testing.T) {
-	cases := map[string]struct {
-		example string
-		valid   bool
-	}{
-		"normal":                {"fedora/httpd:version1.0", true},
-		"another valid org":     {"confio/js-builder-1:test", true},
-		"no org name":           {"cosmwasm-opt:0.6.3", false},
-		"invalid trailing char": {"someone/cosmwasm-opt-:0.6.3", false},
-		"invalid leading char":  {"confio/.builder-1:manual", false},
-		"multiple orgs":         {"confio/assembly-script/optimizer:v0.9.1", true},
-		"too long":              {"over-128-character-limit/some-long-sub-path/and-yet-another-long-name/testtesttesttesttesttesttest/foobarfoobar/foobarfoobar:randomstringrandomstringrandomstringrandomstring", false},
-	}
-
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			err := validateBuilder(tc.example)
-			if tc.valid {
-				assert.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-			}
-		})
-
-	}
-}
-
 func TestStoreCodeValidation(t *testing.T) {
 	bad, err := sdk.AccAddressFromHex("012345")
 	require.NoError(t, err)
@@ -78,37 +51,8 @@ func TestStoreCodeValidation(t *testing.T) {
 			msg: MsgStoreCode{
 				Sender:       goodAddress,
 				WASMByteCode: []byte("foo"),
-				Builder:      "confio/cosmwasm-opt:0.6.2",
-				Source:       "https://crates.io/api/v1/crates/cw-erc20/0.1.0/download",
 			},
 			valid: true,
-		},
-		"invalid builder": {
-			msg: MsgStoreCode{
-				Sender:       goodAddress,
-				WASMByteCode: []byte("foo"),
-				Builder:      "-bad-opt:0.6.2",
-				Source:       "https://crates.io/api/v1/crates/cw-erc20/0.1.0/download",
-			},
-			valid: false,
-		},
-		"invalid source scheme": {
-			msg: MsgStoreCode{
-				Sender:       goodAddress,
-				WASMByteCode: []byte("foo"),
-				Builder:      "cosmwasm-opt:0.6.2",
-				Source:       "ftp://crates.io/api/download.tar.gz",
-			},
-			valid: false,
-		},
-		"invalid source format": {
-			msg: MsgStoreCode{
-				Sender:       goodAddress,
-				WASMByteCode: []byte("foo"),
-				Builder:      "cosmwasm-opt:0.6.2",
-				Source:       "/api/download-ss",
-			},
-			valid: false,
 		},
 		"invalid InstantiatePermission": {
 			msg: MsgStoreCode{

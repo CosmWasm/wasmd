@@ -57,8 +57,6 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				Description:           proposalDescr,
 				RunAs:                 runAs,
 				WASMByteCode:          src.WASMByteCode,
-				Source:                src.Source,
-				Builder:               src.Builder,
 				InstantiatePermission: src.InstantiatePermission,
 			}
 
@@ -74,8 +72,6 @@ func ProposalStoreCodeCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(flagSource, "", "A valid URI reference to the contract's source code, optional")
-	cmd.Flags().String(flagBuilder, "", "A valid docker tag for the build system, optional")
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")

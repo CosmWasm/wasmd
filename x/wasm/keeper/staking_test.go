@@ -106,7 +106,7 @@ func TestInitializeStaking(t *testing.T) {
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := keeper.Create(ctx, creator, stakingCode, "", "", nil)
+	stakingID, err := keeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
@@ -188,7 +188,7 @@ func initializeStaking(t *testing.T) initInfo {
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, "", "", nil)
+	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
@@ -445,7 +445,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	// upload mask code
 	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
-	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, "", "", nil)
+	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), maskID)
 

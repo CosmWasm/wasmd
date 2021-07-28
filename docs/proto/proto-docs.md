@@ -143,8 +143,6 @@ CodeInfo is data for the uploaded contract WASM code
 | ----- | ---- | ----- | ----------- |
 | `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm |
 | `creator` | [string](#string) |  | Creator address who initially stored the code |
-| `source` | [string](#string) |  | Source is a valid absolute HTTPS URI to the contract's source code, optional |
-| `builder` | [string](#string) |  | Builder is a valid docker image name with tag, optional |
 | `instantiate_config` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiateConfig access control to apply on contract creation, optional |
 
 
@@ -407,8 +405,6 @@ MsgStoreCode submit Wasm code to the system
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
-| `source` | [string](#string) |  | Source is a valid absolute HTTPS URI to the contract's source code, optional |
-| `builder` | [string](#string) |  | Builder is a valid docker image name with tag, optional |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
 
 
@@ -733,8 +729,6 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `description` | [string](#string) |  | Description is a human readable text |
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
-| `source` | [string](#string) |  | Source is a valid absolute HTTPS URI to the contract's source code, optional |
-| `builder` | [string](#string) |  | Builder is a valid docker image name with tag, optional |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 
 
@@ -805,8 +799,6 @@ CodeInfoResponse contains code meta data from CodeInfo
 | `code_id` | [uint64](#uint64) |  | id for legacy support |
 | `creator` | [string](#string) |  |  |
 | `data_hash` | [bytes](#bytes) |  |  |
-| `source` | [string](#string) |  |  |
-| `builder` | [string](#string) |  |  |
 
 
 

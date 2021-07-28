@@ -31,11 +31,8 @@ message MsgStoreCode {
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 2 [ (gogoproto.customname) = "WASMByteCode" ];
-  // Source is a valid absolute HTTPS URI to the contract's source code,
-  // optional
-  string source = 3;
-  // Builder is a valid docker image name with tag, optional
-  string builder = 4;
+  // Used in v1beta1
+  reserved 3, 4;
   // InstantiatePermission access control to apply on contract creation,
   // optional
   AccessConfig instantiate_permission = 5;

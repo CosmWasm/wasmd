@@ -236,8 +236,6 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 				CodeID:   binary.BigEndian.Uint64(key),
 				Creator:  c.Creator,
 				DataHash: c.CodeHash,
-				Source:   c.Source,
-				Builder:  c.Builder,
 			})
 		}
 		return true, nil
@@ -274,8 +272,6 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 		CodeID:   codeID,
 		Creator:  res.Creator,
 		DataHash: res.CodeHash,
-		Source:   res.Source,
-		Builder:  res.Builder,
 	}
 
 	code, err := keeper.GetByteCode(ctx, codeID)

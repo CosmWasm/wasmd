@@ -112,12 +112,6 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 				p.InstantiatePermission = &accessConfig
 			}),
 		},
-
-		"without source": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Source = ""
-			}),
-		},
 		"base data missing": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				p.Title = ""
@@ -145,18 +139,6 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		"wasm code invalid": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
-			}),
-			expErr: true,
-		},
-		"source invalid": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Source = "not an url"
-			}),
-			expErr: true,
-		},
-		"builder invalid": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Builder = "not a builder"
 			}),
 			expErr: true,
 		},
@@ -459,8 +441,6 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   WasmCode:    0102030405060708090A
-  Source:      https://example.com/code
-  Builder:     foo/bar:latest
 `,
 		},
 		"instantiate contract": {
@@ -577,8 +557,6 @@ func TestProposalYaml(t *testing.T) {
 description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 wasm_byte_code: AQIDBAUGBwgJCg==
-source: https://example.com/code
-builder: foo/bar:latest
 instantiate_permission: null
 `,
 		},
