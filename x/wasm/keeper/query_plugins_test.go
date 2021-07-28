@@ -171,7 +171,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 					return channeltypes.Channel{
-						State:    channeltypes.INIT,
+						State:    channeltypes.OPEN,
 						Ordering: channeltypes.UNORDERED,
 						Counterparty: channeltypes.Counterparty{
 							PortId:    "counterPartyPortID",

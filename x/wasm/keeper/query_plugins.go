@@ -198,7 +198,8 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 			portID := request.ListChannels.PortID
 			channels := make(wasmvmtypes.IBCChannels, 0)
 			channelKeeper.IterateChannels(ctx, func(ch channeltypes.IdentifiedChannel) bool {
-				if portID == "" || portID == ch.PortId {
+				// it must match the port and be in open state
+				if (portID == "" || portID == ch.PortId) && ch.State == channeltypes.OPEN {
 					newChan := wasmvmtypes.IBCChannel{
 						Endpoint: wasmvmtypes.IBCEndpoint{
 							PortID:    ch.PortId,
@@ -230,7 +231,8 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 			}
 			got, found := channelKeeper.GetChannel(ctx, portID, channelID)
 			var channel *wasmvmtypes.IBCChannel
-			if found {
+			// it must be in open state
+			if found && got.State == channeltypes.OPEN {
 				channel = &wasmvmtypes.IBCChannel{
 					Endpoint: wasmvmtypes.IBCEndpoint{
 						PortID:    portID,
