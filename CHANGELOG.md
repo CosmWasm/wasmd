@@ -15,9 +15,15 @@
   [\#565](https://github.com/CosmWasm/wasmd/pull/565)
 
 **Implemented Enhancements:**
-
+- Wasmvm upgrade 557 [\#559](https://github.com/CosmWasm/wasmd/pull/559) ([ethanfrey](https://github.com/ethanfrey))
+- Bump Cosmos-sdk to v0.42.8 [\#572](https://github.com/CosmWasm/wasmd/pull/572) ([alpe](https://github.com/alpe))
+- Better ibc contract interface [\#570](https://github.com/CosmWasm/wasmd/pull/570) ([ethanfrey](https://github.com/ethanfrey))
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
 - IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
+- Extendable gas costs [\#525](https://github.com/CosmWasm/wasmd/issues/525)
+- Limit init/migrate/execute payload message size [\#203](https://github.com/CosmWasm/wasmd/issues/203)
+- Add cli alias [\#496](https://github.com/CosmWasm/wasmd/issues/496)
+- Remove max gas limit [\#529](https://github.com/CosmWasm/wasmd/pull/529) ([alpe](https://github.com/alpe))
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
 
