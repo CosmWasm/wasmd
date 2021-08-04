@@ -1,6 +1,10 @@
 package types
 
 import (
+	"strings"
+	"testing"
+	"time"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -10,9 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {
@@ -169,8 +170,8 @@ func TestContractInfoSetExtension(t *testing.T) {
 }
 
 func TestContractInfoMarshalUnmarshal(t *testing.T) {
-	var myAddr sdk.AccAddress = rand.Bytes(sdk.AddrLen)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(sdk.AddrLen)
+	var myAddr sdk.AccAddress = rand.Bytes(20)
+	var myOtherAddr sdk.AccAddress = rand.Bytes(20)
 	var anyPos = AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
 
 	anyTime := time.Now().UTC()
@@ -195,11 +196,11 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	govtypes.RegisterInterfaces(interfaceRegistry)
 
 	// when encode
-	bz, err := marshaler.MarshalBinaryBare(&src)
+	bz, err := marshaler.Marshal(&src)
 	require.NoError(t, err)
 	// and decode
 	var dest ContractInfo
-	err = marshaler.UnmarshalBinaryBare(bz, &dest)
+	err = marshaler.Unmarshal(bz, &dest)
 	// then
 	require.NoError(t, err)
 	assert.Equal(t, src, dest)
@@ -290,7 +291,7 @@ func TestContractInfoReadExtension(t *testing.T) {
 func TestNewEnv(t *testing.T) {
 	myTime := time.Unix(0, 1619700924259075000)
 	t.Logf("++ unix: %d", myTime.UnixNano())
-	var myContractAddr sdk.AccAddress = randBytes(sdk.AddrLen)
+	var myContractAddr sdk.AccAddress = randBytes(20)
 	specs := map[string]struct {
 		srcCtx sdk.Context
 		exp    wasmvmtypes.Env

@@ -53,6 +53,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/ibc-go/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/modules/core"
@@ -170,6 +172,7 @@ func createTestInput(
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
+	keyUpgrade := storetypes.NewKVStoreKey(upgradetypes.StoreKey)
 	keyIBC := sdk.NewKVStoreKey(ibchost.StoreKey)
 	keyCapability := sdk.NewKVStoreKey(capabilitytypes.StoreKey)
 	keyCapabilityTransient := storetypes.NewMemoryStoreKey(capabilitytypes.MemStoreKey)
@@ -205,6 +208,7 @@ func createTestInput(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(capabilitytypes.ModuleName)
+	paramsKeeper.Subspace(upgradetypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 
 	maccPerms := map[string][]string{ // module account permissions
@@ -241,9 +245,9 @@ func createTestInput(
 	)
 	bankParams := banktypes.DefaultParams()
 	bankKeeper.SetParams(ctx, bankParams)
-	bankKeeper.SetSupply(ctx, banktypes.NewSupply(sdk.NewCoins(
-		sdk.NewCoin("denom", sdk.NewInt(10000)),
-	)))
+	// bankKeeper.SetSupply(ctx, banktypes.NewSupply(sdk.NewCoins(
+	// 	sdk.NewCoin("denom", sdk.NewInt(10000)),
+	// )))
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -259,19 +263,21 @@ func createTestInput(
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
-	err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
-		sdk.NewCoin("stake", sdk.NewInt(2000000)),
-	))
-	require.NoError(t, err)
+	// err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
+	// 	sdk.NewCoin("stake", sdk.NewInt(2000000)),
+	// ))
+	// require.NoError(t, err)
 	authKeeper.SetModuleAccount(ctx, distrAcc)
 	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, keyCapability, keyCapabilityTransient)
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
+	upgradeKeeper := upgradekeeper.NewKeeper(map[int64]bool{}, keyUpgrade, appCodec, tempDir, nil)
+
 	ibcSubsp, _ := paramsKeeper.GetSubspace(ibchost.ModuleName)
 
 	ibcKeeper := ibckeeper.NewKeeper(
-		appCodec, keyIBC, ibcSubsp, stakingKeeper, scopedIBCKeeper,
+		appCodec, keyIBC, ibcSubsp, stakingKeeper, upgradeKeeper, scopedIBCKeeper,
 	)
 
 	router := baseapp.NewRouter()
@@ -605,7 +611,9 @@ func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountK
 func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	require.NoError(t, bank.SetBalances(ctx, addr, coins))
+	err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
+	require.NoError(t, err)
+	bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
 }
 
 var keyCounter uint64 = 0

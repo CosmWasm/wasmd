@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -85,9 +86,9 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 	}
 
 	// find the handler and execute it
-	handler := h.router.Route(ctx, msg.Route())
+	handler := h.router.Route(ctx, sdk.MsgTypeURL(msg))
 	if handler == nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.Route())
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, sdk.MsgTypeURL(msg))
 	}
 	res, err := handler(ctx, msg)
 	if err != nil {

@@ -1,6 +1,8 @@
 package wasm
 
 import (
+	"math"
+
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,7 +11,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
-	"math"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
@@ -204,7 +205,7 @@ func (i IBCHandler) OnRecvPacket(
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
-func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) (*sdk.Result, error) {
+func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress) (*sdk.Result, error) {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "contract port id")
