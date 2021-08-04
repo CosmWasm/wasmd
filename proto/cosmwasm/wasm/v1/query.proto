@@ -15,22 +15,23 @@ service Query {
   // ContractInfo gets the contract meta data
   rpc ContractInfo(QueryContractInfoRequest)
       returns (QueryContractInfoResponse) {
-    option (google.api.http).get = "/wasm/v1/contract/{address}";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}";
   }
   // ContractHistory gets the contract code history
   rpc ContractHistory(QueryContractHistoryRequest)
       returns (QueryContractHistoryResponse) {
-    option (google.api.http).get = "/wasm/v1/contract/{address}/history";
+    option (google.api.http).get =
+        "/cosmwasm/wasm/v1/contract/{address}/history";
   }
   // ContractsByCode lists all smart contracts for a code id
   rpc ContractsByCode(QueryContractsByCodeRequest)
       returns (QueryContractsByCodeResponse) {
-    option (google.api.http).get = "/wasm/v1/code/{code_id}/contracts";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}/contracts";
   }
   // AllContractState gets all raw store data for a single contract
   rpc AllContractState(QueryAllContractStateRequest)
       returns (QueryAllContractStateResponse) {
-    option (google.api.http).get = "/wasm/v1/contract/{address}/state";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/state";
   }
   // RawContractState gets single key from the raw store data of a contract
   rpc RawContractState(QueryRawContractStateRequest)
@@ -46,11 +47,11 @@ service Query {
   }
   // Code gets the binary code and metadata for a singe wasm code
   rpc Code(QueryCodeRequest) returns (QueryCodeResponse) {
-    option (google.api.http).get = "/wasm/v1/code/{code_id}";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}";
   }
   // Codes gets the metadata for all stored wasm codes
   rpc Codes(QueryCodesRequest) returns (QueryCodesResponse) {
-    option (google.api.http).get = "/wasm/v1/code";
+    option (google.api.http).get = "/cosmwasm/wasm/v1/code";
   }
 }
 

@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var _ types.IBCContractKeeper = (*Keeper)(nil)
+
 // OnOpenChannel calls the contract to participate in the IBC channel handshake step.
 // In the IBC protocol this is either the `Channel Open Init` event on the initiating chain or
 // `Channel Open Try` on the counterparty chain.
@@ -17,9 +19,7 @@ import (
 func (k Keeper) OnOpenChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	channel wasmvmtypes.IBCChannel,
-	// this is unset on init, set on try
-	counterpartyVersion string,
+	msg wasmvmtypes.IBCChannelOpenMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-open-channel")
 
@@ -30,18 +30,6 @@ func (k Keeper) OnOpenChannel(
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
-
-	msg := wasmvmtypes.IBCChannelOpenMsg{}
-	if counterpartyVersion == "" {
-		msg.OpenInit = &wasmvmtypes.IBCOpenInit{
-			Channel: channel,
-		}
-	} else {
-		msg.OpenTry = &wasmvmtypes.IBCOpenTry{
-			Channel:             channel,
-			CounterpartyVersion: counterpartyVersion,
-		}
-	}
 
 	gas := k.runtimeGasForContract(ctx)
 	gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJsonDeserialization)
@@ -63,9 +51,7 @@ func (k Keeper) OnOpenChannel(
 func (k Keeper) OnConnectChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	channel wasmvmtypes.IBCChannel,
-	// this is set on ack, unset on confirm
-	counterpartyVersion string,
+	msg wasmvmtypes.IBCChannelConnectMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-connect-channel")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
@@ -75,18 +61,6 @@ func (k Keeper) OnConnectChannel(
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
-
-	msg := wasmvmtypes.IBCChannelConnectMsg{}
-	if counterpartyVersion == "" {
-		msg.OpenConfirm = &wasmvmtypes.IBCOpenConfirm{
-			Channel: channel,
-		}
-	} else {
-		msg.OpenAck = &wasmvmtypes.IBCOpenAck{
-			Channel:             channel,
-			CounterpartyVersion: counterpartyVersion,
-		}
-	}
 
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCChannelConnect(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJsonDeserialization)
@@ -107,9 +81,7 @@ func (k Keeper) OnConnectChannel(
 func (k Keeper) OnCloseChannel(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	channel wasmvmtypes.IBCChannel,
-	// false for init, true for confirm
-	confirm bool,
+	msg wasmvmtypes.IBCChannelCloseMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-close-channel")
 
@@ -120,17 +92,6 @@ func (k Keeper) OnCloseChannel(
 
 	params := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
-
-	msg := wasmvmtypes.IBCChannelCloseMsg{}
-	if confirm {
-		msg.CloseConfirm = &wasmvmtypes.IBCCloseConfirm{
-			Channel: channel,
-		}
-	} else {
-		msg.CloseInit = &wasmvmtypes.IBCCloseInit{
-			Channel: channel,
-		}
-	}
 
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJsonDeserialization)
@@ -151,7 +112,7 @@ func (k Keeper) OnCloseChannel(
 func (k Keeper) OnRecvPacket(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	packet wasmvmtypes.IBCPacket,
+	msg wasmvmtypes.IBCPacketReceiveMsg,
 ) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-recv-packet")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
@@ -161,7 +122,6 @@ func (k Keeper) OnRecvPacket(
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
-	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: packet}
 
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJsonDeserialization)
@@ -209,7 +169,7 @@ func (k Keeper) OnAckPacket(
 func (k Keeper) OnTimeoutPacket(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
-	packet wasmvmtypes.IBCPacket,
+	msg wasmvmtypes.IBCPacketTimeoutMsg,
 ) error {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-timeout-packet")
 
@@ -220,7 +180,6 @@ func (k Keeper) OnTimeoutPacket(
 
 	env := types.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
-	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: packet}
 
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, execErr := k.wasmVM.IBCPacketTimeout(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJsonDeserialization)

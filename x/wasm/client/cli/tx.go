@@ -50,7 +50,7 @@ func GetTxCmd() *cobra.Command {
 // StoreCodeCmd will upload code to be reused.
 func StoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "store [wasm file] --source [source] --builder [builder]",
+		Use:     "store [wasm file]",
 		Short:   "Upload a wasm binary",
 		Aliases: []string{"upload", "st", "s"},
 		Args:    cobra.ExactArgs(1),
