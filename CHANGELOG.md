@@ -15,7 +15,7 @@
   [\#565](https://github.com/CosmWasm/wasmd/pull/565)
 
 **Implemented Enhancements:**
-- Wasmvm upgrade [\#559](https://github.com/CosmWasm/wasmd/pull/559) ([ethanfrey](https://github.com/ethanfrey))
+- Wasmvm upgrade to v0.16.0-rc2 [\#559](https://github.com/CosmWasm/wasmd/pull/559) ([ethanfrey](https://github.com/ethanfrey))
 - Bump Cosmos-sdk to v0.42.8 [\#572](https://github.com/CosmWasm/wasmd/pull/572) ([alpe](https://github.com/alpe))
 - Better ibc contract interface [\#570](https://github.com/CosmWasm/wasmd/pull/570) ([ethanfrey](https://github.com/ethanfrey))
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
