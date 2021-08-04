@@ -3,15 +3,15 @@ package ibctesting
 import (
 	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
+	ibctesting "github.com/cosmos/ibc-go/testing"
 	"strconv"
 	"testing"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
-	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
-	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/modules/core/24-host"
+	"github.com/cosmos/ibc-go/modules/core/exported"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 )

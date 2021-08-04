@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 	"encoding/binary"
+	"runtime/debug"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"runtime/debug"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -18,13 +19,13 @@ import (
 var _ types.QueryServer = &grpcQuerier{}
 
 type grpcQuerier struct {
-	cdc           codec.Marshaler
+	cdc           codec.Codec
 	storeKey      sdk.StoreKey
 	keeper        types.ViewKeeper
 	queryGasLimit sdk.Gas
 }
 
-func NewGrpcQuerier(cdc codec.Marshaler, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier {
+func NewGrpcQuerier(cdc codec.Codec, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier {
 	return &grpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
