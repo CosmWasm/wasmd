@@ -3,7 +3,7 @@
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
 **Api Breaking:**
-
+- Add organisation to grpc gateway path [\#578](https://github.com/CosmWasm/wasmd/pull/578)
 - Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
   [\#563](https://github.com/CosmWasm/wasmd/pull/563)
 - Renamed InitMsg and MigrateMsg fields to Msg. This applies to protobuf Msg
