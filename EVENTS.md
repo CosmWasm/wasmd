@@ -74,23 +74,69 @@ And here is a sample log output for a transaction with one message, which emitte
 ]
 ```
 
+### Default Events in the SDK
+
+There are two places events that are emitted in every transaction regardless of the module which is executed.
+[The first is `{"type": "message"}`](https://github.com/cosmos/cosmos-sdk/blob/6888de1d86026c25197c1227dae3d7da4d41a441/baseapp/baseapp.go#L746-L748)
+defining an `action` attribute. This is emitted for each top-level (user-signed) message, but the action names have changed between
+0.42 and 0.43. 
+
+The other place is in the [signature verification AnteHandler](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/auth/ante/sigverify.go#L103-L120), where it emits information on the account sequences and signatures on the transaction.
+
+These are all handled in BaseApp and the middleware *before* any module is called and thus not exposed to CosmWasm contracts at all.
+
 ### Standard Events in the SDK
 
-TODO: what is added by the AnteHandlers (message.signer? auth?)
+The events that will actually make it to the contracts are the events that are emitted by the other modules / keepers. Let's look
+at some good examples of what they look like:
 
-TODO: what is emitted by bank (transfer event), as this is a very important base event
+The most basic one is `bank`, which emits two events on every send, a [custom "transfer" event](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/bank/keeper/send.go#L142-L147) as well as "sender" information under the [standard "message" type](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/bank/keeper/send.go#L148-L151). Replacing variables with string literals, they look like this:
+
+```go
+sdk.NewEvent(
+    "transfer"
+    sdk.NewAttribute("recipient", toAddr.String()),
+    sdk.NewAttribute("sender", fromAddr.String()),
+    sdk.NewAttribute("amount", amt.String()),  // eg 12456uatom
+),
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("sender", fromAddr.String()),
+),
+```
+
+The delegation module seems a bit more refined, emitting a generic "message" type event in [`msg_server.go`](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/distribution/keeper/msg_server.go#L42-L46) including the module name, **before** 
+emitting some custom event types closer to the actual code logic in
+[`keeper.go`](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/distribution/keeper/keeper.go#L74-L77).
+
+This looks something like:
+
+```go
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "distribution"),
+    sdk.NewAttribute("sender", msg.DelegatorAddress),
+),
+sdk.NewEvent(
+    "set_withdraw_address",
+    sdk.NewAttribute("withdraw_address", withdrawAddr.String()),
+),
+```
 
 ## Usage in wasmd
 
-In `x/wasm` we also use Events system. On one hand, `x/wasm` emits standard event for each message it processes to convey,
-for example, "uploaded code, id 6" or "executed code, address wasm1234567890". Furthermore, it allows contracts to
+In `x/wasm` we also use Events system. On one hand, the Go implementation of `x/wasm` emits standard events for each 
+message it processes, using the `distribution` module as an example. Furthermore, it allows contracts to
 emit custom events based on their execution state, so they can for example say "dex swap, BTC-ATOM, in 0.23, out 512"
 which require internal knowledge of the contract and is very useful for custom dApp UIs.
 
-In addition, when a smart contract executes a SubMsg and processes the reply, it receives not only the `data` response
-from the message exection, but also the list of events 
+`x/wasm` is also a consumer of events, since when a smart contract executes a SubMsg and processes the reply, it receives
+not only the `data` response from the message exection, but also the list of events. This makes it even more important for
+us to document a standard event processing format.
 
 ### Standard Events in x/wasm
+
+Following the model of `distribution`, we 
 
 TODO: document what we emit in `x/wasm` regardless of the contract return results
 
