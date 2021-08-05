@@ -8,7 +8,7 @@ in human readable form. Events are not written to the application state, nor do 
 but mainly intended for client use (and become an essential API for any reactive app or app that searches for txs). 
 
 In contrast, transactions also have a binary "data" field that is part of the AppHash (provable with light client proofs,
-part of consensus). This data is not searchable, but given a tx hash, you can be gauranteed what the data returned is.
+part of consensus). This data is not searchable, but given a tx hash, you can be guaranteed what the data returned is.
 This is often empty, but sometimes custom protobuf formats to return essential information from an execution.
 
 Every message in the SDK may add events to the EventManager and these are then added to the final ABCI result that is returned
@@ -35,13 +35,77 @@ TODO: show event structure.
 
 TODO: contrast flattened/unflattened events
 
-### Standard Events in the SDK
+### Standard Events in the Cosmos-SDK
+The Cosmos-SDK emits events of type `sdk.EventTypeMessage` for every message that contains the `sender` (actor) and `module` field (which seems to be optional unfortunately)
+For example in the **staking** [msg_server.go](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/staking/keeper/msg_server.go#L106-L117):
+```go
+sdk.NewEvent(
+    types.EventTypeCreateValidator,
+    sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
+    sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Value.Amount.String()),
+)
+```
 
-TODO: what is added by the AnteHandlers (message.signer? auth?)
+They also emit one or more other custom type event in the module that describe the operation executed with more details or metadata.
+```go
+sdk.NewEvent(
+  types.EventTypeCreateValidator,
+  sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress),
+  sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Value.Amount.String()),
+)
+```
 
-TODO: what is emitted by bank (transfer event), as this is a very important base event
+Another example for a custom event is in the **bank** [send.go](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/bank/keeper/send.go#L117-L121),
+that shows a different set of metadata.
+```go
+sdk.NewEvent(
+    types.EventTypeTransfer,
+    sdk.NewAttribute(types.AttributeKeyRecipient, out.Address),
+    sdk.NewAttribute(sdk.AttributeKeyAmount, out.Coins.String()),
+),
+```
+and the `message` type but without the `module` this time. [See](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/bank/keeper/send.go#L117-L121) 
+```go
+sdk.NewEvent(
+    sdk.EventTypeMessage,
+    sdk.NewAttribute(types.AttributeKeySender, in.Address),
+),
+```
+The big difference between both modules is where the events are emitted. In the `message_server` or in the `keeper`. The "classic"
+way to use module functionality was by using the module's keeper. This may have driven the decision where to emit the events.
+
+The **distribution** module though has split the responsibility for the different event types better.
+In [`msg_server.go`](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/distribution/keeper/msg_server.go#L42-L46)
+the `message` type is emitted:
+```go
+sdk.NewEvent(
+    sdk.EventTypeMessage,
+    sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+    sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress),
+),
+```
+While the custom event type is emitted in the [`keeper.go`](https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/distribution/keeper/keeper.go#L74-L77):
+```go
+sdk.NewEvent(
+    types.EventTypeSetWithdrawAddress,
+    sdk.NewAttribute(types.AttributeKeyWithdrawAddress, withdrawAddr.String()),
+),
+```
 
 ## Usage in wasmd
+
+```personal comment
+TODO:
+We have don't have a consistent design yet. We use the `message` type mostly and append our custom metadata in the `msg_server.go`
+but we also emit custom type events in the keeper.
+
+With https://github.com/CosmWasm/wasmd/issues/440 I had in mind to follow the design of the **distribution** module:
+1) split message and operation events
+2) emit in different places so that the keeper can be used without emitting a wrong message type event.
+
+This won't fix the issue of flattend events nor incorrect message events, when not filtered out (see **bank** example)
+ 
+```
 
 In `x/wasm` we also use Events system. On one hand, `x/wasm` emits standard event for each message it processes to convey,
 for example, "uploaded code, id 6" or "executed code, address wasm1234567890". Furthermore, it allows contracts to
@@ -49,7 +113,7 @@ emit custom events based on their execution state, so they can for example say "
 which require internal knowledge of the contract and is very useful for custom dApp UIs.
 
 In addition, when a smart contract executes a SubMsg and processes the reply, it receives not only the `data` response
-from the message exection, but also the list of events 
+from the message execution, but also the list of events 
 
 ### Standard Events in x/wasm
 
