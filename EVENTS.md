@@ -8,7 +8,7 @@ in human readable form. Events are not written to the application state, nor do 
 but mainly intended for client use (and become an essential API for any reactive app or app that searches for txs). 
 
 In contrast, transactions also have a binary "data" field that is part of the AppHash (provable with light client proofs,
-part of consensus). This data is not searchable, but given a tx hash, you can be gauranteed what the data returned is.
+part of consensus). This data is not searchable, but given a tx hash, you can be guaranteed what the data returned is.
 This is often empty, but sometimes custom protobuf formats to return essential information from an execution.
 
 Every message in the SDK may add events to the EventManager and these are then added to the final ABCI result that is returned
@@ -20,20 +20,59 @@ transactions.
 The `log` field actually has the best data. It contains an array of array of events. The first array is one entry per incoming message.
 Transactions in the Cosmos SDK may consist of multiple messages that are executed atomically. Maybe we send tokens, then issue a swap
 on a DEX. Each action would return it's own list of Events and in the logs, these are separated. For each message, it maintains a list
-of Events, exactly in the order returned by the application. This is JSON encoded and can be parsed by a client.
+of Events, exactly in the order returned by the application. This is JSON encoded and can be parsed by a client. In fact this is
+how [CosmJS](https://github.com/cosmos/cosmjs) gets the events it shows to the client.
 
-In Tendermint 0.35, the `events` field will be one flattened list of events over all messages. Just appending the lists returned
-from each message. However, currently (until Tendermint 0.34 used in Cosmos SDK 0.40-0.43), they are flattened on type. Meaning all events
-with type `wasm` get merged into one. This makes the API not very useful to understanding more complex events currently. (TODO: link PR fixing this)
+In Tendermint 0.35, the `events` field will be one flattened list of events over all messages. Just as if we concatenated all
+the per-message arrays contained in the `log` field. This fix was made as
+[part of an event system refactoring](https://github.com/tendermint/tendermint/pull/6634). This refactoring is also giving us
+[pluggable event indexing engines](https://github.com/tendermint/tendermint/pull/6411), so we can use eg. PostgreSQL to
+store and query the events with more powerful indexes.
 
-In the search/subscribe interface, you can query for transactions by `AND`ing a number of conditions. Each is expressed like
-`<type>.<key>=<value>`. For example, `message.signer=cosmos1234567890`. It will return all transactions that emitted an event matching this filter.
+However, currently (until Tendermint 0.34 used in Cosmos SDK 0.40-0.43), all events of one transaction are "flat-mapped" on type. 
+Meaning all events with type `wasm` get merged into one. This makes the API not very useful to understanding more complex events
+currently. There are also a number of limitations of the power of queries in the search interface.
 
-### Examples
+Given the state of affairs, and given that we seek to provide a stable API for contracts looking into the future, we consider the
+`log` output and the Tendermint 0.35 event handling to be the standard that clients should adhere to. And we will expose a similar
+API to the smart contracts internally (all events from the message appended, unmerged).
+### Data Format
 
-TODO: show event structure.
+The event has a string type, and a list of attributes. Each of them being a key value pair. All of these maintain a
+consistent order (and avoid dictionaries/hashes). Here is a simple Event in JSON:
 
-TODO: contrast flattened/unflattened events
+```json
+{ 
+    "type": "wasm", 
+    "attributes": [
+        {"key": "_contract_address", "value": "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6"}, 
+        {"key": "transfered", "value": "777000"}
+    ]
+}
+```
+
+And here is a sample log output for a transaction with one message, which emitted 2 events:
+
+```json
+[
+    [
+        { 
+            "type": "message", 
+            "attributes": [
+                {"key": "module", "value": "bank"}, 
+                {"key": "action", "value": "send"}
+            ]
+        },
+        { 
+            "type": "transfer", 
+            "attributes": [
+                {"key": "recipient", "value": "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6"}, 
+                {"key": "amount", "value": "777000uatom"}
+            ]
+        }
+    ]
+]
+```
 
 ### Standard Events in the SDK
 
