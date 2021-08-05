@@ -131,16 +131,97 @@ emit custom events based on their execution state, so they can for example say "
 which require internal knowledge of the contract and is very useful for custom dApp UIs.
 
 `x/wasm` is also a consumer of events, since when a smart contract executes a SubMsg and processes the reply, it receives
-not only the `data` response from the message exection, but also the list of events. This makes it even more important for
+not only the `data` response from the message execution, but also the list of events. This makes it even more important for
 us to document a standard event processing format.
 
 ### Standard Events in x/wasm
 
-Following the model of `distribution`, we 
+Following the model of `distribution`, we will split the emitted events into two parts. All calls to the message server, will receive
+the following event:
 
-TODO: document what we emit in `x/wasm` regardless of the contract return results
+```go
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "wasm"),
+    // Note: this was "signer" before 0.18
+    sdk.NewAttribute("sender", msg.Sender),  
+),
+```
+
+No further information will be added to the generic "message" type, but rather be contained in a more context-specific event type.
+Here are some examples:
+
+```go
+// Store Code
+sdk.NewEvent(
+    "store_code",
+    sdk.NewAttribute("code_id", fmt.Sprintf("%d", codeID)),
+    // features required by the contract
+    // see https://github.com/CosmWasm/wasmd/issues/574
+    sdk.NewAttribute("feature", "stargate"),
+    sdk.NewAttribute("feature", "staking"),
+)
+
+// Instantiate Contract
+sdk.NewEvent(
+    "instantiate",
+    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(data)),
+)
+
+// Execute Contract
+sdk.NewEvent(
+    "execute",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(data)),
+)
+
+// Migrate Contract
+sdk.NewEvent(
+    "migrate",
+    // Note: this is the new code id that is being migrated to
+    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(data)),
+)
+
+// Set new admin
+sdk.NewEvent(
+    "update_admin",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("admin", msg.NewAdmin),
+)
+
+// Clear admin
+sdk.NewEvent(
+    "clear_admin",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+)
+
+// Pin Code
+sdk.NewEvent(
+    "pin_code",
+    sdk.NewAttribute("code_id", strconv.FormatUint(msg.CodeID, 10)),
+)
+
+// Unpin Code
+sdk.NewEvent(
+    "unpin_code",
+    sdk.NewAttribute("code_id", strconv.FormatUint(msg.CodeID, 10)),
+)
+
+// Emitted when processing a submessage reply
+sdk.NewEvent(
+    "reply",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+)
+
+```
 
 ### Emitted Custom Events from a Contract
+
+**TODO**
 
 TODO: document how we process attributes and events fields in the Response.
 
@@ -159,16 +240,90 @@ flatten that in a meaningful way to feed it into the event system.
 
 Furthermore, with the sub-message reply handlers, we end up with eg. "Contract A execute", "Contract B execute",
 "Contract A reply". If we return all events by all of these, we may end up with many repeated event types and
-a confusing results, especially for Tendermint 0.34 where they are merged together.
-
-While designing this, we wish to make something that is usable with Tendermint 0.34, but focus on using the
-behavior of Tendermint 0.35+ (which is the same behavior as we have internally in the SDK... submessages
-all have their own list of Events). Thus, we may emit more events than in previous wasmd versions (as we assume
-they will be returned in an ordered list rather than merged).
+a confusing results. However, we may use the standard "message" events to separate the sub-messages as it marks
+where the next one starts. With careful analysis of the "sender" field on these "message" markers, we may be able
+to reconstruct much of the tree execution path. We should ensure all this information is exposed in the most
+consistent way possible.
 
 ### Combining Events from Sub-Messages
 
-TODO
+Each time a contract is executed, it not only returns the `message` event from its call, the `execute` event for the
+contact and the `wasm` event with any custom fields from the contract itself. It will also return the same set of information
+for all messages that it returned, which were later dispatched.
+
+Until 0.18.0, we stripped out the `message` events that were returned when dispatching `Response.messages`. However,
+they contain useful information to trace the topography of the call, especially when we call into native modules,
+and it makese sense to maintain the full information.
+
+Note that these are all appended in order called. So if I execute a contract, which returns two messages, one to instantiate a new
+contract and the other to set the withdrawl address, while also using `ReplyOnSuccess` for the instantiation (to get the
+address), it will emit a series of events that looks something like this:
+
+```go
+/// original execution (top-level message)
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "wasm"),
+    sdk.NewAttribute("sender", msg.Sender),  
+),
+sdk.NewEvent(
+    "execute",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(data)),
+),
+sdk.NewEvent(
+    "wasm",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("custom", "from contract"),
+),
+
+// instantiating contract (returned message)
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "wasm"),
+    sdk.NewAttribute("sender", contractAddr.String()),  
+),
+sdk.NewEvent(
+    "instantiate",
+    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(initData)),
+)
+sdk.NewEvent(
+    "wasm",
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("initialization", "succeeded"),
+),
+sdk.NewEvent(
+    "wasm-custom",
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("foobar", "baz"),
+),
+
+// handling the reply (this doesn't emit a message event as it never goes through the message server)
+sdk.NewEvent(
+    "reply",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+),
+sdk.NewEvent(
+    "wasm",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("custom", "from contract"),
+),
+
+
+// calling the distribution module
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "distribution"),
+    sdk.NewAttribute("sender", contractAddr.String()),
+),
+sdk.NewEvent(
+    "set_withdraw_address",
+    sdk.NewAttribute("withdraw_address", withdrawAddr.String()),
+),
+
+```
+
 ### Exposing Events to Reply
 
-TODO
