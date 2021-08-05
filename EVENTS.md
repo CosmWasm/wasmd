@@ -37,7 +37,7 @@ TODO: contrast flattened/unflattened events
 
 ### Standard Events in the SDK
 
-TODO: what is added by the AnteHandlers
+TODO: what is added by the AnteHandlers (message.signer? auth?)
 
 TODO: what is emitted by bank (transfer event), as this is a very important base event
 
@@ -66,4 +66,24 @@ TODO: document how we process attributes and events fields in the Response.
 
 ## Event Details for wasmd
 
-Beyond the basic Event system and emitted events, we 
+Beyond the basic Event system and emitted events, we must handle more advanced cases in `x/wasm`
+and thus add some more logic to the event processing. Remember that CosmWasm contracts dispatch other
+messages themselves, so far from the flattened event structure, or even a list of list (separated
+by message index in the tx), we actually have a tree of messages, each with their own events. And we must
+flatten that in a meaningful way to feed it into the event system.
+
+Furthermore, with the sub-message reply handlers, we end up with eg. "Contract A execute", "Contract B execute",
+"Contract A reply". If we return all events by all of these, we may end up with many repeated event types and
+a confusing results, especially for Tendermint 0.34 where they are merged together.
+
+While designing this, we wish to make something that is usable with Tendermint 0.34, but focus on using the
+behavior of Tendermint 0.35+ (which is the same behavior as we have internally in the SDK... submessages
+all have their own list of Events). Thus, we may emit more events than in previous wasmd versions (as we assume
+they will be returned in an ordered list rather than merged).
+
+### Combining Events from Sub-Messages
+
+TODO
+### Exposing Events to Reply
+
+TODO
