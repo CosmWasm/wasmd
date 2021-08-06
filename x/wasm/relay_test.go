@@ -352,7 +352,7 @@ type captureCloseContract struct {
 	closeCalled bool
 }
 
-func (c *captureCloseContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (c *captureCloseContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	c.closeCalled = true
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
@@ -365,7 +365,7 @@ type sendViaIBCTransferContract struct {
 	t *testing.T
 }
 
-func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
+func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 	var in startTransfer
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
@@ -382,7 +382,7 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 		},
 	}
 
-	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
 var _ wasmtesting.IBCContractCallbacks = &sendEmulatedIBCTransferContract{}
@@ -395,7 +395,7 @@ type sendEmulatedIBCTransferContract struct {
 	contractAddr string
 }
 
-func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.Response, uint64, error) {
+func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 	var in startTransfer
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
@@ -415,12 +415,12 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 			Timeout:   wasmvmtypes.IBCTimeout{Timestamp: in.Timeout},
 		},
 	}
-	return &wasmvmtypes.Response{Messages: []wasmvmtypes.CosmosMsg{{IBC: ibcMsg}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
-func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &data); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Packet.Data, &data); err != nil {
 		return nil, 0, err
 	}
 
@@ -430,7 +430,7 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(data.Amount, data.Denom)},
 		}}
 
-	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.CosmosMsg{{Bank: returnTokens}}}, 0, nil
+	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
 }
 
 // custom contract execute payload
@@ -460,13 +460,13 @@ type receiverContract struct {
 	chain        *ibctesting.TestChain
 }
 
-func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
+func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
 	var src ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
 	// call original ibctransfer keeper to not copy all code into this
-	ibcPacket := toIBCPacket(packet)
+	ibcPacket := toIBCPacket(packet.Packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := wasmd.IBCTestSupport(c.t, c.chain).TransferKeeper().OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
@@ -478,7 +478,7 @@ func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmty
 	return &wasmvmtypes.IBCReceiveResponse{Acknowledgement: ack, Attributes: log}, 0, nil
 }
 
-func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, packetAck wasmvmtypes.IBCAcknowledgement, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, packetAck wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	var data ibctransfertypes.FungibleTokenPacketData
 	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
@@ -486,7 +486,7 @@ func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.Acknowledgement, &ack); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
 
@@ -504,27 +504,27 @@ func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.
 // simple helper struct that implements connection setup methods.
 type contractStub struct{}
 
-func (s *contractStub) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (uint64, error) {
+func (s *contractStub) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (uint64, error) {
 	return 0, nil
 }
 
-func (s *contractStub) IBCChannelConnect(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCChannelConnect(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 }
 
-func (s *contractStub) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannel, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *contractStub) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
+func (s *contractStub) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *contractStub) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, ack wasmvmtypes.IBCAcknowledgement, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, ack wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 }
 
-func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacket, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	panic("implement me")
 }
 
