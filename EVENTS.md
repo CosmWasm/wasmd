@@ -155,8 +155,9 @@ Here are some examples:
 // Store Code
 sdk.NewEvent(
     "store_code",
-    sdk.NewAttribute("code_id", fmt.Sprintf("%d", codeID)),
-    // features required by the contract
+    // Update in 0.18: _code_id is also a reserved prefix
+    sdk.NewAttribute("_code_id", fmt.Sprintf("%d", codeID)),
+    // features required by the contract (new in 0.18)
     // see https://github.com/CosmWasm/wasmd/issues/574
     sdk.NewAttribute("feature", "stargate"),
     sdk.NewAttribute("feature", "staking"),
@@ -165,7 +166,7 @@ sdk.NewEvent(
 // Instantiate Contract
 sdk.NewEvent(
     "instantiate",
-    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
     sdk.NewAttribute("result", hex.EncodeToString(data)),
 )
@@ -181,7 +182,7 @@ sdk.NewEvent(
 sdk.NewEvent(
     "migrate",
     // Note: this is the new code id that is being migrated to
-    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
     sdk.NewAttribute("result", hex.EncodeToString(data)),
 )
@@ -202,13 +203,13 @@ sdk.NewEvent(
 // Pin Code
 sdk.NewEvent(
     "pin_code",
-    sdk.NewAttribute("code_id", strconv.FormatUint(msg.CodeID, 10)),
+    sdk.NewAttribute("_code_id", strconv.FormatUint(msg.CodeID, 10)),
 )
 
 // Unpin Code
 sdk.NewEvent(
     "unpin_code",
-    sdk.NewAttribute("code_id", strconv.FormatUint(msg.CodeID, 10)),
+    sdk.NewAttribute("_code_id", strconv.FormatUint(msg.CodeID, 10)),
 )
 
 // Emitted when processing a submessage reply
@@ -219,16 +220,70 @@ sdk.NewEvent(
 
 ```
 
+Note that every event that affects a contract (not store code, pin or unpin) will return the contract_addr as
+`_contract_addr`. The events that are related to a particular wasm code (store code, instantiate, pin, unpin, and migrate)
+will emit that as `_code_id`. All attributes prefixed with `_` are reserved and may not be emitted by a smart contract,
+so we use consistently with the underscore prefix, as they may also be present in the wasm events.
+
 ### Emitted Custom Events from a Contract
 
-**TODO**
+When a CosmWasm contract returns a `Response` from one of the calls, it may return a list of attributes as well as a list
+of events (in addition to data and a list of messages to dispatch). These are then processed in `x/wasm` to create events that
+are emitted to the blockchain.
 
-TODO: document how we process attributes and events fields in the Response.
+Every contract execution, be it execute, instantiate, migrate, reply, will receive a `wasm` type event. This event will
+always be tagged with `_contract_address` by the Go module, so this is trust-worthy. The contract itself cannot overwrite
+this field. (QUESTION: do we want to emit `_code_id` as well for the code id that was just executed?) Beyond this, if the
+contract returned any `attributes`, these are appended to the same event after the standard tags.
 
-* Base event `wasm`
-* Event name mangling (prepend `wasm-`)
-* Append trusted attribute _contract_address
-* Validation requirements (_ reserved, non-empty, min-length 2 for type)
+A contact may also return custom `events`. These are multiple events, each with their own type as well as attributes.
+When they are received, `x/wasm` prepends `wasm-` to the event type returned by the contact to avoid them trying to fake
+an eg. `transfer` event from the bank module. The output here may look like:
+
+```go
+sdk.NewEvent(
+    "wasm-promote"
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("batch_id", "6"),
+    sdk.NewAttribute("address", "cosmos1234567"),
+    sdk.NewAttribute("address", "cosmos1765432"),
+),
+sdk.NewEvent(
+    "wasm-promote"
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("batch_id", "7"),
+    sdk.NewAttribute("address", "cosmos19875632"),
+)
+```
+
+Note that these custom events also have the `_contract_address` attribute automatically injected for easier attribution in the clients.
+The multiple event API was designed to allow the contract to make logical groupings that are persisted in the event system,
+more than flattening them all into one event like:
+
+```go
+sdk.NewEvent(
+    "wasm"
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("action", "promote"),
+    sdk.NewAttribute("batch_id", "6"),
+    sdk.NewAttribute("address", "cosmos1234567"),
+    sdk.NewAttribute("address", "cosmos1765432"),
+    sdk.NewAttribute("batch_id", "7"),
+    sdk.NewAttribute("address", "cosmos19875632"),
+)
+```
+
+### Validation Rules
+
+While the `wasm` and `wasm-*` namespacing does sandbox the smart contract events and limits malicious activity they could
+undertake, we also perform a number of further validation checks on the contracts:
+
+* No attribute key may start with `_`. This is currently used for `_contract_address` and `_code_id` and is reserved for a 
+  namespace for injecting more *trusted* attributes from the `x/wasm` module as opposed to the contract itself
+* Event types are trimmed of whitespace, and must have at least two characters prior to prepending `wasm-`. If the contract returns
+  "  hello\n", the event type will look like `wasm-hello`. If it emits "  a  ", this will be rejected with an error (aborting execution!)
+* Attribute keys and values (both in `attributes` and under `events`) are trimmed of leading/trailing whitespace. If they are empty after
+  trimming, they are rejected as above (aborting the execution). Otherwise, they are passed verbatim.
 
 ## Event Details for wasmd
 
@@ -327,3 +382,35 @@ sdk.NewEvent(
 
 ### Exposing Events to Reply
 
+When the `reply` clause in a contract is called, it will receive the data returned from the message it
+applies to, as well as all events from that message. In the above case, when the `reply` function was called
+on `contractAddr` in response to initializing a contact, it would get the binary-encoded `initData` in the `data`
+field, and the following in the `events` field:
+
+```go
+sdk.NewEvent(
+    "message",
+    sdk.NewAttribute("module", "wasm"),
+    sdk.NewAttribute("sender", contractAddr.String()),  
+),
+sdk.NewEvent(
+    "instantiate",
+    sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("result", hex.EncodeToString(initData)),
+)
+sdk.NewEvent(
+    "wasm",
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("initialization", "succeeded"),
+),
+sdk.NewEvent(
+    "wasm-custom",
+    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("foobar", "baz"),
+),
+```
+
+If the original contract execution example above was actually the result of a message returned by an eg. factory contract,
+and it registered a ReplyOn clause, the `reply` function on that contract would receive the entire 11 events in the example
+above, and would need to use the `message` markers to locate the segment of interest.
