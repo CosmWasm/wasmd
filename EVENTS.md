@@ -230,9 +230,9 @@ When a CosmWasm contract returns a `Response` from one of the calls, it may retu
 of events (in addition to data and a list of messages to dispatch). These are then processed in `x/wasm` to create events that
 are emitted to the blockchain.
 
-Every contract execution, be it execute, instantiate, migrate, reply, will receive a `wasm` type event. This event will
+If the response contains a non-empty list of `attributes`, `x/wasm` will emit a `wasm` type event. This event will
 always be tagged with `_contract_address` by the Go module, so this is trust-worthy. The contract itself cannot overwrite
-this field. Beyond this, if the contract returned any `attributes`, these are appended to the same event after the standard tags.
+this field. Beyond this, the `attributes` returned by the contract, these are appended to the same event.
 
 A contact may also return custom `events`. These are multiple events, each with their own type as well as attributes.
 When they are received, `x/wasm` prepends `wasm-` to the event type returned by the contact to avoid them trying to fake
@@ -270,6 +270,11 @@ sdk.NewEvent(
     sdk.NewAttribute("address", "cosmos19875632"),
 )
 ```
+
+If the Response contains neither `event` nor `attributes`, not `wasm*` events will be emitted, just the standard `message`
+type as well as the action-dependent event (like `execute` or `migrate`). This is a significant change from pre-0.18 versions
+where one could count on the `wasm` event to always be emitted. Now it is recommended to search for `execute._contract_address="foo"`
+to find all transactions related to the contract.
 
 ### Validation Rules
 
