@@ -1,6 +1,5 @@
 # Dev scripts
-For manual testing. Works on my box(*) ... 
-
+For manual testing. Works on my box(*) ...
 
 
 *) OSX
@@ -17,6 +16,11 @@ Next shell:
 
 ```
 cd contrib/local
-./01-accounts.sh 
+./01-accounts.sh
 ./02-contracts.sh
 ```
+
+## Shell script development
+
+[Use `shellcheck`](https://www.shellcheck.net/) to avoid common mistakes in shell scripts.
+[Use `shfmt`](https://github.com/mvdan/sh) to ensure a consistent code formatting.
