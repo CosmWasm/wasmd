@@ -215,8 +215,14 @@ sdk.NewEvent(
 sdk.NewEvent(
     "reply",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("success", strconv.FormatBool(err == nil)),
 )
 
+// Emitted when handling sudo
+sdk.NewEvent(
+    "sudo",
+    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+)
 ```
 
 Note that every event that affects a contract (not store code, pin or unpin) will return the contract_addr as
@@ -307,23 +313,29 @@ consistent way possible.
 
 Each time a contract is executed, it not only returns the `message` event from its call, the `execute` event for the
 contact and the `wasm` event with any custom fields from the contract itself. It will also return the same set of information
-for all messages that it returned, which were later dispatched.
+for all messages that it returned, which were later dispatched. The event system was really designed for one main
+action emitting events, so we define a structure to flatten this event tree:
 
-Until 0.18.0, we stripped out the `message` events that were returned when dispatching `Response.messages`. However,
-they contain useful information to trace the topography of the call, especially when we call into native modules,
-and it makese sense to maintain the full information.
+* We only emit one event of type `message`. This is the top-level call, just like the standard Go modules. For all
+  dispatched submessages, we filter out this event type.
+* All events are returned in execution order as [defined by CosmWasm docs](https://github.com/CosmWasm/cosmwasm/blob/main/SEMANTICS.md#dispatching-messages)
+* `x/wasm` keeper emits a custom event for each call to a contract entry point. Not just `execute`, `instantiate`,
+  and `migrate`, but also `reply`, `sudo` and all ibc entry points.
+* This means all `wasm*` events are preceeded by the cosmwasm entry point that returned them. 
 
-Note that these are all appended in order called. So if I execute a contract, which returns two messages, one to instantiate a new
+To make this more clear, I will provide an example of executing a contract, which returns two messages, one to instantiate a new
 contract and the other to set the withdrawl address, while also using `ReplyOnSuccess` for the instantiation (to get the
-address), it will emit a series of events that looks something like this:
+address). It will emit a series of events that looks something like this:
 
 ```go
-/// original execution (top-level message)
+/// original execution (top-level message is the only one that gets the message tag)
 sdk.NewEvent(
     "message",
     sdk.NewAttribute("module", "wasm"),
     sdk.NewAttribute("sender", msg.Sender),  
 ),
+
+// top-level exection call
 sdk.NewEvent(
     "execute",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
@@ -335,23 +347,14 @@ sdk.NewEvent(
     sdk.NewAttribute("custom", "from contract"),
 ),
 
-// instantiating contract (returned message)
-sdk.NewEvent(
-    "message",
-    sdk.NewAttribute("module", "wasm"),
-    sdk.NewAttribute("sender", contractAddr.String()),  
-),
+// instantiating contract (first dipatched message)
 sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", newContract.String()),
     sdk.NewAttribute("result", hex.EncodeToString(initData)),
 )
-sdk.NewEvent(
-    "wasm",
-    sdk.NewAttribute("_contract_addr", newContract.String()),
-    sdk.NewAttribute("initialization", "succeeded"),
-),
+// didn't emit any attributes, but one event
 sdk.NewEvent(
     "wasm-custom",
     sdk.NewAttribute("_contract_addr", newContract.String()),
@@ -362,6 +365,7 @@ sdk.NewEvent(
 sdk.NewEvent(
     "reply",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("success", "true"),
 ),
 sdk.NewEvent(
     "wasm",
@@ -369,18 +373,11 @@ sdk.NewEvent(
     sdk.NewAttribute("custom", "from contract"),
 ),
 
-
-// calling the distribution module
-sdk.NewEvent(
-    "message",
-    sdk.NewAttribute("module", "distribution"),
-    sdk.NewAttribute("sender", contractAddr.String()),
-),
+// calling the distribution module (second dispatched message)
 sdk.NewEvent(
     "set_withdraw_address",
     sdk.NewAttribute("withdraw_address", withdrawAddr.String()),
 ),
-
 ```
 
 ### Exposing Events to Reply
@@ -392,21 +389,11 @@ field, and the following in the `events` field:
 
 ```go
 sdk.NewEvent(
-    "message",
-    sdk.NewAttribute("module", "wasm"),
-    sdk.NewAttribute("sender", contractAddr.String()),  
-),
-sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", newContract.String()),
     sdk.NewAttribute("result", hex.EncodeToString(initData)),
 )
-sdk.NewEvent(
-    "wasm",
-    sdk.NewAttribute("_contract_addr", newContract.String()),
-    sdk.NewAttribute("initialization", "succeeded"),
-),
 sdk.NewEvent(
     "wasm-custom",
     sdk.NewAttribute("_contract_addr", newContract.String()),
@@ -417,3 +404,7 @@ sdk.NewEvent(
 If the original contract execution example above was actually the result of a message returned by an eg. factory contract,
 and it registered a ReplyOn clause, the `reply` function on that contract would receive the entire 11 events in the example
 above, and would need to use the `message` markers to locate the segment of interest.
+
+## IBC Events
+
+TODO: define what the default SDK messages are here and what we add to our custom keeper events.
