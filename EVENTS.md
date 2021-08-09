@@ -167,14 +167,12 @@ sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(data)),
 )
 
 // Execute Contract
 sdk.NewEvent(
     "execute",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(data)),
 )
 
 // Migrate Contract
@@ -183,7 +181,6 @@ sdk.NewEvent(
     // Note: this is the new code id that is being migrated to
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(data)),
 )
 
 // Set new admin
@@ -339,7 +336,6 @@ sdk.NewEvent(
 sdk.NewEvent(
     "execute",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(data)),
 ),
 sdk.NewEvent(
     "wasm",
@@ -352,7 +348,6 @@ sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", newContract.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(initData)),
 )
 // didn't emit any attributes, but one event
 sdk.NewEvent(
@@ -392,7 +387,6 @@ sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
     sdk.NewAttribute("_contract_addr", newContract.String()),
-    sdk.NewAttribute("result", hex.EncodeToString(initData)),
 )
 sdk.NewEvent(
     "wasm-custom",
