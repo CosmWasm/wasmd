@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -16,7 +18,6 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMessageHandlerChainDispatch(t *testing.T) {
@@ -190,11 +191,12 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			gotMsg = make([]sdk.Msg, 0)
 			router := baseapp.NewRouter()
+			msgRouter := baseapp.NewMsgServiceRouter()
 			router.AddRoute(spec.srcRoute)
 
 			// when
 			ctx := sdk.Context{}
-			h := NewSDKMessageHandler(router, MessageEncoders{Custom: spec.srcEncoder})
+			h := NewSDKMessageHandler(router, msgRouter, MessageEncoders{Custom: spec.srcEncoder})
 			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
 
 			// then

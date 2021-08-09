@@ -142,6 +142,10 @@ type TestKeepers struct {
 	EncodingConfig params2.EncodingConfig
 }
 
+type MockVersionSetter struct{}
+
+func (MockVersionSetter) SetProtocolVersion(uint64) {}
+
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t TestingT) (sdk.Context, TestKeepers) {
 	return CreateTestInput(t, false, "staking")
@@ -245,9 +249,10 @@ func createTestInput(
 	)
 	bankParams := banktypes.DefaultParams()
 	bankKeeper.SetParams(ctx, bankParams)
-	// bankKeeper.SetSupply(ctx, banktypes.NewSupply(sdk.NewCoins(
-	// 	sdk.NewCoin("denom", sdk.NewInt(10000)),
-	// )))
+	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(
+		sdk.NewCoin("denom", sdk.NewInt(10000)),
+	))
+	require.NoError(t, err)
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -263,23 +268,26 @@ func createTestInput(
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
-	// err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
-	// 	sdk.NewCoin("stake", sdk.NewInt(2000000)),
-	// ))
-	// require.NoError(t, err)
+	stake := sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(2000000)))
+	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, stake)
+	require.NoError(t, err)
+	err = bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, distrAcc.GetAddress(), stake)
+	require.NoError(t, err)
 	authKeeper.SetModuleAccount(ctx, distrAcc)
 	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, keyCapability, keyCapabilityTransient)
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
-	upgradeKeeper := upgradekeeper.NewKeeper(map[int64]bool{}, keyUpgrade, appCodec, tempDir, nil)
-
 	ibcSubsp, _ := paramsKeeper.GetSubspace(ibchost.ModuleName)
+
+	skipHeights := make(map[int64]bool)
+	upgradeKeeper := upgradekeeper.NewKeeper(skipHeights, keyUpgrade, appCodec, tempDir, MockVersionSetter{})
 
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec, keyIBC, ibcSubsp, stakingKeeper, upgradeKeeper, scopedIBCKeeper,
 	)
 
+	// TODO: Remove these routes
 	router := baseapp.NewRouter()
 	bh := bank.NewHandler(bankKeeper)
 	router.AddRoute(sdk.NewRoute(banktypes.RouterKey, bh))
@@ -287,6 +295,9 @@ func createTestInput(
 	router.AddRoute(sdk.NewRoute(stakingtypes.RouterKey, sh))
 	dh := distribution.NewHandler(distKeeper)
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
+
+	// TODO: Figure  out how to register new GRPC style services here
+	msgRouter := baseapp.NewMsgServiceRouter()
 
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
@@ -306,6 +317,7 @@ func createTestInput(
 		scopedWasmKeeper,
 		wasmtesting.MockIBCTransferKeeper{},
 		router,
+		msgRouter,
 		querier,
 		tempDir,
 		wasmConfig,
@@ -611,8 +623,8 @@ func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountK
 func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
-	require.NoError(t, err)
+	// err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
+	// require.NoError(t, err)
 	bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
 }
 
