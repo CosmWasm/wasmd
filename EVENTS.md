@@ -212,7 +212,10 @@ sdk.NewEvent(
 sdk.NewEvent(
     "reply",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("success", strconv.FormatBool(err == nil)),
+    // If the submessage was successful, and reply is processing the success case
+    sdk.NewAttribute("mode", "handle_success"),
+    // If the submessage returned an error that was "caught" by the reply block
+    sdk.NewAttribute("mode", "handle_failure"),
 )
 
 // Emitted when handling sudo
@@ -360,7 +363,7 @@ sdk.NewEvent(
 sdk.NewEvent(
     "reply",
     sdk.NewAttribute("_contract_addr", contractAddr.String()),
-    sdk.NewAttribute("success", "true"),
+    sdk.NewAttribute("mode", "handle_success"),
 ),
 sdk.NewEvent(
     "wasm",
