@@ -13,9 +13,7 @@ import (
 const firstCodeID = 1
 
 func TestStoreCodeValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
+	badAddress := "badaddress"
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
