@@ -291,9 +291,7 @@ func TestExecuteContractValidation(t *testing.T) {
 }
 
 func TestMsgUpdateAdministrator(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
+	badAddress := "badaddress"
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20)).String()

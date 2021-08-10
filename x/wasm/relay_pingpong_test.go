@@ -186,9 +186,6 @@ func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmt
 
 // OnIBCChannelOpen ensures to accept only configured version
 func (p player) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (uint64, error) {
-	if channel.OpenTry.CounterpartyVersion != p.actor {
-		return 0, nil
-	}
 	return 0, nil
 }
 
