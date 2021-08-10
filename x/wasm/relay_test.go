@@ -382,7 +382,7 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 		},
 	}
 
-	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
 var _ wasmtesting.IBCContractCallbacks = &sendEmulatedIBCTransferContract{}
@@ -415,7 +415,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 			Timeout:   wasmvmtypes.IBCTimeout{Timestamp: in.Timeout},
 		},
 	}
-	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
+	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
 func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
@@ -430,7 +430,7 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(data.Amount, data.Denom)},
 		}}
 
-	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
+	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
 }
 
 // custom contract execute payload

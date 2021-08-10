@@ -167,18 +167,20 @@ func (p *player) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmt
 	store.Set(lastBallSentKey, sdk.Uint64ToBigEndian(start.Value))
 	return &wasmvmtypes.Response{
 		Messages: []wasmvmtypes.SubMsg{
-			{Msg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					SendPacket: &wasmvmtypes.SendPacketMsg{
-						ChannelID: start.ChannelID,
-						Data:      service.GetBytes(),
-						Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
-							Revision: doNotTimeout.RevisionNumber,
-							Height:   doNotTimeout.RevisionHeight,
-						}},
+			{
+				ReplyOn: wasmvmtypes.ReplyNever,
+				Msg: wasmvmtypes.CosmosMsg{
+					IBC: &wasmvmtypes.IBCMsg{
+						SendPacket: &wasmvmtypes.SendPacketMsg{
+							ChannelID: start.ChannelID,
+							Data:      service.GetBytes(),
+							Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
+								Revision: doNotTimeout.RevisionNumber,
+								Height:   doNotTimeout.RevisionHeight,
+							}},
+						},
 					},
 				},
-			},
 			},
 		},
 	}, 0, nil
@@ -280,7 +282,7 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, pa
 
 	return &wasmvmtypes.IBCReceiveResponse{
 		Acknowledgement: receivedBall.BuildAck().GetBytes(),
-		Messages:        []wasmvmtypes.SubMsg{{Msg: wasmvmtypes.CosmosMsg{IBC: respHit}}},
+		Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: respHit}}},
 	}, 0, nil
 }
 
