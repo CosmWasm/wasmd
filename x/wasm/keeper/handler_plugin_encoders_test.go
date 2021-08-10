@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -10,7 +12,6 @@ import (
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"

@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -16,7 +18,6 @@ import (
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMessageHandlerChainDispatch(t *testing.T) {

@@ -5,6 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"math"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -16,11 +22,6 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/libs/log"
-	"math"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // contractMemoryLimit is the memory limit of each contract execution (in MiB)
@@ -470,7 +471,6 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 }
 
 // reply is only called from keeper internal functions (dispatchSubmessages) after processing the submessage
-// it
 func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
