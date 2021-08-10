@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
-	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -33,8 +31,7 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgStoreCodeResponse{
@@ -64,10 +61,7 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String()),
-		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgInstantiateContractResponse{
@@ -95,9 +89,7 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Contract),
-		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgExecuteContractResponse{
@@ -124,10 +116,7 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", msg.CodeID)),
-		sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Contract),
-		sdk.NewAttribute(types.AttributeResultDataHex, hex.EncodeToString(data)),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgMigrateContractResponse{
@@ -157,8 +146,7 @@ func (m msgServer) UpdateAdmin(goCtx context.Context, msg *types.MsgUpdateAdmin)
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Contract),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgUpdateAdminResponse{}, nil
@@ -182,8 +170,7 @@ func (m msgServer) ClearAdmin(goCtx context.Context, msg *types.MsgClearAdmin) (
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(types.AttributeKeySigner, msg.Sender),
-		sdk.NewAttribute(types.AttributeKeyContractAddr, msg.Contract),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
 	return &types.MsgClearAdminResponse{}, nil

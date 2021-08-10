@@ -402,6 +402,17 @@ If the original contract execution example above was actually the result of a me
 and it registered a ReplyOn clause, the `reply` function on that contract would receive the entire 11 events in the example
 above, and would need to use the `message` markers to locate the segment of interest.
 
+## Governance Events
+The governance process is handled by the cosmos-sdk `gov` module. We do not emit any events of type "message" anymore in v0.18+.
+Context-specific events are emitted as described above. `Execution` and `Migration` return some contract result though that are
+emitted as:
+```go
+sdk.NewEvent(
+    "gov_contract_result",
+    sdk.NewAttribute("result", hex.EncodeToString(data)),
+)
+```
+
 ## IBC Events
 
 TODO: define what the default SDK messages are here and what we add to our custom keeper events.

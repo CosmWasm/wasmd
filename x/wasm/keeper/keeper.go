@@ -18,6 +18,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"math"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -178,6 +180,16 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
+
+	evt := sdk.NewEvent(
+		types.EventTypeStoreCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	)
+	for _, f := range strings.Split(report.RequiredFeatures, ",") {
+		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyFeature, strings.TrimSpace(f)))
+	}
+	ctx.EventManager().EmitEvent(evt)
+
 	return codeID, nil
 }
 
@@ -299,6 +311,11 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeInstantiate,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", codeID)),
+	))
 	return contractAddress, data, nil
 }
 
@@ -337,6 +354,11 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeExecute,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
 	return data, nil
 }
 
@@ -401,6 +423,12 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeMigrate,
+		sdk.NewAttribute(types.AttributeKeyCodeID, fmt.Sprintf("%d", newCodeID)),
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
 	return data, nil
 }
 
@@ -433,6 +461,11 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSudo,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
 	return data, nil
 }
 
@@ -466,6 +499,11 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeReply,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
 	return data, nil
 }
 
@@ -709,6 +747,11 @@ func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 	store := ctx.KVStore(k.storeKey)
 	// store 1 byte to not run into `nil` debugging issues
 	store.Set(types.GetPinnedCodeIndexPrefix(codeID), []byte{1})
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypePinCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	))
 	return nil
 }
 
@@ -724,6 +767,11 @@ func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetPinnedCodeIndexPrefix(codeID))
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeUnpinCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	))
 	return nil
 }
 
@@ -775,7 +823,7 @@ func (k *Keeper) handleContractResponse(
 	attributeGasCost := k.gasRegister.EventCosts(attrs, evts)
 	ctx.GasMeter().ConsumeGas(attributeGasCost, "Custom contract event attributes")
 	// emit all events from this contract itself
-	if len(attrs) != 0 || !hasWasmModuleEvent(ctx, contractAddr) {
+	if len(attrs) != 0 {
 		wasmEvents, err := newWasmModuleEvent(attrs, contractAddr)
 		if err != nil {
 			return nil, err
@@ -985,7 +1033,9 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 
 // TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
 // is not in the blocked address list.
-func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	em := sdk.NewEventManager()
+	ctx := parentCtx.WithEventManager(em)
 	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
@@ -995,6 +1045,12 @@ func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddr
 	sdkerr := c.keeper.SendCoins(ctx, fromAddr, toAddr, amt)
 	if sdkerr != nil {
 		return sdkerr
+	}
+	for _, e := range em.Events() {
+		if e.Type == sdk.EventTypeMessage { // skip messages as we talk to the keeper directly
+			continue
+		}
+		parentCtx.EventManager().EmitEvent(e)
 	}
 	return nil
 }

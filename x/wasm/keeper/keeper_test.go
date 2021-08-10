@@ -1042,9 +1042,16 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 				{"module": "bank"},
 			},
 		},
+		{
+			"Type": "migrate",
+			"Attr": []dict{
+				{"code_id": "2"},
+				{"_contract_address": contractAddr},
+			},
+		},
 	}
 	expJSONEvts := string(mustMarshal(t, expEvents))
-	assert.JSONEq(t, expJSONEvts, prettyEvents(t, ctx.EventManager().Events()))
+	assert.JSONEq(t, expJSONEvts, prettyEvents(t, ctx.EventManager().Events()), prettyEvents(t, ctx.EventManager().Events()))
 
 	// all persistent data cleared
 	m := keepers.WasmKeeper.QueryRaw(ctx, contractAddr, []byte("config"))
