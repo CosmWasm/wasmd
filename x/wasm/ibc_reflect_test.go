@@ -12,7 +12,6 @@ import (
 )
 
 func TestIBCReflectContract(t *testing.T) {
-	t.Skip("TODO (Alex): fails with `No _contract_address found in callback events: execute wasm contract failed` due to event refactorings")
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
 	//  chain B: reflect.wasm + ibc_reflect.wasm
