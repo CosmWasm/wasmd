@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -117,7 +119,6 @@ func NewKeeper(
 		paramSpace:       paramSpace,
 		gasRegister:      NewDefaultWasmGasRegister(),
 	}
-
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
@@ -166,17 +167,32 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling WASM Bytecode")
 
-	codeHash, err := k.wasmVM.Create(wasmCode)
+	checksum, err := k.wasmVM.Create(wasmCode)
+	if err != nil {
+		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	}
+	report, err := k.wasmVM.AnalyzeCode(checksum)
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
+	k.Logger(ctx).Debug("storing new contract", "features", report.RequiredFeatures, "code_id", codeID)
 	if instantiateAccess == nil {
 		defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
 		instantiateAccess = &defaultAccessConfig
 	}
-	codeInfo := types.NewCodeInfo(codeHash, creator, *instantiateAccess)
+	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
+
+	evt := sdk.NewEvent(
+		types.EventTypeStoreCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	)
+	for _, f := range strings.Split(report.RequiredFeatures, ",") {
+		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyFeature, strings.TrimSpace(f)))
+	}
+	ctx.EventManager().EmitEvent(evt)
+
 	return codeID, nil
 }
 
@@ -292,7 +308,12 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeInstantiate,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "dispatch")
@@ -331,11 +352,16 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeExecute,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
 	return data, nil
 }
 
@@ -395,11 +421,17 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeMigrate,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(newCodeID, 10)),
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
 	return data, nil
 }
 
@@ -427,11 +459,16 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSudo,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
 	return data, nil
 }
 
@@ -460,11 +497,16 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeReply,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
+
 	return data, nil
 }
 
@@ -708,6 +750,11 @@ func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 	store := ctx.KVStore(k.storeKey)
 	// store 1 byte to not run into `nil` debugging issues
 	store.Set(types.GetPinnedCodeIndexPrefix(codeID), []byte{1})
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypePinCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	))
 	return nil
 }
 
@@ -723,6 +770,11 @@ func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.GetPinnedCodeIndexPrefix(codeID))
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeUnpinCode,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	))
 	return nil
 }
 
@@ -774,7 +826,7 @@ func (k *Keeper) handleContractResponse(
 	attributeGasCost := k.gasRegister.EventCosts(attrs, evts)
 	ctx.GasMeter().ConsumeGas(attributeGasCost, "Custom contract event attributes")
 	// emit all events from this contract itself
-	if len(attrs) != 0 || !hasWasmModuleEvent(ctx, contractAddr) {
+	if len(attrs) != 0 {
 		wasmEvents, err := newWasmModuleEvent(attrs, contractAddr)
 		if err != nil {
 			return nil, err
@@ -984,7 +1036,9 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 
 // TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
 // is not in the blocked address list.
-func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	em := sdk.NewEventManager()
+	ctx := parentCtx.WithEventManager(em)
 	if err := c.keeper.IsSendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
@@ -994,6 +1048,12 @@ func (c BankCoinTransferrer) TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddr
 	sdkerr := c.keeper.SendCoins(ctx, fromAddr, toAddr, amt)
 	if sdkerr != nil {
 		return sdkerr
+	}
+	for _, e := range em.Events() {
+		if e.Type == sdk.EventTypeMessage { // skip messages as we talk to the keeper directly
+			continue
+		}
+		parentCtx.EventManager().EmitEvent(e)
 	}
 	return nil
 }
@@ -1015,12 +1075,19 @@ func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMCon
 
 // Handle processes the data returned by a contract invocation.
 func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, messages []wasmvmtypes.SubMsg, origRspData []byte) ([]byte, error) {
+	em := sdk.NewEventManager()
 	result := origRspData
-	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, messages); {
+	switch rsp, err := h.md.DispatchSubmessages(ctx.WithEventManager(em), contractAddr, ibcPort, messages); {
 	case err != nil:
 		return nil, sdkerrors.Wrap(err, "submessages")
 	case rsp != nil:
 		result = rsp
+	}
+	// emit non message type events only
+	for _, e := range em.Events() {
+		if e.Type != sdk.EventTypeMessage {
+			ctx.EventManager().EmitEvent(e)
+		}
 	}
 	return result, nil
 }

@@ -534,8 +534,8 @@ func TestGetAllContracts(t *testing.T) {
 		"read from message state": {
 			src: types.GenesisState{
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "first"}}},
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "first"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "second"}}},
 				},
 			},
 			exp: []contractMeta{
@@ -555,7 +555,7 @@ func TestGetAllContracts(t *testing.T) {
 					{IDKey: types.KeyLastInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "hundred"}}},
 				},
 			},
 			exp: []contractMeta{

@@ -6,12 +6,12 @@ BASE_ACCOUNT=$(wasmd keys show validator -a)
 
 echo "-----------------------"
 echo "## Genesis CosmWasm contract"
-wasmd add-wasm-genesis-message store  "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" --instantiate-everybody true --builder=foo/bar:latest --run-as validator
+wasmd add-wasm-genesis-message store "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" --instantiate-everybody true --builder=foo/bar:latest --run-as validator
 
 echo "-----------------------"
 echo "## Genesis CosmWasm instance"
 INIT="{\"verifier\":\"$(wasmd keys show validator -a)\", \"beneficiary\":\"$(wasmd keys show fred -a)\"}"
-wasmd add-wasm-genesis-message instantiate-contract 1 "$INIT" --run-as validator --label=foobar --amount=100ustake --admin $BASE_ACCOUNT
+wasmd add-wasm-genesis-message instantiate-contract 1 "$INIT" --run-as validator --label=foobar --amount=100ustake --admin "$BASE_ACCOUNT"
 
 echo "-----------------------"
 echo "## Genesis CosmWasm execute"
