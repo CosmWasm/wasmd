@@ -23,16 +23,17 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "sender")
 	}
-	codeID, err := m.keeper.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
-	if err != nil {
-		return nil, err
-	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	codeID, err := m.keeper.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgStoreCodeResponse{
 		CodeID: codeID,
@@ -53,16 +54,16 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		}
 	}
 
-	contractAddr, data, err := m.keeper.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	contractAddr, data, err := m.keeper.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgInstantiateContractResponse{
 		Address: contractAddr.String(),
@@ -81,16 +82,16 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 		return nil, sdkerrors.Wrap(err, "contract")
 	}
 
-	data, err := m.keeper.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	data, err := m.keeper.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgExecuteContractResponse{
 		Data: data,
@@ -108,16 +109,16 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, sdkerrors.Wrap(err, "contract")
 	}
 
-	data, err := m.keeper.Migrate(ctx, contractAddr, senderAddr, msg.CodeID, msg.Msg)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	data, err := m.keeper.Migrate(ctx, contractAddr, senderAddr, msg.CodeID, msg.Msg)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgMigrateContractResponse{
 		Data: data,
@@ -139,15 +140,15 @@ func (m msgServer) UpdateAdmin(goCtx context.Context, msg *types.MsgUpdateAdmin)
 		return nil, sdkerrors.Wrap(err, "new admin")
 	}
 
-	if err := m.keeper.UpdateContractAdmin(ctx, contractAddr, senderAddr, newAdminAddr); err != nil {
-		return nil, err
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	if err := m.keeper.UpdateContractAdmin(ctx, contractAddr, senderAddr, newAdminAddr); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgUpdateAdminResponse{}, nil
 }
@@ -163,15 +164,15 @@ func (m msgServer) ClearAdmin(goCtx context.Context, msg *types.MsgClearAdmin) (
 		return nil, sdkerrors.Wrap(err, "contract")
 	}
 
-	if err := m.keeper.ClearContractAdmin(ctx, contractAddr, senderAddr); err != nil {
-		return nil, err
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		sdk.EventTypeMessage,
 		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
+
+	if err := m.keeper.ClearContractAdmin(ctx, contractAddr, senderAddr); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgClearAdminResponse{}, nil
 }

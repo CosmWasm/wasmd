@@ -305,17 +305,17 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
-	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
-	if err != nil {
-		return nil, nil, sdkerrors.Wrap(err, "dispatch")
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeInstantiate,
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
 	))
+
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "dispatch")
+	}
+
 	return contractAddress, data, nil
 }
 
@@ -349,16 +349,16 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeExecute,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeExecute,
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
-	))
 	return data, nil
 }
 
@@ -418,17 +418,17 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
-	// dispatch submessages then messages
-	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "dispatch")
-	}
-
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeMigrate,
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(newCodeID, 10)),
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 	))
+
+	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "dispatch")
+	}
+
 	return data, nil
 }
 
@@ -456,16 +456,16 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSudo,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeSudo,
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
-	))
 	return data, nil
 }
 
@@ -494,16 +494,16 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
-	// dispatch submessages then messages
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeReply,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+	))
+
 	data, err := k.handleContractResponse(ctx, contractAddress, contractInfo.IBCPortID, res.Messages, res.Attributes, res.Data, res.Events)
 	if err != nil {
 		return nil, sdkerrors.Wrap(err, "dispatch")
 	}
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeReply,
-		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
-	))
 	return data, nil
 }
 
@@ -1072,12 +1072,19 @@ func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMCon
 
 // Handle processes the data returned by a contract invocation.
 func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, messages []wasmvmtypes.SubMsg, origRspData []byte) ([]byte, error) {
+	em := sdk.NewEventManager()
 	result := origRspData
-	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, messages); {
+	switch rsp, err := h.md.DispatchSubmessages(ctx.WithEventManager(em), contractAddr, ibcPort, messages); {
 	case err != nil:
 		return nil, sdkerrors.Wrap(err, "submessages")
 	case rsp != nil:
 		result = rsp
+	}
+	// emit non message type events only
+	for _, e := range em.Events() {
+		if e.Type != sdk.EventTypeMessage {
+			ctx.EventManager().EmitEvent(e)
+		}
 	}
 	return result, nil
 }
