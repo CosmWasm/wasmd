@@ -210,7 +210,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertReturnedEvents := func(expectedEvents int) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
-			assert.Len(t, response.Ok.Events, expectedEvents)
+			require.Len(t, response.Ok.Events, expectedEvents)
 		}
 	}
 
@@ -231,14 +231,14 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubcallResult) {
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
-		assert.Equal(t, event.Type, "wasm")
+		require.Equal(t, event.Type, "instantiate")
 		assert.Equal(t, event.Attributes[0].Key, "_contract_address")
 		eventAddr := event.Attributes[0].Value
 		assert.NotEqual(t, contract, eventAddr)
 
 		// data field is the raw canonical address
 		// QUESTION: why not types.MsgInstantiateContractResponse? difference between calling Router and Service?
-		assert.Len(t, response.Ok.Data, 20)
+		require.Len(t, response.Ok.Data, 20)
 		resAddr := sdk.AccAddress(response.Ok.Data)
 		assert.Equal(t, eventAddr, resAddr.String())
 	}
