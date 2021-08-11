@@ -623,8 +623,8 @@ func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountK
 func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	// err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
-	// require.NoError(t, err)
+	err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
+	require.NoError(t, err)
 	bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
 }
 

@@ -318,8 +318,6 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	ctx, keepers := CreateDefaultTestInput(t)
 	k := keepers.WasmKeeper
 
-	before, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
-	require.NoError(t, err)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // with deposit of 100 stake
 
 	specs := map[string]struct {
@@ -372,6 +370,9 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 				},
 				}, 0, nil
 			}}
+
+			before, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+			require.NoError(t, err)
 
 			// when
 			_, err = k.execute(ctx, example.Contract, example.CreatorAddr, nil, nil)
