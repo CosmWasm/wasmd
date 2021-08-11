@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package ibc.core.channel.v1;
 
 option go_package = "github.com/cosmos/ibc-go/modules/core/04-channel/types";
