@@ -1024,6 +1024,20 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			},
 		},
 		{
+			"Type": "coin_spent",
+			"Attr": []dict{
+				{"spender": contractAddr},
+				{"amount": "100000denom"},
+			},
+		},
+		{
+			"Type": "coin_received",
+			"Attr": []dict{
+				{"receiver": myPayoutAddr},
+				{"amount": "100000denom"},
+			},
+		},
+		{
 			"Type": "transfer",
 			"Attr": []dict{
 				{"recipient": myPayoutAddr},

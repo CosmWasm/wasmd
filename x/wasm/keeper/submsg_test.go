@@ -94,16 +94,30 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotNil(t, res.Result.Ok)
 	sub := res.Result.Ok
 	assert.Empty(t, sub.Data)
-	require.Len(t, sub.Events, 3)
+	require.Len(t, sub.Events, 5)
 
-	transfer := sub.Events[0]
+	coinSpent := sub.Events[0]
+	assert.Equal(t, "coin_spent", coinSpent.Type)
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "spender",
+		Value: contractAddr.String(),
+	}, coinSpent.Attributes[0])
+
+	coinReceived := sub.Events[1]
+	assert.Equal(t, "coin_received", coinReceived.Type)
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "receiver",
+		Value: fred.String(),
+	}, coinReceived.Attributes[0])
+
+	transfer := sub.Events[2]
 	assert.Equal(t, "transfer", transfer.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "recipient",
 		Value: fred.String(),
 	}, transfer.Attributes[0])
 
-	sender := sub.Events[1]
+	sender := sub.Events[3]
 	assert.Equal(t, "message", sender.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "sender",
@@ -111,7 +125,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	}, sender.Attributes[0])
 
 	// where does this come from?
-	module := sub.Events[2]
+	module := sub.Events[4]
 	assert.Equal(t, "message", module.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "module",
