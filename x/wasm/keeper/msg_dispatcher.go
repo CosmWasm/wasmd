@@ -102,7 +102,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		var filteredEvents []sdk.Event
 		if err == nil {
 			commit()
-			filteredEvents = filterEvents(em.Events(), events)
+			filteredEvents = filterEvents(append(em.Events(), events...))
 			ctx.EventManager().EmitEvents(filteredEvents)
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
@@ -154,19 +154,12 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 	return rsp, nil
 }
 
-func filterEvents(events ...[]sdk.Event) []sdk.Event {
+func filterEvents(events []sdk.Event) []sdk.Event {
 	// pre-allocate space for efficiency
-	cap := 0
-	for _, evts := range events {
-		cap += len(evts)
-	}
-	res := make([]sdk.Event, 0, cap)
-
-	for _, evts := range events {
-		for _, ev := range evts {
-			if ev.Type != "message" {
-				res = append(res, ev)
-			}
+	res := make([]sdk.Event, 0, len(events))
+	for _, ev := range events {
+		if ev.Type != "message" {
+			res = append(res, ev)
 		}
 	}
 	return res
