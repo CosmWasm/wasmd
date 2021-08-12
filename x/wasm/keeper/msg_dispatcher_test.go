@@ -269,6 +269,28 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte{},
 			expCommits: []bool{false, false},
 		},
+		"message event filtered without reply": {
+			msgs: []wasmvmtypes.SubMsg{{
+				ReplyOn: wasmvmtypes.ReplyNever,
+			}},
+			replyer: &mockReplyer{
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					return nil, errors.New("should never be called")
+				},
+			},
+			msgHandler: &wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					myEvents := []sdk.Event{
+						sdk.NewEvent("message"),
+						sdk.NewEvent("execute", sdk.NewAttribute("foo", "bar")),
+					}
+					return myEvents, [][]byte{[]byte("myData")}, nil
+				},
+			},
+			expData:    nil,
+			expCommits: []bool{true},
+			expEvents:  []sdk.Event{sdk.NewEvent("execute", sdk.NewAttribute("foo", "bar"))},
+		},
 		"reply gets proper events": {
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways}},
 			replyer: &mockReplyer{
