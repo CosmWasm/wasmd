@@ -1080,6 +1080,7 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 	case rsp != nil:
 		result = rsp
 	}
+	// TODO: remove this - handled inside DispatchSubmessages
 	// emit non message type events only
 	for _, e := range em.Events() {
 		if e.Type != sdk.EventTypeMessage {
