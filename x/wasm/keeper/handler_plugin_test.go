@@ -231,6 +231,13 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
 			capturedPacket = packet
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(channeltypes.EventTypeSendPacket),
+				sdk.NewEvent(
+					sdk.EventTypeMessage, // to be filtered out
+					sdk.NewAttribute(sdk.AttributeKeyModule, channeltypes.AttributeValueCategory),
+				),
+			})
 			return nil
 		},
 	}
@@ -246,6 +253,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		capKeeper     types.CapabilityKeeper
 		expPacketSent channeltypes.Packet
 		expErr        *sdkerrors.Error
+		expEvents     []string
 	}{
 		"all good": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
@@ -264,6 +272,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				Data:               []byte("myData"),
 				TimeoutHeight:      clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
 			},
+			expEvents: []string{"send_packet"},
 		},
 		"sequence not found returns error": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
@@ -296,15 +305,15 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacket = nil
 			// when
 			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.capKeeper)
-			data, evts, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
+			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
 				return
 			}
 			assert.Nil(t, data)
-			assert.Nil(t, evts)
 			assert.Equal(t, spec.expPacketSent, capturedPacket)
+			assert.Equal(t, spec.expEvents, stripTypes(evts))
 		})
 	}
 }

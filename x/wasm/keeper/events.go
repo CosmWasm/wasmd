@@ -63,3 +63,13 @@ func contractSDKEventAttributes(customAttributes []wasmvmtypes.EventAttribute, c
 	}
 	return attrs, nil
 }
+
+func filterOutMessageTypeEvents(events sdk.Events) sdk.Events {
+	var r sdk.Events
+	for _, e := range events {
+		if e.Type != sdk.EventTypeMessage {
+			r = append(r, e)
+		}
+	}
+	return r
+}

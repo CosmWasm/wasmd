@@ -30,46 +30,6 @@ func NewMessageDispatcher(messenger Messenger, keeper replyer) *MessageDispatche
 	return &MessageDispatcher{messenger: messenger, keeper: keeper}
 }
 
-// DispatchMessages sends all messages.
-func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
-	for _, msg := range msgs {
-		events, _, err := d.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
-		if err != nil {
-			return err
-		}
-		// redispatch all events, (type sdk.EventTypeMessage will be filtered out in the handler)
-		ctx.EventManager().EmitEvents(events)
-	}
-	return nil
-}
-
-// dispatchMsgWithGasLimit sends a message with gas limit applied
-func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
-	limitedMeter := sdk.NewGasMeter(gasLimit)
-	subCtx := ctx.WithGasMeter(limitedMeter)
-
-	// catch out of gas panic and just charge the entire gas limit
-	defer func() {
-		if r := recover(); r != nil {
-			// if it's not an OutOfGas error, raise it again
-			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
-				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
-				moduleLogger(ctx).Info("SubMsg rethrowing panic: %#v", r)
-				panic(r)
-			}
-			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
-		}
-	}()
-	events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
-
-	// make sure we charge the parent what was spent
-	spent := subCtx.GasMeter().GasConsumed()
-	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
-
-	return events, data, err
-}
-
 // DispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
 func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
@@ -82,8 +42,6 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 		// first, we build a sub-context which we can use inside the submessages
 		subCtx, commit := ctx.CacheContext()
-		em := sdk.NewEventManager()
-		subCtx = subCtx.WithEventManager(em)
 
 		// check how much gas left locally, optionally wrap the gas meter
 		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
@@ -97,11 +55,10 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		} else {
 			events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
 		}
-
+		events = filterOutMessageTypeEvents(events)
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
 		if err == nil {
 			commit()
-			ctx.EventManager().EmitEvents(em.Events())
 			ctx.EventManager().EmitEvents(events)
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
@@ -151,6 +108,33 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 	}
 	return rsp, nil
+}
+
+// dispatchMsgWithGasLimit sends a message with gas limit applied
+func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
+	limitedMeter := sdk.NewGasMeter(gasLimit)
+	subCtx := ctx.WithGasMeter(limitedMeter)
+
+	// catch out of gas panic and just charge the entire gas limit
+	defer func() {
+		if r := recover(); r != nil {
+			// if it's not an OutOfGas error, raise it again
+			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
+				moduleLogger(ctx).Info("SubMsg rethrowing panic: %#v", r)
+				panic(r)
+			}
+			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
+			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
+		}
+	}()
+	events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
+
+	// make sure we charge the parent what was spent
+	spent := subCtx.GasMeter().GasConsumed()
+	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
+
+	return events, data, err
 }
 
 func sdkEventsToWasmVmEvents(events []sdk.Event) []wasmvmtypes.Event {
