@@ -1075,19 +1075,12 @@ func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMCon
 
 // Handle processes the data returned by a contract invocation.
 func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, messages []wasmvmtypes.SubMsg, origRspData []byte) ([]byte, error) {
-	em := sdk.NewEventManager()
 	result := origRspData
-	switch rsp, err := h.md.DispatchSubmessages(ctx.WithEventManager(em), contractAddr, ibcPort, messages); {
+	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, messages); {
 	case err != nil:
 		return nil, sdkerrors.Wrap(err, "submessages")
 	case rsp != nil:
 		result = rsp
-	}
-	// emit non message type events only
-	for _, e := range em.Events() {
-		if e.Type != sdk.EventTypeMessage {
-			ctx.EventManager().EmitEvent(e)
-		}
 	}
 	return result, nil
 }

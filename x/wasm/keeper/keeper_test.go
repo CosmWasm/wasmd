@@ -1578,15 +1578,6 @@ func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"message events filtered out": {
-			setup: func(m *wasmtesting.MockMsgDispatcher) {
-				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
-					ctx.EventManager().EmitEvent(sdk.NewEvent(sdk.EventTypeMessage))
-					return nil, nil
-				}
-			},
-			expEvts: sdk.Events{},
-		},
 		"message emit non message events": {
 			setup: func(m *wasmtesting.MockMsgDispatcher) {
 				m.DispatchSubmessagesFn = func(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
