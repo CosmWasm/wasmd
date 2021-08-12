@@ -533,7 +533,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x12af1), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x120c9), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -544,13 +544,13 @@ func TestExecute(t *testing.T) {
 	// ensure contract has updated balance
 	contractAcct = accKeeper.GetAccount(ctx, addr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), bankKeeper.GetAllBalances(ctx, contractAcct.GetAddress()))
+	assert.Equal(t, sdk.Coins{}, bankKeeper.GetAllBalances(ctx, contractAcct.GetAddress()))
 
 	// and events emitted
-	require.Len(t, em.Events(), 5)
+	require.Len(t, em.Events(), 9)
 	expEvt := sdk.NewEvent("execute",
 		sdk.NewAttribute("_contract_address", addr.String()))
-	assert.Equal(t, expEvt, em.Events()[1])
+	assert.Equal(t, expEvt, em.Events()[3])
 
 	t.Logf("Duration: %v (%d gas)\n", diff, gasAfter-gasBefore)
 }
