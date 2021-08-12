@@ -617,6 +617,7 @@ func (m BurnerExampleInitMsg) GetBytes(t TestingT) []byte {
 func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	fundAccounts(t, ctx, am, bank, addr, coins)
+	fundAccounts(t, ctx, am, bank, addr, coins)
 	return addr
 }
 
