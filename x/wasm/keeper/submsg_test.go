@@ -93,7 +93,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotNil(t, res.Result.Ok)
 	sub := res.Result.Ok
 	assert.Empty(t, sub.Data)
-	require.Len(t, sub.Events, 3)
+	require.Len(t, sub.Events, 1)
 
 	transfer := sub.Events[0]
 	assert.Equal(t, "transfer", transfer.Type)
@@ -101,22 +101,6 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 		Key:   "recipient",
 		Value: fred.String(),
 	}, transfer.Attributes[0])
-
-	sender := sub.Events[1]
-	assert.Equal(t, "message", sender.Type)
-	assert.Equal(t, wasmvmtypes.EventAttribute{
-		Key:   "sender",
-		Value: contractAddr.String(),
-	}, sender.Attributes[0])
-
-	// where does this come from?
-	module := sub.Events[2]
-	assert.Equal(t, "message", module.Type)
-	assert.Equal(t, wasmvmtypes.EventAttribute{
-		Key:   "module",
-		Value: "bank",
-	}, module.Attributes[0])
-
 }
 
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
@@ -262,7 +246,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			submsgID: 5,
 			msg:      validBankSend,
 			// note we charge another 40k for the reply call
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(123000, 125000)},
+			resultAssertions: []assertion{assertReturnedEvents(1), assertGasUsed(116000, 121000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -282,7 +266,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(123000, 125000)},
+			resultAssertions: []assertion{assertReturnedEvents(1), assertGasUsed(116000, 121000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -300,7 +284,6 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			// uses all the subGasLimit, plus the 92k or so for the main contract
 			resultAssertions: []assertion{assertGasUsed(subGasLimit+92000, subGasLimit+94000), assertErrorString("out of gas")},
 		},
-
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
 			msg:              instantiateContract,

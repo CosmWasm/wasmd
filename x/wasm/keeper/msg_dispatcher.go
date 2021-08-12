@@ -99,10 +99,11 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
+		var filteredEvents []sdk.Event
 		if err == nil {
 			commit()
-			ctx.EventManager().EmitEvents(em.Events())
-			ctx.EventManager().EmitEvents(events)
+			filteredEvents = filterEvents(append(em.Events(), events...))
+			ctx.EventManager().EmitEvents(filteredEvents)
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
 		// we only callback if requested. Short-circuit here the cases we don't want to
@@ -124,7 +125,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			}
 			result = wasmvmtypes.SubcallResult{
 				Ok: &wasmvmtypes.SubcallResponse{
-					Events: sdkEventsToWasmVmEvents(events),
+					Events: sdkEventsToWasmVmEvents(filteredEvents),
 					Data:   responseData,
 				},
 			}
@@ -151,6 +152,17 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 	}
 	return rsp, nil
+}
+
+func filterEvents(events []sdk.Event) []sdk.Event {
+	// pre-allocate space for efficiency
+	res := make([]sdk.Event, 0, len(events))
+	for _, ev := range events {
+		if ev.Type != "message" {
+			res = append(res, ev)
+		}
+	}
+	return res
 }
 
 func sdkEventsToWasmVmEvents(events []sdk.Event) []wasmvmtypes.Event {
