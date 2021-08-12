@@ -308,7 +308,7 @@ func TestDispatchSubmessages(t *testing.T) {
 					if res.Events[0].Type != "execute" {
 						return nil, fmt.Errorf("event0: %#v", res.Events[0])
 					}
-					if res.Events[0].Type != "wasm" {
+					if res.Events[1].Type != "wasm" {
 						return nil, fmt.Errorf("event1: %#v", res.Events[1])
 					}
 
