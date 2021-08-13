@@ -82,28 +82,28 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 		// first, we build a sub-context which we can use inside the submessages
 		subCtx, commit := ctx.CacheContext()
-		em := sdk.NewEventManager()
-		subCtx = subCtx.WithEventManager(em)
+		subCtx = subCtx.WithEventManager(sdk.NewEventManager()) // discard any context events
 
 		// check how much gas left locally, optionally wrap the gas meter
 		gasRemaining := ctx.GasMeter().Limit() - ctx.GasMeter().GasConsumed()
 		limitGas := msg.GasLimit != nil && (*msg.GasLimit < gasRemaining)
 
-		var err error
-		var events []sdk.Event
-		var data [][]byte
+		var (
+			events []sdk.Event
+			data   [][]byte
+			err    error
+		)
 		if limitGas {
 			events, data, err = d.dispatchMsgWithGasLimit(subCtx, contractAddr, ibcPort, msg.Msg, *msg.GasLimit)
 		} else {
 			events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
 		}
 
+		events = filterEvents(events)
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
-		var filteredEvents []sdk.Event
 		if err == nil {
 			commit()
-			filteredEvents = filterEvents(append(em.Events(), events...))
-			ctx.EventManager().EmitEvents(filteredEvents)
+			ctx.EventManager().EmitEvents(events)
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
 		// we only callback if requested. Short-circuit here the cases we don't want to
@@ -125,7 +125,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			}
 			result = wasmvmtypes.SubcallResult{
 				Ok: &wasmvmtypes.SubcallResponse{
-					Events: sdkEventsToWasmVmEvents(filteredEvents),
+					Events: sdkEventsToWasmVmEvents(events),
 					Data:   responseData,
 				},
 			}

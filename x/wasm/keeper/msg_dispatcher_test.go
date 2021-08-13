@@ -104,7 +104,7 @@ func TestDispatchSubmessages(t *testing.T) {
 				sdk.NewEvent("wasm-reply"),
 			},
 		},
-		"with context events - released on commit": {
+		"with context events - discarded on commit": {
 			msgs: []wasmvmtypes.SubMsg{{
 				ReplyOn: wasmvmtypes.ReplyNever,
 			}},
@@ -117,10 +117,6 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			expCommits: []bool{true},
-			expEvents: []sdk.Event{{
-				Type:       "myEvent",
-				Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
-			}},
 		},
 		"with context events - discarded on failure": {
 			msgs: []wasmvmtypes.SubMsg{{
@@ -352,10 +348,9 @@ func TestDispatchSubmessages(t *testing.T) {
 				require.Error(t, gotErr)
 				assert.Empty(t, em.Events())
 				return
-			} else {
-				require.NoError(t, gotErr)
-				assert.Equal(t, spec.expData, gotData)
 			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expData, gotData)
 			assert.Equal(t, spec.expCommits, mockStore.Committed)
 			if len(spec.expEvents) == 0 {
 				assert.Empty(t, em.Events())

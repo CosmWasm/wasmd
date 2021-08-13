@@ -231,6 +231,11 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
 			capturedPacket = packet
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(channeltypes.EventTypeSendPacket),
+				sdk.NewEvent(sdk.EventTypeMessage,
+					sdk.NewAttribute(sdk.AttributeKeyModule, channeltypes.AttributeValueCategory),
+				)})
 			return nil
 		},
 	}
@@ -294,17 +299,22 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			capturedPacket = nil
-			// when
 			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.capKeeper)
-			data, evts, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
+			em := sdk.NewEventManager()
+
+			// when
+			evts, data, gotErr := h.DispatchMsg(ctx.WithEventManager(em), RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
+
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
 				return
 			}
 			assert.Nil(t, data)
-			assert.Nil(t, evts)
 			assert.Equal(t, spec.expPacketSent, capturedPacket)
+			expEvts := []string{"send_packet", "message"}
+			assert.Equal(t, expEvts, stripTypes(evts))
+			assert.Empty(t, em.Events())
 		})
 	}
 }
@@ -371,8 +381,9 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 				}, 0, nil
 			}}
 
+			em := sdk.NewEventManager()
 			// when
-			_, err = k.execute(ctx, example.Contract, example.CreatorAddr, nil, nil)
+			_, err = k.execute(ctx.WithEventManager(em), example.Contract, example.CreatorAddr, nil, nil)
 
 			// then
 			if spec.expErr {
@@ -386,9 +397,9 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			require.NoError(t, err)
 			diff := before.Supply.Sub(after.Supply)
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
+			// and event emitted
+			expEvts := sdk.Events{sdk.NewEvent("execute", sdk.NewAttribute("_contract_address", example.Contract.String()))}
+			assert.Equal(t, expEvts, em.Events())
 		})
 	}
-
-	// test cases:
-	// not enough money to burn
 }
