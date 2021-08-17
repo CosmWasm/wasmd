@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.18.0...HEAD)
+
+
+## [v0.18.0](https://github.com/CosmWasm/wasmd/tree/v0.18.0) (2021-08-16)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.18.0...v0.17.0)
+
 **Api Breaking:**
+- Events documented and refactored [\#448](https://github.com/CosmWasm/wasmd/issues/448), [\#589](https://github.com/CosmWasm/wasmd/pull/589), [\#587](https://github.com/CosmWasm/wasmd/issues/587)
 - Add organisation to grpc gateway path [\#578](https://github.com/CosmWasm/wasmd/pull/578)
 - Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
   [\#563](https://github.com/CosmWasm/wasmd/pull/563)
@@ -15,8 +23,7 @@
   [\#565](https://github.com/CosmWasm/wasmd/pull/565)
 
 **Implemented Enhancements:**
-- Wasmvm upgrade to v0.16.0-rc2 [\#559](https://github.com/CosmWasm/wasmd/pull/559) ([ethanfrey](https://github.com/ethanfrey))
-- Bump Cosmos-sdk to v0.42.8 [\#572](https://github.com/CosmWasm/wasmd/pull/572) ([alpe](https://github.com/alpe))
+- Cosmos SDK 0.42.9, wasmvm 0.16.0 [\#582](https://github.com/CosmWasm/wasmd/pull/582) 
 - Better ibc contract interface [\#570](https://github.com/CosmWasm/wasmd/pull/570) ([ethanfrey](https://github.com/ethanfrey))
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
 - IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
@@ -24,8 +31,7 @@
 - Limit init/migrate/execute payload message size [\#203](https://github.com/CosmWasm/wasmd/issues/203)
 - Add cli alias [\#496](https://github.com/CosmWasm/wasmd/issues/496)
 - Remove max gas limit [\#529](https://github.com/CosmWasm/wasmd/pull/529) ([alpe](https://github.com/alpe))
-
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...HEAD)
+- Add SECURITY.md [\#303](https://github.com/CosmWasm/wasmd/issues/303)
 
 ## [v0.17.0](https://github.com/CosmWasm/wasmd/tree/v0.17.0) (2021-05-26)
 
