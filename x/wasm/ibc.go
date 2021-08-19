@@ -215,6 +215,16 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel)
 	}
 }
 
+type Ack struct{ result []byte }
+
+func (a Ack) Success() bool           { return true }
+func (a Ack) Acknowledgement() []byte { return a.result }
+
+type Nack struct{}
+
+func (Nack) Success() bool           { return false }
+func (Nack) Acknowledgement() []byte { return nil }
+
 // OnRecvPacket implements the IBCModule interface
 func (i IBCHandler) OnRecvPacket(
 	ctx sdk.Context,
@@ -223,15 +233,17 @@ func (i IBCHandler) OnRecvPacket(
 ) exported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return Nack{}
 	}
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet)}
 	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return Nack{}
 	}
 
-	return channeltypes.NewResultAcknowledgement(ack)
+	return Ack{
+		result: ack,
+	}
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
