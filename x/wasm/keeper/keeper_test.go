@@ -69,13 +69,6 @@ func TestCreateNilCreatorAddress(t *testing.T) {
 	require.Error(t, err, "nil creator is not allowed")
 }
 
-func TestCreateInvalidCreatorAddress(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
-
-	_, err := keepers.ContractKeeper.Create(ctx, []byte("sesame street"), hackatomWasm, nil)
-	require.Error(t, err, "sesame street is not a valid address")
-}
-
 func TestCreateNilWasmCode(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
