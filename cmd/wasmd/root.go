@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"os"
 	"path/filepath"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
