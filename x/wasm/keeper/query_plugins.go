@@ -493,3 +493,13 @@ func convertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 		Amount: coin.Amount.String(),
 	}
 }
+
+var _ WasmVMQueryHandler = WasmVMQueryHandlerFn(nil)
+
+// WasmVMQueryHandlerFn is a helper to construct a function based query handler.
+type WasmVMQueryHandlerFn func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
+
+// HandleQuery delegates call into wrapped WasmVMQueryHandlerFn
+func (w WasmVMQueryHandlerFn) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+	return w(ctx, caller, request)
+}

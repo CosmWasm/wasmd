@@ -21,23 +21,39 @@ func WithWasmEngine(x types.WasmerEngine) Option {
 }
 
 // WithMessageHandler is an optional constructor parameter to set a custom handler for wasmVM messages.
-// This option should not be combined with Option `WithMessageEncoders`.
+// This option should not be combined with Option `WithMessageEncoders` or `WithMessageHandlerDecorator`
 func WithMessageHandler(x Messenger) Option {
 	return optsFn(func(k *Keeper) {
 		k.messenger = x
 	})
 }
 
+// WithMessageHandlerDecorator is an optional constructor parameter to decorate the wasm handler for wasmVM messages.
+// This option should not be combined with Option `WithMessageEncoders` or `WithMessageHandler`
+func WithMessageHandlerDecorator(d func(old Messenger) Messenger) Option {
+	return optsFn(func(k *Keeper) {
+		k.messenger = d(k.messenger)
+	})
+}
+
 // WithQueryHandler is an optional constructor parameter to set custom query handler for wasmVM requests.
-// This option should not be combined with Option `WithQueryPlugins`.
+// This option should not be combined with Option `WithQueryPlugins` or `WithQueryHandlerDecorator`
 func WithQueryHandler(x WasmVMQueryHandler) Option {
 	return optsFn(func(k *Keeper) {
 		k.wasmVMQueryHandler = x
 	})
 }
 
+// WithQueryHandlerDecorator is an optional constructor parameter to decorate the default wasm query handler for wasmVM requests.
+// This option should not be combined with Option `WithQueryPlugins` or `WithQueryHandler`
+func WithQueryHandlerDecorator(d func(old WasmVMQueryHandler) WasmVMQueryHandler) Option {
+	return optsFn(func(k *Keeper) {
+		k.wasmVMQueryHandler = d(k.wasmVMQueryHandler)
+	})
+}
+
 // WithQueryPlugins is an optional constructor parameter to pass custom query plugins for wasmVM requests.
-// This option expects the default `QueryHandler` set an should not be combined with Option `WithQueryHandler`.
+// This option expects the default `QueryHandler` set an should not be combined with Option `WithQueryHandler` or `WithQueryHandlerDecorator`.
 func WithQueryPlugins(x *QueryPlugins) Option {
 	return optsFn(func(k *Keeper) {
 		q, ok := k.wasmVMQueryHandler.(QueryPlugins)
@@ -49,7 +65,7 @@ func WithQueryPlugins(x *QueryPlugins) Option {
 }
 
 // WithMessageEncoders is an optional constructor parameter to pass custom message encoder to the default wasm message handler.
-// This option expects the `DefaultMessageHandler` set an should not be combined with Option `WithMessageHandler`.
+// This option expects the `DefaultMessageHandler` set and should not be combined with Option `WithMessageHandler` or `WithMessageHandlerDecorator`.
 func WithMessageEncoders(x *MessageEncoders) Option {
 	return optsFn(func(k *Keeper) {
 		q, ok := k.messenger.(*MessageHandlerChain)
