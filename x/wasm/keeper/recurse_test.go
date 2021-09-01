@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"testing"
 
@@ -39,18 +38,14 @@ type recurseResponse struct {
 var totalWasmQueryCounter int
 
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
-	// we do one basic setup before all test cases (which are read-only and don't change state)
-	var realWasmQuerier func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
-	countingQuerier := &wasmtesting.MockQueryHandler{
-		HandleQueryFn: func(ctx sdk.Context, request wasmvmtypes.QueryRequest, caller sdk.AccAddress) ([]byte, error) {
+	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
+		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++
-			return realWasmQuerier(ctx, request.Wasm)
-		}}
-
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, WithQueryHandler(countingQuerier))
+			return realWasmQuerier.HandleQuery(ctx, caller, request)
+		})
+	}
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, WithQueryHandlerDecorator(countingQuerierDec))
 	keeper = keepers.WasmKeeper
-	realWasmQuerier = WasmQuerier(keeper)
-
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	return exampleContract.Contract, exampleContract.CreatorAddr, ctx, keeper
 }
