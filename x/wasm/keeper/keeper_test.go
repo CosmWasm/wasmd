@@ -1652,6 +1652,37 @@ func TestReply(t *testing.T) {
 	}
 }
 
+func TestQueryIsolation(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k := keepers.WasmKeeper
+	var mock wasmtesting.MockWasmer
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+	WithQueryHandlerDecorator(func(other WasmVMQueryHandler) WasmVMQueryHandler {
+		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+			if request.Custom == nil {
+				return other.HandleQuery(ctx, caller, request)
+			}
+			// here we write to DB which should not be persisted
+			ctx.KVStore(k.storeKey).Set([]byte(`set_in_query`), []byte(`this_is_allowed`))
+			return nil, nil
+		})
+	}).apply(k)
+
+	// when
+	mock.ReplyFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		_, err := querier.Query(wasmvmtypes.QueryRequest{
+			Custom: []byte(`{}`),
+		}, 1_000_000)
+		require.NoError(t, err)
+		return &wasmvmtypes.Response{}, 0, nil
+	}
+	em := sdk.NewEventManager()
+	_, gotErr := k.reply(ctx.WithEventManager(em), example.Contract, wasmvmtypes.Reply{})
+	require.NoError(t, gotErr)
+	assert.Nil(t, ctx.KVStore(k.storeKey).Get([]byte(`set_in_query`)))
+}
+
 func TestBuildContractAddress(t *testing.T) {
 	specs := map[string]struct {
 		srcCodeID     uint64

@@ -46,15 +46,15 @@ type GRPCQueryRouter interface {
 var _ wasmvmtypes.Querier = QueryHandler{}
 
 func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byte, error) {
-	// set a limit for a subctx
+	// set a limit for a subCtx
 	sdkGas := q.gasRegister.FromWasmVMGas(gasLimit)
-	subctx := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas))
+	subCtx, _ := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas)).CacheContext()
 
 	// make sure we charge the higher level context even on panic
 	defer func() {
-		q.Ctx.GasMeter().ConsumeGas(subctx.GasMeter().GasConsumed(), "contract sub-query")
+		q.Ctx.GasMeter().ConsumeGas(subCtx.GasMeter().GasConsumed(), "contract sub-query")
 	}()
-	return q.Plugins.HandleQuery(subctx, q.Caller, request)
+	return q.Plugins.HandleQuery(subCtx, q.Caller, request)
 }
 
 func (q QueryHandler) GasConsumed() uint64 {
