@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -311,6 +312,31 @@ func TestIBCQuerier(t *testing.T) {
 
 }
 
+func TestBankQuerierBalance(t *testing.T) {
+	mock := bankKeeperMock{GetBalanceFn: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+		return sdk.NewCoin(denom, sdk.NewInt(1))
+	}}
+
+	ctx := sdk.Context{}
+	q := BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		Balance: &wasmvmtypes.BalanceQuery{
+			Address: RandomBech32AccountAddress(t),
+			Denom:   "ALX",
+		},
+	})
+	require.NoError(t, gotErr)
+	var got wasmvmtypes.BalanceResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wasmvmtypes.BalanceResponse{
+		Amount: wasmvmtypes.Coin{
+			Denom:  "ALX",
+			Amount: "1",
+		},
+	}
+	assert.Equal(t, exp, got)
+}
+
 type wasmKeeperMock struct {
 	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 }
@@ -324,4 +350,23 @@ func (m wasmKeeperMock) GetContractInfo(ctx sdk.Context, contractAddress sdk.Acc
 		panic("not expected to be called")
 	}
 	return m.GetContractInfoFn(ctx, contractAddress)
+}
+
+type bankKeeperMock struct {
+	GetBalanceFn     func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalancesFn func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+}
+
+func (m bankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	if m.GetBalanceFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetBalanceFn(ctx, addr, denom)
+}
+
+func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+	if m.GetAllBalancesFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetAllBalancesFn(ctx, addr)
 }
