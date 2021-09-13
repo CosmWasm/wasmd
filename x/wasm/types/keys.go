@@ -30,6 +30,7 @@ var (
 	ContractCodeHistoryElementPrefix               = []byte{0x05}
 	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x06}
 	PinnedCodeIndexPrefix                          = []byte{0x07}
+	TXCounterPrefix                                = []byte{0x08}
 
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)

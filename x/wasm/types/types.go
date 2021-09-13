@@ -256,6 +256,10 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	if nano < 1 {
 		panic("Block (unix) time must never be empty or negative ")
 	}
+	txCounter := TXCounter(ctx)
+	// todo: where to store the counter
+	_ = txCounter
+
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
 			Height:  uint64(ctx.BlockHeight()),
@@ -265,6 +269,7 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),
 		},
+		// tx info?
 	}
 	return env
 }
