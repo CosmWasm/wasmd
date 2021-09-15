@@ -302,7 +302,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 }
 
 func TestExecuteContractCmd(t *testing.T) {
-	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
@@ -384,7 +384,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			mutator: func(cmd *cobra.Command) {
 				// See TestBuildContractAddress in keeper_test.go
-				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg", `{}`})
+				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},

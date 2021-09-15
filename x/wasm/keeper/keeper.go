@@ -874,9 +874,7 @@ func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	contractID := make([]byte, 16)
 	binary.BigEndian.PutUint64(contractID[:8], codeID)
 	binary.BigEndian.PutUint64(contractID[8:], instanceID)
-	// TODO remove truncation when issue is resolved https://github.com/cosmos/ibc-go/issues/339
-	// related issue: https://github.com/cosmos/ibc/issues/594
-	return sdkaddress.Module(types.ModuleName, contractID)[:20]
+	return sdkaddress.Module(types.ModuleName, contractID)
 }
 
 // GetNextCodeID reads the next sequence id used for storing wasm code.

@@ -489,7 +489,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Migrate Contract Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
   Code id:     1
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
   Msg          "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du\"}"
@@ -500,7 +500,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Update Contract Admin Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
   New Admin:   cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 `,
 		},
@@ -509,7 +509,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Clear Contract Admin Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
 `,
 		},
 		"pin codes": {
@@ -606,7 +606,7 @@ funds: []
 			src: MigrateContractProposalFixture(),
 			exp: `title: Foo
 description: Bar
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
 code_id: 1
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"}'
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
@@ -617,14 +617,14 @@ run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
 			exp: `title: Foo
 description: Bar
 new_admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
 `,
 		},
 		"clear admin": {
 			src: ClearAdminProposalFixture(),
 			exp: `title: Foo
 description: Bar
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6
+contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
 `,
 		},
 		"pin codes": {

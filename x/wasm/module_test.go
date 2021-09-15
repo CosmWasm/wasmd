@@ -178,7 +178,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 	// this should be standard x/wasm init event, nothing from contract
 	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
 	require.Equal(t, "message", res.Events[0].Type)
@@ -236,7 +236,7 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 
 	require.Equal(t, 6, len(res.Events), prettyEvents(res.Events))
 
@@ -372,7 +372,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 
 	handleMsg := map[string]interface{}{
 		"release": map[string]interface{}{},

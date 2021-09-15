@@ -286,7 +286,7 @@ func TestInstantiate(t *testing.T) {
 	// create with no balance is also legal
 	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), codeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", gotContractAddr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
@@ -496,7 +496,7 @@ func TestExecute(t *testing.T) {
 
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
+	require.Equal(t, "+cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// ensure bob doesn't exist
 	bobAcct := accKeeper.GetAccount(ctx, bob)
@@ -1193,7 +1193,7 @@ func TestSudo(t *testing.T) {
 	require.NoError(t, err)
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// the community is broke
 	_, _, community := keyPubAddr()
@@ -1663,12 +1663,12 @@ func TestBuildContractAddress(t *testing.T) {
 		"initial contract": {
 			srcCodeID:     1,
 			srcInstanceID: 1,
-			expectedAddr:  "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6",
+			expectedAddr:  "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr",
 		},
 		"demo value": {
 			srcCodeID:     1,
 			srcInstanceID: 100,
-			expectedAddr:  "cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg",
+			expectedAddr:  "cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8",
 		},
 		"both below max": {
 			srcCodeID:     math.MaxUint32 - 1,
@@ -1681,12 +1681,12 @@ func TestBuildContractAddress(t *testing.T) {
 		"codeID > max u32": {
 			srcCodeID:     math.MaxUint32 + 1,
 			srcInstanceID: 17,
-			expectedAddr:  "cosmos1673hrexz4h6s0ft04l96ygq667djzh2nvy7fsu",
+			expectedAddr:  "cosmos1673hrexz4h6s0ft04l96ygq667djzh2nsr335kstjp49x5dk6rpsf5t0le",
 		},
 		"instanceID > max u32": {
 			srcCodeID:     22,
 			srcInstanceID: math.MaxUint32 + 1,
-			expectedAddr:  "cosmos10q3pgfvmeyy0veekgtqhxujxkhz0vm9z65ckqh",
+			expectedAddr:  "cosmos10q3pgfvmeyy0veekgtqhxujxkhz0vm9zmalqgc7evrhj68q3l62qrdfg4m",
 		},
 	}
 	for name, spec := range specs {
