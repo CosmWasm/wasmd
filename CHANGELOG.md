@@ -2,8 +2,28 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.18.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.19.0...HEAD)
 
+## [v0.19.0](https://github.com/CosmWasm/wasmd/tree/v0.19.0) (2021-09-15)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.19.0...v0.18.0)
+
+**Fixed bugs:**
+
+- Ensure Queries are executed read only [\#610](https://github.com/CosmWasm/wasmd/issues/610)
+- Fix bug in query handler initialization on reply [\#604](https://github.com/CosmWasm/wasmd/issues/604)
+
+**Api Breaking:**
+- Bump Go version to  1.16 [\#612](https://github.com/CosmWasm/wasmd/pull/612)
+
+**Implemented Enhancements:**
+
+- Ensure query isolation [\#611](https://github.com/CosmWasm/wasmd/pull/611)
+- Optimize BalanceQuery [\#609](https://github.com/CosmWasm/wasmd/pull/609)
+- Bump wasmvm to v0.16.1 [\#605](https://github.com/CosmWasm/wasmd/pull/605)
+- Bump github.com/rs/zerolog from 1.23.0 to 1.25.0 [\#603](https://github.com/CosmWasm/wasmd/pull/603)
+- Add decorator options [\#598](https://github.com/CosmWasm/wasmd/pull/598)
+- Bump github.com/spf13/cast from 1.4.0 to 1.4.1 [\#592](https://github.com/CosmWasm/wasmd/pull/592)
 
 ## [v0.18.0](https://github.com/CosmWasm/wasmd/tree/v0.18.0) (2021-08-16)
 
