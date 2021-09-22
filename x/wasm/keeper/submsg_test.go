@@ -237,7 +237,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 		// data field is the raw canonical address
 		// QUESTION: why not types.MsgInstantiateContractResponse? difference between calling Router and Service?
-		require.Len(t, response.Ok.Data, 20)
+		require.Len(t, response.Ok.Data, 32)
 		resAddr := sdk.AccAddress(response.Ok.Data)
 		assert.Equal(t, eventAddr, resAddr.String())
 	}
