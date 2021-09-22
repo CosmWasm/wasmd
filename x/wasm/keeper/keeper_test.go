@@ -35,7 +35,7 @@ func init() {
 
 var hackatomWasm []byte
 
-const SupportedFeatures = "staking,stargate"
+const SupportedFeatures = "iterator,staking,stargate"
 
 func TestNewKeeper(t *testing.T) {
 	_, keepers := CreateTestInput(t, false, SupportedFeatures)
@@ -307,7 +307,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x12206), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x12215), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -541,7 +541,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x12af1), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x12af8), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
