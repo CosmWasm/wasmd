@@ -283,7 +283,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJsonDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if err != nil {
-		return contractAddress, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
 
 	// persist instance first
@@ -293,7 +293,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	// check for IBC flag
 	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
 	if err != nil {
-		return contractAddress, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
+		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
 	if report.HasIBCEntryPoints {
 		// register IBC port
