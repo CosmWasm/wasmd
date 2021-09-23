@@ -74,6 +74,7 @@ var (
 	NewQuerier                = keeper.Querier
 	ContractFromPortID        = keeper.ContractFromPortID
 	WithWasmEngine            = keeper.WithWasmEngine
+	NewCountTXDecorator       = keeper.NewCountTXDecorator
 
 	// variable aliases
 	ModuleCdc            = types.ModuleCdc

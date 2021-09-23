@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -296,7 +297,7 @@ func TestNewEnv(t *testing.T) {
 		exp    wasmvmtypes.Env
 	}{
 		"all good": {
-			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing"),
+			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,
