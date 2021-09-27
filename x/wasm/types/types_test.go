@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -295,8 +296,22 @@ func TestNewEnv(t *testing.T) {
 		srcCtx sdk.Context
 		exp    wasmvmtypes.Env
 	}{
-		"all good": {
-			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing"),
+		"all good with tx counter": {
+			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
+			exp: wasmvmtypes.Env{
+				Block: wasmvmtypes.BlockInfo{
+					Height:  1,
+					Time:    1619700924259075000,
+					ChainID: "testing",
+				},
+				Contract: wasmvmtypes.ContractInfo{
+					Address: myContractAddr.String(),
+				},
+				Transaction: &wasmvmtypes.TransactionInfo{Index: 0},
+			},
+		},
+		"without tx counter": {
+			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()),
 			exp: wasmvmtypes.Env{
 				Block: wasmvmtypes.BlockInfo{
 					Height:  1,

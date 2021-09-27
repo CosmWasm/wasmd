@@ -52,9 +52,9 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = 44_162
+		GasNoWork uint64 = 44_170
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = 48_846 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = 48_854 // this is a little shy of 50k gas - to keep an eye on the limit
 
 		GasReturnUnhashed uint64 = 253
 		GasReturnHashed   uint64 = 228
@@ -75,7 +75,7 @@ func TestGasCostOnQuery(t *testing.T) {
 			msg: Recurse{
 				Work: 50, // 50 rounds of sha256 inside the contract
 			},
-			expectedGas: GasWork50,
+			expectedGas: GasWork50 + 1,
 		},
 		"recursion 1, no work": {
 			gasLimit: 400_000,
@@ -216,7 +216,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = 233_971 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 233_979 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
 		GasReturnHashed uint64 = 231
 	)
@@ -235,7 +235,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 0,
-			expectedGas:               GasWork2k,
+			expectedGas:               GasWork2k + 1,
 		},
 		"recursion 5, lots of work": {
 			gasLimit: 4_000_000,
