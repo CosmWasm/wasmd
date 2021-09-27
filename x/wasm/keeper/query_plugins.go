@@ -81,6 +81,7 @@ type wasmQueryKeeper interface {
 	contractMetaDataSource
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
 }
 
 func DefaultQueryPlugins(
@@ -459,21 +460,39 @@ func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper,
 	return rewards, nil
 }
 
-func WasmQuerier(wasm wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
+func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
-		if request.Smart != nil {
+		switch {
+		case request.Smart != nil:
 			addr, err := sdk.AccAddressFromBech32(request.Smart.ContractAddr)
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Smart.ContractAddr)
 			}
-			return wasm.QuerySmart(ctx, addr, request.Smart.Msg)
-		}
-		if request.Raw != nil {
+			return k.QuerySmart(ctx, addr, request.Smart.Msg)
+		case request.Raw != nil:
 			addr, err := sdk.AccAddressFromBech32(request.Raw.ContractAddr)
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Raw.ContractAddr)
 			}
-			return wasm.QueryRaw(ctx, addr, request.Raw.Key), nil
+			return k.QueryRaw(ctx, addr, request.Raw.Key), nil
+		case request.ContractInfo != nil:
+			addr, err := sdk.AccAddressFromBech32(request.ContractInfo.ContractAddr)
+			if err != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.ContractInfo.ContractAddr)
+			}
+			info := k.GetContractInfo(ctx, addr)
+			if info == nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownAddress, request.ContractInfo.ContractAddr)
+			}
+
+			res := wasmvmtypes.ContractInfoResponse{
+				CodeID:  info.CodeID,
+				Creator: info.Creator,
+				Admin:   info.Admin,
+				Pinned:  k.IsPinnedCode(ctx, info.CodeID),
+				IBCPort: info.IBCPortID,
+			}
+			return json.Marshal(res)
 		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
 	}
