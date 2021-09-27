@@ -4,6 +4,11 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.19.0...HEAD)
 
+**Implemented Enhancements:**
+
+- Add transaction index implemented as counter [\#601](https://github.com/CosmWasm/wasmd/issues/601)
+
+
 ## [v0.19.0](https://github.com/CosmWasm/wasmd/tree/v0.19.0) (2021-09-15)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.19.0...v0.18.0)
