@@ -488,7 +488,7 @@ func NewWasmApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	app.SetAnteHandler(
 		NewAnteHandler(
 			app.accountKeeper, app.bankKeeper, ante.DefaultSigVerificationGasConsumer,
-			encodingConfig.TxConfig.SignModeHandler(), keys[wasm.StoreKey],
+			encodingConfig.TxConfig.SignModeHandler(), keys[wasm.StoreKey],app.ibcKeeper.ChannelKeeper,
 		),
 	)
 	app.SetEndBlocker(app.EndBlocker)
