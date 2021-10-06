@@ -15,8 +15,8 @@ WORKDIR /code
 COPY . /code/
 
 # See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0-soon/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
-RUN sha256sum /lib/libwasmvm_muslc.a | grep 6e82693aa64e4373ae303e82988c2f3a7216e83ee0021e9be80acbf18676ca9b
+ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0-soon2/libwasmvm_muslc.a /lib/libwasmvm_muslc.a
+RUN sha256sum /lib/libwasmvm_muslc.a | grep ae3132ff947428499a94fc7005999440bd0b04c06322113bbb64bf33d726ed6f
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build

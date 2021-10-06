@@ -15,7 +15,7 @@ const (
 	// Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)
 	//
 	// Please note that all gas prices returned to the wasmer engine should have this multiplied
-	DefaultGasMultiplier uint64 = 100
+	DefaultGasMultiplier uint64 = 15_000_000
 	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 	DefaultInstanceCost uint64 = 40_000
