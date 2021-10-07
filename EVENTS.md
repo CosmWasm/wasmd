@@ -415,4 +415,6 @@ sdk.NewEvent(
 
 ## IBC Events
 
-TODO: define what the default SDK messages are here and what we add to our custom keeper events.
+All IBC entry points are only called by external accounts and not from contracts. They need to contain proofs of state of other blockchains and cannot be called by other contracts on the same chain. Therefore, the event emitted are not essential for cross-contract calls, and `x/wasm` does not emit custom events for these actions.
+
+There are well-defined events emitted by the IBC base layer and are required for the relayer functionality. If you wish to subscribe to these, you can find them [defined in the `ibc-go` codebase](https://github.com/cosmos/ibc-go/blob/main/modules/core/04-channel/keeper/events.go).
