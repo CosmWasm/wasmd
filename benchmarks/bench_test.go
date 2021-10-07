@@ -2,9 +2,9 @@ package benchmarks
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -68,7 +68,7 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 
 	// wasm setup
 	height := int64(2)
-	benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
+	benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
 	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
@@ -81,7 +81,6 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 	require.NoError(b, err)
 	_, res, err := benchmarkApp.Deliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
-	fmt.Printf("Data: %X\n", res.Data)
 	codeID := uint64(1)
 
 	// instantiate the contract
@@ -108,8 +107,9 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 	_, res, err = benchmarkApp.Deliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
 	// TODO: parse contract address
-	fmt.Printf("Data: %X\n", res.Data)
-	contractAddr := "wasm123456789"
+	evt := res.Events[len(res.Events)-1]
+	attr := evt.Attributes[0]
+	contractAddr := string(attr.Value)
 
 	benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
 	benchmarkApp.Commit()
@@ -136,7 +136,7 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 	// Run this with a profiler, so its easy to distinguish what time comes from
 	// Committing, and what time comes from Check/Deliver Tx.
 	for i := 0; i < b.N/blockSize; i++ {
-		benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
+		benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 		for j := 0; j < blockSize; j++ {
 			idx := i*blockSize + j
