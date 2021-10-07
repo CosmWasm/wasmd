@@ -589,7 +589,63 @@ func TestQueryContractInfo(t *testing.T) {
 			assert.Equal(t, spec.expRsp, gotRsp)
 		})
 	}
+}
 
+func TestQueryPinnedCodes(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	keeper := keepers.WasmKeeper
+
+	exampleContract1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	exampleContract2 := InstantiateIBCReflectContract(t, ctx, keepers)
+	require.NoError(t, keeper.pinCode(ctx, exampleContract1.CodeID))
+	require.NoError(t, keeper.pinCode(ctx, exampleContract2.CodeID))
+
+	q := Querier(keeper)
+	specs := map[string]struct {
+		srcQuery   *types.QueryPinnedCodesRequest
+		expCodeIDs []uint64
+		expErr     *sdkErrors.Error
+	}{
+		"query all": {
+			srcQuery:   &types.QueryPinnedCodesRequest{},
+			expCodeIDs: []uint64{exampleContract1.CodeID, exampleContract2.CodeID},
+		},
+		"with pagination offset": {
+			srcQuery: &types.QueryPinnedCodesRequest{
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expCodeIDs: []uint64{exampleContract2.CodeID},
+		},
+		"with pagination limit": {
+			srcQuery: &types.QueryPinnedCodesRequest{
+				Pagination: &query.PageRequest{
+					Limit: 1,
+				},
+			},
+			expCodeIDs: []uint64{exampleContract1.CodeID},
+		},
+		"with pagination next key": {
+			srcQuery: &types.QueryPinnedCodesRequest{
+				Pagination: &query.PageRequest{
+					Key: fromBase64("AAAAAAAAAAM="),
+				},
+			},
+			expCodeIDs: []uint64{exampleContract2.CodeID},
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := q.PinnedCodes(sdk.WrapSDKContext(ctx), spec.srcQuery)
+			require.True(t, spec.expErr.Is(err), err)
+			if spec.expErr != nil {
+				return
+			}
+			require.NotNil(t, got)
+			assert.Equal(t, spec.expCodeIDs, got.CodeIDs)
+		})
+	}
 }
 
 func fromBase64(s string) []byte {

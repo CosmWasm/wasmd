@@ -33,6 +33,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdGetContractInfo(),
 		GetCmdGetContractHistory(),
 		GetCmdGetContractState(),
+		GetCmdListPinnedCode(),
 	)
 	return queryCmd
 }
@@ -381,6 +382,41 @@ func GetCmdGetContractHistory() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "contract history")
+	return cmd
+}
+
+// GetCmdListPinnedCode lists all wasm code ids that are pinned
+func GetCmdListPinnedCode() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pinned",
+		Short: "List all pinned code ids",
+		Long:  "\t\tLong:    List all pinned code ids,\n",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.PinnedCodes(
+				context.Background(),
+				&types.QueryPinnedCodesRequest{
+					Pagination: pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list codes")
 	return cmd
 }
 

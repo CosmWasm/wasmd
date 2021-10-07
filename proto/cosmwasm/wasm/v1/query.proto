@@ -53,6 +53,11 @@ service Query {
   rpc Codes(QueryCodesRequest) returns (QueryCodesResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/code";
   }
+
+  // PinnedCodes gets the pinned code ids
+  rpc PinnedCodes(QueryPinnedCodesRequest) returns (QueryPinnedCodesResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/codes/pinned";
+  }
 }
 
 // QueryContractInfoRequest is the request type for the Query/ContractInfo RPC
@@ -197,6 +202,22 @@ message QueryCodesRequest {
 // QueryCodesResponse is the response type for the Query/Codes RPC method
 message QueryCodesResponse {
   repeated CodeInfoResponse code_infos = 1 [ (gogoproto.nullable) = false ];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryPinnedCodesRequest is the request type for the Query/PinnedCodes
+// RPC method
+message QueryPinnedCodesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryPinnedCodesResponse is the response type for the
+// Query/PinnedCodes RPC method
+message QueryPinnedCodesResponse {
+  repeated uint64 code_ids = 1
+      [ (gogoproto.nullable) = false, (gogoproto.customname) = "CodeIDs" ];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
