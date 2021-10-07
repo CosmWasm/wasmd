@@ -481,7 +481,8 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, err
 	}
 
-	replyCosts := k.gasRegister.ReplyCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), reply)
+	// always consider this pinned
+	replyCosts := k.gasRegister.ReplyCosts(true, reply)
 	ctx.GasMeter().ConsumeGas(replyCosts, "Loading CosmWasm module: reply")
 
 	env := types.NewEnv(ctx, contractAddress)
