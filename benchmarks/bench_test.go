@@ -19,7 +19,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	wasmapp "github.com/CosmWasm/wasmd/app"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -61,7 +60,7 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 
 	// construct genesis state
 	genAccs := []authtypes.GenesisAccount{&acc}
-	benchmarkApp := wasmapp.SetupWithGenesisAccounts(genAccs, banktypes.Balance{
+	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
 		Address: addr1.String(),
 		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
 	})
@@ -164,7 +163,7 @@ func BenchmarkNBankSendTxsPerBlock(b *testing.B) {
 
 	// construct genesis state
 	genAccs := []authtypes.GenesisAccount{&acc}
-	benchmarkApp := wasmapp.SetupWithGenesisAccounts(genAccs, banktypes.Balance{
+	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
 		Address: addr1.String(),
 		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
 	})
