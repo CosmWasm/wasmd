@@ -86,6 +86,20 @@ jobs:
       - store_artifacts:
           path: /tmp/logs
 
+  benchmark:
+    executor: golang
+    parallelism: 1
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Run benchmarks
+          command: |
+            cd ./x/wasm/keeper
+            go test -bench .
+
   upload-coverage:
     executor: golang
     steps:
@@ -176,5 +190,8 @@ workflows:
           requires:
             - setup-dependencies
       - upload-coverage:
+          requires:
+            - test-cover
+      - benchmark:
           requires:
             - test-cover
