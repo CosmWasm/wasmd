@@ -14,6 +14,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	wasmapp "github.com/CosmWasm/wasmd/app"
 )
 
 var moduleAccAddr = authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
@@ -36,14 +38,10 @@ func BenchmarkOneBankSendTxPerBlock(b *testing.B) {
 
 	// construct genesis state
 	genAccs := []authtypes.GenesisAccount{&acc}
-	benchmarkApp := simapp.SetupWithGenesisAccounts(genAccs)
-	ctx := benchmarkApp.BaseApp.NewContext(false, tmproto.Header{})
-
-	// some value conceivably higher than the benchmarks would ever go
-	err := benchmarkApp.BankKeeper.SetBalances(ctx, addr1, sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)))
-	require.NoError(b, err)
-
-	benchmarkApp.Commit()
+	benchmarkApp := wasmapp.SetupWithGenesisAccounts(genAccs, banktypes.Balance{
+		Address: addr1.String(),
+		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
+	})
 	txGen := simappparams.MakeTestEncodingConfig().TxConfig
 
 	// Precompute all txs
@@ -51,7 +49,7 @@ func BenchmarkOneBankSendTxPerBlock(b *testing.B) {
 	require.NoError(b, err)
 	b.ResetTimer()
 
-	height := int64(3)
+	height := int64(2)
 
 	// Run this with a profiler, so its easy to distinguish what time comes from
 	// Committing, and what time comes from Check/Deliver Tx.
