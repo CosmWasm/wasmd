@@ -50,18 +50,25 @@ func BenchmarkOneBankSendTxPerBlock(b *testing.B) {
 	b.ResetTimer()
 
 	height := int64(2)
+	// number of Tx per block for the benchmarks
+	blockSize := 20
 
 	// Run this with a profiler, so its easy to distinguish what time comes from
 	// Committing, and what time comes from Check/Deliver Tx.
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < b.N/blockSize; i++ {
 		benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
-		_, _, err := benchmarkApp.Check(txGen.TxEncoder(), txs[i])
-		if err != nil {
-			panic("something is broken in checking transaction")
+
+		for j := 0; j < blockSize; j++ {
+			idx := i*blockSize + j
+
+			_, _, err := benchmarkApp.Check(txGen.TxEncoder(), txs[idx])
+			if err != nil {
+				panic("something is broken in checking transaction")
+			}
+			_, _, err = benchmarkApp.Deliver(txGen.TxEncoder(), txs[idx])
+			require.NoError(b, err)
 		}
 
-		_, _, err = benchmarkApp.Deliver(txGen.TxEncoder(), txs[i])
-		require.NoError(b, err)
 		benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
 		benchmarkApp.Commit()
 		height++
