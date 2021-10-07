@@ -1,11 +1,14 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	dbm "github.com/tendermint/tm-db"
-	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func BenchmarkExecution(b *testing.B) {
@@ -51,5 +54,25 @@ func BenchmarkExecution(b *testing.B) {
 				require.NoError(b, err)
 			}
 		})
+	}
+}
+
+// BenchmarkVerification benchmarks the given verification algorithm using
+// the provided privkey on a constant message.
+// Copied from https://github.com/cosmos/cosmos-sdk/blob/90e9370bd80d9a3d41f7203ddb71166865561569/crypto/keys/internal/benchmarking/bench.go#L48-L62
+// And thus under the GO license (BSD style)
+func BenchmarkSecpVerification(b *testing.B) {
+	priv := secp256k1.GenPrivKey()
+	pub := priv.PubKey()
+
+	// use a short message, so this time doesn't get dominated by hashing.
+	message := []byte("Hello, world!")
+	signature, err := priv.Sign(message)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		pub.VerifySignature(message, signature)
 	}
 }
