@@ -2,12 +2,31 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.19.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
+
+## [v0.20.0](https://github.com/CosmWasm/wasmd/tree/v0.20.0) (2021-10-08)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...v0.19.0)
+
+**Fixed bugs:**
+
+- Add capabilities to begin block [\#626](https://github.com/CosmWasm/wasmd/pull/626)
+
+**Api Breaking:**
+- Update to wasmvm 1.0.0-soon2 [\#624](https://github.com/CosmWasm/wasmd/issues/624)
 
 **Implemented Enhancements:**
 
+- Upgrade Cosmos-sdk v0.42.10 [\#627](https://github.com/CosmWasm/wasmd/pull/627) ([alpe](https://github.com/alpe))
 - Add transaction index implemented as counter [\#601](https://github.com/CosmWasm/wasmd/issues/601)
-
+- Fix inconsistent return of `contractAddress` from `keeper/init()`? [\#616](https://github.com/CosmWasm/wasmd/issues/616)
+- Query pinned wasm codes [\#596](https://github.com/CosmWasm/wasmd/issues/596)
+- Doc IBC Events [\#593](https://github.com/CosmWasm/wasmd/issues/593)
+- Allow contract Info query from the contract [\#584](https://github.com/CosmWasm/wasmd/issues/584)
+- Revisit reply gas costs for submessages. [\#450](https://github.com/CosmWasm/wasmd/issues/450)
+- Benchmarks for gas pricing [\#634](https://github.com/CosmWasm/wasmd/pull/634)
+- Treat all contracts as pinned for gas costs in reply [\#630](https://github.com/CosmWasm/wasmd/pull/630)
+- Bump github.com/spf13/viper from 1.8.1 to 1.9.0 [\#615](https://github.com/CosmWasm/wasmd/pull/615)
 
 ## [v0.19.0](https://github.com/CosmWasm/wasmd/tree/v0.19.0) (2021-09-15)
 
