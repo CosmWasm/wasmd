@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -48,21 +47,6 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 			db:     func() dbm.DB { return dbm.NewMemDB() },
 			pinned: true,
 		},
-		//"unpinned, level db": {
-		//	db: func() dbm.DB {
-		//		levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
-		//		require.NoError(b, err)
-		//		return levelDB
-		//	},
-		//},
-		//"pinned, level db": {
-		//	db: func() dbm.DB {
-		//		levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
-		//		require.NoError(b, err)
-		//		return levelDB
-		//	},
-		//	pinned: true,
-		//},
 	}
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
@@ -107,7 +91,7 @@ func BenchmarkCompilation(b *testing.B) {
 			// print out code size for comparisons
 			code, err := ioutil.ReadFile(spec.wasmFile)
 			require.NoError(b, err)
-			fmt.Printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b(size: %d)  ", len(code))
+			b.Logf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b(size: %d)  ", len(code))
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
