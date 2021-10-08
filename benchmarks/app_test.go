@@ -6,25 +6,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
+
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
-	db := dbm.NewMemDB()
+func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
 	wasmApp := app.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, app.DefaultNodeHome, invCheckPeriod, wasm.EnableAllProposals, app.EmptyBaseAppOptions{}, opts)
 	if withGenesis {
 		return wasmApp, app.NewDefaultGenesisState()
@@ -34,8 +36,8 @@ func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.Was
 
 // SetupWithGenesisAccounts initializes a new WasmApp with the provided genesis
 // accounts and possible balances.
-func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
-	wasmApp, genesisState := setup(true, 0)
+func SetupWithGenesisAccounts(db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
+	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	encodingConfig := app.MakeEncodingConfig()
 	appCodec := encodingConfig.Marshaler
@@ -69,14 +71,34 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 	return wasmApp
 }
 
-// Returns the address of the contract
-func InitializeWasmApp(b testing.TB, wasmApp *app.WasmApp, minter *secp256k1.PrivKey) string {
-	// wasm setup
+type AppInfo struct {
+	App          *app.WasmApp
+	MinterKey    *secp256k1.PrivKey
+	MinterAddr   sdk.AccAddress
+	ContractAddr string
+	Denom        string
+	TxConfig     client.TxConfig
+}
+
+func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
+	// constants
+	minter := secp256k1.GenPrivKey()
+	addr := sdk.AccAddress(minter.PubKey().Address())
+	denom := "uatom"
+
+	// genesis setup
+	genAccs := []authtypes.GenesisAccount{&authtypes.BaseAccount{
+		Address: addr.String(),
+	}}
+	bals := []banktypes.Balance{{
+		Address: addr.String(),
+		Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
+	}}
+	wasmApp := SetupWithGenesisAccounts(db, genAccs, bals...)
+
+	// add wasm contract
 	height := int64(2)
 	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-
-	addr := sdk.AccAddress(minter.PubKey().Address())
-
 	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
@@ -124,5 +146,12 @@ func InitializeWasmApp(b testing.TB, wasmApp *app.WasmApp, minter *secp256k1.Pri
 	wasmApp.EndBlock(abci.RequestEndBlock{Height: height})
 	wasmApp.Commit()
 
-	return contractAddr
+	return AppInfo{
+		App:          wasmApp,
+		MinterKey:    minter,
+		MinterAddr:   addr,
+		ContractAddr: contractAddr,
+		Denom:        denom,
+		TxConfig:     simappparams.MakeTestEncodingConfig().TxConfig,
+	}
 }

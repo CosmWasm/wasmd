@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -51,42 +53,35 @@ type transferMsg struct {
 }
 
 func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
-	// Initial accounts
-	acc := authtypes.BaseAccount{
-		Address: addr1.String(),
-	}
-	genAccs := []authtypes.GenesisAccount{&acc}
+	db := dbm.NewMemDB()
+	appInfo := InitializeWasmApp(b, db, 1)
 
-	// construct genesis state
-	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
-		Address: addr1.String(),
-		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
-	})
+	benchmarkApp := appInfo.App
+	contractAddr := appInfo.ContractAddr
+	minter := appInfo.MinterKey
+	addr := appInfo.MinterAddr
 
-	// Setup app
-	contractAddr := InitializeWasmApp(b, benchmarkApp, priv1)
-
-	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-
-	height := int64(3)
+	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 
 	// Precompute all txs
 	transfer := cw20ExecMsg{Transfer: &transferMsg{
-		Recipient: addr2.String(),
+		Recipient: rcpt.String(),
 		Amount:    765,
 	}}
 	transferBz, err := json.Marshal(transfer)
 	sendMsg1 := wasmtypes.MsgExecuteContract{
-		Sender:   addr1.String(),
+		Sender:   addr.String(),
 		Contract: contractAddr,
 		Msg:      transferBz,
 	}
-	txs, err := simapp.GenSequenceOfTxs(txGen, []sdk.Msg{&sendMsg1}, []uint64{0}, []uint64{uint64(2)}, b.N, priv1)
+	txs, err := simapp.GenSequenceOfTxs(appInfo.TxConfig, []sdk.Msg{&sendMsg1}, []uint64{0}, []uint64{uint64(2)}, b.N, minter)
 	require.NoError(b, err)
 	b.ResetTimer()
 
 	// number of Tx per block for the benchmarks
 	blockSize := 20
+	height := int64(3)
+	txEncoder := appInfo.TxConfig.TxEncoder()
 
 	// Run this with a profiler, so its easy to distinguish what time comes from
 	// Committing, and what time comes from Check/Deliver Tx.
@@ -96,11 +91,11 @@ func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
 		for j := 0; j < blockSize; j++ {
 			idx := i*blockSize + j
 
-			_, _, err := benchmarkApp.Check(txGen.TxEncoder(), txs[idx])
+			_, _, err := benchmarkApp.Check(txEncoder, txs[idx])
 			if err != nil {
 				panic("something is broken in checking transaction")
 			}
-			_, _, err = benchmarkApp.Deliver(txGen.TxEncoder(), txs[idx])
+			_, _, err = benchmarkApp.Deliver(txEncoder, txs[idx])
 			require.NoError(b, err)
 		}
 
