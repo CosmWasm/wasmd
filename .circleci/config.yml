@@ -95,9 +95,14 @@ jobs:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
-          name: Run benchmarks
+          name: Benchmarks for gas calculations
           command: |
             cd ./x/wasm/keeper
+            go test -bench .
+      - run:
+          name: Benchmarks to compare with native modules
+          command: |
+            cd ./benchmarks
             go test -bench .
 
   upload-coverage:
