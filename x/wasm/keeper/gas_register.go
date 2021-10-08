@@ -27,6 +27,7 @@ const (
 	// such as hardcoding them in contracts.
 	//
 	// Please note that all gas prices returned to wasmvm should have this multiplied.
+	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938055852
 	DefaultGasMultiplier uint64 = 140_000_000
 	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
