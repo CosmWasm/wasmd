@@ -77,6 +77,8 @@ type AppInfo struct {
 	MinterAddr   sdk.AccAddress
 	ContractAddr string
 	Denom        string
+	AccNum       uint64
+	SeqNum       uint64
 	TxConfig     client.TxConfig
 }
 
@@ -152,6 +154,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		MinterAddr:   addr,
 		ContractAddr: contractAddr,
 		Denom:        denom,
+		AccNum:       0,
+		SeqNum:       2,
 		TxConfig:     simappparams.MakeTestEncodingConfig().TxConfig,
 	}
 }
