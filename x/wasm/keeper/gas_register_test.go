@@ -20,7 +20,7 @@ func TestCompileCosts(t *testing.T) {
 		"one byte": {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(2), // DefaultCompileCost
+			exp:       sdk.Gas(3), // DefaultCompileCost
 		},
 		"zero byte": {
 			srcLen:    0,
