@@ -174,3 +174,27 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		TxConfig:     simappparams.MakeTestEncodingConfig().TxConfig,
 	}
 }
+
+func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
+	fees := sdk.Coins{sdk.NewInt64Coin(info.Denom, 0)}
+	txs := make([]sdk.Tx, numToGenerate)
+
+	for i := 0; i < numToGenerate; i++ {
+		msgs, err := msgGen(info)
+		require.NoError(b, err)
+		txs[i], err = helpers.GenTx(
+			info.TxConfig,
+			msgs,
+			fees,
+			1234567,
+			"",
+			[]uint64{info.AccNum},
+			[]uint64{info.SeqNum},
+			info.MinterKey,
+		)
+		require.NoError(b, err)
+		info.SeqNum += 1
+	}
+
+	return txs
+}

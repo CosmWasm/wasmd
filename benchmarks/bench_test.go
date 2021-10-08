@@ -13,40 +13,43 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func bankSendTxs(b *testing.B, info *AppInfo) []sdk.Tx {
+func bankSendMsg(info *AppInfo) ([]sdk.Msg, error) {
 	// Precompute all txs
 	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	coins := sdk.Coins{sdk.NewInt64Coin(info.Denom, 100)}
 	sendMsg := banktypes.NewMsgSend(info.MinterAddr, rcpt, coins)
-
-	txs, err := simapp.GenSequenceOfTxs(info.TxConfig, []sdk.Msg{sendMsg}, []uint64{info.AccNum}, []uint64{info.SeqNum}, b.N, info.MinterKey)
-	require.NoError(b, err)
-	return txs
+	return []sdk.Msg{sendMsg}, nil
 }
 
-func cw20TransferTxs(b *testing.B, info *AppInfo) []sdk.Tx {
+func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
 	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	transfer := cw20ExecMsg{Transfer: &transferMsg{
 		Recipient: rcpt.String(),
 		Amount:    765,
 	}}
 	transferBz, err := json.Marshal(transfer)
+	if err != nil {
+		return nil, err
+	}
 
-	sendMsg := wasmtypes.MsgExecuteContract{
+	sendMsg := &wasmtypes.MsgExecuteContract{
 		Sender:   info.MinterAddr.String(),
 		Contract: info.ContractAddr,
 		Msg:      transferBz,
 	}
-	txs, err := simapp.GenSequenceOfTxs(info.TxConfig, []sdk.Msg{&sendMsg}, []uint64{info.AccNum}, []uint64{info.SeqNum}, b.N, info.MinterKey)
-	require.NoError(b, err)
-	return txs
+	return []sdk.Msg{sendMsg}, nil
+}
+
+func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
+	return func(b *testing.B, info *AppInfo) []sdk.Tx {
+		return GenSequenceOfTxs(b, info, builder, b.N)
+	}
 }
 
 func buildMemDB(b *testing.B) dbm.DB {
@@ -69,33 +72,33 @@ func BenchmarkTxSending(b *testing.B) {
 		"basic send - memdb": {
 			db:        buildMemDB,
 			blockSize: 20,
-			txBuilder: bankSendTxs,
+			txBuilder: buildTxFromMsg(bankSendMsg),
 		},
 		"cw20 transfer - memdb": {
 			db:        buildMemDB,
 			blockSize: 20,
-			txBuilder: cw20TransferTxs,
+			txBuilder: buildTxFromMsg(cw20TransferMsg),
 		},
 		"basic send - leveldb": {
 			db:        buildLevelDB,
 			blockSize: 20,
-			txBuilder: bankSendTxs,
+			txBuilder: buildTxFromMsg(bankSendMsg),
 		},
 		"cw20 transfer - leveldb": {
 			db:        buildLevelDB,
 			blockSize: 20,
-			txBuilder: cw20TransferTxs,
+			txBuilder: buildTxFromMsg(cw20TransferMsg),
 		},
 		"basic send - leveldb - 10k accounts": {
-			db:        buildLevelDB,
-			blockSize: 20,
-			txBuilder: bankSendTxs,
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
 			numAccounts: 10000,
 		},
 		"cw20 transfer - leveldb - 10k accounts": {
-			db:        buildLevelDB,
-			blockSize: 20,
-			txBuilder: cw20TransferTxs,
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
 			numAccounts: 10000,
 		},
 	}
