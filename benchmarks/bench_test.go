@@ -2,7 +2,6 @@ package benchmarks
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -53,67 +51,24 @@ type transferMsg struct {
 }
 
 func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
-	// Add an account at genesis
+	// Initial accounts
 	acc := authtypes.BaseAccount{
 		Address: addr1.String(),
 	}
+	genAccs := []authtypes.GenesisAccount{&acc}
 
 	// construct genesis state
-	genAccs := []authtypes.GenesisAccount{&acc}
 	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
 		Address: addr1.String(),
 		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
 	})
+
+	// Setup app
+	contractAddr := InitializeWasmApp(b, benchmarkApp, priv1)
+
 	txGen := simappparams.MakeTestEncodingConfig().TxConfig
 
-	// wasm setup
-	height := int64(2)
-	benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
-
-	// upload the code
-	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
-	require.NoError(b, err)
-	storeMsg := wasmtypes.MsgStoreCode{
-		Sender:       addr1.String(),
-		WASMByteCode: cw20Code,
-	}
-	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, priv1)
-	require.NoError(b, err)
-	_, res, err := benchmarkApp.Deliver(txGen.TxEncoder(), storeTx)
-	require.NoError(b, err)
-	codeID := uint64(1)
-
-	// instantiate the contract
-	init := cw20InitMsg{
-		Name:     "Cash Money",
-		Symbol:   "CASH",
-		Decimals: 2,
-		InitialBalances: []balance{{
-			Address: addr1.String(),
-			Amount:  100000000000,
-		}},
-	}
-	initBz, err := json.Marshal(init)
-	require.NoError(b, err)
-	initMsg := wasmtypes.MsgInstantiateContract{
-		Sender: addr1.String(),
-		Admin:  addr1.String(),
-		CodeID: codeID,
-		Label:  "Demo contract",
-		Msg:    initBz,
-	}
-	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, 500000, "", []uint64{0}, []uint64{1}, priv1)
-	require.NoError(b, err)
-	_, res, err = benchmarkApp.Deliver(txGen.TxEncoder(), initTx)
-	require.NoError(b, err)
-	// TODO: parse contract address
-	evt := res.Events[len(res.Events)-1]
-	attr := evt.Attributes[0]
-	contractAddr := string(attr.Value)
-
-	benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
-	benchmarkApp.Commit()
-	height++
+	height := int64(3)
 
 	// Precompute all txs
 	transfer := cw20ExecMsg{Transfer: &transferMsg{

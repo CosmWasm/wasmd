@@ -2,10 +2,17 @@ package benchmarks
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"testing"
+	"time"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -13,6 +20,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
@@ -59,4 +67,62 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
 
 	return wasmApp
+}
+
+// Returns the address of the contract
+func InitializeWasmApp(b testing.TB, wasmApp *app.WasmApp, minter *secp256k1.PrivKey) string {
+	// wasm setup
+	height := int64(2)
+	txGen := simappparams.MakeTestEncodingConfig().TxConfig
+
+	addr := sdk.AccAddress(minter.PubKey().Address())
+
+	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
+
+	// upload the code
+	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
+	require.NoError(b, err)
+	storeMsg := wasmtypes.MsgStoreCode{
+		Sender:       addr.String(),
+		WASMByteCode: cw20Code,
+	}
+	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
+	require.NoError(b, err)
+	_, res, err := wasmApp.Deliver(txGen.TxEncoder(), storeTx)
+	require.NoError(b, err)
+	codeID := uint64(1)
+
+	// instantiate the contract
+	init := cw20InitMsg{
+		Name:     "Cash Money",
+		Symbol:   "CASH",
+		Decimals: 2,
+		InitialBalances: []balance{{
+			Address: addr.String(),
+			Amount:  100000000000,
+		}},
+	}
+	initBz, err := json.Marshal(init)
+	require.NoError(b, err)
+	initMsg := wasmtypes.MsgInstantiateContract{
+		Sender: addr.String(),
+		Admin:  addr.String(),
+		CodeID: codeID,
+		Label:  "Demo contract",
+		Msg:    initBz,
+	}
+	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, 500000, "", []uint64{0}, []uint64{1}, minter)
+	require.NoError(b, err)
+	_, res, err = wasmApp.Deliver(txGen.TxEncoder(), initTx)
+	require.NoError(b, err)
+
+	// TODO: parse contract address better
+	evt := res.Events[len(res.Events)-1]
+	attr := evt.Attributes[0]
+	contractAddr := string(attr.Value)
+
+	wasmApp.EndBlock(abci.RequestEndBlock{Height: height})
+	wasmApp.Commit()
+
+	return contractAddr
 }
