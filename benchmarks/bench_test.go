@@ -86,6 +86,18 @@ func BenchmarkTxSending(b *testing.B) {
 			blockSize: 20,
 			txBuilder: cw20TransferTxs,
 		},
+		"basic send - leveldb - 10k accounts": {
+			db:        buildLevelDB,
+			blockSize: 20,
+			txBuilder: bankSendTxs,
+			numAccounts: 10000,
+		},
+		"cw20 transfer - leveldb - 10k accounts": {
+			db:        buildLevelDB,
+			blockSize: 20,
+			txBuilder: cw20TransferTxs,
+			numAccounts: 10000,
+		},
 	}
 
 	for name, tc := range cases {

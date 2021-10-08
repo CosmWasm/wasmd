@@ -88,14 +88,29 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	addr := sdk.AccAddress(minter.PubKey().Address())
 	denom := "uatom"
 
-	// genesis setup
-	genAccs := []authtypes.GenesisAccount{&authtypes.BaseAccount{
+	// genesis setup (with a bunch of random accounts)
+	genAccs := make([]authtypes.GenesisAccount, numAccounts+1)
+	bals := make([]banktypes.Balance, numAccounts+1)
+	genAccs[0] = &authtypes.BaseAccount{
 		Address: addr.String(),
-	}}
-	bals := []banktypes.Balance{{
+	}
+	bals[0] = banktypes.Balance{
 		Address: addr.String(),
 		Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
-	}}
+	}
+	for i := 0; i <= numAccounts; i++ {
+		acct := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
+		if i == 0 {
+			acct = addr.String()
+		}
+		genAccs[i] = &authtypes.BaseAccount{
+			Address: acct,
+		}
+		bals[i] = banktypes.Balance{
+			Address: acct,
+			Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
+		}
+	}
 	wasmApp := SetupWithGenesisAccounts(db, genAccs, bals...)
 
 	// add wasm contract
