@@ -52,12 +52,12 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = 44_171
+		GasNoWork uint64 = 63_787
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = 48_855 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = 64_268 // this is a little shy of 50k gas - to keep an eye on the limit
 
-		GasReturnUnhashed uint64 = 252
-		GasReturnHashed   uint64 = 228
+		GasReturnUnhashed uint64 = 28
+		GasReturnHashed   uint64 = 24
 	)
 
 	cases := map[string]struct {
@@ -98,8 +98,7 @@ func TestGasCostOnQuery(t *testing.T) {
 				Depth: 4,
 				Work:  50,
 			},
-			// FIXME: why -6... confused a bit by calculations, seems like rounding issues
-			expectedGas: 5*GasWork50 + 4*GasReturnHashed - 6,
+			expectedGas: 5*GasWork50 + 4*GasReturnHashed,
 		},
 	}
 
@@ -216,9 +215,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = 233_979 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 84103 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
-		GasReturnHashed uint64 = 232
+		GasReturnHashed uint64 = 24
 	)
 
 	cases := map[string]struct {
@@ -235,7 +234,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 0,
-			expectedGas:               GasWork2k + 1,
+			expectedGas:               GasWork2k,
 		},
 		"recursion 5, lots of work": {
 			gasLimit: 4_000_000,
@@ -244,14 +243,14 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 5,
-			// FIXME: why +3 ... confused a bit by calculations, seems like rounding issues
-			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) + 3,
+			// FIXME: why +1 ... confused a bit by calculations, seems like rounding issues
+			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) + 1,
 		},
 		// this is where we expect an error...
 		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)
 		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
 		"deep recursion, should die on 5th level": {
-			gasLimit: 1_000_000,
+			gasLimit: 400_000,
 			msg: Recurse{
 				Depth: 50,
 				Work:  2000,
