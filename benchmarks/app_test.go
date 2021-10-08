@@ -132,14 +132,22 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	codeID := uint64(1)
 
 	// instantiate the contract
+	initialBalances := make([]balance, numAccounts+1)
+	for i := 0; i <= numAccounts; i++ {
+		acct := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address()).String()
+		if i == 0 {
+			acct = addr.String()
+		}
+		initialBalances[i] = balance{
+			Address: acct,
+			Amount: 1000000000,
+		}
+	}
 	init := cw20InitMsg{
 		Name:     "Cash Money",
 		Symbol:   "CASH",
 		Decimals: 2,
-		InitialBalances: []balance{{
-			Address: addr.String(),
-			Amount:  100000000000,
-		}},
+		InitialBalances: initialBalances,
 	}
 	initBz, err := json.Marshal(init)
 	require.NoError(b, err)
@@ -150,7 +158,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Label:  "Demo contract",
 		Msg:    initBz,
 	}
-	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, 500000, "", []uint64{0}, []uint64{1}, minter)
+	gasWanted := 500000 + 10000*uint64(numAccounts)
+	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
 	require.NoError(b, err)
 	_, res, err = wasmApp.Deliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
