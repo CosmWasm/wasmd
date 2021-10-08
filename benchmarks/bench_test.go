@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -48,20 +49,40 @@ func cw20TransferTxs(b *testing.B, info *AppInfo) []sdk.Tx {
 	return txs
 }
 
+func buildMemDB(b *testing.B) dbm.DB {
+	return dbm.NewMemDB()
+}
+
+func buildLevelDB(b *testing.B) dbm.DB {
+	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+	require.NoError(b, err)
+	return levelDB
+}
+
 func BenchmarkTxSending(b *testing.B) {
 	cases := map[string]struct {
-		db          dbm.DB
+		db          func(*testing.B) dbm.DB
 		txBuilder   func(*testing.B, *AppInfo) []sdk.Tx
 		blockSize   int
 		numAccounts int
 	}{
 		"basic send - memdb": {
-			db:        dbm.NewMemDB(),
+			db:        buildMemDB,
 			blockSize: 20,
 			txBuilder: bankSendTxs,
 		},
 		"cw20 transfer - memdb": {
-			db:        dbm.NewMemDB(),
+			db:        buildMemDB,
+			blockSize: 20,
+			txBuilder: cw20TransferTxs,
+		},
+		"basic send - leveldb": {
+			db:        buildLevelDB,
+			blockSize: 20,
+			txBuilder: bankSendTxs,
+		},
+		"cw20 transfer - leveldb": {
+			db:        buildLevelDB,
 			blockSize: 20,
 			txBuilder: cw20TransferTxs,
 		},
@@ -69,7 +90,8 @@ func BenchmarkTxSending(b *testing.B) {
 
 	for name, tc := range cases {
 		b.Run(name, func(b *testing.B) {
-			appInfo := InitializeWasmApp(b, tc.db, tc.numAccounts)
+			db := tc.db(b)
+			appInfo := InitializeWasmApp(b, db, tc.numAccounts)
 			txs := tc.txBuilder(b, &appInfo)
 
 			// number of Tx per block for the benchmarks
@@ -97,8 +119,6 @@ func BenchmarkTxSending(b *testing.B) {
 				appInfo.App.Commit()
 				height++
 			}
-
 		})
 	}
-
 }
