@@ -2,202 +2,142 @@ package benchmarks
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb/opt"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var moduleAccAddr = authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
-
-var (
-	priv1 = secp256k1.GenPrivKey()
-	addr1 = sdk.AccAddress(priv1.PubKey().Address())
-	priv2 = secp256k1.GenPrivKey()
-	addr2 = sdk.AccAddress(priv2.PubKey().Address())
-)
-
-type cw20InitMsg struct {
-	Name            string    `json:"name"`
-	Symbol          string    `json:"symbol"`
-	Decimals        uint8     `json:"decimals"`
-	InitialBalances []balance `json:"initial_balances"`
-}
-
-type balance struct {
-	Address string `json:"address"`
-	Amount  uint64 `json:"amount,string"`
-}
-
-type cw20ExecMsg struct {
-	Transfer *transferMsg `json:"transfer,omitempty"`
-}
-
-type transferMsg struct {
-	Recipient string `json:"recipient"`
-	Amount    uint64 `json:"amount,string"`
-}
-
-func BenchmarkNCw20SendTxPerBlock(b *testing.B) {
-	// Add an account at genesis
-	acc := authtypes.BaseAccount{
-		Address: addr1.String(),
-	}
-
-	// construct genesis state
-	genAccs := []authtypes.GenesisAccount{&acc}
-	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
-		Address: addr1.String(),
-		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
-	})
-	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-
-	// wasm setup
-	height := int64(2)
-	benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
-
-	// upload the code
-	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
-	require.NoError(b, err)
-	storeMsg := wasmtypes.MsgStoreCode{
-		Sender:       addr1.String(),
-		WASMByteCode: cw20Code,
-	}
-	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, priv1)
-	require.NoError(b, err)
-	_, res, err := benchmarkApp.Deliver(txGen.TxEncoder(), storeTx)
-	require.NoError(b, err)
-	codeID := uint64(1)
-
-	// instantiate the contract
-	init := cw20InitMsg{
-		Name:     "Cash Money",
-		Symbol:   "CASH",
-		Decimals: 2,
-		InitialBalances: []balance{{
-			Address: addr1.String(),
-			Amount:  100000000000,
-		}},
-	}
-	initBz, err := json.Marshal(init)
-	require.NoError(b, err)
-	initMsg := wasmtypes.MsgInstantiateContract{
-		Sender: addr1.String(),
-		Admin:  addr1.String(),
-		CodeID: codeID,
-		Label:  "Demo contract",
-		Msg:    initBz,
-	}
-	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, 500000, "", []uint64{0}, []uint64{1}, priv1)
-	require.NoError(b, err)
-	_, res, err = benchmarkApp.Deliver(txGen.TxEncoder(), initTx)
-	require.NoError(b, err)
-	// TODO: parse contract address
-	evt := res.Events[len(res.Events)-1]
-	attr := evt.Attributes[0]
-	contractAddr := string(attr.Value)
-
-	benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
-	benchmarkApp.Commit()
-	height++
-
+func bankSendMsg(info *AppInfo) ([]sdk.Msg, error) {
 	// Precompute all txs
+	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	coins := sdk.Coins{sdk.NewInt64Coin(info.Denom, 100)}
+	sendMsg := banktypes.NewMsgSend(info.MinterAddr, rcpt, coins)
+	return []sdk.Msg{sendMsg}, nil
+}
+
+func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
+	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	transfer := cw20ExecMsg{Transfer: &transferMsg{
-		Recipient: addr2.String(),
+		Recipient: rcpt.String(),
 		Amount:    765,
 	}}
 	transferBz, err := json.Marshal(transfer)
-	sendMsg1 := wasmtypes.MsgExecuteContract{
-		Sender:   addr1.String(),
-		Contract: contractAddr,
+	if err != nil {
+		return nil, err
+	}
+
+	sendMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   info.MinterAddr.String(),
+		Contract: info.ContractAddr,
 		Msg:      transferBz,
 	}
-	txs, err := simapp.GenSequenceOfTxs(txGen, []sdk.Msg{&sendMsg1}, []uint64{0}, []uint64{uint64(2)}, b.N, priv1)
-	require.NoError(b, err)
-	b.ResetTimer()
+	return []sdk.Msg{sendMsg}, nil
+}
 
-	// number of Tx per block for the benchmarks
-	blockSize := 20
-
-	// Run this with a profiler, so its easy to distinguish what time comes from
-	// Committing, and what time comes from Check/Deliver Tx.
-	for i := 0; i < b.N/blockSize; i++ {
-		benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
-
-		for j := 0; j < blockSize; j++ {
-			idx := i*blockSize + j
-
-			_, _, err := benchmarkApp.Check(txGen.TxEncoder(), txs[idx])
-			if err != nil {
-				panic("something is broken in checking transaction")
-			}
-			_, _, err = benchmarkApp.Deliver(txGen.TxEncoder(), txs[idx])
-			require.NoError(b, err)
-		}
-
-		benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
-		benchmarkApp.Commit()
-		height++
+func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
+	return func(b *testing.B, info *AppInfo) []sdk.Tx {
+		return GenSequenceOfTxs(b, info, builder, b.N)
 	}
 }
 
-func BenchmarkNBankSendTxsPerBlock(b *testing.B) {
-	// Add an account at genesis
-	acc := authtypes.BaseAccount{
-		Address: addr1.String(),
+func buildMemDB(b *testing.B) dbm.DB {
+	return dbm.NewMemDB()
+}
+
+func buildLevelDB(b *testing.B) dbm.DB {
+	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+	require.NoError(b, err)
+	return levelDB
+}
+
+func BenchmarkTxSending(b *testing.B) {
+	cases := map[string]struct {
+		db          func(*testing.B) dbm.DB
+		txBuilder   func(*testing.B, *AppInfo) []sdk.Tx
+		blockSize   int
+		numAccounts int
+	}{
+		"basic send - memdb": {
+			db:        buildMemDB,
+			blockSize: 20,
+			txBuilder: buildTxFromMsg(bankSendMsg),
+			numAccounts: 50,
+		},
+		"cw20 transfer - memdb": {
+			db:        buildMemDB,
+			blockSize: 20,
+			txBuilder: buildTxFromMsg(cw20TransferMsg),
+			numAccounts: 50,
+		},
+		"basic send - leveldb": {
+			db:        buildLevelDB,
+			blockSize: 20,
+			txBuilder: buildTxFromMsg(bankSendMsg),
+			numAccounts: 50,
+		},
+		"cw20 transfer - leveldb": {
+			db:        buildLevelDB,
+			blockSize: 20,
+			txBuilder: buildTxFromMsg(cw20TransferMsg),
+			numAccounts: 50,
+		},
+		"basic send - leveldb - 8k accounts": {
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
+			numAccounts: 8000,
+		},
+		"cw20 transfer - leveldb - 8k accounts": {
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
+			numAccounts: 8000,
+		},
 	}
 
-	// construct genesis state
-	genAccs := []authtypes.GenesisAccount{&acc}
-	benchmarkApp := SetupWithGenesisAccounts(genAccs, banktypes.Balance{
-		Address: addr1.String(),
-		Coins:   sdk.NewCoins(sdk.NewInt64Coin("foocoin", 100000000000)),
-	})
-	txGen := simappparams.MakeTestEncodingConfig().TxConfig
+	for name, tc := range cases {
+		b.Run(name, func(b *testing.B) {
+			db := tc.db(b)
+			appInfo := InitializeWasmApp(b, db, tc.numAccounts)
+			txs := tc.txBuilder(b, &appInfo)
 
-	// Precompute all txs
-	coins := sdk.Coins{sdk.NewInt64Coin("foocoin", 10)}
-	sendMsg1 := banktypes.NewMsgSend(addr1, addr2, coins)
-	txs, err := simapp.GenSequenceOfTxs(txGen, []sdk.Msg{sendMsg1}, []uint64{0}, []uint64{uint64(0)}, b.N, priv1)
-	require.NoError(b, err)
-	b.ResetTimer()
+			// number of Tx per block for the benchmarks
+			blockSize := tc.blockSize
+			height := int64(3)
+			txEncoder := appInfo.TxConfig.TxEncoder()
 
-	height := int64(2)
-	// number of Tx per block for the benchmarks
-	blockSize := 20
+			b.ResetTimer()
 
-	// Run this with a profiler, so its easy to distinguish what time comes from
-	// Committing, and what time comes from Check/Deliver Tx.
-	for i := 0; i < b.N/blockSize; i++ {
-		benchmarkApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height}})
+			for i := 0; i < b.N/blockSize; i++ {
+				appInfo.App.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
-		for j := 0; j < blockSize; j++ {
-			idx := i*blockSize + j
+				for j := 0; j < blockSize; j++ {
+					idx := i*blockSize + j
 
-			_, _, err := benchmarkApp.Check(txGen.TxEncoder(), txs[idx])
-			if err != nil {
-				panic("something is broken in checking transaction")
+					_, _, err := appInfo.App.Check(txEncoder, txs[idx])
+					if err != nil {
+						panic("something is broken in checking transaction")
+					}
+					_, _, err = appInfo.App.Deliver(txEncoder, txs[idx])
+					require.NoError(b, err)
+				}
+
+				appInfo.App.EndBlock(abci.RequestEndBlock{Height: height})
+				appInfo.App.Commit()
+				height++
 			}
-			_, _, err = benchmarkApp.Deliver(txGen.TxEncoder(), txs[idx])
-			require.NoError(b, err)
-		}
-
-		benchmarkApp.EndBlock(abci.RequestEndBlock{Height: height})
-		benchmarkApp.Commit()
-		height++
+		})
 	}
 }
