@@ -11,7 +11,7 @@ import (
 const (
 	// DefaultGasMultiplier is how many CosmWasm gas points = 1 Cosmos SDK gas point.
 	//
-	// CosmWasm gas strategy is documented in https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-soon2/docs/GAS.md.
+	// CosmWasm gas strategy is documented in https://github.com/CosmWasm/cosmwasm/blob/v1.0.0-beta/docs/GAS.md.
 	// Cosmos SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/v0.42.10/store/types/gas.go#L198-L209.
 	//
 	// The original multiplier of 100 up to CosmWasm 0.16 was based on
