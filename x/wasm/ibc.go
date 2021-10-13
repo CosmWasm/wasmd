@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"fmt"
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,6 +35,7 @@ func (i IBCHandler) OnChanOpenInit(
 	counterParty channeltypes.Counterparty,
 	version string,
 ) error {
+	  fmt.Println("hi")
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
 		return err

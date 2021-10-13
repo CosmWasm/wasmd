@@ -62,7 +62,6 @@ jobs:
 
   lint:
     executor: golang
-    parallelism: 4
     steps:
       - checkout
       - restore_cache:
