@@ -4,7 +4,7 @@
 
 **Implemented Enhancements:**
 
-- Updated error log statements in initGenesis to easy debugging: [\#643](https://github.com/CosmWasm/wasmd/issues/643)
+- Updated error log statements in initGenesis for easier debugging: [\#643](https://github.com/CosmWasm/wasmd/issues/643)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
 
