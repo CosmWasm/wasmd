@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Implemented Enhancements:**
+
+- Add golangci lint check to github actions [\620](https://github.com/CosmWasm/wasmd/issues/620)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
 
 ## [v0.20.0](https://github.com/CosmWasm/wasmd/tree/v0.20.0) (2021-10-08)
