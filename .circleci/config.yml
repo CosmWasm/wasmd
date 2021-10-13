@@ -60,6 +60,18 @@ jobs:
           paths:
             - ".git"
 
+  lint:
+    executor: golang
+    parallelism: 4
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Lint
+          command: make lint
+
   test-cover:
     executor: golang
     parallelism: 4
