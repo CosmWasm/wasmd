@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -55,11 +56,13 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 	}
 
 	// sanity check seq values
-	if keeper.peekAutoIncrementID(ctx, types.KeyLastCodeID) <= maxCodeID {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastCodeID), maxCodeID)
+	seqVal := keeper.peekAutoIncrementID(ctx, types.KeyLastCodeID)
+	if seqVal <= maxCodeID {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be less than or equal to maxCodeID: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
 	}
-	if keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID) <= uint64(maxContractID) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s must be greater %d ", string(types.KeyLastInstanceID), maxContractID)
+	seqVal = keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID)
+	if seqVal <= uint64(maxContractID) {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be less than or equal to maxContractID: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
 
 	if len(data.GenMsgs) == 0 {
