@@ -63,7 +63,7 @@ jobs:
   lint:
     executor: golang
     docker:
-      - image: golangci/golangci-lint:v1.42-alpine
+      - image: golangci/golangci-lint:v1.42.1-alpine
     steps:
       - checkout
       - run:
