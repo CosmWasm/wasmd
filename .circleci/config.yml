@@ -68,8 +68,7 @@ jobs:
       - checkout
       - run:
           name: Lint
-          command: |
-            make lint
+          command: golangci-lint run --tests=false
 
   test-cover:
     executor: golang
