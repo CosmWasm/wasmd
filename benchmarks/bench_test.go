@@ -70,27 +70,27 @@ func BenchmarkTxSending(b *testing.B) {
 		numAccounts int
 	}{
 		"basic send - memdb": {
-			db:        buildMemDB,
-			blockSize: 20,
-			txBuilder: buildTxFromMsg(bankSendMsg),
+			db:          buildMemDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
 			numAccounts: 50,
 		},
 		"cw20 transfer - memdb": {
-			db:        buildMemDB,
-			blockSize: 20,
-			txBuilder: buildTxFromMsg(cw20TransferMsg),
+			db:          buildMemDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
 			numAccounts: 50,
 		},
 		"basic send - leveldb": {
-			db:        buildLevelDB,
-			blockSize: 20,
-			txBuilder: buildTxFromMsg(bankSendMsg),
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
 			numAccounts: 50,
 		},
 		"cw20 transfer - leveldb": {
-			db:        buildLevelDB,
-			blockSize: 20,
-			txBuilder: buildTxFromMsg(cw20TransferMsg),
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
 			numAccounts: 50,
 		},
 		"basic send - leveldb - 8k accounts": {

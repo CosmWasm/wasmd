@@ -2,6 +2,10 @@ package types
 
 import (
 	"context"
+	"strings"
+	"testing"
+	"time"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -11,9 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {

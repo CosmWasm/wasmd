@@ -3,15 +3,17 @@ package ibctesting
 import (
 	"bytes"
 	"fmt"
-	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
+
+	wasmd "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"

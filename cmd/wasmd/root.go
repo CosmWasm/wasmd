@@ -6,11 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
@@ -20,7 +19,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -38,6 +39,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+
+	"github.com/CosmWasm/wasmd/app"
 )
 
 // NewRootCmd creates a new root command for wasmd. It is called once in the
