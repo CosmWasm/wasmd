@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Implemented Enhancements:**
+
+- Remove unused flags from command prompt for storing contract [\#647](https://github.com/CosmWasm/wasmd/issues/647)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
 
 ## [v0.20.0](https://github.com/CosmWasm/wasmd/tree/v0.20.0) (2021-10-08)
