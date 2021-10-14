@@ -3,7 +3,10 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,9 +29,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	"os"
-	"path/filepath"
-	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // Get flags every time the simulator is run

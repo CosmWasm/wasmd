@@ -2,11 +2,13 @@ package ibctesting
 
 import (
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
 	"strconv"
 	"testing"
 	"time"
+
+	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"

@@ -10,8 +10,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 var emptyWasmOpts []wasm.Option = nil

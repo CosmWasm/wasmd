@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -23,6 +23,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // GenesisReader reads genesis data. Extension point for custom genesis state readers.

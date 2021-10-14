@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +10,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func ProposalStoreCodeCmd() *cobra.Command {
