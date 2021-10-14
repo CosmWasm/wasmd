@@ -196,9 +196,9 @@ type ContractInfoExtension interface {
 var _ codectypes.UnpackInterfacesMessage = &ContractInfo{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (m *ContractInfo) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (c *ContractInfo) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	var details ContractInfoExtension
-	if err := unpacker.UnpackAny(m.Extension, &details); err != nil {
+	if err := unpacker.UnpackAny(c.Extension, &details); err != nil {
 		return err
 	}
 	return codectypes.UnpackInterfaces(details, unpacker)

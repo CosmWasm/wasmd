@@ -102,15 +102,15 @@ func WithVMCacheMetrics(r prometheus.Registerer) Option {
 
 // WithGasRegister set a new gas register to implement custom gas costs.
 // When the "gas multiplier" for wasmvm gas conversion is modified inside the new register,
-// make sure to also use `WithApiCosts` option for non default values
+// make sure to also use `WithAPICosts` option for non default values
 func WithGasRegister(x GasRegister) Option {
 	return optsFn(func(k *Keeper) {
 		k.gasRegister = x
 	})
 }
 
-// WithApiCosts sets custom api costs. Amounts are in cosmwasm gas Not SDK gas.
-func WithApiCosts(human, canonical uint64) Option {
+// WithAPICosts sets custom api costs. Amounts are in cosmwasm gas Not SDK gas.
+func WithAPICosts(human, canonical uint64) Option {
 	return optsFn(func(_ *Keeper) {
 		costHumanize = human
 		costCanonical = canonical

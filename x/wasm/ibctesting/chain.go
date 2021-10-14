@@ -367,12 +367,12 @@ func getAckPackets(evts []abci.Event) []PacketAck {
 }
 
 // Used for various debug statements above when needed... do not remove
-func showEvent(evt abci.Event) {
-	fmt.Printf("evt.Type: %s\n", evt.Type)
-	for _, attr := range evt.Attributes {
-		fmt.Printf("  %s = %s\n", string(attr.Key), string(attr.Value))
-	}
-}
+// func showEvent(evt abci.Event) {
+//	fmt.Printf("evt.Type: %s\n", evt.Type)
+//	for _, attr := range evt.Attributes {
+//		fmt.Printf("  %s = %s\n", string(attr.Key), string(attr.Value))
+//	}
+//}
 
 func parsePacketFromEvent(evt abci.Event) channeltypes.Packet {
 	return channeltypes.Packet{
@@ -525,7 +525,7 @@ func (chain *TestChain) GetFirstTestConnection(clientID, counterpartyClientID st
 	return chain.ConstructNextTestConnection(clientID, counterpartyClientID)
 }
 
-// Add ibctesting.TestChannel appends a new  ibctesting.TestChannel which contains references to the port and channel ID
+// AddTestChannel Add ibctesting.TestChannel appends a new  ibctesting.TestChannel which contains references to the port and channel ID
 // used for channel creation and interaction. See 'Next ibctesting.TestChannel' for channel ID naming format.
 func (chain *TestChain) AddTestChannel(conn *ibctesting.TestConnection, portID string) ibctesting.TestChannel {
 	channel := chain.NextChannel(conn, portID)
@@ -533,7 +533,7 @@ func (chain *TestChain) AddTestChannel(conn *ibctesting.TestConnection, portID s
 	return channel
 }
 
-// Next ibctesting.TestChannel returns the next test channel to be created on this connection, but does not
+// NextChannel Next ibctesting.TestChannel returns the next test channel to be created on this connection, but does not
 // add it to the list of created channels. This function is expected to be used when the caller
 // has not created the associated channel in app state, but would still like to refer to the
 // non-existent channel usually to test for its non-existence.
@@ -698,11 +698,9 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 		Commit: commit.ToProto(),
 	}
 
-	if tmValSet != nil {
-		valSet, err = tmValSet.ToProto()
-		if err != nil {
-			panic(err)
-		}
+	valSet, err = tmValSet.ToProto()
+	if err != nil {
+		panic(err)
 	}
 
 	if tmTrustedVals != nil {

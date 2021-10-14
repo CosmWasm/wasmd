@@ -88,7 +88,6 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 			return
 		}
 		vars := mux.Vars(r)
-		codeId := vars["codeId"]
 
 		req.BaseReq = req.BaseReq.Sanitize()
 		if !req.BaseReq.ValidateBasic(w) {
@@ -96,7 +95,7 @@ func instantiateContractHandlerFn(cliCtx client.Context) http.HandlerFunc {
 		}
 
 		// get the id of the code to instantiate
-		codeID, err := strconv.ParseUint(codeId, 10, 64)
+		codeID, err := strconv.ParseUint(vars["codeId"], 10, 64)
 		if err != nil {
 			return
 		}

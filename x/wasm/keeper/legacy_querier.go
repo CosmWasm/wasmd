@@ -40,7 +40,7 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractInfo(ctx, addr, keeper)
+			rsp, _ = queryContractInfo(ctx, addr, keeper)
 		case QueryListContractByCode:
 			codeID, err := strconv.ParseUint(path[1], 10, 64)
 			if err != nil {
@@ -57,7 +57,7 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
 			}
-			rsp, err = queryCode(ctx, codeID, keeper)
+			rsp, _ = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
 			rsp, err = queryCodeList(ctx, keeper)
 		case QueryContractHistory:
@@ -65,7 +65,7 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 			}
-			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
+			rsp, _ = queryContractHistory(ctx, contractAddr, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
