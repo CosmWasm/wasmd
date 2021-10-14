@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  golangci: ory/golangci@0.0.18
 
 executors:
   golang:
@@ -32,9 +30,6 @@ commands:
           command: |
             export BINDIR=/tmp/bin
             make << parameters.target >>
-  lint:
-    steps:
-      - run: PATH=$HOME/.bin:$PATH GOGC=100 golangci-lint run --timeout 10m0s --tests=false
 
 jobs:
   setup-dependencies:
@@ -66,10 +61,14 @@ jobs:
             - ".git"
 
   lint:
-    executor: default
+    executor: golang
     steps:
       - checkout
-      - lint
+      - run:
+          name: Lint
+          command: |
+            make install-golangci
+            make lint
 
   test-cover:
     executor: golang
