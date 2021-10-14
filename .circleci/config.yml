@@ -202,6 +202,9 @@ workflows:
             tags:
               only:
                 - /^v.*/
+      - lint:
+          requires:
+            - setup-dependencies
       - test-cover:
           requires:
             - setup-dependencies
