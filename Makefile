@@ -70,11 +70,6 @@ ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)' -trimpath
 
-GOLANGCI_LINT=$(shell which golangci-lint)
-ifeq ("$(wildcard $(GOLANGCI_LINT))","")
-    GOLANGCI_LINT = $(BINDIR)/golangci-lint
-endif
-
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
 
@@ -151,7 +146,7 @@ test-sim-multi-seed-short: runsim
 ###############################################################################
 
 lint:
-	$(GOLANGCI_LINT) run --tests=false
+	golangci-lint run --tests=false
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "*_test.go" | xargs gofmt -d -s
 
 format:
