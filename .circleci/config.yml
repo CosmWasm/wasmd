@@ -62,12 +62,13 @@ jobs:
 
   lint:
     executor: golang
+    docker:
+      - image: golangci/golangci-lint:v1.42-alpine
     steps:
       - checkout
       - run:
           name: Lint
           command: |
-            make install-golangci
             make lint
 
   test-cover:

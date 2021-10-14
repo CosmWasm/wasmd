@@ -150,9 +150,6 @@ test-sim-multi-seed-short: runsim
 ###                                Linting                                  ###
 ###############################################################################
 
-install-golangci:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.1
-
 lint:
 	$(GOLANGCI_LINT) run --tests=false
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "*_test.go" | xargs gofmt -d -s
