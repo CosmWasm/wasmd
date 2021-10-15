@@ -140,13 +140,13 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		}
 		initialBalances[i] = balance{
 			Address: acct,
-			Amount: 1000000000,
+			Amount:  1000000000,
 		}
 	}
 	init := cw20InitMsg{
-		Name:     "Cash Money",
-		Symbol:   "CASH",
-		Decimals: 2,
+		Name:            "Cash Money",
+		Symbol:          "CASH",
+		Decimals:        2,
 		InitialBalances: initialBalances,
 	}
 	initBz, err := json.Marshal(init)
