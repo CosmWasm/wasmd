@@ -94,9 +94,23 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotNil(t, res.Result.Ok)
 	sub := res.Result.Ok
 	assert.Empty(t, sub.Data)
-	require.Len(t, sub.Events, 1)
+	require.Len(t, sub.Events, 3)
 
-	transfer := sub.Events[0]
+	coinSpent := sub.Events[0]
+	assert.Equal(t, "coin_spent", coinSpent.Type)
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "spender",
+		Value: contractAddr.String(),
+	}, coinSpent.Attributes[0])
+
+	coinReceived := sub.Events[1]
+	assert.Equal(t, "coin_received", coinReceived.Type)
+	assert.Equal(t, wasmvmtypes.EventAttribute{
+		Key:   "receiver",
+		Value: fred.String(),
+	}, coinReceived.Attributes[0])
+
+	transfer := sub.Events[2]
 	assert.Equal(t, "transfer", transfer.Type)
 	assert.Equal(t, wasmvmtypes.EventAttribute{
 		Key:   "recipient",
@@ -223,7 +237,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 		// data field is the raw canonical address
 		// QUESTION: why not types.MsgInstantiateContractResponse? difference between calling Router and Service?
-		require.Len(t, response.Ok.Data, 20)
+		require.Len(t, response.Ok.Data, 32)
 		resAddr := sdk.AccAddress(response.Ok.Data)
 		assert.Equal(t, eventAddr, resAddr.String())
 	}
@@ -371,7 +385,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, nil, customEncoders)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

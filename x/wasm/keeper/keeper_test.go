@@ -90,7 +90,7 @@ func TestCreateInvalidWasmCode(t *testing.T) {
 func TestCreateStoresInstantiatePermission(t *testing.T) {
 	var (
 		deposit                = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, 20)
 	)
 
 	specs := map[string]struct {
@@ -303,11 +303,11 @@ func TestInstantiate(t *testing.T) {
 	// create with no balance is also legal
 	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), codeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", gotContractAddr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x16e8a), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x12469), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -337,8 +337,8 @@ func TestInstantiate(t *testing.T) {
 
 func TestInstantiateWithDeposit(t *testing.T) {
 	var (
-		bob  = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob  = bytes.Repeat([]byte{1}, 20)
+		fred = bytes.Repeat([]byte{2}, 20)
 
 		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 		initMsg = HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob}
@@ -394,9 +394,9 @@ func TestInstantiateWithDeposit(t *testing.T) {
 func TestInstantiateWithPermissions(t *testing.T) {
 	var (
 		deposit   = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr    = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		otherAddr = bytes.Repeat([]byte{2}, sdk.AddrLen)
-		anyAddr   = bytes.Repeat([]byte{3}, sdk.AddrLen)
+		myAddr    = bytes.Repeat([]byte{1}, 20)
+		otherAddr = bytes.Repeat([]byte{2}, 20)
+		anyAddr   = bytes.Repeat([]byte{3}, 20)
 	)
 
 	initMsg := HackatomExampleInitMsg{
@@ -504,7 +504,7 @@ func TestExecute(t *testing.T) {
 
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// ensure bob doesn't exist
 	bobAcct := accKeeper.GetAccount(ctx, bob)
@@ -541,7 +541,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x17621), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1215a), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -552,21 +552,21 @@ func TestExecute(t *testing.T) {
 	// ensure contract has updated balance
 	contractAcct = accKeeper.GetAccount(ctx, addr)
 	require.NotNil(t, contractAcct)
-	assert.Equal(t, sdk.Coins(nil), bankKeeper.GetAllBalances(ctx, contractAcct.GetAddress()))
+	assert.Equal(t, sdk.Coins{}, bankKeeper.GetAllBalances(ctx, contractAcct.GetAddress()))
 
 	// and events emitted
-	require.Len(t, em.Events(), 5)
+	require.Len(t, em.Events(), 9)
 	expEvt := sdk.NewEvent("execute",
 		sdk.NewAttribute("_contract_address", addr.String()))
-	assert.Equal(t, expEvt, em.Events()[1])
+	assert.Equal(t, expEvt, em.Events()[3])
 
 	t.Logf("Duration: %v (%d gas)\n", diff, gasAfter-gasBefore)
 }
 
 func TestExecuteWithDeposit(t *testing.T) {
 	var (
-		bob         = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred        = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob         = bytes.Repeat([]byte{1}, 20)
+		fred        = bytes.Repeat([]byte{2}, 20)
 		blockedAddr = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 		deposit     = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	)
@@ -1046,6 +1046,20 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			},
 		},
 		{
+			"Type": "coin_spent",
+			"Attr": []dict{
+				{"spender": contractAddr},
+				{"amount": "100000denom"},
+			},
+		},
+		{
+			"Type": "coin_received",
+			"Attr": []dict{
+				{"receiver": myPayoutAddr},
+				{"amount": "100000denom"},
+			},
+		},
+		{
 			"Type": "transfer",
 			"Attr": []dict{
 				{"recipient": myPayoutAddr},
@@ -1171,7 +1185,7 @@ func TestSudo(t *testing.T) {
 	require.NoError(t, err)
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// the community is broke
 	_, _, community := keyPubAddr()
@@ -1203,7 +1217,7 @@ func TestSudo(t *testing.T) {
 	balance := bankKeeper.GetBalance(ctx, comAcct.GetAddress(), "denom")
 	assert.Equal(t, sdk.NewInt64Coin("denom", 76543), balance)
 	// and events emitted
-	require.Len(t, em.Events(), 2)
+	require.Len(t, em.Events(), 4)
 	expEvt := sdk.NewEvent("sudo",
 		sdk.NewAttribute("_contract_address", addr.String()))
 	assert.Equal(t, expEvt, em.Events()[0])
@@ -1692,12 +1706,12 @@ func TestBuildContractAddress(t *testing.T) {
 		"initial contract": {
 			srcCodeID:     1,
 			srcInstanceID: 1,
-			expectedAddr:  "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6",
+			expectedAddr:  "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr",
 		},
 		"demo value": {
 			srcCodeID:     1,
 			srcInstanceID: 100,
-			expectedAddr:  "cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg",
+			expectedAddr:  "cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8",
 		},
 		"both below max": {
 			srcCodeID:     math.MaxUint32 - 1,
@@ -1710,12 +1724,12 @@ func TestBuildContractAddress(t *testing.T) {
 		"codeID > max u32": {
 			srcCodeID:     math.MaxUint32 + 1,
 			srcInstanceID: 17,
-			expectedAddr:  "cosmos1673hrexz4h6s0ft04l96ygq667djzh2nvy7fsu",
+			expectedAddr:  "cosmos1673hrexz4h6s0ft04l96ygq667djzh2nsr335kstjp49x5dk6rpsf5t0le",
 		},
 		"instanceID > max u32": {
 			srcCodeID:     22,
 			srcInstanceID: math.MaxUint32 + 1,
-			expectedAddr:  "cosmos10q3pgfvmeyy0veekgtqhxujxkhz0vm9z65ckqh",
+			expectedAddr:  "cosmos10q3pgfvmeyy0veekgtqhxujxkhz0vm9zmalqgc7evrhj68q3l62qrdfg4m",
 		},
 	}
 	for name, spec := range specs {

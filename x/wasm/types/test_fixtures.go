@@ -160,7 +160,7 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecuteContract {
 	const (
 		anyAddress           = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
-		firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+		firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	)
 	r := &MsgExecuteContract{
 		Sender:   anyAddress,
@@ -193,7 +193,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 
 func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
 
 		initMsg = struct {
 			Verifier    sdk.AccAddress `json:"verifier"`
@@ -228,7 +228,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
 
 		migMsg = struct {
 			Verifier sdk.AccAddress `json:"verifier"`
@@ -240,7 +240,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		panic(err)
 	}
 	const (
-		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	)
 	p := &MigrateContractProposal{
@@ -260,7 +260,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 
 func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *UpdateAdminProposal {
 	const (
-		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	)
 
@@ -277,7 +277,7 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *Updat
 }
 
 func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) *ClearAdminProposal {
-	const contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+	const contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	p := &ClearAdminProposal{
 		Title:       "Foo",
 		Description: "Bar",

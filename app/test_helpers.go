@@ -9,7 +9,11 @@ import (
 	"testing"
 	"time"
 
+
 	"github.com/CosmWasm/wasmd/x/wasm"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -29,6 +33,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -83,6 +88,22 @@ func Setup(isCheckTx bool) *WasmApp {
 	return app
 }
 
+func SetupTestingApp(opts ...wasm.Option) (ibctesting.TestingApp, map[string]json.RawMessage) {
+	app := NewWasmApp(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		nil,
+		true,
+		map[int64]bool{},
+		DefaultNodeHome,
+		5,
+		wasm.EnableAllProposals,
+		EmptyBaseAppOptions{},
+		opts,
+	)
+	return app, NewDefaultGenesisState()
+}
+
 // SetupWithGenesisValSet initializes a new WasmApp with a validator set and genesis accounts
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
@@ -128,7 +149,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	totalSupply := sdk.NewCoins()
 	for _, b := range balances {
 		// add genesis acc tokens and delegated tokens to total supply
-		totalSupply = totalSupply.Add(b.Coins.Add(sdk.NewCoin(sdk.DefaultBondDenom, bondAmt))...)
+		totalSupply = totalSupply.Add(b.Coins...)
 	}
 
 	// update total supply
@@ -242,9 +263,13 @@ func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotype
 
 // setTotalSupply provides the total supply based on accAmt * totalAccounts.
 func setTotalSupply(app *WasmApp, ctx sdk.Context, accAmt sdk.Int, totalAccounts int) {
-	totalSupply := sdk.NewCoins(sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt.MulRaw(int64(totalAccounts))))
-	prevSupply := app.bankKeeper.GetSupply(ctx)
-	app.bankKeeper.SetSupply(ctx, banktypes.NewSupply(prevSupply.GetTotal().Add(totalSupply...)))
+	totalSupply := sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt.MulRaw(int64(totalAccounts)))
+	prevSupply := app.bankKeeper.GetSupply(ctx, app.stakingKeeper.BondDenom(ctx))
+	newTotal := totalSupply.Add(prevSupply)
+	err := app.bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(newTotal))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // AddTestAddrs constructs and returns accNum amount of accounts with an
@@ -277,7 +302,11 @@ func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int, str
 func saveAccount(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, initCoins sdk.Coins) {
 	acc := app.accountKeeper.NewAccountWithAddress(ctx, addr)
 	app.accountKeeper.SetAccount(ctx, acc)
-	err := app.bankKeeper.AddCoins(ctx, addr, initCoins)
+	err := app.bankKeeper.MintCoins(ctx, minttypes.ModuleName, initCoins)
+	if err != nil {
+		panic(err)
+	}
+	err = app.bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, initCoins)
 	if err != nil {
 		panic(err)
 	}
@@ -442,4 +471,18 @@ type EmptyBaseAppOptions struct{}
 // Get implements AppOptions
 func (ao EmptyBaseAppOptions) Get(o string) interface{} {
 	return nil
+}
+
+func IBCTestSupport(t *testing.T, chain *ibctesting.TestChain) *TestSupport {
+	app, ok := chain.App.(*WasmApp)
+	if !ok {
+		panic("not a wasmd app")
+	}
+	return NewTestSupport(t, app)
+}
+
+// ContractInfo is a helper function to returns the ContractInfo for the given contract address
+func ContractInfo(t *testing.T, c *ibctesting.TestChain, contractAddr sdk.AccAddress) *types.ContractInfo {
+	ibcs := IBCTestSupport(t, c)
+	return ibcs.WasmKeeper().GetContractInfo(c.GetContext(), contractAddr)
 }

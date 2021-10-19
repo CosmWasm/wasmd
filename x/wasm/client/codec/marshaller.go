@@ -3,27 +3,28 @@ package codec
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
 )
 
-var _ codec.Marshaler = (*ProtoCodec)(nil)
+var _ codec.Codec = (*ProtoCodec)(nil)
 
 // ProtoCodec that omits empty values.
 // This Marshaler can be used globally when setting up the client context or individually
-// for each command via `clientCtx.WithJSONMarshaler(myMarshaler)`.
+// for each command via `clientCtx.WithJSONCodec(myMarshaler)`.
 type ProtoCodec struct {
-	codec.Marshaler
+	codec.Codec
 	interfaceRegistry types.InterfaceRegistry
 }
 
-func NewProtoCodec(marshaler codec.Marshaler, registry types.InterfaceRegistry) *ProtoCodec {
-	return &ProtoCodec{Marshaler: marshaler, interfaceRegistry: registry}
+func NewProtoCodec(marshaler codec.Codec, registry types.InterfaceRegistry) *ProtoCodec {
+	return &ProtoCodec{Codec: marshaler, interfaceRegistry: registry}
 }
 
-// MarshalJSON implements JSONMarshaler.MarshalJSON method,
+// MarshalJSON implements JSONCodec.MarshalJSON method,
 // it marshals to JSON using proto codec.
 func (pc *ProtoCodec) MarshalJSON(o proto.Message) ([]byte, error) {
 	m, ok := o.(codec.ProtoMarshaler)
@@ -33,7 +34,7 @@ func (pc *ProtoCodec) MarshalJSON(o proto.Message) ([]byte, error) {
 	return ProtoMarshalJSON(m, pc.interfaceRegistry)
 }
 
-// MustMarshalJSON implements JSONMarshaler.MustMarshalJSON method,
+// MustMarshalJSON implements JSONCodec.MustMarshalJSON method,
 // it executes MarshalJSON except it panics upon failure.
 func (pc *ProtoCodec) MustMarshalJSON(o proto.Message) []byte {
 	bz, err := pc.MarshalJSON(o)

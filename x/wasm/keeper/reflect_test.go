@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/golang/protobuf/proto"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -526,7 +527,7 @@ type reflectCustomMsg struct {
 
 // toReflectRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
-func toReflectRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
+func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
 	any, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, err
@@ -545,7 +546,7 @@ func toReflectRawMsg(cdc codec.Marshaler, msg sdk.Msg) (wasmvmtypes.CosmosMsg, e
 }
 
 // reflectEncoders needs to be registered in test setup to handle custom message callbacks
-func reflectEncoders(cdc codec.Marshaler) *MessageEncoders {
+func reflectEncoders(cdc codec.Codec) *MessageEncoders {
 	return &MessageEncoders{
 		Custom: fromReflectRawMsg(cdc),
 	}
@@ -553,7 +554,7 @@ func reflectEncoders(cdc codec.Marshaler) *MessageEncoders {
 
 // fromReflectRawMsg decodes msg.Data to an sdk.Msg using proto Any and json encoding.
 // this needs to be registered on the Encoders
-func fromReflectRawMsg(cdc codec.Marshaler) CustomEncoder {
+func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 	return func(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 		var custom reflectCustomMsg
 		err := json.Unmarshal(msg, &custom)

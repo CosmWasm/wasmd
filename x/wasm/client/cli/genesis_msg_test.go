@@ -302,7 +302,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 }
 
 func TestExecuteContractCmd(t *testing.T) {
-	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
@@ -384,7 +384,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			mutator: func(cmd *cobra.Command) {
 				// See TestBuildContractAddress in keeper_test.go
-				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y04aervg", `{}`})
+				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
@@ -534,8 +534,8 @@ func TestGetAllContracts(t *testing.T) {
 		"read from message state": {
 			src: types.GenesisState{
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "first"}}},
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "first"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "second"}}},
 				},
 			},
 			exp: []contractMeta{
@@ -555,7 +555,7 @@ func TestGetAllContracts(t *testing.T) {
 					{IDKey: types.KeyLastInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{CodeID: 0, Label: "hundred"}}},
 				},
 			},
 			exp: []contractMeta{
@@ -637,7 +637,7 @@ func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) err
 	require.NoError(t, err)
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
-	clientCtx := client.Context{}.WithJSONMarshaler(appCodec).WithHomeDir(homeDir)
+	clientCtx := client.Context{}.WithJSONCodec(appCodec).WithHomeDir(homeDir)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
