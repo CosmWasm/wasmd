@@ -57,6 +57,9 @@ func StoreCodeCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 			msg, err := parseStoreCodeArgs(args[0], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
