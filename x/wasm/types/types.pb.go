@@ -7,15 +7,14 @@ import (
 	bytes "bytes"
 	encoding_json "encoding/json"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/regen-network/cosmos-proto"
 	github_com_tendermint_tendermint_libs_bytes "github.com/tendermint/tendermint/libs/bytes"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -141,35 +140,35 @@ type AccessConfig struct {
 	Address    string     `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
 }
 
-func (a *AccessConfig) Reset()         { *a = AccessConfig{} }
-func (a *AccessConfig) String() string { return proto.CompactTextString(a) }
+func (m *AccessConfig) Reset()         { *m = AccessConfig{} }
+func (m *AccessConfig) String() string { return proto.CompactTextString(m) }
 func (*AccessConfig) ProtoMessage()    {}
 func (*AccessConfig) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{1}
 }
-func (a *AccessConfig) XXX_Unmarshal(b []byte) error {
-	return a.Unmarshal(b)
+func (m *AccessConfig) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
 }
-func (a *AccessConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *AccessConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AccessConfig.Marshal(b, a, deterministic)
+		return xxx_messageInfo_AccessConfig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := a.MarshalToSizedBuffer(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (a *AccessConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccessConfig.Merge(a, src)
+func (m *AccessConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccessConfig.Merge(m, src)
 }
-func (a *AccessConfig) XXX_Size() int {
-	return a.Size()
+func (m *AccessConfig) XXX_Size() int {
+	return m.Size()
 }
-func (a *AccessConfig) XXX_DiscardUnknown() {
-	xxx_messageInfo_AccessConfig.DiscardUnknown(a)
+func (m *AccessConfig) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccessConfig.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_AccessConfig proto.InternalMessageInfo
@@ -181,34 +180,34 @@ type Params struct {
 	MaxWasmCodeSize              uint64       `protobuf:"varint,3,opt,name=max_wasm_code_size,json=maxWasmCodeSize,proto3" json:"max_wasm_code_size,omitempty" yaml:"max_wasm_code_size"`
 }
 
-func (p *Params) Reset()      { *p = Params{} }
+func (m *Params) Reset()      { *m = Params{} }
 func (*Params) ProtoMessage() {}
 func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{2}
 }
-func (p *Params) XXX_Unmarshal(b []byte) error {
-	return p.Unmarshal(b)
+func (m *Params) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
 }
-func (p *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Params.Marshal(b, p, deterministic)
+		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := p.MarshalToSizedBuffer(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (p *Params) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Params.Merge(p, src)
+func (m *Params) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Params.Merge(m, src)
 }
-func (p *Params) XXX_Size() int {
-	return p.Size()
+func (m *Params) XXX_Size() int {
+	return m.Size()
 }
-func (p *Params) XXX_DiscardUnknown() {
-	xxx_messageInfo_Params.DiscardUnknown(p)
+func (m *Params) XXX_DiscardUnknown() {
+	xxx_messageInfo_Params.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
@@ -276,35 +275,35 @@ type ContractInfo struct {
 	Extension *types.Any `protobuf:"bytes,7,opt,name=extension,proto3" json:"extension,omitempty"`
 }
 
-func (c *ContractInfo) Reset()         { *c = ContractInfo{} }
-func (c *ContractInfo) String() string { return proto.CompactTextString(c) }
+func (m *ContractInfo) Reset()         { *m = ContractInfo{} }
+func (m *ContractInfo) String() string { return proto.CompactTextString(m) }
 func (*ContractInfo) ProtoMessage()    {}
 func (*ContractInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e6155d98fa173e02, []int{4}
 }
-func (c *ContractInfo) XXX_Unmarshal(b []byte) error {
-	return c.Unmarshal(b)
+func (m *ContractInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
 }
-func (c *ContractInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ContractInfo.Marshal(b, c, deterministic)
+		return xxx_messageInfo_ContractInfo.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := c.MarshalToSizedBuffer(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (c *ContractInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContractInfo.Merge(c, src)
+func (m *ContractInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractInfo.Merge(m, src)
 }
-func (c *ContractInfo) XXX_Size() int {
-	return c.Size()
+func (m *ContractInfo) XXX_Size() int {
+	return m.Size()
 }
-func (c *ContractInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContractInfo.DiscardUnknown(c)
+func (m *ContractInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractInfo.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_ContractInfo proto.InternalMessageInfo
@@ -553,9 +552,9 @@ func (this *AccessTypeParam) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (a *AccessConfig) Equal(that interface{}) bool {
+func (this *AccessConfig) Equal(that interface{}) bool {
 	if that == nil {
-		return a == nil
+		return this == nil
 	}
 
 	that1, ok := that.(*AccessConfig)
@@ -568,21 +567,21 @@ func (a *AccessConfig) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return a == nil
-	} else if a == nil {
+		return this == nil
+	} else if this == nil {
 		return false
 	}
-	if a.Permission != that1.Permission {
+	if this.Permission != that1.Permission {
 		return false
 	}
-	if a.Address != that1.Address {
+	if this.Address != that1.Address {
 		return false
 	}
 	return true
 }
-func (p *Params) Equal(that interface{}) bool {
+func (this *Params) Equal(that interface{}) bool {
 	if that == nil {
-		return p == nil
+		return this == nil
 	}
 
 	that1, ok := that.(*Params)
@@ -595,17 +594,17 @@ func (p *Params) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return p == nil
-	} else if p == nil {
+		return this == nil
+	} else if this == nil {
 		return false
 	}
-	if !p.CodeUploadAccess.Equal(&that1.CodeUploadAccess) {
+	if !this.CodeUploadAccess.Equal(&that1.CodeUploadAccess) {
 		return false
 	}
-	if p.InstantiateDefaultPermission != that1.InstantiateDefaultPermission {
+	if this.InstantiateDefaultPermission != that1.InstantiateDefaultPermission {
 		return false
 	}
-	if p.MaxWasmCodeSize != that1.MaxWasmCodeSize {
+	if this.MaxWasmCodeSize != that1.MaxWasmCodeSize {
 		return false
 	}
 	return true
@@ -640,9 +639,9 @@ func (this *CodeInfo) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (c *ContractInfo) Equal(that interface{}) bool {
+func (this *ContractInfo) Equal(that interface{}) bool {
 	if that == nil {
-		return c == nil
+		return this == nil
 	}
 
 	that1, ok := that.(*ContractInfo)
@@ -655,29 +654,29 @@ func (c *ContractInfo) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		return c == nil
-	} else if c == nil {
+		return this == nil
+	} else if this == nil {
 		return false
 	}
-	if c.CodeID != that1.CodeID {
+	if this.CodeID != that1.CodeID {
 		return false
 	}
-	if c.Creator != that1.Creator {
+	if this.Creator != that1.Creator {
 		return false
 	}
-	if c.Admin != that1.Admin {
+	if this.Admin != that1.Admin {
 		return false
 	}
-	if c.Label != that1.Label {
+	if this.Label != that1.Label {
 		return false
 	}
-	if !c.Created.Equal(that1.Created) {
+	if !this.Created.Equal(that1.Created) {
 		return false
 	}
-	if c.IBCPortID != that1.IBCPortID {
+	if this.IBCPortID != that1.IBCPortID {
 		return false
 	}
-	if !c.Extension.Equal(that1.Extension) {
+	if !this.Extension.Equal(that1.Extension) {
 		return false
 	}
 	return true
@@ -797,73 +796,73 @@ func (m *AccessTypeParam) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (a *AccessConfig) Marshal() (dAtA []byte, err error) {
-	size := a.Size()
+func (m *AccessConfig) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := a.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (a *AccessConfig) MarshalTo(dAtA []byte) (int, error) {
-	size := a.Size()
-	return a.MarshalToSizedBuffer(dAtA[:size])
+func (m *AccessConfig) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (a *AccessConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AccessConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(a.Address) > 0 {
-		i -= len(a.Address)
-		copy(dAtA[i:], a.Address)
-		i = encodeVarintTypes(dAtA, i, uint64(len(a.Address)))
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Address)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if a.Permission != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(a.Permission))
+	if m.Permission != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.Permission))
 		i--
 		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
 
-func (p *Params) Marshal() (dAtA []byte, err error) {
-	size := p.Size()
+func (m *Params) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := p.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (p *Params) MarshalTo(dAtA []byte) (int, error) {
-	size := p.Size()
-	return p.MarshalToSizedBuffer(dAtA[:size])
+func (m *Params) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (p *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if p.MaxWasmCodeSize != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(p.MaxWasmCodeSize))
+	if m.MaxWasmCodeSize != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.MaxWasmCodeSize))
 		i--
 		dAtA[i] = 0x18
 	}
-	if p.InstantiateDefaultPermission != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(p.InstantiateDefaultPermission))
+	if m.InstantiateDefaultPermission != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.InstantiateDefaultPermission))
 		i--
 		dAtA[i] = 0x10
 	}
 	{
-		size, err := p.CodeUploadAccess.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.CodeUploadAccess.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -922,29 +921,29 @@ func (m *CodeInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (c *ContractInfo) Marshal() (dAtA []byte, err error) {
-	size := c.Size()
+func (m *ContractInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := c.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (c *ContractInfo) MarshalTo(dAtA []byte) (int, error) {
-	size := c.Size()
-	return c.MarshalToSizedBuffer(dAtA[:size])
+func (m *ContractInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (c *ContractInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if c.Extension != nil {
+	if m.Extension != nil {
 		{
-			size, err := c.Extension.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Extension.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -954,16 +953,16 @@ func (c *ContractInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x3a
 	}
-	if len(c.IBCPortID) > 0 {
-		i -= len(c.IBCPortID)
-		copy(dAtA[i:], c.IBCPortID)
-		i = encodeVarintTypes(dAtA, i, uint64(len(c.IBCPortID)))
+	if len(m.IBCPortID) > 0 {
+		i -= len(m.IBCPortID)
+		copy(dAtA[i:], m.IBCPortID)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.IBCPortID)))
 		i--
 		dAtA[i] = 0x32
 	}
-	if c.Created != nil {
+	if m.Created != nil {
 		{
-			size, err := c.Created.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Created.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -973,29 +972,29 @@ func (c *ContractInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x2a
 	}
-	if len(c.Label) > 0 {
-		i -= len(c.Label)
-		copy(dAtA[i:], c.Label)
-		i = encodeVarintTypes(dAtA, i, uint64(len(c.Label)))
+	if len(m.Label) > 0 {
+		i -= len(m.Label)
+		copy(dAtA[i:], m.Label)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Label)))
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(c.Admin) > 0 {
-		i -= len(c.Admin)
-		copy(dAtA[i:], c.Admin)
-		i = encodeVarintTypes(dAtA, i, uint64(len(c.Admin)))
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Admin)))
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(c.Creator) > 0 {
-		i -= len(c.Creator)
-		copy(dAtA[i:], c.Creator)
-		i = encodeVarintTypes(dAtA, i, uint64(len(c.Creator)))
+	if len(m.Creator) > 0 {
+		i -= len(m.Creator)
+		copy(dAtA[i:], m.Creator)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if c.CodeID != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(c.CodeID))
+	if m.CodeID != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.CodeID))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -1147,35 +1146,35 @@ func (m *AccessTypeParam) Size() (n int) {
 	return n
 }
 
-func (a *AccessConfig) Size() (n int) {
-	if a == nil {
+func (m *AccessConfig) Size() (n int) {
+	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if a.Permission != 0 {
-		n += 1 + sovTypes(uint64(a.Permission))
+	if m.Permission != 0 {
+		n += 1 + sovTypes(uint64(m.Permission))
 	}
-	l = len(a.Address)
+	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
 }
 
-func (p *Params) Size() (n int) {
-	if p == nil {
+func (m *Params) Size() (n int) {
+	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = p.CodeUploadAccess.Size()
+	l = m.CodeUploadAccess.Size()
 	n += 1 + l + sovTypes(uint64(l))
-	if p.InstantiateDefaultPermission != 0 {
-		n += 1 + sovTypes(uint64(p.InstantiateDefaultPermission))
+	if m.InstantiateDefaultPermission != 0 {
+		n += 1 + sovTypes(uint64(m.InstantiateDefaultPermission))
 	}
-	if p.MaxWasmCodeSize != 0 {
-		n += 1 + sovTypes(uint64(p.MaxWasmCodeSize))
+	if m.MaxWasmCodeSize != 0 {
+		n += 1 + sovTypes(uint64(m.MaxWasmCodeSize))
 	}
 	return n
 }
@@ -1199,37 +1198,37 @@ func (m *CodeInfo) Size() (n int) {
 	return n
 }
 
-func (c *ContractInfo) Size() (n int) {
-	if c == nil {
+func (m *ContractInfo) Size() (n int) {
+	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if c.CodeID != 0 {
-		n += 1 + sovTypes(uint64(c.CodeID))
+	if m.CodeID != 0 {
+		n += 1 + sovTypes(uint64(m.CodeID))
 	}
-	l = len(c.Creator)
+	l = len(m.Creator)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(c.Admin)
+	l = len(m.Admin)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(c.Label)
+	l = len(m.Label)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	if c.Created != nil {
-		l = c.Created.Size()
+	if m.Created != nil {
+		l = m.Created.Size()
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	l = len(c.IBCPortID)
+	l = len(m.IBCPortID)
 	if l > 0 {
 		n += 1 + l + sovTypes(uint64(l))
 	}
-	if c.Extension != nil {
-		l = c.Extension.Size()
+	if m.Extension != nil {
+		l = m.Extension.Size()
 		n += 1 + l + sovTypes(uint64(l))
 	}
 	return n
@@ -1365,7 +1364,7 @@ func (m *AccessTypeParam) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (a *AccessConfig) Unmarshal(dAtA []byte) error {
+func (m *AccessConfig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1398,7 +1397,7 @@ func (a *AccessConfig) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Permission", wireType)
 			}
-			a.Permission = 0
+			m.Permission = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTypes
@@ -1408,7 +1407,7 @@ func (a *AccessConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				a.Permission |= AccessType(b&0x7F) << shift
+				m.Permission |= AccessType(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1443,7 +1442,7 @@ func (a *AccessConfig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			a.Address = string(dAtA[iNdEx:postIndex])
+			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1466,7 +1465,7 @@ func (a *AccessConfig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (p *Params) Unmarshal(dAtA []byte) error {
+func (m *Params) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1524,7 +1523,7 @@ func (p *Params) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := p.CodeUploadAccess.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.CodeUploadAccess.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1532,7 +1531,7 @@ func (p *Params) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field InstantiateDefaultPermission", wireType)
 			}
-			p.InstantiateDefaultPermission = 0
+			m.InstantiateDefaultPermission = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTypes
@@ -1542,7 +1541,7 @@ func (p *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				p.InstantiateDefaultPermission |= AccessType(b&0x7F) << shift
+				m.InstantiateDefaultPermission |= AccessType(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1551,7 +1550,7 @@ func (p *Params) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MaxWasmCodeSize", wireType)
 			}
-			p.MaxWasmCodeSize = 0
+			m.MaxWasmCodeSize = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTypes
@@ -1561,7 +1560,7 @@ func (p *Params) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				p.MaxWasmCodeSize |= uint64(b&0x7F) << shift
+				m.MaxWasmCodeSize |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1736,7 +1735,7 @@ func (m *CodeInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (c *ContractInfo) Unmarshal(dAtA []byte) error {
+func (m *ContractInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1769,7 +1768,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CodeID", wireType)
 			}
-			c.CodeID = 0
+			m.CodeID = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTypes
@@ -1779,7 +1778,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				c.CodeID |= uint64(b&0x7F) << shift
+				m.CodeID |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1814,7 +1813,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			c.Creator = string(dAtA[iNdEx:postIndex])
+			m.Creator = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -1846,7 +1845,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			c.Admin = string(dAtA[iNdEx:postIndex])
+			m.Admin = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -1878,7 +1877,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			c.Label = string(dAtA[iNdEx:postIndex])
+			m.Label = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -1909,10 +1908,10 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if c.Created == nil {
-				c.Created = &AbsoluteTxPosition{}
+			if m.Created == nil {
+				m.Created = &AbsoluteTxPosition{}
 			}
-			if err := c.Created.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Created.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1946,7 +1945,7 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			c.IBCPortID = string(dAtA[iNdEx:postIndex])
+			m.IBCPortID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 7:
 			if wireType != 2 {
@@ -1977,10 +1976,10 @@ func (c *ContractInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if c.Extension == nil {
-				c.Extension = &types.Any{}
+			if m.Extension == nil {
+				m.Extension = &types.Any{}
 			}
-			if err := c.Extension.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Extension.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
