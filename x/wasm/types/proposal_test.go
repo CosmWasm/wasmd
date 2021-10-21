@@ -703,7 +703,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"admin": "myAdminAddress",
 	"code_id": 1,
 	"funds": [{"denom": "ALX", "amount": "2"},{"denom": "BLX","amount": "3"}],
-	"msg": "e30=",
+	"msg": {},
 	"label": "testing",
 	"run_as": "myRunAsAddress"
 }`,
@@ -726,7 +726,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"description": "bar",
 	"code_id": 1,
 	"contract": "myContractAddr",
-	"msg": "e30=",
+	"msg": {},
 	"run_as": "myRunAsAddress"
 }`,
 			got: &MigrateContractProposal{},

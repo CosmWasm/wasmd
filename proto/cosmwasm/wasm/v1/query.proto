@@ -161,7 +161,7 @@ message QuerySmartContractStateRequest {
 // Query/SmartContractState RPC method
 message QuerySmartContractStateResponse {
   // Data contains the json data returned from the smart contract
-  bytes data = 1 [ (gogoproto.casttype) = "encoding/json.RawMessage" ];
+  bytes data = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
 
 // QueryCodeRequest is the request type for the Query/Code RPC method
