@@ -5,17 +5,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"io/ioutil"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestStoreCodeProposal(t *testing.T) {

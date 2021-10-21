@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"strings"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"strings"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // newWasmModuleEvent creates with wasm module event for interacting with the given contract. Adds custom attributes

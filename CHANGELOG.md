@@ -5,6 +5,7 @@
 **Implemented Enhancements:**
 
 - Remove unused flags from command prompt for storing contract [\#647](https://github.com/CosmWasm/wasmd/issues/647)
+- Ran `make format` [\#649](https://github.com/CosmWasm/wasmd/issues/649)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
 

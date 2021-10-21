@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -15,6 +13,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
+
+	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (

@@ -1,13 +1,14 @@
 package app
 
 import (
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	channelkeeper "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/keeper"
 	ibcante "github.com/cosmos/cosmos-sdk/x/ibc/core/ante"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 // NewAnteHandler returns an AnteHandler that checks and increments sequence

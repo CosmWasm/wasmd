@@ -1,14 +1,16 @@
 package wasm_test
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"testing"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func TestIBCReflectContract(t *testing.T) {
@@ -56,7 +58,7 @@ func TestIBCReflectContract(t *testing.T) {
 	// Given the source (portID, channelID), we should be able to count how many packets are pending, query the data
 	// and submit them to the other side (same with acks). This is what the real relayer does. I guess the test framework doesn't?
 
-	// Update: I dug through the code, expecially channel.Keeper.SendPacket, and it only writes a commitment
+	// Update: I dug through the code, especially channel.Keeper.SendPacket, and it only writes a commitment
 	// only writes I see: https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/keeper/packet.go#L115-L116
 	// commitment is hashed packet: https://github.com/cosmos/cosmos-sdk/blob/31fdee0228bd6f3e787489c8e4434aabc8facb7d/x/ibc/core/04-channel/types/packet.go#L14-L34
 	// how is the relayer supposed to get the original packet data??

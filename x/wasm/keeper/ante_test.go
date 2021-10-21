@@ -1,7 +1,9 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -9,8 +11,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	"testing"
-	"time"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestCountTxDecorator(t *testing.T) {

@@ -1,9 +1,10 @@
 package wasm
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 // ensure store code returns the expected response
