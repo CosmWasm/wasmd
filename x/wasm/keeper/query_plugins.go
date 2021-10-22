@@ -81,7 +81,7 @@ type contractMetaDataSource interface {
 type wasmQueryKeeper interface {
 	contractMetaDataSource
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) (types.RawContractMessage, error)
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
 	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
 }
 

@@ -116,7 +116,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 		}
 		// this returns raw bytes (must be base64-encoded)
 		bz, err := keeper.QuerySmart(ctx, contractAddr, msg)
-		return bz.Bytes(), err
+		return bz, err
 	default:
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, queryMethod)
 	}

@@ -463,7 +463,7 @@ func (m mockWasmQueryKeeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAd
 	return m.QueryRawFn(ctx, contractAddress, key)
 }
 
-func (m mockWasmQueryKeeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) (types.RawContractMessage, error) {
+func (m mockWasmQueryKeeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	if m.QuerySmartFn == nil {
 		panic("not expected to be called")
 	}
