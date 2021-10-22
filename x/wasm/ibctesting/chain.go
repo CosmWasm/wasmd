@@ -322,7 +322,10 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	chain.NextBlock()
 
 	// increment sequence for successful transaction execution
-	chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: also return acks needed to send
 	toSend := getSendPackets(r.Events)

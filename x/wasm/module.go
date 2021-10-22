@@ -45,7 +45,7 @@ func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { //n
 }
 
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
-	types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
+	types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx)) //nolint
 }
 
 // Name returns the wasm module's name.

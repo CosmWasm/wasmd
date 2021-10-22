@@ -492,7 +492,10 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 		return actorAddr, nil
 	}
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	keyringBackend, err := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	if err != nil {
+		return nil, err
+	}
 
 	homeDir := client.GetClientContextFromCmd(cmd).HomeDir
 	// attempt to lookup address from Keybase if no address was provided
