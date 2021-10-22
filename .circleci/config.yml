@@ -70,7 +70,7 @@ jobs:
           name: Lint
           command: |
             golangci-lint run --version
-            golangci-lint run --tests=false
+            golangci-lint run --tests=false --timeout=5m0s
 
   test-cover:
     executor: golang
