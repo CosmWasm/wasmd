@@ -1,7 +1,8 @@
 package wasm
 
 import (
-	types "github.com/CosmWasm/wasmd/x/wasm/types"
+	"math"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -9,7 +10,8 @@ import (
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	porttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/05-port/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
-	"math"
+
+	types "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}

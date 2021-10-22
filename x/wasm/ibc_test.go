@@ -1,11 +1,12 @@
 package wasm
 
 import (
+	"testing"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMapToWasmVMIBCPacket(t *testing.T) {

@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func GetTestData() ([]byte, []byte, []byte, error) {

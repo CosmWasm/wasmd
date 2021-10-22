@@ -2,11 +2,9 @@ package wasm_test
 
 import (
 	"encoding/json"
-	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+	"time"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +15,12 @@ import (
 	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
+
+	wasmd "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
@@ -221,7 +223,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Nanosecond).UnixNano()) // not enough time
 
-	// custom payload data to be transfered into a proper ICS20 ibc packet
+	// custom payload data to be transferred into a proper ICS20 ibc packet
 	startMsg := &types.MsgExecuteContract{
 		Sender:   chainA.SenderAccount.GetAddress().String(),
 		Contract: myContractAddr.String(),

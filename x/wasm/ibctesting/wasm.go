@@ -5,15 +5,17 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"io/ioutil"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/rand"
-	"io/ioutil"
-	"strings"
+
+	wasmd "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")

@@ -5,10 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -36,7 +37,7 @@ import (
 var DefaultConsensusParams = &abci.ConsensusParams{
 	Block: &abci.BlockParams{
 		MaxBytes: 8000000,
-		MaxGas:   80000000,
+		MaxGas:   1234000000,
 	},
 	Evidence: &tmproto.EvidenceParams{
 		MaxAgeNumBlocks: 302400,

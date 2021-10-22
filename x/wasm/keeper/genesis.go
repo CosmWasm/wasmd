@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // ValidatorSetSource is a subset of the staking keeper
@@ -57,11 +58,11 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 	// sanity check seq values
 	seqVal := keeper.peekAutoIncrementID(ctx, types.KeyLastCodeID)
 	if seqVal <= maxCodeID {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be less than or equal to maxCodeID: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than maxCodeID: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
 	}
 	seqVal = keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID)
 	if seqVal <= uint64(maxContractID) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be less than or equal to maxContractID: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than maxContractID: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
 
 	if len(data.GenMsgs) == 0 {
