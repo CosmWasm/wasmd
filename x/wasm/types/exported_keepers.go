@@ -9,7 +9,7 @@ import (
 // ViewKeeper provides read only operations
 type ViewKeeper interface {
 	GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []ContractCodeHistoryEntry
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req RawContractMessage) (RawContractMessage, error)
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
 	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *ContractInfo

@@ -81,7 +81,7 @@ type contractMetaDataSource interface {
 type wasmQueryKeeper interface {
 	contractMetaDataSource
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) (types.RawContractMessage, error)
 	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
 }
 
@@ -469,7 +469,11 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Smart.ContractAddr)
 			}
-			return k.QuerySmart(ctx, addr, request.Smart.Msg)
+			msg := types.RawContractMessage(request.Smart.Msg)
+			if err := msg.ValidateBasic(); err != nil {
+				return nil, sdkerrors.Wrap(err, "json msg")
+			}
+			return k.QuerySmart(ctx, addr, msg)
 		case request.Raw != nil:
 			addr, err := sdk.AccAddressFromBech32(request.Raw.ContractAddr)
 			if err != nil {

@@ -20,12 +20,12 @@ func (r RawContractMessage) MarshalJSON() ([]byte, error) {
 	return r, nil
 }
 
-func (a *RawContractMessage) UnmarshalJSON(b []byte) error {
+func (r *RawContractMessage) UnmarshalJSON(b []byte) error {
 	// copied from json.RawMessage#UnmarshalJSON
-	if a == nil {
+	if r == nil {
 		return errors.New("unmarshalJSON on nil pointer")
 	}
-	*a = append((*a)[0:0], b...)
+	*r = append((*r)[0:0], b...)
 	return nil
 }
 
@@ -37,6 +37,11 @@ func (r *RawContractMessage) ValidateBasic() error {
 		return ErrInvalid
 	}
 	return nil
+}
+
+// Bytes returns raw bytes type
+func (r RawContractMessage) Bytes() []byte {
+	return r
 }
 
 func (msg MsgStoreCode) Route() string {
