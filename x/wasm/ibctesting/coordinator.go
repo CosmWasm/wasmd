@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
-	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 )

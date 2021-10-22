@@ -60,7 +60,6 @@ func StoreCodeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			msg, err := parseStoreCodeArgs(args[0], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err

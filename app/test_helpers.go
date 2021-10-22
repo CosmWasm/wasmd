@@ -37,7 +37,7 @@ import (
 var DefaultConsensusParams = &abci.ConsensusParams{
 	Block: &abci.BlockParams{
 		MaxBytes: 8000000,
-		MaxGas:   80000000,
+		MaxGas:   1234000000,
 	},
 	Evidence: &tmproto.EvidenceParams{
 		MaxAgeNumBlocks: 302400,

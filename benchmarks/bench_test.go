@@ -19,49 +19,6 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func bankSendMsg(info *AppInfo) ([]sdk.Msg, error) {
-	// Precompute all txs
-	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	coins := sdk.Coins{sdk.NewInt64Coin(info.Denom, 100)}
-	sendMsg := banktypes.NewMsgSend(info.MinterAddr, rcpt, coins)
-	return []sdk.Msg{sendMsg}, nil
-}
-
-func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
-	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	transfer := cw20ExecMsg{Transfer: &transferMsg{
-		Recipient: rcpt.String(),
-		Amount:    765,
-	}}
-	transferBz, err := json.Marshal(transfer)
-	if err != nil {
-		return nil, err
-	}
-
-	sendMsg := &wasmtypes.MsgExecuteContract{
-		Sender:   info.MinterAddr.String(),
-		Contract: info.ContractAddr,
-		Msg:      transferBz,
-	}
-	return []sdk.Msg{sendMsg}, nil
-}
-
-func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
-	return func(b *testing.B, info *AppInfo) []sdk.Tx {
-		return GenSequenceOfTxs(b, info, builder, b.N)
-	}
-}
-
-func buildMemDB(b *testing.B) dbm.DB {
-	return dbm.NewMemDB()
-}
-
-func buildLevelDB(b *testing.B) dbm.DB {
-	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
-	require.NoError(b, err)
-	return levelDB
-}
-
 func BenchmarkTxSending(b *testing.B) {
 	cases := map[string]struct {
 		db          func(*testing.B) dbm.DB
@@ -105,6 +62,30 @@ func BenchmarkTxSending(b *testing.B) {
 			txBuilder:   buildTxFromMsg(cw20TransferMsg),
 			numAccounts: 8000,
 		},
+		"basic send - leveldb - 8k accounts - huge blocks": {
+			db:          buildLevelDB,
+			blockSize:   1000,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
+			numAccounts: 8000,
+		},
+		"cw20 transfer - leveldb - 8k accounts - huge blocks": {
+			db:          buildLevelDB,
+			blockSize:   1000,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
+			numAccounts: 8000,
+		},
+		"basic send - leveldb - 80k accounts": {
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(bankSendMsg),
+			numAccounts: 80000,
+		},
+		"cw20 transfer - leveldb - 80k accounts": {
+			db:          buildLevelDB,
+			blockSize:   20,
+			txBuilder:   buildTxFromMsg(cw20TransferMsg),
+			numAccounts: 80000,
+		},
 	}
 
 	for name, tc := range cases {
@@ -140,4 +121,47 @@ func BenchmarkTxSending(b *testing.B) {
 			}
 		})
 	}
+}
+
+func bankSendMsg(info *AppInfo) ([]sdk.Msg, error) {
+	// Precompute all txs
+	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	coins := sdk.Coins{sdk.NewInt64Coin(info.Denom, 100)}
+	sendMsg := banktypes.NewMsgSend(info.MinterAddr, rcpt, coins)
+	return []sdk.Msg{sendMsg}, nil
+}
+
+func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
+	rcpt := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
+	transfer := cw20ExecMsg{Transfer: &transferMsg{
+		Recipient: rcpt.String(),
+		Amount:    765,
+	}}
+	transferBz, err := json.Marshal(transfer)
+	if err != nil {
+		return nil, err
+	}
+
+	sendMsg := &wasmtypes.MsgExecuteContract{
+		Sender:   info.MinterAddr.String(),
+		Contract: info.ContractAddr,
+		Msg:      transferBz,
+	}
+	return []sdk.Msg{sendMsg}, nil
+}
+
+func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
+	return func(b *testing.B, info *AppInfo) []sdk.Tx {
+		return GenSequenceOfTxs(b, info, builder, b.N)
+	}
+}
+
+func buildMemDB(b *testing.B) dbm.DB {
+	return dbm.NewMemDB()
+}
+
+func buildLevelDB(b *testing.B) dbm.DB {
+	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+	require.NoError(b, err)
+	return levelDB
 }
