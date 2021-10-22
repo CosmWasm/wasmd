@@ -19,9 +19,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -41,6 +38,8 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
 )
 
 // NewRootCmd creates a new root command for wasmd. It is called once in the
