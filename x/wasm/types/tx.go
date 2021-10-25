@@ -10,6 +10,8 @@ import (
 )
 
 // RawContractMessage defines a json message that is sent or returned by a wasm contract.
+// This type can hold any type of bytes. Until validateBasic is called there should not be
+// any assumptions made that the data is valid syntax or semantic.
 type RawContractMessage []byte
 
 func (r RawContractMessage) MarshalJSON() ([]byte, error) {
@@ -20,11 +22,7 @@ func (r *RawContractMessage) UnmarshalJSON(b []byte) error {
 	if r == nil {
 		return errors.New("unmarshalJSON on nil pointer")
 	}
-	raw := json.RawMessage(*r)
-	if err := (&raw).UnmarshalJSON(b); err != nil {
-		return err
-	}
-	*r = []byte(raw)
+	*r = append((*r)[0:0], b...)
 	return nil
 }
 
