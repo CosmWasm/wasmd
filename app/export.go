@@ -72,10 +72,7 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 
 	// withdraw all validator commission
 	app.stakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		_, err := app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
-		if err != nil {
-			panic(err)
-		}
+		_, _ = app.distrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator()) //nolint:errcheck
 		return false
 	})
 
@@ -91,10 +88,7 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 		if err != nil {
 			panic(err)
 		}
-		_, err = app.distrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr)
-		if err != nil {
-			panic(err)
-		}
+		_, _ = app.distrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr) //nolint:errcheck
 	}
 
 	// clear validator slash events
