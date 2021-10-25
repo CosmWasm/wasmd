@@ -288,7 +288,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 		}
 		if request.AllValidators != nil {
 			validators := keeper.GetBondedValidatorsByPower(ctx)
-			//validators := keeper.GetAllValidators(ctx)
+			// validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmvmtypes.Validator, len(validators))
 			for i, v := range validators {
 				wasmVals[i] = wasmvmtypes.Validator{

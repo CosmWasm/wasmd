@@ -27,7 +27,7 @@ type WasmVMMetricsCollector struct {
 	CacheSizeDescr     *prometheus.Desc
 }
 
-//NewWasmVMMetricsCollector constructor
+// NewWasmVMMetricsCollector constructor
 func NewWasmVMMetricsCollector(s metricSource) *WasmVMMetricsCollector {
 	return &WasmVMMetricsCollector{
 		source:             s,

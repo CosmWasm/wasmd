@@ -290,14 +290,14 @@ type contractExecutable interface {
 	) (*wasmvmtypes.Response, uint64, error)
 }
 
-//MakeInstantiable adds some noop functions to not fail when contract is used for instantiation
+// MakeInstantiable adds some noop functions to not fail when contract is used for instantiation
 func MakeInstantiable(m *MockWasmer) {
 	m.CreateFn = HashOnlyCreateFn
 	m.InstantiateFn = NoOpInstantiateFn
 	m.AnalyzeCodeFn = WithoutIBCAnalyzeFn
 }
 
-//MakeIBCInstantiable adds some noop functions to not fail when contract is used for instantiation
+// MakeIBCInstantiable adds some noop functions to not fail when contract is used for instantiation
 func MakeIBCInstantiable(m *MockWasmer) {
 	MakeInstantiable(m)
 	m.AnalyzeCodeFn = HasIBCAnalyzeFn

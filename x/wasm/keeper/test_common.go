@@ -498,7 +498,7 @@ func StoreRandomContract(t TestingT, ctx sdk.Context, keepers TestKeepers, mock 
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
-	wasmCode := append(wasmIdent, rand.Bytes(10)...)
+	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint
 	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
@@ -599,7 +599,7 @@ func (m BurnerExampleInitMsg) GetBytes(t TestingT) []byte {
 	return initMsgBz
 }
 
-func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress {
+func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress { //nolint
 	_, _, addr := keyPubAddr()
 	fundAccounts(t, ctx, am, bank, addr, coins)
 	return addr
@@ -611,7 +611,7 @@ func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank
 	require.NoError(t, bank.SetBalances(ctx, addr, coins))
 }
 
-var keyCounter uint64 = 0
+var keyCounter uint64
 
 // we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
 // depends on the actual bytes (due to ugly CanonicalAddress encoding)

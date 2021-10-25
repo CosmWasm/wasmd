@@ -21,6 +21,9 @@ func MigrateContractCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			msg, err := parseMigrateContractArgs(args, clientCtx)
 			if err != nil {
@@ -63,6 +66,9 @@ func UpdateContractAdminCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
 
 			msg, err := parseUpdateContractAdminArgs(args, clientCtx)
 			if err != nil {

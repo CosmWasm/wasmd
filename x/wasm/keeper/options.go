@@ -109,8 +109,8 @@ func WithGasRegister(x GasRegister) Option {
 	})
 }
 
-// WithApiCosts sets custom api costs. Amounts are in cosmwasm gas Not SDK gas.
-func WithApiCosts(human, canonical uint64) Option {
+// WithAPICosts sets custom api costs. Amounts are in cosmwasm gas Not SDK gas.
+func WithAPICosts(human, canonical uint64) Option {
 	return optsFn(func(_ *Keeper) {
 		costHumanize = human
 		costCanonical = canonical

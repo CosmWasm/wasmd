@@ -36,15 +36,15 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 		)
 		switch path[0] {
 		case QueryGetContract:
-			addr, err := sdk.AccAddressFromBech32(path[1])
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+			addr, addrErr := sdk.AccAddressFromBech32(path[1])
+			if addrErr != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
 			}
 			rsp, err = queryContractInfo(ctx, addr, keeper)
 		case QueryListContractByCode:
-			codeID, err := strconv.ParseUint(path[1], 10, 64)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
+			codeID, parseErr := strconv.ParseUint(path[1], 10, 64)
+			if parseErr != nil {
+				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", parseErr.Error())
 			}
 			rsp = queryContractListByCode(ctx, codeID, keeper)
 		case QueryGetContractState:
@@ -53,17 +53,17 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			}
 			return queryContractState(ctx, path[1], path[2], req.Data, gasLimit, keeper)
 		case QueryGetCode:
-			codeID, err := strconv.ParseUint(path[1], 10, 64)
-			if err != nil {
-				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", err.Error())
+			codeID, parseErr := strconv.ParseUint(path[1], 10, 64)
+			if parseErr != nil {
+				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", parseErr.Error())
 			}
 			rsp, err = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
 			rsp, err = queryCodeList(ctx, keeper)
 		case QueryContractHistory:
-			contractAddr, err := sdk.AccAddressFromBech32(path[1])
-			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+			contractAddr, addrErr := sdk.AccAddressFromBech32(path[1])
+			if addrErr != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
 			}
 			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
 		default:

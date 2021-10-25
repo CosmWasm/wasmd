@@ -2,25 +2,24 @@ package types
 
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 )
 
 // ViewKeeper provides read only operations
 type ViewKeeper interface {
-	GetContractHistory(ctx types.Context, contractAddr types.AccAddress) []ContractCodeHistoryEntry
-	QuerySmart(ctx types.Context, contractAddr types.AccAddress, req []byte) ([]byte, error)
-	QueryRaw(ctx types.Context, contractAddress types.AccAddress, key []byte) []byte
+	GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []ContractCodeHistoryEntry
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
-	GetContractInfo(ctx types.Context, contractAddress types.AccAddress) *ContractInfo
-	IterateContractInfo(ctx types.Context, cb func(types.AccAddress, ContractInfo) bool)
+	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *ContractInfo
+	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, ContractInfo) bool)
 	IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool)
-	GetContractState(ctx types.Context, contractAddress types.AccAddress) types.Iterator
-	GetCodeInfo(ctx types.Context, codeID uint64) *CodeInfo
-	IterateCodeInfos(ctx types.Context, cb func(uint64, CodeInfo) bool)
-	GetByteCode(ctx types.Context, codeID uint64) ([]byte, error)
-	IsPinnedCode(ctx types.Context, codeID uint64) bool
+	GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.Iterator
+	GetCodeInfo(ctx sdk.Context, codeID uint64) *CodeInfo
+	IterateCodeInfos(ctx sdk.Context, cb func(uint64, CodeInfo) bool)
+	GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error)
+	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
 }
 
 // ContractOpsKeeper contains mutable operations on a contract.
@@ -86,7 +85,7 @@ type IBCContractKeeper interface {
 		msg wasmvmtypes.IBCPacketTimeoutMsg,
 	) error
 	// ClaimCapability allows the transfer module to claim a capability
-	//that IBC module passes to it
+	// that IBC module passes to it
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 	// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool

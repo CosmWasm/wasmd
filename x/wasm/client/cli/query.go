@@ -151,7 +151,7 @@ func GetCmdQueryCode() *cobra.Command {
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], res.Data, 0644)
+			return ioutil.WriteFile(args[1], res.Data, 0644) //nolint
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -474,6 +474,9 @@ func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
 	if err != nil {
 		panic(err.Error())
 	}
-	flagSet.Set(flags.FlagPageKey, string(raw))
+	err = flagSet.Set(flags.FlagPageKey, string(raw))
+	if err != nil {
+		panic(err.Error())
+	}
 	return flagSet
 }

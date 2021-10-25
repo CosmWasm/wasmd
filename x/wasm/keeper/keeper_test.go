@@ -11,18 +11,19 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -663,7 +664,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
 
 	// unauthorized - trialCtx so we don't change state
-	nonExistingAddress := addrFromUint64(9999)
+	nonExistingAddress := RandomAccountAddress(t)
 	_, err := keeper.Execute(ctx, nonExistingAddress, creator, []byte(`{}`), nil)
 	require.True(t, types.ErrNotFound.Is(err), err)
 }
