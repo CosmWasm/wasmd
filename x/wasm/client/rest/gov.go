@@ -87,7 +87,7 @@ func (s InstantiateProposalJSONReq) Content() govtypes.Content {
 		Admin:       s.Admin,
 		CodeID:      s.Code,
 		Label:       s.Label,
-		Msg:         s.Msg,
+		Msg:         types.RawContractMessage(s.Msg),
 		Funds:       s.Funds,
 	}
 }
@@ -136,7 +136,7 @@ func (s MigrateProposalJSONReq) Content() govtypes.Content {
 		Description: s.Description,
 		Contract:    s.Contract,
 		CodeID:      s.Code,
-		Msg:         s.Msg,
+		Msg:         types.RawContractMessage(s.Msg),
 		RunAs:       s.RunAs,
 	}
 }
