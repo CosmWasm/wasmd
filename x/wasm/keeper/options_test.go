@@ -68,7 +68,7 @@ func TestConstructorOptions(t *testing.T) {
 			},
 		},
 		"api costs": {
-			srcOpt: WithApiCosts(1, 2),
+			srcOpt: WithAPICosts(1, 2),
 			verify: func(t *testing.T, k Keeper) {
 				t.Cleanup(setApiDefaults)
 				assert.Equal(t, uint64(1), costHumanize)

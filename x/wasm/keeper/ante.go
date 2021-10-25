@@ -29,7 +29,7 @@ func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, 
 	store := ctx.KVStore(a.storeKey)
 	currentHeight := ctx.BlockHeight()
 
-	var txCounter uint32 = 0 // start with 0
+	var txCounter uint32 // start with 0
 	// load counter when exists
 	if bz := store.Get(types.TXCounterPrefix); bz != nil {
 		lastHeight, val := decodeHeightCounter(bz)

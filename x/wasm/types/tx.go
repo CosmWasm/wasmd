@@ -2,11 +2,44 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
+
+// RawContractMessage defines a json message that is sent or returned by a wasm contract.
+// This type can hold any type of bytes. Until validateBasic is called there should not be
+// any assumptions made that the data is valid syntax or semantic.
+type RawContractMessage []byte
+
+func (r RawContractMessage) MarshalJSON() ([]byte, error) {
+	return json.RawMessage(r).MarshalJSON()
+}
+
+func (r *RawContractMessage) UnmarshalJSON(b []byte) error {
+	if r == nil {
+		return errors.New("unmarshalJSON on nil pointer")
+	}
+	*r = append((*r)[0:0], b...)
+	return nil
+}
+
+func (r *RawContractMessage) ValidateBasic() error {
+	if r == nil {
+		return ErrEmpty
+	}
+	if !json.Valid(*r) {
+		return ErrInvalid
+	}
+	return nil
+}
+
+// Bytes returns raw bytes type
+func (r RawContractMessage) Bytes() []byte {
+	return r
+}
 
 func (msg MsgStoreCode) Route() string {
 	return RouterKey
@@ -77,8 +110,8 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 			return sdkerrors.Wrap(err, "admin")
 		}
 	}
-	if !json.Valid(msg.Msg) {
-		return sdkerrors.Wrap(ErrInvalid, "init msg json")
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -94,7 +127,6 @@ func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
 		panic(err.Error())
 	}
 	return []sdk.AccAddress{senderAddr}
-
 }
 
 func (msg MsgExecuteContract) Route() string {
@@ -116,8 +148,8 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 	if !msg.Funds.IsValid() {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
 	}
-	if !json.Valid(msg.Msg) {
-		return sdkerrors.Wrap(ErrInvalid, "msg json")
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -154,8 +186,9 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if !json.Valid(msg.Msg) {
-		return sdkerrors.Wrap(ErrInvalid, "migrate msg json")
+
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
 	}
 
 	return nil

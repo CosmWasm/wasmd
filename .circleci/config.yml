@@ -60,6 +60,18 @@ jobs:
           paths:
             - ".git"
 
+  lint:
+    executor: golang
+    docker:
+      - image: golangci/golangci-lint:v1.42.1-alpine
+    steps:
+      - checkout
+      - run:
+          name: Lint
+          command: |
+            golangci-lint run --version
+            golangci-lint run --tests=false --timeout=5m0s
+
   test-cover:
     executor: golang
     parallelism: 4
@@ -191,6 +203,9 @@ workflows:
             tags:
               only:
                 - /^v.*/
+      - lint:
+          requires:
+            - setup-dependencies
       - test-cover:
           requires:
             - setup-dependencies

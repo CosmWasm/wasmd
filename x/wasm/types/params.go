@@ -103,7 +103,10 @@ func DefaultParams() Params {
 }
 
 func (p Params) String() string {
-	out, _ := yaml.Marshal(p)
+	out, err := yaml.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
 	return string(out)
 }
 
@@ -165,30 +168,30 @@ func validateMaxWasmCodeSize(i interface{}) error {
 	return nil
 }
 
-func (v AccessConfig) ValidateBasic() error {
-	switch v.Permission {
+func (a AccessConfig) ValidateBasic() error {
+	switch a.Permission {
 	case AccessTypeUnspecified:
 		return sdkerrors.Wrap(ErrEmpty, "type")
 	case AccessTypeNobody, AccessTypeEverybody:
-		if len(v.Address) != 0 {
+		if len(a.Address) != 0 {
 			return sdkerrors.Wrap(ErrInvalid, "address not allowed for this type")
 		}
 		return nil
 	case AccessTypeOnlyAddress:
-		_, err := sdk.AccAddressFromBech32(v.Address)
+		_, err := sdk.AccAddressFromBech32(a.Address)
 		return err
 	}
-	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", v.Permission)
+	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
 }
 
-func (v AccessConfig) Allowed(actor sdk.AccAddress) bool {
-	switch v.Permission {
+func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
+	switch a.Permission {
 	case AccessTypeNobody:
 		return false
 	case AccessTypeEverybody:
 		return true
 	case AccessTypeOnlyAddress:
-		return v.Address == actor.String()
+		return a.Address == actor.String()
 	default:
 		panic("unknown type")
 	}

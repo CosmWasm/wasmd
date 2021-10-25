@@ -27,7 +27,7 @@ type grpcQuerier struct {
 }
 
 // NewGrpcQuerier constructor
-func NewGrpcQuerier(cdc codec.Marshaler, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier {
+func NewGrpcQuerier(cdc codec.Marshaler, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier { //nolint:revive
 	return &grpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
@@ -164,6 +164,9 @@ func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	if err := req.QueryData.ValidateBasic(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid query data")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {

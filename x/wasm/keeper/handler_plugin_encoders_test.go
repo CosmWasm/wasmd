@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"encoding/json"
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -12,8 +11,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -21,6 +18,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -36,7 +34,7 @@ func TestEncoding(t *testing.T) {
 	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
 	valAddr2[1] = 123
 
-	jsonMsg := json.RawMessage(`{"foo": 123}`)
+	jsonMsg := types.RawContractMessage(`{"foo": 123}`)
 
 	bankMsg := &banktypes.MsgSend{
 		FromAddress: addr2.String(),

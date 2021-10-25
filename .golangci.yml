@@ -1,4 +1,8 @@
+run:
+  tests: false
+
 linters:
+  disable-all: true
   enable:
     - bodyclose
     - deadcode
@@ -9,17 +13,15 @@ linters:
     - gocritic
     - gofmt
     - goimports
-    - golint
+    - revive
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - misspell
-    - maligned
     - nakedret
     - prealloc
-    - scopelint
+    - exportloopref
     - staticcheck
     - structcheck
     - stylecheck
@@ -40,13 +42,13 @@ issues:
 linters-settings:
   dogsled:
     max-blank-identifiers: 3
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   errcheck:
     # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
     check-blank: true
+  maligned:
+    # print struct with more effective memory layout or not, false by default
+    suggest-new: true
   golint:
     # minimal confidence for issues, default is 0.8
     min-confidence: 0

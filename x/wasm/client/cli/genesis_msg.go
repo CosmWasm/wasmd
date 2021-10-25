@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/crypto"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -214,7 +212,7 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 			if err != nil {
 				return err
 			}
-			return printJsonOutput(cmd, all)
+			return printJSONOutput(cmd, all)
 
 		},
 	}
@@ -237,7 +235,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 			}
 			state := g.WasmModuleState
 			all := getAllContracts(state)
-			return printJsonOutput(cmd, all)
+			return printJSONOutput(cmd, all)
 		},
 	}
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
@@ -246,7 +244,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 }
 
 // clientCtx marshaller works only with proto or bytes so we marshal the output ourself
-func printJsonOutput(cmd *cobra.Command, obj interface{}) error {
+func printJSONOutput(cmd *cobra.Command, obj interface{}) error {
 	clientCtx := client.GetClientContextFromCmd(cmd)
 	bz, err := json.MarshalIndent(obj, "", " ")
 	if err != nil {
@@ -261,12 +259,12 @@ type codeMeta struct {
 }
 
 func getAllCodes(state *types.GenesisState) ([]codeMeta, error) {
-	var all []codeMeta
-	for _, c := range state.Codes {
-		all = append(all, codeMeta{
+	all := make([]codeMeta, len(state.Codes))
+	for i, c := range state.Codes {
+		all[i] = codeMeta{
 			CodeID: c.CodeID,
 			Info:   c.CodeInfo,
-		})
+		}
 	}
 	// add inflight
 	seq := codeSeqValue(state)
@@ -304,12 +302,12 @@ type contractMeta struct {
 }
 
 func getAllContracts(state *types.GenesisState) []contractMeta {
-	var all []contractMeta
-	for _, c := range state.Contracts {
-		all = append(all, contractMeta{
+	all := make([]contractMeta, len(state.Contracts))
+	for i, c := range state.Contracts {
+		all[i] = contractMeta{
 			ContractAddress: c.ContractAddress,
 			Info:            c.ContractInfo,
-		})
+		}
 	}
 	// add inflight
 	seq := contractSeqValue(state)
@@ -494,7 +492,10 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 		return actorAddr, nil
 	}
 	inBuf := bufio.NewReader(cmd.InOrStdin())
-	keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	keyringBackend, err := cmd.Flags().GetString(flags.FlagKeyringBackend)
+	if err != nil {
+		return nil, err
+	}
 
 	homeDir := client.GetClientContextFromCmd(cmd).HomeDir
 	// attempt to lookup address from Keybase if no address was provided
@@ -508,12 +509,4 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 		return nil, fmt.Errorf("failed to get address from Keybase: %w", err)
 	}
 	return info.GetAddress(), nil
-}
-
-// addrFromUint64 is a helper for address generation, copied from keeper
-func addrFromUint64(id uint64) sdk.AccAddress {
-	addr := make([]byte, 20)
-	addr[0] = 'C'
-	binary.PutUvarint(addr[1:], id)
-	return sdk.AccAddress(crypto.AddressHash(addr))
 }

@@ -21,7 +21,7 @@ const (
 var (
 	costHumanize            = DefaultGasCostHumanAddress * DefaultGasMultiplier
 	costCanonical           = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
-	costJsonDeserialization = wasmvmtypes.UFraction{
+	costJSONDeserialization = wasmvmtypes.UFraction{
 		Numerator:   DefaultDeserializationCostPerByte * DefaultGasMultiplier,
 		Denominator: 1,
 	}
@@ -29,7 +29,7 @@ var (
 
 func humanAddress(canon []byte) (string, uint64, error) {
 	if len(canon) != sdk.AddrLen {
-		return "", costHumanize, fmt.Errorf("Expected %d byte address", sdk.AddrLen)
+		return "", costHumanize, fmt.Errorf("expected %d byte address", sdk.AddrLen)
 	}
 	return sdk.AccAddress(canon).String(), costHumanize, nil
 }

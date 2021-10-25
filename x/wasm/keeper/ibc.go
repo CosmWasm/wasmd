@@ -50,7 +50,7 @@ func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Cap
 }
 
 // ClaimCapability allows the transfer module to claim a capability
-//that IBC module passes to it
+// that IBC module passes to it
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.capabilityKeeper.ClaimCapability(ctx, cap, name)
 }

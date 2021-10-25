@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
 	host "github.com/cosmos/cosmos-sdk/x/ibc/core/24-host"
 	"github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
+	ibctesting "github.com/cosmos/cosmos-sdk/x/ibc/testing"
+
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 var (
@@ -393,8 +393,11 @@ func (coord *Coordinator) RelayAndAckPendingPackets(src, dest *TestChain, srcCli
 	coord.IncrementTime()
 	coord.CommitBlock(src)
 	err := coord.UpdateClient(dest, src, dstClientID, exported.Tendermint)
+	if err != nil {
+		return err
+	}
 	for _, packet := range toSend {
-		err = coord.RecvPacket(src, dest, srcClientID, packet)
+		err := coord.RecvPacket(src, dest, srcClientID, packet)
 		if err != nil {
 			return err
 		}

@@ -55,7 +55,7 @@ message MsgInstantiateContract {
   // Label is optional metadata to be stored with a contract instance.
   string label = 4;
   // Msg json encoded message to be passed to the contract on instantiation
-  bytes msg = 5;
+  bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
@@ -77,7 +77,7 @@ message MsgExecuteContract {
   // Contract is the address of the smart contract
   string contract = 2;
   // Msg json encoded message to be passed to the contract
-  bytes msg = 3;
+  bytes msg = 3 [ (gogoproto.casttype) = "RawContractMessage" ];
   // Funds coins that are transferred to the contract on execution
   repeated cosmos.base.v1beta1.Coin funds = 5 [
     (gogoproto.nullable) = false,
@@ -100,7 +100,7 @@ message MsgMigrateContract {
   // CodeID references the new WASM code
   uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
-  bytes msg = 4;
+  bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
 
 // MsgMigrateContractResponse returns contract migration result data.
