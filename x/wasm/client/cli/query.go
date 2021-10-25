@@ -151,7 +151,7 @@ func GetCmdQueryCode() *cobra.Command {
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], res.Data, 0644) //nolint
+			return ioutil.WriteFile(args[1], res.Data, 0600)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

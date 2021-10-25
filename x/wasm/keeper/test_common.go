@@ -498,7 +498,7 @@ func StoreRandomContract(t TestingT, ctx sdk.Context, keepers TestKeepers, mock 
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
-	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint
+	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint:gocritic
 	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
@@ -599,7 +599,7 @@ func (m BurnerExampleInitMsg) GetBytes(t TestingT) []byte {
 	return initMsgBz
 }
 
-func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress { //nolint
+func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, coins sdk.Coins) sdk.AccAddress { //nolint:deadcode,unused
 	_, _, addr := keyPubAddr()
 	fundAccounts(t, ctx, am, bank, addr, coins)
 	return addr
