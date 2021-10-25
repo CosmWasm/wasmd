@@ -13,19 +13,18 @@ import (
 type RawContractMessage []byte
 
 func (r RawContractMessage) MarshalJSON() ([]byte, error) {
-	// copied from json.RawMessage#MarshalJSON
-	if r == nil {
-		return []byte("null"), nil
-	}
-	return r, nil
+	return json.RawMessage(r).MarshalJSON()
 }
 
 func (r *RawContractMessage) UnmarshalJSON(b []byte) error {
-	// copied from json.RawMessage#UnmarshalJSON
 	if r == nil {
 		return errors.New("unmarshalJSON on nil pointer")
 	}
-	*r = append((*r)[0:0], b...)
+	raw := json.RawMessage(*r)
+	if err := (&raw).UnmarshalJSON(b); err != nil {
+		return err
+	}
+	*r = []byte(raw)
 	return nil
 }
 
