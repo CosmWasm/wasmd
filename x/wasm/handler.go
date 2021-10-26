@@ -25,7 +25,7 @@ func NewHandler(k types.ContractOpsKeeper) sdk.Handler {
 			err error
 		)
 		switch msg := msg.(type) {
-		case *MsgStoreCode:
+		case *MsgStoreCode: //nolint:typecheck
 			res, err = msgServer.StoreCode(sdk.WrapSDKContext(ctx), msg)
 		case *MsgInstantiateContract:
 			res, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), msg)
