@@ -48,6 +48,7 @@ using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly 
 ## Supported Systems
 
 The supported systems are limited by the dlls created in [`wasmvm`](https://github.com/CosmWasm/wasmvm). In particular, **we only support MacOS and Linux**.
+However, **M1 macs are currently not supported.**
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
 using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19). 
