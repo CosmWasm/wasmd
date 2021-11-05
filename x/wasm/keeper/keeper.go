@@ -878,18 +878,6 @@ func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	return sdkaddress.Module(types.ModuleName, contractID)
 }
 
-// GetNextCodeID reads the next sequence id used for storing wasm code.
-// Read only operation.
-func (k Keeper) GetNextCodeID(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyLastCodeID)
-	id := uint64(1)
-	if bz != nil {
-		id = binary.BigEndian.Uint64(bz)
-	}
-	return id
-}
-
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(lastIDKey)
@@ -902,8 +890,8 @@ func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-// peekAutoIncrementID reads the current value without incrementing it.
-func (k Keeper) peekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+// PeekAutoIncrementID reads the current value without incrementing it.
+func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(lastIDKey)
 	id := uint64(1)
