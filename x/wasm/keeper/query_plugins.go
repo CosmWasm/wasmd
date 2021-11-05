@@ -92,6 +92,7 @@ func DefaultQueryPlugins(
 	channelKeeper types.ChannelKeeper,
 	queryRouter GRPCQueryRouter,
 	wasm wasmQueryKeeper,
+	maxQueryDepth uint32,
 ) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
@@ -99,7 +100,7 @@ func DefaultQueryPlugins(
 		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
 		Stargate: StargateQuerier(queryRouter),
-		Wasm:     WasmQuerier(wasm),
+		Wasm:     LimitedDepthWasmQuerier(maxQueryDepth, WasmQuerier(wasm)),
 	}
 }
 
@@ -499,7 +500,23 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			return json.Marshal(res)
 		}
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown wasm query variant"}
+	}
+}
+
+// LimitedDepthWasmQuerier decorator to WasmQuerier to limit the depth of recursive calls
+func LimitedDepthWasmQuerier(maxDepth uint32, next func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {
+		counter, ok := types.QueryDepthCounter(ctx)
+		if !ok {
+			counter = 0
+		} else {
+			counter++
+		}
+		if counter > maxDepth {
+			return nil, types.ErrMaxQueryDepth
+		}
+		return next(types.WithQueryDepthCounter(ctx, counter), request)
 	}
 }
 

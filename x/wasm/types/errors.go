@@ -69,4 +69,7 @@ var (
 
 	// ErrInvalidEvent error if an attribute/event from the contract is invalid
 	ErrInvalidEvent = sdkErrors.Register(DefaultCodespace, 21, "invalid event")
+
+	// ErrMaxQueryDepth error if the maximum smart query depth is reached
+	ErrMaxQueryDepth = sdkErrors.Register(DefaultCodespace, 22, "max query depth reached")
 )

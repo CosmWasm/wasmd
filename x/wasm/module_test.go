@@ -405,6 +405,7 @@ func TestReadWasmConfig(t *testing.T) {
 			exp: types.WasmConfig{
 				SmartQueryGasLimit: 1,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
+				SmartQueryDepth:    defaults.SmartQueryDepth,
 			},
 		},
 		"set cache via opts": {
@@ -414,6 +415,7 @@ func TestReadWasmConfig(t *testing.T) {
 			exp: types.WasmConfig{
 				MemoryCacheSize:    2,
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
+				SmartQueryDepth:    defaults.SmartQueryDepth,
 			},
 		},
 		"set debug via opts": {
@@ -424,6 +426,7 @@ func TestReadWasmConfig(t *testing.T) {
 				SmartQueryGasLimit: defaults.SmartQueryGasLimit,
 				MemoryCacheSize:    defaults.MemoryCacheSize,
 				ContractDebugMode:  true,
+				SmartQueryDepth:    defaults.SmartQueryDepth,
 			},
 		},
 		"all defaults when no options set": {

@@ -15,6 +15,7 @@ const (
 	defaultMemoryCacheSize   uint32 = 100 // in MiB
 	defaultQueryGasLimit     uint64 = 3000000
 	defaultContractDebugMode        = false
+	defaultSmartQueryDepth          = 15
 )
 
 func (m Model) ValidateBasic() error {
@@ -301,6 +302,8 @@ type WasmConfig struct {
 	MemoryCacheSize uint32
 	// ContractDebugMode log what contract print
 	ContractDebugMode bool
+	// SmartQueryDepth level of smart queries that create other smart queries
+	SmartQueryDepth uint32
 }
 
 // DefaultWasmConfig returns the default settings for WasmConfig
@@ -309,5 +312,6 @@ func DefaultWasmConfig() WasmConfig {
 		SmartQueryGasLimit: defaultQueryGasLimit,
 		MemoryCacheSize:    defaultMemoryCacheSize,
 		ContractDebugMode:  defaultContractDebugMode,
+		SmartQueryDepth:    defaultSmartQueryDepth,
 	}
 }
