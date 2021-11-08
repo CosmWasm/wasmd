@@ -56,11 +56,11 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 	}
 
 	// sanity check seq values
-	seqVal := keeper.peekAutoIncrementID(ctx, types.KeyLastCodeID)
+	seqVal := keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID)
 	if seqVal <= maxCodeID {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
 	}
-	seqVal = keeper.peekAutoIncrementID(ctx, types.KeyLastInstanceID)
+	seqVal = keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID)
 	if seqVal <= uint64(maxContractID) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
@@ -125,7 +125,7 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 	for _, k := range [][]byte{types.KeyLastCodeID, types.KeyLastInstanceID} {
 		genState.Sequences = append(genState.Sequences, types.Sequence{
 			IDKey: k,
-			Value: keeper.peekAutoIncrementID(ctx, k),
+			Value: keeper.PeekAutoIncrementID(ctx, k),
 		})
 	}
 
