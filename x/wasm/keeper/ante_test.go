@@ -1,8 +1,12 @@
-package keeper
+package keeper_test
 
 import (
 	"testing"
 	"time"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -97,7 +101,7 @@ func TestCountTxDecorator(t *testing.T) {
 			var anyTx sdk.Tx
 
 			// when
-			ante := NewCountTXDecorator(keyWasm)
+			ante := keeper.NewCountTXDecorator(keyWasm)
 			_, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, spec.nextAssertAnte)
 			if spec.expErr {
 				require.Error(t, gotErr)
@@ -105,5 +109,79 @@ func TestCountTxDecorator(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 		})
+	}
+}
+func TestLimitSimulationGasDecorator(t *testing.T) {
+	var (
+		hundred sdk.Gas = 100
+		zero    sdk.Gas = 0
+	)
+	specs := map[string]struct {
+		customLimit *sdk.Gas
+		consumeGas  sdk.Gas
+		maxBlockGas int64
+		simulation  bool
+		expErr      interface{}
+	}{
+		"custom limit set": {
+			customLimit: &hundred,
+			consumeGas:  hundred + 1,
+			maxBlockGas: -1,
+			simulation:  true,
+			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+		},
+		"block limit set": {
+			maxBlockGas: 100,
+			consumeGas:  hundred + 1,
+			simulation:  true,
+			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+		},
+		"no limits set": {
+			maxBlockGas: -1,
+			consumeGas:  hundred + 1,
+			simulation:  true,
+		},
+		"both limits set, custom applies": {
+			customLimit: &hundred,
+			consumeGas:  hundred - 1,
+			maxBlockGas: 10,
+			simulation:  true,
+		},
+		"not a simulation": {
+			customLimit: &hundred,
+			consumeGas:  hundred + 1,
+			simulation:  false,
+		},
+		"zero custom limit": {
+			customLimit: &zero,
+			simulation:  true,
+			expErr:      "gas limit must not be zero",
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			nextAnte := consumeGasAnteHandler(spec.consumeGas)
+			ctx := sdk.Context{}.
+				WithGasMeter(sdk.NewInfiniteGasMeter()).
+				WithConsensusParams(&abci.ConsensusParams{
+					Block: &abci.BlockParams{MaxGas: spec.maxBlockGas}})
+			// when
+			if spec.expErr != nil {
+				require.PanicsWithValue(t, spec.expErr, func() {
+					ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
+					ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+				})
+				return
+			}
+			ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
+			ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+		})
+	}
+}
+
+func consumeGasAnteHandler(gasToConsume sdk.Gas) sdk.AnteHandler {
+	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+		ctx.GasMeter().ConsumeGas(gasToConsume, "testing")
+		return ctx, nil
 	}
 }
