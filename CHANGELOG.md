@@ -13,6 +13,7 @@
 - Amino JSON representation of inner message in Msg{Instantiate,Migrate,Execute}Contract [\#642](https://github.com/CosmWasm/wasmd/issues/642)
 
 **Implemented Enhancements:**
+- Bump wasmvm to v1.0.0-beta2 [\#676](https://github.com/CosmWasm/wasmd/pull/676)
 - Add Benchmarks to compare with native modules [\#635](https://github.com/CosmWasm/wasmd/issues/635)
 - Document M1 is not supported [\#653](https://github.com/CosmWasm/wasmd/issues/653)
 - Open read access to sequences [\#669](https://github.com/CosmWasm/wasmd/pull/669)
