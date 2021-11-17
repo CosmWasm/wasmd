@@ -2,14 +2,26 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-**Implemented Enhancements:**
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...HEAD)
 
+## [v0.21.0](https://github.com/CosmWasm/wasmd/tree/v0.21.0) (2021-11-17)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...v0.20.0)
+
+**Fixed bugs + Api Breaking:**
+- Prevent infinite gas consumption in simulation queries [\#670](https://github.com/CosmWasm/wasmd/issues/670)
+- Amino JSON representation of inner message in Msg{Instantiate,Migrate,Execute}Contract [\#642](https://github.com/CosmWasm/wasmd/issues/642)
+
+**Implemented Enhancements:**
+- Add Benchmarks to compare with native modules [\#635](https://github.com/CosmWasm/wasmd/issues/635)
+- Document M1 is not supported [\#653](https://github.com/CosmWasm/wasmd/issues/653)
+- Open read access to sequences [\#669](https://github.com/CosmWasm/wasmd/pull/669)
 - Remove unused flags from command prompt for storing contract [\#647](https://github.com/CosmWasm/wasmd/issues/647)
 - Ran `make format` [\#649](https://github.com/CosmWasm/wasmd/issues/649)
 - Add golangci lint check to circleci jobs [\620](https://github.com/CosmWasm/wasmd/issues/620)
 - Updated error log statements in initGenesis for easier debugging: [\#643](https://github.com/CosmWasm/wasmd/issues/643)
-
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.20.0...HEAD)
+- Bump github.com/cosmos/iavl from 0.17.1 to 0.17.2 [\#673](https://github.com/CosmWasm/wasmd/pull/673)
+- Bump github.com/rs/zerolog from 1.25.0 to 1.26.0 [\#666](https://github.com/CosmWasm/wasmd/pull/666)
 
 ## [v0.20.0](https://github.com/CosmWasm/wasmd/tree/v0.20.0) (2021-10-08)
 
