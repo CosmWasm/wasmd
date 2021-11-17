@@ -25,6 +25,7 @@ compatibility list:
 
 | wasmd | cosmwasm-vm | cosmwasm-std |
 | ----- | ----------- | ------------ |
+| 0.21  | 1.0.0-beta | 1.0.0-beta  |
 | 0.20  | 1.0.0-beta | 1.0.0-beta  |
 | 0.19  | 0.16        | 0.16         |
 | 0.18  | 0.16        | 0.16         |
@@ -183,8 +184,12 @@ Examples:
 * [`wasmd`](./Makefile#L50-L55) is a generic, permissionless version using the `cosmos` bech32 prefix
 
 ## Genesis Configuration
-
-@alpe we should document all the genesis config for x/wasm even more.
+We strongly suggest **to limit the max block gas in the genesis** and not use the default value (`-1` for infinite).
+```json
+  "consensus_params": {
+    "block": {
+      "max_gas": "SET_YOUR_MAX_VALUE",  
+```
 
 Tip: if you want to lock this down to a permisisoned network, the following script can edit the genesis file
 to only allow permissioned use of code upload or instantiating. (Make sure you set `app.ProposalsEnabled=true`
