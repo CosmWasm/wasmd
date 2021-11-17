@@ -52,3 +52,44 @@ func encodeHeightCounter(height int64, counter uint32) []byte {
 func decodeHeightCounter(bz []byte) (int64, uint32) {
 	return int64(sdk.BigEndianToUint64(bz[0:8])), binary.BigEndian.Uint32(bz[8:])
 }
+
+// LimitSimulationGasDecorator ante decorator to limit gas in simulation calls
+type LimitSimulationGasDecorator struct {
+	gasLimit *sdk.Gas
+}
+
+// NewLimitSimulationGasDecorator constructor accepts nil value to fallback to block gas limit.
+func NewLimitSimulationGasDecorator(gasLimit *sdk.Gas) *LimitSimulationGasDecorator {
+	if gasLimit != nil && *gasLimit == 0 {
+		panic("gas limit must not be zero")
+	}
+	return &LimitSimulationGasDecorator{gasLimit: gasLimit}
+}
+
+// AnteHandle that limits the maximum gas available in simulations only.
+// A custom max value can be configured and will be applied when set. The value should not
+// exceed the max block gas limit.
+// Different values on nodes are not consensus breaking as they affect only
+// simulations but may have effect on client user experience.
+//
+// When no custom value is set then the max block gas is used as default limit.
+func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if !simulate {
+		// Wasm code is not executed in checkTX so that we don't need to limit it further.
+		// Tendermint rejects the TX afterwards when the tx.gas > max block gas.
+		// On deliverTX we rely on the tendermint/sdk mechanics that ensure
+		// tx has gas set and gas < max block gas
+		return next(ctx, tx, simulate)
+	}
+
+	// apply custom node gas limit
+	if d.gasLimit != nil {
+		return next(ctx.WithGasMeter(sdk.NewGasMeter(*d.gasLimit)), tx, simulate)
+	}
+
+	// default to max block gas when set, to be on the safe side
+	if maxGas := ctx.ConsensusParams().GetBlock().MaxGas; maxGas > 0 {
+		return next(ctx.WithGasMeter(sdk.NewGasMeter(sdk.Gas(maxGas))), tx, simulate)
+	}
+	return next(ctx, tx, simulate)
+}
