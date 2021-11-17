@@ -16,7 +16,15 @@ import (
 // NewAnteHandler returns an AnteHandler that checks and increments sequence
 // numbers, checks signatures & account numbers, and deducts fees from the first
 // signer.
-func NewAnteHandler(ak ante.AccountKeeper, bankKeeper types.BankKeeper, sigGasConsumer ante.SignatureVerificationGasConsumer, signModeHandler signing.SignModeHandler, txCounterStoreKey sdk.StoreKey, channelKeeper channelkeeper.Keeper, wasmConfig wasmTypes.WasmConfig) sdk.AnteHandler {
+func NewAnteHandler(
+	ak ante.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	sigGasConsumer ante.SignatureVerificationGasConsumer,
+	signModeHandler signing.SignModeHandler,
+	txCounterStoreKey sdk.StoreKey,
+	channelKeeper channelkeeper.Keeper,
+	wasmConfig wasmTypes.WasmConfig,
+) sdk.AnteHandler {
 	// copied sdk https://github.com/cosmos/cosmos-sdk/blob/v0.42.9/x/auth/ante/ante.go
 	return sdk.ChainAnteDecorators(
 		ante.NewSetUpContextDecorator(),                                          // outermost AnteDecorator. SetUpContext must be called first
