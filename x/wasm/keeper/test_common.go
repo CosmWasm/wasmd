@@ -94,7 +94,7 @@ var ModuleBasics = module.NewBasicManager(
 	transfer.AppModuleBasic{},
 )
 
-func MakeTestCodec(t TestingT) codec.Marshaler {
+func MakeTestCodec(t TestingT) codec.Codec {
 	return MakeEncodingConfig(t).Marshaler
 }
 

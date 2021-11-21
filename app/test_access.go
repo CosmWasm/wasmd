@@ -30,7 +30,7 @@ func (s TestSupport) WasmKeeper() wasm.Keeper {
 	return s.app.wasmKeeper
 }
 
-func (s TestSupport) AppCodec() codec.Marshaler {
+func (s TestSupport) AppCodec() codec.Codec {
 	return s.app.appCodec
 }
 func (s TestSupport) ScopedWasmIBCKeeper() capabilitykeeper.ScopedKeeper {
