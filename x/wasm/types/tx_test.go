@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -505,7 +506,7 @@ func TestMsgMigrateContract(t *testing.T) {
 func TestMsgJsonSignBytes(t *testing.T) {
 	const myInnerMsg = `{"foo":"bar"}`
 	specs := map[string]struct {
-		src sdk.Msg
+		src legacytx.LegacyMsg
 		exp string
 	}{
 		"MsgInstantiateContract": {
