@@ -13,6 +13,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	address "github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -29,9 +30,9 @@ func TestEncoding(t *testing.T) {
 		addr3       = RandomAccountAddress(t)
 		invalidAddr = "xrnd1d02kd90n38qvr3qb9qof83fn2d2"
 	)
-	valAddr := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr := make(sdk.ValAddress, address.Len)
 	valAddr[0] = 12
-	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr2 := make(sdk.ValAddress, address.Len)
 	valAddr2[1] = 123
 
 	jsonMsg := types.RawContractMessage(`{"foo": 123}`)

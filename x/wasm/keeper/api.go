@@ -6,6 +6,8 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	address "github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -28,8 +30,8 @@ var (
 )
 
 func humanAddress(canon []byte) (string, uint64, error) {
-	if len(canon) != sdk.AddrLen {
-		return "", costHumanize, fmt.Errorf("expected %d byte address", sdk.AddrLen)
+	if len(canon) != address.Len {
+		return "", costHumanize, fmt.Errorf("expected %d byte address", address.Len)
 	}
 	return sdk.AccAddress(canon).String(), costHumanize, nil
 }
