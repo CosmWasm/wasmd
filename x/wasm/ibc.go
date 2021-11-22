@@ -249,10 +249,10 @@ func (i IBCHandler) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface
 func (i IBCHandler) OnAcknowledgementPacket(
 	ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress,
-) (*sdk.Result, error) {
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
@@ -260,33 +260,41 @@ func (i IBCHandler) OnAcknowledgementPacket(
 		OriginalPacket:  newIBCPacket(packet),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
 }
 
 // OnTimeoutPacket implements the IBCModule interface
 func (i IBCHandler) OnTimeoutPacket(
 	ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress,
-) (*sdk.Result, error) {
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet)}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
+}
+
+// NegotiateAppVersion implements the IBCModule interface
+func (i IBCHandler) NegotiateAppVersion(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionID string,
+	portID string,
+	counterparty channeltypes.Counterparty,
+	proposedVersion string,
+) (version string, err error) {
+	return proposedVersion, nil
 }
 
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
