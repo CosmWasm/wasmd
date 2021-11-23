@@ -41,8 +41,8 @@ import (
 	"github.com/cosmos/ibc-go/modules/core/exported"
 	"github.com/cosmos/ibc-go/modules/core/types"
 	ibctmtypes "github.com/cosmos/ibc-go/modules/light-clients/07-tendermint/types"
-	ibctesting "github.com/cosmos/ibc-go/modules/testing"
-	"github.com/cosmos/ibc-go/modules/testing/mock"
+	ibctesting "github.com/cosmos/ibc-go/testing"
+	"github.com/cosmos/ibc-go/testing/mock"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
 	"github.com/cosmos/ibc-go/modules/core/exported"
-	ibctesting "github.com/cosmos/ibc-go/modules/testing"
+	ibctesting "github.com/cosmos/ibc-go/testing"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
