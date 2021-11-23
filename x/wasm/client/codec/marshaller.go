@@ -10,17 +10,17 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-var _ codec.Marshaler = (*ProtoCodec)(nil)
+var _ codec.Codec = (*ProtoCodec)(nil)
 
 // ProtoCodec that omits empty values.
 // This Marshaler can be used globally when setting up the client context or individually
 // for each command via `clientCtx.WithJSONMarshaler(myMarshaler)`.
 type ProtoCodec struct {
-	codec.Marshaler
+	codec.Codec
 	interfaceRegistry types.InterfaceRegistry
 }
 
-func NewProtoCodec(marshaler codec.Marshaler, registry types.InterfaceRegistry) *ProtoCodec {
+func NewProtoCodec(marshaler codec.Codec, registry types.InterfaceRegistry) *ProtoCodec {
 	return &ProtoCodec{Marshaler: marshaler, interfaceRegistry: registry}
 }
 
