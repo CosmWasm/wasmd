@@ -28,8 +28,8 @@ var (
 )
 
 func humanAddress(canon []byte) (string, uint64, error) {
-	if len(canon) != sdk.AddrLen {
-		return "", costHumanize, fmt.Errorf("expected %d byte address", sdk.AddrLen)
+	if len(canon) != 20 {
+		return "", costHumanize, fmt.Errorf("expected %d byte address", 20)
 	}
 	return sdk.AccAddress(canon).String(), costHumanize, nil
 }

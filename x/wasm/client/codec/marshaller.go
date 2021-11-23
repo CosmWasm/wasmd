@@ -20,8 +20,8 @@ type ProtoCodec struct {
 	interfaceRegistry types.InterfaceRegistry
 }
 
-func NewProtoCodec(marshaler codec.Codec, registry types.InterfaceRegistry) *ProtoCodec {
-	return &ProtoCodec{Marshaler: marshaler, interfaceRegistry: registry}
+func NewProtoCodec(codec codec.Codec, registry types.InterfaceRegistry) *ProtoCodec {
+	return &ProtoCodec{Codec: codec, interfaceRegistry: registry}
 }
 
 // MarshalJSON implements JSONMarshaler.MarshalJSON method,

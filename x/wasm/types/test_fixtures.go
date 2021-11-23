@@ -191,9 +191,10 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 	return p
 }
 
+// InstantiateContractProposalFixture cheats by setting the address length to an integer.
 func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
 
 		initMsg = struct {
 			Verifier    sdk.AccAddress `json:"verifier"`
@@ -226,9 +227,10 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 	return p
 }
 
+// MigrateContractProposalFixture contains cheating by setting the address length to an integer directly.
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
 
 		migMsg = struct {
 			Verifier sdk.AccAddress `json:"verifier"`
@@ -240,7 +242,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		panic(err)
 	}
 	const (
-		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpjnp7du"
 	)
 	p := &MigrateContractProposal{
