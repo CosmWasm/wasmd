@@ -3,6 +3,7 @@ package wasm
 import (
 	"math"
 
+	types "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -10,8 +11,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
-
-	types "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/cosmos/ibc-go/modules/core/exported"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
@@ -215,28 +215,41 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel)
 	}
 }
 
+type Ack struct{ result []byte }
+
+func (a Ack) Success() bool           { return true }
+func (a Ack) Acknowledgement() []byte { return a.result }
+
+type Nack struct{}
+
+func (Nack) Success() bool           { return false }
+func (Nack) Acknowledgement() []byte { return nil }
+
 // OnRecvPacket implements the IBCModule interface
 func (i IBCHandler) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-) (*sdk.Result, []byte, error) {
+	relayer sdk.AccAddress,
+) exported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrapf(err, "contract port id")
+		return Nack{}
 	}
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet)}
 	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return nil, nil, err
+		return Nack{}
 	}
 
-	return &sdk.Result{ // the response is ignored
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, ack, nil
+	return Ack{
+		result: ack,
+	}
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
-func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) (*sdk.Result, error) {
+func (i IBCHandler) OnAcknowledgementPacket(
+	ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress,
+) (*sdk.Result, error) {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "contract port id")
@@ -257,7 +270,9 @@ func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
+func (i IBCHandler) OnTimeoutPacket(
+	ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress,
+) (*sdk.Result, error) {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
 		return nil, sdkerrors.Wrapf(err, "contract port id")
