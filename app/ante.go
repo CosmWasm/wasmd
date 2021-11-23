@@ -5,8 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	channelkeeper "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/keeper"
-	ibcante "github.com/cosmos/cosmos-sdk/x/ibc/core/ante"
+	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
+	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
