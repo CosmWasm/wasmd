@@ -16,9 +16,9 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/modules/core/24-host"
-	"github.com/cosmos/ibc-go/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v2/modules/core/exported"
 )
 
 const (
@@ -206,13 +206,24 @@ func (am AppModule) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface.
 func (am AppModule) OnAcknowledgementPacket(
 	sdk.Context, channeltypes.Packet, []byte, sdk.AccAddress,
-) (*sdk.Result, error) {
-	return nil, nil
+) error {
+	return nil
 }
 
 // OnTimeoutPacket implements the IBCModule interface.
 func (am AppModule) OnTimeoutPacket(
 	sdk.Context, channeltypes.Packet, sdk.AccAddress,
-) (*sdk.Result, error) {
-	return nil, nil
+) error {
+	return nil
+}
+
+func (am AppModule) NegotiateAppVersion(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionID string,
+	portID string,
+	counterparty channeltypes.Counterparty,
+	proposedVersion string,
+) (version string, err error) {
+	return proposedVersion, nil
 }

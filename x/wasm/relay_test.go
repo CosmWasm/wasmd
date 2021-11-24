@@ -14,9 +14,9 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +65,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 
 	// when relay to chain B and handle Ack on chain A
 	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(
-		coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), chainA.SenderAccount.GetAddress().String(),
+		coinToSendToB.Denom, coinToSendToB.Amount.String(), chainA.SenderAccount.GetAddress().String(),
 		chainB.SenderAccount.GetAddress().String())
 	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1,
 		path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
@@ -281,7 +281,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 
 	// timeout packet send (by the relayer)
 	fungibleTokenPacketData := ibctransfertypes.NewFungibleTokenPacketData(
-		coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), myContractAddr.String(), receiverAddress.String())
+		coinToSendToB.Denom, coinToSendToB.Amount.String(), myContractAddr.String(), receiverAddress.String())
 	var timeoutHeight clienttypes.Height
 	packet = channeltypes.NewPacket(fungibleTokenPacketData.GetBytes(), 1,
 		path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
@@ -402,7 +402,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	}
 
 	dataPacket := ibctransfertypes.NewFungibleTokenPacketData(
-		in.CoinsToSend.Denom, in.CoinsToSend.Amount.Uint64(), s.contractAddr, in.ReceiverAddr,
+		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), s.contractAddr, in.ReceiverAddr,
 	)
 	if err := dataPacket.ValidateBasic(); err != nil {
 		return nil, 0, err
@@ -427,7 +427,7 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 	returnTokens := &wasmvmtypes.BankMsg{
 		Send: &wasmvmtypes.SendMsg{
 			ToAddress: data.Sender,
-			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(data.Amount, data.Denom)},
+			Amount:    wasmvmtypes.Coins{wasmvmtypes.Coin{Amount: data.Amount, Denom: data.Denom}},
 		}}
 
 	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
