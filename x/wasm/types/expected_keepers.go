@@ -29,7 +29,7 @@ type Burner interface {
 type BankKeeper interface {
 	BankViewKeeper
 	Burner
-	SendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+	IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
 	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }

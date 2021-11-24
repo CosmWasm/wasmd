@@ -46,18 +46,13 @@ import (
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	encodingConfig := app.MakeEncodingConfig()
 
-	initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
-	if err != nil {
-		return err
-	}
-
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
 	config.SetBech32PrefixForValidator(app.Bech32PrefixValAddr, app.Bech32PrefixValPub)
 	config.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
 	config.Seal()
 
-	initClientCtx = client.Context{}.
+	initClientCtx := client.Context{}.
 		WithJSONCodec(clientcodec.NewProtoCodec(encodingConfig.Marshaler, encodingConfig.InterfaceRegistry)).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithTxConfig(encodingConfig.TxConfig).
@@ -71,6 +66,12 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		Use:   version.AppName,
 		Short: "Wasm Daemon (server)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+
+			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}

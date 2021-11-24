@@ -1021,7 +1021,7 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	em := sdk.NewEventManager()
 	ctx := parentCtx.WithEventManager(em)
-	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
+	if err := c.keeper.IsSendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
 	if c.keeper.BlockedAddr(fromAddr) {
