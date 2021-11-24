@@ -76,8 +76,8 @@ func TestInstantiateProposal(t *testing.T) {
 	)
 
 	var (
-		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
+		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, 20)
 	)
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
 		p.CodeID = firstCodeID
@@ -139,8 +139,8 @@ func TestMigrateProposal(t *testing.T) {
 	require.NoError(t, wasmKeeper.importCode(ctx, 2, codeInfoFixture, wasmCode))
 
 	var (
-		anyAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
-		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		anyAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, 20)
+		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, 20)
 		contractAddr                = BuildContractAddress(1, 1)
 	)
 
@@ -207,7 +207,7 @@ func TestMigrateProposal(t *testing.T) {
 
 func TestAdminProposals(t *testing.T) {
 	var (
-		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, 20)
 		contractAddr                = BuildContractAddress(1, 1)
 	)
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
@@ -298,7 +298,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 
 	var (
 		cdc                                   = keepers.WasmKeeper.cdc
-		myAddress              sdk.AccAddress = make([]byte, sdk.AddrLen)
+		myAddress              sdk.AccAddress = make([]byte, 20)
 		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
 	)
 
