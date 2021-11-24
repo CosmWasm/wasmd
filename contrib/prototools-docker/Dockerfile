@@ -39,7 +39,7 @@ RUN GO111MODULE=on go get \
 
 RUN upx --lzma /usr/local/bin/*
 
-FROM golang:1.16.8-alpine3.13
+FROM golang:1.17.3-alpine
 ENV LD_LIBRARY_PATH=/lib64:/lib
 
 WORKDIR /work
