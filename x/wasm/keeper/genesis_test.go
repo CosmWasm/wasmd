@@ -660,7 +660,8 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
-	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
+	// another place where we've used Provenance's solution.
+	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
 	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
 }
 
