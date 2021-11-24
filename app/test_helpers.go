@@ -248,10 +248,15 @@ func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotype
 }
 
 // setTotalSupply provides the total supply based on accAmt * totalAccounts.
+// This was taken from the provenance.io 0.44.* code.
 func setTotalSupply(app *WasmApp, ctx sdk.Context, accAmt sdk.Int, totalAccounts int) {
-	totalSupply := sdk.NewCoins(sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt.MulRaw(int64(totalAccounts))))
+	totalSupply := sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt.MulRaw(int64(totalAccounts)))
 	prevSupply := app.bankKeeper.GetSupply(ctx, app.stakingKeeper.BondDenom(ctx))
-	app.bankKeeper.SetSupply(ctx, banktypes.NewSupply(prevSupply.GetTotal().Add(totalSupply...)))
+	newTotal := totalSupply.Add(prevSupply)
+	err := app.bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(newTotal))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // AddTestAddrs constructs and returns accNum amount of accounts with an
