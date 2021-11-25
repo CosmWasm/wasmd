@@ -3,13 +3,13 @@ package keeper
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -60,7 +60,7 @@ func TestLegacyQueryContractState(t *testing.T) {
 		// if success and expSmartRes is not set, we parse into []types.Model and compare (all state)
 		expModelLen      int
 		expModelContains []types.Model
-		expErr           *sdkErrors.Error
+		expErr           error
 	}{
 		"query all": {
 			srcPath:     []string{QueryGetContractState, addr.String(), QueryMethodContractStateAll},
@@ -93,7 +93,7 @@ func TestLegacyQueryContractState(t *testing.T) {
 		"query smart with invalid json": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateSmart},
 			srcReq:  abci.RequestQuery{Data: []byte(`not a json string`)},
-			expErr:  types.ErrQueryFailed,
+			expErr:  types.ErrInvalid,
 		},
 		"query non-existent raw key": {
 			srcPath: []string{QueryGetContractState, addr.String(), QueryMethodContractStateRaw},
@@ -120,6 +120,7 @@ func TestLegacyQueryContractState(t *testing.T) {
 		},
 		"query smart with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
+			srcReq:      abci.RequestQuery{Data: []byte(`{}`)},
 			expModelLen: 0,
 			expErr:      types.ErrNotFound,
 		},
@@ -129,7 +130,7 @@ func TestLegacyQueryContractState(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
 			// require.True(t, spec.expErr.Is(err), "unexpected error")
-			require.True(t, spec.expErr.Is(err), err)
+			require.True(t, errors.Is(err, spec.expErr), err)
 
 			// if smart query, check custom response
 			if spec.srcPath[2] != QueryMethodContractStateAll {

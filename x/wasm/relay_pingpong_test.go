@@ -390,7 +390,7 @@ type startGame struct {
 	MaxValue uint64 `json:"max_value,omitempty"`
 }
 
-func (g startGame) GetBytes() json.RawMessage {
+func (g startGame) GetBytes() wasmtypes.RawContractMessage {
 	b, err := json.Marshal(g)
 	if err != nil {
 		panic(err)

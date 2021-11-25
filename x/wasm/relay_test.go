@@ -442,7 +442,7 @@ type startTransfer struct {
 	Timeout         uint64
 }
 
-func (g startTransfer) GetBytes() json.RawMessage {
+func (g startTransfer) GetBytes() types.RawContractMessage {
 	b, err := json.Marshal(g)
 	if err != nil {
 		panic(err)

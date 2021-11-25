@@ -468,7 +468,11 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			if err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.Smart.ContractAddr)
 			}
-			return k.QuerySmart(ctx, addr, request.Smart.Msg)
+			msg := types.RawContractMessage(request.Smart.Msg)
+			if err := msg.ValidateBasic(); err != nil {
+				return nil, sdkerrors.Wrap(err, "json msg")
+			}
+			return k.QuerySmart(ctx, addr, msg)
 		case request.Raw != nil:
 			addr, err := sdk.AccAddressFromBech32(request.Raw.ContractAddr)
 			if err != nil {
