@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"encoding/json"
+	"reflect"
+	"strconv"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"reflect"
-	"strconv"
 )
 
 const (
