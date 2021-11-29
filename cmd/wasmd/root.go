@@ -39,7 +39,6 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
 )
 
@@ -258,7 +257,6 @@ func (ac appCreator) newApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
-	wasmOpts wasmTypes.WasmConfig
 ) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 

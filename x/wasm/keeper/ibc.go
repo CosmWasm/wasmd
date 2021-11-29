@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -55,16 +56,14 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 	return k.capabilityKeeper.ClaimCapability(ctx, cap, name)
 }
 
-
 // NegotiateAppVersion performs application version negotiation given the provided channel ordering, connectionID, portID, counterparty and proposed version.
-    // An error is returned if version negotiation cannot be performed. For example, an application module implementing this interface
-    // may decide to return an error in the event of the proposed version being incompatible with it's own
-    NegotiateAppVersion(
-        ctx sdk.Context,
-        order channeltypes.Order,
-        connectionID string,
-        portID string,
-        counterparty channeltypes.Counterparty,
-        proposedVersion string,
-    ) (version string, err error)
-}
+// An error is returned if version negotiation cannot be performed. For example, an application module implementing this interface
+// may decide to return an error in the event of the proposed version being incompatible with it's own
+func NegotiateAppVersion(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionID string,
+	portID string,
+	counterparty channeltypes.Counterparty,
+	proposedVersion string,
+) (version string, err error)
