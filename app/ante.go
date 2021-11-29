@@ -5,20 +5,20 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
 	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
-// channel keeper 
+// channel keeper
 type HandlerOptions struct {
 	ante.HandlerOptions
 
 	IBCChannelkeeper channelkeeper.Keeper
-	WasmKeys:        keys[wasm.StoreKey],
-	WasmConfig:      wasmConfig,
+	txCounterStoreKey sdk.StoreKey
+	WasmConfig       wasmTypes.WasmConfig
 }
 
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
@@ -39,8 +39,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
-		wasmkeeper.NewLimitSimulationGasDecorator(WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
-		wasmkeeper.NewCountTXDecorator(txCounterStoreKey),
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
+		wasmkeeper.NewCountTXDecorator(options.txCounterStoreKey),
 		ante.NewRejectExtensionOptionsDecorator(),
 		ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),

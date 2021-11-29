@@ -29,10 +29,14 @@ type Burner interface {
 type BankKeeper interface {
 	BankViewKeeper
 	Burner
-	SendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+
+	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
+	IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+
 	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
+
 
 // AccountKeeper defines a subset of methods implemented by the cosmos-sdk account keeper
 type AccountKeeper interface {

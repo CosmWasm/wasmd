@@ -219,7 +219,6 @@ type WasmApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
 	BankKeeper       bankkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
@@ -600,7 +599,6 @@ func NewWasmApp(
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 			},
 			IBCChannelkeeper: app.IBCKeeper.ChannelKeeper,
-			WasmKeys:         keys[wasm.StoreKey],
 			WasmConfig:       wasmConfig,
 		},
 	)
@@ -627,7 +625,8 @@ func NewWasmApp(
 		// Note that since this reads from the store, we can only perform it when
 		// `loadLatest` is set to true.
 		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
-		app.CapabilityKeeper.InitializeAndSeal(ctx)
+		app.CapabilityKeeper.InitMemStore(ctx)
+		app.CapabilityKeeper.Seal()
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {

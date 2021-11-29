@@ -173,6 +173,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
+// Add init flags for modules
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
 	wasm.AddModuleInitFlags(startCmd)
@@ -244,7 +245,16 @@ func txCommand() *cobra.Command {
 	return cmd
 }
 
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+type appCreator struct {
+	encCfg app.EncodingConfig
+}
+
+func (ac appCreator) newApp(
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	appOpts servertypes.AppOptions,
+) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
@@ -278,8 +288,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	return app.NewWasmApp(logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
+		ac.encCfg,
 		app.GetEnabledProposals(),
-		appOpts,
 		wasmOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
@@ -295,24 +305,43 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	)
 }
 
-func createWasmAppAndExport(
-	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
-	appOpts servertypes.AppOptions) (servertypes.ExportedApp, error) {
+func (ac appCreator) appExport(
+	logger log.Logger,
+	db dbm.DB,
+	traceStore io.Writer,
+	height int64,
+	forZeroHeight bool,
+	jailAllowedAddrs []string,
+	appOpts servertypes.AppOptions,
+) (servertypes.ExportedApp, error) {
 
-	var wasmApp *app.WasmApp
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
-		return servertypes.ExportedApp{}, errors.New("application home not set")
+		return servertypes.ExportedApp{}, errors.New("application home is not set")
 	}
-	var emptyWasmOpts []wasm.Option
-	if height != -1 {
-		wasmApp = app.NewWasmApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), app.GetEnabledProposals(), appOpts, emptyWasmOpts)
 
+	var loadLatest bool
+	if height == -1 {
+		loadLatest = true
+	}
+
+	wasmApp := app.NewWasmApp(
+		logger,
+		db,
+		traceStore,
+		loadLatest,
+		map[int64]bool{},
+		homePath,
+		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
+		ac.encCfg,
+		enabledProposals,
+		appOpts,
+	)
+
+	if height != -1 {
 		if err := wasmApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
-	} else {
-		wasmApp = app.NewWasmApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), app.GetEnabledProposals(), appOpts, emptyWasmOpts)
 	}
 
 	return wasmApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
