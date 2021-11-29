@@ -72,7 +72,7 @@ var (
 	// Default params variables used to create a TM client
 	DefaultTrustLevel ibctmtypes.Fraction = ibctmtypes.DefaultTrustLevel
 	TestHash                              = tmhash.Sum([]byte("TESTING HASH"))
-	TestCoin                              = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	TestCoin                              = sdk.NewCoin(sdk.DefaultBondDenom, sdk.Int(10000000000))
 
 	UpgradePath = []string{"upgrade", "upgradedIBCState"}
 

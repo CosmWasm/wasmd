@@ -93,7 +93,7 @@ func TestCreateInvalidWasmCode(t *testing.T) {
 func TestCreateStoresInstantiatePermission(t *testing.T) {
 	var (
 		deposit                = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, 20)
 	)
 
 	specs := map[string]struct {
@@ -340,8 +340,8 @@ func TestInstantiate(t *testing.T) {
 
 func TestInstantiateWithDeposit(t *testing.T) {
 	var (
-		bob  = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob  = bytes.Repeat([]byte{1}, 20)
+		fred = bytes.Repeat([]byte{2}, 20)
 
 		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 		initMsg = HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob}
@@ -397,9 +397,9 @@ func TestInstantiateWithDeposit(t *testing.T) {
 func TestInstantiateWithPermissions(t *testing.T) {
 	var (
 		deposit   = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr    = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		otherAddr = bytes.Repeat([]byte{2}, sdk.AddrLen)
-		anyAddr   = bytes.Repeat([]byte{3}, sdk.AddrLen)
+		myAddr    = bytes.Repeat([]byte{1}, 20)
+		otherAddr = bytes.Repeat([]byte{2}, 20)
+		anyAddr   = bytes.Repeat([]byte{3}, 20)
 	)
 
 	initMsg := HackatomExampleInitMsg{
@@ -568,8 +568,8 @@ func TestExecute(t *testing.T) {
 
 func TestExecuteWithDeposit(t *testing.T) {
 	var (
-		bob         = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred        = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob         = bytes.Repeat([]byte{1}, 20)
+		fred        = bytes.Repeat([]byte{2}, 20)
 		blockedAddr = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 		deposit     = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	)
