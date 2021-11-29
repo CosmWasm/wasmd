@@ -250,10 +250,10 @@ func (i IBCHandler) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface
 func (i IBCHandler) OnAcknowledgementPacket(
 	ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress,
-) (*sdk.Result, error) {
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
@@ -261,32 +261,28 @@ func (i IBCHandler) OnAcknowledgementPacket(
 		OriginalPacket:  newIBCPacket(packet),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
 }
 
 // OnTimeoutPacket implements the IBCModule interface
 func (i IBCHandler) OnTimeoutPacket(
 	ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress,
-) (*sdk.Result, error) {
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet)}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
 }
 
@@ -326,7 +322,7 @@ func ValidateChannelParams(channelID string) error {
 // NegotiateAppVersion performs application version negotiation given the provided channel ordering, connectionID, portID, counterparty and proposed version.
 // An error is returned if version negotiation cannot be performed. For example, an application module implementing this interface
 // may decide to return an error in the event of the proposed version being incompatible with it's own
-func NegotiateAppVersion(
+func (i IBCHandler) NegotiateAppVersion(
 	ctx sdk.Context,
 	order channeltypes.Order,
 	connectionID string,

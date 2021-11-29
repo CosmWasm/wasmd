@@ -337,7 +337,7 @@ func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, 
 	if err != nil {
 		return false, err
 	}
-	cdc := clientCtx.JSONCodec
+	cdc := clientCtx.Codec
 	var genBalIterator banktypes.GenesisBalancesIterator
 	err = genutil.ValidateAccountInGenesis(appState, genBalIterator, sender, coins, cdc)
 	if err != nil {
@@ -392,7 +392,7 @@ func (d DefaultGenesisReader) ReadWasmGenesis(cmd *cobra.Command) (*GenesisData,
 	var wasmGenesisState types.GenesisState
 	if appState[types.ModuleName] != nil {
 		clientCtx := client.GetClientContextFromCmd(cmd)
-		clientCtx.JSONCodec.MustUnmarshalJSON(appState[types.ModuleName], &wasmGenesisState)
+		clientCtx.Codec.MustUnmarshalJSON(appState[types.ModuleName], &wasmGenesisState)
 	}
 
 	return NewGenesisData(
