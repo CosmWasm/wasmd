@@ -288,12 +288,18 @@ func (ac appCreator) newApp(
 		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
 	}
 
-	return app.NewWasmApp(logger, db, traceStore, true, skipUpgradeHeights,
+	return app.NewWasmApp(
+		logger,
+		db,
+		traceStore,
+		true,
+		skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		ac.encCfg,
 		app.GetEnabledProposals(),
-		baseapp.SetTelemetry(cast.ToBool(appOpts.Get("telemetry.enabled")),
+		appOpts,
+		wasmOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
@@ -327,6 +333,7 @@ func (ac appCreator) appExport(
 	if height == -1 {
 		loadLatest = true
 	}
+	var emptyWasmOpts []wasm.Option
 
 	wasmApp := app.NewWasmApp(
 		logger,
@@ -337,8 +344,9 @@ func (ac appCreator) appExport(
 		homePath,
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		ac.encCfg,
-		enabledProposals,
+		app.GetEnabledProposals(),
 		appOpts,
+		emptyWasmOpts,
 	)
 
 	if height != -1 {
