@@ -293,7 +293,7 @@ func (ac appCreator) newApp(
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		ac.encCfg,
 		app.GetEnabledProposals(),
-		wasmOpts,
+		baseapp.SetTelemetry(cast.ToBool(appOpts.Get("telemetry.enabled")),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(server.FlagHaltHeight))),
