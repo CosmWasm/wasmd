@@ -322,6 +322,7 @@ func ValidateChannelParams(channelID string) error {
 // NegotiateAppVersion performs application version negotiation given the provided channel ordering, connectionID, portID, counterparty and proposed version.
 // An error is returned if version negotiation cannot be performed. For example, an application module implementing this interface
 // may decide to return an error in the event of the proposed version being incompatible with it's own
+// NegotiateAppVersion implements the IBCModule interface
 func (i IBCHandler) NegotiateAppVersion(
 	ctx sdk.Context,
 	order channeltypes.Order,
@@ -329,4 +330,6 @@ func (i IBCHandler) NegotiateAppVersion(
 	portID string,
 	counterparty channeltypes.Counterparty,
 	proposedVersion string,
-) (version string, err error)
+) (version string, err error) {
+	return proposedVersion, nil
+}
