@@ -51,11 +51,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	"github.com/cosmos/ibc-go/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/modules/core"
-	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/cosmos/ibc-go/v2/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v2/modules/core"
+	ibchost "github.com/cosmos/ibc-go/v2/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v2/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -141,6 +143,10 @@ type TestKeepers struct {
 	EncodingConfig params2.EncodingConfig
 }
 
+type MockVersionSetter struct{}
+
+func (MockVersionSetter) SetProtocolVersion(uint64) {}
+
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t TestingT) (sdk.Context, TestKeepers) {
 	return CreateTestInput(t, false, "staking")
@@ -171,6 +177,7 @@ func createTestInput(
 	keyParams := sdk.NewKVStoreKey(paramstypes.StoreKey)
 	tkeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyGov := sdk.NewKVStoreKey(govtypes.StoreKey)
+	keyUpgrade := storetypes.NewKVStoreKey(upgradetypes.StoreKey)
 	keyIBC := sdk.NewKVStoreKey(ibchost.StoreKey)
 	keyCapability := sdk.NewKVStoreKey(capabilitytypes.StoreKey)
 	keyCapabilityTransient := storetypes.NewMemoryStoreKey(capabilitytypes.MemStoreKey)
@@ -244,9 +251,9 @@ func createTestInput(
 	)
 	bankParams := banktypes.DefaultParams()
 	bankKeeper.SetParams(ctx, bankParams)
-	bankKeeper.SetSupply(ctx, banktypes.NewSupply(sdk.NewCoins(
+	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(
 		sdk.NewCoin("denom", sdk.NewInt(10000)),
-	)))
+	))
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -262,9 +269,8 @@ func createTestInput(
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
-	err := bankKeeper.SetBalances(ctx, distrAcc.GetAddress(), sdk.NewCoins(
-		sdk.NewCoin("stake", sdk.NewInt(2000000)),
-	))
+	stake := sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(2000000)))
+	err = bankKeeper.MintCoins(ctx, minttypes.ModuleName, stake)
 	require.NoError(t, err)
 	authKeeper.SetModuleAccount(ctx, distrAcc)
 	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, keyCapability, keyCapabilityTransient)
@@ -272,9 +278,12 @@ func createTestInput(
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
 	ibcSubsp, _ := paramsKeeper.GetSubspace(ibchost.ModuleName)
+	skipHeights := make(map[int64]bool)
+
+	upgradeKeeper := upgradekeeper.NewKeeper(skipHeights, keyUpgrade, appCodec, tempDir, MockVersionSetter{})
 
 	ibcKeeper := ibckeeper.NewKeeper(
-		appCodec, keyIBC, ibcSubsp, stakingKeeper, scopedIBCKeeper,
+		appCodec, keyIBC, ibcSubsp, stakingKeeper, upgradeKeeper, scopedIBCKeeper,
 	)
 
 	router := baseapp.NewRouter()
@@ -284,6 +293,8 @@ func createTestInput(
 	router.AddRoute(sdk.NewRoute(stakingtypes.RouterKey, sh))
 	dh := distribution.NewHandler(distKeeper)
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
+
+	msgRouter := baseapp.NewMsgServiceRouter()
 
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
@@ -303,6 +314,7 @@ func createTestInput(
 		scopedWasmKeeper,
 		wasmtesting.MockIBCTransferKeeper{},
 		router,
+		msgRouter,
 		querier,
 		tempDir,
 		wasmConfig,
@@ -608,7 +620,9 @@ func createFakeFundedAccount(t TestingT, ctx sdk.Context, am authkeeper.AccountK
 func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	require.NoError(t, bank.SetBalances(ctx, addr, coins))
+	err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
+	require.NoError(t, err)
+	bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
 }
 
 var keyCounter uint64

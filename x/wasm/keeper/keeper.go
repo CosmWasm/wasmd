@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -89,6 +91,7 @@ func NewKeeper(
 	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router sdk.Router,
+	msgRouter *baseapp.MsgServiceRouter,
 	queryRouter GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
@@ -112,7 +115,7 @@ func NewKeeper(
 		bank:             NewBankCoinTransferrer(bankKeeper),
 		portKeeper:       portKeeper,
 		capabilityKeeper: capabilityKeeper,
-		messenger:        NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		messenger:        NewDefaultMessageHandler(router, msgRouter, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:    wasmConfig.SmartQueryGasLimit,
 		paramSpace:       paramSpace,
 		gasRegister:      NewDefaultWasmGasRegister(),
@@ -1019,7 +1022,7 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	em := sdk.NewEventManager()
 	ctx := parentCtx.WithEventManager(em)
-	if err := c.keeper.SendEnabledCoins(ctx, amt...); err != nil {
+	if err := c.keeper.IsSendEnabledCoins(ctx, amt...); err != nil {
 		return err
 	}
 	if c.keeper.BlockedAddr(fromAddr) {

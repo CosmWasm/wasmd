@@ -7,10 +7,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
-	connectiontypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/modules/core/exported"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	connectiontypes "github.com/cosmos/ibc-go/v2/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
 )
 
 // BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
@@ -36,7 +36,6 @@ type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
-
 
 // AccountKeeper defines a subset of methods implemented by the cosmos-sdk account keeper
 type AccountKeeper interface {

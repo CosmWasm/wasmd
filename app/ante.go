@@ -7,8 +7,8 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	channelkeeper "github.com/cosmos/ibc-go/modules/core/04-channel/keeper"
-	ibcante "github.com/cosmos/ibc-go/modules/core/ante"
+	channelkeeper "github.com/cosmos/ibc-go/v2/modules/core/04-channel/keeper"
+	ibcante "github.com/cosmos/ibc-go/v2/modules/core/ante"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
@@ -16,9 +16,9 @@ import (
 type HandlerOptions struct {
 	ante.HandlerOptions
 
-	IBCChannelkeeper channelkeeper.Keeper
+	IBCChannelkeeper  channelkeeper.Keeper
 	txCounterStoreKey sdk.StoreKey
-	WasmConfig       wasmTypes.WasmConfig
+	WasmConfig        wasmTypes.WasmConfig
 }
 
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
