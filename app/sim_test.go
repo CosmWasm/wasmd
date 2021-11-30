@@ -106,7 +106,9 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue, wasm.EnableAllProposals, EmptyBaseAppOptions{}, nil, fauxMerkleModeOpt)
+	encodingConfig := MakeEncodingConfig()
+	app := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encodingConfig, wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
+
 	require.Equal(t, appName, app.Name())
 
 	// Run randomized simulation
@@ -146,7 +148,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue, wasm.EnableAllProposals, EmptyBaseAppOptions{}, nil, fauxMerkleModeOpt)
+	newApp := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue, encodingConfig, wasm.EnableAllProposals, EmptyBaseAppOptions{}, nil, fauxMerkleModeOpt)
 	require.Equal(t, appName, newApp.Name())
 
 	var genesisState GenesisState
@@ -204,7 +206,8 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue,
+	encodingConfig := MakeEncodingConfig()
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue, encodingConfig,
 		wasm.EnableAllProposals, simapp.EmptyAppOptions{}, nil, fauxMerkleModeOpt)
 	require.Equal(t, "WasmApp", app.Name())
 

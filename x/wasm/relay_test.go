@@ -58,9 +58,9 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	require.NoError(t, err)
 
 	// when relay to chain B and handle Ack on chain A
-	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String())
+	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.String(), chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String())
 	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, 0)
-	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).GetBytes()
+	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).Response.Size()()
 	err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, packet, ack)
 	require.NoError(t, err)
 
