@@ -26,8 +26,12 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
-	wasmApp := app.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, app.DefaultNodeHome, invCheckPeriod, wasm.EnableAllProposals, app.EmptyBaseAppOptions{}, opts)
+	encodingConfig := app.MakeEncodingConfig()
+
+	
+	wasmApp := app.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, app.DefaultNodeHome, invCheckPeriod, encodingConfig, wasm.EnableAllProposals, app.EmptyBaseAppOptions{}, opts)
 	if withGenesis {
 		return wasmApp, app.NewDefaultGenesisState()
 	}
