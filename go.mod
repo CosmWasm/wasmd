@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-beta2
 	github.com/cosmos/cosmos-sdk v0.42.10
-	github.com/cosmos/iavl v0.17.2
+	github.com/cosmos/iavl v0.17.3
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
