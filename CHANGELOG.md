@@ -5,6 +5,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...HEAD)
 
 **Implemented Enhancements:**
+
 - Move to Cosmos-SDK 0.44.5
 - run make format
 
@@ -13,10 +14,12 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...v0.20.0)
 
 **Fixed bugs + Api Breaking:**
+
 - Prevent infinite gas consumption in simulation queries [\#670](https://github.com/CosmWasm/wasmd/issues/670)
 - Amino JSON representation of inner message in Msg{Instantiate,Migrate,Execute}Contract [\#642](https://github.com/CosmWasm/wasmd/issues/642)
 
 **Implemented Enhancements:**
+
 - Bump wasmvm to v1.0.0-beta2 [\#676](https://github.com/CosmWasm/wasmd/pull/676)
 - Add Benchmarks to compare with native modules [\#635](https://github.com/CosmWasm/wasmd/issues/635)
 - Document M1 is not supported [\#653](https://github.com/CosmWasm/wasmd/issues/653)
@@ -37,6 +40,7 @@
 - Add capabilities to begin block [\#626](https://github.com/CosmWasm/wasmd/pull/626)
 
 **Api Breaking:**
+
 - Update to wasmvm 1.0.0-soon2 [\#624](https://github.com/CosmWasm/wasmd/issues/624)
 
 **Implemented Enhancements:**
@@ -62,6 +66,7 @@
 - Fix bug in query handler initialization on reply [\#604](https://github.com/CosmWasm/wasmd/issues/604)
 
 **Api Breaking:**
+
 - Bump Go version to  1.16 [\#612](https://github.com/CosmWasm/wasmd/pull/612)
 
 **Implemented Enhancements:**
@@ -78,6 +83,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.18.0...v0.17.0)
 
 **Api Breaking:**
+
 - Events documented and refactored [\#448](https://github.com/CosmWasm/wasmd/issues/448), [\#589](https://github.com/CosmWasm/wasmd/pull/589), [\#587](https://github.com/CosmWasm/wasmd/issues/587)
 - Add organisation to grpc gateway path [\#578](https://github.com/CosmWasm/wasmd/pull/578)
 - Move Proto version from `v1beta1` to `v1` for all cosmwasm.wasm.* types
@@ -91,7 +97,8 @@
   [\#565](https://github.com/CosmWasm/wasmd/pull/565)
 
 **Implemented Enhancements:**
-- Cosmos SDK 0.42.9, wasmvm 0.16.0 [\#582](https://github.com/CosmWasm/wasmd/pull/582) 
+
+- Cosmos SDK 0.42.9, wasmvm 0.16.0 [\#582](https://github.com/CosmWasm/wasmd/pull/582)
 - Better ibc contract interface [\#570](https://github.com/CosmWasm/wasmd/pull/570) ([ethanfrey](https://github.com/ethanfrey))
 - Reject invalid events/attributes returned from contracts [\#560](https://github.com/CosmWasm/wasmd/pull/560)
 - IBC Query methods from Wasm contracts only return OPEN channels [\#568](https://github.com/CosmWasm/wasmd/pull/568)
@@ -106,6 +113,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.17.0...v0.16.0)
 
 **Features:**
+
 - Remove json type cast for contract msgs [\#520](https://github.com/CosmWasm/wasmd/pull/520) ([alpe](https://github.com/alpe))
 - Bump github.com/cosmos/cosmos-sdk from 0.42.4 to 0.42.5 [\#519](https://github.com/CosmWasm/wasmd/pull/519) ([dependabot-preview[bot]](https://github.com/apps/dependabot-preview))
 
@@ -114,6 +122,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.15.1...v0.16.0)
 
 **Features:**
+
 - Upgrade to wasmvm v0.14.0-rc1 [\#508](https://github.com/CosmWasm/wasmd/pull/508) ([alpe](https://github.com/alpe))
 - Use the cache metrics from WasmVM [\#500](https://github.com/CosmWasm/wasmd/issues/500)
 - Update IBC.md [\#494](https://github.com/CosmWasm/wasmd/pull/494) ([ethanfrey](https://github.com/ethanfrey))
@@ -147,6 +156,7 @@
 - Implement IBC contract support [\#394](https://github.com/CosmWasm/wasmd/pull/394) ([alpe](https://github.com/alpe))
 
 **Api breaking:**
+
 - Improve list contracts by code query [\#497](https://github.com/CosmWasm/wasmd/pull/497) ([alpe](https://github.com/alpe))
 - Rename to just `funds` [/#423](https://github.com/CosmWasm/wasmd/issues/423)
 
@@ -172,6 +182,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.1...v0.15.0)
 
 **Features:**
+
 - Upgrade to cosmos-sdk v0.41.0 [\#390](https://github.com/CosmWasm/wasmd/pull/390)
 
 ## [v0.14.1](https://github.com/CosmWasm/wasmd/tree/v0.14.1) (2021-01-20)
@@ -179,6 +190,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.14.0...v0.14.1)
 
 **Features:**
+
 - Upgrade to cosmos-sdk v0.40.1 final + Tendermint 0.34.3 [\#380](https://github.com/CosmWasm/wasmd/pull/380)
 
 ## [v0.14.0](https://github.com/CosmWasm/wasmd/tree/v0.14.0) (2021-01-11)
@@ -186,6 +198,7 @@
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.13.0...v0.14.0)
 
 **Features:**
+
 - Upgrade to cosmos-sdk v0.40.0 final [\#354](https://github.com/CosmWasm/wasmd/pull/369)
 - Refactor to GRPC message server [\#366](https://github.com/CosmWasm/wasmd/pull/366)
 - Make it easy to initialize contracts in genesis file with new CLI commands[\#326](https://github.com/CosmWasm/wasmd/issues/326)
