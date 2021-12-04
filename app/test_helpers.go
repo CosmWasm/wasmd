@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -457,4 +459,18 @@ type EmptyBaseAppOptions struct{}
 // Get implements AppOptions
 func (ao EmptyBaseAppOptions) Get(o string) interface{} {
 	return nil
+}
+
+func IBCTestSupport(t *testing.T, chain *ibctesting.TestChain) *TestSupport {
+	app, ok := chain.App.(*WasmApp)
+	if !ok {
+		panic("not a wasmd app")
+	}
+	return NewTestSupport(t, app)
+}
+
+// ContractInfo is a helper function to returns the ContractInfo for the given contract address
+func ContractInfo(t *testing.T, c *ibctesting.TestChain, contractAddr sdk.AccAddress) *types.ContractInfo {
+	ibcs := IBCTestSupport(t, c)
+	return ibcs.WasmKeeper().GetContractInfo(c.GetContext(), contractAddr)
 }
