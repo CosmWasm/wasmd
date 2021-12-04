@@ -371,8 +371,8 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	customEncoders := &MessageEncoders{
 		Bank: nilEncoder,
 	}
-
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, *baseapp.MsgServiceRouter, customEncoders)))
+	msgRouter := baseapp.NewMsgServiceRouter()
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, msgRouter, customEncoders)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

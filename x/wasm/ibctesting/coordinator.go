@@ -57,7 +57,7 @@ func NewCoordinator(t *testing.T, n int, opts ...[]keeper.Option) *Coordinator {
 // for both chains. The channels created are connected to the ibc-transfer application.
 func (coord *Coordinator) Setup(
 	chainA, chainB *TestChain, order channeltypes.Order,
-) (string, string, *ibctesting.TestConnection, *ibctesting.TestConnection, ibctesting.TestChannel, ibctesting.TestChannel) {
+) (string, string, *ibctesting.ConnectionConfig, *ibctesting.ConnectionConfig, ibctesting.ChannelConfig, ibctesting.ChannelConfig) {
 	clientA, clientB, connA, connB := coord.SetupClientConnections(chainA, chainB, exported.Tendermint)
 
 	// channels can also be referenced through the returned connections
@@ -88,7 +88,7 @@ func (coord *Coordinator) SetupClients(
 func (coord *Coordinator) SetupClientConnections(
 	chainA, chainB *TestChain,
 	clientType string,
-) (string, string, *ibctesting.TestConnection, *ibctesting.TestConnection) {
+) (string, string, *ibctesting.ConnectionConfig, *ibctesting.ConnectionConfig) {
 
 	clientA, clientB := coord.SetupClients(chainA, chainB, clientType)
 
@@ -155,7 +155,7 @@ func (coord *Coordinator) UpdateClient(
 func (coord *Coordinator) CreateConnection(
 	chainA, chainB *TestChain,
 	clientA, clientB string,
-) (*ibctesting.TestConnection, *ibctesting.TestConnection) {
+) (*ibctesting.ConnectionConfig, *ibctesting.ConnectionConfig) {
 
 	connA, connB, err := coord.ConnOpenInit(chainA, chainB, clientA, clientB)
 	require.NoError(coord.t, err)
@@ -178,9 +178,9 @@ func (coord *Coordinator) CreateConnection(
 // fail.
 func (coord *Coordinator) CreateMockChannels(
 	chainA, chainB *TestChain,
-	connA, connB *ibctesting.TestConnection,
+	connA, connB *ibctesting.ConnectionConfig,
 	order channeltypes.Order,
-) (ibctesting.TestChannel, ibctesting.TestChannel) {
+) (ibctesting.ConnectionConfig, ibctesting.ConnectionConfig) {
 	return coord.CreateChannel(chainA, chainB, connA, connB, MockPort, MockPort, order)
 }
 
@@ -189,9 +189,9 @@ func (coord *Coordinator) CreateMockChannels(
 // successfully opened otherwise testing will fail.
 func (coord *Coordinator) CreateTransferChannels(
 	chainA, chainB *TestChain,
-	connA, connB *ibctesting.TestConnection,
+	connA, connB *ibctesting.ConnectionConfig,
 	order channeltypes.Order,
-) (ibctesting.TestChannel, ibctesting.TestChannel) {
+) (ibctesting.ChannelConfig, ibctesting.ChannelConfig) {
 	return coord.CreateChannel(chainA, chainB, connA, connB, TransferPort, TransferPort, order)
 }
 
@@ -200,7 +200,7 @@ func (coord *Coordinator) CreateTransferChannels(
 // opened otherwise testing will fail.
 func (coord *Coordinator) CreateChannel(
 	chainA, chainB *TestChain,
-	connA, connB *ibctesting.TestConnection,
+	connA, connB *ibctesting.ConnectionConfig,
 	sourcePortID, counterpartyPortID string,
 	order channeltypes.Order,
 ) (ibctesting.TestChannel, ibctesting.TestChannel) {

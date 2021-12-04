@@ -64,8 +64,8 @@ func TestPinPong(t *testing.T) {
 		counterpartyPortID = wasmkeeper.PortIDForContract(pongContractAddr)
 	)
 	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	connA.NextChannelVersion = ping
-	connB.NextChannelVersion = pong
+	connA.Version.Identifier = ping
+	connB.Version.Identifier = pong
 
 	channelA, _ := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartyPortID, channeltypes.UNORDERED)
 

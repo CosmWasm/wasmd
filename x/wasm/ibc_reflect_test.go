@@ -44,8 +44,8 @@ func TestIBCReflectContract(t *testing.T) {
 		counterpartPortID = chainB.ContractInfo(reflectContractAddr).IBCPortID
 	)
 	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	connA.NextChannelVersion = "ibc-reflect-v1"
-	connB.NextChannelVersion = "ibc-reflect-v1"
+	connA.Version.Identifier = "ibc-reflect-v1"
+	connB.Version.Identifier = "ibc-reflect-v1"
 	// flip instantiation so that we do not run into https://github.com/cosmos/cosmos-sdk/issues/8334
 	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.ORDERED)
 

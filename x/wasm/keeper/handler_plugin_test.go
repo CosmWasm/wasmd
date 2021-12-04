@@ -193,10 +193,11 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 			gotMsg = make([]sdk.Msg, 0)
 			router := baseapp.NewRouter()
 			router.AddRoute(spec.srcRoute)
+			msgRouter := baseapp.NewMsgServiceRouter()
 
 			// when
 			ctx := sdk.Context{}
-			h := NewSDKMessageHandler(router, MessageEncoders{Custom: spec.srcEncoder})
+			h := NewSDKMessageHandler(router, msgRouter, MessageEncoders{Custom: spec.srcEncoder})
 			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
 
 			// then
