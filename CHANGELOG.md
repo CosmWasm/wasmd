@@ -6,6 +6,7 @@
 
 **Implemented Enhancements:**
 - Move to Cosmos-SDK 0.44.5
+- run make format
 
 ## [v0.21.0](https://github.com/CosmWasm/wasmd/tree/v0.21.0) (2021-11-17)
 
