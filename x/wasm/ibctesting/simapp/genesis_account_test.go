@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting/simapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting/simapp"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"

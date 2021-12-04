@@ -5,10 +5,11 @@ import (
 
 	wasmd "github.com/CosmWasm/wasmd/app"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 )
