@@ -5,6 +5,11 @@ import (
 	"testing"
 	"time"
 
+	wasmd "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,18 +17,12 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
+	ibctesting.DefaultTestingAppInit = wasmd.SetupTestingApp
 	// scenario: a contract can handle the receiving side of an ics20 transfer
 	myContract := receiverContract{t: t}
 	var (
@@ -36,7 +35,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	)
 	coordinator.CommitBlock(chainA, chainB)
 	myContractAddr := chainB.SeedNewContractInstance()
-	contractAPortID := chainB.ContractInfo(myContractAddr).IBCPortID
+	contractAPortID := wasmd.ContractInfo(t, chainB, myContractAddr).IBCPortID
 
 	myContract.contractAddr = myContractAddr
 	myContract.chain = chainB
@@ -45,38 +44,54 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		sourcePortID      = "transfer"
 		counterpartPortID = contractAPortID
 	)
-	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
 
-	originalBalance := wasmd.NewTestSupport(t, chainA.App).BankKeeper().GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = sourcePortID
+	path.EndpointB.ChannelConfig.PortID = counterpartPortID
+
+	coordinator.Setup(path)
+
+	originalBalance := wasmd.IBCTestSupport(t, chainA).BankKeeper().
+		GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 
 	// with the channels established, let's do a transfer via sdk transfer
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))
 	timeoutHeight := clienttypes.NewHeight(1, 110)
-	msg := ibctransfertypes.NewMsgTransfer(channelA.PortID, channelA.ID, coinToSendToB, chainA.SenderAccount.GetAddress(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
-	err := coordinator.SendMsg(chainA, chainB, clientB, msg)
+	msg := ibctransfertypes.NewMsgTransfer(
+		path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB,
+		chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
+	_, err := chainA.SendMsgs(msg)
 	require.NoError(t, err)
 
 	// when relay to chain B and handle Ack on chain A
-	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String())
-	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, 0)
-	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).GetBytes()
-	err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, packet, ack)
+	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(
+		coinToSendToB.Denom, coinToSendToB.Amount.String(), chainA.SenderAccount.GetAddress().String(),
+		chainB.SenderAccount.GetAddress().String())
+	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1,
+		path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, timeoutHeight, 0)
+	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).Acknowledgement()
+	err = path.RelayPacket(packet, ack)
 	require.NoError(t, err)
 
 	// then
-	newBalance := wasmd.NewTestSupport(t, chainA.App).BankKeeper().GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
+	newBalance := wasmd.IBCTestSupport(t, chainA).BankKeeper().
+		GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 	assert.Equal(t, originalBalance.Sub(coinToSendToB), newBalance)
 
-	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(channelB.PortID, channelB.ID, coinToSendToB.Denom)).IBCDenom()
-	bankKeeperB := wasmd.NewTestSupport(t, chainB.App).BankKeeper()
+	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom)).IBCDenom()
+	bankKeeperB := wasmd.IBCTestSupport(t, chainB).BankKeeper()
 	chainBBalance := bankKeeperB.GetBalance(chainB.GetContext(), chainB.SenderAccount.GetAddress(), voucherDenom)
-	// note: the contract is called during check and deliverTX but the context used in the contract does not rollback
-	// so that we got twice the amount
-	assert.Equal(t, sdk.Coin{Denom: voucherDenom, Amount: coinToSendToB.Amount.Mul(sdk.NewInt(2))}.String(), chainBBalance.String(), bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t,
+		sdk.Coin{Denom: voucherDenom, Amount: coinToSendToB.Amount}.String(),
+		chainBBalance.String(),
+		bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()),
+	)
 }
 
 func TestContractCanUseIBCTransferMsg(t *testing.T) {
+	ibctesting.DefaultTestingAppInit = wasmd.SetupTestingApp
 	// scenario: a contract can start an ibc transfer via ibctransfertypes.NewMsgTransfer
 	// on an existing connection
 	myContract := &sendViaIBCTransferContract{t: t}
@@ -98,13 +113,16 @@ func TestContractCanUseIBCTransferMsg(t *testing.T) {
 		counterpartPortID = ibctransfertypes.ModuleName
 	)
 
-	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = sourcePortID
+	path.EndpointB.ChannelConfig.PortID = counterpartPortID
+
+	coordinator.Setup(path)
 
 	// send message to chainA
 	receiverAddress := chainB.SenderAccount.GetAddress()
 
-	timeoutHeight := clienttypes.NewHeight(0, 110)
+	//timeoutHeight := clienttypes.NewHeight(0, 110)
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 
 	// start transfer from chainA to chainB
@@ -112,28 +130,31 @@ func TestContractCanUseIBCTransferMsg(t *testing.T) {
 		Sender:   chainA.SenderAccount.GetAddress().String(),
 		Contract: myContractAddr.String(),
 		Msg: startTransfer{
-			ChannelID:    channelA.ID,
+			ChannelID:    path.EndpointA.ChannelID,
 			CoinsToSend:  coinToSendToB,
 			ReceiverAddr: receiverAddress.String(),
 		}.GetBytes(),
 	}
-	err := coordinator.SendMsg(chainA, chainB, clientB, startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
 
 	// relay send
-	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), myContractAddr.String(), receiverAddress.String())
-	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, 0)
-	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
-	err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, packet, ack.GetBytes())
+	err = coordinator.RelayAndAckPendingPackets(path)
 	require.NoError(t, err) // relay committed
 
-	bankKeeperB := wasmd.NewTestSupport(t, chainB.App).BankKeeper()
-	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(channelB.PortID, channelB.ID, coinToSendToB.Denom)).IBCDenom()
+	bankKeeperB := wasmd.IBCTestSupport(t, chainB).BankKeeper()
+	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom)).IBCDenom()
 	newBalance := bankKeeperB.GetBalance(chainB.GetContext(), receiverAddress, voucherDenom)
-	assert.Equal(t, sdk.NewCoin(voucherDenom, coinToSendToB.Amount).String(), newBalance.String(), bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t,
+		sdk.NewCoin(voucherDenom, coinToSendToB.Amount).String(),
+		newBalance.String(),
+		bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()),
+	)
 }
 
 func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
+	ibctesting.DefaultTestingAppInit = wasmd.SetupTestingApp
 	// scenario: a contract can be the sending side of an ics20 transfer
 	// on an existing connection
 	myContract := &sendEmulatedIBCTransferContract{t: t}
@@ -151,17 +172,19 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	myContractAddr := chainA.SeedNewContractInstance()
 	myContract.contractAddr = myContractAddr.String()
 	var (
-		sourcePortID      = chainA.ContractInfo(myContractAddr).IBCPortID
+		sourcePortID      = wasmd.ContractInfo(t, chainA, myContractAddr).IBCPortID
 		counterpartPortID = ibctransfertypes.ModuleName
 	)
 
-	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = sourcePortID
+	path.EndpointB.ChannelConfig.PortID = counterpartPortID
+
+	coordinator.Setup(path)
 
 	// send message to chainA
 	receiverAddress := chainB.SenderAccount.GetAddress()
 
-	var timeoutHeight clienttypes.Height
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 
@@ -170,30 +193,33 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 		Sender:   chainA.SenderAccount.GetAddress().String(),
 		Contract: myContractAddr.String(),
 		Msg: startTransfer{
-			ChannelID:       channelA.ID,
+			ChannelID:       path.EndpointA.ChannelID,
 			CoinsToSend:     coinToSendToB,
 			ReceiverAddr:    receiverAddress.String(),
-			ContractIBCPort: chainA.ContractInfo(myContractAddr).IBCPortID,
+			ContractIBCPort: wasmd.ContractInfo(t, chainA, myContractAddr).IBCPortID,
 			Timeout:         timeout,
 		}.GetBytes(),
 	}
-	err := coordinator.SendMsg(chainA, chainB, clientB, startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
 
 	// relay send
-	fungibleTokenPacket := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), myContractAddr.String(), receiverAddress.String())
-	packet := channeltypes.NewPacket(fungibleTokenPacket.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, timeout)
-	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)})
-	err = coordinator.RelayPacket(chainA, chainB, clientA, clientB, packet, ack.GetBytes())
+	err = coordinator.RelayAndAckPendingPackets(path)
 	require.NoError(t, err) // relay committed
 
-	bankKeeperB := wasmd.NewTestSupport(t, chainB.App).BankKeeper()
-	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(channelB.PortID, channelB.ID, coinToSendToB.Denom)).IBCDenom()
+	bankKeeperB := wasmd.IBCTestSupport(t, chainB).BankKeeper()
+	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom)).IBCDenom()
 	newBalance := bankKeeperB.GetBalance(chainB.GetContext(), receiverAddress, voucherDenom)
-	assert.Equal(t, sdk.NewCoin(voucherDenom, coinToSendToB.Amount).String(), newBalance.String(), bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t,
+		sdk.NewCoin(voucherDenom, coinToSendToB.Amount).String(),
+		newBalance.String(),
+		bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()),
+	)
 }
 
 func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
+	ibctesting.DefaultTestingAppInit = wasmd.SetupTestingApp
 	// scenario: a contract is the sending side of an ics20 transfer but the packet was not received
 	// on the destination chain within the timeout boundaries
 	myContract := &sendEmulatedIBCTransferContract{t: t}
@@ -207,55 +233,76 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 		chainA = coordinator.GetChain(ibctesting.GetChainID(0))
 		chainB = coordinator.GetChain(ibctesting.GetChainID(1))
 	)
-	coordinator.CommitBlock(chainA, chainB)
 	myContractAddr := chainA.SeedNewContractInstance()
+	coordinator.CommitBlock(chainA, chainB)
 	myContract.contractAddr = myContractAddr.String()
 	var (
-		sourcePortID      = chainA.ContractInfo(myContractAddr).IBCPortID
+		sourcePortID      = wasmd.ContractInfo(t, chainA, myContractAddr).IBCPortID
 		counterpartPortID = ibctransfertypes.ModuleName
 	)
 
-	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = sourcePortID
+	path.EndpointB.ChannelConfig.PortID = counterpartPortID
+
+	coordinator.Setup(path)
 
 	// start process by sending message to the contract on chainA
 	receiverAddress := chainB.SenderAccount.GetAddress()
 	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
-	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Nanosecond).UnixNano()) // not enough time
+
+	timeoutTime := chainB.LastHeader.Header.Time.Add(time.Nanosecond)
+	timeout := uint64(timeoutTime.UnixNano())
 
 	// custom payload data to be transferred into a proper ICS20 ibc packet
 	startMsg := &types.MsgExecuteContract{
 		Sender:   chainA.SenderAccount.GetAddress().String(),
 		Contract: myContractAddr.String(),
 		Msg: startTransfer{
-			ChannelID:       channelA.ID,
+			ChannelID:       path.EndpointA.ChannelID,
 			CoinsToSend:     coinToSendToB,
 			ReceiverAddr:    receiverAddress.String(),
-			ContractIBCPort: chainA.ContractInfo(myContractAddr).IBCPortID,
+			ContractIBCPort: wasmd.ContractInfo(t, chainA, myContractAddr).IBCPortID,
 			Timeout:         timeout,
 		}.GetBytes(),
 	}
-	err := coordinator.SendMsg(chainA, chainB, clientB, startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
-	err = coordinator.UpdateClient(chainA, chainB, clientA, ibcexported.Tendermint)
+
+	// Send packet to chainA
+	require.Equal(t, 1, len(chainA.PendingSendPackets))
+	packet := chainA.PendingSendPackets[0]
+	packet.Sequence++
+	err = path.EndpointA.SendPacket(packet)
+	require.NoError(t, err)
+	// Need to update chainA's client representing chainB to prove missing ack
+	err = path.EndpointA.UpdateClient()
 	require.NoError(t, err)
 
 	// timeout packet send (by the relayer)
-	fungibleTokenPacketData := ibctransfertypes.NewFungibleTokenPacketData(coinToSendToB.Denom, coinToSendToB.Amount.Uint64(), myContractAddr.String(), receiverAddress.String())
+	fungibleTokenPacketData := ibctransfertypes.NewFungibleTokenPacketData(
+		coinToSendToB.Denom, coinToSendToB.Amount.String(), myContractAddr.String(), receiverAddress.String())
 	var timeoutHeight clienttypes.Height
-	packet := channeltypes.NewPacket(fungibleTokenPacketData.GetBytes(), 1, channelA.PortID, channelA.ID, channelB.PortID, channelB.ID, timeoutHeight, timeout)
-
-	err = coordinator.TimeoutPacket(chainA, chainB, clientB, packet)
+	packet = channeltypes.NewPacket(fungibleTokenPacketData.GetBytes(), 1,
+		path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID,
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, timeoutHeight, timeout)
+	err = coordinator.TimeoutPacket(path, packet)
 	require.NoError(t, err)
 
 	// then verify account has no vouchers
-	bankKeeperB := wasmd.NewTestSupport(t, chainB.App).BankKeeper()
-	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(channelB.PortID, channelB.ID, coinToSendToB.Denom)).IBCDenom()
+	bankKeeperB := wasmd.IBCTestSupport(t, chainB).BankKeeper()
+	voucherDenom := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom(
+		path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom)).IBCDenom()
 	newBalance := bankKeeperB.GetBalance(chainB.GetContext(), receiverAddress, voucherDenom)
-	assert.Equal(t, sdk.NewInt64Coin(voucherDenom, 0).String(), newBalance.String(), bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t,
+		sdk.NewInt64Coin(voucherDenom, 0).String(),
+		newBalance.String(),
+		bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()),
+	)
 }
 
 func TestContractHandlesChannelClose(t *testing.T) {
+	ibctesting.DefaultTestingAppInit = wasmd.SetupTestingApp
 	// scenario: a contract is the sending side of an ics20 transfer but the packet was not received
 	// on the destination chain within the timeout boundaries
 	myContractA := &captureCloseContract{}
@@ -278,21 +325,22 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	_ = chainB.SeedNewContractInstance() // skip one instance
 	myContractAddrB := chainB.SeedNewContractInstance()
 	var (
-		sourcePortID      = chainA.ContractInfo(myContractAddrA).IBCPortID
-		counterpartPortID = chainB.ContractInfo(myContractAddrB).IBCPortID
+		sourcePortID      = wasmd.ContractInfo(t, chainA, myContractAddrA).IBCPortID
+		counterpartPortID = wasmd.ContractInfo(t, chainB, myContractAddrB).IBCPortID
 	)
 
-	_, _, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
+	path := ibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig.PortID = sourcePortID
+	path.EndpointB.ChannelConfig.PortID = counterpartPortID
 
-	err := coordinator.ChanCloseInit(chainA, chainB, channelA)
+	coordinator.Setup(path)
+
+	// close channels
+	err := path.CloseChannels()
 	require.NoError(t, err)
+
+	// Ensure both contracts were closed
 	assert.True(t, myContractA.closeCalled)
-
-	err = coordinator.UpdateClient(chainB, chainA, channelB.ClientID, ibcexported.Tendermint)
-	require.NoError(t, err)
-	err = coordinator.ChanCloseConfirm(chainA, chainB, channelA, channelB)
-	require.NoError(t, err)
 	assert.True(t, myContractB.closeCalled)
 }
 
@@ -304,7 +352,7 @@ type captureCloseContract struct {
 	closeCalled bool
 }
 
-func (c *captureCloseContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (c *captureCloseContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	c.closeCalled = true
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
@@ -335,7 +383,6 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 	}
 
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
-	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
 var _ wasmtesting.IBCContractCallbacks = &sendEmulatedIBCTransferContract{}
@@ -355,7 +402,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	}
 
 	dataPacket := ibctransfertypes.NewFungibleTokenPacketData(
-		in.CoinsToSend.Denom, in.CoinsToSend.Amount.Uint64(), s.contractAddr, in.ReceiverAddr,
+		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), s.contractAddr, in.ReceiverAddr,
 	)
 	if err := dataPacket.ValidateBasic(); err != nil {
 		return nil, 0, err
@@ -371,18 +418,16 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
-func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-	packet := msg.Packet
-
+func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &data); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Packet.Data, &data); err != nil {
 		return nil, 0, err
 	}
 
 	returnTokens := &wasmvmtypes.BankMsg{
 		Send: &wasmvmtypes.SendMsg{
 			ToAddress: data.Sender,
-			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(data.Amount, data.Denom)},
+			Amount:    wasmvmtypes.Coins{wasmvmtypes.Coin{Amount: data.Amount, Denom: data.Denom}},
 		}}
 
 	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
@@ -415,43 +460,40 @@ type receiverContract struct {
 	chain        *ibctesting.TestChain
 }
 
-func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
-	packet := msg.Packet
-
+func (c *receiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
 	var src ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Data, &src); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packet.Packet.Data, &src); err != nil {
 		return nil, 0, err
 	}
 	// call original ibctransfer keeper to not copy all code into this
-	ibcPacket := toIBCPacket(packet)
+	ibcPacket := toIBCPacket(packet.Packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	err := c.chain.TestSupport().TransferKeeper().OnRecvPacket(ctx, ibcPacket, src)
+	err := wasmd.IBCTestSupport(c.t, c.chain).TransferKeeper().OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}
 
 	var log []wasmvmtypes.EventAttribute // note: all events are under `wasm` event type
-	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).GetBytes()
+	ack := channeltypes.NewResultAcknowledgement([]byte{byte(1)}).Acknowledgement()
 	return &wasmvmtypes.IBCReceiveResponse{Acknowledgement: ack, Attributes: log}, 0, nil
 }
 
-func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-
+func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, packetAck wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	var data ibctransfertypes.FungibleTokenPacketData
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.OriginalPacket.Data, &data); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.OriginalPacket.Data, &data); err != nil {
 		return nil, 0, err
 	}
 	// call original ibctransfer keeper to not copy all code into this
 
 	var ack channeltypes.Acknowledgement
-	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(msg.Acknowledgement.Data, &ack); err != nil {
+	if err := ibctransfertypes.ModuleCdc.UnmarshalJSON(packetAck.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
 
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	ibcPacket := toIBCPacket(msg.OriginalPacket)
-	err := c.chain.TestSupport().TransferKeeper().OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
+	ibcPacket := toIBCPacket(packetAck.OriginalPacket)
+	err := wasmd.IBCTestSupport(c.t, c.chain).TransferKeeper().OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}
@@ -462,27 +504,27 @@ func (c *receiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.
 // simple helper struct that implements connection setup methods.
 type contractStub struct{}
 
-func (s *contractStub) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (uint64, error) {
+func (s *contractStub) IBCChannelOpen(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (uint64, error) {
 	return 0, nil
 }
 
-func (s *contractStub) IBCChannelConnect(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCChannelConnect(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 }
 
-func (s *contractStub) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, channel wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *contractStub) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
+func (s *contractStub) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResponse, uint64, error) {
 	panic("implement me")
 }
 
-func (s *contractStub) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, ack wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 }
 
-func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *contractStub) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, packet wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	panic("implement me")
 }
 

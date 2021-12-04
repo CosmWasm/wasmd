@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,9 +31,6 @@ import (
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const firstCodeID = 1
@@ -474,7 +473,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
   ],
   "contracts": [
     {
-      "contract_address": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6",
+	  "contract_address": "cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5",
       "contract_info": {
         "code_id": "1",
         "creator": "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x",
@@ -531,7 +530,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)
 
 	// verify contract
-	contractAddr, _ := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6")
+	contractAddr, _ := sdk.AccAddressFromBech32("cosmos18vd8fpwxzck93qlwghaj6arh4p7c5n89uzcee5")
 	gotContractInfo := keeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, gotContractInfo)
 	contractCreatorAddr := "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x"
@@ -560,7 +559,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NoError(t, err)
 	var (
 		myAddress          sdk.AccAddress = bytes.Repeat([]byte{1}, 20)
-		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, 20)
+		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, 32)
 		beneficiaryAddress sdk.AccAddress = bytes.Repeat([]byte{3}, 20)
 	)
 	const denom = "stake"
@@ -660,7 +659,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
-	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
+	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.DefaultParamspace), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
 	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
 }
 

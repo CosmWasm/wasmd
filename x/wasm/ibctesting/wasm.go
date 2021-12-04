@@ -8,14 +8,11 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/protobuf/proto" //nolint
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/rand"
-
-	wasmd "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")
@@ -24,72 +21,72 @@ var wasmIdent = []byte("\x00\x61\x73\x6D")
 // This method can be called to prepare the store with some valid CodeInfo and ContractInfo. The returned
 // Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmer
 // for using a contract mock in Go.
-func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
-	pInstResp := chain.StoreCode(append(wasmIdent, rand.Bytes(10)...))
+func (c *TestChain) SeedNewContractInstance() sdk.AccAddress {
+	// No longer likes the randomly created wasm, so we just use a test file now
+	pInstResp := c.StoreCodeFile("./testdata/test.wasm")
 	codeID := pInstResp.CodeID
-
-	anyAddressStr := chain.SenderAccount.GetAddress().String()
+	anyAddressStr := c.SenderAccount.GetAddress().String()
 	initMsg := []byte(fmt.Sprintf(`{"verifier": %q, "beneficiary": %q}`, anyAddressStr, anyAddressStr))
-	return chain.InstantiateContract(codeID, initMsg)
+	return c.InstantiateContract(codeID, initMsg)
 }
 
-func (chain *TestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
+func (c *TestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
 	wasmCode, err := ioutil.ReadFile(filename)
-	require.NoError(chain.t, err)
+	require.NoError(c.t, err)
 	if strings.HasSuffix(filename, "wasm") { // compress for gas limit
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
 		_, err := gz.Write(wasmCode)
-		require.NoError(chain.t, err)
+		require.NoError(c.t, err)
 		err = gz.Close()
-		require.NoError(chain.t, err)
+		require.NoError(c.t, err)
 		wasmCode = buf.Bytes()
 	}
-	return chain.StoreCode(wasmCode)
+	return c.StoreCode(wasmCode)
 }
 
-func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
+func (c *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	storeMsg := &types.MsgStoreCode{
-		Sender:       chain.SenderAccount.GetAddress().String(),
+		Sender:       c.SenderAccount.GetAddress().String(),
 		WASMByteCode: byteCode,
 	}
-	r, err := chain.SendMsgs(storeMsg)
-	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
+	r, err := c.SendMsgs(storeMsg)
+	require.NoError(c.t, err)
+	protoResult := c.parseSDKResultData(r)
+	require.Len(c.t, protoResult.Data, 1)
 	// unmarshal protobuf response from data
 	var pInstResp types.MsgStoreCodeResponse
-	require.NoError(chain.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
-	require.NotEmpty(chain.t, pInstResp.CodeID)
+	require.NoError(c.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
+	require.NotEmpty(c.t, pInstResp.CodeID)
 	return pInstResp
 }
 
-func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
+func (c *TestChain) InstantiateContract(codeID uint64, msg []byte) sdk.AccAddress {
 	instantiateMsg := &types.MsgInstantiateContract{
-		Sender: chain.SenderAccount.GetAddress().String(),
-		Admin:  chain.SenderAccount.GetAddress().String(),
+		Sender: c.SenderAccount.GetAddress().String(),
+		Admin:  c.SenderAccount.GetAddress().String(),
 		CodeID: codeID,
 		Label:  "ibc-test",
-		Msg:    initMsg,
+		Msg:    msg,
 		Funds:  sdk.Coins{TestCoin},
 	}
 
-	r, err := chain.SendMsgs(instantiateMsg)
-	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
+	r, err := c.SendMsgs(instantiateMsg)
+	require.NoError(c.t, err)
+	protoResult := c.parseSDKResultData(r)
+	require.Len(c.t, protoResult.Data, 1)
 
 	var pExecResp types.MsgInstantiateContractResponse
-	require.NoError(chain.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
+	require.NoError(c.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
-	require.NoError(chain.t, err)
+	require.NoError(c.t, err)
 	return a
 }
 
-// SmartQuery This will serialize the query message and submit it to the contract.
+// This will serialize the query message and submit it to the contract.
 // The response is parsed into the provided interface.
 // Usage: SmartQuery(addr, QueryMsg{Foo: 1}, &response)
-func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, response interface{}) error {
+func (c *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, response interface{}) error {
 	msg, err := json.Marshal(queryMsg)
 	if err != nil {
 		return err
@@ -105,13 +102,13 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	}
 
 	// TODO: what is the query?
-	res := chain.App.Query(abci.RequestQuery{
+	res := c.App.Query(abci.RequestQuery{
 		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})
 
 	if res.Code != 0 {
-		return fmt.Errorf("query failed: (%d) %s", res.Code, res.Log)
+		return fmt.Errorf("Query failed: (%d) %s", res.Code, res.Log)
 	}
 
 	// unpack protobuf
@@ -124,18 +121,8 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	return json.Unmarshal(resp.Data, response)
 }
 
-func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
+func (c *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
 	var protoResult sdk.TxMsgData
-	require.NoError(chain.t, proto.Unmarshal(r.Data, &protoResult))
+	require.NoError(c.t, proto.Unmarshal(r.Data, &protoResult))
 	return protoResult
-}
-
-// ContractInfo is a helper function to returns the ContractInfo for the given contract address
-func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	return chain.TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
-}
-
-// TestSupport provides access to package private keepers.
-func (chain *TestChain) TestSupport() *wasmd.TestSupport {
-	return wasmd.NewTestSupport(chain.t, chain.App)
 }
