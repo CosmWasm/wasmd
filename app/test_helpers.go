@@ -86,6 +86,23 @@ func Setup(isCheckTx bool) *WasmApp {
 	return app
 }
 
+func SetupTestingApp(opts ...wasm.Option) (ibctesting.TestingApp, map[string]json.RawMessage) {
+	app := NewWasmApp(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		nil,
+		true,
+		map[int64]bool{},
+		DefaultNodeHome,
+		5,
+		EncodingConfig{},
+		wasm.EnableAllProposals,
+		EmptyBaseAppOptions{},
+		opts,
+	)
+	return app, NewDefaultGenesisState()
+}
+
 // SetupWithGenesisValSet initializes a new WasmApp with a validator set and genesis accounts
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
