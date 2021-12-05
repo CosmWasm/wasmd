@@ -291,6 +291,7 @@ func NewWasmApp(
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
+	// Creates KV Store Keys (eg: keys, in the key/value store)
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey,
 		banktypes.StoreKey,
@@ -298,13 +299,13 @@ func NewWasmApp(
 		minttypes.StoreKey,
 		distrtypes.StoreKey,
 		slashingtypes.StoreKey,
-		evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey,
 		capabilitytypes.StoreKey,
 		feegrant.StoreKey,
 		evidencetypes.StoreKey,
 		wasm.StoreKey,
 	)
+
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
@@ -457,6 +458,8 @@ func NewWasmApp(
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferModule)
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
