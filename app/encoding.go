@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
 // EncodingConfig specifies the concrete encoding types to use for a given app.
@@ -16,12 +17,21 @@ type EncodingConfig struct {
 	Amino             *codec.LegacyAmino //nolint:staticcheck
 }
 
-// MakeEncodingConfig creates an EncodingConfig for testing
 func MakeEncodingConfig() EncodingConfig {
-	encodingConfig := MakeEncodingConfig()
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	return encodingConfig
+	amino := codec.NewLegacyAmino()
+	interfaceRegistry := types.NewInterfaceRegistry()
+	marshaler := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
+
+	std.RegisterInterfaces(interfaceRegistry)
+	std.RegisterLegacyAminoCodec(amino)
+
+	ModuleBasics.RegisterLegacyAminoCodec(amino)
+	ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	return EncodingConfig{
+		InterfaceRegistry: interfaceRegistry,
+		Marshaler:         marshaler,
+		TxConfig:          txCfg,
+		Amino:             amino,
+	}
 }

@@ -803,5 +803,6 @@ func (app *WasmApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 
 // GetTxConfig implements the TestingApp interface.
 func (app *WasmApp) GetTxConfig() client.TxConfig {
-	return MakeEncodingConfig().TxConfig
+	encodingConfig := MakeEncodingConfig()
+	return encodingConfig.TxConfig
 }
