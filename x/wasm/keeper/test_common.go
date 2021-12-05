@@ -66,6 +66,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting/simapp"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -97,7 +98,7 @@ var ModuleBasics = module.NewBasicManager(
 )
 
 func MakeTestCodec(t TestingT) codec.Codec {
-	return MakeEncodingConfig(t).Marshaler
+	return simapp.MakeTestEncodingConfig().Marshaler
 }
 
 func MakeEncodingConfig(_ TestingT) params2.EncodingConfig {
@@ -252,8 +253,10 @@ func createTestInput(
 	bankParams := banktypes.DefaultParams()
 	bankKeeper.SetParams(ctx, bankParams)
 	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(
-		sdk.NewCoin("denom", sdk.NewInt(10000)),
+		sdk.NewCoin("stake", sdk.NewInt(10000)),
 	))
+	require.NoError(t, err)
+
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)

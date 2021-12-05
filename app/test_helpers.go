@@ -56,7 +56,7 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 
 func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
 	db := dbm.NewMemDB()
-	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, EncodingConfig{}, wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts)
+	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts)
 	if withGenesis {
 		return app, NewDefaultGenesisState()
 	}
@@ -95,7 +95,6 @@ func SetupTestingApp(opts ...wasm.Option) (ibctesting.TestingApp, map[string]jso
 		map[int64]bool{},
 		DefaultNodeHome,
 		5,
-		EncodingConfig{},
 		wasm.EnableAllProposals,
 		EmptyBaseAppOptions{},
 		opts,
