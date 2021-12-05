@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package ibc.core.types.v1;
 
 option go_package = "github.com/cosmos/ibc-go/v2/modules/core/types";
