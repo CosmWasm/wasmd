@@ -413,15 +413,15 @@ func ProposalPinCodesCmd() *cobra.Command {
 }
 
 func parsePinCodesArgs(args []string) ([]uint64, error) {
-	var codeIds []uint64
-	for _, c := range args {
+	codeIDs := make([]uint64, len(args))
+	for i, c := range args {
 		codeID, err := strconv.ParseUint(c, 10, 64)
 		if err != nil {
-			return codeIds, fmt.Errorf("code IDs: %s", err)
+			return codeIDs, fmt.Errorf("code IDs: %s", err)
 		}
-		codeIds = append(codeIds, codeID)
+		codeIDs[i] = codeID
 	}
-	return codeIds, nil
+	return codeIDs, nil
 }
 
 func ProposalUnpinCodesCmd() *cobra.Command {

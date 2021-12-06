@@ -53,7 +53,7 @@ was sent:
         },
         {
             "key": "_contract_address",
-            "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+            "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
         }
     ]
 }
@@ -70,7 +70,7 @@ provide a initial balance in the same `MsgInstantiateContract`. We see the follo
         "Attr": [
             {
                 "key": "recipient",
-                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
             },
             {
                 "key": "sender",
@@ -97,7 +97,7 @@ Here is an example from the escrow contract successfully releasing funds to the 
     "Attr": [
         {
             "key": "_contract_address",
-            "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+            "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
         },
         {
             "key": "action",
@@ -131,7 +131,7 @@ was executed (which always appears, while 2 is optional and has information as r
         "Attr": [
             {
                 "key": "recipient",
-                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
             },
             {
                 "key": "sender",
@@ -148,7 +148,7 @@ was executed (which always appears, while 2 is optional and has information as r
         "Attr": [
             {
                 "key": "_contract_address",
-                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
             },
             {
                 "key": "action",
@@ -169,7 +169,7 @@ was executed (which always appears, while 2 is optional and has information as r
             },
             {
                 "key": "sender",
-                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
             },
             {
                 "key": "amount",
@@ -194,7 +194,7 @@ was executed (which always appears, while 2 is optional and has information as r
             },
             {
                 "key": "_contract_address",
-                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhuc53mp6"
+                "value": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
             }
         ]
     }

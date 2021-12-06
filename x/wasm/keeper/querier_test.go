@@ -258,12 +258,12 @@ func TestQueryRawContractState(t *testing.T) {
 
 func TestQueryContractListByCodeOrdering(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
-	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
+	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	anyAddr := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)

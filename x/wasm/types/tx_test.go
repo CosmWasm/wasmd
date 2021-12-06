@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +19,8 @@ func TestStoreCodeValidation(t *testing.T) {
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
-	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-
+	goodAddress := sdk.AccAddress(make([]byte, ContractAddrLen)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 	cases := map[string]struct {
 		msg   MsgStoreCode
 		valid bool
@@ -505,7 +507,7 @@ func TestMsgMigrateContract(t *testing.T) {
 func TestMsgJsonSignBytes(t *testing.T) {
 	const myInnerMsg = `{"foo":"bar"}`
 	specs := map[string]struct {
-		src sdk.Msg
+		src legacytx.LegacyMsg
 		exp string
 	}{
 		"MsgInstantiateContract": {

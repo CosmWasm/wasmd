@@ -7,10 +7,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
-	connectiontypes "github.com/cosmos/cosmos-sdk/x/ibc/core/03-connection/types"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
-	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	connectiontypes "github.com/cosmos/ibc-go/v2/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
 )
 
 // BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
@@ -29,7 +29,7 @@ type Burner interface {
 type BankKeeper interface {
 	BankViewKeeper
 	Burner
-	SendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+	IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
 	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }

@@ -13,8 +13,11 @@ func RandomizedGenState(simstate *module.SimulationState) {
 		Params:    params,
 		Codes:     nil,
 		Contracts: nil,
-		Sequences: nil,
-		GenMsgs:   nil,
+		Sequences: []types.Sequence{
+			{IDKey: types.KeyLastCodeID, Value: simstate.Rand.Uint64()},
+			{IDKey: types.KeyLastInstanceID, Value: simstate.Rand.Uint64()},
+		},
+		GenMsgs: nil,
 	}
 
 	_, err := simstate.Cdc.MarshalJSON(&wasmGenesis)

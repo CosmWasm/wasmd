@@ -13,8 +13,6 @@ import (
 )
 
 const (
-	// DefaultParamspace for params keeper
-	DefaultParamspace = ModuleName
 	// DefaultMaxWasmCodeSize limit max bytes read to prevent gzip bombs
 	DefaultMaxWasmCodeSize = 600 * 1024 * 2
 )
