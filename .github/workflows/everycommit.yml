@@ -26,7 +26,7 @@ jobs:
       run: go test ./...
 
 
-// Here, I separated benchmarks for more granular performance info
+# Here, I separated benchmarks for more granular performance info
 
   wasmgas:
     runs-on: ubuntu-latest
