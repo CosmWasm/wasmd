@@ -5,6 +5,7 @@
 - bump github.com/cosmos/cosmos-sdk to 0.42.11
 - bump github.com/cosmos/iavl to 0.17.3
 - use replace to enforce consistency of versioning in imported libraries
+- fixed circleci by removing the golang executor from a docker build
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...HEAD)
 
