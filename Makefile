@@ -158,8 +158,8 @@ format:
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
-PROTO_BUILDER_IMAGE=tendermintdev/sdk-proto-gen@sha256:372dce7be2f465123e26459973ca798fc489ff2c75aeecd814c0ca8ced24faca
-PROTO_FORMATTER_IMAGE=tendermintdev/docker-build-proto@sha256:aabcfe2fc19c31c0f198d4cd26393f5e5ca9502d7ea3feafbfe972448fee7cae
+PROTO_BUILDER_IMAGE=tendermintdev/sdk-proto-gen@sha256:0aed80376ed4d70dec6a1ecdd18aa4d0c2dc7e1349cf004222497b04328b436b
+PROTO_FORMATTER_IMAGE=tendermintdev/docker-build-proto@sha256:762c899ec0505d1a32930ee804c5b008825f41611161be104076cba33b7e5b2b
 
 proto-all: proto-format proto-lint proto-gen format
 
