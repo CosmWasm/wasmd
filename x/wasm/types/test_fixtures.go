@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
-	"math/rand"
+	"crypto/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -50,7 +50,7 @@ func randBytes(n int) []byte {
 	r := make([]byte, n)
 	rand.Read(r)
 	return r
-}
+}beta2
 
 func CodeFixture(mutators ...func(*Code)) Code {
 	wasmCode := randBytes(100)
