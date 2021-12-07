@@ -7,13 +7,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	address "github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidateParams(t *testing.T) {
 	var (
-		anyAddress     sdk.AccAddress = make([]byte, sdk.AddrLen)
+		anyAddress     sdk.AccAddress = make([]byte, address.Len)
 		invalidAddress                = "invalid address"
 	)
 

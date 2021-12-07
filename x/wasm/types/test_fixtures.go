@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	address "github.com/cosmos/cosmos-sdk/types/address"
 )
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
@@ -193,7 +194,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 
 func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, address.Len)
 
 		initMsg = struct {
 			Verifier    sdk.AccAddress `json:"verifier"`
@@ -228,7 +229,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, address.Len)
 
 		migMsg = struct {
 			Verifier sdk.AccAddress `json:"verifier"`
