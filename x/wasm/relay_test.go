@@ -30,7 +30,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
 			wasmtesting.NewIBCContractMockWasmer(&myContract),
 		)}
-		coordinator = ibctesting.NewCoordinator(t, 2, nil, chainAOpts)
+		coordinator = ibctesting.NewCoordinator(t, 2)
 		chainA      = coordinator.GetChain(ibctesting.GetChainID(0))
 		chainB      = coordinator.GetChain(ibctesting.GetChainID(1))
 	)

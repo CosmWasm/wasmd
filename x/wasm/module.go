@@ -5,6 +5,11 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
+	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/simulation"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -18,12 +23,6 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/simulation"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var (
@@ -41,15 +40,12 @@ const (
 // AppModuleBasic defines the basic application module used by the wasm module.
 type AppModuleBasic struct{}
 
-func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { //nolint:staticcheck
+func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	RegisterCodec(amino)
 }
 
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
-	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
-	if err != nil {
-		panic(err)
-	}
+	types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 }
 
 // Name returns the wasm module's name.
@@ -90,12 +86,12 @@ func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// RegisterInterfaces implements InterfaceModule
+// RegisterInterfaceTypes implements InterfaceModule
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
-// ____________________________________________________________________________
+//____________________________________________________________________________
 
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
@@ -120,7 +116,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 }
 
-func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { //nolint:staticcheck
+func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
 	return keeper.NewLegacyQuerier(am.keeper, am.keeper.QueryGasLimit())
 }
 
@@ -165,7 +161,7 @@ func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Validato
 	return []abci.ValidatorUpdate{}
 }
 
-// ____________________________________________________________________________
+//____________________________________________________________________________
 
 // AppModuleSimulation functions
 
@@ -193,7 +189,7 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	return nil
 }
 
-// ____________________________________________________________________________
+//____________________________________________________________________________
 
 // AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
 func AddModuleInitFlags(startCmd *cobra.Command) {

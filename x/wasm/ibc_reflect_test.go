@@ -22,7 +22,7 @@ func TestIBCReflectContract(t *testing.T) {
 	//  "ibc_reflect" sends a submessage to "reflect" which is returned as submessage.
 
 	var (
-		coordinator = ibctesting.NewCoordinator(t, 2, nil, nil)
+		coordinator = ibctesting.NewCoordinator(t, 2)
 		chainA      = coordinator.GetChain(ibctesting.GetChainID(0))
 		chainB      = coordinator.GetChain(ibctesting.GetChainID(1))
 	)

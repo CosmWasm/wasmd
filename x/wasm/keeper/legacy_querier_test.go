@@ -16,6 +16,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+sdk.AddrLen := 32
+
 func TestLegacyQueryContractState(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
