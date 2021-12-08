@@ -298,6 +298,9 @@ func createTestInput(
 	dh := distribution.NewHandler(distKeeper)
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
 
+	// TODO: Figure  out how to register new GRPC style services here
+	msgRouter := baseapp.NewMsgServiceRouter()
+
 	querier := baseapp.NewGRPCQueryRouter()
 	banktypes.RegisterQueryServer(querier, bankKeeper)
 	stakingtypes.RegisterQueryServer(querier, stakingkeeper.Querier{Keeper: stakingKeeper})
@@ -316,6 +319,7 @@ func createTestInput(
 		scopedWasmKeeper,
 		wasmtesting.MockIBCTransferKeeper{},
 		router,
+		msgRouter,
 		querier,
 		tempDir,
 		wasmConfig,
