@@ -11,7 +11,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - run: go build ./...
+      - run: make build
   
   test:
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
-      run: go test ./...
+      run: make test
 
 
 # Here, I separated benchmarks for more granular performance info
