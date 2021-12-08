@@ -47,7 +47,7 @@ func TestBlockedAddrs(t *testing.T) {
 
 	for acc := range maccPerms {
 		t.Run(acc, func(t *testing.T) {
-			require.True(t, gapp.bankKeeper.BlockedAddr(gapp.accountKeeper.GetModuleAddress(acc)),
+			require.True(t, gapp.BankKeeper.BlockedAddr(gapp.AccountKeeper.GetModuleAddress(acc)),
 				"ensure that blocked addresses are properly set in bank keeper",
 			)
 		})
