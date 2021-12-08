@@ -67,7 +67,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
-      - name: wasm vs native
+      - name: Run Multi Seed Simulation
         run: make test-sim-multi-seed-short
 
 
