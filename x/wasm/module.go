@@ -234,3 +234,6 @@ func ReadWasmConfig(opts servertypes.AppOptions) (types.WasmConfig, error) {
 	}
 	return cfg, nil
 }
+
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return 1 }

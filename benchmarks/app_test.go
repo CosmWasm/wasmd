@@ -40,7 +40,7 @@ func SetupWithGenesisAccounts(db dbm.DB, genAccs []authtypes.GenesisAccount, bal
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	encodingConfig := app.MakeEncodingConfig()
-	appCodec := encodingConfig.Marshaler
+	appCodec := encodingConfig.Codec
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 

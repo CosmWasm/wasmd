@@ -10,11 +10,22 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v2/modules/core/exported"
 
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
+
+type Ack struct{ result []byte }
+
+func (a Ack) Success() bool           { return true }
+func (a Ack) Acknowledgement() []byte { return a.result }
+
+type Nack struct{}
+
+func (Nack) Success() bool           { return false }
+func (Nack) Acknowledgement() []byte { return nil }
 
 type IBCHandler struct {
 	keeper        types.IBCContractKeeper
@@ -219,27 +230,30 @@ func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel)
 func (i IBCHandler) OnRecvPacket(
 	ctx sdk.Context,
 	packet channeltypes.Packet,
-) (*sdk.Result, []byte, error) {
+	relayer sdk.AccAddress,
+) exported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return nil, nil, sdkerrors.Wrapf(err, "contract port id")
+		return Nack{}
 	}
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet)}
 	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return nil, nil, err
+		return Nack{}
 	}
 
-	return &sdk.Result{ // the response is ignored
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, ack, nil
+	return Ack{
+		result: ack,
+	}
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
-func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte) (*sdk.Result, error) {
+func (i IBCHandler) OnAcknowledgementPacket(
+	ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress,
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
@@ -247,30 +261,28 @@ func (i IBCHandler) OnAcknowledgementPacket(ctx sdk.Context, packet channeltypes
 		OriginalPacket:  newIBCPacket(packet),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
 }
 
 // OnTimeoutPacket implements the IBCModule interface
-func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) (*sdk.Result, error) {
+func (i IBCHandler) OnTimeoutPacket(
+	ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress,
+) error {
 	contractAddr, err := ContractFromPortID(packet.SourcePort)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "contract port id")
+		return sdkerrors.Wrapf(err, "contract port id")
 	}
 	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet)}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &sdk.Result{
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
+	return nil
 
 }
 
@@ -305,4 +317,16 @@ func ValidateChannelParams(channelID string) error {
 		return sdkerrors.Wrapf(types.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
 	}
 	return nil
+}
+
+// NegotiateAppVersion implements the IBCModule interface
+func (i IBCHandler) NegotiateAppVersion(
+	ctx sdk.Context,
+	order channeltypes.Order,
+	connectionID string,
+	portID string,
+	counterparty channeltypes.Counterparty,
+	proposedVersion string,
+) (version string, err error) {
+	return proposedVersion, nil
 }
