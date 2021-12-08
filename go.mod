@@ -130,5 +130,6 @@ replace (
 	github.com/tendermint/tendermint => github.com/tendermint/tendermint v0.34.14
 	github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.6.4
 	github.com/urfave/cli => github.com/urfave/cli v1.22.1
+	go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.5
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
