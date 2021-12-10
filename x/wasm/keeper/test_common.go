@@ -252,9 +252,14 @@ func createTestInput(
 	)
 	bankParams := banktypes.DefaultParams()
 	bankKeeper.SetParams(ctx, bankParams)
+
 	err := bankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(
 		sdk.NewCoin("denom", sdk.NewInt(10000)),
 	))
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	stakingSubsp, _ := paramsKeeper.GetSubspace(stakingtypes.ModuleName)
 	stakingKeeper := stakingkeeper.NewKeeper(appCodec, keyStaking, authKeeper, bankKeeper, stakingSubsp)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -627,7 +632,8 @@ func fundAccounts(t TestingT, ctx sdk.Context, am authkeeper.AccountKeeper, bank
 	am.SetAccount(ctx, acc)
 	err := bank.MintCoins(ctx, minttypes.ModuleName, coins)
 	require.NoError(t, err)
-	bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
+	err = bank.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
+	require.NoError(t, err)
 }
 
 var keyCounter uint64

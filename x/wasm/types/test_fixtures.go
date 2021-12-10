@@ -2,12 +2,14 @@ package types
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
-	"crypto/rand"
+	fmt "fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	address "github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/rs/zerolog/log"
 )
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
@@ -49,7 +51,11 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 
 func randBytes(n int) []byte {
 	r := make([]byte, n)
-	rand.Read(r)
+	num, err := rand.Read(r)
+	if err != nil {
+		log.Err(err)
+		fmt.Println(num)
+	}
 	return r
 }
 

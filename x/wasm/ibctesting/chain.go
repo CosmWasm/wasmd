@@ -26,14 +26,33 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmversion "github.com/tendermint/tendermint/version"
 
+	"github.com/CosmWasm/wasmd/app"
+	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v2/modules/core/03-connection/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v2/modules/core/23-commitment/types"
 	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
 	"github.com/cosmos/ibc-go/v2/modules/core/exported"
 	"github.com/cosmos/ibc-go/v2/modules/core/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v2/modules/light-clients/07-tendermint/types"
+
 	"github.com/cosmos/ibc-go/v2/testing/mock"
 	"github.com/cosmos/ibc-go/v2/testing/simapp"
+)
+
+var (
+	DefaultOpenInitVersion *connectiontypes.Version
+
+	// Default params variables used to create a TM client
+	DefaultTrustLevel ibctmtypes.Fraction = ibctmtypes.DefaultTrustLevel
+	TestHash                              = tmhash.Sum([]byte("TESTING HASH"))
+	TestCoin                              = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+
+	UpgradePath = []string{"upgrade", "upgradedIBCState"}
+
+	ConnectionVersion = connectiontypes.ExportedVersionsToProto(connectiontypes.GetCompatibleVersions())[0]
+
+	MockAcknowledgement = mock.MockAcknowledgement
 )
 
 // TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
@@ -45,7 +64,7 @@ type TestChain struct {
 	t *testing.T
 
 	Coordinator   *Coordinator
-	App           TestingApp
+	App           app.WasmApp
 	ChainID       string
 	LastHeader    *ibctmtypes.Header // header for last block height committed
 	CurrentHeader tmproto.Header     // header for current block height
@@ -84,13 +103,12 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string) *TestChain {
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	amount, ok := sdk.NewIntFromString("10000000000000000000")
 	require.True(t, ok)
-
-	balance := banktypes.Balance{
+	balances := banktypes.Balance{
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
-	app := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
+	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balances)
 
 	// create current header and call begin block
 	header := tmproto.Header{
@@ -122,6 +140,19 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string) *TestChain {
 	return chain
 }
 
+// GetPacketData returns a ibc-transfer marshalled packet to be used for
+// callback testing.
+func (chain *TestChain) GetPacketData(counterparty *TestChain) []byte {
+	packet := ibctransfertypes.FungibleTokenPacketData{
+		Denom:    TestCoin.Denom,
+		Amount:   TestCoin.Amount.String(),
+		Sender:   chain.SenderAccount.GetAddress().String(),
+		Receiver: counterparty.SenderAccount.GetAddress().String(),
+	}
+
+	return packet.GetBytes()
+}
+
 // GetContext returns the current context for the application.
 func (chain *TestChain) GetContext() sdk.Context {
 	return chain.App.GetBaseApp().NewContext(false, chain.CurrentHeader)
@@ -131,8 +162,7 @@ func (chain *TestChain) GetContext() sdk.Context {
 // CONTRACT: This function should not be called by third parties implementing
 // their own SimApp.
 func (chain *TestChain) GetSimApp() *simapp.SimApp {
-	app, ok := chain.App.(*simapp.SimApp)
-	require.True(chain.t, ok)
+	app := chain.GetSimApp()
 
 	return app
 }

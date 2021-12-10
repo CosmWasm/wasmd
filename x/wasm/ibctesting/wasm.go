@@ -64,25 +64,25 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	return pInstResp
 }
 
-func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
+func (c *TestChain) InstantiateContract(codeID uint64, msg []byte) sdk.AccAddress {
 	instantiateMsg := &types.MsgInstantiateContract{
-		Sender: chain.SenderAccount.GetAddress().String(),
-		Admin:  chain.SenderAccount.GetAddress().String(),
+		Sender: c.SenderAccount.GetAddress().String(),
+		Admin:  c.SenderAccount.GetAddress().String(),
 		CodeID: codeID,
 		Label:  "ibc-test",
-		Msg:    initMsg,
+		Msg:    msg,
 		Funds:  sdk.Coins{TestCoin},
 	}
 
-	r, err := chain.SendMsgs(instantiateMsg)
-	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
+	r, err := c.SendMsgs(instantiateMsg)
+	require.NoError(c.t, err)
+	protoResult := c.parseSDKResultData(r)
+	require.Len(c.t, protoResult.Data, 1)
 
 	var pExecResp types.MsgInstantiateContractResponse
-	require.NoError(chain.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
+	require.NoError(c.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
-	require.NoError(chain.t, err)
+	require.NoError(c.t, err)
 	return a
 }
 
@@ -137,5 +137,5 @@ func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.Contrac
 
 // TestSupport provides access to package private keepers.
 func (chain *TestChain) TestSupport() *wasmd.TestSupport {
-	return wasmd.NewTestSupport(chain.t, chain.App)
+	return wasmd.NewTestSupport(chain.t, &chain.App)
 }
