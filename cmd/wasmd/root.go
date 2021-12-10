@@ -84,6 +84,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
+// This function was shamelessly borrowed from Osmosis. 
 func initAppConfig() (string, interface{}) {
 	// The following code snippet is just for reference.
 
