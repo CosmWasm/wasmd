@@ -27,6 +27,7 @@ import (
 	tmversion "github.com/tendermint/tendermint/version"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v2/modules/core/03-connection/types"
@@ -108,8 +109,9 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string) *TestChain {
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
-	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balances)
-
+	var emptyWasmOpts []wasm.Option = nil
+	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, emptyWasmOpts, balances)
+	useit := *app
 	// create current header and call begin block
 	header := tmproto.Header{
 		ChainID: chainID,
@@ -124,7 +126,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string) *TestChain {
 		t:             t,
 		Coordinator:   coord,
 		ChainID:       chainID,
-		App:           app,
+		App:           useit,
 		CurrentHeader: header,
 		QueryServer:   app.GetIBCKeeper(),
 		TxConfig:      txConfig,
