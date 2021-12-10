@@ -47,7 +47,7 @@ func TestIBCReflectContract(t *testing.T) {
 	connA.NextChannelVersion = "ibc-reflect-v1"
 	connB.NextChannelVersion = "ibc-reflect-v1"
 	// flip instantiation so that we do not run into https://github.com/cosmos/cosmos-sdk/issues/8334
-	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.ORDERED)
+	channelA, channelB := coordinator.CreateChannels()(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.ORDERED)
 
 	// TODO: query both contracts directly to ensure they have registered the proper connection
 	// (and the chainB has created a reflect contract)

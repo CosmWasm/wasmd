@@ -45,7 +45,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		sourcePortID      = "transfer"
 		counterpartPortID = contractAPortID
 	)
-	clientA, clientB, connA, connB := coordinator.SetupClientConnections(chainA, chainB, ibcexported.Tendermint)
+	clientA, clientB, connA, connB := coordinator.CreateConnections(chainA, chainB, ibcexported.Tendermint)
 	channelA, channelB := coordinator.CreateChannel(chainA, chainB, connA, connB, sourcePortID, counterpartPortID, channeltypes.UNORDERED)
 
 	originalBalance := wasmd.NewTestSupport(t, chainA.App).BankKeeper().GetBalance(chainA.GetContext(), chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)

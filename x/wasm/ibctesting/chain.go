@@ -26,8 +26,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmversion "github.com/tendermint/tendermint/version"
 
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	ibctransfertypes "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v2/modules/core/03-connection/types"
@@ -36,6 +34,9 @@ import (
 	"github.com/cosmos/ibc-go/v2/modules/core/exported"
 	"github.com/cosmos/ibc-go/v2/modules/core/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v2/modules/light-clients/07-tendermint/types"
+
+	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 
 	"github.com/cosmos/ibc-go/v2/testing/mock"
 	"github.com/cosmos/ibc-go/v2/testing/simapp"
