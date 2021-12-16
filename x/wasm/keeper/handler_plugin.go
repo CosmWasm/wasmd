@@ -45,16 +45,17 @@ func NewDefaultMessageHandler(
 		encoders = encoders.Merge(e)
 	}
 	return NewMessageHandlerChain(
-		NewSDKMessageHandler(router, encoders),
+		NewSDKMessageHandler(router, msgRouter, encoders),
 		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
 
-func NewSDKMessageHandler(router sdk.Router, encoders msgEncoder) SDKMessageHandler {
+func NewSDKMessageHandler(router sdk.Router, msgRouter *baseapp.MsgServiceRouter, encoders msgEncoder) SDKMessageHandler {
 	return SDKMessageHandler{
-		router:   router,
-		encoders: encoders,
+		router:    router,
+		msgRouter: msgRouter,
+		encoders:  encoders,
 	}
 }
 
