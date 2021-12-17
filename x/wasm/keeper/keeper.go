@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -18,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -875,40 +875,7 @@ func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	contractID := make([]byte, 16)
 	binary.BigEndian.PutUint64(contractID[:8], codeID)
 	binary.BigEndian.PutUint64(contractID[8:], instanceID)
-	return Module(types.ModuleName, contractID)
-}
-
-// Hash and Module is taken from https://github.com/cosmos/cosmos-sdk/blob/v0.43.0-rc2/types/address/hash.go
-// (PR #9088 included in Cosmos SDK 0.43 - can be swapped out for the sdk version when we upgrade)
-
-// Hash creates a new address from address type and key
-func Hash(typ string, key []byte) []byte {
-	hasher := sha256.New()
-	_, err := hasher.Write([]byte(typ))
-	// the error always nil, it's here only to satisfy the io.Writer interface
-	assertNil(err)
-	th := hasher.Sum(nil)
-
-	hasher.Reset()
-	_, err = hasher.Write(th)
-	assertNil(err)
-	_, err = hasher.Write(key)
-	assertNil(err)
-	return hasher.Sum(nil)
-}
-
-// Module is a specialized version of a composed address for modules. Each module account
-// is constructed from a module name and module account key.
-func Module(moduleName string, key []byte) []byte {
-	mKey := append([]byte(moduleName), 0)
-	return Hash("module", append(mKey, key...))
-}
-
-// Also from the 0.43 Cosmos SDK... sigh (sdkerrors.AssertNil)
-func assertNil(err error) {
-	if err != nil {
-		panic(fmt.Errorf("logic error - this should never happen. %w", err))
-	}
+	return sdkaddress.Module(types.ModuleName, contractID)
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
