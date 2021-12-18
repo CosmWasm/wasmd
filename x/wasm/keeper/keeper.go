@@ -875,9 +875,7 @@ func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
 	contractID := make([]byte, 16)
 	binary.BigEndian.PutUint64(contractID[:8], codeID)
 	binary.BigEndian.PutUint64(contractID[8:], instanceID)
-	// 20 bytes to work with Cosmos SDK 0.42 (0.43 pushes for 32 bytes)
-	// TODO: remove truncate if we update to 0.43 before wasmd 1.0
-	return Module(types.ModuleName, contractID)[:20]
+	return Module(types.ModuleName, contractID)
 }
 
 // Hash and Module is taken from https://github.com/cosmos/cosmos-sdk/blob/v0.43.0-rc2/types/address/hash.go
