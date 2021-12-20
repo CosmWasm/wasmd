@@ -356,7 +356,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 func ProposalPinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pin-codes [code-ids]",
-		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
+		Short: "Submit a pin code proposal for pinning a code to cache",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -427,7 +427,7 @@ func parsePinCodesArgs(args []string) ([]uint64, error) {
 func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unpin-codes [code-ids]",
-		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
+		Short: "Submit a unpin code proposal for unpinning a code to cache",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
