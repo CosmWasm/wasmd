@@ -279,7 +279,49 @@ func PinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "pin_code",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
-			var req ClearAdminJSONReq
+			var req PinCodeJSONReq
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
+				return
+			}
+			toStdTxResponse(cliCtx, w, req)
+		},
+	}
+}
+
+type UnpinCodeJSONReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"`
+
+	Proposer string    `json:"proposer" yaml:"proposer"`
+	Deposit  sdk.Coins `json:"deposit" yaml:"deposit"`
+
+	CodeIDs []uint64 `json:"code_ids" yaml:"code_ids"`
+}
+
+func (s UnpinCodeJSONReq) Content() govtypes.Content {
+	return &types.UnpinCodesProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		CodeIDs:     s.CodeIDs,
+	}
+}
+func (s UnpinCodeJSONReq) GetProposer() string {
+	return s.Proposer
+}
+func (s UnpinCodeJSONReq) GetDeposit() sdk.Coins {
+	return s.Deposit
+}
+func (s UnpinCodeJSONReq) GetBaseReq() rest.BaseReq {
+	return s.BaseReq
+}
+
+func UnpinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
+	return govrest.ProposalRESTHandler{
+		SubRoute: "pin_code",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			var req UnpinCodeJSONReq
 			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
