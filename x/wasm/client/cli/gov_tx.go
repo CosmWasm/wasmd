@@ -357,7 +357,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pin-codes [code-ids]",
 		Short: "Submit a pin code proposal for pinning a code to cache",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -414,7 +414,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 
 func parsePinCodesArgs(args []string) ([]uint64, error) {
 	var codeIds []uint64
-	for _, c := range args[1:] {
+	for _, c := range args {
 		codeID, err := strconv.ParseUint(c, 10, 64)
 		if err != nil {
 			return codeIds, fmt.Errorf("code IDs: %s", err)
@@ -428,7 +428,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unpin-codes [code-ids]",
 		Short: "Submit a unpin code proposal for unpinning a code to cache",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
