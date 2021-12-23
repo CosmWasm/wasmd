@@ -191,7 +191,7 @@ type WasmerEngine interface {
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
 		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCReceiveResponse, uint64, error)
+	) (*wasmvmtypes.IBCReceiveResult, uint64, error)
 
 	// IBCPacketAck is available on IBC-enabled contracts and is called when an
 	// the response for an outgoing packet (previously sent by this contract)
