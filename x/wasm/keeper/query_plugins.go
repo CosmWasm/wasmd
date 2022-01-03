@@ -487,7 +487,7 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			info := k.GetContractInfo(ctx, addr)
 			if info == nil {
-				return nil, wasmvmtypes.NoSuchContract{Addr: request.ContractInfo.ContractAddr}
+				return nil, sdkerrors.Wrap(types.ErrNoSuchContract, request.ContractInfo.ContractAddr)
 			}
 
 			res := wasmvmtypes.ContractInfoResponse{
