@@ -69,4 +69,7 @@ var (
 
 	// ErrInvalidEvent error if an attribute/event from the contract is invalid
 	ErrInvalidEvent = sdkErrors.Register(DefaultCodespace, 21, "invalid event")
+
+	// ErrNoSuchContract error if an address does not belong to a contract
+	ErrNoSuchContract = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
 )
