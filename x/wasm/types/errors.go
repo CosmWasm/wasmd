@@ -73,3 +73,19 @@ var (
 	// ErrNoSuchContract error if an address does not belong to a contract
 	ErrNoSuchContract = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
 )
+
+type NoSuchContract struct {
+	Addr string
+}
+
+func (m *NoSuchContract) Error() string {
+	return "no such contract: " + m.Addr
+}
+
+func (m *NoSuchContract) ABCICode() uint32 {
+	return 22
+}
+
+func (m *NoSuchContract) Codespace() string {
+	return DefaultCodespace
+}
