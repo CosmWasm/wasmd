@@ -56,7 +56,13 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	defer func() {
 		q.Ctx.GasMeter().ConsumeGas(subCtx.GasMeter().GasConsumed(), "contract sub-query")
 	}()
-	return q.Plugins.HandleQuery(subCtx, q.Caller, request)
+
+	res, err := q.Plugins.HandleQuery(subCtx, q.Caller, request)
+	// Error mapping
+	if nsc, ok := err.(*types.ErrNoSuchContract); ok {
+		return res, wasmvmtypes.NoSuchContract{Addr: nsc.Addr}
+	}
+	return res, err
 }
 
 func (q QueryHandler) GasConsumed() uint64 {
@@ -487,7 +493,7 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			info := k.GetContractInfo(ctx, addr)
 			if info == nil {
-				return nil, sdkerrors.Wrap(types.ErrNoSuchContract, request.ContractInfo.ContractAddr)
+				return nil, &types.ErrNoSuchContract{Addr: request.ContractInfo.ContractAddr}
 			}
 
 			res := wasmvmtypes.ContractInfoResponse{

@@ -70,22 +70,22 @@ var (
 	// ErrInvalidEvent error if an attribute/event from the contract is invalid
 	ErrInvalidEvent = sdkErrors.Register(DefaultCodespace, 21, "invalid event")
 
-	// ErrNoSuchContract error if an address does not belong to a contract
-	ErrNoSuchContract = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
+	// errNoSuchContract error if an address does not belong to a contract (just for registration)
+	errNoSuchContract = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
 )
 
-type NoSuchContract struct {
+type ErrNoSuchContract struct {
 	Addr string
 }
 
-func (m *NoSuchContract) Error() string {
+func (m *ErrNoSuchContract) Error() string {
 	return "no such contract: " + m.Addr
 }
 
-func (m *NoSuchContract) ABCICode() uint32 {
+func (m *ErrNoSuchContract) ABCICode() uint32 {
 	return 22
 }
 
-func (m *NoSuchContract) Codespace() string {
+func (m *ErrNoSuchContract) Codespace() string {
 	return DefaultCodespace
 }
