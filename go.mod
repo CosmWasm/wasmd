@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-beta5
-	github.com/cosmos/cosmos-sdk v0.44.5
+	github.com/cosmos/cosmos-sdk v0.45.0-rc1
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v2 v2.0.2
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
@@ -43,7 +43,7 @@ require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/coinbase/rosetta-sdk-go v0.6.10 // indirect
+	github.com/coinbase/rosetta-sdk-go v0.7.0 // indirect
 	github.com/confio/ics23/go v0.6.6 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
@@ -123,7 +123,7 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/confio/ics23/go => github.com/confio/ics23/go v0.6.6
-	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.44.5
+	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.0-rc1
 	github.com/cosmos/go-bip39 => github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.17.3
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
