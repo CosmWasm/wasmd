@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
@@ -59,8 +60,9 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 
 	res, err := q.Plugins.HandleQuery(subCtx, q.Caller, request)
 	// Error mapping
-	if nsc, ok := err.(*types.ErrNoSuchContract); ok {
-		return res, wasmvmtypes.NoSuchContract{Addr: nsc.Addr}
+	var noSuchContract *types.ErrNoSuchContract
+	if ok := errors.As(err, &noSuchContract); ok {
+		return res, wasmvmtypes.NoSuchContract{Addr: noSuchContract.Addr}
 	}
 	return res, err
 }
