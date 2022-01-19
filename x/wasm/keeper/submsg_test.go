@@ -247,7 +247,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(96000, 107367)},
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(112000, 112900)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -267,7 +267,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(96000, 107469)},
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(112000, 113000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -275,7 +275,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(76000, 79000), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(79000, 79040), assertErrorString("insufficient funds")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,
@@ -283,7 +283,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses all the subGasLimit, plus the 52k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+71000, subGasLimit+74000), assertErrorString("out of gas")},
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+73000, subGasLimit+80000), assertErrorString("out of gas")},
 		},
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
