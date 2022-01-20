@@ -22,6 +22,7 @@ const (
 	flagAmount                 = "amount"
 	flagLabel                  = "label"
 	flagAdmin                  = "admin"
+	flagNoAdmin                = "no-admin"
 	flagRunAs                  = "run-as"
 	flagInstantiateByEverybody = "instantiate-everybody"
 	flagInstantiateByAddress   = "instantiate-only-address"
@@ -157,6 +158,7 @@ func InstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -186,6 +188,16 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 	adminStr, err := flags.GetString(flagAdmin)
 	if err != nil {
 		return types.MsgInstantiateContract{}, fmt.Errorf("admin: %s", err)
+	}
+
+	if adminStr == "" {
+		noAdmin, err := flags.GetBool(flagNoAdmin)
+		if err != nil {
+			return types.MsgInstantiateContract{}, fmt.Errorf("no-admin: %s", err)
+		}
+		if !noAdmin {
+			return types.MsgInstantiateContract{}, fmt.Errorf("You must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
+		}
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
