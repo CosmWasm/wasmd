@@ -189,15 +189,17 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 	if err != nil {
 		return types.MsgInstantiateContract{}, fmt.Errorf("admin: %s", err)
 	}
+	noAdmin, err := flags.GetBool(flagNoAdmin)
+	if err != nil {
+		return types.MsgInstantiateContract{}, fmt.Errorf("no-admin: %s", err)
+	}
 
-	if adminStr == "" {
-		noAdmin, err := flags.GetBool(flagNoAdmin)
-		if err != nil {
-			return types.MsgInstantiateContract{}, fmt.Errorf("no-admin: %s", err)
-		}
-		if !noAdmin {
-			return types.MsgInstantiateContract{}, fmt.Errorf("You must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
-		}
+	// ensure sensible admin is set (or explicitly immutable)
+	if adminStr == "" && !noAdmin {
+		return types.MsgInstantiateContract{}, fmt.Errorf("You must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
+	}
+	if adminStr != "" && noAdmin {
+		return types.MsgInstantiateContract{}, fmt.Errorf("You set an admin and passed --no-admin, those cannot both be true")
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
