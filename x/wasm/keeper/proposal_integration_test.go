@@ -52,6 +52,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, myActorAddress, cInfo.Creator)
+	assert.True(t, wasmKeeper.IsPinnedCode(ctx, 1))
 
 	storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
 	require.NoError(t, err)
