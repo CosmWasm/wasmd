@@ -2,12 +2,28 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-- bump github.com/cosmos/cosmos-sdk to 0.42.11
-- bump github.com/cosmos/iavl to 0.17.3
-- use replace to enforce consistency of versioning in imported libraries
-- fixed circleci by removing the golang executor from a docker build
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.21.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...HEAD)
+
+## [v0.22.0](https://github.com/CosmWasm/wasmd/tree/v0.22.0) (2022-01-20)
+
+**Api Breaking:**
+- Upgrade to cosmos-sdk v0.45.0 [\#717](https://github.com/CosmWasm/wasmd/pull/717)
+- Upgrade wasmvm to v1.0.0-beta5 [\#714](https://github.com/CosmWasm/wasmd/pull/714)
+
+**Implemented Enhancements:**
+- Use proper SystemError::NoSuchContract on ContractInfo if missing [\#687](https://github.com/CosmWasm/wasmd/issues/687)
+- Benchmark tests flickering: directory not empty [\#659](https://github.com/CosmWasm/wasmd/issues/659)
+- Implement PinCode and UnpinCode proposal client handlers [\#707](https://github.com/CosmWasm/wasmd/pull/707) ([orkunkl](https://github.com/orkunkl))
+- Use replace statements to enforce consistent versioning. [\#692](https://github.com/CosmWasm/wasmd/pull/692) ([faddat](https://github.com/faddat))
+- Fixed circleci by removing the golang executor from a docker build
+- Go 1.17 provides a much clearer go.mod file [\#679](https://github.com/CosmWasm/wasmd/pull/679) ([faddat](https://github.com/faddat))
+
+
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...v0.21.0)
+
+
 
 ## [v0.21.0](https://github.com/CosmWasm/wasmd/tree/v0.21.0) (2021-11-17)
 
