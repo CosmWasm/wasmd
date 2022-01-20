@@ -70,8 +70,8 @@ var (
 	// ErrInvalidEvent error if an attribute/event from the contract is invalid
 	ErrInvalidEvent = sdkErrors.Register(DefaultCodespace, 21, "invalid event")
 
-	// errNoSuchContract error if an address does not belong to a contract (just for registration)
-	errNoSuchContract = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
+	//  error if an address does not belong to a contract (just for registration)
+	_ = sdkErrors.Register(DefaultCodespace, 22, "no such contract")
 )
 
 type ErrNoSuchContract struct {
