@@ -27,7 +27,8 @@ import (
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
-	wasmApp := app.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, app.DefaultNodeHome, invCheckPeriod, wasm.EnableAllProposals, app.EmptyBaseAppOptions{}, opts)
+	encodingConfig := app.MakeEncodingConfig()
+	wasmApp := app.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, app.DefaultNodeHome, invCheckPeriod, encodingConfig, wasm.EnableAllProposals, app.EmptyBaseAppOptions{}, opts)
 	if withGenesis {
 		return wasmApp, app.NewDefaultGenesisState()
 	}
@@ -36,11 +37,10 @@ func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option
 
 // SetupWithGenesisAccounts initializes a new WasmApp with the provided genesis
 // accounts and possible balances.
-func SetupWithGenesisAccounts(db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
+func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	encodingConfig := app.MakeEncodingConfig()
-	appCodec := encodingConfig.Marshaler
+	appCodec := app.NewTestSupport(b, wasmApp).AppCodec()
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 
@@ -111,7 +111,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 			Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
 		}
 	}
-	wasmApp := SetupWithGenesisAccounts(db, genAccs, bals...)
+	wasmApp := SetupWithGenesisAccounts(b, db, genAccs, bals...)
 
 	// add wasm contract
 	height := int64(2)

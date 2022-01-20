@@ -8,13 +8,16 @@ import (
 	"io/ioutil"
 	"strings"
 
+	wasmd "github.com/CosmWasm/wasmd/app"
+
+	ibctesting "github.com/cosmos/ibc-go/v2/testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/rand"
 
-	wasmd "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -71,7 +74,7 @@ func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.A
 		CodeID: codeID,
 		Label:  "ibc-test",
 		Msg:    initMsg,
-		Funds:  sdk.Coins{TestCoin},
+		Funds:  sdk.Coins{ibctesting.TestCoin},
 	}
 
 	r, err := chain.SendMsgs(instantiateMsg)
@@ -132,10 +135,8 @@ func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	return chain.TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
-}
-
-// TestSupport provides access to package private keepers.
-func (chain *TestChain) TestSupport() *wasmd.TestSupport {
-	return wasmd.NewTestSupport(chain.t, chain.App)
+	type testSupporter interface {
+		TestSupport() *wasmd.TestSupport
+	}
+	return chain.App.(testSupporter).TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
 }

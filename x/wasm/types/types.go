@@ -15,6 +15,11 @@ const (
 	defaultMemoryCacheSize    uint32 = 100 // in MiB
 	defaultSmartQueryGasLimit uint64 = 3_000_000
 	defaultContractDebugMode         = false
+
+	// ContractAddrLen defines a valid address length for contracts
+	ContractAddrLen = 32
+	// SDKAddrLen defines a valid address length that was used in sdk address generation
+	SDKAddrLen = 20
 )
 
 func (m Model) ValidateBasic() error {
@@ -313,5 +318,15 @@ func DefaultWasmConfig() WasmConfig {
 		SmartQueryGasLimit: defaultSmartQueryGasLimit,
 		MemoryCacheSize:    defaultMemoryCacheSize,
 		ContractDebugMode:  defaultContractDebugMode,
+	}
+}
+
+// VerifyAddressLen ensures that the address matches the expected length
+func VerifyAddressLen() func(addr []byte) error {
+	return func(addr []byte) error {
+		if len(addr) != ContractAddrLen && len(addr) != SDKAddrLen {
+			return sdkerrors.ErrInvalidAddress
+		}
+		return nil
 	}
 }

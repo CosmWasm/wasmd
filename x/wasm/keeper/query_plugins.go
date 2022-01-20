@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -32,14 +34,8 @@ func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller 
 	}
 }
 
-// -- interfaces from baseapp - so we can use the GPRQueryRouter --
-
-// GRPCQueryHandler defines a function type which handles ABCI Query requests
-// using gRPC
-type GRPCQueryHandler = func(ctx sdk.Context, req abci.RequestQuery) (abci.ResponseQuery, error)
-
 type GRPCQueryRouter interface {
-	Route(path string) GRPCQueryHandler
+	Route(path string) baseapp.GRPCQueryHandler
 }
 
 // -- end baseapp interfaces --

@@ -18,12 +18,11 @@ import (
 
 func TestLegacyQueryContractState(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit.Add(deposit...))
-	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
+	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	anyAddr := keepers.Faucet.NewFundedAccount(ctx, sdk.NewInt64Coin("denom", 5000))
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -156,12 +155,12 @@ func TestLegacyQueryContractState(t *testing.T) {
 
 func TestLegacyQueryContractListByCodeOrdering(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
-	anyAddr := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, topUp)
+	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	anyAddr := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -223,7 +222,7 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	var (
-		otherAddr sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		otherAddr sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
 	)
 
 	specs := map[string]struct {

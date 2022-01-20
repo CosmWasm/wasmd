@@ -53,12 +53,12 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = 63_787
+		GasNoWork uint64 = 63_958
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = 64_268 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = 64_401 // this is a little shy of 50k gas - to keep an eye on the limit
 
-		GasReturnUnhashed uint64 = 28
-		GasReturnHashed   uint64 = 24
+		GasReturnUnhashed uint64 = 33
+		GasReturnHashed   uint64 = 25
 	)
 
 	cases := map[string]struct {
@@ -103,7 +103,7 @@ func TestGasCostOnQuery(t *testing.T) {
 		},
 	}
 
-	contractAddr, creator, ctx, keeper := initRecurseContract(t)
+	contractAddr, _, ctx, keeper := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -130,9 +130,9 @@ func TestGasCostOnQuery(t *testing.T) {
 			err = json.Unmarshal(data, &resp)
 			require.NoError(t, err)
 			if recurse.Work == 0 {
-				assert.Equal(t, len(resp.Hashed), len(creator.String()))
+				assert.Equal(t, len(contractAddr.String()), len(resp.Hashed))
 			} else {
-				assert.Equal(t, len(resp.Hashed), 32)
+				assert.Equal(t, 32, len(resp.Hashed))
 			}
 		})
 	}
@@ -216,9 +216,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = 84103 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 84_236 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
-		GasReturnHashed uint64 = 24
+		GasReturnHashed uint64 = 26
 	)
 
 	cases := map[string]struct {
@@ -244,8 +244,8 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Work:  2000,
 			},
 			expectQueriesFromContract: 5,
-			// FIXME: why +1 ... confused a bit by calculations, seems like rounding issues
-			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) + 1,
+			// FIXME: why -1 ... confused a bit by calculations, seems like rounding issues
+			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) - 1,
 		},
 		// this is where we expect an error...
 		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)

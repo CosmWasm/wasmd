@@ -95,14 +95,14 @@ func TestInitializeStaking(t *testing.T) {
 	ctx, k := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
 
-	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1234567))
+	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
 	ctx = nextBlock(ctx, stakingKeeper)
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
@@ -163,13 +163,14 @@ type initInfo struct {
 	wasmKeeper     Keeper
 	contractKeeper wasmtypes.ContractOpsKeeper
 	bankKeeper     bankkeeper.Keeper
+	faucet         *TestFaucet
 }
 
 func initializeStaking(t *testing.T) initInfo {
 	ctx, k := CreateTestInput(t, false, SupportedFeatures)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
-	valAddr := addValidator(t, ctx, stakingKeeper, accKeeper, bankKeeper, sdk.NewInt64Coin("stake", 1000000))
+	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
 	ctx = nextBlock(ctx, stakingKeeper)
 
 	// set some baseline - this seems to be needed
@@ -184,7 +185,7 @@ func initializeStaking(t *testing.T) initInfo {
 	assert.Equal(t, v.Status, stakingtypes.Bonded)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, deposit)
+	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
 	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
@@ -220,6 +221,7 @@ func initializeStaking(t *testing.T) initInfo {
 		distKeeper:     k.DistKeeper,
 		bankKeeper:     bankKeeper,
 		contractKeeper: k.ContractKeeper,
+		faucet:         k.Faucet,
 	}
 }
 
@@ -236,7 +238,7 @@ func TestBonding(t *testing.T) {
 	// bob has 160k, putting 80k into the contract
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 160000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
-	bob := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, full)
+	bob := initInfo.faucet.NewFundedAccount(ctx, full...)
 
 	// check contract state before
 	assertBalance(t, ctx, keeper, contractAddr, bob, "0")
@@ -284,7 +286,7 @@ func TestUnbonding(t *testing.T) {
 	// bob has 160k, putting 80k into the contract
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 160000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 80000))
-	bob := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, full)
+	bob := initInfo.faucet.NewFundedAccount(ctx, full...)
 
 	bond := StakingHandleMsg{
 		Bond: &struct{}{},
@@ -351,7 +353,7 @@ func TestReinvest(t *testing.T) {
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
-	bob := createFakeFundedAccount(t, ctx, accKeeper, bankKeeper, full)
+	bob := initInfo.faucet.NewFundedAccount(ctx, full...)
 
 	// we will stake 200k to a validator with 1M self-bond
 	// this means we should get 1/6 of the rewards
@@ -408,7 +410,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper, accKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper
+	keeper, stakingKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
@@ -419,7 +421,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
-	bob := createFakeFundedAccount(t, ctx, accKeeper, initInfo.bankKeeper, full)
+	bob := initInfo.faucet.NewFundedAccount(ctx, full...)
 
 	// we will stake 200k to a validator with 1M self-bond
 	// this means we should get 1/6 of the rewards
@@ -441,7 +443,7 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// STEP 2: Prepare the mask contract
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := createFakeFundedAccount(t, ctx, accKeeper, initInfo.bankKeeper, deposit)
+	creator := initInfo.faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload mask code
 	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
@@ -587,7 +589,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	stakingKeeper, accKeeper := initInfo.stakingKeeper, initInfo.accKeeper
+	stakingKeeper := initInfo.stakingKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
@@ -598,7 +600,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
 	funds := sdk.NewCoins(sdk.NewInt64Coin("stake", 200000))
-	bob := createFakeFundedAccount(t, ctx, accKeeper, initInfo.bankKeeper, full)
+	bob := initInfo.faucet.NewFundedAccount(ctx, full...)
 
 	// we will stake 200k to a validator with 1M self-bond
 	// this means we should get 1/6 of the rewards
@@ -650,8 +652,8 @@ func TestQueryStakingPlugin(t *testing.T) {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, value sdk.Coin) sdk.ValAddress {
-	owner := createFakeFundedAccount(t, ctx, accountKeeper, bankKeeper, sdk.Coins{value})
+func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+	owner := faucet.NewFundedAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()

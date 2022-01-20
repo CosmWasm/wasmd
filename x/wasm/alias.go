@@ -12,7 +12,6 @@ import (
 
 const (
 	firstCodeID                     = 1
-	DefaultParamspace               = types.DefaultParamspace
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	TStoreKey                       = types.TStoreKey
