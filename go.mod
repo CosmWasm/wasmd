@@ -123,7 +123,7 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/confio/ics23/go => github.com/confio/ics23/go v0.6.6
-	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.0-rc1
+	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.45.0
 	github.com/cosmos/go-bip39 => github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.17.3
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
