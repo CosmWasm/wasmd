@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/testutil"
+	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -650,7 +651,7 @@ func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) err
 	mockIn := testutil.ApplyMockIODiscardOutErr(cmd)
 	kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, homeDir, mockIn)
 	require.NoError(t, err)
-	_, err = kb.NewAccount(defaultTestKeyName, testutil.TestMnemonic, "", sdk.FullFundraiserPath, hd.Secp256k1)
+	_, err = kb.NewAccount(defaultTestKeyName, testdata.TestMnemonic, "", sdk.FullFundraiserPath, hd.Secp256k1)
 	require.NoError(t, err)
 	return cmd.ExecuteContext(ctx)
 }
