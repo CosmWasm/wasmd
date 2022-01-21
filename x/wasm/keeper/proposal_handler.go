@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"encoding/hex"
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -121,55 +119,50 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 }
 
 func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.SudoContractProposal) error {
-	return fmt.Errorf("Not implemented")
-	//if err := p.ValidateBasic(); err != nil {
-	//	return err
-	//}
-	//
-	//contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "contract")
-	//}
-	//runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "run as address")
-	//}
-	//data, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.Msg)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//ctx.EventManager().EmitEvent(sdk.NewEvent(
-	//	types.EventTypeGovContractResult,
-	//	sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
-	//))
-	//return nil
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	data, err := k.Sudo(ctx, contractAddr, p.Msg)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
 }
 
 func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ExecuteContractProposal) error {
-	return fmt.Errorf("Not implemented")
-	//if err := p.ValidateBasic(); err != nil {
-	//	return err
-	//}
-	//
-	//contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "contract")
-	//}
-	//runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
-	//if err != nil {
-	//	return sdkerrors.Wrap(err, "run as address")
-	//}
-	//data, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.Msg)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//ctx.EventManager().EmitEvent(sdk.NewEvent(
-	//	types.EventTypeGovContractResult,
-	//	sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
-	//))
-	//return nil
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	// we currently don't support sending tokens as part of an execute proposal. should we? from which account?
+	data, err := k.Execute(ctx, contractAddr, runAsAddr, p.Msg, nil)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
 }
 
 func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
