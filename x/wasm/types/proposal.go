@@ -16,6 +16,8 @@ const (
 	ProposalTypeStoreCode           ProposalType = "StoreCode"
 	ProposalTypeInstantiateContract ProposalType = "InstantiateContract"
 	ProposalTypeMigrateContract     ProposalType = "MigrateContract"
+	ProposalTypeSudoContract        ProposalType = "SudoContract"
+	ProposalTypeExecuteContract     ProposalType = "ExecuteContract"
 	ProposalTypeUpdateAdmin         ProposalType = "UpdateAdmin"
 	ProposalTypeClearAdmin          ProposalType = "ClearAdmin"
 	ProposalTypePinCodes            ProposalType = "PinCodes"
@@ -30,6 +32,8 @@ var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
 	ProposalTypeInstantiateContract,
 	ProposalTypeMigrateContract,
+	ProposalTypeSudoContract,
+	ProposalTypeExecuteContract,
 	ProposalTypeUpdateAdmin,
 	ProposalTypeClearAdmin,
 	ProposalTypePinCodes,
@@ -58,6 +62,8 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
 	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeSudoContract))
+	govtypes.RegisterProposalType(string(ProposalTypeExecuteContract))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
 	govtypes.RegisterProposalType(string(ProposalTypePinCodes))
@@ -65,6 +71,8 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
 	govtypes.RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
 	govtypes.RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
+	govtypes.RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
+	govtypes.RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
 	govtypes.RegisterProposalTypeCodec(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
 	govtypes.RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
 	govtypes.RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
@@ -272,6 +280,114 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 		Description: p.Description,
 		Contract:    p.Contract,
 		CodeID:      p.CodeID,
+		Msg:         string(p.Msg),
+		RunAs:       p.RunAs,
+	}, nil
+}
+
+// ProposalRoute returns the routing key of a parameter change proposal.
+func (p SudoContractProposal) ProposalRoute() string { return RouterKey }
+
+// GetTitle returns the title of the proposal
+func (p *SudoContractProposal) GetTitle() string { return p.Title }
+
+// GetDescription returns the human readable description of the proposal
+func (p SudoContractProposal) GetDescription() string { return p.Description }
+
+// ProposalType returns the type
+func (p SudoContractProposal) ProposalType() string { return string(ProposalTypeSudoContract) }
+
+// ValidateBasic validates the proposal
+func (p SudoContractProposal) ValidateBasic() error {
+	if err := validateProposalCommons(p.Title, p.Description); err != nil {
+		return err
+	}
+	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	if err := p.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
+	}
+	return nil
+}
+
+// String implements the Stringer interface.
+func (p SudoContractProposal) String() string {
+	return fmt.Sprintf(`Migrate Contract Proposal:
+  Title:       %s
+  Description: %s
+  Contract:    %s
+  Msg          %q
+`, p.Title, p.Description, p.Contract, p.Msg)
+}
+
+// MarshalYAML pretty prints the migrate message
+func (p SudoContractProposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		Title       string `yaml:"title"`
+		Description string `yaml:"description"`
+		Contract    string `yaml:"contract"`
+		Msg         string `yaml:"msg"`
+	}{
+		Title:       p.Title,
+		Description: p.Description,
+		Contract:    p.Contract,
+		Msg:         string(p.Msg),
+	}, nil
+}
+
+// ProposalRoute returns the routing key of a parameter change proposal.
+func (p ExecuteContractProposal) ProposalRoute() string { return RouterKey }
+
+// GetTitle returns the title of the proposal
+func (p *ExecuteContractProposal) GetTitle() string { return p.Title }
+
+// GetDescription returns the human readable description of the proposal
+func (p ExecuteContractProposal) GetDescription() string { return p.Description }
+
+// ProposalType returns the type
+func (p ExecuteContractProposal) ProposalType() string { return string(ProposalTypeExecuteContract) }
+
+// ValidateBasic validates the proposal
+func (p ExecuteContractProposal) ValidateBasic() error {
+	if err := validateProposalCommons(p.Title, p.Description); err != nil {
+		return err
+	}
+	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
+		return sdkerrors.Wrap(err, "run as")
+	}
+	if err := p.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
+	}
+	return nil
+}
+
+// String implements the Stringer interface.
+func (p ExecuteContractProposal) String() string {
+	return fmt.Sprintf(`Migrate Contract Proposal:
+  Title:       %s
+  Description: %s
+  Contract:    %s
+  Run as:      %s
+  Msg          %q
+`, p.Title, p.Description, p.Contract, p.RunAs, p.Msg)
+}
+
+// MarshalYAML pretty prints the migrate message
+func (p ExecuteContractProposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		Title       string `yaml:"title"`
+		Description string `yaml:"description"`
+		Contract    string `yaml:"contract"`
+		Msg         string `yaml:"msg"`
+		RunAs       string `yaml:"run_as"`
+	}{
+		Title:       p.Title,
+		Description: p.Description,
+		Contract:    p.Contract,
 		Msg:         string(p.Msg),
 		RunAs:       p.RunAs,
 	}, nil
