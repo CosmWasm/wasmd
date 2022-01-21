@@ -56,6 +56,7 @@ message MigrateContractProposal {
   string title = 1;
   // Description is a human readable text
   string description = 2;
+  // FIXME: I think this is unused? Migrate has no sender
   // RunAs is the address that is passed to the contract's environment as sender
   string run_as = 3;
   // Contract is the address of the smart contract
@@ -64,6 +65,33 @@ message MigrateContractProposal {
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 6 [ (gogoproto.casttype) = "RawContractMessage" ];
+}
+
+// SudoContractProposal gov proposal content type to call sudo on a contract.
+message SudoContractProposal {
+  // Title is a short summary
+  string title = 1;
+  // Description is a human readable text
+  string description = 2;
+  // Contract is the address of the smart contract
+  string contract = 3;
+  // Msg json encoded message to be passed to the contract as sudo
+  bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
+}
+
+// ExecuteContractProposal gov proposal content type to call execute on a
+// contract.
+message ExecuteContractProposal {
+  // Title is a short summary
+  string title = 1;
+  // Description is a human readable text
+  string description = 2;
+  // RunAs is the address that is passed to the contract's environment as sender
+  string run_as = 3;
+  // Contract is the address of the smart contract
+  string contract = 4;
+  // Msg json encoded message to be passed to the contract as sudo
+  bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.
