@@ -18,7 +18,7 @@
 - Use replace statements to enforce consistent versioning. [\#692](https://github.com/CosmWasm/wasmd/pull/692) ([faddat](https://github.com/faddat))
 - Fixed circleci by removing the golang executor from a docker build
 - Go 1.17 provides a much clearer go.mod file [\#679](https://github.com/CosmWasm/wasmd/pull/679) ([faddat](https://github.com/faddat))
-
+- Autopin wasm code uploaded by gov proposal [\#726](https://github.com/CosmWasm/wasmd/pull/726) ([ethanfrey](https://github.com/ethanfrey))
 
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...v0.21.0)
