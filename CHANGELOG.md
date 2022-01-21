@@ -19,6 +19,7 @@
 - Fixed circleci by removing the golang executor from a docker build
 - Go 1.17 provides a much clearer go.mod file [\#679](https://github.com/CosmWasm/wasmd/pull/679) ([faddat](https://github.com/faddat))
 - Autopin wasm code uploaded by gov proposal [\#726](https://github.com/CosmWasm/wasmd/pull/726) ([ethanfrey](https://github.com/ethanfrey))
+- You must explicitly declare --no-admin on cli instantiate if that is what you want [\#727](https://github.com/CosmWasm/wasmd/pull/727) ([ethanfrey](https://github.com/ethanfrey))
 
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...v0.21.0)
