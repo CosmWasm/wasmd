@@ -18,7 +18,7 @@ type ValidatorSetSource interface {
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, stakingKeeper ValidatorSetSource, msgHandler sdk.Handler) ([]abci.ValidatorUpdate, error) {
 	contractKeeper := NewGovPermissionKeeper(keeper)
-	keeper.setParams(ctx, data.Params)
+	keeper.SetParams(ctx, data.Params)
 	var maxCodeID uint64
 	for i, code := range data.Codes {
 		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)

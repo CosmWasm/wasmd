@@ -123,7 +123,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 			accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
-			keepers.WasmKeeper.setParams(ctx, types.Params{
+			keepers.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowEverybody,
 				InstantiateDefaultPermission: spec.srcPermission,
 				MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
@@ -174,7 +174,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
 			params.CodeUploadAccess = spec.srcPermission
-			keepers.WasmKeeper.setParams(ctx, params)
+			keepers.WasmKeeper.SetParams(ctx, params)
 			_, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
