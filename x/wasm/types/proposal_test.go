@@ -304,18 +304,6 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
-		"run_as missing": {
-			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.RunAs = ""
-			}),
-			expErr: true,
-		},
-		"run_as invalid": {
-			src: MigrateContractProposalFixture(func(p *MigrateContractProposal) {
-				p.RunAs = invalidAddress
-			}),
-			expErr: true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -491,7 +479,6 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
   Code id:     1
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Msg          "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
 `,
 		},
@@ -609,7 +596,6 @@ description: Bar
 contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
 code_id: 1
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 `,
 		},
 		"update admin": {
@@ -733,7 +719,6 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 			exp: &MigrateContractProposal{
 				Title:       "foo",
 				Description: "bar",
-				RunAs:       "myRunAsAddress",
 				Contract:    "myContractAddr",
 				CodeID:      1,
 				Msg:         []byte("{}"),

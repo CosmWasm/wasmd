@@ -249,7 +249,6 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 		Contract:    contractAddr,
 		CodeID:      1,
 		Msg:         migMsgBz,
-		RunAs:       anyAddress,
 	}
 
 	for _, m := range mutators {

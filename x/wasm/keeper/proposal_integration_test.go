@@ -166,7 +166,6 @@ func TestMigrateProposal(t *testing.T) {
 		CodeID:      2,
 		Contract:    contractAddr.String(),
 		Msg:         migMsgBz,
-		RunAs:       otherAddress.String(),
 	}
 
 	em := sdk.NewEventManager()
@@ -204,6 +203,119 @@ func TestMigrateProposal(t *testing.T) {
 	require.Equal(t, types.EventTypeGovContractResult, em.Events()[1].Type)
 	require.Len(t, em.Events()[1].Attributes, 1)
 	assert.Equal(t, types.AttributeKeyResultDataHex, string(em.Events()[1].Attributes[0].Key))
+}
+
+func TestExecuteProposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking")
+	govKeeper, bankKeeper := keepers.GovKeeper, keepers.BankKeeper
+
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := exampleContract.Contract
+
+	// check balance
+	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(100))
+
+	releaseMsg := struct {
+		Release struct{} `json:"release"`
+	}{}
+	releaseMsgBz, err := json.Marshal(releaseMsg)
+	require.NoError(t, err)
+
+	// try with runAs that doesn't have pemission
+	badSrc := types.ExecuteContractProposal{
+		Title:       "First",
+		Description: "Beneficiary has no permission to run",
+		Contract:    contractAddr.String(),
+		Msg:         releaseMsgBz,
+		RunAs:       exampleContract.BeneficiaryAddr.String(),
+	}
+
+	em := sdk.NewEventManager()
+
+	// fails on store - this doesn't have permission
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &badSrc)
+	require.Error(t, err)
+	// balance should not change
+	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(100))
+
+	// try again with the proper run-as
+	src := types.ExecuteContractProposal{
+		Title:       "Second",
+		Description: "Verifier can execute",
+		Contract:    contractAddr.String(),
+		Msg:         releaseMsgBz,
+		RunAs:       exampleContract.VerifierAddr.String(),
+	}
+
+	em = sdk.NewEventManager()
+
+	// when stored
+	storedProposal, err = govKeeper.SubmitProposal(ctx, &src)
+	require.NoError(t, err)
+
+	// and proposal execute
+	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
+	require.NoError(t, err)
+
+	// balance should be empty (proper release)
+	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(0))
+}
+
+func TestSudoProposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking")
+	govKeeper, bankKeeper := keepers.GovKeeper, keepers.BankKeeper
+
+	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
+	contractAddr := exampleContract.Contract
+	_, _, anyAddr := keyPubAddr()
+
+	// check balance
+	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(0))
+
+	type StealMsg struct {
+		Recipient string     `json:"recipient"`
+		Amount    []sdk.Coin `json:"amount"`
+	}
+	stealMsg := struct {
+		Steal StealMsg `json:"steal_funds"`
+	}{Steal: StealMsg{
+		Recipient: anyAddr.String(),
+		Amount:    []sdk.Coin{sdk.NewInt64Coin("denom", 75)},
+	}}
+	stealMsgBz, err := json.Marshal(stealMsg)
+	require.NoError(t, err)
+
+	// sudo can do anything
+	src := types.SudoContractProposal{
+		Title:       "Sudo",
+		Description: "Steal funds for the verifier",
+		Contract:    contractAddr.String(),
+		Msg:         stealMsgBz,
+	}
+
+	em := sdk.NewEventManager()
+
+	// when stored
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	require.NoError(t, err)
+
+	// and proposal execute
+	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
+	require.NoError(t, err)
+
+	// balance should be empty (and verifier richer)
+	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(25))
+	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
+	require.Equal(t, bal.Amount, sdk.NewInt(75))
 }
 
 func TestAdminProposals(t *testing.T) {

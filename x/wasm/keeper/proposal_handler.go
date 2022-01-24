@@ -35,6 +35,10 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return handleInstantiateProposal(ctx, k, *c)
 		case *types.MigrateContractProposal:
 			return handleMigrateProposal(ctx, k, *c)
+		case *types.SudoContractProposal:
+			return handleSudoProposal(ctx, k, *c)
+		case *types.ExecuteContractProposal:
+			return handleExecuteProposal(ctx, k, *c)
 		case *types.UpdateAdminProposal:
 			return handleUpdateAdminProposal(ctx, k, *c)
 		case *types.ClearAdminProposal:
@@ -99,11 +103,57 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	if err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	// runAs is not used if this is permissioned, so just put any valid address there (second contractAddr)
+	data, err := k.Migrate(ctx, contractAddr, contractAddr, p.CodeID, p.Msg)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
+}
+
+func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.SudoContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	data, err := k.Sudo(ctx, contractAddr, p.Msg)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
+}
+
+func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ExecuteContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
+	if err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	data, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.Msg)
+	data, err := k.Execute(ctx, contractAddr, runAsAddr, p.Msg, p.Funds)
 	if err != nil {
 		return err
 	}

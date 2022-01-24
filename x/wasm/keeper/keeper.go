@@ -438,9 +438,9 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return data, nil
 }
 
-// Sudo allows priviledged access to a contract. This can never be called by governance or external tx, but only by
-// another native Go module directly. Thus, the keeper doesn't place any access controls on it, that is the
-// responsibility or the app developer (who passes the wasm.Keeper in app.go)
+// Sudo allows priviledged access to a contract. This can never be called by an external tx, but only by
+// another native Go module directly, or on-chain governance (if sudo proposals are enabled). Thus, the keeper doesn't
+// place any access controls on it, that is the responsibility or the app developer (who passes the wasm.Keeper in app.go)
 func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "sudo")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
