@@ -166,7 +166,6 @@ func TestMigrateProposal(t *testing.T) {
 		CodeID:      2,
 		Contract:    contractAddr.String(),
 		Msg:         migMsgBz,
-		RunAs:       otherAddress.String(),
 	}
 
 	em := sdk.NewEventManager()
