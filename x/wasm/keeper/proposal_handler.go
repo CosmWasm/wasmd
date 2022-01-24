@@ -103,11 +103,11 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	if err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	data, err := k.Migrate(ctx, contractAddr, runAsAddr, p.CodeID, p.Msg)
+	// runAs is not used if this is permissioned, so just put any valid address there (second contractAddr)
+	data, err := k.Migrate(ctx, contractAddr, contractAddr, p.CodeID, p.Msg)
 	if err != nil {
 		return err
 	}

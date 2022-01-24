@@ -56,12 +56,11 @@ message MigrateContractProposal {
   string title = 1;
   // Description is a human readable text
   string description = 2;
-  // FIXME: I think this is unused? Migrate has no sender
-  // RunAs is the address that is passed to the contract's environment as sender
-  string run_as = 3;
+  // Note: skipping 3 as this was previously used for unneeded run_as
+
   // Contract is the address of the smart contract
   string contract = 4;
-  // CodeID references the new WASM code
+  // CodeID references the new WASM codesudo
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 6 [ (gogoproto.casttype) = "RawContractMessage" ];
@@ -90,7 +89,7 @@ message ExecuteContractProposal {
   string run_as = 3;
   // Contract is the address of the smart contract
   string contract = 4;
-  // Msg json encoded message to be passed to the contract as sudo
+  // Msg json encoded message to be passed to the contract as execute
   bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
 

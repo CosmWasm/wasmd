@@ -181,13 +181,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
-			}
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
-			}
 			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
@@ -211,7 +204,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				Contract:    src.Contract,
 				CodeID:      src.CodeID,
 				Msg:         src.Msg,
-				RunAs:       runAs,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -225,7 +217,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")

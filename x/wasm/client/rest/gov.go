@@ -126,8 +126,6 @@ type MigrateProposalJSONReq struct {
 	Contract string          `json:"contract" yaml:"contract"`
 	Code     uint64          `json:"code_id" yaml:"code_id"`
 	Msg      json.RawMessage `json:"msg" yaml:"msg"`
-	// RunAs is the role that is passed to the contract's environment
-	RunAs string `json:"run_as" yaml:"run_as"`
 }
 
 func (s MigrateProposalJSONReq) Content() govtypes.Content {
@@ -137,7 +135,6 @@ func (s MigrateProposalJSONReq) Content() govtypes.Content {
 		Contract:    s.Contract,
 		CodeID:      s.Code,
 		Msg:         types.RawContractMessage(s.Msg),
-		RunAs:       s.RunAs,
 	}
 }
 func (s MigrateProposalJSONReq) GetProposer() string {

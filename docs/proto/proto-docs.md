@@ -673,7 +673,7 @@ contract.
 | `description` | [string](#string) |  | Description is a human readable text |
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as sudo |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as execute |
 
 
 
@@ -712,10 +712,11 @@ MigrateContractProposal gov proposal content type to migrate a contract.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
-| `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | FIXME: I think this is unused? Migrate has no sender RunAs is the address that is passed to the contract's environment as sender |
+| `description` | [string](#string) |  | Description is a human readable text
+
+Note: skipping 3 as this was previously used for unneeded run_as |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
+| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM codesudo |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
 
 
