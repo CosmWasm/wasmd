@@ -153,8 +153,7 @@ func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.E
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	// we currently don't support sending tokens as part of an execute proposal. should we? from which account?
-	data, err := k.Execute(ctx, contractAddr, runAsAddr, p.Msg, nil)
+	data, err := k.Execute(ctx, contractAddr, runAsAddr, p.Msg, p.Funds)
 	if err != nil {
 		return err
 	}

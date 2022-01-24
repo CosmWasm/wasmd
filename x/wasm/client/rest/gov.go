@@ -171,7 +171,8 @@ type ExecuteProposalJSONReq struct {
 	Contract string          `json:"contract" yaml:"contract"`
 	Msg      json.RawMessage `json:"msg" yaml:"msg"`
 	// RunAs is the role that is passed to the contract's environment
-	RunAs string `json:"run_as" yaml:"run_as"`
+	RunAs string    `json:"run_as" yaml:"run_as"`
+	Funds sdk.Coins `json:"funds" yaml:"funds"`
 }
 
 func (s ExecuteProposalJSONReq) Content() govtypes.Content {
@@ -181,6 +182,7 @@ func (s ExecuteProposalJSONReq) Content() govtypes.Content {
 		Contract:    s.Contract,
 		Msg:         types.RawContractMessage(s.Msg),
 		RunAs:       s.RunAs,
+		Funds:       s.Funds,
 	}
 }
 func (s ExecuteProposalJSONReq) GetProposer() string {

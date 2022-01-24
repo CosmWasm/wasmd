@@ -241,11 +241,19 @@ func ProposalExecuteContractCmd() *cobra.Command {
 
 			contract := args[0]
 			execMsg := []byte(args[1])
-
+			amountStr, err := cmd.Flags().GetString(flagAmount)
+			if err != nil {
+				return fmt.Errorf("amount: %s", err)
+			}
+			funds, err := sdk.ParseCoinsNormalized(amountStr)
+			if err != nil {
+				return fmt.Errorf("amount: %s", err)
+			}
 			runAs, err := cmd.Flags().GetString(flagRunAs)
 			if err != nil {
 				return fmt.Errorf("run-as: %s", err)
 			}
+
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
@@ -272,6 +280,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 				Contract:    contract,
 				Msg:         execMsg,
 				RunAs:       runAs,
+				Funds:       funds,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -286,6 +295,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
+	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")

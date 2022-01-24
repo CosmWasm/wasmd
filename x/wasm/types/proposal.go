@@ -353,6 +353,9 @@ func (p ExecuteContractProposal) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
 		return sdkerrors.Wrap(err, "run as")
 	}
+	if !p.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
 	if err := p.Msg.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "payload msg")
 	}
@@ -366,24 +369,27 @@ func (p ExecuteContractProposal) String() string {
   Description: %s
   Contract:    %s
   Run as:      %s
-  Msg          %q
-`, p.Title, p.Description, p.Contract, p.RunAs, p.Msg)
+  Msg:         %q
+  Funds:       %s
+`, p.Title, p.Description, p.Contract, p.RunAs, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the migrate message
 func (p ExecuteContractProposal) MarshalYAML() (interface{}, error) {
 	return struct {
-		Title       string `yaml:"title"`
-		Description string `yaml:"description"`
-		Contract    string `yaml:"contract"`
-		Msg         string `yaml:"msg"`
-		RunAs       string `yaml:"run_as"`
+		Title       string    `yaml:"title"`
+		Description string    `yaml:"description"`
+		Contract    string    `yaml:"contract"`
+		Msg         string    `yaml:"msg"`
+		RunAs       string    `yaml:"run_as"`
+		Funds       sdk.Coins `yaml:"funds"`
 	}{
 		Title:       p.Title,
 		Description: p.Description,
 		Contract:    p.Contract,
 		Msg:         string(p.Msg),
 		RunAs:       p.RunAs,
+		Funds:       p.Funds,
 	}, nil
 }
 
