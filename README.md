@@ -25,6 +25,7 @@ compatibility list:
 
 | wasmd | cosmwasm-vm | cosmwasm-std |
 | ----- | ----------- | ------------ |
+| 0.22  | 1.0.0-beta | 1.0.0-beta  |
 | 0.21  | 1.0.0-beta | 1.0.0-beta  |
 | 0.20  | 1.0.0-beta | 1.0.0-beta  |
 | 0.19  | 0.16        | 0.16         |
