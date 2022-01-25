@@ -1,6 +1,6 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.17.3-alpine AS go-builder
+FROM golang:1.17-alpine3.15 AS go-builder
 
 # this comes from standard alpine nightly file
 #  https://github.com/rust-lang/docker-rust-nightly/blob/master/alpine3.12/Dockerfile
@@ -22,7 +22,7 @@ RUN sha256sum /lib/libwasmvm_muslc.a | grep d16a2cab22c75dbe8af32265b9346c626607
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc make build
 
 # --------------------------------------------------------
-FROM alpine:3.13
+FROM alpine:3.15
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 
