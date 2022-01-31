@@ -186,10 +186,10 @@ workflows:
       - docker-image:
           requires:
             - setup-dependencies
-#          filters:
-#            branches:
-#              only:
-#                - master
+          filters:
+            branches:
+              only:
+                - master
       - docker-tagged:
           filters:
             tags:
