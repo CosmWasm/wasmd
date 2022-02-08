@@ -37,13 +37,13 @@ service Query {
   rpc RawContractState(QueryRawContractStateRequest)
       returns (QueryRawContractStateResponse) {
     option (google.api.http).get =
-        "/wasm/v1/contract/{address}/raw/{query_data}";
+        "/cosmwasm/wasm/v1/contract/{address}/raw/{query_data}";
   }
   // SmartContractState get smart query result from the contract
   rpc SmartContractState(QuerySmartContractStateRequest)
       returns (QuerySmartContractStateResponse) {
     option (google.api.http).get =
-        "/wasm/v1/contract/{address}/smart/{query_data}";
+        "/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}";
   }
   // Code gets the binary code and metadata for a singe wasm code
   rpc Code(QueryCodeRequest) returns (QueryCodeResponse) {
