@@ -799,6 +799,9 @@ func GetMaccPerms() map[string][]string {
 	for k, v := range maccPerms {
 		dupMaccPerms[k] = v
 	}
+	for k, v := range maccPerms {
+		dupMaccPerms[k] = v
+	}
 	return dupMaccPerms
 }
 

@@ -229,6 +229,11 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 }
 
 func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
+	testMap := map[string]int{"hi": 1, "Dog": 2, "test": 3}
+	for k, v := range testMap {
+		testMap[k] = v * 2
+	}
+
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 
 	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(ctx, codeID), len(initMsg))
