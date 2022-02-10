@@ -258,7 +258,7 @@ func (p MigrateContractProposal) String() string {
   Description: %s
   Contract:    %s
   Code id:     %d
-  Msg          %q
+  Msg:         %q
 `, p.Title, p.Description, p.Contract, p.CodeID, p.Msg)
 }
 
@@ -311,7 +311,7 @@ func (p SudoContractProposal) String() string {
   Title:       %s
   Description: %s
   Contract:    %s
-  Msg          %q
+  Msg:         %q
 `, p.Title, p.Description, p.Contract, p.Msg)
 }
 

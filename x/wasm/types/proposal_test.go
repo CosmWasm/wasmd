@@ -479,7 +479,7 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
   Code id:     1
-  Msg          "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
+  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
 `,
 		},
 		"update admin": {
