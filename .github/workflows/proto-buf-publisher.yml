@@ -20,11 +20,12 @@ jobs:
         with:
           input: 'proto'
 
+      # TODO: Add this when project is more stable.
       # backward compatibility breaking checks
-      - uses: bufbuild/buf-breaking-action@v1
-        with:
-          input: 'proto'
-          against: 'https://github.com/CosmWasm/wasmd.git#branch=master'
+      #- uses: bufbuild/buf-breaking-action@v1
+      #  with:
+      #    input: 'proto'
+      #    against: 'https://github.com/CosmWasm/wasmd.git#branch=master'
 
       # publish proto files
       - uses: bufbuild/buf-push-action@v1
