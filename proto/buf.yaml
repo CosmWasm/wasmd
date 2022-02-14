@@ -5,6 +5,11 @@
 # the previous configuration.
 version: v1
 name: buf.build/cosmwasm/wasmd
+deps:
+  - buf.build/cosmos/cosmos-proto
+  - buf.build/cosmos/cosmos-sdk
+  - buf.build/cosmos/gogo-proto
+
 breaking:
   use:
     - FILE

@@ -10,7 +10,7 @@ SIMAPP = ./app
 
 # for dockerized protobuf tools
 DOCKER := $(shell which docker)
-BUF_IMAGE=bufbuild/buf@sha256:9dc5d6645f8f8a2d5aaafc8957fbbb5ea64eada98a84cb09654e8f49d6f73b3e
+BUF_IMAGE=bufbuild/buf:1.0.0-rc12
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(BUF_IMAGE)
 HTTPS_GIT := https://github.com/CosmWasm/wasmd.git
 

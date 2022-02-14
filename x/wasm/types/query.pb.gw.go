@@ -990,23 +990,23 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_ContractInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"cosmwasm", "wasm", "v1", "contract", "address"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ContractInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"cosmwasm", "wasm", "v1", "contract", "address"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ContractHistory_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "history"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ContractHistory_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "history"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ContractsByCode_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "code", "code_id", "contracts"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_ContractsByCode_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "code", "code_id", "contracts"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_AllContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "state"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_AllContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "state"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_RawContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "raw", "query_data"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_RawContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "raw", "query_data"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_SmartContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "smart", "query_data"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_SmartContractState_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"cosmwasm", "wasm", "v1", "contract", "address", "smart", "query_data"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Code_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"cosmwasm", "wasm", "v1", "code", "code_id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Code_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"cosmwasm", "wasm", "v1", "code", "code_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Codes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"cosmwasm", "wasm", "v1", "code"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_Codes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"cosmwasm", "wasm", "v1", "code"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_PinnedCodes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"cosmwasm", "wasm", "v1", "codes", "pinned"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Query_PinnedCodes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"cosmwasm", "wasm", "v1", "codes", "pinned"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
