@@ -4,6 +4,7 @@
 # This module represents the "proto" root found in
 # the previous configuration.
 version: v1
+name: buf.build/cosmwasm/wasmd
 breaking:
   use:
     - FILE
