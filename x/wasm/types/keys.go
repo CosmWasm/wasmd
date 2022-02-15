@@ -87,7 +87,7 @@ func GetContractCodeHistoryElementKey(contractAddr sdk.AccAddress, pos uint64) [
 // GetContractCodeHistoryElementPrefix returns the key prefix for a contract code history entry: `<prefix><contractAddr>`
 func GetContractCodeHistoryElementPrefix(contractAddr sdk.AccAddress) []byte {
 	prefixLen := len(ContractCodeHistoryElementPrefix)
-	r := make([]byte, prefixLen+ContractAddrLen)
+	r := make([]byte, prefixLen+len(contractAddr))
 	copy(r[0:], ContractCodeHistoryElementPrefix)
 	copy(r[prefixLen:], contractAddr)
 	return r
