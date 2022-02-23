@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // ComposeMiddlewares compose multiple middlewares on top of a tx.Handler. The
@@ -48,13 +48,14 @@ type TxHandlerOptions struct {
 	LegacyRouter     sdk.Router
 	MsgServiceRouter *middleware.MsgServiceRouter
 
-	AccountKeeper     middleware.AccountKeeper
-	BankKeeper        types.BankKeeper
-	FeegrantKeeper    middleware.FeegrantKeeper
-	SignModeHandler   authsigning.SignModeHandler
-	SigGasConsumer    func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	AccountKeeper   middleware.AccountKeeper
+	BankKeeper      types.BankKeeper
+	FeegrantKeeper  middleware.FeegrantKeeper
+	SignModeHandler authsigning.SignModeHandler
+	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+
 	TXCounterStoreKey storetypes.StoreKey
-}
+	WasmConfig        *wasmTypes.WasmConfig
 }
 
 // NewDefaultTxHandler defines a TxHandler middleware stacks that should work
@@ -78,7 +79,7 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 
 	var sigGasConsumer = options.SigGasConsumer
 	if sigGasConsumer == nil {
-		sigGasConsumer = DefaultSigVerificationGasConsumer
+		sigGasConsumer = middleware.DefaultSigVerificationGasConsumer
 	}
 
 	return ComposeMiddlewares(
@@ -106,7 +107,7 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		middleware.ConsumeTxSizeGasMiddleware(options.AccountKeeper),
 		//Wasm Middleware
 		wasmkeeper.CountTxMiddleware(options.TXCounterStoreKey),
-
+		wasmkeeper.LimitSimulationGasMiddleware(options.WasmConfig.SimulationGasLimit),
 		// No gas should be consumed in any middleware above in a "post" handler part. See
 		// ComposeMiddlewares godoc for details.
 		// `DeductFeeMiddleware` and `IncrementSequenceMiddleware` should be put outside of `WithBranchedStore` middleware,

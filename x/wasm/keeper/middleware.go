@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 )
 
-var _ tx.Handler = CountTxHandler{}
+var _ tx.Handler = countTxHandler{}
 
-type CountTxHandler struct {
+type countTxHandler struct {
 	storeKey storetypes.StoreKey
 	next     tx.Handler
 }
@@ -19,14 +19,14 @@ type CountTxHandler struct {
 // CountTxMiddleware sets CountTx in context
 func CountTxMiddleware(storeKey storetypes.StoreKey) tx.Middleware {
 	return func(txh tx.Handler) tx.Handler {
-		return CountTxHandler{
+		return countTxHandler{
 			storeKey: storeKey,
 			next:     txh,
 		}
 	}
 }
 
-func (ctm CountTxHandler) setCountTxHandler(ctx context.Context, req tx.Request, simulate bool) error {
+func (ctm countTxHandler) setCountTxHandler(ctx context.Context, req tx.Request, simulate bool) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if simulate {
 		return nil
@@ -48,7 +48,8 @@ func (ctm CountTxHandler) setCountTxHandler(ctx context.Context, req tx.Request,
 	return nil
 }
 
-func (ctm CountTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
+// CheckTx implements tx.Handler.CheckTx.
+func (ctm countTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
 	if err := ctm.setCountTxHandler(ctx, req, false); err != nil {
 		return tx.Response{}, tx.ResponseCheckTx{}, err
 	}
@@ -57,7 +58,7 @@ func (ctm CountTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq 
 }
 
 // DeliverTx implements tx.Handler.DeliverTx.
-func (ctm CountTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+func (ctm countTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	if err := ctm.setCountTxHandler(ctx, req, false); err != nil {
 		return tx.Response{}, err
 	}
@@ -65,9 +66,74 @@ func (ctm CountTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Res
 }
 
 // SimulateTx implements tx.Handler.SimulateTx.
-func (ctm CountTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+func (ctm countTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	if err := ctm.setCountTxHandler(ctx, req, true); err != nil {
 		return tx.Response{}, err
 	}
 	return ctm.next.SimulateTx(ctx, req)
+}
+
+var _ tx.Handler = LimitSimulationGasHandler{}
+
+// LimitSimulationGasHandler to limit gas in simulation calls
+type LimitSimulationGasHandler struct {
+	gasLimit *sdk.Gas
+	next     tx.Handler
+}
+
+// LimitSimulationGasMiddleware to limit gas in simulation calls
+func LimitSimulationGasMiddleware(gas *sdk.Gas) tx.Middleware {
+	return func(txh tx.Handler) tx.Handler {
+		return LimitSimulationGasHandler{
+			gasLimit: gas,
+			next:     txh,
+		}
+	}
+}
+
+func (d LimitSimulationGasHandler) setLimitSimulationGas(ctx context.Context, req tx.Request, simulate bool) (context.Context, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if !simulate {
+		return ctx, nil
+	}
+
+	// apply custom node gas limit
+	if d.gasLimit != nil {
+		return sdkCtx.WithGasMeter(storetypes.NewGasMeter(*d.gasLimit)), nil
+	}
+
+	// default to max block gas when set, to be on the safe side
+	if maxGas := sdkCtx.ConsensusParams().GetBlock().MaxGas; maxGas > 0 {
+		return sdkCtx.WithGasMeter(sdk.NewGasMeter(sdk.Gas(maxGas))), nil
+	}
+
+	return ctx, nil
+}
+
+// CheckTx implements tx.Handler.CheckTx.
+func (d LimitSimulationGasHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
+	ctx, err := d.setLimitSimulationGas(ctx, req, false)
+	if err != nil {
+		return tx.Response{}, tx.ResponseCheckTx{}, err
+	}
+
+	return d.next.CheckTx(ctx, req, checkReq)
+}
+
+// DeliverTx implements tx.Handler.DeliverTx.
+func (d LimitSimulationGasHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	ctx, err := d.setLimitSimulationGas(ctx, req, false)
+	if err != nil {
+		return tx.Response{}, err
+	}
+	return d.next.DeliverTx(ctx, req)
+}
+
+// SimulateTx implements tx.Handler.SimulateTx.
+func (d LimitSimulationGasHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	ctx, err := d.setLimitSimulationGas(ctx, req, true)
+	if err != nil {
+		return tx.Response{}, err
+	}
+	return d.next.SimulateTx(ctx, req)
 }
