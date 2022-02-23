@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 

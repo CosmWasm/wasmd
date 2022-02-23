@@ -5,8 +5,8 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-beta6
 	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220222235041-afbb0bd1941f
+	github.com/cosmos/ibc-go/v3 v3.0.0-alpha1.0.20220222215829-9fcf2543b4af // indirect
 	github.com/cosmos/iavl v0.17.3
-	github.com/cosmos/ibc-go/v2 v2.0.3
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
@@ -25,7 +25,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/tendermint/tendermint v0.35.1
-	github.com/tendermint/tm-db v0.6.6
+	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
 	google.golang.org/grpc v1.44.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -63,6 +63,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
@@ -130,5 +131,6 @@ replace (
 	// the following version across all dependencies.
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
+//	github.com/cosmos/ibc-go/v3 => github.com/notional-labs/ibc-go/v3 v3.0.0-rc0
 
 )
