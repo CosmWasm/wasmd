@@ -5,7 +5,6 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -135,7 +134,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			}
 		} else {
 			// Issue #759 - we don't return error string for worries of non-determinism
-			ctx.Logger().Info("Redacting submessage error", "error", err.Error())
+			logError(ctx, "Redacting submessage error", err)
 			result = wasmvmtypes.SubcallResult{
 				Err: redactError(err),
 			}
@@ -160,8 +159,15 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 	return rsp, nil
 }
 
+func logError(ctx sdk.Context, msg string, err error) {
+	logger := ctx.Logger()
+	if logger != nil {
+		logger.Info(msg, "error", err.Error())
+	}
+}
+
 func redactError(err error) string {
-	codespace, code, _ := errors.ABCIInfo(err, false)
+	codespace, code, _ := sdkerrors.ABCIInfo(err, false)
 	return fmt.Sprintf("Error: %s/%d", codespace, code)
 }
 
