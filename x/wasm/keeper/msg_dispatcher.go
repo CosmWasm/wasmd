@@ -1,8 +1,11 @@
 package keeper
 
 import (
+	"fmt"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -131,8 +134,10 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 				},
 			}
 		} else {
+			// Issue #759 - we don't return error string for worries of non-determinism
+			ctx.Logger().Info("Redacting submessage error", "error", err.Error())
 			result = wasmvmtypes.SubcallResult{
-				Err: err.Error(),
+				Err: redactError(err),
 			}
 		}
 
@@ -153,6 +158,11 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 	}
 	return rsp, nil
+}
+
+func redactError(err error) string {
+	codespace, code, _ := errors.ABCIInfo(err, false)
+	return fmt.Sprintf("Error: %s/%d", codespace, code)
 }
 
 func filterEvents(events []sdk.Event) []sdk.Event {
