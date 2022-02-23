@@ -167,6 +167,10 @@ func logError(ctx sdk.Context, msg string, err error) {
 }
 
 func redactError(err error) string {
+	// FIXME: do we want to hardcode some constant string mappings here as well?
+	// Or better document them? (SDK error string may change on a patch release to fix wording)
+	// sdk/11 is out of gas
+	// sdk/5 is insufficient funds (on bank send)
 	codespace, code, _ := sdkerrors.ABCIInfo(err, false)
 	return fmt.Sprintf("Error: %s/%d", codespace, code)
 }

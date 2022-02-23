@@ -254,7 +254,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(76000, 79000), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(76000, 79000), assertErrorString("sdk/5")},
 		},
 		"out of gas panic with no gas limit": {
 			submsgID:        7,
@@ -275,7 +275,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(79000, 79040), assertErrorString("insufficient funds")},
+			resultAssertions: []assertion{assertGasUsed(77500, 77600), assertErrorString("sdk/5")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,
@@ -283,7 +283,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses all the subGasLimit, plus the 52k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+73000, subGasLimit+80000), assertErrorString("out of gas")},
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+72000, subGasLimit+73000), assertErrorString("sdk/11")},
 		},
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
