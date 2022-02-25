@@ -2,6 +2,7 @@ package ibctesting
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -34,7 +35,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmprotoversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmversion "github.com/tendermint/tendermint/version"
 
@@ -85,7 +85,7 @@ type PacketAck struct {
 func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
 	// generate validator private/public key
 	privVal := mock.NewPV()
-	pubKey, err := privVal.GetPubKey()
+	pubKey, err := privVal.GetPubKey(context.Background())
 	require.NoError(t, err)
 
 	// create validator set with single validator
@@ -406,7 +406,7 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	vsetHash := tmValSet.Hash()
 
 	tmHeader := tmtypes.Header{
-		Version:            tmprotoversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
+		Version:            tmversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
 		ChainID:            chainID,
 		Height:             blockHeight,
 		Time:               timestamp,
@@ -425,7 +425,7 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	blockID := MakeBlockID(hhash, 3, tmhash.Sum([]byte("part_set")))
 	voteSet := tmtypes.NewVoteSet(chainID, blockHeight, 1, tmproto.PrecommitType, tmValSet)
 
-	commit, err := tmtypes.MakeCommit(blockID, blockHeight, 1, voteSet, signers, timestamp)
+	commit, err := MakeCommit(context.Background(), blockID, blockHeight, 1, voteSet, signers, timestamp)
 	require.NoError(chain.t, err)
 
 	signedHeader := &tmproto.SignedHeader{
@@ -590,4 +590,35 @@ func (a TestingAppDecorator) GetTxConfig() client.TxConfig {
 
 func (a TestingAppDecorator) TestSupport() *wasmd.TestSupport {
 	return wasmd.NewTestSupport(a.t, a.WasmApp)
+}
+
+func MakeCommit(ctx context.Context, blockID tmtypes.BlockID, height int64, round int32, voteSet *tmtypes.VoteSet, validators []tmtypes.PrivValidator, now time.Time) (*tmtypes.Commit, error) {
+	// all sign
+	for i := 0; i < len(validators); i++ {
+		pubKey, err := validators[i].GetPubKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+		vote := &tmtypes.Vote{
+			ValidatorAddress: pubKey.Address(),
+			ValidatorIndex:   int32(i),
+			Height:           height,
+			Round:            round,
+			Type:             tmproto.PrecommitType,
+			BlockID:          blockID,
+			Timestamp:        now,
+		}
+
+		v := vote.ToProto()
+
+		if err := validators[i].SignVote(ctx, voteSet.ChainID(), v); err != nil {
+			return nil, err
+		}
+		vote.Signature = v.Signature
+		if _, err := voteSet.AddVote(vote); err != nil {
+			return nil, err
+		}
+	}
+
+	return voteSet.MakeCommit(), nil
 }
