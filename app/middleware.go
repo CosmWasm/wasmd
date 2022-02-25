@@ -85,6 +85,9 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 	return ComposeMiddlewares(
 		middleware.NewRunMsgsTxHandler(options.MsgServiceRouter, options.LegacyRouter),
 		middleware.NewTxDecoderMiddleware(options.TxDecoder),
+		//Wasm Middleware
+		wasmkeeper.CountTxMiddleware(options.TXCounterStoreKey),
+		wasmkeeper.LimitSimulationGasMiddleware(options.WasmConfig.SimulationGasLimit),
 		// Set a new GasMeter on sdk.Context.
 		//
 		// Make sure the Gas middleware is outside of all other middlewares
