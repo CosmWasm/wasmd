@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-beta6
-	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220222235041-afbb0bd1941f
+	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220225205817-9a875574bfa4
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v3 v3.0.0-alpha1.0.20220223145401-ef34765e7010 // indirect
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
@@ -53,7 +53,7 @@ require (
 	github.com/confio/ics23/go v0.7.0-rc // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7.0.20220208174455-213b76899fac // indirect
-	github.com/cosmos/cosmos-sdk/api v0.1.0-alpha4 // indirect
+	github.com/cosmos/cosmos-sdk/api v0.1.0-alpha5 // indirect
 	github.com/cosmos/cosmos-sdk/errors v1.0.0-beta.2 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
@@ -103,7 +103,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect
-	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643 // indirect
