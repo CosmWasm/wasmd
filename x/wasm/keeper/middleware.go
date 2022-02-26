@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -136,4 +137,14 @@ func (d LimitSimulationGasHandler) SimulateTx(ctx context.Context, req tx.Reques
 		return tx.Response{}, err
 	}
 	return d.next.SimulateTx(ctx, req)
+}
+
+func encodeHeightCounter(height int64, counter uint32) []byte {
+	b := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, counter)
+	return append(sdk.Uint64ToBigEndian(uint64(height)), b...)
+}
+
+func decodeHeightCounter(bz []byte) (int64, uint32) {
+	return int64(sdk.BigEndianToUint64(bz[0:8])), binary.BigEndian.Uint32(bz[8:])
 }
