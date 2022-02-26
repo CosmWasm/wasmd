@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	govrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -29,7 +29,7 @@ type StoreCodeProposalJSONReq struct {
 	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
 
-func (s StoreCodeProposalJSONReq) Content() govtypes.Content {
+func (s StoreCodeProposalJSONReq) Content() govtypesv1beta1.Content {
 	return &types.StoreCodeProposal{
 		Title:                 s.Title,
 		Description:           s.Description,
@@ -79,7 +79,7 @@ type InstantiateProposalJSONReq struct {
 	Funds sdk.Coins       `json:"funds" yaml:"funds"`
 }
 
-func (s InstantiateProposalJSONReq) Content() govtypes.Content {
+func (s InstantiateProposalJSONReq) Content() govtypesv1beta1.Content {
 	return &types.InstantiateContractProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -128,7 +128,7 @@ type MigrateProposalJSONReq struct {
 	Msg      json.RawMessage `json:"msg" yaml:"msg"`
 }
 
-func (s MigrateProposalJSONReq) Content() govtypes.Content {
+func (s MigrateProposalJSONReq) Content() govtypesv1beta1.Content {
 	return &types.MigrateContractProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -175,7 +175,7 @@ type ExecuteProposalJSONReq struct {
 	Funds sdk.Coins `json:"funds" yaml:"funds"`
 }
 
-func (s ExecuteProposalJSONReq) Content() govtypes.Content {
+func (s ExecuteProposalJSONReq) Content() govtypesv1beta1.Content {
 	return &types.ExecuteContractProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -220,7 +220,7 @@ type SudoProposalJSONReq struct {
 	Msg      json.RawMessage `json:"msg" yaml:"msg"`
 }
 
-func (s SudoProposalJSONReq) Content() govtypes.Content {
+func (s SudoProposalJSONReq) Content() govtypesv1beta1.Content {
 	return &types.SudoContractProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -263,7 +263,7 @@ type UpdateAdminJSONReq struct {
 	Contract string `json:"contract" yaml:"contract"`
 }
 
-func (s UpdateAdminJSONReq) Content() govtypes.Content {
+func (s UpdateAdminJSONReq) Content() govtypesv1beta1.Content {
 	return &types.UpdateAdminProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -305,7 +305,7 @@ type ClearAdminJSONReq struct {
 	Contract string `json:"contract" yaml:"contract"`
 }
 
-func (s ClearAdminJSONReq) Content() govtypes.Content {
+func (s ClearAdminJSONReq) Content() govtypesv1beta1.Content {
 	return &types.ClearAdminProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -346,7 +346,7 @@ type PinCodeJSONReq struct {
 	CodeIDs []uint64 `json:"code_ids" yaml:"code_ids"`
 }
 
-func (s PinCodeJSONReq) Content() govtypes.Content {
+func (s PinCodeJSONReq) Content() govtypesv1beta1.Content {
 	return &types.PinCodesProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -388,7 +388,7 @@ type UnpinCodeJSONReq struct {
 	CodeIDs []uint64 `json:"code_ids" yaml:"code_ids"`
 }
 
-func (s UnpinCodeJSONReq) Content() govtypes.Content {
+func (s UnpinCodeJSONReq) Content() govtypesv1beta1.Content {
 	return &types.UnpinCodesProposal{
 		Title:       s.Title,
 		Description: s.Description,
@@ -419,7 +419,7 @@ func UnpinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler
 }
 
 type wasmProposalData interface {
-	Content() govtypes.Content
+	Content() govtypesv1beta1.Content
 	GetProposer() string
 	GetDeposit() sdk.Coins
 	GetBaseReq() rest.BaseReq
@@ -431,7 +431,7 @@ func toStdTxResponse(cliCtx client.Context, w http.ResponseWriter, data wasmProp
 		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	msg, err := govtypes.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), proposerAddr)
+	msg, err := govtypesv1beta1.NewMsgSubmitProposal(data.Content(), data.GetDeposit(), proposerAddr)
 	if err != nil {
 		rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return

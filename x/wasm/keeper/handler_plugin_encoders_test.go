@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestEncoding(t *testing.T) {
@@ -50,7 +50,7 @@ func TestEncoding(t *testing.T) {
 	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
 	require.NoError(t, err)
 
-	proposalMsg := &govtypes.MsgSubmitProposal{
+	proposalMsg := &govtypesv1beta1.MsgSubmitProposal{
 		Proposer:       addr1.String(),
 		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
 		Content:        content,
@@ -509,10 +509,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govtypesv1beta1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionYes,
+					Option:     govtypesv1beta1.OptionYes,
 				},
 			},
 		},
@@ -525,10 +525,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govtypesv1beta1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNo,
+					Option:     govtypesv1beta1.OptionNo,
 				},
 			},
 		},
@@ -541,10 +541,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govtypesv1beta1.MsgVote{
 					ProposalId: 10,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionAbstain,
+					Option:     govtypesv1beta1.OptionAbstain,
 				},
 			},
 		},
@@ -557,10 +557,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govtypesv1beta1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNoWithVeto,
+					Option:     govtypesv1beta1.OptionNoWithVeto,
 				},
 			},
 		},

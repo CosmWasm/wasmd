@@ -14,10 +14,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -29,8 +30,6 @@ import (
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -75,9 +74,9 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 		if contractExtension {
 			anyTime := time.Now().UTC()
-			var nestedType govtypes.TextProposal
+			var nestedType govtypesv1beta1.TextProposal
 			f.NilChance(0).Fuzz(&nestedType)
-			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime)
+			myExtension, err := govtypesv1beta1.NewProposal(&nestedType, 1, anyTime, anyTime)
 			require.NoError(t, err)
 			contract.SetExtension(&myExtension)
 		}
@@ -655,10 +654,10 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	// register an example extension. must be protobuf
 	encodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*types.ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
+		&govtypesv1beta1.Proposal{},
 	)
 	// also registering gov interfaces for nested Any type
-	govtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	govtypesv1beta1.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)

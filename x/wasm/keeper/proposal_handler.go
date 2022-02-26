@@ -5,23 +5,23 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
-func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) govtypesv1beta1.Handler {
 	return NewWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
 }
 
 // NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
-func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) govtypesv1beta1.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
 	}
-	return func(ctx sdk.Context, content govtypes.Content) error {
+	return func(ctx sdk.Context, content govtypesv1beta1.Content) error {
 		if content == nil {
 			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "content must not be empty")
 		}

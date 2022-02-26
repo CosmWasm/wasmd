@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -57,6 +58,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1beta2 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta2"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -94,8 +97,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -413,9 +414,9 @@ func NewWasmApp(
 	)
 
 	// register the proposal types
-	govRouter := govtypes.NewRouter()
+	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.
-		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+		AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
@@ -814,7 +815,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(minttypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1beta2.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)

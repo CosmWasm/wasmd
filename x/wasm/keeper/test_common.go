@@ -37,6 +37,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1beta2 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta2"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -398,8 +400,8 @@ func createTestInput(
 	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
 	types.RegisterQueryServer(querier, NewGrpcQuerier(appCodec, keys[types.ModuleName], keeper, keeper.queryGasLimit))
 
-	govRouter := govtypes.NewRouter().
-		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+	govRouter := govtypesv1beta1.NewRouter().
+		AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
 		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
@@ -407,17 +409,17 @@ func createTestInput(
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
-		subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()),
+		subspace(govtypes.ModuleName).WithKeyTable(govtypesv1beta2.ParamKeyTable()),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
 		govRouter,
 	)
 
-	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
-	govKeeper.SetDepositParams(ctx, govtypes.DefaultDepositParams())
-	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
-	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
+	govKeeper.SetProposalID(ctx, govtypesv1beta1.DefaultStartingProposalID)
+	govKeeper.SetDepositParams(ctx, govtypesv1beta2.DefaultDepositParams())
+	govKeeper.SetVotingParams(ctx, govtypesv1beta2.DefaultVotingParams())
+	govKeeper.SetTallyParams(ctx, govtypesv1beta2.DefaultTallyParams())
 
 	keepers := TestKeepers{
 		AccountKeeper:  accountKeeper,

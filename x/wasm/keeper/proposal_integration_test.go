@@ -13,7 +13,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -328,7 +328,7 @@ func TestAdminProposals(t *testing.T) {
 
 	specs := map[string]struct {
 		state       types.ContractInfo
-		srcProposal govtypes.Content
+		srcProposal govtypesv1beta1.Content
 		expAdmin    sdk.AccAddress
 	}{
 		"update with different admin": {
