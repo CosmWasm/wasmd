@@ -1,0 +1,33 @@
+# This is a basic workflow that is manually triggered
+
+name: 200s testnet
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on: [push, pull_request, workflow_dispatch]
+
+# This workflow makes x86_64 binaries for mac, windows, and linux.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    name: 200 second testnet
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2.1.3
+        with: 
+          go-version: '^1.17'
+
+
+# we build and install in case we want to run it or capture an artifact as we do in the step below. 
+# we also start a chain, so that if we can't do that we know we've failed and move on
+      - name: Compile chain
+        run: |
+          cd cmd/wasmd
+          go build .
+          go install .
+          ./wasmd testnet start --enable-logging | true
+        
+          
+          
