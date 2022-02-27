@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -95,7 +96,7 @@ var ModuleBasics = module.NewBasicManager(
 )
 
 func MakeTestCodec(t testing.TB) codec.Codec {
-	return MakeEncodingConfig(t).Marshaler
+	return MakeEncodingConfig(t).Codec
 }
 
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
@@ -178,7 +179,7 @@ type TestKeepers struct {
 	ContractKeeper types.ContractOpsKeeper
 	WasmKeeper     *Keeper
 	IBCKeeper      *ibckeeper.Keeper
-	Router         *baseapp.Router
+	Router         *authmiddleware.MsgServiceRouter
 	EncodingConfig wasmappparams.EncodingConfig
 	Faucet         *TestFaucet
 }
@@ -236,7 +237,7 @@ func createTestInput(
 	ctx = types.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(t)
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
@@ -279,6 +280,7 @@ func createTestInput(
 		subspace(authtypes.ModuleName),
 		authtypes.ProtoBaseAccount, // prototype
 		maccPerms,
+		"wasm",
 	)
 	blockedAddrs := make(map[string]bool)
 	for acc := range maccPerms {
@@ -311,7 +313,6 @@ func createTestInput(
 		bankKeeper,
 		stakingKeeper,
 		authtypes.FeeCollectorName,
-		nil,
 	)
 	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
@@ -352,18 +353,17 @@ func createTestInput(
 		scopedIBCKeeper,
 	)
 
-	router := baseapp.NewRouter()
-	bh := bank.NewHandler(bankKeeper)
-	router.AddRoute(sdk.NewRoute(banktypes.RouterKey, bh))
-	sh := staking.NewHandler(stakingKeeper)
-	router.AddRoute(sdk.NewRoute(stakingtypes.RouterKey, sh))
-	dh := distribution.NewHandler(distKeeper)
-	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
+	router := authmiddleware.NewLegacyRouter()
+	br := bank.AppModule.Route(bank.AppModule{})
+	router.AddRoute(br)
+	sr := staking.AppModule.Route(staking.AppModule{})
+	router.AddRoute(sr)
+	dr := distribution.AppModule.Route(distribution.AppModule{})
+	router.AddRoute(dr)
 
 	querier := baseapp.NewGRPCQueryRouter()
 	querier.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
-	msgRouter := baseapp.NewMsgServiceRouter()
-	msgRouter.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
+	msgRouter := authmiddleware.NewMsgServiceRouter(encodingConfig.InterfaceRegistry)
 
 	cfg := sdk.GetConfig()
 	cfg.SetAddressVerifier(types.VerifyAddressLen())
@@ -407,6 +407,8 @@ func createTestInput(
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
 		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
 
+	govConfig := govtypes.DefaultConfig()
+
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
@@ -415,6 +417,8 @@ func createTestInput(
 		bankKeeper,
 		stakingKeeper,
 		govRouter,
+		msgRouter,
+		govConfig,
 	)
 
 	govKeeper.SetProposalID(ctx, govtypesv1beta1.DefaultStartingProposalID)
@@ -431,7 +435,7 @@ func createTestInput(
 		BankKeeper:     bankKeeper,
 		GovKeeper:      govKeeper,
 		IBCKeeper:      ibcKeeper,
-		Router:         router,
+		Router:         msgRouter,
 		EncodingConfig: encodingConfig,
 		Faucet:         faucet,
 	}

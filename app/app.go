@@ -308,7 +308,7 @@ func NewWasmApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
 
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, baseAppOptions...)
