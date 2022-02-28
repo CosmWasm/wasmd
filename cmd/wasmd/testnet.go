@@ -1,6 +1,7 @@
 package main
 
 // DONTCOVER
+//nolint:errcheck
 
 import (
 	"bufio"
@@ -125,15 +126,46 @@ Example:
 			config := serverCtx.Config
 
 			args := initArgs{}
-			args.outputDir, _ = cmd.Flags().GetString(flagOutputDir)
-			args.keyringBackend, _ = cmd.Flags().GetString(flags.FlagKeyringBackend)
-			args.chainID, _ = cmd.Flags().GetString(flags.FlagChainID)
-			args.minGasPrices, _ = cmd.Flags().GetString(server.FlagMinGasPrices)
-			args.nodeDirPrefix, _ = cmd.Flags().GetString(flagNodeDirPrefix)
-			args.nodeDaemonHome, _ = cmd.Flags().GetString(flagNodeDaemonHome)
-			args.startingIPAddress, _ = cmd.Flags().GetString(flagStartingIPAddress)
-			args.numValidators, _ = cmd.Flags().GetInt(flagNumValidators)
-			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			args.outputDir, err = cmd.Flags().GetString(flagOutputDir)
+			if err != nil {
+				panic(err)
+			}
+
+			args.keyringBackend, err = cmd.Flags().GetString(flags.FlagKeyringBackend)
+			if err != nil {
+				panic(err)
+			}
+
+			args.chainID, err = cmd.Flags().GetString(flags.FlagChainID)
+			if err != nil {
+				panic(err)
+			}
+
+			args.minGasPrices, err = cmd.Flags().GetString(server.FlagMinGasPrices)
+			if err != nil {
+				panic(err)
+			}
+
+			args.nodeDirPrefix, err = cmd.Flags().GetString(flagNodeDirPrefix)
+			if err != nil {
+				panic(err)
+			}
+			args.nodeDaemonHome, err = cmd.Flags().GetString(flagNodeDaemonHome)
+			if err != nil {
+				panic(err)
+			}
+			args.startingIPAddress, err = cmd.Flags().GetString(flagStartingIPAddress)
+			if err != nil {
+				panic(err)
+			}
+			args.numValidators, err = cmd.Flags().GetInt(flagNumValidators)
+			if err != nil {
+				panic(err)
+			}
+			args.algo, err = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			if err != nil {
+				panic(err)
+			}
 
 			return initTestnetFiles(clientCtx, cmd, config, mbm, genBalIterator, args)
 
@@ -161,17 +193,57 @@ Example:
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 
+			var err error
 			args := startArgs{}
-			args.outputDir, _ = cmd.Flags().GetString(flagOutputDir)
-			args.chainID, _ = cmd.Flags().GetString(flags.FlagChainID)
-			args.minGasPrices, _ = cmd.Flags().GetString(server.FlagMinGasPrices)
-			args.numValidators, _ = cmd.Flags().GetInt(flagNumValidators)
-			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
-			args.enableLogging, _ = cmd.Flags().GetBool(flagEnableLogging)
-			args.rpcAddress, _ = cmd.Flags().GetString(flagRPCAddress)
-			args.apiAddress, _ = cmd.Flags().GetString(flagAPIAddress)
-			args.grpcAddress, _ = cmd.Flags().GetString(flagGRPCAddress)
-			args.printMnemonic, _ = cmd.Flags().GetBool(flagPrintMnemonic)
+			args.outputDir, err = cmd.Flags().GetString(flagOutputDir)
+			if err != nil {
+				panic(err)
+			}
+
+			args.chainID, err = cmd.Flags().GetString(flags.FlagChainID)
+			if err != nil {
+				panic(err)
+			}
+
+			args.minGasPrices, err = cmd.Flags().GetString(server.FlagMinGasPrices)
+			if err != nil {
+				panic(err)
+			}
+
+			args.numValidators, err = cmd.Flags().GetInt(flagNumValidators)
+			if err != nil {
+				panic(err)
+			}
+
+			args.algo, err = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			if err != nil {
+				panic(err)
+			}
+
+			args.enableLogging, err = cmd.Flags().GetBool(flagEnableLogging)
+			if err != nil {
+				panic(err)
+			}
+
+			args.rpcAddress, err = cmd.Flags().GetString(flagRPCAddress)
+			if err != nil {
+				panic(err)
+			}
+
+			args.apiAddress, err = cmd.Flags().GetString(flagAPIAddress)
+			if err != nil {
+				panic(err)
+			}
+
+			args.grpcAddress, err = cmd.Flags().GetString(flagGRPCAddress)
+			if err != nil {
+				panic(err)
+			}
+
+			args.printMnemonic, err = cmd.Flags().GetBool(flagPrintMnemonic)
+			if err != nil {
+				panic(err)
+			}
 
 			return startTestnet(cmd, args)
 
@@ -523,7 +595,10 @@ func startTestnet(cmd *cobra.Command, args startArgs) error {
 		return err
 	}
 
-	height, _ := testnet.WaitForHeight(200)
+	height, err := testnet.WaitForHeight(200)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("Testnet started (height=%d).\n", height)
 
 	cmd.Println("press the Enter Key to terminate")
