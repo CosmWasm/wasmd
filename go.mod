@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-soon2.0.20220223181252-4aba468c9bc6
-	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220225205817-9a875574bfa4
+	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220227172654-e460f010e1a6
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v3 v3.0.0-alpha1.0.20220223145401-ef34765e7010
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b

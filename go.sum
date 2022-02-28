@@ -292,6 +292,8 @@ github.com/cosmos/cosmos-proto v1.0.0-alpha7.0.20220208174455-213b76899fac/go.mo
 github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220222235041-afbb0bd1941f/go.mod h1:w8r5e1R7DvZy48qBhAerzXxKC4wH3f5262y8F9RxkMA=
 github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220225205817-9a875574bfa4 h1:cE4zd+/uq6YqYgjBTcMexrgYa874xMtkUpl4oVuP3eg=
 github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220225205817-9a875574bfa4/go.mod h1:9kSCRAbYH9qjNnzvAVF9dVB6LYO6dpuxPXQgLyq24Uw=
+github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220227172654-e460f010e1a6 h1:dHHDtVkt9BzlhG6auEihCAPe3YxvMMqgHWHuUdbZxK0=
+github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220227172654-e460f010e1a6/go.mod h1:9kSCRAbYH9qjNnzvAVF9dVB6LYO6dpuxPXQgLyq24Uw=
 github.com/cosmos/cosmos-sdk/api v0.1.0-alpha4/go.mod h1:gZu6sOu2vl4Fd7I+BjDSx2bxndwPgFLGfOegek3SQQo=
 github.com/cosmos/cosmos-sdk/api v0.1.0-alpha5 h1:UlK7NOHGlEbvbDTCM0cN7BJN6hhqeXZIuLv6KapFYTc=
 github.com/cosmos/cosmos-sdk/api v0.1.0-alpha5/go.mod h1:gZu6sOu2vl4Fd7I+BjDSx2bxndwPgFLGfOegek3SQQo=
