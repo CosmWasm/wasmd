@@ -23,6 +23,7 @@ docs/node_modules
 baseapp/data/*
 client/lcd/keys/*
 mytestnet
+.testnets
 
 # Testing
 coverage.txt
