@@ -85,7 +85,7 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 	return ComposeMiddlewares(
 		middleware.NewRunMsgsTxHandler(options.MsgServiceRouter, options.LegacyRouter),
 		middleware.NewTxDecoderMiddleware(options.TxDecoder),
-		//Wasm Middleware
+		// Wasm Middleware
 		wasmkeeper.CountTxMiddleware(options.TXCounterStoreKey),
 		wasmkeeper.LimitSimulationGasMiddleware(options.WasmConfig.SimulationGasLimit),
 		// Set a new GasMeter on sdk.Context.
@@ -108,7 +108,7 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		middleware.TxTimeoutHeightMiddleware,
 		middleware.ValidateMemoMiddleware(options.AccountKeeper),
 		middleware.ConsumeTxSizeGasMiddleware(options.AccountKeeper),
-		//Wasm Middleware
+		// Wasm Middleware
 		wasmkeeper.CountTxMiddleware(options.TXCounterStoreKey),
 		wasmkeeper.LimitSimulationGasMiddleware(options.WasmConfig.SimulationGasLimit),
 		// No gas should be consumed in any middleware above in a "post" handler part. See
@@ -131,6 +131,6 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		// should be accounted for, should go below this middleware.
 		middleware.ConsumeBlockGasMiddleware,
 		middleware.NewTipMiddleware(options.BankKeeper),
-		//Ibc v3 middleware
+		// Ibc v3 middleware
 	), nil
 }
