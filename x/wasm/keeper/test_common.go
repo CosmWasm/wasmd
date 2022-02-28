@@ -363,13 +363,16 @@ func createTestInput(
 		scopedIBCKeeper,
 	)
 
-	router := authmiddleware.NewLegacyRouter()
-	br := bank.AppModule.Route(bank.AppModule{})
-	router.AddRoute(br)
-	sr := staking.AppModule.Route(staking.AppModule{})
-	router.AddRoute(sr)
-	dr := distribution.AppModule.Route(distribution.AppModule{})
-	router.AddRoute(dr)
+	// Legacy router: going to comment this out for now.  Do we need it?
+	/*
+		router := authmiddleware.NewLegacyRouter()
+		br := bank.AppModule.Route(bank.AppModule{})
+		router.AddRoute(br)
+		sr := staking.AppModule.Route(staking.AppModule{})
+		router.AddRoute(sr)
+		dr := distribution.AppModule.Route(distribution.AppModule{})
+		router.AddRoute(dr)
+	*/
 
 	querier := baseapp.NewGRPCQueryRouter()
 	querier.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
@@ -400,7 +403,7 @@ func createTestInput(
 	keeper.SetParams(ctx, types.DefaultParams())
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
-	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
+	//	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
