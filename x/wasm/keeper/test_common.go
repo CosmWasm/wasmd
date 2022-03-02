@@ -122,6 +122,7 @@ var TestingStakeParams = stakingtypes.Params{
 	MaxEntries:        10,
 	HistoricalEntries: 10,
 	BondDenom:         "stake",
+	MinCommissionRate: sdk.NewDec(0),
 }
 
 type TestFaucet struct {
@@ -337,6 +338,17 @@ func createTestInput(
 		tempDir,
 		nil,
 	)
+
+	// govKeeper := govkeeper.NewKeeper(
+	// 	appCodec,
+	// 	keys[govtypes.StoreKey],
+	// 	subspace(govtypes.ModuleName),
+	// 	accountKeeper,
+	// 	bankKeeper,
+	// 	stakingKeeper,
+	// 	nil,
+
+	// )
 
 	faucet := NewTestFaucet(t, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
 
