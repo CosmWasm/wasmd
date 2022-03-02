@@ -328,7 +328,6 @@ func NewWasmApp(
 		ibchost.StoreKey,
 		upgradetypes.StoreKey,
 		evidencetypes.StoreKey,
-		ibctransfertypes.StoreKey,
 		capabilitytypes.StoreKey,
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
@@ -519,15 +518,6 @@ func NewWasmApp(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icaAuthModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	// Create static IBC router, add app routes, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
-		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
-		AddRoute(ibcmock.ModuleName, mockIBCModule)
-	app.IBCKeeper.SetRouter(ibcRouter)
-
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -570,7 +560,13 @@ func NewWasmApp(
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+	ibcRouter := porttypes.NewRouter()
+	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
+		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
+		AddRoute(ibcmock.ModuleName, mockIBCModule).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// register the proposal types
@@ -649,6 +645,7 @@ func NewWasmApp(
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -673,6 +670,7 @@ func NewWasmApp(
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -704,11 +702,34 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		// wasm after ibc transfer
+		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
-	// app.mm.SetOrderMigrations(custom order)
+	// app.mm.SetOrderMigrations(
+	// 	capabilitytypes.ModuleName,
+	// 	authtypes.ModuleName,
+	// 	banktypes.ModuleName,
+	// 	distrtypes.ModuleName,
+	// 	stakingtypes.ModuleName,
+	// 	slashingtypes.ModuleName,
+	// 	govtypes.ModuleName,
+	// 	minttypes.ModuleName,
+	// 	crisistypes.ModuleName,
+	// 	genutiltypes.ModuleName,
+	// 	evidencetypes.ModuleName,
+	// 	authz.ModuleName,
+	// 	feegrant.ModuleName,
+	// 	paramstypes.ModuleName,
+	// 	upgradetypes.ModuleName,
+	// 	vestingtypes.ModuleName,
+	// 	// additional non simd modules
+	// 	ibchost.ModuleName,
+	// 	ibctransfertypes.ModuleName,
+	// 	// wasm after ibc transfer
+	// 	wasm.ModuleName,
+	// )
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.legacyRouter, app.QueryRouter(), encodingConfig.Amino)
