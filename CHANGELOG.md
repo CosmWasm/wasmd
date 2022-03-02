@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Fixed bugs + Api Breaking:**
+- Add support for old contract addresses of length 20 [\#758](https://github.com/CosmWasm/wasmd/issues/758)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...HEAD)
 
