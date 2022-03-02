@@ -5,7 +5,14 @@
 **Fixed bugs + Api Breaking:**
 - Add support for old contract addresses of length 20 [\#758](https://github.com/CosmWasm/wasmd/issues/758)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.22.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.23.0...HEAD)
+
+## [v0.23.0](https://github.com/CosmWasm/wasmd/tree/v0.23.0) (2022-01-28)
+
+**Fixed bugs**
+- Set end block order [\#736](https://github.com/CosmWasm/wasmd/issues/736)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.23.0...v0.22.0)
 
 ## [v0.22.0](https://github.com/CosmWasm/wasmd/tree/v0.22.0) (2022-01-20)
 
