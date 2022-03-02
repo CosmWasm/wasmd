@@ -4,7 +4,7 @@
 
 Please report any security issues via email to security@confio.gmbh. 
 
-You will receive a response from us within 48 hours. If the issue is confirmed, we will release a patch as soon as possible depending on complexity but historically within a few days.
+You will receive a response from us within 2 working days. If the issue is confirmed, we will release a patch as soon as possible depending on complexity but historically within a few days.
 
 Please avoid opening public issues on GitHub that contain information about a potential security vulnerability as this makes it difficult to reduce the impact and harm of valid security issues.
 
@@ -22,7 +22,7 @@ We ask security researchers to keep vulnerabilities and communications around vu
 
  - Allow us a reasonable amount of time to correct or address security vulnerabilities.
  - Avoid exploiting any vulnerabilities that you discover.
- - Demonstrate good faith by not disrupting or degrading services built on top of cw-plus.
+ - Demonstrate good faith by not disrupting or degrading services built on top of this software.
 
 ## Vulnerability Disclosure Process
 
@@ -30,10 +30,10 @@ Confio uses the following disclosure process for the various CosmWasm-related re
 
  - Once a security report is received, the core development team works to verify the issue.
  - Patches are prepared for eligible releases in private repositories.
- - We notify the community that a security release is coming, to give users time to prepare their systems for the update. Notifications can include Discord messages, tweets, and emails to partners and validators.
- - 24 hours following this notification, the fixes are applied publicly and new releases are issued.
+ - We notify the community that a security release is coming, to give users time to prepare their systems for the update. Notifications can include Discord messages, tweets, and emails to partners and validators. Please also see [CosmWasm/advisories](https://github.com/CosmWasm/advisories) if you want to receive notifications.
+ - No less than 24 hours following this notification, the fixes are applied publicly and new releases are issued.
  - Once releases are available, we notify the community, again, through the same channels as above.
- - Once the community is notified, we will pay out any relevant bug bounties to submitters.
- - One week after the releases go out, we will publish a post with further details on the vulnerability as well as our response to it.
+ - Once the patches have been properly rolled out, we will publish a post with further details on the vulnerability as well as our response to it.
+ - Note that we are working on a concept for bug bounties and they are not currently available.
 
- This process can take some time. Every effort will be made to handle the bug in as timely a manner as possible. However, it's important that we follow the process described above to ensure that disclosures are handled consistently and to keep this codebase and the projects that depend on them secure.
+ This process can take some time. Every effort will be made to handle the bug as quickly and thoroughly as possible. However, it's important that we follow the process described above to ensure that disclosures are handled consistently and to keep this codebase and the projects that depend on them secure.
