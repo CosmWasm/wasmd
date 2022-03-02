@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -347,7 +349,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			em := sdk.NewEventManager()
 			ctx := sdk.Context{}.WithMultiStore(&mockStore).
 				WithGasMeter(sdk.NewGasMeter(100)).
-				WithEventManager(em)
+				WithEventManager(em).WithLogger(log.TestingLogger())
 			d := NewMessageDispatcher(spec.msgHandler, spec.replyer)
 			gotData, gotErr := d.DispatchSubmessages(ctx, RandomAccountAddress(t), "any_port", spec.msgs)
 			if spec.expErr {
