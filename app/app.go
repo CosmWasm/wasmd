@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -328,10 +329,10 @@ func NewWasmApp(
 		ibchost.StoreKey,
 		upgradetypes.StoreKey,
 		evidencetypes.StoreKey,
+		ibctransfertypes.StoreKey,
 		capabilitytypes.StoreKey,
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
-		ibctransfertypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		icahosttypes.StoreKey,
 		wasm.StoreKey,
@@ -518,6 +519,14 @@ func NewWasmApp(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icaAuthModule)
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
+	// Create static IBC router, add app routes, then set and seal it
+	ibcRouter := porttypes.NewRouter()
+	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
+		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
+		AddRoute(ibcmock.ModuleName, mockIBCModule)
+
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -560,13 +569,7 @@ func NewWasmApp(
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
-	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
-		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
-		AddRoute(ibcmock.ModuleName, mockIBCModule).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// register the proposal types
@@ -644,8 +647,8 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
 		icatypes.ModuleName,
+		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -669,8 +672,8 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
-		ibctransfertypes.ModuleName,
 		icatypes.ModuleName,
+		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -700,36 +703,14 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
+		icatypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		// wasm after ibc transfer
-		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
-	// app.mm.SetOrderMigrations(
-	// 	capabilitytypes.ModuleName,
-	// 	authtypes.ModuleName,
-	// 	banktypes.ModuleName,
-	// 	distrtypes.ModuleName,
-	// 	stakingtypes.ModuleName,
-	// 	slashingtypes.ModuleName,
-	// 	govtypes.ModuleName,
-	// 	minttypes.ModuleName,
-	// 	crisistypes.ModuleName,
-	// 	genutiltypes.ModuleName,
-	// 	evidencetypes.ModuleName,
-	// 	authz.ModuleName,
-	// 	feegrant.ModuleName,
-	// 	paramstypes.ModuleName,
-	// 	upgradetypes.ModuleName,
-	// 	vestingtypes.ModuleName,
-	// 	// additional non simd modules
-	// 	ibchost.ModuleName,
-	// 	ibctransfertypes.ModuleName,
-	// 	// wasm after ibc transfer
-	// 	wasm.ModuleName,
-	// )
+	// app.mm.SetOrderMigrations(custom order)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.legacyRouter, app.QueryRouter(), encodingConfig.Amino)
@@ -766,30 +747,10 @@ func NewWasmApp(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	// The Antehandler is replaced with the tx handler.
-	/*
-		anteHandler, err := NewAnteHandler(
-			HandlerOptions{
-				HandlerOptions: ante.HandlerOptions{
-					AccountKeeper:   app.accountKeeper,
-					BankKeeper:      app.bankKeeper,
-					FeegrantKeeper:  app.FeeGrantKeeper,
-					SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-					SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-				},
-				IBCChannelkeeper:  app.ibcKeeper.ChannelKeeper,
-				WasmConfig:        &wasmConfig,
-				TXCounterStoreKey: keys[wasm.StoreKey],
-			},
-		)
-		if err != nil {
-			panic(fmt.Errorf("failed to create AnteHandler: %s", err))
-		}
-	*/
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setTxHandler(encodingConfig.TxConfig, cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents)))
+	app.setTxHandler(encodingConfig.TxConfig, cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents)), keys, wasmConfig)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -816,23 +777,25 @@ func NewWasmApp(
 	return app
 }
 
-func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string) {
+func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string, keys map[string]*storetypes.KVStoreKey, wasmConfig wasmtypes.WasmConfig) {
 
 	indexEvents := map[string]struct{}{}
 	for _, e := range indexEventsStr {
 		indexEvents[e] = struct{}{}
 	}
-	txHandler, err := authmiddleware.NewDefaultTxHandler(authmiddleware.TxHandlerOptions{
-		Debug:            app.Trace(),
-		IndexEvents:      indexEvents,
-		LegacyRouter:     app.legacyRouter,
-		MsgServiceRouter: app.MsgSvcRouter,
-		AccountKeeper:    app.AccountKeeper,
-		BankKeeper:       app.BankKeeper,
-		FeegrantKeeper:   app.FeeGrantKeeper,
-		SignModeHandler:  txConfig.SignModeHandler(),
-		SigGasConsumer:   authmiddleware.DefaultSigVerificationGasConsumer,
-		TxDecoder:        txConfig.TxDecoder(),
+	txHandler, err := NewDefaultTxHandler(TxHandlerOptions{
+		Debug:             app.Trace(),
+		IndexEvents:       indexEvents,
+		LegacyRouter:      app.legacyRouter,
+		MsgServiceRouter:  app.MsgSvcRouter,
+		AccountKeeper:     app.AccountKeeper,
+		BankKeeper:        app.BankKeeper,
+		FeegrantKeeper:    app.FeeGrantKeeper,
+		SignModeHandler:   txConfig.SignModeHandler(),
+		SigGasConsumer:    authmiddleware.DefaultSigVerificationGasConsumer,
+		TxDecoder:         txConfig.TxDecoder(),
+		WasmConfig:        &wasmConfig,
+		TXCounterStoreKey: keys[wasm.StoreKey],
 	})
 	if err != nil {
 		panic(err)
