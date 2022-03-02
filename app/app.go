@@ -796,6 +796,7 @@ func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []stri
 		TxDecoder:         txConfig.TxDecoder(),
 		WasmConfig:        &wasmConfig,
 		TXCounterStoreKey: keys[wasm.StoreKey],
+		ChannelKeeper:     app.IBCKeeper.ChannelKeeper,
 	})
 	if err != nil {
 		panic(err)
