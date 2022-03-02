@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -12,7 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func TestValidateProposalCommons(t *testing.T) {
+func TestvalidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
 	}
@@ -424,6 +425,17 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"label": "testing",
 	"run_as": "myRunAsAddress"
 }`,
+			got: &InstantiateContractProposal{},
+			exp: &InstantiateContractProposal{
+				Title:       "foo",
+				Description: "bar",
+				RunAs:       "myRunAsAddress",
+				Admin:       "myAdminAddress",
+				CodeID:      1,
+				Label:       "testing",
+				Msg:         []byte("{}"),
+				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdk.NewInt(2)), sdk.NewCoin("BLX", sdk.NewInt(3))),
+			},
 		},
 		"migrate ": {
 			src: `
@@ -446,19 +458,27 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 		},
 	}
 	for name, spec := range specs {
+		fmt.Println(name)
 		t.Run(name, func(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(spec.src), spec.got))
 			assert.Equal(t, spec.exp, spec.got)
 		})
 	}
 }
-
 func TestProposalJsonSignBytes(t *testing.T) {
 	const myInnerMsg = `{"foo":"bar"}`
 	specs := map[string]struct {
 		src govtypesv1beta1.Content
 		exp string
 	}{
+		"instantiate contract": {
+			src: &InstantiateContractProposal{Msg: RawContractMessage(myInnerMsg)},
+			exp: `
+{
+	"type":"cosmos-sdk/MsgSubmitProposal",
+	"value":{"content":{"type":"wasm/InstantiateContractProposal","value":{"funds":[],"msg":{"foo":"bar"}}},"initial_deposit":[]}
+}`,
+		},
 		"migrate contract": {
 			src: &MigrateContractProposal{Msg: RawContractMessage(myInnerMsg)},
 			exp: `
