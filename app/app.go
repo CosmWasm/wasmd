@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -332,7 +333,6 @@ func NewWasmApp(
 		capabilitytypes.StoreKey,
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
-		ibctransfertypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		icahosttypes.StoreKey,
 		wasm.StoreKey,
@@ -526,7 +526,6 @@ func NewWasmApp(
 		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(ibcmock.ModuleName, mockIBCModule)
-	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -648,6 +647,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
+		icatypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -672,6 +672,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
+		icatypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -702,6 +703,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
+		icatypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
@@ -745,30 +747,10 @@ func NewWasmApp(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	// The Antehandler is replaced with the tx handler.
-	/*
-		anteHandler, err := NewAnteHandler(
-			HandlerOptions{
-				HandlerOptions: ante.HandlerOptions{
-					AccountKeeper:   app.accountKeeper,
-					BankKeeper:      app.bankKeeper,
-					FeegrantKeeper:  app.FeeGrantKeeper,
-					SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
-					SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-				},
-				IBCChannelkeeper:  app.ibcKeeper.ChannelKeeper,
-				WasmConfig:        &wasmConfig,
-				TXCounterStoreKey: keys[wasm.StoreKey],
-			},
-		)
-		if err != nil {
-			panic(fmt.Errorf("failed to create AnteHandler: %s", err))
-		}
-	*/
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setTxHandler(encodingConfig.TxConfig, cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents)))
+	app.setTxHandler(encodingConfig.TxConfig, cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents)), keys, wasmConfig)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -795,23 +777,26 @@ func NewWasmApp(
 	return app
 }
 
-func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string) {
+func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string, keys map[string]*storetypes.KVStoreKey, wasmConfig wasmtypes.WasmConfig) {
 
 	indexEvents := map[string]struct{}{}
 	for _, e := range indexEventsStr {
 		indexEvents[e] = struct{}{}
 	}
-	txHandler, err := authmiddleware.NewDefaultTxHandler(authmiddleware.TxHandlerOptions{
-		Debug:            app.Trace(),
-		IndexEvents:      indexEvents,
-		LegacyRouter:     app.legacyRouter,
-		MsgServiceRouter: app.MsgSvcRouter,
-		AccountKeeper:    app.AccountKeeper,
-		BankKeeper:       app.BankKeeper,
-		FeegrantKeeper:   app.FeeGrantKeeper,
-		SignModeHandler:  txConfig.SignModeHandler(),
-		SigGasConsumer:   authmiddleware.DefaultSigVerificationGasConsumer,
-		TxDecoder:        txConfig.TxDecoder(),
+	txHandler, err := NewDefaultTxHandler(TxHandlerOptions{
+		Debug:             app.Trace(),
+		IndexEvents:       indexEvents,
+		LegacyRouter:      app.legacyRouter,
+		MsgServiceRouter:  app.MsgSvcRouter,
+		AccountKeeper:     app.AccountKeeper,
+		BankKeeper:        app.BankKeeper,
+		FeegrantKeeper:    app.FeeGrantKeeper,
+		SignModeHandler:   txConfig.SignModeHandler(),
+		SigGasConsumer:    authmiddleware.DefaultSigVerificationGasConsumer,
+		TxDecoder:         txConfig.TxDecoder(),
+		WasmConfig:        &wasmConfig,
+		TXCounterStoreKey: keys[wasm.StoreKey],
+		ChannelKeeper:     app.IBCKeeper.ChannelKeeper,
 	})
 	if err != nil {
 		panic(err)

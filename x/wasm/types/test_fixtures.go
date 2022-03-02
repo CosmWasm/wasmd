@@ -177,6 +177,55 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 	return r
 }
 
+func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+	p := &StoreCodeProposal{
+		Title:        "Foo",
+		Description:  "Bar",
+		RunAs:        anyAddress,
+		WASMByteCode: []byte{0x0},
+	}
+	for _, m := range mutators {
+		m(p)
+	}
+	return p
+}
+
+func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
+	var (
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
+
+		initMsg = struct {
+			Verifier    sdk.AccAddress `json:"verifier"`
+			Beneficiary sdk.AccAddress `json:"beneficiary"`
+		}{
+			Verifier:    anyValidAddress,
+			Beneficiary: anyValidAddress,
+		}
+	)
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+
+	initMsgBz, err := json.Marshal(initMsg)
+	if err != nil {
+		panic(err)
+	}
+	p := &InstantiateContractProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		RunAs:       anyAddress,
+		Admin:       anyAddress,
+		CodeID:      1,
+		Label:       "testing",
+		Msg:         initMsgBz,
+		Funds:       nil,
+	}
+
+	for _, m := range mutators {
+		m(p)
+	}
+	return p
+}
+
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)

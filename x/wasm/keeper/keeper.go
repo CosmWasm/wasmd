@@ -850,7 +850,7 @@ func (k Keeper) runtimeGasForContract(ctx sdk.Context) uint64 {
 	if meter.IsOutOfGas() {
 		return 0
 	}
-	if meter.Limit() == 0 { // infinite gas meter with limit=0 and not out of gas
+	if meter.Limit() == math.MaxUint64 { // infinite gas meter with limit=0 and not out of gas
 		return math.MaxUint64
 	}
 	return k.gasRegister.ToWasmVMGas(meter.Limit() - meter.GasConsumedToLimit())
