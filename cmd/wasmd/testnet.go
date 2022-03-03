@@ -284,6 +284,7 @@ func initTestnetFiles(
 	simappConfig.Telemetry.EnableHostnameLabel = false
 	simappConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", args.chainID}}
 
+	//nolint:prealloc
 	var (
 		genAccounts []authtypes.GenesisAccount
 		genBalances []banktypes.Balance

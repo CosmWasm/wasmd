@@ -122,6 +122,7 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	return json.Unmarshal(resp.Data, response)
 }
 
+//nolint:unused
 func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
 	var protoResult sdk.TxMsgData
 	require.NoError(chain.t, proto.Unmarshal(r.Data, &protoResult))

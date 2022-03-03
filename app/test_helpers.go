@@ -69,7 +69,10 @@ func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp
 func Setup(isCheckTx bool) *WasmApp {
 
 	privVal := wasmtypes.NewPV()
-	pubKey, _ := privVal.GetPubKey(context.TODO())
+	pubKey, err := privVal.GetPubKey(context.TODO())
+	if err != nil {
+		panic(err)
+	}
 
 	// create validator set with single validator
 	validator := tmtypes.NewValidator(pubKey, 1)
@@ -90,7 +93,10 @@ func Setup(isCheckTx bool) *WasmApp {
 
 func NewValSet() *tmtypes.ValidatorSet {
 	privVal := wasmtypes.NewPV()
-	pubKey, _ := privVal.GetPubKey(context.TODO())
+	pubKey, err := privVal.GetPubKey(context.TODO())
+	if err != nil {
+		panic(err)
+	}
 
 	// create validator set with single validator
 	validator := tmtypes.NewValidator(pubKey, 1)
@@ -114,8 +120,14 @@ func SetupWithGenesisValSet(valSet *tmtypes.ValidatorSet, genAccs []authtypes.Ge
 	bondAmt := sdk.DefaultPowerReduction
 
 	for _, val := range valSet.Validators {
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
-		pkAny, _ := codectypes.NewAnyWithValue(pk)
+		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		if err != nil {
+			panic(err)
+		}
+		pkAny, err := codectypes.NewAnyWithValue(pk)
+		if err != nil {
+			panic(err)
+		}
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
 			ConsensusPubkey:   pkAny,
@@ -154,7 +166,10 @@ func SetupWithGenesisValSet(valSet *tmtypes.ValidatorSet, genAccs []authtypes.Ge
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
 	genesisState[banktypes.ModuleName] = app.appCodec.MustMarshalJSON(bankGenesis)
 
-	stateBytes, _ := json.MarshalIndent(genesisState, "", " ")
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+	if err != nil {
+		panic(err)
+	}
 
 	// init chain will set the validator set and initialize the genesis accounts
 	app.InitChain(
@@ -537,8 +552,15 @@ func GenesisStateWithValSet(app *WasmApp, genesisState GenesisState,
 	bondAmt := sdk.DefaultPowerReduction
 
 	for _, val := range valSet.Validators {
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
-		pkAny, _ := codectypes.NewAnyWithValue(pk)
+		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		if err != nil {
+			panic(err)
+		}
+
+		pkAny, err := codectypes.NewAnyWithValue(pk)
+		if err != nil {
+			panic(err)
+		}
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
 			ConsensusPubkey:   pkAny,
