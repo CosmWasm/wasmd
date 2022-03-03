@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	govtypesv1beta2 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta2"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
@@ -37,6 +37,14 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
 			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
 			if err != nil {
 				return err
@@ -47,12 +55,14 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			content := types.StoreCodeProposal{
+				Title:                 proposalTitle,
+				Description:           proposalDescr,
 				RunAs:                 runAs,
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -69,7 +79,10 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 
 	// proposal flags
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -98,6 +111,14 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
 			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
 			if err != nil {
 				return err
@@ -108,15 +129,17 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			}
 
 			content := types.InstantiateContractProposal{
-				RunAs:  runAs,
-				Admin:  src.Admin,
-				CodeID: src.CodeID,
-				Label:  src.Label,
-				Msg:    src.Msg,
-				Funds:  src.Funds,
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				RunAs:       runAs,
+				Admin:       src.Admin,
+				CodeID:      src.CodeID,
+				Label:       src.Label,
+				Msg:         src.Msg,
+				Funds:       src.Funds,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -136,6 +159,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -182,7 +206,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				Msg:         src.Msg,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -198,6 +222,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -258,7 +283,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 				Funds:       funds,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -276,6 +301,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -319,7 +345,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 				Msg:         sudoMsg,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -335,6 +361,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -380,7 +407,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				NewAdmin:    src.NewAdmin,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -395,6 +422,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -434,7 +462,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				Contract:    args[0],
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -449,6 +477,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -492,7 +521,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 				CodeIDs:     codeIds,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -507,6 +536,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
@@ -562,7 +592,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				CodeIDs:     codeIds,
 			}
 
-			msg, err := govtypesv1beta2.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress(), nil)
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -577,6 +607,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
