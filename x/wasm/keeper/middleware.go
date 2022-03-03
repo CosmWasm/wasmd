@@ -94,6 +94,10 @@ func LimitSimulationGasMiddleware(gas *sdk.Gas) tx.Middleware {
 
 func (d LimitSimulationGasHandler) setLimitSimulationGas(ctx context.Context, req tx.Request, simulate bool) (context.Context, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if d.gasLimit != nil && *d.gasLimit == 0 {
+		panic("gas limit must not be zero")
+	}
+
 	if !simulate {
 		return ctx, nil
 	}
@@ -113,7 +117,7 @@ func (d LimitSimulationGasHandler) setLimitSimulationGas(ctx context.Context, re
 
 // CheckTx implements tx.Handler.CheckTx.
 func (d LimitSimulationGasHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
-	ctx, err := d.setLimitSimulationGas(ctx, req, false)
+	ctx, err := d.setLimitSimulationGas(ctx, req, true)
 	if err != nil {
 		return tx.Response{}, tx.ResponseCheckTx{}, err
 	}

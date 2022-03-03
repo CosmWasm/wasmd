@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -116,29 +117,23 @@ func TestLimitSimulationGasMiddleware(t *testing.T) {
 	var (
 		hundred sdk.Gas = 100
 		zero    sdk.Gas = 0
+		noLimit sdk.Gas = math.MaxInt64
 	)
 	specs := map[string]struct {
 		customLimit *sdk.Gas
 		consumeGas  sdk.Gas
-		maxBlockGas int64
+		maxBlockGas sdk.Gas
 		simulation  bool
 		expErr      interface{}
 	}{
-		"custom limit set": {
-			customLimit: &hundred,
-			consumeGas:  hundred + 1,
-			maxBlockGas: -1,
-			simulation:  true,
-			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
-		},
 		"block limit set": {
-			maxBlockGas: 100,
+			maxBlockGas: hundred,
 			consumeGas:  hundred + 1,
 			simulation:  true,
-			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+			expErr:      sdk.ErrorOutOfGas{Descriptor: "block gas meter"},
 		},
 		"no limits set": {
-			maxBlockGas: -1,
+			maxBlockGas: noLimit,
 			consumeGas:  hundred + 1,
 			simulation:  true,
 		},
@@ -161,22 +156,25 @@ func TestLimitSimulationGasMiddleware(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			gasMeter := sdk.NewInfiniteGasMeter()
+			gasMeter.ConsumeGas(spec.consumeGas, "testing")
+
+			blockgasMeter := sdk.NewGasMeter(spec.maxBlockGas)
+
 			ctx := sdk.Context{}.
-				WithGasMeter(sdk.NewInfiniteGasMeter()).
-				WithConsensusParams(&tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas}})
+				WithGasMeter(gasMeter).
+				WithBlockGasMeter(blockgasMeter)
 
 			//setting TxHandler
 			var anyTx sdk.Tx
-			txHandler := middleware.ComposeMiddlewares(noopTxHandler, keeper.LimitSimulationGasMiddleware(spec.customLimit))
+			txHandler := middleware.ComposeMiddlewares(noopTxHandler, keeper.LimitSimulationGasMiddleware(spec.customLimit), middleware.ConsumeBlockGasMiddleware)
 
 			if spec.expErr != nil {
 				require.PanicsWithValue(t, spec.expErr, func() {
-					txHandler.CheckTx(ctx, txtypes.Request{Tx: anyTx}, txtypes.RequestCheckTx{})
+					txHandler.DeliverTx(ctx, txtypes.Request{Tx: anyTx})
 				})
 				return
 			}
-			txHandler.CheckTx(ctx, txtypes.Request{Tx: anyTx}, txtypes.RequestCheckTx{})
 		})
 	}
 }
