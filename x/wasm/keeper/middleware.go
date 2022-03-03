@@ -117,7 +117,7 @@ func (d LimitSimulationGasHandler) setLimitSimulationGas(ctx context.Context, re
 
 // CheckTx implements tx.Handler.CheckTx.
 func (d LimitSimulationGasHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
-	ctx, err := d.setLimitSimulationGas(ctx, req, true)
+	ctx, err := d.setLimitSimulationGas(ctx, req, false)
 	if err != nil {
 		return tx.Response{}, tx.ResponseCheckTx{}, err
 	}

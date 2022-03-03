@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"context"
-	"math"
 	"testing"
 	"time"
 
@@ -113,27 +112,34 @@ func TestCountTxHandle(t *testing.T) {
 		})
 	}
 }
+
 func TestLimitSimulationGasMiddleware(t *testing.T) {
 	var (
 		hundred sdk.Gas = 100
 		zero    sdk.Gas = 0
-		noLimit sdk.Gas = math.MaxInt64
 	)
 	specs := map[string]struct {
 		customLimit *sdk.Gas
 		consumeGas  sdk.Gas
-		maxBlockGas sdk.Gas
+		maxBlockGas int64
 		simulation  bool
 		expErr      interface{}
 	}{
+		"custom limit set": {
+			customLimit: &hundred,
+			consumeGas:  hundred + 1,
+			maxBlockGas: -1,
+			simulation:  true,
+			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+		},
 		"block limit set": {
-			maxBlockGas: hundred,
+			maxBlockGas: 100,
 			consumeGas:  hundred + 1,
 			simulation:  true,
-			expErr:      sdk.ErrorOutOfGas{Descriptor: "block gas meter"},
+			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
 		},
 		"no limits set": {
-			maxBlockGas: noLimit,
+			maxBlockGas: -1,
 			consumeGas:  hundred + 1,
 			simulation:  true,
 		},
@@ -156,22 +162,23 @@ func TestLimitSimulationGasMiddleware(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gasMeter := sdk.NewInfiniteGasMeter()
-			gasMeter.ConsumeGas(spec.consumeGas, "testing")
-
-			blockgasMeter := sdk.NewGasMeter(spec.maxBlockGas)
-
 			ctx := sdk.Context{}.
-				WithGasMeter(gasMeter).
-				WithBlockGasMeter(blockgasMeter)
+				WithGasMeter(sdk.NewInfiniteGasMeter()).
+				WithConsensusParams(&tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas}})
 
 			//setting TxHandler
 			var anyTx sdk.Tx
-			txHandler := middleware.ComposeMiddlewares(noopTxHandler, keeper.LimitSimulationGasMiddleware(spec.customLimit), middleware.ConsumeBlockGasMiddleware)
+
+			txHandler := middleware.ComposeMiddlewares(
+				noopTxHandler,
+				keeper.LimitSimulationGasMiddleware(spec.customLimit),
+				cosumeGasTxMiddleware(spec.consumeGas),
+			)
 
 			if spec.expErr != nil {
 				require.PanicsWithValue(t, spec.expErr, func() {
-					txHandler.DeliverTx(ctx, txtypes.Request{Tx: anyTx})
+					txHandler.SimulateTx(ctx, txtypes.Request{Tx: anyTx})
 				})
 				return
 			}
@@ -201,3 +208,32 @@ func (h customTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Res
 var noopTxHandler = customTxHandler{func(_ context.Context, _ tx.Request) (tx.Response, error) {
 	return tx.Response{}, nil
 }}
+
+// customTxHandler is a test middleware that will run a custom function.
+type cosumeGasTxHandler struct {
+	gasToConsume sdk.Gas
+	next         tx.Handler
+}
+
+var _ tx.Handler = cosumeGasTxHandler{}
+
+func (h cosumeGasTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	return h.next.DeliverTx(ctx, req)
+}
+func (h cosumeGasTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
+	return h.next.CheckTx(ctx, req, checkReq)
+}
+func (h cosumeGasTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.GasMeter().ConsumeGas(h.gasToConsume, "testing")
+	return h.next.SimulateTx(ctx, req)
+}
+
+func cosumeGasTxMiddleware(gas sdk.Gas) tx.Middleware {
+	return func(txh tx.Handler) tx.Handler {
+		return cosumeGasTxHandler{
+			gasToConsume: gas,
+			next:         txh,
+		}
+	}
+}
