@@ -567,7 +567,7 @@ func TestExecuteContractCmd(t *testing.T) {
 func TestGetAllContracts(t *testing.T) {
 	specs := map[string]struct {
 		src types.GenesisState
-		exp []contractMeta
+		exp []ContractMeta
 	}{
 		"read from contracts state": {
 			src: types.GenesisState{
@@ -582,7 +582,7 @@ func TestGetAllContracts(t *testing.T) {
 					},
 				},
 			},
-			exp: []contractMeta{
+			exp: []ContractMeta{
 				{
 					ContractAddress: "first-contract",
 					Info:            types.ContractInfo{Label: "first"},
@@ -600,7 +600,7 @@ func TestGetAllContracts(t *testing.T) {
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
 				},
 			},
-			exp: []contractMeta{
+			exp: []ContractMeta{
 				{
 					ContractAddress: keeper.BuildContractAddress(0, 1).String(),
 					Info:            types.ContractInfo{Label: "first"},
@@ -620,7 +620,7 @@ func TestGetAllContracts(t *testing.T) {
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
 				},
 			},
-			exp: []contractMeta{
+			exp: []ContractMeta{
 				{
 					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
 					Info:            types.ContractInfo{Label: "hundred"},
@@ -642,7 +642,7 @@ func TestGetAllContracts(t *testing.T) {
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
 				},
 			},
-			exp: []contractMeta{
+			exp: []ContractMeta{
 				{
 					ContractAddress: "first-contract",
 					Info:            types.ContractInfo{Label: "first"},
@@ -656,7 +656,7 @@ func TestGetAllContracts(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got := getAllContracts(&spec.src)
+			got := GetAllContracts(&spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
 	}

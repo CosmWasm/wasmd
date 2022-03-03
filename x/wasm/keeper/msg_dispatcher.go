@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -131,8 +133,10 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 				},
 			}
 		} else {
+			// Issue #759 - we don't return error string for worries of non-determinism
+			moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
 			result = wasmvmtypes.SubcallResult{
-				Err: err.Error(),
+				Err: redactError(err),
 			}
 		}
 
@@ -153,6 +157,15 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		}
 	}
 	return rsp, nil
+}
+
+func redactError(err error) string {
+	// FIXME: do we want to hardcode some constant string mappings here as well?
+	// Or better document them? (SDK error string may change on a patch release to fix wording)
+	// sdk/11 is out of gas
+	// sdk/5 is insufficient funds (on bank send)
+	codespace, code, _ := sdkerrors.ABCIInfo(err, false)
+	return fmt.Sprintf("codespace: %s, code: %d", codespace, code)
 }
 
 func filterEvents(events []sdk.Event) []sdk.Event {
