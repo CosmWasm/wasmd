@@ -95,7 +95,7 @@ func (i IBCHandler) OnChanOpenTry(
 				Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
 				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
 				Order:                order.String(),
-				Version:              types.Version,
+				Version:              counterpartyVersion,
 				ConnectionID:         connectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
 			},
 			CounterpartyVersion: counterpartyVersion,
