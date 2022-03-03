@@ -110,11 +110,11 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				}
 
 				//  does code id exists?
-				codeInfos, err := getAllCodes(state)
+				codeInfos, err := GetAllCodes(state)
 				if err != nil {
 					return err
 				}
-				var codeInfo *codeMeta
+				var codeInfo *CodeMeta
 				for i := range codeInfos {
 					if codeInfos[i].CodeID == msg.CodeID {
 						codeInfo = &codeInfos[i]
@@ -209,7 +209,7 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 			if err != nil {
 				return err
 			}
-			all, err := getAllCodes(g.WasmModuleState)
+			all, err := GetAllCodes(g.WasmModuleState)
 			if err != nil {
 				return err
 			}
@@ -235,7 +235,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 				return err
 			}
 			state := g.WasmModuleState
-			all := getAllContracts(state)
+			all := GetAllContracts(state)
 			return printJSONOutput(cmd, all)
 		},
 	}
@@ -254,15 +254,15 @@ func printJSONOutput(cmd *cobra.Command, obj interface{}) error {
 	return clientCtx.PrintString(string(bz))
 }
 
-type codeMeta struct {
+type CodeMeta struct {
 	CodeID uint64         `json:"code_id"`
 	Info   types.CodeInfo `json:"info"`
 }
 
-func getAllCodes(state *types.GenesisState) ([]codeMeta, error) {
-	all := make([]codeMeta, len(state.Codes))
+func GetAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
+	all := make([]CodeMeta, len(state.Codes))
 	for i, c := range state.Codes {
-		all[i] = codeMeta{
+		all[i] = CodeMeta{
 			CodeID: c.CodeID,
 			Info:   c.CodeInfo,
 		}
@@ -283,7 +283,7 @@ func getAllCodes(state *types.GenesisState) ([]codeMeta, error) {
 				accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
 			}
 			hash := sha256.Sum256(msg.WASMByteCode)
-			all = append(all, codeMeta{
+			all = append(all, CodeMeta{
 				CodeID: seq,
 				Info: types.CodeInfo{
 					CodeHash:          hash[:],
@@ -297,15 +297,15 @@ func getAllCodes(state *types.GenesisState) ([]codeMeta, error) {
 	return all, nil
 }
 
-type contractMeta struct {
+type ContractMeta struct {
 	ContractAddress string             `json:"contract_address"`
 	Info            types.ContractInfo `json:"info"`
 }
 
-func getAllContracts(state *types.GenesisState) []contractMeta {
-	all := make([]contractMeta, len(state.Contracts))
+func GetAllContracts(state *types.GenesisState) []ContractMeta {
+	all := make([]ContractMeta, len(state.Contracts))
 	for i, c := range state.Contracts {
-		all[i] = contractMeta{
+		all[i] = ContractMeta{
 			ContractAddress: c.ContractAddress,
 			Info:            c.ContractInfo,
 		}
@@ -314,7 +314,7 @@ func getAllContracts(state *types.GenesisState) []contractMeta {
 	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			all = append(all, contractMeta{
+			all = append(all, ContractMeta{
 				ContractAddress: keeper.BuildContractAddress(msg.CodeID, seq).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
