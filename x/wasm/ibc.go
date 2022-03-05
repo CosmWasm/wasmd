@@ -124,6 +124,7 @@ func (i IBCHandler) OnChanOpenAck(
 	ctx sdk.Context,
 	portID, channelID string,
 	counterpartyVersion string,
+	counterpartyChannelID string,
 ) error {
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
@@ -133,6 +134,7 @@ func (i IBCHandler) OnChanOpenAck(
 	if !ok {
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
+	channelInfo.Counterparty.ChannelId = counterpartyChannelID
 	msg := wasmvmtypes.IBCChannelConnectMsg{
 		OpenAck: &wasmvmtypes.IBCOpenAck{
 			Channel:             toWasmVMChannel(portID, channelID, channelInfo),
