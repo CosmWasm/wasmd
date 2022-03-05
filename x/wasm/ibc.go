@@ -135,6 +135,7 @@ func (i IBCHandler) OnChanOpenAck(
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
 	channelInfo.Counterparty.ChannelId = counterpartyChannelID
+	i.channelKeeper.SetChannel(ctx, portID, channelID, channelInfo)
 	msg := wasmvmtypes.IBCChannelConnectMsg{
 		OpenAck: &wasmvmtypes.IBCOpenAck{
 			Channel:             toWasmVMChannel(portID, channelID, channelInfo),
