@@ -15,6 +15,7 @@ addition of the `x/wasm` module.
 
 **Note**: Requires [Go 1.17+](https://golang.org/dl/)
 
+For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 ## Compatibility with CosmWasm contracts
 
 ## Compatibility
