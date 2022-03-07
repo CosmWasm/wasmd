@@ -60,6 +60,12 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	if ok := errors.As(err, &noSuchContract); ok {
 		return res, wasmvmtypes.NoSuchContract{Addr: noSuchContract.Addr}
 	}
+	// Otherwise redact all (we can theoretically redact less in the future)
+	if err != nil {
+		// Issue #759 - we don't return error string for worries of non-determinism
+		// moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
+		err = errors.New(redactError(err))
+	}
 	return res, err
 }
 
