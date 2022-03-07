@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-soon2.0.20220223181252-4aba468c9bc6
-	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220227172654-e460f010e1a6
+	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220307102711-ccaf94391e1b
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v3 v3.0.0-alpha1.0.20220223145401-ef34765e7010
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
@@ -49,7 +49,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.2 // indirect
-	github.com/confio/ics23/go v0.7.0-rc // indirect
+	github.com/confio/ics23/go v0.7.0 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7.0.20220208174455-213b76899fac // indirect
 	github.com/cosmos/cosmos-sdk/api v0.1.0-alpha5 // indirect
@@ -124,7 +124,7 @@ require (
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
-	github.com/zondax/hid v0.9.0 // indirect
+	github.com/zondax/hid v0.9.1-0.20220302062450-5552068d2266 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
