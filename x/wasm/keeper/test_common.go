@@ -36,6 +36,7 @@ import (
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -84,7 +85,7 @@ var ModuleBasics = module.NewBasicManager(
 	mint.AppModuleBasic{},
 	distribution.AppModuleBasic{},
 	gov.NewAppModuleBasic(
-		paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.ProposalHandler,
+		[]govclient.ProposalHandler{paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.LegacyProposalHandler, upgradeclient.LegacyCancelProposalHandler},
 	),
 	params.AppModuleBasic{},
 	crisis.AppModuleBasic{},
@@ -328,13 +329,7 @@ func createTestInput(
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distributiontypes.InitialFeePool())
 
-	upgradeKeeper := upgradekeeper.NewKeeper(
-		map[int64]bool{},
-		keys[upgradetypes.StoreKey],
-		appCodec,
-		tempDir,
-		nil,
-	)
+	upgradeKeeper := upgradekeeper.NewKeeper(map[int64]bool{}, keys[upgradetypes.StoreKey], appCodec, tempDir, nil, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 
 	// govKeeper := govkeeper.NewKeeper(
 	// 	appCodec,

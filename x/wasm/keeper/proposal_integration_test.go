@@ -42,7 +42,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	// when stored
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -94,7 +94,7 @@ func TestInstantiateProposal(t *testing.T) {
 	msgContent, err := v1beta2.NewLegacyContent(src, myActorAddress)
 
 	// when stored
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -179,7 +179,7 @@ func TestMigrateProposal(t *testing.T) {
 	msgContent, err := v1beta2.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -243,7 +243,7 @@ func TestExecuteProposal(t *testing.T) {
 	msgContent, err := v1beta2.NewLegacyContent(&badSrc, myActorAddress)
 
 	// fails on store - this doesn't have permission
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.Error(t, err)
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
@@ -262,7 +262,7 @@ func TestExecuteProposal(t *testing.T) {
 	msgContent, err = v1beta2.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -314,7 +314,7 @@ func TestSudoProposal(t *testing.T) {
 	msgContent, err := v1beta2.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
-	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -403,7 +403,7 @@ func TestAdminProposals(t *testing.T) {
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := v1beta2.NewLegacyContent(spec.srcProposal, myActorAddress)
 
-			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
 
 			// and execute proposal
@@ -478,7 +478,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
 
-			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
 
 			// and proposal execute
@@ -564,7 +564,7 @@ func TestPinCodesProposal(t *testing.T) {
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
 
-			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {
 				require.Error(t, err)
 				return
@@ -653,7 +653,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
 
-			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, nil)
+			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {
 				require.Error(t, err)
 				return
