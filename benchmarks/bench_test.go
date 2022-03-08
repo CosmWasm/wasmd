@@ -109,10 +109,6 @@ func BenchmarkTxSending(b *testing.B) {
 					idx := i*blockSize + j
 
 					_, _, err := appInfo.App.SimCheck(txEncoder, txs[idx])
-					if err != nil {
-						panic("something is broken in checking transaction")
-					}
-					_, _, err = appInfo.App.SimCheck(txEncoder, txs[idx])
 					require.NoError(b, err)
 				}
 
