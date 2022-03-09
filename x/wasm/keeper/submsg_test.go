@@ -20,6 +20,7 @@ import (
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
@@ -108,6 +109,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 }
 
 func TestDispatchSubMsgErrorHandling(t *testing.T) {
+	SkipIfM1(t)
 	fundedDenom := "funds"
 	fundedAmount := 1_000_000
 	ctxGasLimit := uint64(1_000_000)
@@ -363,6 +365,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 // Test an error case, where the Encoded doesn't return any sdk.Msg and we trigger(ed) a null pointer exception.
 // This occurs with the IBC encoder. Test this.
 func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
+	SkipIfM1(t)
 	// fake out the bank handle to return success with no data
 	nilEncoder := func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error) {
 		return nil, nil
@@ -439,6 +442,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
 	keeper := keepers.WasmKeeper
 
