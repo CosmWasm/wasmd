@@ -56,18 +56,26 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	}()
 
 	res, err := q.Plugins.HandleQuery(subCtx, q.Caller, request)
-	// Error mapping
+	if err == nil {
+		// short-circuit, the rest is dealing with handling existing errors
+		return res, nil
+	}
+
+	// special mappings to system error
 	var noSuchContract *types.ErrNoSuchContract
 	if ok := errors.As(err, &noSuchContract); ok {
-		return res, wasmvmtypes.NoSuchContract{Addr: noSuchContract.Addr}
+		err = wasmvmtypes.NoSuchContract{Addr: noSuchContract.Addr}
 	}
-	// Otherwise redact all (we can theoretically redact less in the future)
-	if err != nil {
+
+	// Redact all that are not system errors
+	// SystemErrors must be created in x/wasm and we can ensure determinism
+	// (we can theoretically redact less in the future, but this is a first step to safety)
+	if wasmvmtypes.ToSystemError(err) == nil {
 		// Issue #759 - we don't return error string for worries of non-determinism
 		// moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
 		err = errors.New(redactError(err))
 	}
-	return res, err
+	return nil, err
 }
 
 func (q QueryHandler) GasConsumed() uint64 {

@@ -387,6 +387,7 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectInvalidStargateQuery(t *testing.T) {
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Marshaler
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
