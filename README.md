@@ -26,9 +26,11 @@ compatibility list:
 
 | wasmd | cosmwasm-vm | cosmwasm-std |
 | ----- | ----------- | ------------ |
-| 0.22  | 1.0.0-beta | 1.0.0-beta  |
-| 0.21  | 1.0.0-beta | 1.0.0-beta  |
-| 0.20  | 1.0.0-beta | 1.0.0-beta  |
+| 0.24  | 1.0.0-beta7 | 1.0          |
+| 0.23  | 1.0.0-beta5 | 1.0          |
+| 0.22  | 1.0.0-beta5 | 1.0          |
+| 0.21  | 1.0.0-beta2 | 1.0          |
+| 0.20  | 1.0.0-beta  | 1.0          |
 | 0.19  | 0.16        | 0.16         |
 | 0.18  | 0.16        | 0.16         |
 | 0.17  | 0.14        | 0.14         |
@@ -42,6 +44,10 @@ compatibility list:
 | 0.9   | 0.9         | 0.9          |
 | 0.8   | 0.8         | 0.8          |
 
+Note: `cosmwasm_std v1.0` means it supports contracts compiled by any `v1.0.0-betaX` or `1.0.x`.
+It will also run contracts compiled with 1.x assuming they don't opt into any newer features.
+The 1.x cosmwasm_vm will support all contracts with 1.0 <= version <= 1.x. 
+
 Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
 have been compiled with one of the supported `cosmwasm-std` versions, or will be rejeted upon upload (with some error
 message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
@@ -51,7 +57,7 @@ using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly 
 ## Supported Systems
 
 The supported systems are limited by the dlls created in [`wasmvm`](https://github.com/CosmWasm/wasmvm). In particular, **we only support MacOS and Linux**.
-However, **M1 macs are currently not supported.**
+However, **M1 macs are not fully supported.** (Experimental support was merged with wasmd 0.24)
 For linux, the default is to build for glibc, and we cross-compile with CentOS 7 to provide
 backwards compatibility for `glibc 2.12+`. This includes all known supported distributions
 using glibc (CentOS 7 uses 2.12, obsolete Debian Jessy uses 2.19). 
@@ -65,18 +71,20 @@ binary for `muslc`. (Or just use this Dockerfile for your production setup).
 
 ## Stability
 
-**This is alpha software, do not run on a production system.** Notably, we currently provide **no migration path** not even "dump state and restart" to move to future versions. At **beta** we will begin to offer migrations and better backwards compatibility guarantees.
+**This is beta software** It is run in some production systems, but we cannot yet provide a stability guarantee
+and have not yet gone through and audit of this codebase. Note that the
+[CosmWasm smart contract framework](https://github.com/CosmWasm/cosmwasm) used by `wasmd` is in a 1.0 release candidate
+as of March 2022, with stability guarantee and addressing audit results.
 
-With the `v0.6.0` tag, we entered semver. That means anything with `v0.6.x` tags is compatible with each other, 
-and everything with `v0.7.x` tags is compatible with each other. 
-Between these minor versions, there is API breakage with no upgrade path provided.
+As of `wasmd` 0.22, we will work to provide upgrade paths *for this module* for projects running a non-forked
+version on their live networks. If there are Cosmos SDK upgrades, you will have to run their migration code
+for their modules. If we change the internal storage of `x/wasm` we will provide a function to migrate state that
+can be called by an `x/upgrade` handler.
 
-We will have a stable `v0.x` version before the final `v1.0.0` version with
-the same API as the `v1.0` version in order to run last testnets and manual testing on it.
-We have not yet committed to that version number. Our `v1.0.0` release plans were also
-delayed by upstream release cycles, and we have continued to refine APIs while we can.
+The APIs are pretty stable, but we cannot guarantee their stability until we reach v1.0.
+However, we will provide a way for you to hard-fork your way to v1.0.
 
-Thank you to all projects who have run this code in your testnets and
+Thank you to all projects who have run this code in your mainnets and testnets and
 given feedback to improve stability.
 
 ## Encoding
