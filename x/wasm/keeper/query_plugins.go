@@ -265,15 +265,15 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 }
 
 var queryDenyList = []string{
-	"/cosmos.tx",
-	"/cosmos.base.tendermint",
+	"/cosmos.tx.",
+	"/cosmos.base.tendermint.",
 }
 
 func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
 		for _, b := range queryDenyList {
-			if strings.Contains(msg.Path, b) {
-				return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", msg.Path)}
+			if strings.HasPrefix(msg.Path, b) {
+				return nil, wasmvmtypes.UnsupportedRequest{Kind: "path is not allowed from the contract"}
 			}
 		}
 
