@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0-soon2.0.20220223181252-4aba468c9bc6
-	github.com/cosmos/cosmos-sdk v0.46.0-alpha2.0.20220307102711-ccaf94391e1b
-	github.com/cosmos/iavl v0.17.3
+	github.com/cosmos/cosmos-sdk v0.46.0-alpha3.0.20220311194917-25feb237f891
+	github.com/cosmos/iavl v0.18.0
 	github.com/cosmos/ibc-go/v3 v3.0.0-alpha1.0.20220223145401-ef34765e7010
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3
@@ -19,7 +19,7 @@ require (
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/snikch/goodman v0.0.0-20171125024755-10e37e294daa
 	github.com/spf13/cast v1.4.1
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
@@ -28,7 +28,7 @@ require (
 	github.com/tendermint/tendermint v0.36.0-dev.0.20220226000315-ea497301a7d3
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5
-	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc v1.45.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -147,7 +147,7 @@ require (
 replace (
 	// Use the cosmos-flavored keyring library
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
-	github.com/cosmos/ibc-go/v3 => github.com/notional-labs/ibc-go/v3 v3.0.0-20220307194004-1db588989b6a
+	github.com/cosmos/ibc-go/v3 => github.com/notional-labs/ibc-go/v3 v3.0.0-20220313013342-c5d92b4023b4
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0

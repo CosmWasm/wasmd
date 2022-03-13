@@ -15,8 +15,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta2"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 )
 
@@ -38,7 +38,7 @@ func TestStoreCodeProposal(t *testing.T) {
 		p.WASMByteCode = wasmCode
 	})
 
-	msgContent, err := v1beta2.NewLegacyContent(src, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
 	require.NoError(t, err)
 
 	// when stored
@@ -91,7 +91,7 @@ func TestInstantiateProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err := v1beta2.NewLegacyContent(src, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -176,7 +176,7 @@ func TestMigrateProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err := v1beta2.NewLegacyContent(&src, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -240,7 +240,7 @@ func TestExecuteProposal(t *testing.T) {
 	}
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err := v1beta2.NewLegacyContent(&badSrc, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(&badSrc, myActorAddress)
 
 	// fails on store - this doesn't have permission
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -259,7 +259,7 @@ func TestExecuteProposal(t *testing.T) {
 	}
 
 	myActorAddress = govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err = v1beta2.NewLegacyContent(&src, myActorAddress)
+	msgContent, err = govv1.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -311,7 +311,7 @@ func TestSudoProposal(t *testing.T) {
 	}
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err := v1beta2.NewLegacyContent(&src, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -339,7 +339,7 @@ func TestAdminProposals(t *testing.T) {
 
 	specs := map[string]struct {
 		state       types.ContractInfo
-		srcProposal govtypesv1beta1.Content
+		srcProposal govv1beta1.Content
 		expAdmin    sdk.AccAddress
 	}{
 		"update with different admin": {
@@ -401,7 +401,7 @@ func TestAdminProposals(t *testing.T) {
 			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}))
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := v1beta2.NewLegacyContent(spec.srcProposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(spec.srcProposal, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
@@ -476,7 +476,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
@@ -562,7 +562,7 @@ func TestPinCodesProposal(t *testing.T) {
 
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {
@@ -651,7 +651,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := v1beta2.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {

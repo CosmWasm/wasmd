@@ -39,8 +39,8 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	govtypesv1beta2 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta2"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -397,8 +397,8 @@ func createTestInput(
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
 
-	govRouter := govtypesv1beta1.NewRouter().
-		AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
+	govRouter := govv1beta1.NewRouter().
+		AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
 		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
@@ -408,7 +408,7 @@ func createTestInput(
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
-		subspace(govtypes.ModuleName).WithKeyTable(govtypesv1beta2.ParamKeyTable()),
+		subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable()),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -417,10 +417,10 @@ func createTestInput(
 		govConfig,
 	)
 
-	govKeeper.SetProposalID(ctx, govtypesv1beta1.DefaultStartingProposalID)
-	govKeeper.SetDepositParams(ctx, govtypesv1beta2.DefaultDepositParams())
-	govKeeper.SetVotingParams(ctx, govtypesv1beta2.DefaultVotingParams())
-	govKeeper.SetTallyParams(ctx, govtypesv1beta2.DefaultTallyParams())
+	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
+	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
+	govKeeper.SetVotingParams(ctx, govv1.DefaultVotingParams())
+	govKeeper.SetTallyParams(ctx, govv1.DefaultTallyParams())
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
