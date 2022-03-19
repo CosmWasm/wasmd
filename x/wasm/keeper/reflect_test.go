@@ -264,7 +264,7 @@ func TestReflectCustomMsg(t *testing.T) {
 
 func TestMaskReflectCustomQuery(t *testing.T) {
 	SkipIfM1(t)
-  cdc := MakeEncodingConfig(t).Codec
+	cdc := MakeEncodingConfig(t).Codec
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
@@ -315,7 +315,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-  SkipIfM1(t)
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
