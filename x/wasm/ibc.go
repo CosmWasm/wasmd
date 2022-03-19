@@ -3,15 +3,15 @@ package wasm
 import (
 	"math"
 
-	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v2/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
 )

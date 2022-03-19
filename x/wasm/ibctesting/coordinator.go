@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v2/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v2/testing"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
