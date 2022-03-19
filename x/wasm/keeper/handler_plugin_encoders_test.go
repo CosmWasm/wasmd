@@ -569,7 +569,7 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
 			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.isError {
 				require.Error(t, err)

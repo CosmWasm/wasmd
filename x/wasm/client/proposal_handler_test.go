@@ -33,7 +33,7 @@ func TestGovRestHandlers(t *testing.T) {
 	)
 	encodingConfig := keeper.MakeEncodingConfig(t)
 	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
