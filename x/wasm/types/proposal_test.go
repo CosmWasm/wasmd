@@ -1,19 +1,19 @@
 package types
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
 
-func TestValidateProposalCommons(t *testing.T) {
+func TestvalidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
 	}
@@ -48,7 +48,7 @@ func TestValidateProposalCommons(t *testing.T) {
 		},
 		"prevent title exceeds max length ": {
 			src: commonProposal{
-				Title:       strings.Repeat("a", govtypes.MaxTitleLength+1),
+				Title:       strings.Repeat("a", govtypesv1beta1.MaxTitleLength+1),
 				Description: "Bar",
 			},
 			expErr: true,
@@ -76,7 +76,7 @@ func TestValidateProposalCommons(t *testing.T) {
 		"prevent descr exceeds max length ": {
 			src: commonProposal{
 				Title:       "Foo",
-				Description: strings.Repeat("a", govtypes.MaxDescriptionLength+1),
+				Description: strings.Repeat("a", govtypesv1beta1.MaxDescriptionLength+1),
 			},
 			expErr: true,
 		},
@@ -84,169 +84,6 @@ func TestValidateProposalCommons(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			err := validateProposalCommons(spec.src.Title, spec.src.Description)
-			if spec.expErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateStoreCodeProposal(t *testing.T) {
-	var (
-		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
-	)
-
-	specs := map[string]struct {
-		src    *StoreCodeProposal
-		expErr bool
-	}{
-		"all good": {
-			src: StoreCodeProposalFixture(),
-		},
-		"with instantiate permission": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
-				p.InstantiatePermission = &accessConfig
-			}),
-		},
-		"base data missing": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.Title = ""
-			}),
-			expErr: true,
-		},
-		"run_as missing": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.RunAs = ""
-			}),
-			expErr: true,
-		},
-		"run_as invalid": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.RunAs = invalidAddress
-			}),
-			expErr: true,
-		},
-		"wasm code missing": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = nil
-			}),
-			expErr: true,
-		},
-		"wasm code invalid": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
-			}),
-			expErr: true,
-		},
-		"with invalid instantiate permission": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.InstantiatePermission = &AccessConfig{}
-			}),
-			expErr: true,
-		},
-	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			err := spec.src.ValidateBasic()
-			if spec.expErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateInstantiateContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
-
-	specs := map[string]struct {
-		src    *InstantiateContractProposal
-		expErr bool
-	}{
-		"all good": {
-			src: InstantiateContractProposalFixture(),
-		},
-		"without admin": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Admin = ""
-			}),
-		},
-		"without init msg": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Msg = nil
-			}),
-			expErr: true,
-		},
-		"with invalid init msg": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Msg = []byte("not a json string")
-			}),
-			expErr: true,
-		},
-		"without init funds": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = nil
-			}),
-		},
-		"base data missing": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Title = ""
-			}),
-			expErr: true,
-		},
-		"run_as missing": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.RunAs = ""
-			}),
-			expErr: true,
-		},
-		"run_as invalid": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.RunAs = invalidAddress
-			}),
-			expErr: true,
-		},
-		"admin invalid": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Admin = invalidAddress
-			}),
-			expErr: true,
-		},
-		"code id empty": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.CodeID = 0
-			}),
-			expErr: true,
-		},
-		"label empty": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Label = ""
-			}),
-			expErr: true,
-		},
-		"init funds negative": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
-			}),
-			expErr: true,
-		},
-		"init funds with duplicates": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
-			}),
-			expErr: true,
-		},
-	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			err := spec.src.ValidateBasic()
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -417,61 +254,9 @@ func TestValidateClearAdminProposal(t *testing.T) {
 
 func TestProposalStrings(t *testing.T) {
 	specs := map[string]struct {
-		src govtypes.Content
+		src govtypesv1beta1.Content
 		exp string
 	}{
-		"store code": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
-			}),
-			exp: `Store Code Proposal:
-  Title:       Foo
-  Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  WasmCode:    0102030405060708090A
-`,
-		},
-		"instantiate contract": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
-			}),
-			exp: `Instantiate Code Proposal:
-  Title:       Foo
-  Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Code id:     1
-  Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
-  Funds:       1foo,2bar
-`,
-		},
-		"instantiate contract without funds": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Funds = nil }),
-			exp: `Instantiate Code Proposal:
-  Title:       Foo
-  Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Code id:     1
-  Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
-  Funds:       
-`,
-		},
-		"instantiate contract without admin": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = "" }),
-			exp: `Instantiate Code Proposal:
-  Title:       Foo
-  Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Admin:       
-  Code id:     1
-  Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
-  Funds:       
-`,
-		},
 		"migrate contract": {
 			src: MigrateContractProposalFixture(),
 			exp: `Migrate Contract Proposal:
@@ -533,62 +318,9 @@ func TestProposalStrings(t *testing.T) {
 
 func TestProposalYaml(t *testing.T) {
 	specs := map[string]struct {
-		src govtypes.Content
+		src govtypesv1beta1.Content
 		exp string
 	}{
-		"store code": {
-			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
-			}),
-			exp: `title: Foo
-description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-wasm_byte_code: AQIDBAUGBwgJCg==
-instantiate_permission: null
-`,
-		},
-		"instantiate contract": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
-			}),
-			exp: `title: Foo
-description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-code_id: 1
-label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
-funds:
-- denom: foo
-  amount: "1"
-- denom: bar
-  amount: "2"
-`,
-		},
-		"instantiate contract without funds": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Funds = nil }),
-			exp: `title: Foo
-description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-code_id: 1
-label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
-funds: []
-`,
-		},
-		"instantiate contract without admin": {
-			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = "" }),
-			exp: `title: Foo
-description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-admin: ""
-code_id: 1
-label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
-funds: []
-`,
-		},
 		"migrate contract": {
 			src: MigrateContractProposalFixture(),
 			exp: `title: Foo
@@ -678,8 +410,8 @@ func TestConvertToProposals(t *testing.T) {
 func TestUnmarshalContentFromJson(t *testing.T) {
 	specs := map[string]struct {
 		src string
-		got govtypes.Content
-		exp govtypes.Content
+		got govtypesv1beta1.Content
+		exp govtypesv1beta1.Content
 	}{
 		"instantiate ": {
 			src: `
@@ -726,17 +458,17 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 		},
 	}
 	for name, spec := range specs {
+		fmt.Println(name)
 		t.Run(name, func(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(spec.src), spec.got))
 			assert.Equal(t, spec.exp, spec.got)
 		})
 	}
 }
-
 func TestProposalJsonSignBytes(t *testing.T) {
 	const myInnerMsg = `{"foo":"bar"}`
 	specs := map[string]struct {
-		src govtypes.Content
+		src govtypesv1beta1.Content
 		exp string
 	}{
 		"instantiate contract": {
@@ -758,7 +490,7 @@ func TestProposalJsonSignBytes(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			msg, err := govtypes.NewMsgSubmitProposal(spec.src, sdk.NewCoins(), []byte{})
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(spec.src, sdk.NewCoins(), []byte{})
 			require.NoError(t, err)
 
 			bz := msg.GetSignBytes()

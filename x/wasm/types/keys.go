@@ -8,6 +8,9 @@ const (
 	// ModuleName is the name of the contract module
 	ModuleName = "wasm"
 
+	// Version is the name of the ibc version
+	Version = "ics20-1"
+
 	// StoreKey is the string store representation
 	StoreKey = ModuleName
 
