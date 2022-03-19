@@ -85,6 +85,8 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate"
 
 func TestReflectContractSend(t *testing.T) {
+
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
@@ -167,6 +169,7 @@ func TestReflectContractSend(t *testing.T) {
 }
 
 func TestReflectCustomMsg(t *testing.T) {
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
@@ -260,7 +263,9 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Codec
+	SkipIfM1(t)
+  cdc := MakeEncodingConfig(t).Codec
+
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -310,6 +315,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
+  SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
@@ -382,11 +388,70 @@ func TestReflectStargateQuery(t *testing.T) {
 	assert.Equal(t, expectedBalance, protoResult.Balances)
 }
 
+func TestReflectInvalidStargateQuery(t *testing.T) {
+	SkipIfM1(t)
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	keeper := keepers.WasmKeeper
+
+	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
+	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
+	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
+
+	// upload code
+	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	require.NoError(t, err)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	// creator instantiates a contract and gives it tokens
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// now, try to build a protobuf query
+	protoRequest := wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.tx.v1beta1.Service/GetTx",
+			Data: []byte{},
+		},
+	}
+	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain, should be blacklisted
+	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "path is not allowed from the contract")
+
+	// and another one
+	protoRequest = wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.base.tendermint.v1beta1.Service/GetNodeInfo",
+			Data: []byte{},
+		},
+	}
+	protoQueryBz, err = json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain, should be blacklisted
+	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "path is not allowed from the contract")
+}
+
 type reflectState struct {
 	Owner string `json:"owner"`
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
+
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
@@ -459,6 +524,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
+
+	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper

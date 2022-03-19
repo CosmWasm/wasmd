@@ -673,6 +673,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 }
 
 func TestExecuteWithPanic(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper
 
@@ -704,6 +705,7 @@ func TestExecuteWithPanic(t *testing.T) {
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper
 
@@ -746,6 +748,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper
 
@@ -787,6 +790,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 }
 
 func TestMigrate(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper
 
@@ -968,6 +972,7 @@ func TestMigrate(t *testing.T) {
 }
 
 func TestMigrateReplacesTheSecondIndex(t *testing.T) {
+	SkipIfM1(t)
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers)
 

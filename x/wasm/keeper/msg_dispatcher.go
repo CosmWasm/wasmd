@@ -136,7 +136,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			// Issue #759 - we don't return error string for worries of non-determinism
 			moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
 			result = wasmvmtypes.SubcallResult{
-				Err: redactError(err),
+				Err: redactError(err).Error(),
 			}
 		}
 
@@ -159,13 +159,21 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 	return rsp, nil
 }
 
-func redactError(err error) string {
+// Issue #759 - we don't return error string for worries of non-determinism
+func redactError(err error) error {
+	// Do not redact system errors
+	// SystemErrors must be created in x/wasm and we can ensure determinism
+	if wasmvmtypes.ToSystemError(err) != nil {
+		return err
+	}
+
 	// FIXME: do we want to hardcode some constant string mappings here as well?
 	// Or better document them? (SDK error string may change on a patch release to fix wording)
 	// sdk/11 is out of gas
 	// sdk/5 is insufficient funds (on bank send)
+	// (we can theoretically redact less in the future, but this is a first step to safety)
 	codespace, code, _ := sdkerrors.ABCIInfo(err, false)
-	return fmt.Sprintf("codespace: %s, code: %d", codespace, code)
+	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }
 
 func filterEvents(events []sdk.Event) []sdk.Event {
