@@ -443,15 +443,6 @@ func NewWasmApp(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
-	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
-
-	// initialize ICA module with mock module as the authentication module on the controller side
-	icaAuthModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", app.ScopedICAMockKeeper))
-	app.ICAAuthModule = icaAuthModule
-
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icaAuthModule)
-	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
-
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// not replicate if you do not need to test core IBC or light clients.
 	mockModule := ibcmock.NewAppModule(&app.IBCKeeper.PortKeeper)
@@ -464,6 +455,15 @@ func NewWasmApp(
 		app.ScopedICAControllerKeeper, app.MsgServiceRouter(),
 	)
 
+	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
+
+	// initialize ICA module with mock module as the authentication module on the controller side
+	icaAuthModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", app.ScopedICAMockKeeper))
+	app.ICAAuthModule = icaAuthModule
+
+	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, icaAuthModule)
+	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
+
 	// initialize ICA module with mock module as the authentication module on the controller side
 	app.ICAAuthModule = icaAuthModule
 
@@ -474,7 +474,6 @@ func NewWasmApp(
 		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(ibcmock.ModuleName, mockIBCModule)
-	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -518,7 +517,7 @@ func NewWasmApp(
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.ibcKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	app.GovKeeper = govkeeper.NewKeeper(
@@ -562,6 +561,7 @@ func NewWasmApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
+		icaModule,
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -688,7 +688,7 @@ func NewWasmApp(
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// note replicate if you do not need to test core IBC or light clients.
 	app.ScopedIBCMockKeeper = app.ScopedIBCMockKeeper
-	app.ScopedICAMockKeeper = ascopedICAMockKeeper
+	app.ScopedICAMockKeeper = app.ScopedICAMockKeeper
 
 	return app
 }
