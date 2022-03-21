@@ -244,7 +244,7 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 
 // AddTestAddrsFromPubKeys adds the addresses into the WasmApp providing only the public keys.
 func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotypes.PubKey, accAmt sdk.Int) {
-	initCoins := sdk.NewCoins(sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt))
+	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
 
 	for _, pk := range pubKeys {
 		initAccountWithCoins(app, ctx, sdk.AccAddress(pk.Address()), initCoins)
@@ -266,7 +266,7 @@ func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt s
 func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int, strategy GenerateAccountStrategy) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 
-	initCoins := sdk.NewCoins(sdk.NewCoin(app.stakingKeeper.BondDenom(ctx), accAmt))
+	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
 
 	// fill all the addresses with some coins, set the loose pool tokens simultaneously
 	for _, addr := range testAddrs {
@@ -277,12 +277,12 @@ func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int, str
 }
 
 func initAccountWithCoins(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
-	err := app.bankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
+	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
 	if err != nil {
 		panic(err)
 	}
 
-	err = app.bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
 	if err != nil {
 		panic(err)
 	}
@@ -323,7 +323,7 @@ func TestAddr(addr string, bech string) (sdk.AccAddress, error) {
 // CheckBalance checks the balance of an account.
 func CheckBalance(t *testing.T, app *WasmApp, addr sdk.AccAddress, balances sdk.Coins) {
 	ctxCheck := app.BaseApp.NewContext(true, tmproto.Header{})
-	require.True(t, balances.IsEqual(app.bankKeeper.GetAllBalances(ctxCheck, addr)))
+	require.True(t, balances.IsEqual(app.BankKeeper.GetAllBalances(ctxCheck, addr)))
 }
 
 const DefaultGas = 1200000
