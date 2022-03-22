@@ -119,6 +119,8 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			ContractState:   state,
 		})
 
+		contractStateIterator.Close()
+
 		return false
 	})
 
