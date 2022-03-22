@@ -418,7 +418,7 @@ func (endpoint *Endpoint) WriteAcknowledgement(ack exported.Acknowledgement, pac
 	channelCap := endpoint.Chain.GetChannelCapability(packet.GetDestPort(), packet.GetDestChannel())
 
 	// no need to send message, acting as a handler
-	err := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.WriteAcknowledgement(endpoint.Chain.GetContext(), channelCap, packet, ack)
+	err := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.WriteAcknowledgement(endpoint.Chain.GetContext(), channelCap, packet, ack.Acknowledgement())
 	if err != nil {
 		return err
 	}

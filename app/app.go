@@ -257,7 +257,7 @@ type WasmApp struct {
 	// module configurator
 	configurator module.Configurator
 
-	// ics4Wrapper
+	//ics4Wrapper
 	ICS4Wrapper porttypes.ICS4Wrapper
 }
 
