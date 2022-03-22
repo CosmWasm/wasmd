@@ -123,8 +123,8 @@ func (i IBCHandler) OnChanOpenTry(
 func (i IBCHandler) OnChanOpenAck(
 	ctx sdk.Context,
 	portID, channelID string,
-	counterpartyVersion string,
 	counterpartyChannelID string,
+	counterpartyVersion string,
 ) error {
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
