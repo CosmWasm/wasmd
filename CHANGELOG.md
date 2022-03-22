@@ -2,6 +2,8 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+- Update wasmvm to 1.0.0-beta8 (incl wasmer 2.2.1)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.24.0...master)
 
 ## [v0.24.0](https://github.com/CosmWasm/wasmd/tree/v0.24.0) (2022-03-09)
