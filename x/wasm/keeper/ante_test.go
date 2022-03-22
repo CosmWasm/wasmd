@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ import (
 func TestCountTxDecorator(t *testing.T) {
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db, log.NewTMLogger(log.NewSyncWriter(os.Stdout)))
+	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100

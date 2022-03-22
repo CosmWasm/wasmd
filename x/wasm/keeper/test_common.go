@@ -118,7 +118,6 @@ var TestingStakeParams = stakingtypes.Params{
 	MaxEntries:        10,
 	HistoricalEntries: 10,
 	BondDenom:         "stake",
-	MinCommissionRate: sdk.NewDec(0),
 }
 
 type TestFaucet struct {
@@ -211,7 +210,7 @@ func createTestInput(
 		capabilitytypes.StoreKey, feegrant.StoreKey, authzkeeper.StoreKey,
 		types.StoreKey,
 	)
-	ms := store.NewCommitMultiStore(db, log.NewNopLogger())
+	ms := store.NewCommitMultiStore(db)
 	for _, v := range keys {
 		ms.MountStoreWithDB(v, sdk.StoreTypeIAVL, db)
 	}
