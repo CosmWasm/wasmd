@@ -959,6 +959,7 @@ func moduleLogger(ctx sdk.Context) log.Logger {
 }
 
 // Querier creates a new grpc querier instance
+//nolint:revive
 func Querier(k *Keeper) *grpcQuerier {
 	return NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
 }
