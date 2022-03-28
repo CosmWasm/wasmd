@@ -688,10 +688,19 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, typ
 	}
 }
 
-func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.Iterator {
+// IterateContractState iterates through all elements of the key value store for the given contract address and passes
+// them to the provided callback function. The callback method can return true to abort early.
+func (k Keeper) IterateContractState(ctx sdk.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool) {
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return prefixStore.Iterator(nil, nil)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		if cb(iter.Key(), iter.Value()) {
+			break
+		}
+	}
 }
 
 func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) error {
