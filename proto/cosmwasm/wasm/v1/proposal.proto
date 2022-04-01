@@ -148,3 +148,19 @@ message UnpinCodesProposal {
     (gogoproto.moretags) = "yaml:\"code_ids\""
   ];
 }
+
+// UpdateInstantiateConfigProposal gov proposal content type to update
+// instantiate config to a  set of code ids.
+message UpdateInstantiateConfigProposal {
+  // Title is a short summary
+  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+  // Description is a human readable text
+  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+  // CodeIDs references the WASM codes
+  repeated uint64 code_ids = 3 [
+    (gogoproto.customname) = "CodeIDs",
+    (gogoproto.moretags) = "yaml:\"code_ids\""
+  ];
+  // InstantiatePermission to apply to the set of code ids
+  AccessConfig instantiate_permission = 4 [ (gogoproto.nullable) = false ];
+}

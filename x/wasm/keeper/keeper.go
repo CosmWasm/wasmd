@@ -833,6 +833,17 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 	return nil
 }
 
+// setAccessConfig updates the access config of a code id.
+func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, config types.AccessConfig) error {
+	info := k.GetCodeInfo(ctx, codeID)
+	if info == nil {
+		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+	}
+	info.InstantiateConfig = config
+	k.storeCodeInfo(ctx, codeID, *info)
+	return nil
+}
+
 // handleContractResponse processes the contract response data by emitting events and sending sub-/messages.
 func (k *Keeper) handleContractResponse(
 	ctx sdk.Context,
