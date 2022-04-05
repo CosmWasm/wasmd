@@ -768,19 +768,21 @@ func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []stri
 		indexEvents[e] = struct{}{}
 	}
 	txHandler, err := NewDefaultTxHandler(TxHandlerOptions{
-		Debug:             app.Trace(),
-		IndexEvents:       indexEvents,
-		LegacyRouter:      app.legacyRouter,
-		MsgServiceRouter:  app.MsgSvcRouter,
-		AccountKeeper:     app.AccountKeeper,
-		BankKeeper:        app.BankKeeper,
-		FeegrantKeeper:    app.FeeGrantKeeper,
-		SignModeHandler:   txConfig.SignModeHandler(),
-		SigGasConsumer:    authmiddleware.DefaultSigVerificationGasConsumer,
-		TxDecoder:         txConfig.TxDecoder(),
+		TxHandlerOptions:  authmiddleware.TxHandlerOptions{
+			Debug:             app.Trace(),
+			IndexEvents:       indexEvents,
+			LegacyRouter:      app.legacyRouter,
+			MsgServiceRouter:  app.MsgSvcRouter,
+			AccountKeeper:     app.AccountKeeper,
+			BankKeeper:        app.BankKeeper,
+			FeegrantKeeper:    app.FeeGrantKeeper,
+			SignModeHandler:   txConfig.SignModeHandler(),
+			SigGasConsumer:    authmiddleware.DefaultSigVerificationGasConsumer,
+			TxDecoder:         txConfig.TxDecoder(),
+		},
 		WasmConfig:        &wasmConfig,
 		TXCounterStoreKey: keys[wasm.StoreKey],
-		ChannelKeeper:     app.IBCKeeper.ChannelKeeper,
+		IBCKeeper:     app.IBCKeeper,
 	})
 	if err != nil {
 		panic(err)
