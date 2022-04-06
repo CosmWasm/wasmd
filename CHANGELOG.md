@@ -7,7 +7,7 @@
 ## [v0.25.0](https://github.com/CosmWasm/wasmd/tree/v0.25.0) (2022-04-06)
 
 **API Breaking**
-- Upgrade wasmvm to v1.0.0-beta9 [\#790](https://github.com/CosmWasm/wasmd/pull/790)
+- Upgrade wasmvm to v1.0.0-beta10 [\#790](https://github.com/CosmWasm/wasmd/pull/790), [\#800](https://github.com/CosmWasm/wasmd/pull/800)
 
 **Implemented Enhancements**
 - Fix: close iterators [\#792](https://github.com/CosmWasm/wasmd/pull/792)
