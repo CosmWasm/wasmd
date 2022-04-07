@@ -286,17 +286,6 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 	return nil
 }
 
-func (i IBCHandler) NegotiateAppVersion(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionID string,
-	portID string,
-	counterparty channeltypes.Counterparty,
-	proposedVersion string,
-) (version string, err error) {
-	return proposedVersion, nil // accept all
-}
-
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
 	timeout := wasmvmtypes.IBCTimeout{
 		Timestamp: packet.TimeoutTimestamp,
