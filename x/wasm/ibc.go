@@ -123,8 +123,8 @@ func (i IBCHandler) OnChanOpenTry(
 func (i IBCHandler) OnChanOpenAck(
 	ctx sdk.Context,
 	portID, channelID string,
-	counterpartyVersion string,
 	counterpartyChannelID string,
+	counterpartyVersion string,
 ) error {
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
@@ -284,17 +284,6 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 		return sdkerrors.Wrap(err, "on timeout")
 	}
 	return nil
-}
-
-func (i IBCHandler) NegotiateAppVersion(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionID string,
-	portID string,
-	counterparty channeltypes.Counterparty,
-	proposedVersion string,
-) (version string, err error) {
-	return proposedVersion, nil // accept all
 }
 
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {

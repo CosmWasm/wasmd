@@ -4,14 +4,11 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/middleware"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	channelkeeper "github.com/cosmos/ibc-go/v3/modules/core/04-channel/keeper"
+	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
+	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibcmiddleware "github.com/cosmos/ibc-go/v3/modules/core/middleware"
 )
 
@@ -37,27 +34,11 @@ func ComposeMiddlewares(txHandler tx.Handler, middlewares ...tx.Middleware) tx.H
 }
 
 type TxHandlerOptions struct {
-	Debug bool
-
-	// TxDecoder is used to decode the raw tx bytes into a sdk.Tx.
-	TxDecoder sdk.TxDecoder
-
-	// IndexEvents defines the set of events in the form {eventType}.{attributeKey},
-	// which informs Tendermint what to index. If empty, all events will be indexed.
-	IndexEvents map[string]struct{}
-
-	LegacyRouter     sdk.Router
-	MsgServiceRouter *middleware.MsgServiceRouter
-
-	AccountKeeper   middleware.AccountKeeper
-	BankKeeper      types.BankKeeper
-	FeegrantKeeper  middleware.FeegrantKeeper
-	SignModeHandler authsigning.SignModeHandler
-	SigGasConsumer  func(meter sdk.GasMeter, sig signing.SignatureV2, params types.Params) error
+	authmiddleware.TxHandlerOptions
 
 	TXCounterStoreKey storetypes.StoreKey
 	WasmConfig        *wasmTypes.WasmConfig
-	ChannelKeeper     channelkeeper.Keeper
+	IBCKeeper *ibckeeper.Keeper
 }
 
 // NewDefaultTxHandler defines a TxHandler middleware stacks that should work
@@ -134,6 +115,6 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		middleware.ConsumeBlockGasMiddleware,
 		middleware.NewTipMiddleware(options.BankKeeper),
 		// Ibc v3 middleware
-		ibcmiddleware.IbcTxMiddleware(options.ChannelKeeper),
+		ibcmiddleware.IBCTxMiddleware(options.IBCKeeper),
 	), nil
 }
