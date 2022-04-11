@@ -2,7 +2,20 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.24.0...master)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.25.0...master)
+
+## [v0.25.0](https://github.com/CosmWasm/wasmd/tree/v0.25.0) (2022-04-06)
+
+**API Breaking**
+- Upgrade wasmvm to v1.0.0-beta10 [\#790](https://github.com/CosmWasm/wasmd/pull/790), [\#800](https://github.com/CosmWasm/wasmd/pull/800)
+
+**Implemented Enhancements**
+- Fix: close iterators [\#792](https://github.com/CosmWasm/wasmd/pull/792)
+- Use callback pattern for contract state iterator [\#794](https://github.com/CosmWasm/wasmd/pull/794)
+- Bump github.com/stretchr/testify from 1.7.0 to 1.7.1 [\#787](https://github.com/CosmWasm/wasmd/pull/787)
+- Bump github.com/cosmos/ibc-go/v2 from 2.0.3 to 2.2.0 [\#786](https://github.com/CosmWasm/wasmd/pull/786)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.24.0...v0.25.0)
 
 ## [v0.24.0](https://github.com/CosmWasm/wasmd/tree/v0.24.0) (2022-03-09)
 

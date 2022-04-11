@@ -93,12 +93,10 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	case QueryMethodContractStateAll:
 		resultData := make([]types.Model, 0)
 		// this returns a serialized json object (which internally encoded binary fields properly)
-		for iter := keeper.GetContractState(ctx, contractAddr); iter.Valid(); iter.Next() {
-			resultData = append(resultData, types.Model{
-				Key:   iter.Key(),
-				Value: iter.Value(),
-			})
-		}
+		keeper.IterateContractState(ctx, contractAddr, func(key, value []byte) bool {
+			resultData = append(resultData, types.Model{Key: key, Value: value})
+			return false
+		})
 		bz, err := json.Marshal(resultData)
 		if err != nil {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
