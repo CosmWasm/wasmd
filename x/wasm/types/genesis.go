@@ -103,8 +103,8 @@ func ValidateGenesis(data GenesisState) error {
 var _ codectypes.UnpackInterfacesMessage = GenesisState{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (m GenesisState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	for _, v := range m.Contracts {
+func (s GenesisState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	for _, v := range s.Contracts {
 		if err := v.UnpackInterfaces(unpacker); err != nil {
 			return err
 		}
@@ -115,6 +115,6 @@ func (m GenesisState) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 var _ codectypes.UnpackInterfacesMessage = &Contract{}
 
 // UnpackInterfaces implements codectypes.UnpackInterfaces
-func (m *Contract) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	return m.ContractInfo.UnpackInterfaces(unpacker)
+func (c *Contract) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return c.ContractInfo.UnpackInterfaces(unpacker)
 }
