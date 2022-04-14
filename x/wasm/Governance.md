@@ -57,17 +57,109 @@ See [params.go](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/param
         },
         "instantiate_default_permission": "Everybody"
       }
-    },
+    },  
 ```
 
 The values can be updated via gov proposal implemented in the `params` module.
 
+### Update Params Via [ParamChangeProposal](https://github.com/cosmos/cosmos-sdk/blob/v0.45.3/proto/cosmos/params/v1beta1/params.proto#L10)
+Example to submit a parameter change gov proposal:
+```sh
+wasmd tx gov submit-proposal param-change <proposal-json-file> --from validator --chain-id=testing -b block
+```
+#### Content examples
+* Disable wasm code uploads
+```json
+{
+  "title": "Foo",
+  "description": "Bar",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "uploadAccess",
+      "value": {
+        "permission": "Nobody"
+      }
+    }
+  ],
+  "deposit": ""
+}
+```
+* Allow wasm code uploads for everybody
+```json
+{
+  "title": "Foo",
+  "description": "Bar",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "uploadAccess",
+      "value": {
+        "permission": "Everybody"
+      }
+    }
+  ],
+  "deposit": ""
+}
+```
+
+* Restrict code uploads to a single address
+```json
+{
+  "title": "Foo",
+  "description": "Bar",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "uploadAccess",
+      "value": {
+        "permission": "OnlyAddress",
+        "address": "cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq0fr2sh"
+      }
+    }
+  ],
+  "deposit": ""
+}
+```
+* Set chain **default** instantiation settings to nobody
+```json
+{
+  "title": "Foo",
+  "description": "Bar",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "instantiateAccess",
+      "value": "Nobody"
+    }
+  ],
+  "deposit": ""
+}
+```
+* Set chain **default** instantiation settings to everybody
+```json
+{
+  "title": "Foo",
+  "description": "Bar",
+  "changes": [
+    {
+      "subspace": "wasm",
+      "key": "instantiateAccess",
+      "value": "Everybody"
+    }
+  ],
+  "deposit": ""
+}
+```
+
 ### Enable gov proposals at **compile time**. 
-As gov proposals bypass the existing authorzation policy they are diabled and require to be enabled at compile time. 
+As gov proposals bypass the existing authorization policy they are disabled and require to be enabled at compile time. 
 ```
 -X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true - enable all x/wasm governance proposals (default false)
 -X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin - enable a subset of the x/wasm governance proposal types (overrides ProposalsEnabled)
 ```
+
+The `ParamChangeProposal` is always enabled.
 
 ### Tests
 * [params validation unit tests](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/params_test.go)
