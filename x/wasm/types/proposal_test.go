@@ -317,6 +317,61 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 	}
 }
 
+func TestValidateSudoContractProposal(t *testing.T) {
+	var (
+		invalidAddress = "invalid address2"
+	)
+
+	specs := map[string]struct {
+		src    *SudoContractProposal
+		expErr bool
+	}{
+		"all good": {
+			src: SudoContractProposalFixture(),
+		},
+		"msg is nil": {
+			src: SudoContractProposalFixture(func(p *SudoContractProposal) {
+				p.Msg = nil
+			}),
+			expErr: true,
+		},
+		"msg with invalid json": {
+			src: SudoContractProposalFixture(func(p *SudoContractProposal) {
+				p.Msg = []byte("not a json message")
+			}),
+			expErr: true,
+		},
+		"base data missing": {
+			src: SudoContractProposalFixture(func(p *SudoContractProposal) {
+				p.Title = ""
+			}),
+			expErr: true,
+		},
+		"contract missing": {
+			src: SudoContractProposalFixture(func(p *SudoContractProposal) {
+				p.Contract = ""
+			}),
+			expErr: true,
+		},
+		"contract invalid": {
+			src: SudoContractProposalFixture(func(p *SudoContractProposal) {
+				p.Contract = invalidAddress
+			}),
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateUpdateAdminProposal(t *testing.T) {
 	var (
 		invalidAddress = "invalid address"
