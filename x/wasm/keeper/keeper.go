@@ -524,7 +524,10 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 // IterateContractsByCode iterates over all contracts with given codeID ASC on code update time.
 func (k Keeper) IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractByCodeIDSecondaryIndexPrefix(codeID))
-	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
 		key := iter.Key()
 		if cb(key[types.AbsoluteTxPositionLen:]) {
 			return
@@ -550,7 +553,10 @@ func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAdd
 	// find last element position
 	var pos uint64
 	prefixStore := prefix.NewStore(store, types.GetContractCodeHistoryElementPrefix(contractAddr))
-	if iter := prefixStore.ReverseIterator(nil, nil); iter.Valid() {
+	iter := prefixStore.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	if iter.Valid() {
 		pos = sdk.BigEndianToUint64(iter.Value())
 	}
 	// then store with incrementing position
@@ -565,6 +571,8 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
 	r := make([]types.ContractCodeHistoryEntry, 0)
 	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
 	for ; iter.Valid(); iter.Next() {
 		var e types.ContractCodeHistoryEntry
 		k.cdc.MustUnmarshal(iter.Value(), &e)
@@ -577,6 +585,8 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 func (k Keeper) getLastContractHistoryEntry(ctx sdk.Context, contractAddr sdk.AccAddress) types.ContractCodeHistoryEntry {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractCodeHistoryElementPrefix(contractAddr))
 	iter := prefixStore.ReverseIterator(nil, nil)
+	defer iter.Close()
+
 	var r types.ContractCodeHistoryEntry
 	if !iter.Valid() {
 		// all contracts have a history
@@ -666,6 +676,8 @@ func (k Keeper) storeContractInfo(ctx sdk.Context, contractAddress sdk.AccAddres
 func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractKeyPrefix)
 	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
 	for ; iter.Valid(); iter.Next() {
 		var contract types.ContractInfo
 		k.cdc.MustUnmarshal(iter.Value(), &contract)
@@ -676,10 +688,19 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, typ
 	}
 }
 
-func (k Keeper) GetContractState(ctx sdk.Context, contractAddress sdk.AccAddress) sdk.Iterator {
+// IterateContractState iterates through all elements of the key value store for the given contract address and passes
+// them to the provided callback function. The callback method can return true to abort early.
+func (k Keeper) IterateContractState(ctx sdk.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool) {
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return prefixStore.Iterator(nil, nil)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		if cb(iter.Key(), iter.Value()) {
+			break
+		}
+	}
 }
 
 func (k Keeper) importContractState(ctx sdk.Context, contractAddress sdk.AccAddress, models []types.Model) error {
@@ -716,6 +737,8 @@ func (k Keeper) containsCodeInfo(ctx sdk.Context, codeID uint64) bool {
 func (k Keeper) IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool) {
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.CodeKeyPrefix)
 	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
 	for ; iter.Valid(); iter.Next() {
 		var c types.CodeInfo
 		k.cdc.MustUnmarshal(iter.Value(), &c)
@@ -788,6 +811,8 @@ func (k Keeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PinnedCodeIndexPrefix)
 	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
 	for ; iter.Valid(); iter.Next() {
 		codeInfo := k.GetCodeInfo(ctx, types.ParsePinnedCodeIndex(iter.Key()))
 		if codeInfo == nil {
@@ -959,7 +984,7 @@ func moduleLogger(ctx sdk.Context) log.Logger {
 }
 
 // Querier creates a new grpc querier instance
-func Querier(k *Keeper) *grpcQuerier {
+func Querier(k *Keeper) *grpcQuerier { //nolint:revive
 	return NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
 }
 
