@@ -102,15 +102,11 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 	})
 
 	keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, contract types.ContractInfo) bool {
-		contractStateIterator := keeper.GetContractState(ctx, addr)
 		var state []types.Model
-		for ; contractStateIterator.Valid(); contractStateIterator.Next() {
-			m := types.Model{
-				Key:   contractStateIterator.Key(),
-				Value: contractStateIterator.Value(),
-			}
-			state = append(state, m)
-		}
+		keeper.IterateContractState(ctx, addr, func(key, value []byte) bool {
+			state = append(state, types.Model{Key: key, Value: value})
+			return false
+		})
 		// redact contract info
 		contract.Created = nil
 		genState.Contracts = append(genState.Contracts, types.Contract{
@@ -118,7 +114,6 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			ContractInfo:    contract,
 			ContractState:   state,
 		})
-
 		return false
 	})
 

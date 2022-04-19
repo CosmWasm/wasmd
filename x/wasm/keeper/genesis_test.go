@@ -114,7 +114,9 @@ func TestGenesisExportImport(t *testing.T) {
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
 		wasmKeeper.removeFromContractCodeSecondaryIndex(srcCtx, address, wasmKeeper.getLastContractHistoryEntry(srcCtx, address))
 		prefixStore := prefix.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
-		for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+		iter := prefixStore.Iterator(nil, nil)
+
+		for ; iter.Valid(); iter.Next() {
 			prefixStore.Delete(iter.Key())
 		}
 		x := &info
@@ -122,6 +124,7 @@ func TestGenesisExportImport(t *testing.T) {
 		wasmKeeper.storeContractInfo(srcCtx, address, x)
 		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, newHistory)
 		wasmKeeper.appendToContractHistory(srcCtx, address, newHistory)
+		iter.Close()
 		return false
 	})
 
@@ -146,6 +149,8 @@ func TestGenesisExportImport(t *testing.T) {
 		if !assert.False(t, dstIT.Valid()) {
 			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
 		}
+		srcIT.Close()
+		dstIT.Close()
 	}
 }
 
