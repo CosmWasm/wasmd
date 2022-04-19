@@ -38,7 +38,7 @@ type TxHandlerOptions struct {
 
 	TXCounterStoreKey storetypes.StoreKey
 	WasmConfig        *wasmTypes.WasmConfig
-	IBCKeeper *ibckeeper.Keeper
+	IBCKeeper         *ibckeeper.Keeper
 }
 
 // NewDefaultTxHandler defines a TxHandler middleware stacks that should work
@@ -85,8 +85,8 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		middleware.NewIndexEventsTxMiddleware(options.IndexEvents),
 		// Reject all extension options which can optionally be included in the
 		// tx.
-		middleware.RejectExtensionOptionsMiddleware,
-		middleware.MempoolFeeMiddleware,
+		//		middleware.RejectExtensionOptionsMiddleware,
+		//		middleware.MempoolFeeMiddleware,
 		middleware.ValidateBasicMiddleware,
 		middleware.TxTimeoutHeightMiddleware,
 		middleware.ValidateMemoMiddleware(options.AccountKeeper),
@@ -98,8 +98,8 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		// ComposeMiddlewares godoc for details.
 		// `DeductFeeMiddleware` and `IncrementSequenceMiddleware` should be put outside of `WithBranchedStore` middleware,
 		// so their storage writes are not discarded when tx fails.
-		middleware.DeductFeeMiddleware(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper),
-		middleware.TxPriorityMiddleware,
+		middleware.DeductFeeMiddleware(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
+		//		middleware.TxPriorityMiddleware,
 		middleware.SetPubKeyMiddleware(options.AccountKeeper),
 		middleware.ValidateSigCountMiddleware(options.AccountKeeper),
 		middleware.SigGasConsumeMiddleware(options.AccountKeeper, sigGasConsumer),
