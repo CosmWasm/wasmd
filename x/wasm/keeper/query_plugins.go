@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
@@ -16,7 +15,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type QueryHandler struct {
@@ -273,20 +271,6 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled."}
-
-		route := queryRouter.Route(msg.Path)
-		if route == nil {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", msg.Path)}
-		}
-		req := abci.RequestQuery{
-			Data: msg.Data,
-			Path: msg.Path,
-		}
-		res, err := route(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-		return res.Value, nil
 	}
 }
 
