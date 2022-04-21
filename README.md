@@ -24,25 +24,27 @@ A VM can support one or more contract-VM interface versions. The interface
 version is communicated by the contract via a Wasm export. This is the current
 compatibility list:
 
-| wasmd | cosmwasm-vm | cosmwasm-std |
-| ----- | ----------- | ------------ |
-| 0.24  | 1.0.0-beta7 | 1.0          |
-| 0.23  | 1.0.0-beta5 | 1.0          |
-| 0.22  | 1.0.0-beta5 | 1.0          |
-| 0.21  | 1.0.0-beta2 | 1.0          |
-| 0.20  | 1.0.0-beta  | 1.0          |
-| 0.19  | 0.16        | 0.16         |
-| 0.18  | 0.16        | 0.16         |
-| 0.17  | 0.14        | 0.14         |
-| 0.16  | 0.14        | 0.14         |
-| 0.15  | 0.13        | 0.11-0.13    |
-| 0.14  | 0.13        | 0.11-0.13    |
-| 0.13  | 0.12        | 0.11-0.13    |
-| 0.12  | 0.12        | 0.11-0.13    |
-| 0.11  | 0.11        | 0.11-0.13    |
-| 0.10  | 0.10        | 0.10         |
-| 0.9   | 0.9         | 0.9          |
-| 0.8   | 0.8         | 0.8          |
+| wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
+| ----- | ------------ | ----------- | ------------ |
+| 0.26  | 1.0.0-beta10 |             | 1.0          |
+| 0.25  | 1.0.0-beta10 |             | 1.0          |
+| 0.24  | 1.0.0-beta7  | 1.0.0-beta6 | 1.0          |
+| 0.23  |              | 1.0.0-beta5 | 1.0          |
+| 0.22  |              | 1.0.0-beta5 | 1.0          |
+| 0.21  |              | 1.0.0-beta2 | 1.0          |
+| 0.20  |              | 1.0.0-beta  | 1.0          |
+| 0.19  |              | 0.16        | 0.16         |
+| 0.18  |              | 0.16        | 0.16         |
+| 0.17  |              | 0.14        | 0.14         |
+| 0.16  |              | 0.14        | 0.14         |
+| 0.15  |              | 0.13        | 0.11-0.13    |
+| 0.14  |              | 0.13        | 0.11-0.13    |
+| 0.13  |              | 0.12        | 0.11-0.13    |
+| 0.12  |              | 0.12        | 0.11-0.13    |
+| 0.11  |              | 0.11        | 0.11-0.13    |
+| 0.10  |              | 0.10        | 0.10         |
+| 0.9   |              | 0.9         | 0.9          |
+| 0.8   |              | 0.8         | 0.8          |
 
 Note: `cosmwasm_std v1.0` means it supports contracts compiled by any `v1.0.0-betaX` or `1.0.x`.
 It will also run contracts compiled with 1.x assuming they don't opt into any newer features.

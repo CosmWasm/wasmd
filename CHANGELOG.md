@@ -2,7 +2,27 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.25.0...master)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.26.0...HEAD)
+
+## [v0.26.0](https://github.com/CosmWasm/wasmd/tree/v0.26.0) (2022-04-21)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.25.0...v0.26.0)
+
+**Fixed bugs:**
+
+- Unpack contract details from genesis [\#802](https://github.com/CosmWasm/wasmd/pull/802)
+
+**Closed issues:**
+
+- Issue Updating uploadAccess Param [\#804](https://github.com/CosmWasm/wasmd/issues/804)
+- Add tx query to wasmd QueryPlugins for smart contract [\#788](https://github.com/CosmWasm/wasmd/issues/788)
+
+**Merged pull requests:**
+
+- Disable stargate queries [\#812](https://github.com/CosmWasm/wasmd/pull/812)
+- Gov param change examples [\#805](https://github.com/CosmWasm/wasmd/pull/805)
+- Create link to SECURITY.md in other repo [\#801](https://github.com/CosmWasm/wasmd/pull/801)
+- Tests some event edge cases [\#799](https://github.com/CosmWasm/wasmd/pull/799)
 
 ## [v0.25.0](https://github.com/CosmWasm/wasmd/tree/v0.25.0) (2022-04-06)
 
