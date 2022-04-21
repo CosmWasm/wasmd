@@ -356,34 +356,6 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.Equal(t, len(expectedBalance), len(simpleBalance.Amount))
 	assert.Equal(t, simpleBalance.Amount[0].Amount, expectedBalance[0].Amount.String())
 	assert.Equal(t, simpleBalance.Amount[0].Denom, expectedBalance[0].Denom)
-
-	// now, try to build a protobuf query
-	protoQuery := banktypes.QueryAllBalancesRequest{
-		Address: creator.String(),
-	}
-	protoQueryBin, err := proto.Marshal(&protoQuery)
-	protoRequest := wasmvmtypes.QueryRequest{
-		Stargate: &wasmvmtypes.StargateQuery{
-			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
-			Data: protoQueryBin,
-		},
-	}
-	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
-		Chain: &ChainQuery{Request: &protoRequest},
-	})
-	require.NoError(t, err)
-
-	// make a query on the chain
-	protoRes, err := keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
-	require.NoError(t, err)
-	var protoChain ChainResponse
-	mustParse(t, protoRes, &protoChain)
-
-	// unmarshal raw protobuf response
-	var protoResult banktypes.QueryAllBalancesResponse
-	err = proto.Unmarshal(protoChain.Data, &protoResult)
-	require.NoError(t, err)
-	assert.Equal(t, expectedBalance, protoResult.Balances)
 }
 
 func TestReflectInvalidStargateQuery(t *testing.T) {
@@ -409,10 +381,14 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// now, try to build a protobuf query
+	protoQuery := banktypes.QueryAllBalancesRequest{
+		Address: creator.String(),
+	}
+	protoQueryBin, err := proto.Marshal(&protoQuery)
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
-			Path: "/cosmos.tx.v1beta1.Service/GetTx",
-			Data: []byte{},
+			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
+			Data: protoQueryBin,
 		},
 	}
 	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
@@ -423,7 +399,24 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "path is not allowed from the contract")
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
+
+	// now, try to build a protobuf query
+	protoRequest = wasmvmtypes.QueryRequest{
+		Stargate: &wasmvmtypes.StargateQuery{
+			Path: "/cosmos.tx.v1beta1.Service/GetTx",
+			Data: []byte{},
+		},
+	}
+	protoQueryBz, err = json.Marshal(ReflectQueryMsg{
+		Chain: &ChainQuery{Request: &protoRequest},
+	})
+	require.NoError(t, err)
+
+	// make a query on the chain, should be blacklisted
+	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
 
 	// and another one
 	protoRequest = wasmvmtypes.QueryRequest{
@@ -440,7 +433,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "path is not allowed from the contract")
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
 }
 
 type reflectState struct {
