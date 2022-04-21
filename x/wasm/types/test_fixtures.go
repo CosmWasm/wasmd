@@ -260,7 +260,6 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 func SudoContractProposalFixture(mutators ...func(p *SudoContractProposal)) *SudoContractProposal {
 	const (
 		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
-		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	)
 
 	p := &SudoContractProposal{
@@ -268,6 +267,30 @@ func SudoContractProposalFixture(mutators ...func(p *SudoContractProposal)) *Sud
 		Description: "Bar",
 		Contract:    contractAddr,
 		Msg:         []byte(`{"do":"something"}`),
+	}
+
+	for _, m := range mutators {
+		m(p)
+	}
+	return p
+}
+
+func ExecuteContractProposalFixture(mutators ...func(p *ExecuteContractProposal)) *ExecuteContractProposal {
+	const (
+		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
+		anyAddress   = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+	)
+
+	p := &ExecuteContractProposal{
+		Title:       "Foo",
+		Description: "Bar",
+		Contract:    contractAddr,
+		RunAs:       anyAddress,
+		Msg:         []byte(`{"do":"something"}`),
+		Funds: sdk.Coins{{
+			Denom:  "stake",
+			Amount: sdk.NewInt(1),
+		}},
 	}
 
 	for _, m := range mutators {
