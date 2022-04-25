@@ -8,7 +8,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz/types"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -28,7 +28,7 @@ var (
 )
 
 // NewExecuteContractAuthorization creates a new ExecuteContractAuthorization object.
-func NewExecuteContractAuthorization(msgTypeURL string) *ExecuteContractAuthorization {
+func NewExecuteContractAuthorization(targetContracts, AllowedFunctions []string) *ExecuteContractAuthorization {
 	return &ExecuteContractAuthorization{}
 }
 
