@@ -682,6 +682,11 @@ func NewWasmApp(
 	app.scopedIBCKeeper = scopedIBCKeeper
 	app.scopedTransferKeeper = scopedTransferKeeper
 	app.scopedWasmKeeper = scopedWasmKeeper
+
+	app.SnapshotManager().RegisterExtensions(
+		wasm.NewWasmSnapshotter(filepath.Join(wasmDir, "wasm", "state", "wasm")),
+	)
+
 	return app
 }
 
