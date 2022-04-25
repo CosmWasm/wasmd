@@ -8,6 +8,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz/types"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -21,6 +22,30 @@ const (
 	// SDKAddrLen defines a valid address length that was used in sdk address generation
 	SDKAddrLen = 20
 )
+
+var (
+	_ authztypes.Authorization = &ExecuteContractAuthorization{}
+)
+
+// NewExecuteContractAuthorization creates a new ExecuteContractAuthorization object.
+func NewExecuteContractAuthorization(msgTypeURL string) *ExecuteContractAuthorization {
+	return &ExecuteContractAuthorization{}
+}
+
+// MsgTypeURL implements Authorization.MsgTypeURL.
+func (a ExecuteContractAuthorization) MsgTypeURL() string {
+	return "/cosmos.wasm.base.MsgExecuteContract"
+}
+
+// Accept implements Authorization.Accept.
+func (a ExecuteContractAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return authztypes.AcceptResponse{Accept: true}, nil
+}
+
+// ValidateBasic implements Authorization.ValidateBasic.
+func (a ExecuteContractAuthorization) ValidateBasic() error {
+	return nil
+}
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {

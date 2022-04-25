@@ -11,6 +11,7 @@
     - [CodeInfo](#cosmwasm.wasm.v1.CodeInfo)
     - [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry)
     - [ContractInfo](#cosmwasm.wasm.v1.ContractInfo)
+    - [ExecuteContractAuthorization](#cosmwasm.wasm.v1.ExecuteContractAuthorization)
     - [Model](#cosmwasm.wasm.v1.Model)
     - [Params](#cosmwasm.wasm.v1.Params)
   
@@ -187,6 +188,23 @@ ContractInfo stores a WASM contract instance
 | `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. This data should kept internal and not be exposed via query results. Just use for sorting |
 | `ibc_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ExecuteContractAuthorization"></a>
+
+### ExecuteContractAuthorization
+ExecuteContractAuthorization gives the grantee unrestricted permissions to execute
+the provided method on behalf of the granter's account.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `target_contracts` | [string](#string) | repeated | Msg, identified by it's type URL, to grant unrestricted permissions to execute |
+| `allowed_functions` | [string](#string) | repeated |  |
 
 
 

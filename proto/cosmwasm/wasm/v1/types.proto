@@ -9,6 +9,17 @@ option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all) = true;
 
+// ExecuteContractAuthorization gives the grantee unrestricted permissions to execute
+// the provided method on behalf of the granter's account.
+message ExecuteContractAuthorization {
+  option (cosmos_proto.implements_interface) = "Authorization";
+
+  // Msg, identified by it's type URL, to grant unrestricted permissions to execute
+  repeated string target_contracts = 1;
+  repeated string allowed_functions = 2;
+}
+
+
 // AccessType permission types
 enum AccessType {
   option (gogoproto.goproto_enum_prefix) = false;
