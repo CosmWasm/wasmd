@@ -28,11 +28,6 @@ func ParamChanges(r *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {
 				return fmt.Sprintf("%q", params.CodeUploadAccess.Permission.String())
 			},
 		),
-		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyMaxWasmCodeSize),
-			func(r *rand.Rand) string {
-				return fmt.Sprintf(`"%d"`, params.MaxWasmCodeSize)
-			},
-		),
 	}
 }
 

@@ -5,17 +5,18 @@ import (
 )
 
 const (
-	MaxWasmSize = 500 * 1024
-
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
 )
+
+// MaxWasmSize is the largest a compiled contract code can be when storing code on chain
+var MaxWasmSize uint64 = 800 * 1024
 
 func validateWasmCode(s []byte) error {
 	if len(s) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "is required")
 	}
-	if len(s) > MaxWasmSize {
+	if uint64(len(s)) > MaxWasmSize {
 		return sdkerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", MaxWasmSize)
 	}
 	return nil
