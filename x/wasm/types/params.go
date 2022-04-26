@@ -12,14 +12,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	// DefaultMaxWasmCodeSize limit max bytes read to prevent gzip bombs
-	DefaultMaxWasmCodeSize = 600 * 1024 * 2
-)
-
 var ParamStoreKeyUploadAccess = []byte("uploadAccess")
 var ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
-var ParamStoreKeyMaxWasmCodeSize = []byte("maxWasmCodeSize")
 
 var AllAccessTypes = []AccessType{
 	AccessTypeNobody,
@@ -96,7 +90,6 @@ func DefaultParams() Params {
 	return Params{
 		CodeUploadAccess:             AllowEverybody,
 		InstantiateDefaultPermission: AccessTypeEverybody,
-		MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
 	}
 }
 
@@ -113,7 +106,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyUploadAccess, &p.CodeUploadAccess, validateAccessConfig),
 		paramtypes.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
-		paramtypes.NewParamSetPair(ParamStoreKeyMaxWasmCodeSize, &p.MaxWasmCodeSize, validateMaxWasmCodeSize),
 	}
 }
 

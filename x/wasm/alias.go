@@ -17,7 +17,6 @@ const (
 	TStoreKey                       = types.TStoreKey
 	QuerierRoute                    = types.QuerierRoute
 	RouterKey                       = types.RouterKey
-	MaxWasmSize                     = types.MaxWasmSize
 	WasmModuleEventType             = types.WasmModuleEventType
 	AttributeKeyContractAddr        = types.AttributeKeyContractAddr
 	ProposalTypeStoreCode           = types.ProposalTypeStoreCode

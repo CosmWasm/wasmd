@@ -4,13 +4,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const (
-	MaxWasmSize = 500 * 1024
-)
-
 var (
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
+	MaxWasmSize  = 800 * 1024
 )
 
 func validateWasmCode(s []byte) error {
