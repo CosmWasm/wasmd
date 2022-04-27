@@ -1,4 +1,4 @@
-package keeper
+package ioutils
 
 import (
 	"bytes"
@@ -16,10 +16,10 @@ import (
 )
 
 func TestUncompress(t *testing.T) {
-	wasmRaw, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmRaw, err := ioutil.ReadFile("../keeper/testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmGzipped, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
+	wasmGzipped, err := ioutil.ReadFile("../keeper/testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
 	const maxSize = 400_000
@@ -80,7 +80,7 @@ func TestUncompress(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			r, err := uncompress(spec.src, maxSize)
+			r, err := Uncompress(spec.src, maxSize)
 			require.True(t, errors.Is(spec.expError, err), "exp %v got %+v", spec.expError, err)
 			if spec.expError != nil {
 				return

@@ -1,4 +1,4 @@
-package keeper
+package ioutils
 
 import (
 	"bytes"
@@ -9,13 +9,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// magic bytes to identify gzip.
-// See https://www.ietf.org/rfc/rfc1952.txt
-// and https://github.com/golang/go/blob/master/src/net/http/sniff.go#L186
-var gzipIdent = []byte("\x1F\x8B\x08")
-
-// uncompress returns gzip uncompressed content or given src when not gzip.
-func uncompress(src []byte, limit uint64) ([]byte, error) {
+// Uncompress returns gzip uncompressed content if input was gzip, or original src otherwise
+func Uncompress(src []byte, limit uint64) ([]byte, error) {
 	switch n := uint64(len(src)); {
 	case n < 3:
 		return src, nil

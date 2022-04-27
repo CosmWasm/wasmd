@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/client/utils"
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -84,7 +84,7 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 			return true
 		}
 
-		compressedWasm, err := utils.GzipIt(wasmBytes)
+		compressedWasm, err := ioutils.GzipIt(wasmBytes)
 		if err != nil {
 			rerr = err
 			return true
@@ -113,7 +113,7 @@ func restoreV1(ctx sdk.Context, k Keeper, payload []byte) error {
 	// TODO: more structure here?
 	wasmCode := payload
 
-	wasmCode, err := uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	wasmCode, err := ioutils.Uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
