@@ -117,8 +117,7 @@ func (ws *WasmSnapshotter) Restore(
 	height uint64, format uint32, protoReader protoio.Reader,
 ) (snapshot.SnapshotItem, error) {
 	if format == 1 {
-		err := ws.processAllItems(height, protoReader, restoreV1, finalizeV1)
-		return snapshot.SnapshotItem{}, err
+		return ws.processAllItems(height, protoReader, restoreV1, finalizeV1)
 	}
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
@@ -147,27 +146,27 @@ func (ws *WasmSnapshotter) processAllItems(
 	protoReader protoio.Reader,
 	cb func(sdk.Context, Keeper, []byte) error,
 	finalize func(sdk.Context, Keeper) error,
-) error {
+) (snapshot.SnapshotItem, error) {
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 
 	for {
-		item := &snapshot.SnapshotItem{}
-		err := protoReader.ReadMsg(item)
+		item := snapshot.SnapshotItem{}
+		err := protoReader.ReadMsg(&item)
 		if err == io.EOF {
-			break
+			return snapshot.SnapshotItem{}, finalize(ctx, ws.wasm)
 		} else if err != nil {
-			return sdkerrors.Wrap(err, "invalid protobuf message")
+			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "invalid protobuf message")
 		}
 
+		// if it is not another ExtensionPayload message, then it is not for us.
+		// we should return it an let the manager handle this one
 		payload := item.GetExtensionPayload()
 		if payload == nil {
-			return sdkerrors.Wrap(err, "invalid protobuf message")
+			return item, nil
 		}
 
 		if err := cb(ctx, ws.wasm, payload.Payload); err != nil {
-			return sdkerrors.Wrap(err, "processing snapshot item")
+			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "processing snapshot item")
 		}
 	}
-
-	return finalize(ctx, ws.wasm)
 }
