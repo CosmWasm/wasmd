@@ -2,9 +2,6 @@ package wasm
 
 import (
 	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,8 +51,6 @@ type ExtensionSnapshotter interface {
 type WasmSnapshotter struct {
 	wasm keeper.Keeper
 	cms  sdk.CommitMultiStore
-	// obsolete placeholder to compile
-	wasmDirectory string
 }
 
 func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm keeper.Keeper) *WasmSnapshotter {
@@ -90,57 +85,74 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 		}
 
 		// TODO: compress wasm bytes
-		// TODO: embed in a protobuf message
+		// TODO: embed in a protobuf message with more data
 		snapshot.WriteExtensionItem(protoWriter, wasmBytes)
 
 		return false
 	})
 
-	return nil
+	return rerr
 }
 
 func (ws *WasmSnapshotter) Restore(
 	height uint64, format uint32, protoReader protoio.Reader,
 ) (snapshot.SnapshotItem, error) {
-	if format != 1 {
-		return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
+	if format == 1 {
+		err := ws.processAllItems(height, protoReader, restoreV1)
+		return snapshot.SnapshotItem{}, err
 	}
+	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
+}
 
-	// Create .compute directory if it doesn't exist already
-	err := os.MkdirAll(ws.wasmDirectory, os.ModePerm)
-	if err != nil {
-		return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "failed to create directory '%s'", ws.wasmDirectory)
-	}
+func restoreV1(ctx sdk.Context, k keeper.Keeper, payload []byte) error {
+	panic("TODO")
+	// wasmCode, err = uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	// if err != nil {
+	// 	return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	// }
+	// checksum, err := k.wasmVM.Create(wasmCode)
+	// if err != nil {
+	// 	return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	// }
+}
+
+func (ws *WasmSnapshotter) processAllItems(
+	height uint64, protoReader protoio.Reader, cb func(sdk.Context, keeper.Keeper, []byte) error,
+) error {
+	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 
 	for {
 		item := &snapshot.SnapshotItem{}
-		err = protoReader.ReadMsg(item)
+		err := protoReader.ReadMsg(item)
 		if err == io.EOF {
-			break
+			return nil
 		} else if err != nil {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "invalid protobuf message")
+			return sdkerrors.Wrap(err, "invalid protobuf message")
 		}
 
 		payload := item.GetExtensionPayload()
 		if payload == nil {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "invalid protobuf message")
+			return sdkerrors.Wrap(err, "invalid protobuf message")
 		}
 
-		// snapshotItem is 64 bytes of the file name, then the actual WASM bytes
-		if len(payload.Payload) < 64 {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "wasm snapshot must be at least 64 bytes, got %v bytes", len(payload.Payload))
-		}
-
-		wasmFileName := string(payload.Payload[0:64])
-		wasmBytes := payload.Payload[64:]
-
-		wasmFilePath := filepath.Join(ws.wasmDirectory, wasmFileName)
-
-		err = ioutil.WriteFile(wasmFilePath, wasmBytes, 0664 /* -rw-rw-r-- */)
-		if err != nil {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "failed to write wasm file '%v' to disk", wasmFilePath)
+		if err := cb(ctx, ws.wasm, payload.Payload); err != nil {
+			return sdkerrors.Wrap(err, "processing snapshot item")
 		}
 	}
-
-	return snapshot.SnapshotItem{}, nil
 }
+
+// 		// snapshotItem is 64 bytes of the file name, then the actual WASM bytes
+// 		if len(payload.Payload) < 64 {
+// 			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "wasm snapshot must be at least 64 bytes, got %v bytes", len(payload.Payload))
+// 		}
+
+// 		wasmBytes := payload.Payload[64:]
+
+// 		err = ioutil.WriteFile(wasmFilePath, wasmBytes, 0664 /* -rw-rw-r-- */)
+// 		if err != nil {
+// 			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "failed to write wasm file '%v' to disk", wasmFilePath)
+// 		}
+// 	}
+
+// 	return snapshot.SnapshotItem{}, nil
+// }
