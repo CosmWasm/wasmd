@@ -14,11 +14,19 @@ option (gogoproto.equal_all) = true;
 message ExecuteContractAuthorization {
   option (cosmos_proto.implements_interface) = "Authorization";
 
-  // Msg, identified by it's type URL, to grant unrestricted permissions to execute
-  repeated string target_contracts = 1;
-  repeated string allowed_functions = 2;
+  repeated AllowedContract allowed_contracts = 1;
 }
 
+message AllowedContract {
+  // required
+  string contract_address = 1;
+
+  // optional
+  repeated string allowed_messages = 2;
+
+  // optional
+  bool once = 3; // if true, the contract is only allowed to be called once
+}
 
 // AccessType permission types
 enum AccessType {

@@ -8,6 +8,7 @@
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
     - [AccessTypeParam](#cosmwasm.wasm.v1.AccessTypeParam)
+    - [AllowedContract](#cosmwasm.wasm.v1.AllowedContract)
     - [CodeInfo](#cosmwasm.wasm.v1.CodeInfo)
     - [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry)
     - [ContractInfo](#cosmwasm.wasm.v1.ContractInfo)
@@ -138,6 +139,25 @@ AccessTypeParam
 
 
 
+<a name="cosmwasm.wasm.v1.AllowedContract"></a>
+
+### AllowedContract
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_address` | [string](#string) |  | required |
+| `allowed_messages` | [string](#string) | repeated | optional |
+| `once` | [bool](#bool) |  | optional
+
+if true, the contract is only allowed to be called once |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.CodeInfo"></a>
 
 ### CodeInfo
@@ -203,8 +223,7 @@ the provided method on behalf of the granter's account.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `target_contracts` | [string](#string) | repeated | Msg, identified by it's type URL, to grant unrestricted permissions to execute |
-| `allowed_functions` | [string](#string) | repeated |  |
+| `allowed_contracts` | [AllowedContract](#cosmwasm.wasm.v1.AllowedContract) | repeated |  |
 
 
 
