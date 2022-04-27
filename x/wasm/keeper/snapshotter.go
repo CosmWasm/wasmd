@@ -10,6 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -83,9 +84,14 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 			return true
 		}
 
-		// TODO: compress wasm bytes
+		compressedWasm, err := utils.GzipIt(wasmBytes)
+		if err != nil {
+			rerr = err
+			return true
+		}
+
 		// TODO: embed in a protobuf message with more data
-		snapshot.WriteExtensionItem(protoWriter, wasmBytes)
+		snapshot.WriteExtensionItem(protoWriter, compressedWasm)
 
 		return false
 	})
@@ -107,14 +113,13 @@ func restoreV1(ctx sdk.Context, k Keeper, payload []byte) error {
 	// TODO: more structure here?
 	wasmCode := payload
 
-	// TODO: uncompress when we have compression on the sender
-	// wasmCode, err = uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
-	// if err != nil {
-	// 	return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
-	// }
+	wasmCode, err := uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	}
 
 	// TODO: assert checksum matches something??
-	_, err := k.wasmVM.Create(wasmCode)
+	_, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
