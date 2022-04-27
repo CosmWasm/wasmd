@@ -62,7 +62,7 @@ func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm *Keeper) *WasmSnapshotter
 }
 
 func (ws *WasmSnapshotter) SnapshotName() string {
-	return "WASM Code Snapshot"
+	return types.ModuleName
 }
 
 func (ws *WasmSnapshotter) SnapshotFormat() uint32 {
@@ -162,7 +162,7 @@ func (ws *WasmSnapshotter) processAllItems(
 		// we should return it an let the manager handle this one
 		payload := item.GetExtensionPayload()
 		if payload == nil {
-			return item, nil
+			return item, finalize(ctx, ws.wasm)
 		}
 
 		if err := cb(ctx, ws.wasm, payload.Payload); err != nil {
