@@ -178,6 +178,7 @@ type TestKeepers struct {
 	Router         *baseapp.Router
 	EncodingConfig wasmappparams.EncodingConfig
 	Faucet         *TestFaucet
+	MultiStore     sdk.MultiStore
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -431,6 +432,7 @@ func createTestInput(
 		Router:         router,
 		EncodingConfig: encodingConfig,
 		Faucet:         faucet,
+		MultiStore:     ms,
 	}
 	return ctx, keepers
 }
