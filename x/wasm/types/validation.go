@@ -6,7 +6,9 @@ import (
 
 const (
 	MaxWasmSize = 500 * 1024
+)
 
+var (
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
 )
