@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"io"
 
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
@@ -76,7 +77,17 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 	var rerr error
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 
+	seen := make(map[string]bool)
+
 	ws.wasm.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
+		// Many code ids may point to the same code hash... only sync it once
+		hexHash := hex.EncodeToString(info.CodeHash)
+		// if seen, just skip this one and move to the next
+		if seen[hexHash] {
+			return false
+		}
+		seen[hexHash] = true
+
 		// load code and abort on error
 		wasmBytes, err := ws.wasm.GetByteCode(ctx, id)
 		if err != nil {
