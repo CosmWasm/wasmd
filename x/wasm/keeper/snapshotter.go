@@ -50,11 +50,11 @@ type ExtensionSnapshotter interface {
 */
 
 type WasmSnapshotter struct {
-	wasm Keeper
+	wasm *Keeper
 	cms  sdk.CommitMultiStore
 }
 
-func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm Keeper) *WasmSnapshotter {
+func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm *Keeper) *WasmSnapshotter {
 	return &WasmSnapshotter{
 		wasm: wasm,
 		cms:  cms,
@@ -122,7 +122,7 @@ func (ws *WasmSnapshotter) Restore(
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
-func restoreV1(ctx sdk.Context, k Keeper, compressedCode []byte) error {
+func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	wasmCode, err := ioutils.Uncompress(compressedCode, k.GetMaxWasmCodeSize(ctx))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
@@ -136,7 +136,7 @@ func restoreV1(ctx sdk.Context, k Keeper, compressedCode []byte) error {
 	return nil
 }
 
-func finalizeV1(ctx sdk.Context, k Keeper) error {
+func finalizeV1(ctx sdk.Context, k *Keeper) error {
 	// FIXME: ensure all codes have been uploaded?
 	return k.InitializePinnedCodes(ctx)
 }
@@ -144,8 +144,8 @@ func finalizeV1(ctx sdk.Context, k Keeper) error {
 func (ws *WasmSnapshotter) processAllItems(
 	height uint64,
 	protoReader protoio.Reader,
-	cb func(sdk.Context, Keeper, []byte) error,
-	finalize func(sdk.Context, Keeper) error,
+	cb func(sdk.Context, *Keeper, []byte) error,
+	finalize func(sdk.Context, *Keeper) error,
 ) (snapshot.SnapshotItem, error) {
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 

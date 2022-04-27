@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -10,10 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
+	protoio "github.com/gogo/protobuf/io"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func TestSnapshotRestoreMovesFile(t *testing.T) {
+func TestSnapshoting(t *testing.T) {
 	// we hack this to "fake" copying over all the iavl data
 	sharedDB := dbm.NewMemDB()
 
@@ -46,17 +49,33 @@ func TestSnapshotRestoreMovesFile(t *testing.T) {
 	expected := fmt.Sprintf(`{"verifier":"%s"}`, fred.String())
 	assert.JSONEq(t, string(res), expected)
 
-	// failed attempt to copy state
-	// // now, we make a new app with a copy of the "iavl" db, but no contracts
-	// copyCtx, copyKeepers := createTestInput(t, false, SupportedFeatures, types.DefaultWasmConfig(), sharedDB)
+	// now, create a snapshoter
+	extension := NewWasmSnapshotter(keepers.MultiStore, keepers.WasmKeeper)
 
-	// // contract exists
-	// info := copyKeepers.WasmKeeper.GetContractInfo(ctx, contractAddr)
-	// require.NotNil(t, info)
-	// require.Equal(t, info.CodeID, codeID)
+	// create reader to store data
+	buf := bytes.Buffer{}
+	// Note: we ignore height for now (TODO)
+	err = extension.Snapshot(100, protoio.NewFullWriter(&buf))
+	require.NoError(t, err)
+	require.True(t, buf.Len() > 50000)
 
-	// // querying the existing contract errors, as there is no wasm file
-	// res, err = copyKeepers.WasmKeeper.QuerySmart(copyCtx, contractAddr, queryBz)
-	// require.Error(t, err)
+	// let's try to restore this now
+	_, newKeepers := CreateTestInput(t, false, SupportedFeatures)
 
+	recovery := NewWasmSnapshotter(newKeepers.MultiStore, newKeepers.WasmKeeper)
+	_, err = recovery.Restore(100, 1, protoio.NewFullReader(&buf, buf.Len()))
+	require.NoError(t, err)
 }
+
+// failed attempt to copy state
+// // now, we make a new app with a copy of the "iavl" db, but no contracts
+// copyCtx, copyKeepers := createTestInput(t, false, SupportedFeatures, types.DefaultWasmConfig(), sharedDB)
+
+// // contract exists
+// info := copyKeepers.WasmKeeper.GetContractInfo(ctx, contractAddr)
+// require.NotNil(t, info)
+// require.Equal(t, info.CodeID, codeID)
+
+// // querying the existing contract errors, as there is no wasm file
+// res, err = copyKeepers.WasmKeeper.QuerySmart(copyCtx, contractAddr, queryBz)
+// require.Error(t, err)

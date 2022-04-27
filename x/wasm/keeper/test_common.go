@@ -178,7 +178,7 @@ type TestKeepers struct {
 	Router         *baseapp.Router
 	EncodingConfig wasmappparams.EncodingConfig
 	Faucet         *TestFaucet
-	MultiStore     sdk.MultiStore
+	MultiStore     sdk.CommitMultiStore
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
