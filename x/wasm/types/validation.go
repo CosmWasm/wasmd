@@ -7,6 +7,7 @@ import (
 var (
 	// MaxLabelSize is the longest label that can be used when Instantiating a contract
 	MaxLabelSize = 128
+	// MaxWasmSize is the largest a compiled contract code can be when storing code on chain
 	MaxWasmSize  = 800 * 1024
 )
 
