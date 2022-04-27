@@ -180,10 +180,9 @@ docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
 
 We provide a number of variables in `app/app.go` that are intended to be set via `-ldflags -X ...`
 compile-time flags. This enables us to avoid copying a new binary directory over for each small change
-to the configuration.
+to the configuration. 
 
 Available flags:
-
  
 * `-X github.com/CosmWasm/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
 * `-X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
@@ -194,6 +193,16 @@ Available flags:
 Examples:
 
 * [`wasmd`](./Makefile#L50-L55) is a generic, permissionless version using the `cosmos` bech32 prefix
+
+## Compile Time Parameters
+
+Besides those above variables (meant for custom wasmd compilation), there are a few more variables which
+we allow blockchains to customize, but at compile time. If you build your own chain and import `x/wasm`,
+you can adjust a few items via module parameters, but a few others did not fit in that, as they need to be
+used by stateless `ValidateBasic()`. Thus, we made them public `var` and these can be overridden in the `app.go`
+file of your custom chain.
+
+* `wasmtypes.MaxLabelSize = 64` to set the maximum label size on instantiation (default 128)
 
 ## Genesis Configuration
 We strongly suggest **to limit the max block gas in the genesis** and not use the default value (`-1` for infinite).
