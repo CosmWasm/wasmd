@@ -1,4 +1,4 @@
-package wasm
+package keeper
 
 import (
 	"io"
@@ -10,7 +10,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -49,11 +48,11 @@ type ExtensionSnapshotter interface {
 */
 
 type WasmSnapshotter struct {
-	wasm keeper.Keeper
+	wasm Keeper
 	cms  sdk.CommitMultiStore
 }
 
-func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm keeper.Keeper) *WasmSnapshotter {
+func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm Keeper) *WasmSnapshotter {
 	return &WasmSnapshotter{
 		wasm: wasm,
 		cms:  cms,
@@ -98,26 +97,39 @@ func (ws *WasmSnapshotter) Restore(
 	height uint64, format uint32, protoReader protoio.Reader,
 ) (snapshot.SnapshotItem, error) {
 	if format == 1 {
-		err := ws.processAllItems(height, protoReader, restoreV1)
+		err := ws.processAllItems(height, protoReader, restoreV1, finalizeV1)
 		return snapshot.SnapshotItem{}, err
 	}
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
-func restoreV1(ctx sdk.Context, k keeper.Keeper, payload []byte) error {
-	panic("TODO")
+func restoreV1(ctx sdk.Context, k Keeper, payload []byte) error {
+	// TODO: more structure here?
+	wasmCode := payload
+
+	// TODO: uncompress when we have compression on the sender
 	// wasmCode, err = uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
 	// if err != nil {
-	// 	return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	// 	return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	// }
-	// checksum, err := k.wasmVM.Create(wasmCode)
-	// if err != nil {
-	// 	return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
-	// }
+
+	// TODO: assert checksum matches something??
+	_, err := k.wasmVM.Create(wasmCode)
+	if err != nil {
+		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	}
+	return nil
+}
+
+func finalizeV1(ctx sdk.Context, k Keeper) error {
+	return k.InitializePinnedCodes(ctx)
 }
 
 func (ws *WasmSnapshotter) processAllItems(
-	height uint64, protoReader protoio.Reader, cb func(sdk.Context, keeper.Keeper, []byte) error,
+	height uint64,
+	protoReader protoio.Reader,
+	cb func(sdk.Context, Keeper, []byte) error,
+	finalize func(sdk.Context, Keeper) error,
 ) error {
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 
@@ -125,7 +137,7 @@ func (ws *WasmSnapshotter) processAllItems(
 		item := &snapshot.SnapshotItem{}
 		err := protoReader.ReadMsg(item)
 		if err == io.EOF {
-			return nil
+			break
 		} else if err != nil {
 			return sdkerrors.Wrap(err, "invalid protobuf message")
 		}
@@ -139,6 +151,8 @@ func (ws *WasmSnapshotter) processAllItems(
 			return sdkerrors.Wrap(err, "processing snapshot item")
 		}
 	}
+
+	return finalize(ctx, ws.wasm)
 }
 
 // 		// snapshotItem is 64 bytes of the file name, then the actual WASM bytes
