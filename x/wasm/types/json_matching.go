@@ -6,9 +6,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// isJSONObjectWithTopLevelKey checks if the given bytes are a valid JSON object
+// IsJSONObjectWithTopLevelKey checks if the given bytes are a valid JSON object
 // with exactly one top-level key that is contained in the list of allowed keys.
-func isJSONObjectWithTopLevelKey(jsonBytes []byte, allowedKeys []string) error {
+func IsJSONObjectWithTopLevelKey(jsonBytes []byte, allowedKeys []string) error {
 	document := map[string]interface{}{}
 	if err := json.Unmarshal(jsonBytes, &document); err != nil {
 		return sdkerrors.Wrap(ErrNotAJSONObject, "failed to unmarshal JSON to map")

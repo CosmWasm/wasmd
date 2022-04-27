@@ -103,7 +103,7 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			result := isJSONObjectWithTopLevelKey(spec.src, spec.allowedKeys)
+			result := IsJSONObjectWithTopLevelKey(spec.src, spec.allowedKeys)
 			if spec.exp == nil {
 				require.NoError(t, result)
 			} else {
