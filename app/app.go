@@ -684,7 +684,7 @@ func NewWasmApp(
 	app.scopedWasmKeeper = scopedWasmKeeper
 
 	app.SnapshotManager().RegisterExtensions(
-		wasm.NewWasmSnapshotter(filepath.Join(wasmDir, "wasm", "state", "wasm")),
+		wasm.NewWasmSnapshotter(app.CommitMultiStore(), app.wasmKeeper),
 	)
 
 	return app
