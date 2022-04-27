@@ -90,8 +90,11 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 			return true
 		}
 
-		// TODO: embed in a protobuf message with more data
-		snapshot.WriteExtensionItem(protoWriter, compressedWasm)
+		err = snapshot.WriteExtensionItem(protoWriter, compressedWasm)
+		if err != nil {
+			rerr = err
+			return true
+		}
 
 		return false
 	})
@@ -109,16 +112,13 @@ func (ws *WasmSnapshotter) Restore(
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
-func restoreV1(ctx sdk.Context, k Keeper, payload []byte) error {
-	// TODO: more structure here?
-	wasmCode := payload
-
-	wasmCode, err := ioutils.Uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+func restoreV1(ctx sdk.Context, k Keeper, compressedCode []byte) error {
+	wasmCode, err := ioutils.Uncompress(compressedCode, k.GetMaxWasmCodeSize(ctx))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 
-	// TODO: assert checksum matches something??
+	// FIXME: check which codeIDs the checksum matches??
 	_, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
@@ -127,6 +127,7 @@ func restoreV1(ctx sdk.Context, k Keeper, payload []byte) error {
 }
 
 func finalizeV1(ctx sdk.Context, k Keeper) error {
+	// FIXME: ensure all codes have been uploaded?
 	return k.InitializePinnedCodes(ctx)
 }
 
@@ -159,19 +160,3 @@ func (ws *WasmSnapshotter) processAllItems(
 
 	return finalize(ctx, ws.wasm)
 }
-
-// 		// snapshotItem is 64 bytes of the file name, then the actual WASM bytes
-// 		if len(payload.Payload) < 64 {
-// 			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "wasm snapshot must be at least 64 bytes, got %v bytes", len(payload.Payload))
-// 		}
-
-// 		wasmBytes := payload.Payload[64:]
-
-// 		err = ioutil.WriteFile(wasmFilePath, wasmBytes, 0664 /* -rw-rw-r-- */)
-// 		if err != nil {
-// 			return snapshot.SnapshotItem{}, sdkerrors.Wrapf(err, "failed to write wasm file '%v' to disk", wasmFilePath)
-// 		}
-// 	}
-
-// 	return snapshot.SnapshotItem{}, nil
-// }
