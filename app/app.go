@@ -204,7 +204,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// TODO: ICA
 		// icatypes.ModuleName: nil,
-		wasm.ModuleName:                {authtypes.Burner},
+		wasm.ModuleName: {authtypes.Burner},
 	}
 )
 
