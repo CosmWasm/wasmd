@@ -7,20 +7,13 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	protoio "github.com/gogo/protobuf/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	dbm "github.com/tendermint/tm-db"
-
-	protoio "github.com/gogo/protobuf/io"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestSnapshoting(t *testing.T) {
-	// we hack this to "fake" copying over all the iavl data
-	sharedDB := dbm.NewMemDB()
-
-	ctx, keepers := createTestInput(t, false, SupportedFeatures, types.DefaultWasmConfig(), sharedDB)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 	_, _, bob := keyPubAddr()
@@ -41,6 +34,14 @@ func TestSnapshoting(t *testing.T) {
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, "demo contract 1", deposit)
 	require.NoError(t, err)
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractAddr.String())
+
+	// commit all data to a height (to be snapshotted)
+	ms := keepers.MultiStore
+	id := ms.LastCommitID()
+	fmt.Printf("%#v\n", id)
+	commitInfo := ms.Commit()
+	// for debugging
+	assert.Equal(t, 1, commitInfo)
 
 	// successfully query it
 	queryBz := []byte(`{"verifier":{}}`)
