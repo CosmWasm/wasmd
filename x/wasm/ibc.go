@@ -53,8 +53,9 @@ func (i IBCHandler) OnChanOpenInit(
 				Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
 				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
 				Order:                order.String(),
-				Version:              version,
-				ConnectionID:         connectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
+				// DESIGN V3: this may be "" ??
+				Version:      version,
+				ConnectionID: connectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
 			},
 		},
 	}
@@ -102,6 +103,7 @@ func (i IBCHandler) OnChanOpenTry(
 		},
 	}
 
+	// DESIGN V3: Allow contracts to return a version (or default to counterpartyVersion if unset)
 	err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
 		return "", err
@@ -123,8 +125,8 @@ func (i IBCHandler) OnChanOpenTry(
 func (i IBCHandler) OnChanOpenAck(
 	ctx sdk.Context,
 	portID, channelID string,
-	counterpartyVersion string,
 	counterpartyChannelID string,
+	counterpartyVersion string,
 ) error {
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
