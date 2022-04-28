@@ -49,12 +49,15 @@ type ExtensionSnapshotter interface {
 }
 */
 
+// Format 1 is just gzipped wasm byte code for each item payload. No protobuf envelope, no metadata.
+const SnapshotFormat = 1
+
 type WasmSnapshotter struct {
 	wasm *Keeper
-	cms  sdk.CommitMultiStore
+	cms  sdk.MultiStore
 }
 
-func NewWasmSnapshotter(cms sdk.CommitMultiStore, wasm *Keeper) *WasmSnapshotter {
+func NewWasmSnapshotter(cms sdk.MultiStore, wasm *Keeper) *WasmSnapshotter {
 	return &WasmSnapshotter{
 		wasm: wasm,
 		cms:  cms,
@@ -66,27 +69,32 @@ func (ws *WasmSnapshotter) SnapshotName() string {
 }
 
 func (ws *WasmSnapshotter) SnapshotFormat() uint32 {
-	return 1
+	return SnapshotFormat
 }
 
 func (ws *WasmSnapshotter) SupportedFormats() []uint32 {
-	return []uint32{1}
+	// If we support older formats, add them here and handle them in Restore
+	return []uint32{SnapshotFormat}
 }
 
 func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) error {
-	var rerr error
-	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
+	cacheMS, err := ws.cms.CacheMultiStoreWithVersion(int64(height))
+	if err != nil {
+		return err
+	}
 
-	seen := make(map[string]bool)
+	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
+	uniqueHashes := make(map[string]bool)
+	var rerr error
 
 	ws.wasm.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
 		// Many code ids may point to the same code hash... only sync it once
 		hexHash := hex.EncodeToString(info.CodeHash)
-		// if seen, just skip this one and move to the next
-		if seen[hexHash] {
+		// if uniqueHashes, just skip this one and move to the next
+		if uniqueHashes[hexHash] {
 			return false
 		}
-		seen[hexHash] = true
+		uniqueHashes[hexHash] = true
 
 		// load code and abort on error
 		wasmBytes, err := ws.wasm.GetByteCode(ctx, id)
@@ -149,11 +157,14 @@ func (ws *WasmSnapshotter) processAllItems(
 ) (snapshot.SnapshotItem, error) {
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
 
+	// keep the last item here... if we break, it will either be empty (if we hit io.EOF)
+	// or contain the last item (if we hit payload == nil)
+	var item snapshot.SnapshotItem
 	for {
-		item := snapshot.SnapshotItem{}
+		item = snapshot.SnapshotItem{}
 		err := protoReader.ReadMsg(&item)
 		if err == io.EOF {
-			return snapshot.SnapshotItem{}, finalize(ctx, ws.wasm)
+			break
 		} else if err != nil {
 			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "invalid protobuf message")
 		}
@@ -162,11 +173,13 @@ func (ws *WasmSnapshotter) processAllItems(
 		// we should return it an let the manager handle this one
 		payload := item.GetExtensionPayload()
 		if payload == nil {
-			return item, finalize(ctx, ws.wasm)
+			break
 		}
 
 		if err := cb(ctx, ws.wasm, payload.Payload); err != nil {
 			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "processing snapshot item")
 		}
 	}
+
+	return item, finalize(ctx, ws.wasm)
 }
