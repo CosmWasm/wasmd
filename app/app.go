@@ -425,6 +425,7 @@ func NewWasmApp(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.getSubspace(ibctransfertypes.ModuleName),
+		nil, // TODO: need "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types".ICS4Wrapper
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
 		app.accountKeeper,
@@ -456,16 +457,6 @@ func NewWasmApp(
 
 	// icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, icaAuthModule)
 	// icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
-
-	// Create static IBC router, add app routes, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	ibcRouter.
-		// AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		// AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		// AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
-		AddRoute(ibctransfertypes.ModuleName, transferModule).
-		// AddRoute(ibcmock.ModuleName, mockIBCModule)
-		app.ibcKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -505,11 +496,24 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
+	// Create static IBC router, add app routes, then set and seal it
+	ibcRouter := porttypes.NewRouter()
+
 	// The gov proposal types can be individually enabled
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, enabledProposals))
 	}
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+	ibcRouter.
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
+		// TODO: why does this fail???
+		// 	AddRoute(ibctransfertypes.ModuleName, transferModule)
+
+	// FIXME: these are for ICA later
+	// AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+	// AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+	// AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
+	// AddRoute(ibcmock.ModuleName, mockIBCModule)
+
 	app.ibcKeeper.SetRouter(ibcRouter)
 
 	app.govKeeper = govkeeper.NewKeeper(
