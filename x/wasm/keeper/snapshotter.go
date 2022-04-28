@@ -89,17 +89,17 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 	cacheMS := ws.cms.CacheMultiStore()
 
 	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
-	uniqueHashes := make(map[string]bool)
+	seenBefore := make(map[string]bool)
 	var rerr error
 
 	ws.wasm.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
 		// Many code ids may point to the same code hash... only sync it once
 		hexHash := hex.EncodeToString(info.CodeHash)
-		// if uniqueHashes, just skip this one and move to the next
-		if uniqueHashes[hexHash] {
+		// if seenBefore, just skip this one and move to the next
+		if seenBefore[hexHash] {
 			return false
 		}
-		uniqueHashes[hexHash] = true
+		seenBefore[hexHash] = true
 
 		// load code and abort on error
 		wasmBytes, err := ws.wasm.GetByteCode(ctx, id)
@@ -160,7 +160,7 @@ func (ws *WasmSnapshotter) processAllItems(
 	cb func(sdk.Context, *Keeper, []byte) error,
 	finalize func(sdk.Context, *Keeper) error,
 ) (snapshot.SnapshotItem, error) {
-	ctx := sdk.NewContext(ws.cms, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ws.cms, tmproto.Header{Height: int64(height)}, false, log.NewNopLogger())
 
 	// keep the last item here... if we break, it will either be empty (if we hit io.EOF)
 	// or contain the last item (if we hit payload == nil)

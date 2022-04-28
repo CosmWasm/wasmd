@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 )
 
+// Note: []byte can never be const as they are inherently mutable
 var (
 	// magic bytes to identify gzip.
 	// See https://www.ietf.org/rfc/rfc1952.txt
