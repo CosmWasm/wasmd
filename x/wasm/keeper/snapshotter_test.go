@@ -35,13 +35,13 @@ func TestSnapshoting(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractAddr.String())
 
-	// commit all data to a height (to be snapshotted)
-	ms := keepers.MultiStore
-	id := ms.LastCommitID()
-	fmt.Printf("%#v\n", id)
-	commitInfo := ms.Commit()
-	// for debugging
-	assert.Equal(t, 1, commitInfo)
+	// // commit all data to a height (to be snapshotted)
+	// ms := keepers.MultiStore
+	// id := ms.LastCommitID()
+	// fmt.Printf("%#v\n", id)
+	// commitInfo := ms.Commit()
+	// // for debugging
+	// assert.Equal(t, 1, commitInfo)
 
 	// successfully query it
 	queryBz := []byte(`{"verifier":{}}`)

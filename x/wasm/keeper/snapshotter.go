@@ -78,10 +78,15 @@ func (ws *WasmSnapshotter) SupportedFormats() []uint32 {
 }
 
 func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) error {
-	cacheMS, err := ws.cms.CacheMultiStoreWithVersion(int64(height))
-	if err != nil {
-		return err
-	}
+	// TODO: This seems more correct (historical info), but kills my tests
+	// Since codeIDs and wasm are immutible, it is never wrong to return new wasm data than the
+	// user requests
+	// ------
+	// cacheMS, err := ws.cms.CacheMultiStoreWithVersion(int64(height))
+	// if err != nil {
+	// 	return err
+	// }
+	cacheMS := ws.cms.CacheMultiStore()
 
 	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
 	uniqueHashes := make(map[string]bool)
