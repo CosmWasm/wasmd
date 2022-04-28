@@ -425,7 +425,7 @@ func NewWasmApp(
 		appCodec,
 		keys[ibctransfertypes.StoreKey],
 		app.getSubspace(ibctransfertypes.ModuleName),
-		nil, // TODO: need "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types".ICS4Wrapper
+		app.ibcKeeper.ChannelKeeper,
 		app.ibcKeeper.ChannelKeeper,
 		&app.ibcKeeper.PortKeeper,
 		app.accountKeeper,
@@ -434,6 +434,7 @@ func NewWasmApp(
 	)
 
 	transferModule := transfer.NewAppModule(app.transferKeeper)
+	transferIBCModule := transfer.NewIBCModule(app.transferKeeper)
 
 	// TODO: enable ICA something like this
 
@@ -504,9 +505,8 @@ func NewWasmApp(
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.wasmKeeper, enabledProposals))
 	}
 	ibcRouter.
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper))
-		// TODO: why does this fail???
-		// 	AddRoute(ibctransfertypes.ModuleName, transferModule)
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper)).
+		AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
 
 	// FIXME: these are for ICA later
 	// AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
