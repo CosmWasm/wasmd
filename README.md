@@ -189,6 +189,8 @@ Available flags:
 * `-X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
 * `-X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
     enable a subset of the x/wasm governance proposal types (overrides `ProposalsEnabled`)
+* `-X github.com/CosmWasm/wasmd/x/wasm/types/validation.MaxWasmSize=819200` - set the max size of compiled wasm to be accepted (default `819200`)
+* `-X github.com/CosmWasm/wasmd/x/wasm/types/validation.MaxLabelSize=128` - set the max length of the label on instantiation (default `128`)
 
 Examples:
 

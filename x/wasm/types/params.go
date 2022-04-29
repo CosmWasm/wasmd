@@ -117,9 +117,6 @@ func (p Params) ValidateBasic() error {
 	if err := validateAccessConfig(p.CodeUploadAccess); err != nil {
 		return errors.Wrap(err, "upload access")
 	}
-	if err := validateMaxWasmCodeSize(p.MaxWasmCodeSize); err != nil {
-		return errors.Wrap(err, "max wasm code size")
-	}
 	return nil
 }
 
@@ -145,17 +142,6 @@ func validateAccessType(i interface{}) error {
 		}
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
-}
-
-func validateMaxWasmCodeSize(i interface{}) error {
-	a, ok := i.(uint64)
-	if !ok {
-		return sdkerrors.Wrapf(ErrInvalid, "type: %T", i)
-	}
-	if a == 0 {
-		return sdkerrors.Wrap(ErrInvalid, "must be greater 0")
-	}
-	return nil
 }
 
 func (a AccessConfig) ValidateBasic() error {

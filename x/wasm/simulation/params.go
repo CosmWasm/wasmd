@@ -38,6 +38,5 @@ func RandomParams(r *rand.Rand) types.Params {
 	return types.Params{
 		CodeUploadAccess:             accessConfig,
 		InstantiateDefaultPermission: accessConfig.Permission,
-		MaxWasmCodeSize:              uint64(simtypes.RandIntBetween(r, 1, 600) * 1024),
 	}
 }
