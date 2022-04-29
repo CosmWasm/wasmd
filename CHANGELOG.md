@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
+**Merged pull requests:**
+
+- Consolidate MaxWasmSize constraints into a single var [\#826](https://github.com/CosmWasm/wasmd/pull/826)
+
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.26.0...HEAD)
 
 **Implemented Enhancements**

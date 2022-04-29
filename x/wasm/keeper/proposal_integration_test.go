@@ -29,7 +29,6 @@ func TestStoreCodeProposal(t *testing.T) {
 	wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
-		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
 	})
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -67,7 +66,6 @@ func TestInstantiateProposal(t *testing.T) {
 	wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
-		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
 	})
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
@@ -131,7 +129,6 @@ func TestMigrateProposal(t *testing.T) {
 	wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
-		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
 	})
 
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
@@ -383,7 +380,6 @@ func TestAdminProposals(t *testing.T) {
 			wasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowNobody,
 				InstantiateDefaultPermission: types.AccessTypeNobody,
-				MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize,
 			})
 
 			codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))

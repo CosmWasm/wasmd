@@ -463,8 +463,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 		"code_upload_access": {
 			"permission": "Everybody"
 		},
-		"instantiate_default_permission": "Everybody",
-		"max_wasm_code_size": 500000
+		"instantiate_default_permission": "Everybody"
 	},
   "codes": [
     {
