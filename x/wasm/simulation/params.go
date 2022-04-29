@@ -43,6 +43,6 @@ func RandomParams(r *rand.Rand) types.Params {
 	return types.Params{
 		CodeUploadAccess:             accessConfig,
 		InstantiateDefaultPermission: accessConfig.Permission,
-		MaxWasmCodeSize:              uint64(simtypes.RandIntBetween(r, 1, 600) * 1024),
+		MaxWasmCodeSize:              types.DefaultMaxWasmCodeSize, // removed in https://github.com/CosmWasm/wasmd/pull/809
 	}
 }
