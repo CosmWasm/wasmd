@@ -142,8 +142,19 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	var (
 		oneAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 	)
-	// test with no admin
+
+	// test invalid admin address
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
+		p.CodeID = firstCodeID
+		p.RunAs = oneAddress.String()
+		p.Admin = "invalid"
+		p.Label = "testing"
+	})
+	_, err = govKeeper.SubmitProposal(ctx, src)
+	require.Error(t, err)
+
+	// test with no admin
+	src = types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = ""
