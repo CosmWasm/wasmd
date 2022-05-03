@@ -842,6 +842,7 @@ CodeInfoResponse contains code meta data from CodeInfo
 | `code_id` | [uint64](#uint64) |  | id for legacy support |
 | `creator` | [string](#string) |  |  |
 | `data_hash` | [bytes](#bytes) |  |  |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  |  |
 
 
 

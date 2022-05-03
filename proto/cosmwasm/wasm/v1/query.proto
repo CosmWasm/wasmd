@@ -183,6 +183,7 @@ message CodeInfoResponse {
             "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
   // Used in v1beta1
   reserved 4, 5;
+  AccessConfig instantiate_permission = 6 [ (gogoproto.nullable) = false ];
 }
 
 // QueryCodeResponse is the response type for the Query/Code RPC method
