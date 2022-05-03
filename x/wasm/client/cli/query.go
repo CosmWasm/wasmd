@@ -151,7 +151,7 @@ func GetCmdQueryCode() *cobra.Command {
 			}
 
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
-			return ioutil.WriteFile(args[1], res.Data, 0600)
+			return ioutil.WriteFile(args[1], res.Data, 0o600)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -167,7 +167,6 @@ func GetCmdGetContractInfo() *cobra.Command {
 		Aliases: []string{"meta", "c"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
@@ -210,7 +209,6 @@ func GetCmdGetContractState() *cobra.Command {
 		GetCmdGetContractStateSmart(),
 	)
 	return cmd
-
 }
 
 func GetCmdGetContractStateAll() *cobra.Command {

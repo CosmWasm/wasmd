@@ -139,9 +139,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		wasmCode),
 	)
 
-	var (
-		oneAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
-	)
+	var oneAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 
 	// test invalid admin address
 	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {

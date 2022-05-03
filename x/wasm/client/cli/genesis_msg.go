@@ -214,7 +214,6 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 				return err
 			}
 			return printJSONOutput(cmd, all)
-
 		},
 	}
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
@@ -404,8 +403,10 @@ func (d DefaultGenesisReader) ReadWasmGenesis(cmd *cobra.Command) (*GenesisData,
 	), nil
 }
 
-var _ GenesisReader = DefaultGenesisIO{}
-var _ GenesisMutator = DefaultGenesisIO{}
+var (
+	_ GenesisReader  = DefaultGenesisIO{}
+	_ GenesisMutator = DefaultGenesisIO{}
+)
 
 // DefaultGenesisIO implements both interfaces to read and modify the genesis state for this module.
 // This implementation uses the default data structure that is used by the module.go genesis import/ export.

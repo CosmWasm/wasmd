@@ -240,7 +240,6 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		if err := k.bank.TransferCoins(ctx, creator, contractAddress, deposit); err != nil {
 			return nil, nil, err
 		}
-
 	} else {
 		// create an empty account (so we don't have issues later)
 		// TODO: can we remove this?

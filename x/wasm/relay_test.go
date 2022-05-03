@@ -138,8 +138,9 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 
 	myContract := &sendViaIBCTransferContract{t: t}
 	var (
-		chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(myContract)),
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(0))
@@ -207,8 +208,9 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	myContract := &sendEmulatedIBCTransferContract{t: t}
 
 	var (
-		chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(myContract)),
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
@@ -281,8 +283,9 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	myContract := &sendEmulatedIBCTransferContract{t: t}
 
 	var (
-		chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(myContract)),
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
@@ -360,11 +363,13 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	myContractB := &captureCloseContract{}
 
 	var (
-		chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(myContractA)),
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractA)),
 		}
-		chainBOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(myContractB)),
+		chainBOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractB)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 
@@ -479,7 +484,6 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 	}
 	if err := data.ValidateBasic(); err != nil {
 		return nil, 0, err
-
 	}
 	amount, _ := sdk.NewIntFromString(data.Amount)
 
@@ -487,7 +491,8 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 		Send: &wasmvmtypes.SendMsg{
 			ToAddress: data.Sender,
 			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(amount.Uint64(), data.Denom)},
-		}}
+		},
+	}
 
 	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
 }

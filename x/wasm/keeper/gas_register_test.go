@@ -387,6 +387,7 @@ func TestToWasmVMGasConversion(t *testing.T) {
 		})
 	}
 }
+
 func TestFromWasmVMGasConversion(t *testing.T) {
 	specs := map[string]struct {
 		src       uint64
