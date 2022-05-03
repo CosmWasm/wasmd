@@ -5,21 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+	"github.com/cosmos/cosmos-sdk/snapshots"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -30,8 +23,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -53,36 +56,20 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
-func setup(withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
+func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
+	nodeHome := t.TempDir()
+	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
+	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
+	require.NoError(t, err)
+	snapshotStore, err := snapshots.NewStore(snapshotDB, snapshotDir)
+	require.NoError(t, err)
+	baseAppOpts := []func(*baseapp.BaseApp){baseapp.SetSnapshotStore(snapshotStore), baseapp.SetSnapshotKeepRecent(2)}
 	db := dbm.NewMemDB()
-	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts)
+	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, nodeHome, invCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts, baseAppOpts...)
 	if withGenesis {
 		return app, NewDefaultGenesisState()
 	}
 	return app, GenesisState{}
-}
-
-// Setup initializes a new WasmApp. A Nop logger is set in WasmApp.
-func Setup(isCheckTx bool) *WasmApp {
-	app, genesisState := setup(!isCheckTx, 5)
-	if !isCheckTx {
-		// init chain must be called to stop deliverState from being nil
-		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-		if err != nil {
-			panic(err)
-		}
-
-		// Initialize the chain
-		app.InitChain(
-			abci.RequestInitChain{
-				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: DefaultConsensusParams,
-				AppStateBytes:   stateBytes,
-			},
-		)
-	}
-
-	return app
 }
 
 // SetupWithGenesisValSet initializes a new WasmApp with a validator set and genesis accounts
@@ -90,7 +77,7 @@ func Setup(isCheckTx bool) *WasmApp {
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
 func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
-	app, genesisState := setup(true, 5, opts...)
+	app, genesisState := setup(t, true, 5, opts...)
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.appCodec.MustMarshalJSON(authGenesis)
@@ -167,37 +154,9 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	return app
 }
 
-// SetupWithGenesisAccounts initializes a new WasmApp with the provided genesis
-// accounts and possible balances.
-func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *WasmApp {
-	app, genesisState := setup(true, 0)
-	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	genesisState[authtypes.ModuleName] = app.appCodec.MustMarshalJSON(authGenesis)
-
-	totalSupply := sdk.NewCoins()
-	for _, b := range balances {
-		totalSupply = totalSupply.Add(b.Coins...)
-	}
-
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
-	genesisState[banktypes.ModuleName] = app.appCodec.MustMarshalJSON(bankGenesis)
-
-	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	if err != nil {
-		panic(err)
-	}
-
-	app.InitChain(
-		abci.RequestInitChain{
-			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: DefaultConsensusParams,
-			AppStateBytes:   stateBytes,
-		},
-	)
-
-	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1}})
-
+// SetupWithEmptyStore setup a wasmd app instance with empty DB
+func SetupWithEmptyStore(t testing.TB) *WasmApp {
+	app, _ := setup(t, false, 0)
 	return app
 }
 
