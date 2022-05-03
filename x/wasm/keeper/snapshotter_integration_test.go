@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"crypto/sha256"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -23,20 +24,16 @@ import (
 
 func TestSnapshotter(t *testing.T) {
 	specs := map[string]struct {
-		wasmFiles    []string
-		expCodeInfos int
+		wasmFiles []string
 	}{
 		"single contract": {
-			wasmFiles:    []string{"./testdata/reflect.wasm"},
-			expCodeInfos: 1,
+			wasmFiles: []string{"./testdata/reflect.wasm"},
 		},
 		"multiple contract": {
-			wasmFiles:    []string{"./testdata/reflect.wasm", "./testdata/burner.wasm", "./testdata/reflect.wasm"},
-			expCodeInfos: 3,
+			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/burner.wasm", "./testdata/reflect.wasm"},
 		},
 		"duplicate contracts": {
-			wasmFiles:    []string{"./testdata/reflect.wasm", "./testdata/reflect.wasm"},
-			expCodeInfos: 2,
+			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/reflect.wasm"},
 		},
 	}
 	for name, spec := range specs {
@@ -83,24 +80,24 @@ func TestSnapshotter(t *testing.T) {
 				}
 			}
 
-			// then wasm contracts are imported
+			// then all wasm contracts are imported
 			wasmKeeper = app.NewTestSupport(t, destWasmApp).WasmKeeper()
 			ctx = destWasmApp.NewUncachedContext(false, tmproto.Header{
 				ChainID: "foo",
 				Height:  destWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
 			})
-			for codeID, checksum := range srcCodeIDToChecksum {
-				bz, err := wasmKeeper.GetByteCode(ctx, codeID)
+
+			destCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
+			wasmKeeper.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
+				bz, err := wasmKeeper.GetByteCode(ctx, id)
 				require.NoError(t, err)
 				hash := sha256.Sum256(bz)
-				assert.Equal(t, checksum, hash[:])
-				destCodeInfo := wasmKeeper.GetCodeInfo(ctx, codeID)
-				require.NotNil(t, destCodeInfo)
-				assert.Equal(t, checksum, destCodeInfo.CodeHash)
-			}
-			// and expected number of code infos stored
-			assert.Equal(t, spec.expCodeInfos, len(srcCodeIDToChecksum))
+				destCodeIDToChecksum[id] = hash[:]
+				assert.Equal(t, hash[:], info.CodeHash)
+				return false
+			})
+			assert.Equal(t, srcCodeIDToChecksum, destCodeIDToChecksum)
 		})
 	}
 }
