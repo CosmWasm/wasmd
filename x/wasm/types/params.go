@@ -12,14 +12,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	// DefaultMaxWasmCodeSize limit max bytes read to prevent gzip bombs
-	DefaultMaxWasmCodeSize = 600 * 1024 * 2
-)
-
 var ParamStoreKeyUploadAccess = []byte("uploadAccess")
 var ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
-var ParamStoreKeyMaxWasmCodeSize = []byte("maxWasmCodeSize")
 
 var AllAccessTypes = []AccessType{
 	AccessTypeNobody,
@@ -96,7 +90,6 @@ func DefaultParams() Params {
 	return Params{
 		CodeUploadAccess:             AllowEverybody,
 		InstantiateDefaultPermission: AccessTypeEverybody,
-		MaxWasmCodeSize:              DefaultMaxWasmCodeSize,
 	}
 }
 
@@ -113,7 +106,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamStoreKeyUploadAccess, &p.CodeUploadAccess, validateAccessConfig),
 		paramtypes.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
-		paramtypes.NewParamSetPair(ParamStoreKeyMaxWasmCodeSize, &p.MaxWasmCodeSize, validateMaxWasmCodeSize),
 	}
 }
 
@@ -124,9 +116,6 @@ func (p Params) ValidateBasic() error {
 	}
 	if err := validateAccessConfig(p.CodeUploadAccess); err != nil {
 		return errors.Wrap(err, "upload access")
-	}
-	if err := validateMaxWasmCodeSize(p.MaxWasmCodeSize); err != nil {
-		return errors.Wrap(err, "max wasm code size")
 	}
 	return nil
 }
@@ -153,17 +142,6 @@ func validateAccessType(i interface{}) error {
 		}
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
-}
-
-func validateMaxWasmCodeSize(i interface{}) error {
-	a, ok := i.(uint64)
-	if !ok {
-		return sdkerrors.Wrapf(ErrInvalid, "type: %T", i)
-	}
-	if a == 0 {
-		return sdkerrors.Wrap(ErrInvalid, "must be greater 0")
-	}
-	return nil
 }
 
 func (a AccessConfig) ValidateBasic() error {
