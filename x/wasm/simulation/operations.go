@@ -118,19 +118,19 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKe
 		accs []simtypes.Account,
 		chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		if wasmKeeper.GetParams(ctx).InstantiateDefaultPermission != types.AccessTypeEverybody {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgInstantiateContract{}.Type(), "no chain permission"), nil, nil
-		}
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
 		var codeID uint64
 		wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
+			if info.InstantiateConfig.Permission != types.AccessTypeEverybody {
+				return false
+			}
 			codeID = u
 			return true
 		})
 
 		if codeID == 0 {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgInstantiateContract{}.Type(), "no codes available"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgInstantiateContract{}.Type(), "no codes with permission available"), nil, nil
 		}
 
 		spendable := bk.SpendableCoins(ctx, simAccount.Address)
