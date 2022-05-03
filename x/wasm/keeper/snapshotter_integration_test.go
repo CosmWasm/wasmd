@@ -2,10 +2,11 @@ package keeper_test
 
 import (
 	"crypto/sha256"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/stretchr/testify/assert"
 
