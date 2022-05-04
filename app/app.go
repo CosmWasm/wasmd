@@ -103,6 +103,9 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
+	intertx "github.com/CosmWasm/wasmd/x/mauth"
+	intertxkeeper "github.com/CosmWasm/wasmd/x/mauth/keeper"
+	intertxtypes "github.com/CosmWasm/wasmd/x/mauth/types"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -200,6 +203,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
+		intertx.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -251,6 +255,7 @@ type WasmApp struct {
 	ibcKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	icaControllerKeeper icacontrollerkeeper.Keeper
 	icaHostKeeper       icahostkeeper.Keeper
+	interTxKeeper       intertxkeeper.Keeper
 	transferKeeper      ibctransferkeeper.Keeper
 	feeGrantKeeper      feegrantkeeper.Keeper
 	authzKeeper         authzkeeper.Keeper
@@ -259,6 +264,7 @@ type WasmApp struct {
 	scopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	scopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	scopedICAControllerKeeper capabilitykeeper.ScopedKeeper
+	scopedInterTxKeeper       capabilitykeeper.ScopedKeeper
 	scopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	scopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
@@ -301,6 +307,7 @@ func NewWasmApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		feegrant.StoreKey, authzkeeper.StoreKey, wasm.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey,
+		intertxtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -335,6 +342,7 @@ func NewWasmApp(
 	scopedIBCKeeper := app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedICAHostKeeper := app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	scopedInterTxKeeper := app.capabilityKeeper.ScopeToModule(intertxkeeper.SubModuleName)
 	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.capabilityKeeper.Seal()
@@ -473,14 +481,14 @@ func NewWasmApp(
 	icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
 
-	// FIXME: this came from PR #793, but I don't like testing "mocks" in a real app
-	// icaAuthModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", scopedICAMockKeeper))
-
-	// TODO: clarify how to build icaAuthModule or remove icaController support?
+	// we use the x/mauth module being developed in gaia as the example auth for wasmd.
+	// when integrating into your blockchain, please research if this is the best choice for your application
 	// See https://github.com/cosmos/ibc-go/blob/v3.0.0/docs/apps/interchain-accounts/integration.md
-	// "Note: No `icaauth` exists, this must be substituted with an actual Interchain Accounts authentication module"
-	var icaAuthModule porttypes.IBCModule
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, icaAuthModule)
+	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
+	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
+	interTxIBCModule := intertx.NewIBCModule(app.InterTxKeeper)
+	// and we use this for controller authorization
+	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -531,12 +539,8 @@ func NewWasmApp(
 		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper)).
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-
-	// FIXME: these are for ICA later
-	// AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
-	// AddRoute(ibcmock.ModuleName, mockIBCModule)
-
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
 	app.ibcKeeper.SetRouter(ibcRouter)
 
 	app.govKeeper = govkeeper.NewKeeper(
