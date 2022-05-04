@@ -15,13 +15,12 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var reflectContract, _ = ioutil.ReadFile("../keeper/testdata/reflect.wasm")
-
 // Simulation operation weights constants
 //nolint:gosec
 const (
 	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
+	OpReflectContractPath          = "op_reflect_contract_path"
 )
 
 // WasmKeeper is a subset of the wasm keeper used by simulations
@@ -40,6 +39,7 @@ func WeightedOperations(
 	var (
 		weightMsgStoreCode           int
 		weightMsgInstantiateContract int
+		wasmContractPath             string
 	)
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgStoreCode, &weightMsgStoreCode, nil,
@@ -53,11 +53,22 @@ func WeightedOperations(
 			weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
 		},
 	)
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
+		func(_ *rand.Rand) {
+			// simulations are run from the `app` folder
+			wasmContractPath = "../x/wasm/keeper/testdata/reflect.wasm"
+		},
+	)
+
+	wasmBz, err := ioutil.ReadFile(wasmContractPath)
+	if err != nil {
+		panic(err)
+	}
 
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgStoreCode,
-			SimulateMsgStoreCode(ak, bk, wasmKeeper),
+			SimulateMsgStoreCode(ak, bk, wasmKeeper, wasmBz),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
@@ -67,7 +78,7 @@ func WeightedOperations(
 }
 
 // SimulateMsgStoreCode generates a MsgStoreCode with random values
-func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper) simtypes.Operation {
+func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -86,7 +97,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		msg := types.MsgStoreCode{
 			Sender:                simAccount.Address.String(),
-			WASMByteCode:          reflectContract,
+			WASMByteCode:          wasmBz,
 			InstantiatePermission: config,
 		}
 
