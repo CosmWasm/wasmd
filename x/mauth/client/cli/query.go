@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/gaia/v6/x/mauth/types"
+	"github.com/CosmWasm/wasmd/x/mauth/types"
 	"github.com/spf13/cobra"
 )
 

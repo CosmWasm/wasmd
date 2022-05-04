@@ -14,7 +14,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
-	icaapp "github.com/cosmos/gaia/v6/app"
+	icaapp "github.com/CosmWasm/wasmd/app"
 )
 
 var (

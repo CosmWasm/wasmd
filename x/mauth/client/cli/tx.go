@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/pkg/errors"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/gaia/v6/x/mauth/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+
+	"github.com/CosmWasm/wasmd/x/mauth/types"
 )
 
 // GetTxCmd creates and returns the intertx tx command

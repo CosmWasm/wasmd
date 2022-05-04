@@ -14,9 +14,10 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/gaia/v6/x/mauth/client/cli"
-	"github.com/cosmos/gaia/v6/x/mauth/keeper"
-	"github.com/cosmos/gaia/v6/x/mauth/types"
+
+	"github.com/CosmWasm/wasmd/x/mauth/client/cli"
+	"github.com/CosmWasm/wasmd/x/mauth/keeper"
+	"github.com/CosmWasm/wasmd/x/mauth/types"
 )
 
 var (
