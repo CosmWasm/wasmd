@@ -74,6 +74,14 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
 	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -191,6 +199,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		ica.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -202,9 +211,8 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		// TODO: ICA
-		// icatypes.ModuleName: nil,
-		wasm.ModuleName: {authtypes.Burner},
+		icatypes.ModuleName:            nil,
+		wasm.ModuleName:                {authtypes.Burner},
 	}
 )
 
@@ -228,29 +236,31 @@ type WasmApp struct {
 	memKeys map[string]*sdk.MemoryStoreKey
 
 	// keepers
-	accountKeeper    authkeeper.AccountKeeper
-	bankKeeper       bankkeeper.Keeper
-	capabilityKeeper *capabilitykeeper.Keeper
-	stakingKeeper    stakingkeeper.Keeper
-	slashingKeeper   slashingkeeper.Keeper
-	mintKeeper       mintkeeper.Keeper
-	distrKeeper      distrkeeper.Keeper
-	govKeeper        govkeeper.Keeper
-	crisisKeeper     crisiskeeper.Keeper
-	upgradeKeeper    upgradekeeper.Keeper
-	paramsKeeper     paramskeeper.Keeper
-	ibcKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	evidenceKeeper   evidencekeeper.Keeper
-	// icaControllerKeeper icacontrollerkeeper.Keeper
-	// icaHostKeeper       icahostkeeper.Keeper
-	transferKeeper ibctransferkeeper.Keeper
-	feeGrantKeeper feegrantkeeper.Keeper
-	authzKeeper    authzkeeper.Keeper
-	wasmKeeper     wasm.Keeper
+	accountKeeper       authkeeper.AccountKeeper
+	bankKeeper          bankkeeper.Keeper
+	capabilityKeeper    *capabilitykeeper.Keeper
+	stakingKeeper       stakingkeeper.Keeper
+	slashingKeeper      slashingkeeper.Keeper
+	mintKeeper          mintkeeper.Keeper
+	distrKeeper         distrkeeper.Keeper
+	govKeeper           govkeeper.Keeper
+	crisisKeeper        crisiskeeper.Keeper
+	upgradeKeeper       upgradekeeper.Keeper
+	paramsKeeper        paramskeeper.Keeper
+	evidenceKeeper      evidencekeeper.Keeper
+	ibcKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	icaControllerKeeper icacontrollerkeeper.Keeper
+	icaHostKeeper       icahostkeeper.Keeper
+	transferKeeper      ibctransferkeeper.Keeper
+	feeGrantKeeper      feegrantkeeper.Keeper
+	authzKeeper         authzkeeper.Keeper
+	wasmKeeper          wasm.Keeper
 
-	scopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	scopedTransferKeeper capabilitykeeper.ScopedKeeper
-	scopedWasmKeeper     capabilitykeeper.ScopedKeeper
+	scopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	scopedICAHostKeeper       capabilitykeeper.ScopedKeeper
+	scopedICAControllerKeeper capabilitykeeper.ScopedKeeper
+	scopedTransferKeeper      capabilitykeeper.ScopedKeeper
+	scopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -290,7 +300,7 @@ func NewWasmApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		feegrant.StoreKey, authzkeeper.StoreKey, wasm.StoreKey,
+		feegrant.StoreKey, authzkeeper.StoreKey, wasm.StoreKey, icahosttypes.StoreKey, icacontrollertypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -323,6 +333,8 @@ func NewWasmApp(
 		memKeys[capabilitytypes.MemStoreKey],
 	)
 	scopedIBCKeeper := app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedICAHostKeeper := app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedICAControllerKeeper := app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.capabilityKeeper.Seal()
@@ -434,32 +446,41 @@ func NewWasmApp(
 		app.bankKeeper,
 		scopedTransferKeeper,
 	)
-
 	transferModule := transfer.NewAppModule(app.transferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.transferKeeper)
 
-	// TODO: enable ICA something like this
+	_ = app.getSubspace(icahosttypes.SubModuleName)
+	app.icaHostKeeper = icahostkeeper.NewKeeper(
+		appCodec,
+		keys[icahosttypes.StoreKey],
+		app.getSubspace(icahosttypes.SubModuleName),
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		app.accountKeeper,
+		scopedICAHostKeeper,
+		app.MsgServiceRouter(),
+	)
+	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
+		appCodec,
+		keys[icacontrollertypes.StoreKey],
+		app.getSubspace(icacontrollertypes.SubModuleName),
+		app.ibcKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
+		app.ibcKeeper.ChannelKeeper,
+		&app.ibcKeeper.PortKeeper,
+		scopedICAControllerKeeper,
+		app.MsgServiceRouter(),
+	)
+	icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
+	icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
 
-	// icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
-
-	// // NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
-	// // not replicate if you do not need to test core IBC or light clients.
-	// mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
-	// mockIBCModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(ibcmock.ModuleName, scopedIBCMockKeeper))
-
-	// app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
-	// 	appCodec, keys[icacontrollertypes.StoreKey], app.getSubspace(icacontrollertypes.SubModuleName),
-	// 	app.ibcKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
-	// 	app.ibcKeeper.ChannelKeeper, &app.ibcKeeper.PortKeeper,
-	// 	scopedicaControllerKeeper, app.MsgServiceRouter(),
-	// )
-
-	// // initialize ICA module with mock module as the authentication module on the controller side
+	// FIXME: this came from PR #793, but I don't like testing "mocks" in a real app
 	// icaAuthModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", scopedICAMockKeeper))
-	// app.icaAuthModule = icaAuthModule
 
-	// icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, icaAuthModule)
-	// icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
+	// TODO: clarify how to build icaAuthModule or remove icaController support?
+	// See https://github.com/cosmos/ibc-go/blob/v3.0.0/docs/apps/interchain-accounts/integration.md
+	// "Note: No `icaauth` exists, this must be substituted with an actual Interchain Accounts authentication module"
+	var icaAuthModule porttypes.IBCModule
+	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, icaAuthModule)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -508,11 +529,11 @@ func NewWasmApp(
 	}
 	ibcRouter.
 		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper)).
-		AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
+		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
+		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
 
 	// FIXME: these are for ICA later
-	// AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-	// AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 	// AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
 	// AddRoute(ibcmock.ModuleName, mockIBCModule)
 
@@ -559,6 +580,7 @@ func NewWasmApp(
 		ibc.NewAppModule(app.ibcKeeper),
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
+		icaModule,
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -584,8 +606,9 @@ func NewWasmApp(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		// additional non simd modules
-		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibchost.ModuleName,
+		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -607,8 +630,9 @@ func NewWasmApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		// additional non simd modules
-		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibchost.ModuleName,
+		icatypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -637,8 +661,9 @@ func NewWasmApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		// additional non simd modules
-		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibchost.ModuleName,
+		icatypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
 	)
@@ -718,6 +743,8 @@ func NewWasmApp(
 	app.scopedIBCKeeper = scopedIBCKeeper
 	app.scopedTransferKeeper = scopedTransferKeeper
 	app.scopedWasmKeeper = scopedWasmKeeper
+	app.scopedICAHostKeeper = scopedICAHostKeeper
+	app.scopedICAControllerKeeper = scopedICAControllerKeeper
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -865,6 +892,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
