@@ -183,7 +183,7 @@ proto-lint:
 	@$(DOCKER_BUF) lint --error-format=json
 
 proto-check-breaking:
-	@$(DOCKER_BUF) breaking --against-input $(HTTPS_GIT)#branch=master
+	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
 
 .PHONY: all install install-debug \
 	go-mod-cache draw-deps clean build format \

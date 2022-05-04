@@ -46,6 +46,7 @@
   
 - [cosmwasm/wasm/v1/proposal.proto](#cosmwasm/wasm/v1/proposal.proto)
     - [ClearAdminProposal](#cosmwasm.wasm.v1.ClearAdminProposal)
+    - [CodeAccessConfigUpdate](#cosmwasm.wasm.v1.CodeAccessConfigUpdate)
     - [ExecuteContractProposal](#cosmwasm.wasm.v1.ExecuteContractProposal)
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
@@ -660,6 +661,23 @@ contract.
 
 
 
+<a name="cosmwasm.wasm.v1.CodeAccessConfigUpdate"></a>
+
+### CodeAccessConfigUpdate
+CodeAccessConfigUpdate contains the code id and the access config to be
+applied.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code to be updated |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply to the set of code ids |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.ExecuteContractProposal"></a>
 
 ### ExecuteContractProposal
@@ -827,8 +845,7 @@ instantiate config to a  set of code ids.
 | ----- | ---- | ----- | ----------- |
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
-| `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the WASM codes |
-| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply to the set of code ids |
+| `code_updates` | [CodeAccessConfigUpdate](#cosmwasm.wasm.v1.CodeAccessConfigUpdate) | repeated | CodeAccessConfigUpdate contains the list of code ids and the access config to be applied. |
 
 
 

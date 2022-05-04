@@ -149,6 +149,15 @@ message UnpinCodesProposal {
   ];
 }
 
+// CodeAccessConfigUpdate contains the code id and the access config to be
+// applied.
+message CodeAccessConfigUpdate {
+  // CodeID is the reference to the stored WASM code to be updated
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // InstantiatePermission to apply to the set of code ids
+  AccessConfig instantiate_permission = 4 [ (gogoproto.nullable) = false ];
+}
+
 // UpdateInstantiateConfigProposal gov proposal content type to update
 // instantiate config to a  set of code ids.
 message UpdateInstantiateConfigProposal {
@@ -156,11 +165,8 @@ message UpdateInstantiateConfigProposal {
   string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
   string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
-  // CodeIDs references the WASM codes
-  repeated uint64 code_ids = 3 [
-    (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags) = "yaml:\"code_ids\""
-  ];
-  // InstantiatePermission to apply to the set of code ids
-  AccessConfig instantiate_permission = 4 [ (gogoproto.nullable) = false ];
+  // CodeAccessConfigUpdate contains the list of code ids and the access config
+  // to be applied.
+  repeated CodeAccessConfigUpdate code_updates = 3
+      [ (gogoproto.nullable) = false ];
 }

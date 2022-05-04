@@ -568,11 +568,13 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if len(p.CodeIDs) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code ids")
+	if len(p.CodeUpdates) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "code updates")
 	}
-	if err := p.InstantiatePermission.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "instantiate permission")
+	for _, codeUpdate := range p.CodeUpdates {
+		if err := codeUpdate.InstantiatePermission.ValidateBasic(); err != nil {
+			return sdkerrors.Wrap(err, "instantiate permission")
+		}
 	}
 	return nil
 }
@@ -582,7 +584,14 @@ func (p UpdateInstantiateConfigProposal) String() string {
 	return fmt.Sprintf(`Update Instantiate Config Proposal:
   Title:       %s
   Description: %s
-  Codes:       %v
-  InstantiatePermission: %v
-`, p.Title, p.Description, p.CodeIDs, p.InstantiatePermission)
+  CodeUpdates: %v
+`, p.Title, p.Description, p.CodeUpdates)
+}
+
+// String implements the Stringer interface.
+func (c CodeAccessConfigUpdate) String() string {
+	return fmt.Sprintf(`CodeAccessUpdate:
+  CodeID:       %d
+  AccessConfig: %v
+`, c.CodeID, c.InstantiatePermission)
 }

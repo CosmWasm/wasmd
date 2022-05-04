@@ -228,9 +228,10 @@ func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsK
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
-	for _, v := range p.CodeIDs {
-		if err := k.SetAccessConfig(ctx, v, p.InstantiatePermission); err != nil {
-			return sdkerrors.Wrapf(err, "code id: %d", v)
+
+	for _, codeUpdate := range p.CodeUpdates {
+		if err := k.SetAccessConfig(ctx, codeUpdate.CodeID, codeUpdate.InstantiatePermission); err != nil {
+			return sdkerrors.Wrapf(err, "code id: %d", codeUpdate.CodeID)
 		}
 	}
 	return nil
