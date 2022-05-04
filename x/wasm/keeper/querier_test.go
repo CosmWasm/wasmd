@@ -675,7 +675,7 @@ func TestQueryCodeInfo(t *testing.T) {
 		},
 		"nobody": {
 			codeId:       10,
-			accessConfig: types.AllowEverybody,
+			accessConfig: types.AllowNobody,
 		},
 		"with_address": {
 			codeId:       20,
@@ -709,6 +709,72 @@ func TestQueryCodeInfo(t *testing.T) {
 			require.EqualValues(t, expectedResponse, got)
 		})
 	}
+}
+
+func TestQueryCodeInfoList(t *testing.T) {
+
+	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	keeper := keepers.WasmKeeper
+
+	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	require.NoError(t, err)
+	codeInfoWithConfig := func(accessConfig types.AccessConfig) types.CodeInfo {
+		codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
+		codeInfo.InstantiateConfig = accessConfig
+		return codeInfo
+	}
+
+	codes := []struct {
+		name     string
+		codeId   uint64
+		codeInfo types.CodeInfo
+	}{
+		{
+			name:     "everybody",
+			codeId:   1,
+			codeInfo: codeInfoWithConfig(types.AllowEverybody),
+		},
+		{
+			codeId:   10,
+			name:     "nobody",
+			codeInfo: codeInfoWithConfig(types.AllowNobody),
+		},
+		{
+			name:     "with_address",
+			codeId:   20,
+			codeInfo: codeInfoWithConfig(types.AccessTypeOnlyAddress.With(anyAddress)),
+		},
+	}
+
+	allCodesResponse := make([]types.CodeInfoResponse, 0)
+	for _, code := range codes {
+		t.Run(fmt.Sprintf("import_%s", code.name), func(t *testing.T) {
+			require.NoError(t, keeper.importCode(ctx, code.codeId,
+				code.codeInfo,
+				wasmCode),
+			)
+		})
+
+		allCodesResponse = append(allCodesResponse, types.CodeInfoResponse{
+			CodeID:                code.codeId,
+			Creator:               code.codeInfo.Creator,
+			DataHash:              code.codeInfo.CodeHash,
+			InstantiatePermission: code.codeInfo.InstantiateConfig,
+		})
+	}
+	q := Querier(keeper)
+	got, err := q.Codes(sdk.WrapSDKContext(ctx), &types.QueryCodesRequest{
+		Pagination: &query.PageRequest{
+			Limit: 3,
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, got.CodeInfos, 3)
+	require.EqualValues(t, allCodesResponse, got.CodeInfos)
+
 }
 
 func fromBase64(s string) []byte {
