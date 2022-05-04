@@ -906,3 +906,40 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	return paramsKeeper
 }
+
+// TestingApp functions
+
+// GetBaseApp implements the TestingApp interface.
+func (app *WasmApp) GetBaseApp() *baseapp.BaseApp {
+	return app.BaseApp
+}
+
+// GetStakingKeeper implements the TestingApp interface.
+func (app *WasmApp) GetStakingKeeper() stakingkeeper.Keeper {
+	return app.stakingKeeper
+}
+
+// GetIBCKeeper implements the TestingApp interface.
+func (app *WasmApp) GetIBCKeeper() *ibckeeper.Keeper {
+	return app.ibcKeeper
+}
+
+// GetScopedIBCKeeper implements the TestingApp interface.
+func (app *WasmApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
+	return app.scopedIBCKeeper
+}
+
+// GetTxConfig implements the TestingApp interface.
+func (app *WasmApp) GetTxConfig() client.TxConfig {
+	return MakeEncodingConfig().TxConfig
+}
+
+// GetICAControllerKeeper implements the TestingApp interface.
+func (app *WasmApp) GetICAControllerKeeper() icacontrollerkeeper.Keeper {
+	return app.icaControllerKeeper
+}
+
+// GetInterTxKeeper implements the TestingApp interface.
+func (app *WasmApp) GetInterTxKeeper() intertxkeeper.Keeper {
+	return app.interTxKeeper
+}

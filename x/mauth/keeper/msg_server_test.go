@@ -26,7 +26,7 @@ func (suite *KeeperTestSuite) TestRegisterInterchainAccount() {
 		{
 			"port is already bound",
 			func() {
-				suite.GetICAApp(suite.chainA).IBCKeeper.PortKeeper.BindPort(suite.chainA.GetContext(), TestPortID)
+				suite.GetICAApp(suite.chainA).GetIBCKeeper().PortKeeper.BindPort(suite.chainA.GetContext(), TestPortID)
 			},
 			false,
 		},
@@ -40,10 +40,10 @@ func (suite *KeeperTestSuite) TestRegisterInterchainAccount() {
 		{
 			"MsgChanOpenInit fails - channel is already active",
 			func() {
-				portID, err := icatypes.GeneratePortID(owner, path.EndpointA.ConnectionID, path.EndpointB.ConnectionID)
+				portID, err := icatypes.NewControllerPortID(owner)
 				suite.Require().NoError(err)
 
-				suite.GetICAApp(suite.chainA).ICAControllerKeeper.SetActiveChannelID(suite.chainA.GetContext(), portID, path.EndpointA.ChannelID)
+				suite.GetICAApp(suite.chainA).GetICAControllerKeeper().SetActiveChannelID(suite.chainA.GetContext(), ibctesting.FirstConnectionID, portID, path.EndpointA.ChannelID)
 			},
 			false,
 		},
@@ -62,7 +62,7 @@ func (suite *KeeperTestSuite) TestRegisterInterchainAccount() {
 
 			tc.malleate() // malleate mutates test data
 
-			msgSrv := keeper.NewMsgServerImpl(suite.GetICAApp(suite.chainA).InterTxKeeper)
+			msgSrv := keeper.NewMsgServerImpl(suite.GetICAApp(suite.chainA).GetInterTxKeeper())
 			msg := types.NewMsgRegisterAccount(owner, path.EndpointA.ConnectionID, path.EndpointB.ConnectionID)
 
 			res, err := msgSrv.RegisterAccount(sdk.WrapSDKContext(suite.chainA.GetContext()), msg)

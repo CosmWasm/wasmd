@@ -15,18 +15,25 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
 	icaapp "github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 var (
+	// TestPortID defines a resuable port identifier for testing purposes
+	TestPortID, _ = icatypes.NewControllerPortID(TestOwnerAddress)
 	// TestAccAddress defines a resuable bech32 address for testing purposes
 	// TODO: update crypto.AddressHash() when sdk uses address.Module()
-	TestAccAddress = icatypes.GenerateAddress(sdk.AccAddress(crypto.AddressHash([]byte(icatypes.ModuleName))), TestPortID)
+	TestAccAddress = icatypes.GenerateAddress(sdk.AccAddress(crypto.AddressHash([]byte(icatypes.ModuleName))), ibctesting.FirstConnectionID, TestPortID)
 	// TestOwnerAddress defines a reusable bech32 address for testing purposes
 	TestOwnerAddress = "cosmos17dtl0mjt3t77kpuhg2edqzjpszulwhgzuj9ljs"
-	// TestPortID defines a resuable port identifier for testing purposes
-	TestPortID, _ = icatypes.GeneratePortID(TestOwnerAddress, ibctesting.FirstConnectionID, ibctesting.FirstConnectionID)
 	// TestVersion defines a resuable interchainaccounts version string for testing purposes
-	TestVersion = icatypes.NewAppVersion(icatypes.VersionPrefix, TestAccAddress.String())
+	TestVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		Version:                icatypes.Version,
+		ControllerConnectionId: ibctesting.FirstConnectionID,
+		HostConnectionId:       ibctesting.FirstConnectionID,
+		Encoding:               icatypes.EncodingProtobuf,
+		TxType:                 icatypes.TxTypeSDKMultiMsg,
+	}))
 )
 
 func init() {
@@ -35,8 +42,7 @@ func init() {
 
 func SetupICATestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
-	encCdc := icaapp.MakeEncodingConfig()
-	app := icaapp.NewGaiaApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, icaapp.DefaultNodeHome, 5, encCdc, icaapp.EmptyAppOptions{})
+	app := icaapp.NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, icaapp.DefaultNodeHome, 0, icaapp.MakeEncodingConfig(), wasm.EnableAllProposals, icaapp.EmptyBaseAppOptions{}, nil)
 	// TODO: figure out if it's ok that w MakeEncodingConfig inside of our Genesis.go. It would be a different instance than the one used in app
 	return app, icaapp.NewDefaultGenesisState()
 }
@@ -52,8 +58,8 @@ type KeeperTestSuite struct {
 	chainB *ibctesting.TestChain
 }
 
-func (suite *KeeperTestSuite) GetICAApp(chain *ibctesting.TestChain) *icaapp.GaiaApp {
-	app, ok := chain.App.(*icaapp.GaiaApp)
+func (suite *KeeperTestSuite) GetICAApp(chain *ibctesting.TestChain) *icaapp.WasmApp {
+	app, ok := chain.App.(*icaapp.WasmApp)
 	if !ok {
 		panic("not ica app")
 	}
@@ -69,8 +75,8 @@ func TestKeeperTestSuite(t *testing.T) {
 // SetupTest creates a coordinator with 2 test chains.
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
-	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(0))
-	suite.chainB = suite.coordinator.GetChain(ibctesting.GetChainID(1))
+	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
+	suite.chainB = suite.coordinator.GetChain(ibctesting.GetChainID(2))
 }
 
 func NewICAPath(chainA, chainB *ibctesting.TestChain) *ibctesting.Path {
@@ -79,7 +85,7 @@ func NewICAPath(chainA, chainB *ibctesting.TestChain) *ibctesting.Path {
 	path.EndpointB.ChannelConfig.PortID = icatypes.PortID
 	path.EndpointA.ChannelConfig.Order = channeltypes.ORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.ORDERED
-	path.EndpointA.ChannelConfig.Version = icatypes.VersionPrefix
+	path.EndpointA.ChannelConfig.Version = icatypes.Version
 	path.EndpointB.ChannelConfig.Version = TestVersion
 
 	return path
