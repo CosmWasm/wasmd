@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -87,13 +87,13 @@ func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet)
 	}
 
 	// gzip the wasm file
-	if wasmUtils.IsWasm(wasm) {
-		wasm, err = wasmUtils.GzipIt(wasm)
+	if ioutils.IsWasm(wasm) {
+		wasm, err = ioutils.GzipIt(wasm)
 
 		if err != nil {
 			return types.MsgStoreCode{}, err
 		}
-	} else if !wasmUtils.IsGzip(wasm) {
+	} else if !ioutils.IsGzip(wasm) {
 		return types.MsgStoreCode{}, fmt.Errorf("invalid input file. Use wasm binary or gzip")
 	}
 

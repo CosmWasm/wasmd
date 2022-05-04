@@ -1,12 +1,17 @@
-package utils
+package ioutils
 
 import (
 	"bytes"
 	"compress/gzip"
 )
 
+// Note: []byte can never be const as they are inherently mutable
 var (
+	// magic bytes to identify gzip.
+	// See https://www.ietf.org/rfc/rfc1952.txt
+	// and https://github.com/golang/go/blob/master/src/net/http/sniff.go#L186
 	gzipIdent = []byte("\x1F\x8B\x08")
+
 	wasmIdent = []byte("\x00\x61\x73\x6D")
 )
 
