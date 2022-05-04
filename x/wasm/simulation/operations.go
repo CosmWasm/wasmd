@@ -1,7 +1,7 @@
 package simulation
 
 import (
-	_ "embed"
+	"io/ioutil"
 	"math/rand"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -15,8 +15,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-//go:embed testdata/reflect.wasm
-var reflectContract []byte
+var reflectContract, _ = ioutil.ReadFile("../keeper/testdata/reflect.wasm")
 
 // Simulation operation weights constants
 //nolint:gosec
