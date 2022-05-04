@@ -99,7 +99,7 @@ func (ws *WasmSnapshotter) Restore(
 }
 
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
-	wasmCode, err := ioutils.Uncompress(compressedCode, k.GetMaxWasmCodeSize(ctx))
+	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}

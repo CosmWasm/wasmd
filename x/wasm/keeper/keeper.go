@@ -140,12 +140,6 @@ func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 	return a
 }
 
-func (k Keeper) GetMaxWasmCodeSize(ctx sdk.Context) uint64 {
-	var a uint64
-	k.paramSpace.Get(ctx, types.ParamStoreKeyMaxWasmCodeSize, &a)
-	return a
-}
-
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	var params types.Params
@@ -165,7 +159,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
 		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
-	wasmCode, err = ioutils.Uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
 	if err != nil {
 		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
@@ -207,7 +201,7 @@ func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.Cod
 }
 
 func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
-	wasmCode, err := ioutils.Uncompress(wasmCode, k.GetMaxWasmCodeSize(ctx))
+	wasmCode, err := ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
