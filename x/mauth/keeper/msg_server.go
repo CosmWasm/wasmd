@@ -43,12 +43,12 @@ func (k msgServer) RegisterAccount(goCtx context.Context, msg *types.MsgRegister
 func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*types.MsgSubmitTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	portID, err := icatypes.GeneratePortID(msg.Owner.String(), msg.ConnectionId, msg.CounterpartyConnectionId)
+	portID, err := icatypes.NewControllerPortID(msg.Owner.String())
 	if err != nil {
 		return nil, err
 	}
 
-	channelID, found := k.icaControllerKeeper.GetActiveChannelID(ctx, portID)
+	channelID, found := k.icaControllerKeeper.GetActiveChannelID(ctx, msg.ConnectionId, portID)
 	if !found {
 		return nil, sdkerrors.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
@@ -68,7 +68,9 @@ func (k msgServer) SubmitTx(goCtx context.Context, msg *types.MsgSubmitTx) (*typ
 		Data: data,
 	}
 
-	_, err = k.icaControllerKeeper.TrySendTx(ctx, chanCap, portID, packetData)
+	// TODO: timeout
+	var timeoutTimestamp uint64 = 1656925166000000000
+	_, err = k.icaControllerKeeper.SendTx(ctx, chanCap, msg.ConnectionId, portID, packetData, timeoutTimestamp)
 	if err != nil {
 		return nil, err
 	}

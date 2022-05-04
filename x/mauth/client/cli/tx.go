@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/mauth/types"
 )
@@ -67,7 +67,6 @@ func getRegisterAccountCmd() *cobra.Command {
 	return cmd
 }
 
-
 //	cmd.Flags().AddFlagSet(fsConnectionPair)
 //
 //	_ = cmd.MarkFlagRequired(FlagConnectionID)
@@ -77,7 +76,6 @@ func getRegisterAccountCmd() *cobra.Command {
 //
 //	return cmd
 //}
-
 
 func getSubmitTxCmd() *cobra.Command {
 	cmd := &cobra.Command{

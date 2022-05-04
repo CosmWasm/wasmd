@@ -342,7 +342,7 @@ func NewWasmApp(
 	scopedIBCKeeper := app.capabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedICAHostKeeper := app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	scopedInterTxKeeper := app.capabilityKeeper.ScopeToModule(intertxkeeper.SubModuleName)
+	scopedInterTxKeeper := app.capabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
 	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.capabilityKeeper.Seal()
@@ -486,7 +486,7 @@ func NewWasmApp(
 	// See https://github.com/cosmos/ibc-go/blob/v3.0.0/docs/apps/interchain-accounts/integration.md
 	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
 	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
-	interTxIBCModule := intertx.NewIBCModule(app.InterTxKeeper)
+	interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
 	// and we use this for controller authorization
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
 
@@ -585,6 +585,7 @@ func NewWasmApp(
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 		icaModule,
+		interTxModule,
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -611,6 +612,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
+		intertxtypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		wasm.ModuleName,
@@ -635,6 +637,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
+		intertxtypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		wasm.ModuleName,
@@ -666,6 +669,7 @@ func NewWasmApp(
 		vestingtypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
+		intertxtypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		// wasm after ibc transfer

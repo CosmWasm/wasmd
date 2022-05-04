@@ -1,9 +1,9 @@
 package cli
 
 import (
+	"github.com/CosmWasm/wasmd/x/mauth/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/CosmWasm/wasmd/x/mauth/types"
 	"github.com/spf13/cobra"
 )
 
