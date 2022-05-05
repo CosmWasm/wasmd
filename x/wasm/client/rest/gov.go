@@ -407,7 +407,50 @@ func (s UnpinCodeJSONReq) GetBaseReq() rest.BaseReq {
 
 func UnpinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "pin_code",
+		SubRoute: "unpin_code",
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			var req UnpinCodeJSONReq
+			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
+				return
+			}
+			toStdTxResponse(cliCtx, w, req)
+		},
+	}
+}
+
+type UpdateInstantiateConfigProposalJSONReq struct {
+	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
+
+	Title       string    `json:"title" yaml:"title"`
+	Description string    `json:"description" yaml:"description"`
+	Proposer    string    `json:"proposer" yaml:"proposer"`
+	Deposit     sdk.Coins `json:"deposit" yaml:"deposit"`
+
+	CodeUpdates []types.CodeAccessConfigUpdate `json:"code_updates" yaml:"code_updates"`
+	// InstantiatePermission to apply on contract creation, optional
+	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
+}
+
+func (s UpdateInstantiateConfigProposalJSONReq) Content() govtypes.Content {
+	return &types.UpdateInstantiateConfigProposal{
+		Title:       s.Title,
+		Description: s.Description,
+		CodeUpdates: s.CodeUpdates,
+	}
+}
+func (s UpdateInstantiateConfigProposalJSONReq) GetProposer() string {
+	return s.Proposer
+}
+func (s UpdateInstantiateConfigProposalJSONReq) GetDeposit() sdk.Coins {
+	return s.Deposit
+}
+func (s UpdateInstantiateConfigProposalJSONReq) GetBaseReq() rest.BaseReq {
+	return s.BaseReq
+}
+
+func UpdateInstantiateConfigProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
+	return govrest.ProposalRESTHandler{
+		SubRoute: "update_instatiate_config",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
 			var req UnpinCodeJSONReq
 			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
