@@ -749,3 +749,101 @@ func TestUnpinCodesProposal(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateInstantiateConfigProposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking")
+	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
+
+	mock := wasmtesting.MockWasmer{
+		CreateFn:      wasmtesting.NoOpCreateFn,
+		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
+	}
+	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	require.NoError(t, err)
+
+	withAddressAccessConfig := types.AccessTypeOnlyAddress.With(anyAddress)
+	var (
+		nobody      = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &types.AllowNobody)
+		everybody   = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &types.AllowEverybody)
+		withAddress = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &withAddressAccessConfig)
+	)
+	type codeUpdate struct {
+		codeID       uint64
+		AccessConfig types.AccessConfig
+	}
+	specs := map[string]struct {
+		codeUpdates []codeUpdate
+		expErr      bool
+	}{
+		"update one": {
+			codeUpdates: []codeUpdate{
+				{codeID: nobody.CodeID, AccessConfig: types.AllowEverybody},
+			},
+		},
+		"update multiple": {
+			codeUpdates: []codeUpdate{
+				{codeID: everybody.CodeID, AccessConfig: types.AllowNobody},
+				{codeID: nobody.CodeID, AccessConfig: withAddressAccessConfig},
+				{codeID: withAddress.CodeID, AccessConfig: types.AllowEverybody},
+			},
+		},
+		"update same code id": {
+			codeUpdates: []codeUpdate{
+				{codeID: everybody.CodeID, AccessConfig: types.AllowNobody},
+				{codeID: everybody.CodeID, AccessConfig: types.AllowEverybody},
+			},
+			expErr: true,
+		},
+		"update non existing code id": {
+			codeUpdates: []codeUpdate{
+				{codeID: 100, AccessConfig: types.AllowNobody},
+				{codeID: everybody.CodeID, AccessConfig: types.AllowEverybody},
+			},
+			expErr: true,
+		},
+		"update empty list": {
+			codeUpdates: make([]codeUpdate, 0),
+			expErr:      true,
+		},
+	}
+	parentCtx := ctx
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+
+			ctx, _ := parentCtx.CacheContext()
+
+			updates := make([]types.CodeAccessConfigUpdate, 0)
+			for _, cu := range spec.codeUpdates {
+				updates = append(updates, types.CodeAccessConfigUpdate{
+					CodeID:                cu.codeID,
+					InstantiatePermission: cu.AccessConfig,
+				})
+			}
+
+			proposal := types.UpdateInstantiateConfigProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeUpdates: updates,
+			}
+
+			// when stored
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			gotErr = handler(ctx, storedProposal.GetContent())
+			require.NoError(t, gotErr)
+
+			// then
+			for i := range spec.codeUpdates {
+				c := wasmKeeper.GetCodeInfo(ctx, spec.codeUpdates[i].codeID)
+				require.Equal(t, spec.codeUpdates[i].AccessConfig, c.InstantiateConfig)
+			}
+		})
+	}
+}
