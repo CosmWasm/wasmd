@@ -36,18 +36,19 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdGetContractHistory(),
 		GetCmdGetContractState(),
 		GetCmdListPinnedCode(),
-		GetCmdVMVersion(),
+		GetCmdLibVersion(),
 	)
 	return queryCmd
 }
 
-// GetCmdVMVersion gets current libwasmvm version.
-func GetCmdVMVersion() *cobra.Command {
+// GetCmdLibVersion gets current libwasmvm version.
+func GetCmdLibVersion() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vm-version",
-		Short: "Get libwasmvm version",
-		Long:  "Get libwasmvm version",
-		Args:  cobra.ExactArgs(0),
+		Use:     "libwasmvm-version",
+		Short:   "Get libwasmvm version",
+		Long:    "Get libwasmvm version",
+		Aliases: []string{"lib-version"},
+		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version, err := wasmvmapi.LibwasmvmVersion()
 			if err != nil {
