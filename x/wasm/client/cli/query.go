@@ -17,6 +17,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvmapi "github.com/CosmWasm/wasmvm/api"
 )
 
 func GetQueryCmd() *cobra.Command {
@@ -35,8 +36,28 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdGetContractHistory(),
 		GetCmdGetContractState(),
 		GetCmdListPinnedCode(),
+		GetCmdVMVersion(),
 	)
 	return queryCmd
+}
+
+// GetCmdVMVersion gets current libwasmvm version.
+func GetCmdVMVersion() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vm-version",
+		Short: "Get libwasmvm version",
+		Long:  "Get libwasmvm version",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			version, err := wasmvmapi.LibwasmvmVersion()
+			if err != nil {
+				return fmt.Errorf("error retrieving libwasmvm version: %w", err)
+			}
+			fmt.Println(version)
+			return nil
+		},
+	}
+	return cmd
 }
 
 // GetCmdListCode lists all wasm code uploaded
