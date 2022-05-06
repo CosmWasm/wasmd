@@ -639,7 +639,7 @@ func parseCodeUpdateArgs(args []string) ([]types.CodeAccessConfigUpdate, error) 
 		// access_config: nobody|everybody|address
 		parts := strings.Split(c, ",")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid ")
+			return nil, fmt.Errorf("invalid format")
 		}
 
 		codeID, err := strconv.ParseUint(parts[0], 10, 64)
