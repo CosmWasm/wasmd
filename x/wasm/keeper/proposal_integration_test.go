@@ -767,42 +767,39 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 		everybody   = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &types.AllowEverybody)
 		withAddress = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &withAddressAccessConfig)
 	)
-	type codeUpdate struct {
-		codeID       uint64
-		AccessConfig types.AccessConfig
-	}
+
 	specs := map[string]struct {
-		codeUpdates []codeUpdate
+		codeUpdates []types.CodeAccessConfigUpdate
 		expErr      bool
 	}{
 		"update one": {
-			codeUpdates: []codeUpdate{
-				{codeID: nobody.CodeID, AccessConfig: types.AllowEverybody},
+			codeUpdates: []types.CodeAccessConfigUpdate{
+				{CodeID: nobody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 		},
 		"update multiple": {
-			codeUpdates: []codeUpdate{
-				{codeID: everybody.CodeID, AccessConfig: types.AllowNobody},
-				{codeID: nobody.CodeID, AccessConfig: withAddressAccessConfig},
-				{codeID: withAddress.CodeID, AccessConfig: types.AllowEverybody},
+			codeUpdates: []types.CodeAccessConfigUpdate{
+				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowNobody},
+				{CodeID: nobody.CodeID, InstantiatePermission: withAddressAccessConfig},
+				{CodeID: withAddress.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 		},
 		"update same code id": {
-			codeUpdates: []codeUpdate{
-				{codeID: everybody.CodeID, AccessConfig: types.AllowNobody},
-				{codeID: everybody.CodeID, AccessConfig: types.AllowEverybody},
+			codeUpdates: []types.CodeAccessConfigUpdate{
+				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowNobody},
+				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 			expErr: true,
 		},
 		"update non existing code id": {
-			codeUpdates: []codeUpdate{
-				{codeID: 100, AccessConfig: types.AllowNobody},
-				{codeID: everybody.CodeID, AccessConfig: types.AllowEverybody},
+			codeUpdates: []types.CodeAccessConfigUpdate{
+				{CodeID: 100, InstantiatePermission: types.AllowNobody},
+				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 			expErr: true,
 		},
 		"update empty list": {
-			codeUpdates: make([]codeUpdate, 0),
+			codeUpdates: make([]types.CodeAccessConfigUpdate, 0),
 			expErr:      true,
 		},
 	}
@@ -815,8 +812,8 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			updates := make([]types.CodeAccessConfigUpdate, 0)
 			for _, cu := range spec.codeUpdates {
 				updates = append(updates, types.CodeAccessConfigUpdate{
-					CodeID:                cu.codeID,
-					InstantiatePermission: cu.AccessConfig,
+					CodeID:                cu.CodeID,
+					InstantiatePermission: cu.InstantiatePermission,
 				})
 			}
 
@@ -841,8 +838,8 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 
 			// then
 			for i := range spec.codeUpdates {
-				c := wasmKeeper.GetCodeInfo(ctx, spec.codeUpdates[i].codeID)
-				require.Equal(t, spec.codeUpdates[i].AccessConfig, c.InstantiateConfig)
+				c := wasmKeeper.GetCodeInfo(ctx, spec.codeUpdates[i].CodeID)
+				require.Equal(t, spec.codeUpdates[i].InstantiatePermission, c.InstantiateConfig)
 			}
 		})
 	}

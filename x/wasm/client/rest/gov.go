@@ -427,8 +427,6 @@ type UpdateInstantiateConfigProposalJSONReq struct {
 	Deposit     sdk.Coins `json:"deposit" yaml:"deposit"`
 
 	CodeUpdates []types.CodeAccessConfigUpdate `json:"code_updates" yaml:"code_updates"`
-	// InstantiatePermission to apply on contract creation, optional
-	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 }
 
 func (s UpdateInstantiateConfigProposalJSONReq) Content() govtypes.Content {
@@ -450,9 +448,9 @@ func (s UpdateInstantiateConfigProposalJSONReq) GetBaseReq() rest.BaseReq {
 
 func UpdateInstantiateConfigProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
-		SubRoute: "update_instatiate_config",
+		SubRoute: "update_instantiate_config",
 		Handler: func(w http.ResponseWriter, r *http.Request) {
-			var req UnpinCodeJSONReq
+			var req UpdateInstantiateConfigProposalJSONReq
 			if !rest.ReadRESTReq(w, r, cliCtx.LegacyAmino, &req) {
 				return
 			}
