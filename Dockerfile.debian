@@ -1,7 +1,6 @@
 # docker build -f Dockerfile.debian -t cosmwasm/wasmd:debian-test .
 # docker run --rm -it cosmwasm/wasmd:debian-test /bin/sh
 FROM golang:1.17-bullseye AS go-builder
-ARG arch=x86_64
 
 RUN apt update \
   && apt install -y file
