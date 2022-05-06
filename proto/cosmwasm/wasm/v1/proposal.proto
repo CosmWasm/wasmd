@@ -60,7 +60,7 @@ message MigrateContractProposal {
 
   // Contract is the address of the smart contract
   string contract = 4;
-  // CodeID references the new WASM codesudo
+  // CodeID references the new WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
   bytes msg = 6 [ (gogoproto.casttype) = "RawContractMessage" ];
