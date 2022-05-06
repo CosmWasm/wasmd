@@ -134,7 +134,7 @@ type MigrateContractProposal struct {
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// Contract is the address of the smart contract
 	Contract string `protobuf:"bytes,4,opt,name=contract,proto3" json:"contract,omitempty"`
-	// CodeID references the new WASM codesudo
+	// CodeID references the new WASM code
 	CodeID uint64 `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 	// Msg json encoded message to be passed to the contract on migration
 	Msg RawContractMessage `protobuf:"bytes,6,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`

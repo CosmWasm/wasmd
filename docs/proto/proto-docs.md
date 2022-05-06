@@ -716,7 +716,7 @@ MigrateContractProposal gov proposal content type to migrate a contract.
 
 Note: skipping 3 as this was previously used for unneeded run_as |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM codesudo |
+| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
 
 
