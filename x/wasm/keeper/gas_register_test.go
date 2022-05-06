@@ -183,8 +183,8 @@ func TestReplyCost(t *testing.T) {
 	}{
 		"subcall response with events and data - pinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myData"}}},
 						},
@@ -198,8 +198,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events - pinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myData"}}},
 						},
@@ -212,8 +212,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events exceeds free tier- pinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", DefaultEventAttributeDataFreeTier), Value: "myData"}}},
 						},
@@ -226,7 +226,7 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response error - pinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
+				Result: wasmvmtypes.SubMsgResult{
 					Err: "foo",
 				},
 			},
@@ -236,8 +236,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events and data - unpinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myData"}}},
 						},
@@ -250,8 +250,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events - unpinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myData"}}},
 						},
@@ -263,8 +263,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events exceeds free tier- unpinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
 							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", DefaultEventAttributeDataFreeTier), Value: "myData"}}},
 						},
@@ -276,7 +276,7 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response error - unpinned": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
+				Result: wasmvmtypes.SubMsgResult{
 					Err: "foo",
 				},
 			},
@@ -285,8 +285,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with empty events": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: make([]wasmvmtypes.Event, 10),
 					},
 				},
@@ -296,8 +296,8 @@ func TestReplyCost(t *testing.T) {
 		},
 		"subcall response with events unset": {
 			src: wasmvmtypes.Reply{
-				Result: wasmvmtypes.SubcallResult{
-					Ok: &wasmvmtypes.SubcallResponse{},
+				Result: wasmvmtypes.SubMsgResult{
+					Ok: &wasmvmtypes.SubMsgResponse{},
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
