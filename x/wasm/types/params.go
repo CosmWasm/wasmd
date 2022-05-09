@@ -12,8 +12,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var ParamStoreKeyUploadAccess = []byte("uploadAccess")
-var ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
+var (
+	ParamStoreKeyUploadAccess      = []byte("uploadAccess")
+	ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
+)
 
 var AllAccessTypes = []AccessType{
 	AccessTypeNobody,
@@ -58,6 +60,7 @@ func (a *AccessType) UnmarshalText(text []byte) error {
 	*a = AccessTypeUnspecified
 	return nil
 }
+
 func (a AccessType) MarshalText() ([]byte, error) {
 	return []byte(a.String()), nil
 }

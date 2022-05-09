@@ -656,7 +656,6 @@ func TestQueryPinnedCodes(t *testing.T) {
 }
 
 func TestQueryCodeInfo(t *testing.T) {
-
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -712,7 +711,6 @@ func TestQueryCodeInfo(t *testing.T) {
 }
 
 func TestQueryCodeInfoList(t *testing.T) {
-
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -774,7 +772,6 @@ func TestQueryCodeInfoList(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got.CodeInfos, 3)
 	require.EqualValues(t, allCodesResponse, got.CodeInfos)
-
 }
 
 func fromBase64(s string) []byte {

@@ -18,9 +18,12 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
-var _ = time.Kitchen
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+	_ = time.Kitchen
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -43,9 +46,11 @@ func (*ConsensusParams) ProtoMessage()    {}
 func (*ConsensusParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{0}
 }
+
 func (m *ConsensusParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ConsensusParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ConsensusParams.Marshal(b, m, deterministic)
@@ -58,12 +63,15 @@ func (m *ConsensusParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *ConsensusParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ConsensusParams.Merge(m, src)
 }
+
 func (m *ConsensusParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ConsensusParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_ConsensusParams.DiscardUnknown(m)
 }
@@ -119,9 +127,11 @@ func (*BlockParams) ProtoMessage()    {}
 func (*BlockParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{1}
 }
+
 func (m *BlockParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *BlockParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_BlockParams.Marshal(b, m, deterministic)
@@ -134,12 +144,15 @@ func (m *BlockParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
+
 func (m *BlockParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_BlockParams.Merge(m, src)
 }
+
 func (m *BlockParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *BlockParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_BlockParams.DiscardUnknown(m)
 }
@@ -192,9 +205,11 @@ func (*EvidenceParams) ProtoMessage()    {}
 func (*EvidenceParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{2}
 }
+
 func (m *EvidenceParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *EvidenceParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_EvidenceParams.Marshal(b, m, deterministic)
@@ -207,12 +222,15 @@ func (m *EvidenceParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
+
 func (m *EvidenceParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_EvidenceParams.Merge(m, src)
 }
+
 func (m *EvidenceParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *EvidenceParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_EvidenceParams.DiscardUnknown(m)
 }
@@ -252,9 +270,11 @@ func (*ValidatorParams) ProtoMessage()    {}
 func (*ValidatorParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{3}
 }
+
 func (m *ValidatorParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ValidatorParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ValidatorParams.Marshal(b, m, deterministic)
@@ -267,12 +287,15 @@ func (m *ValidatorParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *ValidatorParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ValidatorParams.Merge(m, src)
 }
+
 func (m *ValidatorParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ValidatorParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_ValidatorParams.DiscardUnknown(m)
 }
@@ -297,9 +320,11 @@ func (*VersionParams) ProtoMessage()    {}
 func (*VersionParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{4}
 }
+
 func (m *VersionParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *VersionParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_VersionParams.Marshal(b, m, deterministic)
@@ -312,12 +337,15 @@ func (m *VersionParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
+
 func (m *VersionParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_VersionParams.Merge(m, src)
 }
+
 func (m *VersionParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *VersionParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_VersionParams.DiscardUnknown(m)
 }
@@ -345,9 +373,11 @@ func (*HashedParams) ProtoMessage()    {}
 func (*HashedParams) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e12598271a686f57, []int{5}
 }
+
 func (m *HashedParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *HashedParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_HashedParams.Marshal(b, m, deterministic)
@@ -360,12 +390,15 @@ func (m *HashedParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *HashedParams) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_HashedParams.Merge(m, src)
 }
+
 func (m *HashedParams) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *HashedParams) XXX_DiscardUnknown() {
 	xxx_messageInfo_HashedParams.DiscardUnknown(m)
 }
@@ -468,6 +501,7 @@ func (this *ConsensusParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *BlockParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -498,6 +532,7 @@ func (this *BlockParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *EvidenceParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -528,6 +563,7 @@ func (this *EvidenceParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *ValidatorParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -557,6 +593,7 @@ func (this *ValidatorParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *VersionParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -581,6 +618,7 @@ func (this *VersionParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *HashedParams) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -608,6 +646,7 @@ func (this *HashedParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (m *ConsensusParams) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -854,6 +893,7 @@ func encodeVarintParams(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func NewPopulatedValidatorParams(r randyParams, easy bool) *ValidatorParams {
 	this := &ValidatorParams{}
 	v1 := r.Intn(10)
@@ -892,6 +932,7 @@ func randUTF8RuneParams(r randyParams) rune {
 	}
 	return rune(ru + 61)
 }
+
 func randStringParams(r randyParams) string {
 	v2 := r.Intn(100)
 	tmps := make([]rune, v2)
@@ -900,6 +941,7 @@ func randStringParams(r randyParams) string {
 	}
 	return string(tmps)
 }
+
 func randUnrecognizedParams(r randyParams, maxFieldNumber int) (dAtA []byte) {
 	l := r.Intn(5)
 	for i := 0; i < l; i++ {
@@ -912,6 +954,7 @@ func randUnrecognizedParams(r randyParams, maxFieldNumber int) (dAtA []byte) {
 	}
 	return dAtA
 }
+
 func randFieldParams(dAtA []byte, r randyParams, fieldNumber int, wire int) []byte {
 	key := uint32(fieldNumber)<<3 | uint32(wire)
 	switch wire {
@@ -938,6 +981,7 @@ func randFieldParams(dAtA []byte, r randyParams, fieldNumber int, wire int) []by
 	}
 	return dAtA
 }
+
 func encodeVarintPopulateParams(dAtA []byte, v uint64) []byte {
 	for v >= 1<<7 {
 		dAtA = append(dAtA, uint8(uint64(v)&0x7f|0x80))
@@ -946,6 +990,7 @@ func encodeVarintPopulateParams(dAtA []byte, v uint64) []byte {
 	dAtA = append(dAtA, uint8(v))
 	return dAtA
 }
+
 func (m *ConsensusParams) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1043,9 +1088,11 @@ func (m *HashedParams) Size() (n int) {
 func sovParams(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozParams(x uint64) (n int) {
 	return sovParams(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *ConsensusParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1228,6 +1275,7 @@ func (m *ConsensusParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *BlockParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1335,6 +1383,7 @@ func (m *BlockParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *EvidenceParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1456,6 +1505,7 @@ func (m *EvidenceParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ValidatorParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1538,6 +1588,7 @@ func (m *ValidatorParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *VersionParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1607,6 +1658,7 @@ func (m *VersionParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *HashedParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1695,6 +1747,7 @@ func (m *HashedParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipParams(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

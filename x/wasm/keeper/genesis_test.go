@@ -259,7 +259,8 @@ func TestGenesisInit(t *testing.T) {
 					},
 				},
 				Params: types.DefaultParams(),
-			}},
+			},
+		},
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
@@ -413,8 +414,10 @@ func TestGenesisInit(t *testing.T) {
 				Params: types.DefaultParams(),
 			},
 			stakingMock: StakingKeeperMock{expCalls: 1, validatorUpdate: []abci.ValidatorUpdate{
-				{PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
-					Ed25519: []byte("a valid key")}},
+				{
+					PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
+						Ed25519: []byte("a valid key"),
+					}},
 					Power: 100,
 				},
 			}},
@@ -551,11 +554,12 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	}
 	assert.Equal(t, expContractInfo, *gotContractInfo)
 
-	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeGenesis,
-		CodeID:    firstCodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-	},
+	expHistory := []types.ContractCodeHistoryEntry{
+		{
+			Operation: types.ContractCodeHistoryOperationTypeGenesis,
+			CodeID:    firstCodeID,
+			Updated:   types.NewAbsoluteTxPosition(ctx),
+		},
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))

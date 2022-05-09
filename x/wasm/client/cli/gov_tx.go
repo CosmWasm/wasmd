@@ -658,6 +658,7 @@ func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error)
 	}
 	return updates, nil
 }
+
 func ProposalUpdateInstantiateConfigCmd() *cobra.Command {
 	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	cmd := &cobra.Command{

@@ -258,7 +258,7 @@ func TestIsSimulationMode(t *testing.T) {
 	}
 	for msg := range specs {
 		t.Run(msg, func(t *testing.T) {
-			//assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
+			// assert.Equal(t, spec.exp, isSimulationMode(spec.ctx))
 		})
 	}
 }
@@ -742,7 +742,6 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
 	require.True(t, false, "We must panic before this line")
-
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
@@ -1230,7 +1229,6 @@ func TestSudo(t *testing.T) {
 	expEvt := sdk.NewEvent("sudo",
 		sdk.NewAttribute("_contract_address", addr.String()))
 	assert.Equal(t, expEvt, em.Events()[0])
-
 }
 
 func prettyEvents(t *testing.T, events sdk.Events) string {
@@ -1428,7 +1426,8 @@ func TestUnpinCode(t *testing.T) {
 		UnpinFn: func(checksum wasmvm.Checksum) error {
 			capturedChecksums = append(capturedChecksums, checksum)
 			return nil
-		}}
+		},
+	}
 	wasmtesting.MakeInstantiable(&mock)
 	myCodeID := StoreRandomContract(t, ctx, keepers, &mock).CodeID
 	require.Equal(t, uint64(1), myCodeID)
@@ -1523,7 +1522,6 @@ func TestPinnedContractLoops(t *testing.T) {
 	})
 	assert.True(t, ctx.GasMeter().IsOutOfGas())
 	assert.Greater(t, loops, 2)
-
 }
 
 func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
@@ -1587,9 +1585,7 @@ func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			var (
-				msgs []wasmvmtypes.SubMsg
-			)
+			var msgs []wasmvmtypes.SubMsg
 			var mock wasmtesting.MockMsgDispatcher
 			spec.setup(&mock)
 			d := NewDefaultWasmVMContractResponseHandler(&mock)

@@ -38,12 +38,15 @@ func (s StoreCodeProposalJSONReq) Content() govtypes.Content {
 		InstantiatePermission: s.InstantiatePermission,
 	}
 }
+
 func (s StoreCodeProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s StoreCodeProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s StoreCodeProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
@@ -91,12 +94,15 @@ func (s InstantiateProposalJSONReq) Content() govtypes.Content {
 		Funds:       s.Funds,
 	}
 }
+
 func (s InstantiateProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s InstantiateProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s InstantiateProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
@@ -137,15 +143,19 @@ func (s MigrateProposalJSONReq) Content() govtypes.Content {
 		Msg:         types.RawContractMessage(s.Msg),
 	}
 }
+
 func (s MigrateProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s MigrateProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s MigrateProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
+
 func MigrateProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_migrate",
@@ -185,15 +195,19 @@ func (s ExecuteProposalJSONReq) Content() govtypes.Content {
 		Funds:       s.Funds,
 	}
 }
+
 func (s ExecuteProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s ExecuteProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s ExecuteProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
+
 func ExecuteProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_execute",
@@ -228,15 +242,19 @@ func (s SudoProposalJSONReq) Content() govtypes.Content {
 		Msg:         types.RawContractMessage(s.Msg),
 	}
 }
+
 func (s SudoProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s SudoProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s SudoProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
+
 func SudoProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_sudo",
@@ -271,15 +289,19 @@ func (s UpdateAdminJSONReq) Content() govtypes.Content {
 		NewAdmin:    s.NewAdmin,
 	}
 }
+
 func (s UpdateAdminJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s UpdateAdminJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s UpdateAdminJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
+
 func UpdateContractAdminProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_update_admin",
@@ -312,15 +334,19 @@ func (s ClearAdminJSONReq) Content() govtypes.Content {
 		Contract:    s.Contract,
 	}
 }
+
 func (s ClearAdminJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s ClearAdminJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s ClearAdminJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
+
 func ClearContractAdminProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "wasm_clear_admin",
@@ -353,12 +379,15 @@ func (s PinCodeJSONReq) Content() govtypes.Content {
 		CodeIDs:     s.CodeIDs,
 	}
 }
+
 func (s PinCodeJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s PinCodeJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s PinCodeJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
@@ -395,12 +424,15 @@ func (s UnpinCodeJSONReq) Content() govtypes.Content {
 		CodeIDs:     s.CodeIDs,
 	}
 }
+
 func (s UnpinCodeJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s UnpinCodeJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s UnpinCodeJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
@@ -435,12 +467,15 @@ func (s UpdateInstantiateConfigProposalJSONReq) Content() govtypes.Content {
 		AccessConfigUpdates: s.AccessConfigUpdates,
 	}
 }
+
 func (s UpdateInstantiateConfigProposalJSONReq) GetProposer() string {
 	return s.Proposer
 }
+
 func (s UpdateInstantiateConfigProposalJSONReq) GetDeposit() sdk.Coins {
 	return s.Deposit
 }
+
 func (s UpdateInstantiateConfigProposalJSONReq) GetBaseReq() rest.BaseReq {
 	return s.BaseReq
 }
