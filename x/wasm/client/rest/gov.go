@@ -421,19 +421,18 @@ func UnpinCodeProposalHandler(cliCtx client.Context) govrest.ProposalRESTHandler
 type UpdateInstantiateConfigProposalJSONReq struct {
 	BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-	Title       string    `json:"title" yaml:"title"`
-	Description string    `json:"description" yaml:"description"`
-	Proposer    string    `json:"proposer" yaml:"proposer"`
-	Deposit     sdk.Coins `json:"deposit" yaml:"deposit"`
-
-	CodeUpdates []types.CodeAccessConfigUpdate `json:"code_updates" yaml:"code_updates"`
+	Title               string                     `json:"title" yaml:"title"`
+	Description         string                     `json:"description" yaml:"description"`
+	Proposer            string                     `json:"proposer" yaml:"proposer"`
+	Deposit             sdk.Coins                  `json:"deposit" yaml:"deposit"`
+	AccessConfigUpdates []types.AccessConfigUpdate `json:"access_config_updates" yaml:"access_config_updates"`
 }
 
 func (s UpdateInstantiateConfigProposalJSONReq) Content() govtypes.Content {
 	return &types.UpdateInstantiateConfigProposal{
-		Title:       s.Title,
-		Description: s.Description,
-		CodeUpdates: s.CodeUpdates,
+		Title:               s.Title,
+		Description:         s.Description,
+		AccessConfigUpdates: s.AccessConfigUpdates,
 	}
 }
 func (s UpdateInstantiateConfigProposalJSONReq) GetProposer() string {

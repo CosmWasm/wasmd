@@ -570,11 +570,11 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if len(p.CodeUpdates) == 0 {
+	if len(p.AccessConfigUpdates) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code updates")
 	}
 	dedup := make(map[uint64]bool)
-	for _, codeUpdate := range p.CodeUpdates {
+	for _, codeUpdate := range p.AccessConfigUpdates {
 		_, found := dedup[codeUpdate.CodeID]
 		if found {
 			return sdkerrors.Wrapf(ErrDuplicate, "duplicate code: %d", codeUpdate.CodeID)
@@ -592,13 +592,13 @@ func (p UpdateInstantiateConfigProposal) String() string {
 	return fmt.Sprintf(`Update Instantiate Config Proposal:
   Title:       %s
   Description: %s
-  CodeUpdates: %v
-`, p.Title, p.Description, p.CodeUpdates)
+  AccessConfigUpdates: %v
+`, p.Title, p.Description, p.AccessConfigUpdates)
 }
 
 // String implements the Stringer interface.
-func (c CodeAccessConfigUpdate) String() string {
-	return fmt.Sprintf(`CodeAccessUpdate:
+func (c AccessConfigUpdate) String() string {
+	return fmt.Sprintf(`AccessConfigUpdate:
   CodeID:       %d
   AccessConfig: %v
 `, c.CodeID, c.InstantiatePermission)

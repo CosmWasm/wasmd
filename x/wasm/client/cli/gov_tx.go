@@ -632,8 +632,8 @@ func parseAccessConfig(config string) (types.AccessConfig, error) {
 	}
 }
 
-func parseCodeUpdateArgs(args []string) ([]types.CodeAccessConfigUpdate, error) {
-	updates := make([]types.CodeAccessConfigUpdate, len(args))
+func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error) {
+	updates := make([]types.AccessConfigUpdate, len(args))
 	for i, c := range args {
 		// format: code_id,access_config
 		// access_config: nobody|everybody|address
@@ -651,7 +651,7 @@ func parseCodeUpdateArgs(args []string) ([]types.CodeAccessConfigUpdate, error) 
 		if err != nil {
 			return nil, err
 		}
-		updates[i] = types.CodeAccessConfigUpdate{
+		updates[i] = types.AccessConfigUpdate{
 			CodeID:                codeID,
 			InstantiatePermission: accessConfig,
 		}
@@ -692,15 +692,15 @@ $ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1
 			if err != nil {
 				return err
 			}
-			updates, err := parseCodeUpdateArgs(args)
+			updates, err := parseAccessConfigUpdates(args)
 			if err != nil {
 				return err
 			}
 
 			content := types.UpdateInstantiateConfigProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				CodeUpdates: updates,
+				Title:               proposalTitle,
+				Description:         proposalDescr,
+				AccessConfigUpdates: updates,
 			}
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {

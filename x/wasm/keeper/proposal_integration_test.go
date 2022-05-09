@@ -769,38 +769,38 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		codeUpdates []types.CodeAccessConfigUpdate
-		expErr      bool
+		accessConfigUpdates []types.AccessConfigUpdate
+		expErr              bool
 	}{
 		"update one": {
-			codeUpdates: []types.CodeAccessConfigUpdate{
+			accessConfigUpdates: []types.AccessConfigUpdate{
 				{CodeID: nobody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 		},
 		"update multiple": {
-			codeUpdates: []types.CodeAccessConfigUpdate{
+			accessConfigUpdates: []types.AccessConfigUpdate{
 				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowNobody},
 				{CodeID: nobody.CodeID, InstantiatePermission: withAddressAccessConfig},
 				{CodeID: withAddress.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 		},
 		"update same code id": {
-			codeUpdates: []types.CodeAccessConfigUpdate{
+			accessConfigUpdates: []types.AccessConfigUpdate{
 				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowNobody},
 				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 			expErr: true,
 		},
 		"update non existing code id": {
-			codeUpdates: []types.CodeAccessConfigUpdate{
+			accessConfigUpdates: []types.AccessConfigUpdate{
 				{CodeID: 100, InstantiatePermission: types.AllowNobody},
 				{CodeID: everybody.CodeID, InstantiatePermission: types.AllowEverybody},
 			},
 			expErr: true,
 		},
 		"update empty list": {
-			codeUpdates: make([]types.CodeAccessConfigUpdate, 0),
-			expErr:      true,
+			accessConfigUpdates: make([]types.AccessConfigUpdate, 0),
+			expErr:              true,
 		},
 	}
 	parentCtx := ctx
@@ -809,18 +809,18 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 
 			ctx, _ := parentCtx.CacheContext()
 
-			updates := make([]types.CodeAccessConfigUpdate, 0)
-			for _, cu := range spec.codeUpdates {
-				updates = append(updates, types.CodeAccessConfigUpdate{
+			updates := make([]types.AccessConfigUpdate, 0)
+			for _, cu := range spec.accessConfigUpdates {
+				updates = append(updates, types.AccessConfigUpdate{
 					CodeID:                cu.CodeID,
 					InstantiatePermission: cu.InstantiatePermission,
 				})
 			}
 
 			proposal := types.UpdateInstantiateConfigProposal{
-				Title:       "Foo",
-				Description: "Bar",
-				CodeUpdates: updates,
+				Title:               "Foo",
+				Description:         "Bar",
+				AccessConfigUpdates: updates,
 			}
 
 			// when stored
@@ -837,9 +837,9 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// then
-			for i := range spec.codeUpdates {
-				c := wasmKeeper.GetCodeInfo(ctx, spec.codeUpdates[i].CodeID)
-				require.Equal(t, spec.codeUpdates[i].InstantiatePermission, c.InstantiateConfig)
+			for i := range spec.accessConfigUpdates {
+				c := wasmKeeper.GetCodeInfo(ctx, spec.accessConfigUpdates[i].CodeID)
+				require.Equal(t, spec.accessConfigUpdates[i].InstantiatePermission, c.InstantiateConfig)
 			}
 		})
 	}
