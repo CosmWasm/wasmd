@@ -47,6 +47,8 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return handlePinCodesProposal(ctx, k, *c)
 		case *types.UnpinCodesProposal:
 			return handleUnpinCodesProposal(ctx, k, *c)
+		case *types.UpdateInstantiateConfigProposal:
+			return handleUpdateInstantiateConfigProposal(ctx, k, *c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
@@ -217,6 +219,19 @@ func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 	for _, v := range p.CodeIDs {
 		if err := k.UnpinCode(ctx, v); err != nil {
 			return sdkerrors.Wrapf(err, "code id: %d", v)
+		}
+	}
+	return nil
+}
+
+func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	for _, accessConfigUpdate := range p.AccessConfigUpdates {
+		if err := k.SetAccessConfig(ctx, accessConfigUpdate.CodeID, accessConfigUpdate.InstantiatePermission); err != nil {
+			return sdkerrors.Wrapf(err, "code id: %d", accessConfigUpdate.CodeID)
 		}
 	}
 	return nil

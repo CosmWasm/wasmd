@@ -53,6 +53,9 @@ type ContractOpsKeeper interface {
 
 	// SetContractInfoExtension updates the extension point data that is stored with the contract info
 	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra ContractInfoExtension) error
+
+	// SetAccessConfig updates the access config of a code id.
+	SetAccessConfig(ctx sdk.Context, codeID uint64, config AccessConfig) error
 }
 
 // IBCContractKeeper IBC lifecycle event handler

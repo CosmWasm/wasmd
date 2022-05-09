@@ -586,16 +586,25 @@ func SeedNewContractInstance(t testing.TB, ctx sdk.Context, keepers TestKeepers,
 
 // StoreRandomContract sets the mock wasmerEngine in keeper and calls store
 func StoreRandomContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+	return StoreRandomContractWithAccessConfig(t, ctx, keepers, mock, nil)
+}
+
+func StoreRandomContractWithAccessConfig(
+	t testing.TB, ctx sdk.Context,
+	keepers TestKeepers,
+	mock types.WasmerEngine,
+	cfg *types.AccessConfig) ExampleContract {
 	t.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint:gocritic
-	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, cfg)
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
 	return exampleContract
+
 }
 
 type HackatomExampleInstance struct {
