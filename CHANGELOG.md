@@ -10,6 +10,7 @@ Yes
 - Fix SudoContractProposal and ExecuteContractProposal [\#808](https://github.com/CosmWasm/wasmd/pull/808) ([the-frey](https://github.com/the-frey))
 
 **Implemented Enhancements**
+- Add UpdateInstantiateConfig governance proposal [\#820](https://github.com/CosmWasm/wasmd/pull/796) ([jhernandezb](https://github.com/jhernandezb))
 - Upgrade wasmvm to v1.0.0-rc.0 [\#844](https://github.com/CosmWasm/wasmd/pull/844)
 - Support state sync [\#478](https://github.com/CosmWasm/wasmd/issues/478)
 - Upgrade to ibc-go v3 [\#806](https://github.com/CosmWasm/wasmd/issues/806)
