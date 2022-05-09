@@ -5,11 +5,12 @@ package crypto
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -206,7 +207,7 @@ func (m *DominoOp) GetOutput() string {
 }
 
 // ProofOp defines an operation used for calculating Merkle root
-// The data could be arbitrary format, providing nessecary data
+// The data could be arbitrary format, providing necessary data
 // for example neighbouring node hash
 type ProofOp struct {
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
