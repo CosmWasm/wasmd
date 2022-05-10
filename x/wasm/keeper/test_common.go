@@ -242,7 +242,8 @@ func createTestInput(
 		keys[paramstypes.StoreKey],
 		tkeys[paramstypes.TStoreKey],
 	)
-	for _, m := range []string{authtypes.ModuleName,
+	for _, m := range []string{
+		authtypes.ModuleName,
 		banktypes.ModuleName,
 		stakingtypes.ModuleName,
 		minttypes.ModuleName,
@@ -253,7 +254,8 @@ func createTestInput(
 		capabilitytypes.ModuleName,
 		ibchost.ModuleName,
 		govtypes.ModuleName,
-		types.ModuleName} {
+		types.ModuleName,
+	} {
 		paramsKeeper.Subspace(m)
 	}
 	subspace := func(m string) paramstypes.Subspace {
@@ -593,7 +595,8 @@ func StoreRandomContractWithAccessConfig(
 	t testing.TB, ctx sdk.Context,
 	keepers TestKeepers,
 	mock types.WasmerEngine,
-	cfg *types.AccessConfig) ExampleContract {
+	cfg *types.AccessConfig,
+) ExampleContract {
 	t.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
@@ -604,7 +607,6 @@ func StoreRandomContractWithAccessConfig(
 	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID}
 	return exampleContract
-
 }
 
 type HackatomExampleInstance struct {

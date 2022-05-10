@@ -162,9 +162,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
@@ -257,9 +255,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateMigrateContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address2"
-	)
+	invalidAddress := "invalid address2"
 
 	specs := map[string]struct {
 		src    *MigrateContractProposal
@@ -318,9 +314,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *SudoContractProposal
@@ -373,9 +367,7 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
@@ -434,9 +426,7 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
@@ -489,9 +479,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *ClearAdminProposal
@@ -538,7 +526,7 @@ func TestProposalStrings(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
 			}),
 			exp: `Store Code Proposal:
   Title:       Foo
@@ -654,7 +642,7 @@ func TestProposalYaml(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
 			}),
 			exp: `title: Foo
 description: Bar

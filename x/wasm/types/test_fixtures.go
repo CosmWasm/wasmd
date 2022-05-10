@@ -125,7 +125,7 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 }
 
 func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
-	var wasmIdent = []byte("\x00\x61\x73\x6D")
+	wasmIdent := []byte("\x00\x61\x73\x6D")
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	r := &MsgStoreCode{
 		Sender:                anyAddress,

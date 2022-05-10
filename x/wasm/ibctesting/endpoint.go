@@ -133,9 +133,7 @@ func (endpoint *Endpoint) UpdateClient() (err error) {
 	// ensure counterparty has committed state
 	endpoint.Chain.Coordinator.CommitBlock(endpoint.Counterparty.Chain)
 
-	var (
-		header exported.Header
-	)
+	var header exported.Header
 
 	switch endpoint.ClientConfig.GetClientType() {
 	case exported.Tendermint:
@@ -156,7 +154,6 @@ func (endpoint *Endpoint) UpdateClient() (err error) {
 	require.NoError(endpoint.Chain.t, err)
 
 	return endpoint.Chain.sendMsgs(msg)
-
 }
 
 // ConnOpenInit will construct and execute a MsgConnectionOpenInit on the associated endpoint.

@@ -142,12 +142,12 @@ func TestAccessTypeUnmarshalJson(t *testing.T) {
 		})
 	}
 }
+
 func TestParamsUnmarshalJson(t *testing.T) {
 	specs := map[string]struct {
 		src string
 		exp Params
 	}{
-
 		"defaults": {
 			src: `{"code_upload_access": {"permission": "Everybody"},
 				"instantiate_default_permission": "Everybody"}`,
