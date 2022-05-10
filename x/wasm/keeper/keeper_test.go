@@ -183,6 +183,84 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	}
 }
 
+// ensure that the user cannot set the code instantiate permission to something more permissive
+// than the default
+func TestEnforceValidPermissionsOnCreate(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	keeper := keepers.WasmKeeper
+	contractKeeper := keepers.ContractKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	other := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+
+	onlyCreator := types.AccessTypeOnlyAddress.With(creator)
+	onlyOther := types.AccessTypeOnlyAddress.With(other)
+
+	specs := map[string]struct {
+		defaultPermssion    types.AccessType
+		requestedPermission *types.AccessConfig
+		// grantedPermission is set iff no error
+		grantedPermission types.AccessConfig
+		// expError is nil iff the request is allowed
+		expError *sdkerrors.Error
+	}{
+		"override everybody": {
+			defaultPermssion:    types.AccessTypeEverybody,
+			requestedPermission: &onlyCreator,
+			grantedPermission:   onlyCreator,
+		},
+		"default to everybody": {
+			defaultPermssion:    types.AccessTypeEverybody,
+			requestedPermission: nil,
+			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
+		},
+		"explicitly set everybody": {
+			defaultPermssion:    types.AccessTypeEverybody,
+			requestedPermission: &types.AccessConfig{Permission: types.AccessTypeEverybody},
+			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
+		},
+		"cannot override nobody": {
+			defaultPermssion:    types.AccessTypeNobody,
+			requestedPermission: &onlyCreator,
+			expError:            sdkerrors.ErrUnauthorized,
+		},
+		"default to nobody": {
+			defaultPermssion:    types.AccessTypeNobody,
+			requestedPermission: nil,
+			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
+		},
+		"only defaults to code creator": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: nil,
+			grantedPermission:   onlyCreator,
+		},
+		"can explicitly set to code creator": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: &onlyCreator,
+			grantedPermission:   onlyCreator,
+		},
+		"cannot override which address in only": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: &onlyOther,
+			expError:            sdkerrors.ErrUnauthorized,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			params := types.DefaultParams()
+			params.InstantiateDefaultPermission = spec.defaultPermssion
+			keeper.SetParams(ctx, params)
+			codeID, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
+			require.True(t, spec.expError.Is(err), err)
+			if spec.expError == nil {
+				codeInfo := keeper.GetCodeInfo(ctx, codeID)
+				require.Equal(t, codeInfo.InstantiateConfig, spec.grantedPermission)
+			}
+		})
+	}
+}
+
 func TestCreateDuplicate(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper

@@ -372,3 +372,84 @@ func TestVerifyAddressLen(t *testing.T) {
 		})
 	}
 }
+
+func TestAccesConfigSubset(t *testing.T) {
+	specs := map[string]struct {
+		check    AccessConfig
+		superSet AccessConfig
+		isSubSet bool
+	}{
+		"nobody <= nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: true,
+		},
+		"only > nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
+			isSubSet: false,
+		},
+		"everybody > nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: false,
+		},
+		"unspecified > nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
+		"nobody <= everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: true,
+		},
+		"only <= everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
+			isSubSet: true,
+		},
+		"everybody <= everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: true,
+		},
+		"unspecified > everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
+		"nobody <= only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: true,
+		},
+		"only <= only(same)": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			isSubSet: true,
+		},
+		"only > only(other)": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "other"},
+			isSubSet: false,
+		},
+		"everybody > only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: false,
+		},
+		"nobody > unspecified": {
+			superSet: AccessConfig{Permission: AccessTypeUnspecified},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: false,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			subset := spec.check.IsSubset(spec.superSet)
+			require.Equal(t, spec.isSubSet, subset)
+		})
+	}
+}
