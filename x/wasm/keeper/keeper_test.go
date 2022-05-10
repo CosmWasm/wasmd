@@ -192,8 +192,10 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	other := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	onlyCreator := types.AccessTypeOnlyAddress.With(creator)
+	onlyOther := types.AccessTypeOnlyAddress.With(other)
 
 	specs := map[string]struct {
 		defaultPermssion    types.AccessType
@@ -213,6 +215,11 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
+		"explicitly set everybody": {
+			defaultPermssion:    types.AccessTypeEverybody,
+			requestedPermission: &types.AccessConfig{Permission: types.AccessTypeEverybody},
+			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeEverybody},
+		},
 		"cannot override nobody": {
 			defaultPermssion:    types.AccessTypeNobody,
 			requestedPermission: &onlyCreator,
@@ -222,6 +229,21 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 			defaultPermssion:    types.AccessTypeNobody,
 			requestedPermission: nil,
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
+		},
+		"only defaults to code creator": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: nil,
+			grantedPermission:   onlyCreator,
+		},
+		"can explicitly set to code creator": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: &onlyCreator,
+			grantedPermission:   onlyCreator,
+		},
+		"cannot override which address in only": {
+			defaultPermssion:    types.AccessTypeOnlyAddress,
+			requestedPermission: &onlyOther,
+			expError:            sdkerrors.ErrUnauthorized,
 		},
 	}
 	for msg, spec := range specs {

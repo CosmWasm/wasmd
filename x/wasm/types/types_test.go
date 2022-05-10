@@ -394,6 +394,11 @@ func TestAccesConfigSubset(t *testing.T) {
 			check:    AccessConfig{Permission: AccessTypeEverybody},
 			isSubSet: false,
 		},
+		"unspecified > nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
 		"nobody <= everybody": {
 			superSet: AccessConfig{Permission: AccessTypeEverybody},
 			check:    AccessConfig{Permission: AccessTypeNobody},
@@ -408,6 +413,11 @@ func TestAccesConfigSubset(t *testing.T) {
 			superSet: AccessConfig{Permission: AccessTypeEverybody},
 			check:    AccessConfig{Permission: AccessTypeEverybody},
 			isSubSet: true,
+		},
+		"unspecified > everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
 		},
 		"nobody <= only": {
 			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
@@ -432,11 +442,6 @@ func TestAccesConfigSubset(t *testing.T) {
 		"nobody > unspecified": {
 			superSet: AccessConfig{Permission: AccessTypeUnspecified},
 			check:    AccessConfig{Permission: AccessTypeNobody},
-			isSubSet: false,
-		},
-		"unspecified > everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeUnspecified},
 			isSubSet: false,
 		},
 	}
