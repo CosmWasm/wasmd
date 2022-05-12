@@ -72,7 +72,7 @@ func WeightedOperations(
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
-			SimulateMsgInstantiateContract(ak, bk, wasmKeeper, DefaultSimulationCodeIdSelector),
+			SimulateMsgInstantiateContract(ak, bk, wasmKeeper, DefaultSimulationCodeIDSelector),
 		),
 	}
 }
@@ -119,11 +119,11 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 	}
 }
 
-// SimulationCodeIdSelector returns code id to be used in simulations
-type SimulationCodeIdSelector = func(ctx sdk.Context, wasmKeeper WasmKeeper) uint64
+// CodeIDSelector returns code id to be used in simulations
+type CodeIDSelector = func(ctx sdk.Context, wasmKeeper WasmKeeper) uint64
 
-// DefaultSimulationCodeIdSelector picks the first code id
-func DefaultSimulationCodeIdSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uint64 {
+// DefaultSimulationCodeIDSelector picks the first code id
+func DefaultSimulationCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uint64 {
 	var codeID uint64
 	wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
 		if info.InstantiateConfig.Permission != types.AccessTypeEverybody {
@@ -136,7 +136,7 @@ func DefaultSimulationCodeIdSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uin
 }
 
 // SimulateMsgInstantiateContract generates a MsgInstantiateContract with random values
-func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, codeSelector SimulationCodeIdSelector) simtypes.Operation {
+func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
