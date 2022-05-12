@@ -2,15 +2,16 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/codchen/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/codchen/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestIBCQuerier(t *testing.T) {

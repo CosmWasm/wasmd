@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/codchen/wasmd/x/wasm/keeper/wasmtesting"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/codchen/wasmd/x/wasm/types"
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

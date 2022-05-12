@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/codchen/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"

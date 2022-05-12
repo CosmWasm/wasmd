@@ -2,8 +2,9 @@ package wasm
 
 import (
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/codchen/wasmd/x/wasm/keeper"
+	"github.com/codchen/wasmd/x/wasm/types"
 	"github.com/gogo/protobuf/proto"
 	abci "github.com/tendermint/tendermint/abci/types"
 

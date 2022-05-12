@@ -2,7 +2,8 @@ package keeper
 
 import (
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+
+	"github.com/codchen/wasmd/x/wasm/types"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

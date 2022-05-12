@@ -6,8 +6,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"io/ioutil"
+	"math/rand"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/codchen/wasmd/x/wasm/types"
+	wasmTypes "github.com/codchen/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,11 +31,6 @@ import (
 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-	"io/ioutil"
-	"math/rand"
-	"os"
-	"testing"
-	"time"
 )
 
 const firstCodeID = 1

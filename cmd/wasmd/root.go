@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmkeeper "github.com/codchen/wasmd/x/wasm/keeper"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	clientcodec "github.com/CosmWasm/wasmd/x/wasm/client/codec"
+	"github.com/codchen/wasmd/x/wasm"
+	clientcodec "github.com/codchen/wasmd/x/wasm/client/codec"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
 	bankcmd "github.com/cosmos/cosmos-sdk/x/bank/client/cli"
@@ -20,7 +20,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/app"
+	"github.com/codchen/wasmd/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"

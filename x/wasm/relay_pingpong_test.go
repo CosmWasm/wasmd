@@ -3,21 +3,22 @@ package wasm_test
 import (
 	"encoding/json"
 	"fmt"
-	wasmd "github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmd "github.com/codchen/wasmd/app"
+	wasmibctesting "github.com/codchen/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/codchen/wasmd/x/wasm/keeper"
+	"github.com/codchen/wasmd/x/wasm/keeper/wasmtesting"
+	wasmtypes "github.com/codchen/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/cosmos-sdk/x/ibc/core/02-client/types"
-	channeltypes "github.com/cosmos/cosmos-sdk/x/ibc/core/04-channel/types"
-	ibcexported "github.com/cosmos/cosmos-sdk/x/ibc/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v2/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 const (

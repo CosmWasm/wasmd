@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	wasmUtils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmUtils "github.com/codchen/wasmd/x/wasm/client/utils"
+	"github.com/codchen/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -2,13 +2,14 @@ package keeper
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
 	"io/ioutil"
 	"strings"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/golang/protobuf/proto"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/codchen/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

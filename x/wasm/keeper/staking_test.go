@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"encoding/json"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"io/ioutil"
 	"testing"
+
+	wasmtypes "github.com/codchen/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

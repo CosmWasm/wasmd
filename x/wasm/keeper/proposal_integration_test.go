@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"io/ioutil"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/codchen/wasmd/x/wasm/keeper/wasmtesting"
+
+	"github.com/codchen/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"

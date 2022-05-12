@@ -10,7 +10,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/codchen/wasmd/x/wasm"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
