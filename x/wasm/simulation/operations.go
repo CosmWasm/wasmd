@@ -68,17 +68,17 @@ func WeightedOperations(
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgStoreCode,
-			SimulateMsgStoreCode(ak, bk, wasmKeeper, wasmBz),
+			SimulateMsgStoreCode(ak, bk, wasmKeeper, wasmBz, 5_000_000),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
-			SimulateMsgInstantiateContract(ak, bk, wasmKeeper),
+			SimulateMsgInstantiateContract(ak, bk, wasmKeeper, DefaultSimulationCodeIdSelector),
 		),
 	}
 }
 
 // SimulateMsgStoreCode generates a MsgStoreCode with random values
-func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte) simtypes.Operation {
+func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte, gas uint64) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -115,12 +115,28 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 			ModuleName:    types.ModuleName,
 		}
 
-		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+		return GenAndDeliverTxWithRandFees(txCtx, gas)
 	}
 }
 
+// SimulationCodeIdSelector returns code id to be used in simulations
+type SimulationCodeIdSelector = func(ctx sdk.Context, wasmKeeper WasmKeeper) uint64
+
+// DefaultSimulationCodeIdSelector picks the first code id
+func DefaultSimulationCodeIdSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uint64 {
+	var codeID uint64
+	wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
+		if info.InstantiateConfig.Permission != types.AccessTypeEverybody {
+			return false
+		}
+		codeID = u
+		return true
+	})
+	return codeID
+}
+
 // SimulateMsgInstantiateContract generates a MsgInstantiateContract with random values
-func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper) simtypes.Operation {
+func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, codeSelector SimulationCodeIdSelector) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -130,42 +146,34 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKe
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		var codeID uint64
-		wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
-			if info.InstantiateConfig.Permission != types.AccessTypeEverybody {
-				return false
-			}
-			codeID = u
-			return true
-		})
-
+		codeID := codeSelector(ctx, wasmKeeper)
 		if codeID == 0 {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgInstantiateContract{}.Type(), "no codes with permission available"), nil, nil
 		}
 
-		spendable := bk.SpendableCoins(ctx, simAccount.Address)
-
+		deposit := simtypes.RandSubsetCoins(r, bk.SpendableCoins(ctx, simAccount.Address))
 		msg := types.MsgInstantiateContract{
 			Sender: simAccount.Address.String(),
 			Admin:  simtypes.RandomAccounts(r, 1)[0].Address.String(),
 			CodeID: codeID,
 			Label:  simtypes.RandStringOfLength(r, 10),
 			Msg:    []byte(`{}`),
-			Funds:  simtypes.RandSubsetCoins(r, spendable),
+			Funds:  deposit,
 		}
 
 		txCtx := simulation.OperationInput{
-			R:             r,
-			App:           app,
-			TxGen:         simappparams.MakeTestEncodingConfig().TxConfig,
-			Cdc:           nil,
-			Msg:           &msg,
-			MsgType:       msg.Type(),
-			Context:       ctx,
-			SimAccount:    simAccount,
-			AccountKeeper: ak,
-			Bankkeeper:    bk,
-			ModuleName:    types.ModuleName,
+			R:               r,
+			App:             app,
+			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			Cdc:             nil,
+			Msg:             &msg,
+			MsgType:         msg.Type(),
+			Context:         ctx,
+			SimAccount:      simAccount,
+			AccountKeeper:   ak,
+			Bankkeeper:      bk,
+			ModuleName:      types.ModuleName,
+			CoinsSpentInMsg: deposit,
 		}
 
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
