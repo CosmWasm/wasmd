@@ -455,7 +455,6 @@ func NewWasmApp(
 	transferModule := transfer.NewAppModule(app.transferKeeper)
 	transferIBCModule := transfer.NewIBCModule(app.transferKeeper)
 
-	_ = app.getSubspace(icahosttypes.SubModuleName)
 	app.icaHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
 		keys[icahosttypes.StoreKey],
