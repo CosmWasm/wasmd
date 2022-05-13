@@ -90,15 +90,15 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgStoreCode{}.Type(), "no chain permission"), nil, nil
 		}
 
-		config := &types.AccessConfig{
-			Permission: wasmKeeper.GetParams(ctx).InstantiateDefaultPermission,
-		}
-
 		simAccount, _ := simtypes.RandomAcc(r, accs)
+
+		permission := wasmKeeper.GetParams(ctx).InstantiateDefaultPermission
+		config := permission.With(simAccount.Address)
+
 		msg := types.MsgStoreCode{
 			Sender:                simAccount.Address.String(),
 			WASMByteCode:          wasmBz,
-			InstantiatePermission: config,
+			InstantiatePermission: &config,
 		}
 
 		txCtx := simulation.OperationInput{
