@@ -36,7 +36,7 @@ func RandomParams(r *rand.Rand) types.Params {
 	account, _ := simtypes.RandomAcc(r, simtypes.RandomAccounts(r, 10))
 	accessConfig := permissionType.With(account.Address)
 	return types.Params{
-		CodeUploadAccess:             accessConfig,
+		CodeUploadAccess:             types.AllowEverybody,
 		InstantiateDefaultPermission: accessConfig.Permission,
 	}
 }

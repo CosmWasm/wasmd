@@ -91,7 +91,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 		}
 
 		config := &types.AccessConfig{
-			Permission: types.AccessTypeEverybody,
+			Permission: wasmKeeper.GetParams(ctx).InstantiateDefaultPermission,
 		}
 
 		simAccount, _ := simtypes.RandomAcc(r, accs)
