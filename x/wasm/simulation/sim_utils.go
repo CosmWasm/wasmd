@@ -40,7 +40,6 @@ func GenAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins, gas uint64
 		[]uint64{account.GetSequence()},
 		txCtx.SimAccount.PrivKey,
 	)
-
 	if err != nil {
 		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate mock tx"), nil, err
 	}
@@ -51,5 +50,4 @@ func GenAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins, gas uint64
 	}
 
 	return simtypes.NewOperationMsg(txCtx.Msg, true, "", txCtx.Cdc), nil, nil
-
 }
