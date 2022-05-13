@@ -13,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	simKeeper "github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
@@ -105,7 +104,7 @@ type AppModule struct {
 	keeper             *Keeper
 	validatorSetSource keeper.ValidatorSetSource
 	accountKeeper      types.AccountKeeper // for simulation
-	bankKeeper         simKeeper.BankKeeper
+	bankKeeper         simulation.BankKeeper
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the
@@ -120,7 +119,7 @@ func NewAppModule(
 	keeper *Keeper,
 	validatorSetSource keeper.ValidatorSetSource,
 	ak types.AccountKeeper,
-	bk simKeeper.BankKeeper,
+	bk simulation.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic:     AppModuleBasic{},

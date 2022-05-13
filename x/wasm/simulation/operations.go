@@ -28,12 +28,16 @@ type WasmKeeper interface {
 	GetParams(ctx sdk.Context) types.Params
 	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
 }
+type BankKeeper interface {
+	simulation.BankKeeper
+	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
+}
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
 	simstate *module.SimulationState,
 	ak types.AccountKeeper,
-	bk simulation.BankKeeper,
+	bk BankKeeper,
 	wasmKeeper WasmKeeper,
 ) simulation.WeightedOperations {
 	var (
@@ -136,7 +140,7 @@ func DefaultSimulationCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uin
 }
 
 // SimulateMsgInstantiateContract generates a MsgInstantiateContract with random values
-func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.Operation {
+func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -150,8 +154,14 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKe
 		if codeID == 0 {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgInstantiateContract{}.Type(), "no codes with permission available"), nil, nil
 		}
+		deposit := sdk.Coins{}
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		for _, v := range spendableCoins {
+			if bk.IsSendEnabledCoin(ctx, v) {
+				deposit = deposit.Add(simtypes.RandSubsetCoins(r, sdk.NewCoins(v))...)
+			}
+		}
 
-		deposit := simtypes.RandSubsetCoins(r, bk.SpendableCoins(ctx, simAccount.Address))
 		msg := types.MsgInstantiateContract{
 			Sender: simAccount.Address.String(),
 			Admin:  simtypes.RandomAccounts(r, 1)[0].Address.String(),
