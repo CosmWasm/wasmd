@@ -10,13 +10,12 @@ import (
 	"io/ioutil"
 	"strconv"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-
-	wasmvmapi "github.com/CosmWasm/wasmvm/api"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -52,7 +51,7 @@ func GetCmdLibVersion() *cobra.Command {
 		Aliases: []string{"lib-version"},
 		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			version, err := wasmvmapi.LibwasmvmVersion()
+			version, err := wasmvm.LibwasmvmVersion()
 			if err != nil {
 				return fmt.Errorf("error retrieving libwasmvm version: %w", err)
 			}
