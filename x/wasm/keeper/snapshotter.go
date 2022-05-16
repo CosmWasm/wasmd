@@ -98,6 +98,14 @@ func (ws *WasmSnapshotter) Restore(
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
+func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {
+	// noop
+}
+
+func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {
+	// noop
+}
+
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {

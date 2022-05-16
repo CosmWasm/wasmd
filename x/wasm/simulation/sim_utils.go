@@ -49,5 +49,5 @@ func GenAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins, gas uint64
 		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to deliver tx"), nil, err
 	}
 
-	return simtypes.NewOperationMsg(txCtx.Msg, true, "", txCtx.Cdc), nil, nil
+	return simtypes.NewOperationMsg(txCtx.Msg, true, "", 1, 1, txCtx.Cdc), nil, nil
 }

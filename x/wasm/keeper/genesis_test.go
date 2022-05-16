@@ -75,7 +75,7 @@ func TestGenesisExportImport(t *testing.T) {
 			anyTime := time.Now().UTC()
 			var nestedType govtypes.TextProposal
 			f.NilChance(0).Fuzz(&nestedType)
-			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime)
+			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime, false)
 			require.NoError(t, err)
 			contract.SetExtension(&myExtension)
 		}
@@ -646,7 +646,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	)
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewNopLogger())
 	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)

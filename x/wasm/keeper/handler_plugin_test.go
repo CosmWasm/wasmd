@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
@@ -332,7 +332,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // with deposit of 100 stake
 
-	before, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	before, _, err := keepers.BankKeeper.GetPaginatedTotalSupply(ctx, &query.PageRequest{})
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -398,9 +398,9 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			require.NoError(t, err)
 
 			// and total supply reduced by burned amount
-			after, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+			after, _, err := keepers.BankKeeper.GetPaginatedTotalSupply(ctx, &query.PageRequest{})
 			require.NoError(t, err)
-			diff := before.Supply.Sub(after.Supply)
+			diff := before.Sub(after)
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
 		})
 	}
