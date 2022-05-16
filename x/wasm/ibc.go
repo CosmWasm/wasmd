@@ -59,7 +59,7 @@ func (i IBCHandler) OnChanOpenInit(
 			},
 		},
 	}
-	err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
+	_, err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
 		return err
 	}
@@ -103,11 +103,15 @@ func (i IBCHandler) OnChanOpenTry(
 		},
 	}
 
-	// DESIGN V3: Allow contracts to return a version (or default to counterpartyVersion if unset)
-	err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
+	// Allow contracts to return a version (or default to counterpartyVersion if unset)
+	version, err := i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
 		return "", err
 	}
+	if version == "" {
+		version = counterpartyVersion
+	}
+
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
 	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
 	// If module can already authenticate the capability then module already owns it so we don't need to claim
@@ -119,9 +123,7 @@ func (i IBCHandler) OnChanOpenTry(
 		}
 	}
 
-	// In the future, we can negotiate (see design comment above), but for now, we only error if we disagee
-	// with the proposed version
-	return counterpartyVersion, nil
+	return version, nil
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -240,7 +242,7 @@ func (i IBCHandler) OnRecvPacket(
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(err, "contract port id").Error())
 	}
-	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet)}
+	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err.Error())
@@ -275,6 +277,7 @@ func (i IBCHandler) OnAcknowledgementPacket(
 	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
 		Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
 		OriginalPacket:  newIBCPacket(packet),
+		Relayer:         relayer.String(),
 	})
 	if err != nil {
 		return sdkerrors.Wrap(err, "on ack")
@@ -288,7 +291,7 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 	if err != nil {
 		return sdkerrors.Wrapf(err, "contract port id")
 	}
-	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet)}
+	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
 		return sdkerrors.Wrap(err, "on timeout")

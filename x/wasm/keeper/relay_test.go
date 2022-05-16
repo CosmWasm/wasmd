@@ -72,7 +72,7 @@ func TestOnOpenChannel(t *testing.T) {
 					CounterpartyVersion: "foo",
 				},
 			}
-			err := keepers.WasmKeeper.OnOpenChannel(ctx, spec.contractAddr, msg)
+			_, err := keepers.WasmKeeper.OnOpenChannel(ctx, spec.contractAddr, msg)
 
 			// then
 			if spec.expErr {
