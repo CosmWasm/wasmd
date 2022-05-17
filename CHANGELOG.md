@@ -1,6 +1,13 @@
 # Changelog
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.27.0...HEAD)
+
+## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-17)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.26.0...v0.27.0)
+
 **API Breaking**
 Yes
 
@@ -11,7 +18,7 @@ Yes
 
 **Implemented Enhancements**
 - Add UpdateInstantiateConfig governance proposal [\#820](https://github.com/CosmWasm/wasmd/pull/796) ([jhernandezb](https://github.com/jhernandezb))
-- Upgrade wasmvm to v1.0.0-rc.0 [\#844](https://github.com/CosmWasm/wasmd/pull/844)
+- Upgrade wasmvm to v1.0.0 [\#844](https://github.com/CosmWasm/wasmd/pull/844) and [\#858](https://github.com/CosmWasm/wasmd/pull/858)
 - Support state sync [\#478](https://github.com/CosmWasm/wasmd/issues/478)
 - Upgrade to ibc-go v3 [\#806](https://github.com/CosmWasm/wasmd/issues/806)
 - Initial ICA integration [\#837](https://github.com/CosmWasm/wasmd/pull/837) ([ethanfrey](https://github.com/ethanfrey))
@@ -20,8 +27,6 @@ Yes
 - Bump sdk to v0.45.4 [\#818](https://github.com/CosmWasm/wasmd/pull/818) ([alpe](https://github.com/alpe))
 - Bump buf docker image to fix proto generation issues [\#820](https://github.com/CosmWasm/wasmd/pull/820) ([alpe](https://github.com/alpe))
 - Add MsgStoreCode and MsgInstantiateContract support to simulations [\#831](https://github.com/CosmWasm/wasmd/pull/831) ([pinosu](https://github.com/pinosu))
-
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.26.0...HEAD)
 
 **Implemented Enhancements**
 
