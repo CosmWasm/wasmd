@@ -19,6 +19,13 @@ type MockChannelKeeper struct {
 	SetChannelFn          func(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 }
 
+func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel) {
+	if m.GetChannelFn == nil {
+		panic("not supposed to be called!")
+	}
+	m.SetChannelFn(ctx, portID, channelID, channel)
+}
+
 func (m *MockChannelKeeper) GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
 	if m.GetChannelFn == nil {
 		panic("not supposed to be called!")

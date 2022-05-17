@@ -95,17 +95,16 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}}}}
+					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
 					return myEvents, [][]byte{[]byte("myData")}, nil
 				},
 			},
 			expData:    []byte("myReplyData"),
 			expCommits: []bool{true},
-			expEvents: []sdk.Event{
-				{
-					Type:       "myEvent",
-					Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
-				},
+			expEvents: []sdk.Event{{
+				Type:       "myEvent",
+				Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}},
+			},
 				sdk.NewEvent("wasm-reply"),
 			},
 		},
@@ -116,7 +115,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}}}}
+					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
 					ctx.EventManager().EmitEvents(myEvents)
 					return nil, nil, nil
 				},
@@ -124,7 +123,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			expCommits: []bool{true},
 			expEvents: []sdk.Event{{
 				Type:       "myEvent",
-				Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
+				Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}},
 			}},
 		},
 		"with context events - discarded on failure": {
@@ -134,7 +133,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}}}}
+					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
 					ctx.EventManager().EmitEvents(myEvents)
 					return nil, nil, errors.New("testing")
 				},

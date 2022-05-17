@@ -482,6 +482,7 @@ func codeSeqValue(state *types.GenesisState) uint64 {
 // The flag value can either be an address already or a key name where the
 // address is read from the keyring instead.
 func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
+	clientCtx := client.GetClientContextFromCmd(cmd)
 	actorArg, err := cmd.Flags().GetString(flagRunAs)
 	if err != nil {
 		return nil, fmt.Errorf("run-as: %s", err.Error())
@@ -502,7 +503,7 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 
 	homeDir := client.GetClientContextFromCmd(cmd).HomeDir
 	// attempt to lookup address from Keybase if no address was provided
-	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf)
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf, clientCtx.Codec)
 	if err != nil {
 		return nil, err
 	}
@@ -511,5 +512,5 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get address from Keybase: %w", err)
 	}
-	return info.GetAddress(), nil
+	return info.GetAddress()
 }

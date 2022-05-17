@@ -1,29 +1,30 @@
 package keeper_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func TestCountTxDecorator(t *testing.T) {
+func TestCountTxHandle(t *testing.T) {
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100
 
@@ -99,10 +100,10 @@ func TestCountTxDecorator(t *testing.T) {
 
 			spec.setupDB(t, ctx)
 			var anyTx sdk.Tx
+			txHandler := middleware.ComposeMiddlewares(noopTxHandler, keeper.CountTxMiddleware(keyWasm))
 
-			// when
-			ante := keeper.NewCountTXDecorator(keyWasm)
-			_, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, spec.nextAssertAnte)
+			// test DeliverTx
+			_, _, gotErr := txHandler.CheckTx(ctx, txtypes.Request{Tx: anyTx}, txtypes.RequestCheckTx{})
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -112,7 +113,7 @@ func TestCountTxDecorator(t *testing.T) {
 	}
 }
 
-func TestLimitSimulationGasDecorator(t *testing.T) {
+func TestLimitSimulationGasMiddleware(t *testing.T) {
 	var (
 		hundred sdk.Gas = 100
 		zero    sdk.Gas = 0
@@ -161,29 +162,78 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
 				WithGasMeter(sdk.NewInfiniteGasMeter()).
-				WithConsensusParams(&abci.ConsensusParams{
-					Block: &abci.BlockParams{MaxGas: spec.maxBlockGas},
-				})
-			// when
+				WithConsensusParams(&tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas}})
+
+			//setting TxHandler
+			var anyTx sdk.Tx
+
+			txHandler := middleware.ComposeMiddlewares(
+				noopTxHandler,
+				keeper.LimitSimulationGasMiddleware(spec.customLimit),
+				cosumeGasTxMiddleware(spec.consumeGas),
+			)
+
 			if spec.expErr != nil {
 				require.PanicsWithValue(t, spec.expErr, func() {
-					ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-					ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+					txHandler.SimulateTx(ctx, txtypes.Request{Tx: anyTx})
 				})
 				return
 			}
-			ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-			ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
 		})
 	}
 }
 
-func consumeGasAnteHandler(gasToConsume sdk.Gas) sdk.AnteHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-		ctx.GasMeter().ConsumeGas(gasToConsume, "testing")
-		return ctx, nil
+// customTxHandler is a test middleware that will run a custom function.
+type customTxHandler struct {
+	fn func(context.Context, tx.Request) (tx.Response, error)
+}
+
+var _ tx.Handler = customTxHandler{}
+
+func (h customTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	return h.fn(ctx, req)
+}
+func (h customTxHandler) CheckTx(ctx context.Context, req tx.Request, _ tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
+	res, err := h.fn(ctx, req)
+	return res, tx.ResponseCheckTx{}, err
+}
+func (h customTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	return h.fn(ctx, req)
+}
+
+// noopTxHandler is a test middleware that returns an empty response.
+var noopTxHandler = customTxHandler{func(_ context.Context, _ tx.Request) (tx.Response, error) {
+	return tx.Response{}, nil
+}}
+
+// customTxHandler is a test middleware that will run a custom function.
+type cosumeGasTxHandler struct {
+	gasToConsume sdk.Gas
+	next         tx.Handler
+}
+
+var _ tx.Handler = cosumeGasTxHandler{}
+
+func (h cosumeGasTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	return h.next.DeliverTx(ctx, req)
+}
+func (h cosumeGasTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
+	return h.next.CheckTx(ctx, req, checkReq)
+}
+func (h cosumeGasTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.GasMeter().ConsumeGas(h.gasToConsume, "testing")
+	return h.next.SimulateTx(ctx, req)
+}
+
+func cosumeGasTxMiddleware(gas sdk.Gas) tx.Middleware {
+	return func(txh tx.Handler) tx.Handler {
+		return cosumeGasTxHandler{
+			gasToConsume: gas,
+			next:         txh,
+		}
 	}
 }

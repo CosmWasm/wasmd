@@ -513,6 +513,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 		},
 		"onlyAddress with non matching address": {
 			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
+			srcActor:      myAddr,
 			expError:      sdkerrors.ErrUnauthorized,
 		},
 	}
@@ -623,7 +624,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x17cd2), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x19505), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)

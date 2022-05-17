@@ -122,7 +122,7 @@ distclean: clean
 
 
 test: test-unit
-test-all: check test-race test-cover
+test-all: test-race test-cover
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...

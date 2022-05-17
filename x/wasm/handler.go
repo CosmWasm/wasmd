@@ -64,8 +64,8 @@ func filterMessageEvents(ctx sdk.Context) *sdk.EventManager {
 
 func hasWasmModuleAttribute(attrs []abci.EventAttribute) bool {
 	for _, a := range attrs {
-		if sdk.AttributeKeyModule == string(a.Key) &&
-			types.ModuleName == string(a.Value) {
+		if sdk.AttributeKeyModule == a.Key &&
+			types.ModuleName == a.Value {
 			return true
 		}
 	}

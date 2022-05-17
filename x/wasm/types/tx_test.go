@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/legacy/legacytx"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -500,45 +498,6 @@ func TestMsgMigrateContract(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-		})
-	}
-}
-
-func TestMsgJsonSignBytes(t *testing.T) {
-	const myInnerMsg = `{"foo":"bar"}`
-	specs := map[string]struct {
-		src legacytx.LegacyMsg
-		exp string
-	}{
-		"MsgInstantiateContract": {
-			src: &MsgInstantiateContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgInstantiateContract",
-	"value": {"msg": {"foo":"bar"}, "funds":[]}
-}`,
-		},
-		"MsgExecuteContract": {
-			src: &MsgExecuteContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgExecuteContract",
-	"value": {"msg": {"foo":"bar"}, "funds":[]}
-}`,
-		},
-		"MsgMigrateContract": {
-			src: &MsgMigrateContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgMigrateContract",
-	"value": {"msg": {"foo":"bar"}}
-}`,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			bz := spec.src.GetSignBytes()
-			assert.JSONEq(t, spec.exp, string(bz), "raw: %s", string(bz))
 		})
 	}
 }

@@ -2,11 +2,12 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // RegisterLegacyAminoCodec registers the account types and interface
@@ -43,9 +44,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgIBCSend{},
 	)
 	registry.RegisterImplementations(
-		(*govtypes.Content)(nil),
-		&StoreCodeProposal{},
-		&InstantiateContractProposal{},
+		(*govtypesv1beta1.Content)(nil),
 		&MigrateContractProposal{},
 		&SudoContractProposal{},
 		&ExecuteContractProposal{},
@@ -53,7 +52,8 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&ClearAdminProposal{},
 		&PinCodesProposal{},
 		&UnpinCodesProposal{},
-		&UpdateInstantiateConfigProposal{},
+		&StoreCodeProposal{},
+		&InstantiateContractProposal{},
 	)
 
 	registry.RegisterInterface("ContractInfoExtension", (*ContractInfoExtension)(nil))
@@ -70,6 +70,7 @@ var (
 )
 
 func init() {
+	RegisterLegacyAminoCodec(legacy.Cdc)
 	RegisterLegacyAminoCodec(amino)
 	cryptocodec.RegisterCrypto(amino)
 	amino.Seal()
