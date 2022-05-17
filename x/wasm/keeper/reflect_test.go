@@ -85,7 +85,6 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate"
 
 func TestReflectContractSend(t *testing.T) {
-
 	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
@@ -442,7 +441,6 @@ type reflectState struct {
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
-
 	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -516,7 +514,6 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
-
 	SkipIfM1(t)
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))

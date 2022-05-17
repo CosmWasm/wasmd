@@ -101,10 +101,11 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			expData:    []byte("myReplyData"),
 			expCommits: []bool{true},
-			expEvents: []sdk.Event{{
-				Type:       "myEvent",
-				Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}},
-			},
+			expEvents: []sdk.Event{
+				{
+					Type:       "myEvent",
+					Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}},
+				},
 				sdk.NewEvent("wasm-reply"),
 			},
 		},

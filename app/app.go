@@ -22,7 +22,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/version"
 
 	// Auth-related SDK imports
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -104,6 +103,7 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	ibcmock "github.com/cosmos/ibc-go/v3/testing/mock"
+	//	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -203,7 +203,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		intertx.AppModuleBasic{},
+		//	intertx.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -266,7 +266,7 @@ type WasmApp struct {
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedInterTxKeeper		  capabilitykeeper.ScopedKeeper
+	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedIBCMockKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAMockKeeper       capabilitykeeper.ScopedKeeper
@@ -301,7 +301,6 @@ func NewWasmApp(
 	wasmOpts []wasm.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
-
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
@@ -328,7 +327,7 @@ func NewWasmApp(
 		icacontrollertypes.StoreKey,
 		icahosttypes.StoreKey,
 		wasm.StoreKey,
-		intertxtypes.StoreKey,
+		//		intertxtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -552,24 +551,18 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
-	// Create static IBC router, add app routes, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-
 	// The gov proposal types can be individually enabled
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 	ibcRouter.
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.ibcKeeper.ChannelKeeper)).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)).
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
-	app.ibcKeeper.SetRouter(ibcRouter)
-
-	// register the proposal types
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
+	//	AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
+	app.CapabilityKeeper.Seal() // Seal it so there's no escape
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -610,7 +603,7 @@ func NewWasmApp(
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
@@ -618,8 +611,8 @@ func NewWasmApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		icaModule,
-		interTxModule,
-		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
+		//	interTxModule,
+		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -647,7 +640,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		//	intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -674,7 +667,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		//		intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -707,7 +700,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		//	intertxtypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
 	)
@@ -738,7 +731,7 @@ func NewWasmApp(
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 	)
@@ -759,7 +752,7 @@ func NewWasmApp(
 	// see cmd/wasmd/root.go: 206 - 214 approx
 	if manager := app.SnapshotManager(); manager != nil {
 		err := manager.RegisterExtensions(
-			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.wasmKeeper),
+			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
 		)
 		if err != nil {
 			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
@@ -775,7 +768,7 @@ func NewWasmApp(
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
 	// note replicate if you do not need to test core IBC or light clients.
 	app.ScopedIBCMockKeeper = scopedIBCMockKeeper
-	app.ScopedICAMockKeeper = scopedICAMockKeeper	app.scopedInterTxKeeper = scopedInterTxKeeper
+	app.ScopedICAMockKeeper = scopedICAMockKeeper
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -789,32 +782,30 @@ func NewWasmApp(
 		}
 	}
 
-
 	return app
 }
 
 func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string, keys map[string]*storetypes.KVStoreKey, wasmConfig wasmtypes.WasmConfig) {
-
 	indexEvents := map[string]struct{}{}
 	for _, e := range indexEventsStr {
 		indexEvents[e] = struct{}{}
 	}
 	txHandler, err := NewDefaultTxHandler(TxHandlerOptions{
-		TxHandlerOptions:  authmiddleware.TxHandlerOptions{
-			Debug:             app.Trace(),
-			IndexEvents:       indexEvents,
-			LegacyRouter:      app.legacyRouter,
-			MsgServiceRouter:  app.MsgSvcRouter,
-			AccountKeeper:     app.AccountKeeper,
-			BankKeeper:        app.BankKeeper,
-			FeegrantKeeper:    app.FeeGrantKeeper,
-			SignModeHandler:   txConfig.SignModeHandler(),
-			SigGasConsumer:    authmiddleware.DefaultSigVerificationGasConsumer,
-			TxDecoder:         txConfig.TxDecoder(),
+		TxHandlerOptions: authmiddleware.TxHandlerOptions{
+			Debug:            app.Trace(),
+			IndexEvents:      indexEvents,
+			LegacyRouter:     app.legacyRouter,
+			MsgServiceRouter: app.MsgSvcRouter,
+			AccountKeeper:    app.AccountKeeper,
+			BankKeeper:       app.BankKeeper,
+			FeegrantKeeper:   app.FeeGrantKeeper,
+			SignModeHandler:  txConfig.SignModeHandler(),
+			SigGasConsumer:   authmiddleware.DefaultSigVerificationGasConsumer,
+			TxDecoder:        txConfig.TxDecoder(),
 		},
 		WasmConfig:        &wasmConfig,
 		TXCounterStoreKey: keys[wasm.StoreKey],
-		IBCKeeper:     app.IBCKeeper,
+		IBCKeeper:         app.IBCKeeper,
 	})
 	if err != nil {
 		panic(err)
@@ -909,7 +900,7 @@ func (app *WasmApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *WasmApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	tmservice.RegisterTendermintService(clientCtx, app.BaseApp.GRPCQueryRouter(), app.interfaceRegistry, app.Query)
 }
 
 func (app *WasmApp) AppCodec() codec.Codec {

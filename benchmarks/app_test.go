@@ -91,13 +91,11 @@ func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.Genes
 	for _, b := range balances {
 		// add genesis acc tokens and delegated tokens to total supply
 		totalSupply = totalSupply.Add(b.Coins...)
-
 	}
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
 	genesisState[banktypes.ModuleName] = appCodec.MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-
 	if err != nil {
 		panic(err)
 	}

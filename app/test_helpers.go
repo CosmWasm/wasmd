@@ -11,10 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/snapshots"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -34,18 +35,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -85,7 +77,6 @@ func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Opt
 
 // Setup initializes a new SimApp. A Nop logger is set in SimApp.
 func Setup(isCheckTx bool) *WasmApp {
-
 	privVal := wasmtypes.NewPV()
 	pubKey, err := privVal.GetPubKey(context.TODO())
 	if err != nil {
@@ -127,7 +118,9 @@ func NewValSet() *tmtypes.ValidatorSet {
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
 func SetupWithGenesisValSet(valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
-	app, genesisState := setup(true, 5, opts...)
+	var t testing.TB
+	t.Helper()
+	app, genesisState := setup(t, true, 5, opts...)
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.appCodec.MustMarshalJSON(authGenesis)
@@ -529,7 +522,8 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 
 func GenesisStateWithValSet(app *WasmApp, genesisState GenesisState,
 	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
-	balances ...banktypes.Balance) GenesisState {
+	balances ...banktypes.Balance,
+) GenesisState {
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)

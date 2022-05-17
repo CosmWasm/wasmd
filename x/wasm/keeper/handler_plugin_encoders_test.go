@@ -634,5 +634,4 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 			assert.Equal(t, spec.expVal, gotVal)
 		})
 	}
-
 }

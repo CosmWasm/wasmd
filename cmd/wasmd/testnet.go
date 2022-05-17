@@ -168,7 +168,6 @@ Example:
 			}
 
 			return initTestnetFiles(clientCtx, cmd, config, mbm, genBalIterator, args)
-
 		},
 	}
 
@@ -192,7 +191,6 @@ Example:
 	simd testnet --v 4 --output-dir ./.testnets
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-
 			var err error
 			args := startArgs{}
 			args.outputDir, err = cmd.Flags().GetString(flagOutputDir)
@@ -246,7 +244,6 @@ Example:
 			}
 
 			return startTestnet(cmd, args)
-
 		},
 	}
 
@@ -259,7 +256,7 @@ Example:
 	return cmd
 }
 
-const nodeDirPerm = 0755
+const nodeDirPerm = 0o755
 
 // initTestnetFiles initializes testnet files for a testnet to be run in a separate process
 func initTestnetFiles(
@@ -434,7 +431,6 @@ func initGenFiles(
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
 	genFiles []string, numValidators int,
 ) error {
-
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 
 	// set the accounts in the genesis state
@@ -484,7 +480,6 @@ func collectGenFiles(
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 ) error {
-
 	var appState json.RawMessage
 	genTime := tmtime.Now()
 
@@ -552,12 +547,12 @@ func calculateIP(ip string, i int) (string, error) {
 func writeFile(name string, dir string, contents []byte) error {
 	file := filepath.Join(dir, name)
 
-	err := tmos.EnsureDir(dir, 0755)
+	err := tmos.EnsureDir(dir, 0o755)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(file, contents, 0644) // nolint: gosec
+	err = ioutil.WriteFile(file, contents, 0o644) // nolint: gosec
 	if err != nil {
 		return err
 	}

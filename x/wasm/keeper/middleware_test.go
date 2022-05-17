@@ -165,9 +165,10 @@ func TestLimitSimulationGasMiddleware(t *testing.T) {
 			ctx := sdk.Context{}.
 				WithGasMeter(sdk.NewInfiniteGasMeter()).
 				WithConsensusParams(&tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas}})
+					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas},
+				})
 
-			//setting TxHandler
+			// setting TxHandler
 			var anyTx sdk.Tx
 
 			txHandler := middleware.ComposeMiddlewares(
@@ -196,10 +197,12 @@ var _ tx.Handler = customTxHandler{}
 func (h customTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	return h.fn(ctx, req)
 }
+
 func (h customTxHandler) CheckTx(ctx context.Context, req tx.Request, _ tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
 	res, err := h.fn(ctx, req)
 	return res, tx.ResponseCheckTx{}, err
 }
+
 func (h customTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	return h.fn(ctx, req)
 }
@@ -220,9 +223,11 @@ var _ tx.Handler = cosumeGasTxHandler{}
 func (h cosumeGasTxHandler) DeliverTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	return h.next.DeliverTx(ctx, req)
 }
+
 func (h cosumeGasTxHandler) CheckTx(ctx context.Context, req tx.Request, checkReq tx.RequestCheckTx) (tx.Response, tx.ResponseCheckTx, error) {
 	return h.next.CheckTx(ctx, req, checkReq)
 }
+
 func (h cosumeGasTxHandler) SimulateTx(ctx context.Context, req tx.Request) (tx.Response, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx.GasMeter().ConsumeGas(h.gasToConsume, "testing")

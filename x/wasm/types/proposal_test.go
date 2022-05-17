@@ -314,9 +314,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *SudoContractProposal
@@ -369,9 +367,7 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
@@ -430,9 +426,7 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
@@ -738,6 +732,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 		})
 	}
 }
+
 func TestProposalJsonSignBytes(t *testing.T) {
 	const myInnerMsg = `{"foo":"bar"}`
 	specs := map[string]struct {

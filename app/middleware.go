@@ -9,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	ibcmiddleware "github.com/cosmos/ibc-go/v3/modules/core/middleware"
 )
 
 // ComposeMiddlewares compose multiple middlewares on top of a tx.Handler. The
@@ -60,7 +59,7 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "sign mode handler is required for middlewares")
 	}
 
-	var sigGasConsumer = options.SigGasConsumer
+	sigGasConsumer := options.SigGasConsumer
 	if sigGasConsumer == nil {
 		sigGasConsumer = middleware.DefaultSigVerificationGasConsumer
 	}
@@ -115,6 +114,6 @@ func NewDefaultTxHandler(options TxHandlerOptions) (tx.Handler, error) {
 		middleware.ConsumeBlockGasMiddleware,
 		middleware.NewTipMiddleware(options.BankKeeper),
 		// Ibc v3 middleware
-		ibcmiddleware.IBCTxMiddleware(options.IBCKeeper),
+		ibckeeper.IBCTxMiddleware(options.IBCKeeper),
 	), nil
 }
