@@ -116,6 +116,16 @@ jobs:
             cd ./benchmarks
             go test -bench .
 
+  simulations:
+    executor: golang
+    parallelism: 1
+    steps:
+      - checkout
+      - run:
+          name: Run simulations
+          command: |
+            make test-sim-multi-seed-short
+
   upload-coverage:
     executor: golang
     steps:
@@ -218,3 +228,6 @@ workflows:
       - benchmark:
           requires:
             - test-cover
+      - simulations:
+          requires:
+            - setup-dependencies
