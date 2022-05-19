@@ -84,6 +84,9 @@ var (
 
 	// ErrTopKevelKeyNotAllowed error if a JSON object has a top-level key that is not allowed
 	ErrTopKevelKeyNotAllowed = sdkErrors.Register(DefaultCodespace, 26, "top-level key is not allowed")
+
+	// ErrExceedMaxQueryStackSize error if max query stack size is exceeded
+	ErrExceedMaxQueryStackSize = sdkErrors.Register(DefaultCodespace, 27, "max query stack size exceeded")
 )
 
 type ErrNoSuchContract struct {
