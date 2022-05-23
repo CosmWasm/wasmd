@@ -172,7 +172,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 
 	// when stored
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err := goveeper.SubmitProposal(ctx, src)
 	require.NoError(t, err)
 
 	// and proposal execute
