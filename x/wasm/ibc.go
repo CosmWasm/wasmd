@@ -34,24 +34,24 @@ func (i IBCHandler) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterParty channeltypes.Counterparty,
+	chanelCap *capabilitytypes.Capability,
+	counterparty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
-		return err
+		return "", err
 	}
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "contract port id")
+		return "", sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	msg := wasmvmtypes.IBCChannelOpenMsg{
 		OpenInit: &wasmvmtypes.IBCOpenInit{
 			Channel: wasmvmtypes.IBCChannel{
 				Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
-				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
+				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterparty.PortId, ChannelID: counterparty.ChannelId},
 				Order:                order.String(),
 				// DESIGN V3: this may be "" ??
 				Version:      version,
@@ -61,13 +61,14 @@ func (i IBCHandler) OnChanOpenInit(
 	}
 	_, err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
-		return err
+		return version, err
 	}
+
 	// Claim channel capability passed back by IBC module
-	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return sdkerrors.Wrap(err, "claim capability")
+	if err := i.keeper.ClaimCapability(ctx, chanelCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
+		return "", sdkerrors.Wrap(err, "claim capability")
 	}
-	return nil
+	return "", nil
 }
 
 // OnChanOpenTry implements the IBCModule interface
