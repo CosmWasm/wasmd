@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func TestvalidateProposalCommons(t *testing.T) {
+func TestValidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
 	}

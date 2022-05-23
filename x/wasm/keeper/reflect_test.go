@@ -85,7 +85,6 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate"
 
 func TestReflectContractSend(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
@@ -167,7 +166,6 @@ func TestReflectContractSend(t *testing.T) {
 }
 
 func TestReflectCustomMsg(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -262,9 +260,7 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
-
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
@@ -315,7 +311,6 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -323,7 +318,7 @@ func TestReflectStargateQuery(t *testing.T) {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	expectedBalance := funds.Sub(contractStart)
+	expectedBalance := funds.Sub(contractStart...)
 	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
 
 	// upload code
@@ -444,7 +439,6 @@ type reflectState struct {
 }
 
 func TestMaskReflectWasmQueries(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -518,7 +512,6 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 }
 
 func TestWasmRawQueryWithNil(t *testing.T) {
-
 	cdc := MakeEncodingConfig(t).Codec
 
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))

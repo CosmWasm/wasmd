@@ -704,7 +704,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1
 				Description:         proposalDescr,
 				AccessConfigUpdates: updates,
 			}
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := govtypesv1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}

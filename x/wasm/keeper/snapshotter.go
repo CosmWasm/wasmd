@@ -21,8 +21,10 @@ var _ snapshot.ExtensionSnapshotter = &WasmSnapshotter{}
 const SnapshotFormat = 1
 
 type WasmSnapshotter struct {
-	wasm *Keeper
-	cms  sdk.MultiStore
+	wasm             *Keeper
+	prunedHeights    map[int64]struct{}
+	cms              sdk.MultiStore
+	snapshotInterval uint64
 }
 
 func NewWasmSnapshotter(cms sdk.MultiStore, wasm *Keeper) *WasmSnapshotter {
@@ -87,6 +89,14 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 	})
 
 	return rerr
+}
+
+func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {
+	ws.prunedHeights[height] = struct{}{}
+}
+
+func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {
+	ws.snapshotInterval = snapshotInterval
 }
 
 func (ws *WasmSnapshotter) Restore(

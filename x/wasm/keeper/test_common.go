@@ -18,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	//	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -161,7 +160,7 @@ func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amount
 	ctx := parentCtx.WithEventManager(sdk.NewEventManager()) // discard all faucet related events
 	err := f.bankKeeper.SendCoins(ctx, f.sender, receiver, amounts)
 	require.NoError(f.t, err)
-	f.balance = f.balance.Sub(amounts)
+	f.balance = f.balance.Sub(amounts...)
 }
 
 func (f *TestFaucet) NewFundedAccount(ctx sdk.Context, amounts ...sdk.Coin) sdk.AccAddress {
@@ -371,10 +370,12 @@ func createTestInput(
 		scopedIBCKeeper,
 	)
 
+	router := baseapp.NewRouter()
+
 	querier := baseapp.NewGRPCQueryRouter()
 	querier.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
 	msgRouter := baseapp.NewMsgServiceRouter()
-
+	msgRouter.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
 	cfg := sdk.GetConfig()
 	cfg.SetAddressVerifier(types.VerifyAddressLen())
 
@@ -401,6 +402,8 @@ func createTestInput(
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
 
+	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
+
 	govRouter := govv1beta1.NewRouter().
 		AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
@@ -421,17 +424,18 @@ func createTestInput(
 		govConfig,
 	)
 
-	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
-	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
-	govKeeper.SetVotingParams(ctx, govv1.DefaultVotingParams())
-	govKeeper.SetTallyParams(ctx, govv1.DefaultTallyParams())
-
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
 		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
 		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
 		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper),
 	)
+
+	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
+	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
+	govKeeper.SetVotingParams(ctx, govv1.DefaultVotingParams())
+	govKeeper.SetTallyParams(ctx, govv1.DefaultTallyParams())
+
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier))
 	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
 	types.RegisterQueryServer(querier, NewGrpcQuerier(appCodec, keys[types.ModuleName], keeper, keeper.queryGasLimit))
@@ -445,7 +449,7 @@ func createTestInput(
 		BankKeeper:     bankKeeper,
 		GovKeeper:      govKeeper,
 		IBCKeeper:      ibcKeeper,
-		Router:         msgRouter,
+		Router:         router,
 		EncodingConfig: encodingConfig,
 		Faucet:         faucet,
 		MultiStore:     ms,

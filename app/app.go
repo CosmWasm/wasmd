@@ -8,13 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -25,10 +23,9 @@ import (
 
 	// Auth-related SDK imports
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	//	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	//	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -85,7 +82,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
 	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
@@ -307,7 +303,7 @@ func NewWasmApp(
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
-	bApp := baseapp.NewBaseApp(appName, logger, db, baseAppOptions...)
+	bApp := baseapp.NewBaseApp(appName, logger, db, encodingConfig.TxConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 
@@ -396,9 +392,10 @@ func NewWasmApp(
 		app.GetSubspace(banktypes.ModuleName),
 		app.ModuleAccountAddrs(),
 	)
-	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey],
+	app.AuthzKeeper = authzkeeper.NewKeeper(
+		keys[authzkeeper.StoreKey],
 		appCodec,
-		app.MsgSvcRouter,
+		app.BaseApp.MsgServiceRouter(),
 		app.AccountKeeper,
 	)
 
@@ -488,13 +485,13 @@ func NewWasmApp(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		scopedICAControllerKeeper, app.MsgSvcRouter,
+		scopedICAControllerKeeper, app.BaseApp.MsgServiceRouter(),
 	)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, scopedICAHostKeeper, app.MsgSvcRouter,
+		app.AccountKeeper, scopedICAHostKeeper, app.BaseApp.MsgServiceRouter(),
 	)
 
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
@@ -507,9 +504,7 @@ func NewWasmApp(
 
 	// Create static IBC router, add app routes, then set and seal it
 	ibcRouter := porttypes.NewRouter()
-	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerIBCModule). // ica with mock auth module stack route to ica (top level of middleware stack)
+	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(ibcmock.ModuleName, mockIBCModule)
 	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
@@ -551,7 +546,7 @@ func NewWasmApp(
 		&app.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
 		app.TransferKeeper,
-		app.MsgSvcRouter,
+		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
@@ -563,14 +558,16 @@ func NewWasmApp(
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
+
 	app.IBCKeeper.SetRouter(ibcRouter)
 	ibcRouter.
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)).
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.wasmKeeper, app.IBCKeeper.ChannelKeeper)).
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
-		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+		//		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
 	//	AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
-	app.CapabilityKeeper.Seal() // Seal it so there's no escape
+	app.IBCKeeper.SetRouter(ibcRouter)
+
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -578,7 +575,7 @@ func NewWasmApp(
 	*/
 	govKeeper := govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, govRouter, app.MsgSvcRouter, govConfig,
+		&stakingKeeper, govRouter, app.BaseApp.MsgServiceRouter(), govConfig,
 	)
 
 	app.GovKeeper = *govKeeper.SetHooks(
@@ -717,9 +714,9 @@ func NewWasmApp(
 	// app.mm.SetOrderMigrations(custom order)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
-	app.mm.RegisterRoutes(app.legacyRouter, app.QueryRouter(), encodingConfig.Amino)
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 
-	app.configurator = module.NewConfigurator(app.appCodec, app.MsgSvcRouter, app.GRPCQueryRouter())
+	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
@@ -750,10 +747,28 @@ func NewWasmApp(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
+	anteHandler, err := NewAnteHandler(
+		HandlerOptions{
+			HandlerOptions: ante.HandlerOptions{
+				AccountKeeper:   app.AccountKeeper,
+				BankKeeper:      app.BankKeeper,
+				FeegrantKeeper:  app.FeeGrantKeeper,
+				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+			},
+			IBCKeeper:         app.IBCKeeper,
+			WasmConfig:        &wasmConfig,
+			TXCounterStoreKey: keys[wasm.StoreKey],
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("failed to create AnteHandler: %s", err))
+	}
+
+	app.SetAnteHandler(anteHandler)
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setTxHandler(encodingConfig.TxConfig, cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents)), keys, wasmConfig)
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption
@@ -863,8 +878,6 @@ func (app *WasmApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APICo
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
-	// Register legacy and grpc-gateway routes for all modules.
-	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register swagger API from root so that other applications can override easily
