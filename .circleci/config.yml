@@ -125,6 +125,8 @@ jobs:
           name: Run simulations
           command: |
             make test-sim-multi-seed-short
+      - store_artifacts:
+          path: /tmp/sim-logs-*
 
   upload-coverage:
     executor: golang
