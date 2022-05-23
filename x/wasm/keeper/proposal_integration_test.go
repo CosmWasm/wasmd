@@ -155,6 +155,9 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.Admin = "invalid"
 		p.Label = "testing"
 	})
+
+	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
+
 	_, err = govKeeper.SubmitProposal(ctx, src)
 	require.Error(t, err)
 
@@ -168,11 +171,11 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err := govv1beta1.IsValidProposalType(ctx, src)
 	require.NoError(t, err)
 
 	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+	handler := govKeeper.Router().RegisterService(storedProposal.ProposalRoute())
 	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
 	require.NoError(t, err)
 

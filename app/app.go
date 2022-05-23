@@ -28,7 +28,7 @@ import (
 	//	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-//	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
+	//	authmiddleware "github.com/cosmos/cosmos-sdk/x/auth/middleware"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -106,9 +106,9 @@ import (
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. It has no known issues, but do your own research before using it.
-//	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
-//	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
-//	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+	//	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
+	//	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
+	//	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -208,7 +208,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
-//		intertx.AppModuleBasic{},
+		//		intertx.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -236,8 +236,6 @@ type WasmApp struct {
 	legacyAmino       *codec.LegacyAmino //nolint:staticcheck
 	appCodec          codec.Codec
 	interfaceRegistry types.InterfaceRegistry
-	MsgSvcRouter      *authmiddleware.MsgServiceRouter
-	legacyRouter      sdk.Router
 
 	invCheckPeriod uint
 
@@ -271,11 +269,11 @@ type WasmApp struct {
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-//	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedIBCMockKeeper       capabilitykeeper.ScopedKeeper
-	ScopedICAMockKeeper       capabilitykeeper.ScopedKeeper
-	scopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	//	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper capabilitykeeper.ScopedKeeper
+	ScopedIBCMockKeeper capabilitykeeper.ScopedKeeper
+	ScopedICAMockKeeper capabilitykeeper.ScopedKeeper
+	scopedWasmKeeper    capabilitykeeper.ScopedKeeper
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router
@@ -342,8 +340,6 @@ func NewWasmApp(
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
 		interfaceRegistry: interfaceRegistry,
-		legacyRouter:      authmiddleware.NewLegacyRouter(),
-		MsgSvcRouter:      authmiddleware.NewMsgServiceRouter(interfaceRegistry),
 		invCheckPeriod:    invCheckPeriod,
 		keys:              keys,
 		tkeys:             tkeys,
@@ -517,13 +513,13 @@ func NewWasmApp(
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(ibcmock.ModuleName, mockIBCModule)
 	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
-//	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
+	//	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. Do your own research before using it.
-//	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
-//	interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
+	//	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
+	//	interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
 	// You will likely want to swap out the second argument with your own reviewed and maintained ica auth module
-//	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
+	//	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -795,34 +791,6 @@ func NewWasmApp(
 	}
 
 	return app
-}
-
-func (app *WasmApp) setTxHandler(txConfig client.TxConfig, indexEventsStr []string, keys map[string]*storetypes.KVStoreKey, wasmConfig wasmtypes.WasmConfig) {
-	indexEvents := map[string]struct{}{}
-	for _, e := range indexEventsStr {
-		indexEvents[e] = struct{}{}
-	}
-	txHandler, err := NewDefaultTxHandler(TxHandlerOptions{
-		TxHandlerOptions: authmiddleware.TxHandlerOptions{
-			Debug:            app.Trace(),
-			IndexEvents:      indexEvents,
-			LegacyRouter:     app.legacyRouter,
-			MsgServiceRouter: app.MsgSvcRouter,
-			AccountKeeper:    app.AccountKeeper,
-			BankKeeper:       app.BankKeeper,
-			FeegrantKeeper:   app.FeeGrantKeeper,
-			SignModeHandler:  txConfig.SignModeHandler(),
-			SigGasConsumer:   authmiddleware.DefaultSigVerificationGasConsumer,
-			TxDecoder:        txConfig.TxDecoder(),
-		},
-		WasmConfig:        &wasmConfig,
-		TXCounterStoreKey: keys[wasm.StoreKey],
-		IBCKeeper:         app.IBCKeeper,
-	})
-	if err != nil {
-		panic(err)
-	}
-	app.SetTxHandler(txHandler)
 }
 
 // Name returns the name of the App

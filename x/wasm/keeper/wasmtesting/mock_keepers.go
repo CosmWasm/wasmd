@@ -68,13 +68,6 @@ func (m *MockChannelKeeper) IterateChannels(ctx sdk.Context, cb func(channeltype
 	m.IterateChannelsFn(ctx, cb)
 }
 
-func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel) {
-	if m.GetChannelFn == nil {
-		panic("not supposed to be called!")
-	}
-	m.SetChannelFn(ctx, portID, channelID, channel)
-}
-
 func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
 	return func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool) {
 		for _, channel := range s {
