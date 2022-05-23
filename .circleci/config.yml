@@ -119,6 +119,7 @@ jobs:
   simulations:
     executor: golang
     parallelism: 1
+    resource_class: large
     steps:
       - checkout
       - run:
@@ -126,7 +127,7 @@ jobs:
           command: |
             make test-sim-multi-seed-short
       - store_artifacts:
-          path: /tmp/sim-logs-*
+          path: /tmp
 
   upload-coverage:
     executor: golang
