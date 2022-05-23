@@ -17,7 +17,6 @@ import (
 )
 
 func TestOnOpenChannel(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
@@ -88,7 +87,6 @@ func TestOnOpenChannel(t *testing.T) {
 }
 
 func TestOnConnectChannel(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
@@ -200,7 +198,6 @@ func TestOnConnectChannel(t *testing.T) {
 }
 
 func TestOnCloseChannel(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
@@ -311,7 +308,6 @@ func TestOnCloseChannel(t *testing.T) {
 }
 
 func TestOnRecvPacket(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
@@ -474,7 +470,6 @@ func TestOnRecvPacket(t *testing.T) {
 }
 
 func TestOnAckPacket(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
@@ -580,7 +575,6 @@ func TestOnAckPacket(t *testing.T) {
 }
 
 func TestOnTimeoutPacket(t *testing.T) {
-	SkipIfM1(t)
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}

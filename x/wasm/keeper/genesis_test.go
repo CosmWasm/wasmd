@@ -38,7 +38,6 @@ import (
 const firstCodeID = 1
 
 func TestGenesisExportImport(t *testing.T) {
-	SkipIfM1(t)
 	wasmKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
 
@@ -155,7 +154,6 @@ func TestGenesisExportImport(t *testing.T) {
 }
 
 func TestGenesisInit(t *testing.T) {
-	SkipIfM1(t)
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -460,7 +458,6 @@ func TestGenesisInit(t *testing.T) {
 }
 
 func TestImportContractWithCodeHistoryReset(t *testing.T) {
-	SkipIfM1(t)
 	genesisTemplate := `
 {
 	"params":{
@@ -568,7 +565,6 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 }
 
 func TestSupportedGenMsgTypes(t *testing.T) {
-	SkipIfM1(t)
 	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	var (

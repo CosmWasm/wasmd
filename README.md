@@ -108,10 +108,6 @@ make test
 ```
 if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
-To set up a single node testnet, [look at the deployment documentation](./docs/deploy-testnet.md).
-
-If you want to deploy a whole cluster, [look at the network scripts](./networks/README.md).
-
 ## Protobuf
 Generate protobuf
 ```shell script

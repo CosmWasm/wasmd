@@ -207,8 +207,6 @@ func TestGasOnExternalQuery(t *testing.T) {
 }
 
 func TestLimitRecursiveQueryGas(t *testing.T) {
-	SkipIfM1(t)
-
 	// The point of this test from https://github.com/CosmWasm/cosmwasm/issues/456
 	// Basically, if I burn 90% of gas in CPU loop, then query out (to my self)
 	// the sub-query will have all the original gas (minus the 40k instance charge)
@@ -229,6 +227,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		expectQueriesFromContract int
 		expectedGas               uint64
 		expectOutOfGas            bool
+		expectError               string
 	}{
 		"no recursion, lots of work": {
 			gasLimit: 4_000_000,
@@ -261,6 +260,17 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			expectQueriesFromContract: 4,
 			expectOutOfGas:            true,
 		},
+		"very deep recursion, hits recursion limit": {
+			gasLimit: 10_000_000,
+			msg: Recurse{
+				Depth: 100,
+				Work:  2000,
+			},
+			expectQueriesFromContract: 10,
+			expectOutOfGas:            false,
+			expectError:               "query wasm contract failed", // Error we get from the contract instance doing the failing query, not wasmd
+			expectedGas:               10*(GasWork2k+GasReturnHashed) - 264,
+		},
 	}
 
 	contractAddr, _, ctx, keeper := initRecurseContract(t)
@@ -291,7 +301,11 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 			// otherwise, we expect a successful call
 			_, err := keeper.QuerySmart(ctx, contractAddr, msg)
-			require.NoError(t, err)
+			if tc.expectError != "" {
+				require.ErrorContains(t, err, tc.expectError)
+			} else {
+				require.NoError(t, err)
+			}
 			if types.EnableGasVerification {
 				assert.Equal(t, tc.expectedGas, ctx.GasMeter().GasConsumed())
 			}
