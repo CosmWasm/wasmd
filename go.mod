@@ -5,7 +5,7 @@ go 1.18
 require (
 	cosmossdk.io/math v1.0.0-beta.2
 	github.com/CosmWasm/wasmvm v1.0.0
-	github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20220523103238-d416ee86b6a0
+	github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20220524011904-dafdc1070b2c
 	github.com/cosmos/iavl v0.18.0
 	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
@@ -159,4 +159,4 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 )
 
-replace github.com/cosmos/ibc-go/v3 => github.com/notional-labs/ibc-go/v3 v3.0.0-20220523185022-752207ff8155
+replace github.com/cosmos/ibc-go/v3 => github.com/notional-labs/ibc-go/v3 v3.0.0-20220524111251-7d35705a7f2d
