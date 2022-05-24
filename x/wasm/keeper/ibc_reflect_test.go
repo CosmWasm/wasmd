@@ -167,7 +167,6 @@ func TestReflectContractSend(t *testing.T) {
 
 func TestReflectCustomMsg(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
@@ -261,7 +260,6 @@ func TestReflectCustomMsg(t *testing.T) {
 
 func TestMaskReflectCustomQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -312,7 +310,6 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 
 func TestReflectStargateQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -358,7 +355,6 @@ func TestReflectStargateQuery(t *testing.T) {
 
 func TestReflectInvalidStargateQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -440,7 +436,6 @@ type reflectState struct {
 
 func TestMaskReflectWasmQueries(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -513,7 +508,6 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 
 func TestWasmRawQueryWithNil(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
-
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
@@ -554,7 +548,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	mustParse(t, res, &reflectRawRes)
 	// and make sure there is no data
 	require.Empty(t, reflectRawRes.Data)
-	// we get an empty byte slice not nil (if anyone care in go-land)
+	// we get an empty byte slice not nil (if anyone cares in go-land)
 	require.Equal(t, []byte{}, reflectRawRes.Data)
 }
 
@@ -580,7 +574,7 @@ type reflectCustomMsg struct {
 	Raw   []byte `json:"raw,omitempty"`
 }
 
-// toReflectRawMsg encodes an sdk msg using any type with json encoding.
+// toReflectRawMsg encodes a sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
 func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
 	any, err := codectypes.NewAnyWithValue(msg)
@@ -607,7 +601,7 @@ func reflectEncoders(cdc codec.Codec) *MessageEncoders {
 	}
 }
 
-// fromReflectRawMsg decodes msg.Data to an sdk.Msg using proto Any and json encoding.
+// fromReflectRawMsg decodes msg.Data to a sdk.Msg using proto Any and json encoding.
 // this needs to be registered on the Encoders
 func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 	return func(_sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {

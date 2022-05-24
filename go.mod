@@ -3,6 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.18
 
 require (
+	cosmossdk.io/math v1.0.0-beta.2
 	github.com/CosmWasm/wasmvm v1.0.0
 	github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20220523103238-d416ee86b6a0
 	github.com/cosmos/iavl v0.18.0
@@ -38,7 +39,6 @@ require (
 	cloud.google.com/go/storage v1.14.0 // indirect
 	cosmossdk.io/api v0.1.0-alpha8 // indirect
 	cosmossdk.io/errors v1.0.0-beta.6 // indirect
-	cosmossdk.io/math v1.0.0-beta.2 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/keyring v1.1.6 // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
