@@ -22,4 +22,5 @@ const (
 	DefaultWeightParamChangeProposal    int = 5
 	DefaultWeightMsgStoreCode           int = 50
 	DefaultWeightMsgInstantiateContract int = 100
+	DefaultWeightMsgExecuteContract     int = 100
 )
