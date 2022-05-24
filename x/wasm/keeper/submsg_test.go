@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	"github.com/stretchr/testify/assert"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // test handing of submessages, very closely related to the reflect_test
@@ -59,8 +59,8 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 			},
 		},
 	}
-	reflectSend := ReflectHandleMsg{
-		ReflectSubMsg: &reflectSubPayload{
+	reflectSend := testdata.ReflectHandleMsg{
+		ReflectSubMsg: &testdata.ReflectSubPayload{
 			Msgs: []wasmvmtypes.SubMsg{{
 				ID:      7,
 				Msg:     msg,
@@ -80,8 +80,8 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
 
 	// query the reflect state to ensure the result was stored
-	query := ReflectQueryMsg{
-		SubMsgResult: &SubCall{ID: 7},
+	query := testdata.ReflectQueryMsg{
+		SubMsgResult: &testdata.SubCall{ID: 7},
 	}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)
@@ -300,8 +300,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			require.NoError(t, err)
 
 			msg := tc.msg(contractAddr.String(), empty.String())
-			reflectSend := ReflectHandleMsg{
-				ReflectSubMsg: &reflectSubPayload{
+			reflectSend := testdata.ReflectHandleMsg{
+				ReflectSubMsg: &testdata.ReflectSubPayload{
 					Msgs: []wasmvmtypes.SubMsg{{
 						ID:       tc.submsgID,
 						Msg:      msg,
@@ -331,8 +331,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				require.NoError(t, err)
 
 				// query the reply
-				query := ReflectQueryMsg{
-					SubMsgResult: &SubCall{ID: tc.submsgID},
+				query := testdata.ReflectQueryMsg{
+					SubMsgResult: &testdata.SubCall{ID: tc.submsgID},
 				}
 				queryBz, err := json.Marshal(query)
 				require.NoError(t, err)
@@ -403,8 +403,8 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 			},
 		},
 	}
-	reflectSend := ReflectHandleMsg{
-		ReflectSubMsg: &reflectSubPayload{
+	reflectSend := testdata.ReflectHandleMsg{
+		ReflectSubMsg: &testdata.ReflectSubPayload{
 			Msgs: []wasmvmtypes.SubMsg{{
 				ID:      7,
 				Msg:     msg,
@@ -418,8 +418,8 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// query the reflect state to ensure the result was stored
-	query := ReflectQueryMsg{
-		SubMsgResult: &SubCall{ID: 7},
+	query := testdata.ReflectQueryMsg{
+		SubMsgResult: &testdata.SubCall{ID: 7},
 	}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)
@@ -529,8 +529,8 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 				subMsg.ReplyOn = wasmvmtypes.ReplyError
 			}
 
-			reflectSend := ReflectHandleMsg{
-				ReflectSubMsg: &reflectSubPayload{
+			reflectSend := testdata.ReflectHandleMsg{
+				ReflectSubMsg: &testdata.ReflectSubPayload{
 					Msgs: []wasmvmtypes.SubMsg{subMsg},
 				},
 			}
@@ -545,8 +545,8 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 			}
 
 			// query the reflect state to check if the result was stored
-			query := ReflectQueryMsg{
-				SubMsgResult: &SubCall{ID: id},
+			query := testdata.ReflectQueryMsg{
+				SubMsgResult: &testdata.SubCall{ID: id},
 			}
 			queryBz, err := json.Marshal(query)
 			require.NoError(t, err)

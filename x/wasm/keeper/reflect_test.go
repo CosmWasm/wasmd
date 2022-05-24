@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/protobuf/proto"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -16,62 +14,17 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // ReflectInitMsg is {}
 
-// ReflectHandleMsg is used to encode handle messages
-type ReflectHandleMsg struct {
-	Reflect       *reflectPayload    `json:"reflect_msg,omitempty"`
-	ReflectSubMsg *reflectSubPayload `json:"reflect_sub_msg,omitempty"`
-	Change        *ownerPayload      `json:"change_owner,omitempty"`
-}
-
-type ownerPayload struct {
-	Owner sdk.Address `json:"owner"`
-}
-
-type reflectPayload struct {
-	Msgs []wasmvmtypes.CosmosMsg `json:"msgs"`
-}
-
-type reflectSubPayload struct {
-	Msgs []wasmvmtypes.SubMsg `json:"msgs"`
-}
-
-// ReflectQueryMsg is used to encode query messages
-type ReflectQueryMsg struct {
-	Owner        *struct{}   `json:"owner,omitempty"`
-	Capitalized  *Text       `json:"capitalized,omitempty"`
-	Chain        *ChainQuery `json:"chain,omitempty"`
-	SubMsgResult *SubCall    `json:"sub_msg_result,omitempty"`
-}
-
-type ChainQuery struct {
-	Request *wasmvmtypes.QueryRequest `json:"request,omitempty"`
-}
-
-type Text struct {
-	Text string `json:"text"`
-}
-
-type SubCall struct {
-	ID uint64 `json:"id"`
-}
-
-type OwnerResponse struct {
-	Owner string `json:"owner,omitempty"`
-}
-
-type ChainResponse struct {
-	Data []byte `json:"data,omitempty"`
-}
-
-func buildReflectQuery(t *testing.T, query *ReflectQueryMsg) []byte {
+func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
 	bz, err := json.Marshal(query)
 	require.NoError(t, err)
 	return bz
@@ -148,8 +101,8 @@ func TestReflectContractSend(t *testing.T) {
 			},
 		},
 	}}
-	reflectSend := ReflectHandleMsg{
-		Reflect: &reflectPayload{
+	reflectSend := testdata.ReflectHandleMsg{
+		Reflect: &testdata.ReflectPayload{
 			Msgs: msgs,
 		},
 	}
@@ -189,8 +142,8 @@ func TestReflectCustomMsg(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// set owner to bob
-	transfer := ReflectHandleMsg{
-		Change: &ownerPayload{
+	transfer := testdata.ReflectHandleMsg{
+		ChangeOwner: &testdata.OwnerPayload{
 			Owner: bob,
 		},
 	}
@@ -216,8 +169,8 @@ func TestReflectCustomMsg(t *testing.T) {
 			},
 		},
 	}}
-	reflectSend := ReflectHandleMsg{
-		Reflect: &reflectPayload{
+	reflectSend := testdata.ReflectHandleMsg{
+		Reflect: &testdata.ReflectPayload{
 			Msgs: msgs,
 		},
 	}
@@ -240,8 +193,8 @@ func TestReflectCustomMsg(t *testing.T) {
 	}
 	opaque, err := toReflectRawMsg(cdc, sdkSendMsg)
 	require.NoError(t, err)
-	reflectOpaque := ReflectHandleMsg{
-		Reflect: &reflectPayload{
+	reflectOpaque := testdata.ReflectHandleMsg{
+		Reflect: &testdata.ReflectPayload{
 			Msgs: []wasmvmtypes.CosmosMsg{opaque},
 		},
 	}
@@ -280,21 +233,21 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// let's perform a normal query of state
-	ownerQuery := ReflectQueryMsg{
+	ownerQuery := testdata.ReflectQueryMsg{
 		Owner: &struct{}{},
 	}
 	ownerQueryBz, err := json.Marshal(ownerQuery)
 	require.NoError(t, err)
 	ownerRes, err := keeper.QuerySmart(ctx, contractAddr, ownerQueryBz)
 	require.NoError(t, err)
-	var res OwnerResponse
+	var res testdata.OwnerResponse
 	err = json.Unmarshal(ownerRes, &res)
 	require.NoError(t, err)
 	assert.Equal(t, res.Owner, creator.String())
 
 	// and now making use of the custom querier callbacks
-	customQuery := ReflectQueryMsg{
-		Capitalized: &Text{
+	customQuery := testdata.ReflectQueryMsg{
+		Capitalized: &testdata.Text{
 			Text: "all Caps noW",
 		},
 	}
@@ -338,13 +291,13 @@ func TestReflectStargateQuery(t *testing.T) {
 			},
 		},
 	}
-	simpleQueryBz, err := json.Marshal(ReflectQueryMsg{
-		Chain: &ChainQuery{Request: &bankQuery},
+	simpleQueryBz, err := json.Marshal(testdata.ReflectQueryMsg{
+		Chain: &testdata.ChainQuery{Request: &bankQuery},
 	})
 	require.NoError(t, err)
 	simpleRes, err := keeper.QuerySmart(ctx, contractAddr, simpleQueryBz)
 	require.NoError(t, err)
-	var simpleChain ChainResponse
+	var simpleChain testdata.ChainResponse
 	mustParse(t, simpleRes, &simpleChain)
 	var simpleBalance wasmvmtypes.AllBalancesResponse
 	mustParse(t, simpleChain.Data, &simpleBalance)
@@ -385,8 +338,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 			Data: protoQueryBin,
 		},
 	}
-	protoQueryBz, err := json.Marshal(ReflectQueryMsg{
-		Chain: &ChainQuery{Request: &protoRequest},
+	protoQueryBz, err := json.Marshal(testdata.ReflectQueryMsg{
+		Chain: &testdata.ChainQuery{Request: &protoRequest},
 	})
 	require.NoError(t, err)
 
@@ -402,8 +355,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 			Data: []byte{},
 		},
 	}
-	protoQueryBz, err = json.Marshal(ReflectQueryMsg{
-		Chain: &ChainQuery{Request: &protoRequest},
+	protoQueryBz, err = json.Marshal(testdata.ReflectQueryMsg{
+		Chain: &testdata.ChainQuery{Request: &protoRequest},
 	})
 	require.NoError(t, err)
 
@@ -419,8 +372,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 			Data: []byte{},
 		},
 	}
-	protoQueryBz, err = json.Marshal(ReflectQueryMsg{
-		Chain: &ChainQuery{Request: &protoRequest},
+	protoQueryBz, err = json.Marshal(testdata.ReflectQueryMsg{
+		Chain: &testdata.ChainQuery{Request: &protoRequest},
 	})
 	require.NoError(t, err)
 
@@ -456,10 +409,10 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.NotEmpty(t, reflectAddr)
 
 	// for control, let's make some queries directly on the reflect
-	ownerQuery := buildReflectQuery(t, &ReflectQueryMsg{Owner: &struct{}{}})
+	ownerQuery := buildReflectQuery(t, &testdata.ReflectQueryMsg{Owner: &struct{}{}})
 	res, err := keeper.QuerySmart(ctx, reflectAddr, ownerQuery)
 	require.NoError(t, err)
-	var ownerRes OwnerResponse
+	var ownerRes testdata.OwnerResponse
 	mustParse(t, res, &ownerRes)
 	require.Equal(t, ownerRes.Owner, creator.String())
 
@@ -471,7 +424,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.Equal(t, stateRes.Owner, creator.String())
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
-	reflectOwnerQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+	reflectOwnerQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
 		Smart: &wasmvmtypes.SmartQuery{
 			ContractAddr: reflectAddr.String(),
 			Msg:          ownerQuery,
@@ -481,14 +434,14 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, reflectAddr, reflectOwnerBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	var reflectRes ChainResponse
+	var reflectRes testdata.ChainResponse
 	mustParse(t, res, &reflectRes)
-	var reflectOwnerRes OwnerResponse
+	var reflectOwnerRes testdata.OwnerResponse
 	mustParse(t, reflectRes.Data, &reflectOwnerRes)
 	require.Equal(t, reflectOwnerRes.Owner, creator.String())
 
 	// and with queryRaw
-	reflectStateQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+	reflectStateQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
 		Raw: &wasmvmtypes.RawQuery{
 			ContractAddr: reflectAddr.String(),
 			Key:          configKey,
@@ -498,7 +451,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, reflectAddr, reflectStateBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	var reflectRawRes ChainResponse
+	var reflectRawRes testdata.ChainResponse
 	mustParse(t, res, &reflectRawRes)
 	// now, with the raw data, we can parse it into state
 	var reflectStateRes reflectState
@@ -533,7 +486,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	require.Nil(t, raw)
 
 	// and with queryRaw
-	reflectQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
+	reflectQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
 		Raw: &wasmvmtypes.RawQuery{
 			ContractAddr: reflectAddr.String(),
 			Key:          missingKey,
@@ -544,7 +497,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	require.NoError(t, err)
 
 	// first we pull out the data from chain response, before parsing the original response
-	var reflectRawRes ChainResponse
+	var reflectRawRes testdata.ChainResponse
 	mustParse(t, res, &reflectRawRes)
 	// and make sure there is no data
 	require.Empty(t, reflectRawRes.Data)
@@ -629,8 +582,8 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 }
 
 type reflectCustomQuery struct {
-	Ping        *struct{} `json:"ping,omitempty"`
-	Capitalized *Text     `json:"capitalized,omitempty"`
+	Ping        *struct{}      `json:"ping,omitempty"`
+	Capitalized *testdata.Text `json:"capitalized,omitempty"`
 }
 
 // this is from the go code back to the contract (capitalized or ping)
