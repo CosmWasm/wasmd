@@ -447,9 +447,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	creator := initInfo.faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload mask code
-	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, nil)
+	maskID, err := initInfo.contractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), maskID)
 

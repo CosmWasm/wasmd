@@ -47,9 +47,7 @@ func TestReflectContractSend(t *testing.T) {
 	_, _, bob := keyPubAddr()
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	reflectID, err := keeper.Create(ctx, creator, reflectCode, nil)
+	reflectID, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -129,9 +127,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keeper.Create(ctx, creator, reflectCode, nil)
+	codeID, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -220,9 +216,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -272,9 +266,7 @@ func TestReflectStargateQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -316,9 +308,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -396,9 +386,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -468,9 +456,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
+	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 

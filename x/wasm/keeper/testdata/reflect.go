@@ -1,9 +1,18 @@
 package testdata
 
 import (
+	_ "embed"
+
 	typwasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/types"
 )
+
+//go:embed reflect.wasm
+var reflectContract []byte
+
+func ReflectContractWasm() []byte {
+	return reflectContract
+}
 
 // ReflectHandleMsg is used to encode handle messages
 type ReflectHandleMsg struct {

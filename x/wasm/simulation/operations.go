@@ -74,13 +74,19 @@ func WeightedOperations(
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
 		func(_ *rand.Rand) {
-			// simulations are run from the `app` folder
-			wasmContractPath = "../x/wasm/keeper/testdata/reflect.wasm"
+			wasmContractPath = ""
 		},
 	)
-	wasmBz, err := ioutil.ReadFile(wasmContractPath)
-	if err != nil {
-		panic(err)
+
+	var wasmBz []byte
+	if wasmContractPath == "" {
+		wasmBz = testdata.ReflectContractWasm()
+	} else {
+		var err error
+		wasmBz, err = ioutil.ReadFile(wasmContractPath)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return simulation.WeightedOperations{
