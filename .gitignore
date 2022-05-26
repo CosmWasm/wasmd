@@ -24,6 +24,7 @@ baseapp/data/*
 client/lcd/keys/*
 mytestnet
 .testnets
+x/wasm/keeper/tempDir
 
 # Testing
 coverage.txt
