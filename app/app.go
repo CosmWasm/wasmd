@@ -2,12 +2,13 @@ package app
 
 import (
 	"fmt"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
@@ -122,6 +123,7 @@ import (
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
