@@ -3,7 +3,7 @@ version: 2.1
 executors:
   golang:
     docker:
-      - image: circleci/golang:1.17
+      - image: 	cimg/go:1.18
     working_directory: /go/src/github.com/cosmwasm/wasmd
 
 commands:
@@ -62,7 +62,7 @@ jobs:
 
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.43.0
+      - image: golangci/golangci-lint:v1.46.2
     steps:
       - checkout
       - run:
