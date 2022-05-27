@@ -28,11 +28,11 @@ func NewTestSupport(t testing.TB, app *WasmApp) *TestSupport {
 }
 
 func (s TestSupport) IBCKeeper() *ibckeeper.Keeper {
-	return s.app.IBCKeeper
+	return s.app.ibcKeeper
 }
 
 func (s TestSupport) WasmKeeper() wasm.Keeper {
-	return s.app.WasmKeeper
+	return s.app.wasmKeeper
 }
 
 func (s TestSupport) AppCodec() codec.Codec {
@@ -52,15 +52,15 @@ func (s TestSupport) ScopedTransferKeeper() capabilitykeeper.ScopedKeeper {
 }
 
 func (s TestSupport) StakingKeeper() stakingkeeper.Keeper {
-	return s.app.StakingKeeper
+	return s.app.stakingKeeper
 }
 
 func (s TestSupport) BankKeeper() bankkeeper.Keeper {
-	return s.app.BankKeeper
+	return s.app.bankKeeper
 }
 
 func (s TestSupport) TransferKeeper() ibctransferkeeper.Keeper {
-	return s.app.TransferKeeper
+	return s.app.transferKeeper
 }
 
 func (s TestSupport) GetBaseApp() *baseapp.BaseApp {
