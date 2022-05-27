@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
 
 	"github.com/cosmos/cosmos-sdk/server"
@@ -74,7 +73,7 @@ func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Opt
 	require.NoError(t, err)
 	snapshotStore, err := snapshots.NewStore(snapshotDB, snapshotDir)
 	require.NoError(t, err)
-	baseAppOpts := []func(*bam.BaseApp){bam.SetSnapshot(snapshotStore, snapshottypes.SnapshotOptions{10, 2}), baseapp.SetPruning(pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))}
+	baseAppOpts := []func(*bam.BaseApp){bam.SetSnapshot(snapshotStore, snapshottypes.SnapshotOptions{10, uint32(2)}), bam.SetPruning(pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))}
 	db := dbm.NewMemDB()
 	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, nodeHome, invCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts, baseAppOpts...)
 	if withGenesis {
