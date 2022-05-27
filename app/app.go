@@ -87,12 +87,16 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
 	icacontrollertypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
 	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
 	icahostkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v3/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v3/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v3/modules/apps/29-fee/types"
 	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
@@ -129,6 +133,11 @@ import (
 )
 
 const appName = "WasmApp"
+
+// IBC application testing ports
+const (
+	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
+)
 
 // We pull these out so we can set them with LDFLAGS in the Makefile
 var (
@@ -194,20 +203,29 @@ var (
 		staking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(append(wasmclient.ProposalHandlers, paramsclient.ProposalHandler, distrclient.ProposalHandler, upgradeclient.LegacyProposalHandler, upgradeclient.LegacyCancelProposalHandler, ibcclientclient.UpdateClientProposalHandler, ibcclientclient.UpgradeProposalHandler)),
+		gov.NewAppModuleBasic(append(
+			wasmclient.ProposalHandlers,
+			paramsclient.ProposalHandler,
+			distrclient.ProposalHandler,
+			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
+		)),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
+		ibc.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
-		ibc.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ibcmock.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
+		vesting.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
+		wasm.AppModuleBasic{},
 		//		intertx.AppModuleBasic{},
 	)
 
@@ -220,6 +238,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
 		wasm.ModuleName:                {authtypes.Burner},
 	}
@@ -257,6 +276,7 @@ type WasmApp struct {
 	UpgradeKeeper       upgradekeeper.Keeper
 	ParamsKeeper        paramskeeper.Keeper
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
 	EvidenceKeeper      evidencekeeper.Keeper
@@ -268,14 +288,18 @@ type WasmApp struct {
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
+	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
+	ScopedFeeMockKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	//	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper capabilitykeeper.ScopedKeeper
-	scopedWasmKeeper    capabilitykeeper.ScopedKeeper
+	scopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
+	ScopedIBCMockKeeper       capabilitykeeper.ScopedKeeper
+	ScopedICAMockKeeper       capabilitykeeper.ScopedKeeper
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router
 	ICAAuthModule ibcmock.IBCModule
+	FeeMockModule ibcmock.IBCModule
 
 	// the module manager
 	mm *module.Manager
@@ -322,11 +346,12 @@ func NewWasmApp(
 		upgradetypes.StoreKey,
 		evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey,
+		icacontrollertypes.StoreKey,
+		icahosttypes.StoreKey,
 		capabilitytypes.StoreKey,
 		feegrant.StoreKey,
 		authzkeeper.StoreKey,
-		icacontrollertypes.StoreKey,
-		icahosttypes.StoreKey,
+		ibcfeetypes.StoreKey,
 		wasm.StoreKey,
 		//		intertxtypes.StoreKey,
 	)
@@ -358,9 +383,14 @@ func NewWasmApp(
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+
+	scopedIBCMockKeeper := app.CapabilityKeeper.ScopeToModule(ibcmock.ModuleName)
+	scopedFeeMockKeeper := app.CapabilityKeeper.ScopeToModule(MockFeePort)
+	scopedICAMockKeeper := app.CapabilityKeeper.ScopeToModule(ibcmock.ModuleName + icacontrollertypes.SubModuleName)
+
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
@@ -437,12 +467,7 @@ func NewWasmApp(
 	)
 
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec,
-		keys[ibchost.StoreKey],
-		app.GetSubspace(ibchost.ModuleName),
-		app.StakingKeeper,
-		app.UpgradeKeeper,
-		scopedIBCKeeper,
+		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,
 	)
 
 	// register the proposal types
@@ -454,15 +479,15 @@ func NewWasmApp(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
-	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+	// IBC Fee Module keeper
+	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
+		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
 	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
 
+	// ICA Controller keeper
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
@@ -470,18 +495,93 @@ func NewWasmApp(
 		scopedICAControllerKeeper, app.BaseApp.MsgServiceRouter(),
 	)
 
+	// ICA Host keeper
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec, keys[icahosttypes.StoreKey], app.GetSubspace(icahosttypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, scopedICAHostKeeper, app.BaseApp.MsgServiceRouter(),
 	)
 
-	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
+	// Create IBC Router
+	ibcRouter := porttypes.NewRouter()
+
+	// Middleware Stacks
+
+	// Create Transfer Keeper and pass IBCFeeKeeper as expected Channel and PortKeeper
+	// since fee middleware will wrap the IBCKeeper for underlying application.
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCFeeKeeper, // ISC4 Wrapper: fee IBC middleware
+		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+	)
+
+	// Mock Module Stack
+
+	// Mock Module setup for testing IBC and also acts as the interchain accounts authentication module
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// not replicate if you do not need to test core IBC or light clients.
+	mockModule := ibcmock.NewAppModule(&app.IBCKeeper.PortKeeper)
+
+	// The mock module is used for testing IBC
+	mockIBCModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(ibcmock.ModuleName, scopedIBCMockKeeper))
+	ibcRouter.AddRoute(ibcmock.ModuleName, mockIBCModule)
+
+	// Create Transfer Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// transferKeeper.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
+	// channel.RecvPacket -> fee.OnRecvPacket -> transfer.OnRecvPacket
+
+	// transfer stack contains (from top to bottom):
+	// - IBC Fee Middleware
+	// - Transfer
+
+	// create IBC module from bottom to top of stack
+	var transferStack porttypes.IBCModule
+	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+
+	// Add transfer stack to IBC Router
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+	// Create Interchain Accounts Stack
+	// SendPacket, since it is originating from the application to core IBC:
+	// icaAuthModuleKeeper.SendTx -> icaControllerKeeper.SendPacket -> channel.SendPacket
+
+	// initialize ICA module with mock module as the authentication module on the controller side
+	var icaControllerStack porttypes.IBCModule
+	icaControllerStack = ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", scopedICAMockKeeper))
+	app.ICAAuthModule = icaControllerStack.(ibcmock.IBCModule)
+	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, app.ICAControllerKeeper)
 
 	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
-	// Create static IBC router, add app routes, then set and seal it
-	ibcRouter := porttypes.NewRouter()
+	// Add host, controller & ica auth modules to IBC router
+	ibcRouter.
+		// the ICA Controller middleware needs to be explicitly added to the IBC Router because the
+		// ICA controller module owns the port capability for ICA. The ICA authentication module
+		// owns the channel capability.
+		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
+		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
+		AddRoute(ibcmock.ModuleName+icacontrollertypes.SubModuleName, icaControllerStack) // ica with mock auth module stack route to ica (top level of middleware stack)
+
+	// Create Mock IBC Fee module stack for testing
+	// SendPacket, since it is originating from the application to core IBC:
+	// mockModule.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// OnRecvPacket, message that originates from core IBC and goes down to app, the flow is the otherway
+	// channel.RecvPacket -> fee.OnRecvPacket -> mockModule.OnRecvPacket
+
+	// OnAcknowledgementPacket as this is where fee's are paid out
+	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
+
+	// create fee wrapped mock module
+	feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
+	app.FeeMockModule = feeMockModule
+	feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.IBCFeeKeeper)
+	ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
 
 	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
 	//	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
@@ -535,11 +635,9 @@ func NewWasmApp(
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
 	ibcRouter.
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)).
-		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
-		//		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
-		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule)
-	//	AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
+		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper))
+
+	// Seal the IBC Router
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	govConfig := govtypes.DefaultConfig()
@@ -588,8 +686,10 @@ func NewWasmApp(
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
-		transferModule,
-		icaModule,
+		transfer.NewAppModule(app.TransferKeeper),
+		ibcfee.NewAppModule(app.IBCFeeKeeper),
+		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
+		mockModule,
 		//	interTxModule,
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -619,6 +719,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
+		ibcfeetypes.ModuleName, ibcmock.ModuleName,
 		//	intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -646,6 +747,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
+		ibcfeetypes.ModuleName, ibcmock.ModuleName,
 		//		intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -679,6 +781,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
+		ibcfeetypes.ModuleName, ibcmock.ModuleName,
 		//	intertxtypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
@@ -712,7 +815,7 @@ func NewWasmApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
-		transferModule,
+		transfer.NewAppModule(app.TransferKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -745,15 +848,12 @@ func NewWasmApp(
 	// upgrade.
 	app.setPostHandler()
 
-	// must be before Loading version
-	// requires the snapshot store to be created and registered as a BaseAppOption
-	// see cmd/wasmd/root.go: 206 - 214 approx
 	if manager := app.SnapshotManager(); manager != nil {
-		err := manager.RegisterExtensions(
+		err = manager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
+			panic("failed to register snapshot extension: " + err.Error())
 		}
 	}
 
