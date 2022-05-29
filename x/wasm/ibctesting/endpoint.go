@@ -287,7 +287,6 @@ func (endpoint *Endpoint) ChanOpenInit() error {
 	// update version to selected app version
 	// NOTE: this update must be performed after SendMsgs()
 	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
-	fmt.Println(endpoint.GetChannel().Version, "endpoint.GetChannel().Version")
 
 	return nil
 }
@@ -308,7 +307,6 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 		proof, height,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
-	fmt.Println(endpoint.Counterparty.ChannelConfig.Version)
 	res, err := endpoint.Chain.SendMsgs(msg)
 	if err != nil {
 		return err
