@@ -60,6 +60,8 @@ func TestIBCReflectContract(t *testing.T) {
 		Version: "ibc-reflect-v1",
 		Order:   channeltypes.ORDERED,
 	}
+	path.EndpointA.Counterparty = path.EndpointB
+	path.EndpointB.Counterparty = path.EndpointA
 
 	coordinator.SetupConnections(path)
 	coordinator.CreateChannels(path)

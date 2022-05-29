@@ -284,6 +284,11 @@ func (endpoint *Endpoint) ChanOpenInit() error {
 	endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
 	require.NoError(endpoint.Chain.t, err)
 
+	// update version to selected app version
+	// NOTE: this update must be performed after SendMsgs()
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
+	fmt.Println(endpoint.GetChannel().Version, "endpoint.GetChannel().Version")
+
 	return nil
 }
 
@@ -303,6 +308,7 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 		proof, height,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
+	fmt.Println(endpoint.Counterparty.ChannelConfig.Version)
 	res, err := endpoint.Chain.SendMsgs(msg)
 	if err != nil {
 		return err
@@ -312,6 +318,10 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 		endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
 		require.NoError(endpoint.Chain.t, err)
 	}
+
+	// update version to selected app version
+	// NOTE: this update must be performed after the endpoint channelID is set
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
 
 	return nil
 }
@@ -331,7 +341,14 @@ func (endpoint *Endpoint) ChanOpenAck() error {
 		proof, height,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
-	return endpoint.Chain.sendMsgs(msg)
+
+	if err := endpoint.Chain.sendMsgs(msg); err != nil {
+		return err
+	}
+
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
+
+	return nil
 }
 
 // ChanOpenConfirm will construct and execute a MsgChannelOpenConfirm on the associated endpoint.
@@ -364,6 +381,11 @@ func (endpoint *Endpoint) ChanCloseInit() error {
 
 // ChanCloseConfirm will construct and execute a NewMsgChannelCloseConfirm on the associated endpoint.
 func (endpoint *Endpoint) ChanCloseConfirm() error {
+	err := endpoint.UpdateClient()
+	if err != nil {
+		return err
+	}
+
 	channelKey := host.ChannelKey(endpoint.Counterparty.ChannelConfig.PortID, endpoint.Counterparty.ChannelID)
 	proof, proofHeight := endpoint.Counterparty.QueryProof(channelKey)
 

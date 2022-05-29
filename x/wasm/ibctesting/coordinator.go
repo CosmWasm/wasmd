@@ -159,6 +159,7 @@ func (coord *Coordinator) CreateChannels(path *Path) {
 	err := path.EndpointA.ChanOpenInit()
 	require.NoError(coord.t, err)
 
+	fmt.Println(path.EndpointB.Counterparty.ChannelConfig.Version)
 	err = path.EndpointB.ChanOpenTry()
 	require.NoError(coord.t, err)
 
