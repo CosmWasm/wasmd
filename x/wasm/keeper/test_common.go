@@ -124,15 +124,15 @@ var TestingStakeParams = stakingtypes.Params{
 
 type TestFaucet struct {
 	t                testing.TB
-	bankKeeper       bankkeeper.Keeper
+	BankKeeper       bankkeeper.Keeper
 	sender           sdk.AccAddress
 	balance          sdk.Coins
 	minterModuleName string
 }
 
-func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
+func NewTestFaucet(t testing.TB, ctx sdk.Context, BankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
 	require.NotEmpty(t, initialAmount)
-	r := &TestFaucet{t: t, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
+	r := &TestFaucet{t: t, BankKeeper: BankKeeper, minterModuleName: minterModuleName}
 	_, _, addr := keyPubAddr()
 	r.sender = addr
 	r.Mint(ctx, addr, initialAmount...)
@@ -143,9 +143,9 @@ func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, 
 func (f *TestFaucet) Mint(parentCtx sdk.Context, addr sdk.AccAddress, amounts ...sdk.Coin) {
 	require.NotEmpty(f.t, amounts)
 	ctx := parentCtx.WithEventManager(sdk.NewEventManager()) // discard all faucet related events
-	err := f.bankKeeper.MintCoins(ctx, f.minterModuleName, amounts)
+	err := f.BankKeeper.MintCoins(ctx, f.minterModuleName, amounts)
 	require.NoError(f.t, err)
-	err = f.bankKeeper.SendCoinsFromModuleToAccount(ctx, f.minterModuleName, addr, amounts)
+	err = f.BankKeeper.SendCoinsFromModuleToAccount(ctx, f.minterModuleName, addr, amounts)
 	require.NoError(f.t, err)
 	f.balance = f.balance.Add(amounts...)
 }
@@ -157,7 +157,7 @@ func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amount
 		f.Mint(parentCtx, f.sender, amounts...)
 	}
 	ctx := parentCtx.WithEventManager(sdk.NewEventManager()) // discard all faucet related events
-	err := f.bankKeeper.SendCoins(ctx, f.sender, receiver, amounts)
+	err := f.BankKeeper.SendCoins(ctx, f.sender, receiver, amounts)
 	require.NoError(f.t, err)
 	f.balance = f.balance.Sub(amounts)
 }
@@ -238,7 +238,7 @@ func createTestInput(
 	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
 
-	paramsKeeper := paramskeeper.NewKeeper(
+	ParamsKeeper := paramskeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
 		keys[paramstypes.StoreKey],
@@ -258,10 +258,10 @@ func createTestInput(
 		govtypes.ModuleName,
 		types.ModuleName,
 	} {
-		paramsKeeper.Subspace(m)
+		ParamsKeeper.Subspace(m)
 	}
 	subspace := func(m string) paramstypes.Subspace {
-		r, ok := paramsKeeper.GetSubspace(m)
+		r, ok := ParamsKeeper.GetSubspace(m)
 		require.True(t, ok)
 		return r
 	}
@@ -275,7 +275,7 @@ func createTestInput(
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		types.ModuleName:               {authtypes.Burner},
 	}
-	accountKeeper := authkeeper.NewAccountKeeper(
+	AccountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		keys[authtypes.StoreKey], // target store
 		subspace(authtypes.ModuleName),
@@ -287,41 +287,41 @@ func createTestInput(
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
-	bankKeeper := bankkeeper.NewBaseKeeper(
+	BankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
 		keys[banktypes.StoreKey],
-		accountKeeper,
+		AccountKeeper,
 		subspace(banktypes.ModuleName),
 		blockedAddrs,
 	)
-	bankKeeper.SetParams(ctx, banktypes.DefaultParams())
+	BankKeeper.SetParams(ctx, banktypes.DefaultParams())
 
-	stakingKeeper := stakingkeeper.NewKeeper(
+	StakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
-		accountKeeper,
-		bankKeeper,
+		AccountKeeper,
+		BankKeeper,
 		subspace(stakingtypes.ModuleName),
 	)
-	stakingKeeper.SetParams(ctx, TestingStakeParams)
+	StakingKeeper.SetParams(ctx, TestingStakeParams)
 
 	distKeeper := distributionkeeper.NewKeeper(
 		appCodec,
 		keys[distributiontypes.StoreKey],
 		subspace(distributiontypes.ModuleName),
-		accountKeeper,
-		bankKeeper,
-		stakingKeeper,
+		AccountKeeper,
+		BankKeeper,
+		StakingKeeper,
 		authtypes.FeeCollectorName,
 		nil,
 	)
 	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
-	stakingKeeper.SetHooks(distKeeper.Hooks())
+	StakingKeeper.SetHooks(distKeeper.Hooks())
 
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distributiontypes.InitialFeePool())
 
-	upgradeKeeper := upgradekeeper.NewKeeper(
+	UpgradeKeeper := upgradekeeper.NewKeeper(
 		map[int64]bool{},
 		keys[upgradetypes.StoreKey],
 		appCodec,
@@ -329,35 +329,35 @@ func createTestInput(
 		nil,
 	)
 
-	faucet := NewTestFaucet(t, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
+	faucet := NewTestFaucet(t, ctx, BankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
 
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
 	faucet.Fund(ctx, distrAcc.GetAddress(), sdk.NewCoin("stake", sdk.NewInt(2000000)))
-	accountKeeper.SetModuleAccount(ctx, distrAcc)
+	AccountKeeper.SetModuleAccount(ctx, distrAcc)
 
-	capabilityKeeper := capabilitykeeper.NewKeeper(
+	CapabilityKeeper := capabilitykeeper.NewKeeper(
 		appCodec,
 		keys[capabilitytypes.StoreKey],
 		memKeys[capabilitytypes.MemStoreKey],
 	)
-	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
-	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
+	scopedIBCKeeper := CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedWasmKeeper := CapabilityKeeper.ScopeToModule(types.ModuleName)
 
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		keys[ibchost.StoreKey],
 		subspace(ibchost.ModuleName),
-		stakingKeeper,
-		upgradeKeeper,
+		StakingKeeper,
+		UpgradeKeeper,
 		scopedIBCKeeper,
 	)
 
 	router := baseapp.NewRouter()
-	bh := bank.NewHandler(bankKeeper)
+	bh := bank.NewHandler(BankKeeper)
 	router.AddRoute(sdk.NewRoute(banktypes.RouterKey, bh))
-	sh := staking.NewHandler(stakingKeeper)
+	sh := staking.NewHandler(StakingKeeper)
 	router.AddRoute(sdk.NewRoute(stakingtypes.RouterKey, sh))
 	dh := distribution.NewHandler(distKeeper)
 	router.AddRoute(sdk.NewRoute(distributiontypes.RouterKey, dh))
@@ -374,9 +374,9 @@ func createTestInput(
 		appCodec,
 		keys[types.StoreKey],
 		subspace(types.ModuleName),
-		accountKeeper,
-		bankKeeper,
-		stakingKeeper,
+		AccountKeeper,
+		BankKeeper,
+		StakingKeeper,
 		distKeeper,
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
@@ -395,9 +395,9 @@ func createTestInput(
 	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
-		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
-		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
-		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
+		bank.NewAppModule(appCodec, BankKeeper, AccountKeeper),
+		staking.NewAppModule(appCodec, StakingKeeper, AccountKeeper, BankKeeper),
+		distribution.NewAppModule(appCodec, distKeeper, AccountKeeper, BankKeeper, StakingKeeper),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier))
 	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
@@ -405,33 +405,33 @@ func createTestInput(
 
 	govRouter := govtypes.NewRouter().
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
-		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
+		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(ParamsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
 		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
 
-	govKeeper := govkeeper.NewKeeper(
+	GovKeeper := govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey],
 		subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable()),
-		accountKeeper,
-		bankKeeper,
-		stakingKeeper,
+		AccountKeeper,
+		BankKeeper,
+		StakingKeeper,
 		govRouter,
 	)
 
-	govKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
-	govKeeper.SetDepositParams(ctx, govtypes.DefaultDepositParams())
-	govKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
-	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
+	GovKeeper.SetProposalID(ctx, govtypes.DefaultStartingProposalID)
+	GovKeeper.SetDepositParams(ctx, govtypes.DefaultDepositParams())
+	GovKeeper.SetVotingParams(ctx, govtypes.DefaultVotingParams())
+	GovKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
 	keepers := TestKeepers{
-		AccountKeeper:  accountKeeper,
-		StakingKeeper:  stakingKeeper,
+		AccountKeeper:  AccountKeeper,
+		StakingKeeper:  StakingKeeper,
 		DistKeeper:     distKeeper,
 		ContractKeeper: contractKeeper,
 		WasmKeeper:     &keeper,
-		BankKeeper:     bankKeeper,
-		GovKeeper:      govKeeper,
+		BankKeeper:     BankKeeper,
+		GovKeeper:      GovKeeper,
 		IBCKeeper:      ibcKeeper,
 		Router:         router,
 		EncodingConfig: encodingConfig,

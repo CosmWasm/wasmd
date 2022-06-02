@@ -70,10 +70,10 @@ type WasmVMResponseHandler interface {
 type Keeper struct {
 	storeKey              sdk.StoreKey
 	cdc                   codec.Codec
-	accountKeeper         types.AccountKeeper
+	AccountKeeper         types.AccountKeeper
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
-	capabilityKeeper      types.CapabilityKeeper
+	CapabilityKeeper      types.CapabilityKeeper
 	wasmVM                types.WasmerEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
@@ -91,13 +91,13 @@ func NewKeeper(
 	cdc codec.Codec,
 	storeKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	stakingKeeper types.StakingKeeper,
+	AccountKeeper types.AccountKeeper,
+	BankKeeper types.BankKeeper,
+	StakingKeeper types.StakingKeeper,
 	distKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
-	capabilityKeeper types.CapabilityKeeper,
+	CapabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
 	queryRouter GRPCQueryRouter,
@@ -119,17 +119,17 @@ func NewKeeper(
 		storeKey:          storeKey,
 		cdc:               cdc,
 		wasmVM:            wasmer,
-		accountKeeper:     accountKeeper,
-		bank:              NewBankCoinTransferrer(bankKeeper),
+		AccountKeeper:     AccountKeeper,
+		bank:              NewBankCoinTransferrer(BankKeeper),
 		portKeeper:        portKeeper,
-		capabilityKeeper:  capabilityKeeper,
-		messenger:         NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		CapabilityKeeper:  CapabilityKeeper,
+		messenger:         NewDefaultMessageHandler(router, channelKeeper, CapabilityKeeper, BankKeeper, cdc, portSource),
 		queryGasLimit:     wasmConfig.SmartQueryGasLimit,
 		paramSpace:        paramSpace,
 		gasRegister:       NewDefaultWasmGasRegister(),
 		maxQueryStackSize: types.DefaultMaxQueryStackSize,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(BankKeeper, StakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}
@@ -246,7 +246,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
-	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
+	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
 	}
@@ -259,8 +259,8 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	} else {
 		// create an empty account (so we don't have issues later)
 		// TODO: can we remove this?
-		contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
-		k.accountKeeper.SetAccount(ctx, contractAccount)
+		contractAccount := k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		k.AccountKeeper.SetAccount(ctx, contractAccount)
 	}
 
 	// get contact info

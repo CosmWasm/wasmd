@@ -35,8 +35,8 @@ type SDKMessageHandler struct {
 func NewDefaultMessageHandler(
 	router MessageRouter,
 	channelKeeper types.ChannelKeeper,
-	capabilityKeeper types.CapabilityKeeper,
-	bankKeeper types.Burner,
+	CapabilityKeeper types.CapabilityKeeper,
+	BankKeeper types.Burner,
 	unpacker codectypes.AnyUnpacker,
 	portSource types.ICS20TransferPortSource,
 	customEncoders ...*MessageEncoders,
@@ -47,8 +47,8 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
-		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
-		NewBurnCoinMessageHandler(bankKeeper),
+		NewIBCRawPacketHandler(channelKeeper, CapabilityKeeper),
+		NewBurnCoinMessageHandler(BankKeeper),
 	)
 }
 
@@ -143,11 +143,11 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 // IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
 	channelKeeper    types.ChannelKeeper
-	capabilityKeeper types.CapabilityKeeper
+	CapabilityKeeper types.CapabilityKeeper
 }
 
 func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper) IBCRawPacketHandler {
-	return IBCRawPacketHandler{channelKeeper: chk, capabilityKeeper: cak}
+	return IBCRawPacketHandler{channelKeeper: chk, CapabilityKeeper: cak}
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
@@ -174,7 +174,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrInvalidChannel, "not found")
 	}
-	channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
+	channelCap, ok := h.CapabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}

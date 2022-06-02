@@ -94,11 +94,11 @@ type InvestmentResponse struct {
 
 func TestInitializeStaking(t *testing.T) {
 	ctx, k := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
+	accKeeper, StakingKeeper, keeper, BankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
 
-	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
-	ctx = nextBlock(ctx, stakingKeeper)
-	v, found := stakingKeeper.GetValidator(ctx, valAddr)
+	valAddr := addValidator(t, ctx, StakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
+	ctx = nextBlock(ctx, StakingKeeper)
+	v, found := StakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
 
@@ -129,7 +129,7 @@ func TestInitializeStaking(t *testing.T) {
 	require.NotEmpty(t, stakingAddr)
 
 	// nothing spent here
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, deposit)
+	checkAccount(t, ctx, accKeeper, BankKeeper, creator, deposit)
 
 	// try to register with a validator not on the list and it fails
 	_, _, bob := keyPubAddr()
@@ -148,7 +148,7 @@ func TestInitializeStaking(t *testing.T) {
 	require.Error(t, err)
 
 	// no changes to bonding shares
-	val, _ := stakingKeeper.GetValidator(ctx, valAddr)
+	val, _ := StakingKeeper.GetValidator(ctx, valAddr)
 	assert.Equal(t, val.GetDelegatorShares(), sdk.NewDec(1234567))
 }
 
@@ -159,20 +159,20 @@ type initInfo struct {
 
 	ctx            sdk.Context
 	accKeeper      authkeeper.AccountKeeper
-	stakingKeeper  stakingkeeper.Keeper
+	StakingKeeper  stakingkeeper.Keeper
 	distKeeper     distributionkeeper.Keeper
 	wasmKeeper     Keeper
 	contractKeeper wasmtypes.ContractOpsKeeper
-	bankKeeper     bankkeeper.Keeper
+	BankKeeper     bankkeeper.Keeper
 	faucet         *TestFaucet
 }
 
 func initializeStaking(t *testing.T) initInfo {
 	ctx, k := CreateTestInput(t, false, SupportedFeatures)
-	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
+	accKeeper, StakingKeeper, keeper, BankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
-	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
-	ctx = nextBlock(ctx, stakingKeeper)
+	valAddr := addValidator(t, ctx, StakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
+	ctx = nextBlock(ctx, StakingKeeper)
 
 	// set some baseline - this seems to be needed
 	k.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distributiontypes.ValidatorHistoricalRewards{
@@ -180,7 +180,7 @@ func initializeStaking(t *testing.T) initInfo {
 		ReferenceCount:        1,
 	})
 
-	v, found := stakingKeeper.GetValidator(ctx, valAddr)
+	v, found := StakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1000000))
 	assert.Equal(t, v.Status, stakingtypes.Bonded)
@@ -217,10 +217,10 @@ func initializeStaking(t *testing.T) initInfo {
 		contractAddr:   stakingAddr,
 		ctx:            ctx,
 		accKeeper:      accKeeper,
-		stakingKeeper:  stakingKeeper,
+		StakingKeeper:  StakingKeeper,
 		wasmKeeper:     *keeper,
 		distKeeper:     k.DistKeeper,
-		bankKeeper:     bankKeeper,
+		BankKeeper:     BankKeeper,
 		contractKeeper: k.ContractKeeper,
 		faucet:         k.Faucet,
 	}
@@ -229,10 +229,10 @@ func initializeStaking(t *testing.T) initInfo {
 func TestBonding(t *testing.T) {
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
+	keeper, StakingKeeper, accKeeper, BankKeeper := initInfo.wasmKeeper, initInfo.StakingKeeper, initInfo.accKeeper, initInfo.BankKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	val, found := StakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
 	initPower := val.GetDelegatorShares()
 
@@ -255,16 +255,16 @@ func TestBonding(t *testing.T) {
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	checkAccount(t, ctx, accKeeper, BankKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, BankKeeper, bob, funds)
 
 	// make sure the proper number of tokens have been bonded
-	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	val, _ = StakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
 	assert.Equal(t, sdk.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, found := StakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
 	require.True(t, found)
 	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("80000"))
 
@@ -277,10 +277,10 @@ func TestBonding(t *testing.T) {
 func TestUnbonding(t *testing.T) {
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
+	keeper, StakingKeeper, accKeeper, BankKeeper := initInfo.wasmKeeper, initInfo.StakingKeeper, initInfo.accKeeper, initInfo.BankKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	val, found := StakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
 	initPower := val.GetDelegatorShares()
 
@@ -298,7 +298,7 @@ func TestUnbonding(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit
-	ctx = nextBlock(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, StakingKeeper)
 
 	// now unbond 30k - note that 3k (10%) goes to the owner as a tax, 27k unbonded and available as claims
 	unbond := StakingHandleMsg{
@@ -313,21 +313,21 @@ func TestUnbonding(t *testing.T) {
 
 	// check some account values - the money is on neither account (cuz it is bonded)
 	// Note: why is this immediate? just test setup?
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	checkAccount(t, ctx, accKeeper, BankKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, BankKeeper, bob, funds)
 
 	// make sure the proper number of tokens have been bonded (80k - 27k = 53k)
-	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	val, _ = StakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
 	assert.Equal(t, sdk.NewInt(53000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, found := StakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
 	require.True(t, found)
 	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("53000"))
 
 	// check there is unbonding in progress
-	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	un, found := StakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
 	require.True(t, found)
 	require.Equal(t, 1, len(un.Entries))
 	assert.Equal(t, "27000", un.Entries[0].Balance.String())
@@ -342,11 +342,11 @@ func TestUnbonding(t *testing.T) {
 func TestReinvest(t *testing.T) {
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
+	keeper, StakingKeeper, accKeeper, BankKeeper := initInfo.wasmKeeper, initInfo.StakingKeeper, initInfo.accKeeper, initInfo.BankKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	val, found := StakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
 	initPower := val.GetDelegatorShares()
 	assert.Equal(t, val.Tokens, sdk.NewInt(1000000), "%s", val.Tokens)
@@ -367,9 +367,9 @@ func TestReinvest(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
-	ctx = nextBlock(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, StakingKeeper)
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
-	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+	setValidatorRewards(ctx, StakingKeeper, distKeeper, valAddr, "240000")
 
 	// this should withdraw our outstanding 36k of rewards and reinvest them in the same delegation
 	reinvest := StakingHandleMsg{
@@ -382,22 +382,22 @@ func TestReinvest(t *testing.T) {
 
 	// check some account values - the money is on neither account (cuz it is bonded)
 	// Note: why is this immediate? just test setup?
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	checkAccount(t, ctx, accKeeper, BankKeeper, contractAddr, sdk.Coins{})
+	checkAccount(t, ctx, accKeeper, BankKeeper, bob, funds)
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	d, found := StakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
 	require.True(t, found)
 	// we started with 200k and added 36k
 	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("236000"))
 
 	// make sure the proper number of tokens have been bonded (80k + 40k = 120k)
-	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
+	val, _ = StakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
 	assert.Equal(t, sdk.NewInt(236000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
 
 	// check there is no unbonding in progress
-	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	un, found := StakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
 	assert.False(t, found, "%#v", un)
 
 	// check we have the desired balance
@@ -411,11 +411,11 @@ func TestQueryStakingInfo(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	keeper, stakingKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper
+	keeper, StakingKeeper := initInfo.wasmKeeper, initInfo.StakingKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	val, found := StakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
 	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
 
@@ -435,9 +435,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
-	ctx = nextBlock(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, StakingKeeper)
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
-	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+	setValidatorRewards(ctx, StakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
 	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
@@ -588,11 +588,11 @@ func TestQueryStakingPlugin(t *testing.T) {
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
-	stakingKeeper := initInfo.stakingKeeper
+	StakingKeeper := initInfo.StakingKeeper
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
+	val, found := StakingKeeper.GetValidator(ctx, valAddr)
 	require.True(t, found)
 	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
 
@@ -612,9 +612,9 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.NoError(t, err)
 
 	// update height a bit to solidify the delegation
-	ctx = nextBlock(ctx, stakingKeeper)
+	ctx = nextBlock(ctx, StakingKeeper)
 	// we get 1/6, our share should be 40k minus 10% commission = 36k
-	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
+	setValidatorRewards(ctx, StakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
 	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
@@ -626,7 +626,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 			Validator: valAddr.String(),
 		},
 	}
-	raw, err := StakingQuerier(stakingKeeper, distKeeper)(ctx, &query)
+	raw, err := StakingQuerier(StakingKeeper, distKeeper)(ctx, &query)
 	require.NoError(t, err)
 	var res wasmvmtypes.DelegationResponse
 	mustParse(t, raw, &res)
@@ -651,7 +651,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+func addValidator(t *testing.T, ctx sdk.Context, StakingKeeper stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
 	owner := faucet.NewFundedAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
@@ -676,7 +676,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 		Value:             value,
 	}
 
-	h := staking.NewHandler(stakingKeeper)
+	h := staking.NewHandler(StakingKeeper)
 	_, err = h(ctx, &msg)
 	require.NoError(t, err)
 	return addr
@@ -684,16 +684,16 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 
 // this will commit the current set, update the block height and set historic info
 // basically, letting two blocks pass
-func nextBlock(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper) sdk.Context {
-	staking.EndBlocker(ctx, stakingKeeper)
+func nextBlock(ctx sdk.Context, StakingKeeper stakingkeeper.Keeper) sdk.Context {
+	staking.EndBlocker(ctx, StakingKeeper)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	staking.BeginBlocker(ctx, stakingKeeper)
+	staking.BeginBlocker(ctx, StakingKeeper)
 	return ctx
 }
 
-func setValidatorRewards(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
+func setValidatorRewards(ctx sdk.Context, StakingKeeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
 	// allocate some rewards
-	vali := stakingKeeper.Validator(ctx, valAddr)
+	vali := StakingKeeper.Validator(ctx, valAddr)
 	amount, err := sdk.NewDecFromStr(reward)
 	if err != nil {
 		panic(err)

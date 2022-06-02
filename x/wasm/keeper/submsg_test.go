@@ -21,7 +21,7 @@ import (
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
-	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
+	accKeeper, keeper, BankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
@@ -41,9 +41,9 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// check some account values
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
+	checkAccount(t, ctx, accKeeper, BankKeeper, contractAddr, contractStart)
+	checkAccount(t, ctx, accKeeper, BankKeeper, creator, creatorBalance)
+	checkAccount(t, ctx, accKeeper, BankKeeper, fred, nil)
 
 	// creator can send contract's tokens to fred (using SendMsg)
 	msg := wasmvmtypes.CosmosMsg{
@@ -72,10 +72,10 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	checkAccount(t, ctx, accKeeper, BankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
+	checkAccount(t, ctx, accKeeper, BankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	checkAccount(t, ctx, accKeeper, BankKeeper, creator, creatorBalance)
 
 	// query the reflect state to ensure the result was stored
 	query := testdata.ReflectQueryMsg{

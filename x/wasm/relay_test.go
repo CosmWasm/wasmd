@@ -193,10 +193,10 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.GetTestSupport().BankKeeper()
+	BankKeeperB := chainB.GetTestSupport().BankKeeper()
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
-	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", BankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
 
 func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
@@ -268,10 +268,10 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.GetTestSupport().BankKeeper()
+	BankKeeperB := chainB.GetTestSupport().BankKeeper()
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
-	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
+	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", BankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
 }
 
 func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
