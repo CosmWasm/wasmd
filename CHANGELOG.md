@@ -6,7 +6,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.27.0...HEAD)
 
-## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-17)
+## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-19)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.26.0...v0.27.0)
 

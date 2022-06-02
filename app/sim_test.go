@@ -6,11 +6,17 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
+
+	"github.com/cosmos/cosmos-sdk/store"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -118,7 +124,7 @@ func TestAppImportExport(t *testing.T) {
 		t,
 		os.Stdout,
 		app.BaseApp,
-		simapp.AppStateFn(app.AppCodec(), app.SimulationManager()),
+		AppStateFn(app.AppCodec(), app.SimulationManager()),
 		simtypes.RandomAccounts,
 		simapp.SimulationOperations(app, app.AppCodec(), config),
 		app.ModuleAccountAddrs(),
@@ -190,6 +196,37 @@ func TestAppImportExport(t *testing.T) {
 	// delete persistent tx counter value
 	ctxA.KVStore(app.keys[wasm.StoreKey]).Delete(wasmtypes.TXCounterPrefix)
 
+	// reset contract code index in source DB for comparison with dest DB
+	dropContractHistory := func(s store.KVStore, keys ...[]byte) {
+		for _, key := range keys {
+			prefixStore := prefix.NewStore(s, key)
+			iter := prefixStore.Iterator(nil, nil)
+			for ; iter.Valid(); iter.Next() {
+				prefixStore.Delete(iter.Key())
+			}
+			iter.Close()
+		}
+	}
+	prefixes := [][]byte{wasmtypes.ContractCodeHistoryElementPrefix, wasmtypes.ContractByCodeIDAndCreatedSecondaryIndexPrefix}
+	dropContractHistory(ctxA.KVStore(app.keys[wasm.StoreKey]), prefixes...)
+	dropContractHistory(ctxB.KVStore(newApp.keys[wasm.StoreKey]), prefixes...)
+
+	normalizeContractInfo := func(ctx sdk.Context, app *WasmApp) {
+		var index uint64
+		app.wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info wasmtypes.ContractInfo) bool {
+			created := &wasmtypes.AbsoluteTxPosition{
+				BlockHeight: uint64(0),
+				TxIndex:     index,
+			}
+			info.Created = created
+			store := ctx.KVStore(app.keys[wasm.StoreKey])
+			store.Set(wasmtypes.GetContractAddressKey(address), app.appCodec.MustMarshal(&info))
+			index++
+			return false
+		})
+	}
+	normalizeContractInfo(ctxA, app)
+	normalizeContractInfo(ctxB, newApp)
 	// diff both stores
 	for _, skp := range storeKeysPrefixes {
 		storeA := ctxA.KVStore(skp.A)
@@ -215,7 +252,7 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 	encConf := MakeEncodingConfig()
-	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, simapp.FlagPeriodValue,
+	app := NewWasmApp(logger, db, nil, true, map[int64]bool{}, t.TempDir(), simapp.FlagPeriodValue,
 		encConf, wasm.EnableAllProposals, simapp.EmptyAppOptions{}, nil, fauxMerkleModeOpt)
 	require.Equal(t, "WasmApp", app.Name())
 
@@ -224,7 +261,7 @@ func TestFullAppSimulation(t *testing.T) {
 		t,
 		os.Stdout,
 		app.BaseApp,
-		simapp.AppStateFn(app.appCodec, app.SimulationManager()),
+		AppStateFn(app.appCodec, app.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simapp.SimulationOperations(app, app.AppCodec(), config),
 		app.ModuleAccountAddrs(),
@@ -240,4 +277,16 @@ func TestFullAppSimulation(t *testing.T) {
 	if config.Commit {
 		simapp.PrintStats(db)
 	}
+}
+
+// AppStateFn returns the initial application state using a genesis or the simulation parameters.
+// It panics if the user provides files for both of them.
+// If a file is not given for the genesis or the sim params, it creates a randomized one.
+func AppStateFn(codec codec.Codec, manager *module.SimulationManager) simtypes.AppStateFn {
+	// quick hack to setup app state genesis with our app modules
+	simapp.ModuleBasics = ModuleBasics
+	if simapp.FlagGenesisTimeValue == 0 { // always set to have a block time
+		simapp.FlagGenesisTimeValue = time.Now().Unix()
+	}
+	return simapp.AppStateFn(codec, manager)
 }
