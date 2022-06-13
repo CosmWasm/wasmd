@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/CosmWasm/wasmvm v1.0.0
-	github.com/cosmos/cosmos-sdk v0.45.4
+	github.com/cosmos/cosmos-sdk v0.45.5
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v3 v3.0.0
 	github.com/cosmos/interchain-accounts v0.1.0
