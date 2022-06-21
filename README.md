@@ -102,6 +102,13 @@ your use case.
 
 ## Quick Start
 
+## Clone securely the repo
+
+```
+git clone https://github.com/CosmWasm/wasmd.git
+```
+First, clone securely with this command.
+
 ```
 make install
 make test
