@@ -73,16 +73,6 @@ func init() { // register new content types with the sdk
 	govv1beta1.RegisterProposalType(string(ProposalTypePinCodes))
 	govv1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
 	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
-	RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
-	RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
-	RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
-	RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
-	RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
-	RegisterProposalTypeCodec(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
-	RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
-	RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
-	RegisterProposalTypeCodec(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
-	RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
 }
 
 // RegisterProposalTypeCodec allows external modules to register their own pubproposal types on the

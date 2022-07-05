@@ -5,7 +5,7 @@ go 1.18
 require (
 	cosmossdk.io/math v1.0.0-beta.2
 	github.com/CosmWasm/wasmvm v1.0.0
-	github.com/cosmos/cosmos-sdk v0.46.0-rc1.0.20220704192804-f68653f13648
+	github.com/cosmos/cosmos-sdk v0.46.0-rc2
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v4 v4.0.0-rc0
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
@@ -162,5 +162,3 @@ replace (
 )
 
 replace github.com/cosmos/ibc-go/v4 => github.com/notional-labs/ibc-go/v4 v4.0.0-20220705045309-1e79e0b54d84
-
-replace github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.0-rc1.0.20220704192804-f68653f13648
