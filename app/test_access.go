@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/app/params"
 
@@ -37,6 +38,10 @@ func (s TestSupport) WasmKeeper() wasm.Keeper {
 
 func (s TestSupport) AppCodec() codec.Codec {
 	return s.app.appCodec
+}
+
+func (s TestSupport) AppplySnapshotChunk() func(abcitypes.RequestApplySnapshotChunk) abcitypes.ResponseApplySnapshotChunk {
+	return s.app.ApplySnapshotChunk
 }
 
 func (s TestSupport) ScopedWasmIBCKeeper() capabilitykeeper.ScopedKeeper {

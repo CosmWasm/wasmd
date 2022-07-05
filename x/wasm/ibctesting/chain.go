@@ -572,6 +572,14 @@ func (a TestingAppDecorator) GetBaseApp() *baseapp.BaseApp {
 	return a.TestSupport().GetBaseApp()
 }
 
+func (a TestingAppDecorator) AppCodec() codec.Codec {
+	return a.TestSupport().AppCodec()
+}
+
+func (a TestingAppDecorator) AppplySnapshotChunk() func(abci.RequestApplySnapshotChunk) abci.ResponseApplySnapshotChunk {
+	return a.TestSupport().AppplySnapshotChunk()
+}
+
 func (a TestingAppDecorator) GetStakingKeeper() stakingkeeper.Keeper {
 	return a.TestSupport().StakingKeeper()
 }

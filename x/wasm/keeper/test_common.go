@@ -105,12 +105,17 @@ func MakeTestCodec(t testing.TB) codec.Codec {
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	encodingConfig := wasmappparams.MakeEncodingConfig()
 
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	amino := encodingConfig.Amino
+	interfaceRegistry := encodingConfig.InterfaceRegistry
 
+	std.RegisterInterfaces(interfaceRegistry)
+	std.RegisterLegacyAminoCodec(amino)
+
+	moduleBasics.RegisterLegacyAminoCodec(amino)
+	moduleBasics.RegisterInterfaces(interfaceRegistry)
 	// add wasmd types
-	types.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	types.RegisterLegacyAminoCodec(encodingConfig.Amino)
+	types.RegisterInterfaces(interfaceRegistry)
+	types.RegisterLegacyAminoCodec(amino)
 	return encodingConfig
 }
 

@@ -16,7 +16,7 @@ func GenAndDeliverTxWithRandFees(txCtx simulation.OperationInput, gas uint64) (s
 	//	var err error
 
 	// coins, hasNeg := spendable.SafeSub(txCtx.CoinsSpentInMsg)
-	//if hasNeg {
+	// if hasNeg {
 	//	return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "message doesn't leave room for fees"), nil, err
 	//}
 
