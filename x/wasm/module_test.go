@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -66,7 +68,7 @@ var (
 	_, _, addrAcc1 = keyPubAddr()
 	addr1          = addrAcc1.String()
 	testContract   = mustLoad("./keeper/testdata/hackatom.wasm")
-	maskContract   = mustLoad("./keeper/testdata/reflect.wasm")
+	maskContract   = testdata.ReflectContractWasm()
 	oldContract    = mustLoad("./testdata/escrow_0.7.wasm")
 )
 

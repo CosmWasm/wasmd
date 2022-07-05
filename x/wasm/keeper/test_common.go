@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -77,7 +79,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
-var ModuleBasics = module.NewBasicManager(
+var moduleBasics = module.NewBasicManager(
 	auth.AppModuleBasic{},
 	bank.AppModuleBasic{},
 	capability.AppModuleBasic{},
@@ -106,8 +108,6 @@ func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 
-	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	// add wasmd types
 	types.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	types.RegisterLegacyAminoCodec(encodingConfig.Amino)
@@ -563,11 +563,8 @@ func StoreIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers)
 }
 
 func StoreReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) uint64 {
-	wasmCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-
 	_, _, creatorAddr := keyPubAddr()
-	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
+	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	return codeID
 }
