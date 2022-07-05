@@ -1104,6 +1104,7 @@ github.com/notional-labs/cosmos-sdk v0.46.0-craft.0.20220526155600-a4cf8ab9598a 
 github.com/notional-labs/cosmos-sdk v0.46.0-craft.0.20220526155600-a4cf8ab9598a/go.mod h1:/3z9fPNC6MPv4NNYKqMLKK/CNGwsuyklV4oaE1sIYCw=
 github.com/notional-labs/ibc-go/v3 v3.0.0-20220526172805-2314e4770899 h1:e/G3vB43+jMbbQcATd8Sq+Y+9TAsPHyvKRgqsje8/wU=
 github.com/notional-labs/ibc-go/v3 v3.0.0-20220526172805-2314e4770899/go.mod h1:kADt98Vnr/d5B/xWd49OOter0GD2gj2X9LFVOhO1kb4=
+github.com/notional-labs/ibc-go/v4 v4.0.0-20220705045309-1e79e0b54d84 h1:LooA7NDC1Kr8Bd0F9NSxcXsinThegqMmAlR63W0BWgU=
 github.com/notional-labs/ibc-go/v4 v4.0.0-20220705045309-1e79e0b54d84/go.mod h1:s2fbASaVyOsAxWrloW6tDlOoC2YY7S2RrWIrRN2v830=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
