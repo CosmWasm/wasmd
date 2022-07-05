@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	tmprotoversion "github.com/tendermint/tendermint/proto/tendermint/version"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -85,7 +87,7 @@ type PacketAck struct {
 func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
 	// generate validator private/public key
 	privVal := mock.NewPV()
-	pubKey, err := privVal.GetPubKey(context.Background())
+	pubKey, err := privVal.GetPubKey()
 	require.NoError(t, err)
 
 	// create validator set with single validator
@@ -404,7 +406,7 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	vsetHash := tmValSet.Hash()
 
 	tmHeader := tmtypes.Header{
-		Version:            tmversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
+		Version:            tmprotoversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
 		ChainID:            chainID,
 		Height:             blockHeight,
 		Time:               timestamp,
@@ -593,7 +595,7 @@ func (a TestingAppDecorator) TestSupport() *wasmd.TestSupport {
 func MakeCommit(ctx context.Context, blockID tmtypes.BlockID, height int64, round int32, voteSet *tmtypes.VoteSet, validators []tmtypes.PrivValidator, now time.Time) (*tmtypes.Commit, error) {
 	// all sign
 	for i := 0; i < len(validators); i++ {
-		pubKey, err := validators[i].GetPubKey(ctx)
+		pubKey, err := validators[i].GetPubKey()
 		if err != nil {
 			return nil, err
 		}
@@ -609,7 +611,7 @@ func MakeCommit(ctx context.Context, blockID tmtypes.BlockID, height int64, roun
 
 		v := vote.ToProto()
 
-		if err := validators[i].SignVote(ctx, voteSet.ChainID(), v); err != nil {
+		if err := validators[i].SignVote(voteSet.ChainID(), v); err != nil {
 			return nil, err
 		}
 		vote.Signature = v.Signature

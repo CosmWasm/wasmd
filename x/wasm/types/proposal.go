@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 type ProposalType string
@@ -62,15 +63,33 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 }
 
 func init() { // register new content types with the sdk
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeStoreCode))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeMigrateContract))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeSudoContract))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeExecuteContract))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeUpdateAdmin))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeClearAdmin))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypePinCodes))
-	govtypesv1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
+	govv1beta1.RegisterProposalType(string(ProposalTypeStoreCode))
+	govv1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeMigrateContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeSudoContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeExecuteContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateAdmin))
+	govv1beta1.RegisterProposalType(string(ProposalTypeClearAdmin))
+	govv1beta1.RegisterProposalType(string(ProposalTypePinCodes))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
+	RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
+	RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
+	RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
+	RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
+	RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
+	RegisterProposalTypeCodec(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
+	RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
+	RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
+	RegisterProposalTypeCodec(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
+	RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
+}
+
+// RegisterProposalTypeCodec allows external modules to register their own pubproposal types on the
+// internal ModuleCdc. This allows the MsgSubmitProposal to be correctly Amino encoded and decoded.
+// borrowed from here, and looked correct: https://github.com/CJpaekil/DEFiProject/blob/bf38929081d0ea6854451189103aafa30ec9985a/x/committee/types/codec.go
+func RegisterProposalTypeCodec(o interface{}, name string) {
+	ModuleCdc.RegisterConcrete(o, name, nil)
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -526,8 +545,8 @@ func validateProposalCommons(title, description string) error {
 	if len(title) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
 	}
-	if len(title) > govtypesv1beta1.MaxTitleLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govtypesv1beta1.MaxTitleLength)
+	if len(title) > govv1beta1.MaxTitleLength {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govv1beta1.MaxTitleLength)
 	}
 	if strings.TrimSpace(description) != description {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
@@ -535,8 +554,8 @@ func validateProposalCommons(title, description string) error {
 	if len(description) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")
 	}
-	if len(description) > govtypesv1beta1.MaxDescriptionLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", govtypesv1beta1.MaxDescriptionLength)
+	if len(description) > govv1beta1.MaxDescriptionLength {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", govv1beta1.MaxDescriptionLength)
 	}
 	return nil
 }

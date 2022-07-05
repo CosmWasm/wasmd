@@ -38,7 +38,6 @@ require (
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/storage v1.14.0 // indirect
 	cosmossdk.io/api v0.1.1-0.20220526150508-16badb17be9a // indirect
-	cosmossdk.io/core v0.1.1-0.20220526150508-16badb17be9a // indirect
 	cosmossdk.io/errors v1.0.0-beta.7 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/keyring v1.1.6 // indirect
@@ -58,12 +57,10 @@ require (
 	github.com/confio/ics23/go v0.7.0 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7.0.20220208174455-213b76899fac // indirect
-	github.com/cosmos/cosmos-sdk/container v1.0.0-alpha.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
-	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/danieljoos/wincred v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -83,12 +80,10 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect
@@ -118,7 +113,6 @@ require (
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
-	github.com/oasisprotocol/curve25519-voi v0.0.0-20210609091139-0a56a4bca00b // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
@@ -141,10 +135,8 @@ require (
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171 // indirect
 	golang.org/x/net v0.0.0-20220617184016-355a448f1bc9 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
-	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29 // indirect
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467 // indirect
 	golang.org/x/text v0.3.7 // indirect
@@ -170,5 +162,5 @@ replace (
 )
 
 replace github.com/cosmos/ibc-go/v4 => github.com/notional-labs/ibc-go/v4 v4.0.0-20220705045309-1e79e0b54d84
-replace github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.0-rc1.0.20220704192804-f68653f13648
 
+replace github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.0-rc1.0.20220704192804-f68653f13648

@@ -202,8 +202,8 @@ func sdkAttributesToWasmVMAttributes(attrs []abci.EventAttribute) []wasmvmtypes.
 	res := make([]wasmvmtypes.EventAttribute, len(attrs))
 	for i, attr := range attrs {
 		res[i] = wasmvmtypes.EventAttribute{
-			Key:   attr.Key,
-			Value: attr.Value,
+			Key:   string(attr.Key),
+			Value: string(attr.Value),
 		}
 	}
 	return res

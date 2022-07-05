@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,8 +165,8 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
 				WithGasMeter(sdk.NewInfiniteGasMeter()).
-				WithConsensusParams(&tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas},
+				WithConsensusParams(&abcitypes.ConsensusParams{
+					Block: &abcitypes.BlockParams{MaxGas: spec.maxBlockGas},
 				})
 			// when
 			if spec.expErr != nil {

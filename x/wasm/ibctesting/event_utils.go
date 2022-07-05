@@ -59,8 +59,8 @@ func parsePacketFromEvent(evt abci.Event) channeltypes.Packet {
 // return the value for the attribute with the given name
 func getField(evt abci.Event, key string) string {
 	for _, attr := range evt.Attributes {
-		if attr.Key == key {
-			return attr.Value
+		if string(attr.Key) == key {
+			return string(attr.Value)
 		}
 	}
 	return ""

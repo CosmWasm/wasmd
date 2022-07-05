@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -83,7 +82,7 @@ func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Opt
 
 func NewValSet() *tmtypes.ValidatorSet {
 	privVal := wasmtypes.NewPV()
-	pubKey, err := privVal.GetPubKey(context.TODO())
+	pubKey, err := privVal.GetPubKey()
 	if err != nil {
 		panic(err)
 	}
