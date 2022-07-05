@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -28,10 +27,7 @@ var emptyWasmOpts []wasm.Option = nil
 
 func TestWasmdExport(t *testing.T) {
 	db := db.NewMemDB()
-	logger, err := log.NewDefaultLogger("text", "info", false)
-	if err != nil {
-		fmt.Println(err)
-	}
+	logger := log.TestingLogger()
 	gapp := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
 
 	genesisState := NewDefaultGenesisState()
@@ -113,17 +109,14 @@ func TestWasmdExport(t *testing.T) {
 
 	// Making a new app object with the db, so that initchain hasn't been called
 	newGapp := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
-	_, err = newGapp.ExportAppStateAndValidators(false, []string{})
+	_, err := newGapp.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
 // ensure that blocked addresses are properly set in bank keeper
 func TestBlockedAddrs(t *testing.T) {
 	db := db.NewMemDB()
-	logger, err := log.NewDefaultLogger("text", "info", false)
-	if err != nil {
-		fmt.Println(err)
-	}
+	logger := log.TestingLogger()
 	gapp := NewWasmApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
 
 	for acc := range maccPerms {
