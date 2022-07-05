@@ -46,15 +46,12 @@
   
 - [cosmwasm/wasm/v1/proposal.proto](#cosmwasm/wasm/v1/proposal.proto)
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
-    - [ClearAdminProposal](#cosmwasm.wasm.v1.ClearAdminProposal)
-    - [ExecuteContractProposal](#cosmwasm.wasm.v1.ExecuteContractProposal)
-    - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
-    - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
-    - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
-    - [StoreCodeProposal](#cosmwasm.wasm.v1.StoreCodeProposal)
-    - [SudoContractProposal](#cosmwasm.wasm.v1.SudoContractProposal)
-    - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
-    - [UpdateAdminProposal](#cosmwasm.wasm.v1.UpdateAdminProposal)
+    - [MsgClearAdminProposal](#cosmwasm.wasm.v1.MsgClearAdminProposal)
+    - [MsgMigrateContractProposal](#cosmwasm.wasm.v1.MsgMigrateContractProposal)
+    - [MsgPinCodesProposal](#cosmwasm.wasm.v1.MsgPinCodesProposal)
+    - [MsgSudoContractProposal](#cosmwasm.wasm.v1.MsgSudoContractProposal)
+    - [MsgUnpinCodesProposal](#cosmwasm.wasm.v1.MsgUnpinCodesProposal)
+    - [MsgUpdateAdminProposal](#cosmwasm.wasm.v1.MsgUpdateAdminProposal)
     - [UpdateInstantiateConfigProposal](#cosmwasm.wasm.v1.UpdateInstantiateConfigProposal)
   
 - [cosmwasm/wasm/v1/query.proto](#cosmwasm/wasm/v1/query.proto)
@@ -660,9 +657,9 @@ applied.
 
 
 
-<a name="cosmwasm.wasm.v1.ClearAdminProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgClearAdminProposal"></a>
 
-### ClearAdminProposal
+### MsgClearAdminProposal
 ClearAdminProposal gov proposal content type to clear the admin of a
 contract.
 
@@ -678,53 +675,9 @@ contract.
 
 
 
-<a name="cosmwasm.wasm.v1.ExecuteContractProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgMigrateContractProposal"></a>
 
-### ExecuteContractProposal
-ExecuteContractProposal gov proposal content type to call execute on a
-contract.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `title` | [string](#string) |  | Title is a short summary |
-| `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
-| `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as execute |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.InstantiateContractProposal"></a>
-
-### InstantiateContractProposal
-InstantiateContractProposal gov proposal content type to instantiate a
-contract.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `title` | [string](#string) |  | Title is a short summary |
-| `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
-| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MigrateContractProposal"></a>
-
-### MigrateContractProposal
+### MsgMigrateContractProposal
 MigrateContractProposal gov proposal content type to migrate a contract.
 
 
@@ -743,9 +696,9 @@ Note: skipping 3 as this was previously used for unneeded run_as |
 
 
 
-<a name="cosmwasm.wasm.v1.PinCodesProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgPinCodesProposal"></a>
 
-### PinCodesProposal
+### MsgPinCodesProposal
 PinCodesProposal gov proposal content type to pin a set of code ids in the
 wasmvm cache.
 
@@ -761,28 +714,9 @@ wasmvm cache.
 
 
 
-<a name="cosmwasm.wasm.v1.StoreCodeProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgSudoContractProposal"></a>
 
-### StoreCodeProposal
-StoreCodeProposal gov proposal content type to submit WASM code to the system
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `title` | [string](#string) |  | Title is a short summary |
-| `description` | [string](#string) |  | Description is a human readable text |
-| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
-| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
-| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.SudoContractProposal"></a>
-
-### SudoContractProposal
+### MsgSudoContractProposal
 SudoContractProposal gov proposal content type to call sudo on a contract.
 
 
@@ -798,9 +732,9 @@ SudoContractProposal gov proposal content type to call sudo on a contract.
 
 
 
-<a name="cosmwasm.wasm.v1.UnpinCodesProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgUnpinCodesProposal"></a>
 
-### UnpinCodesProposal
+### MsgUnpinCodesProposal
 UnpinCodesProposal gov proposal content type to unpin a set of code ids in
 the wasmvm cache.
 
@@ -816,9 +750,9 @@ the wasmvm cache.
 
 
 
-<a name="cosmwasm.wasm.v1.UpdateAdminProposal"></a>
+<a name="cosmwasm.wasm.v1.MsgUpdateAdminProposal"></a>
 
-### UpdateAdminProposal
+### MsgUpdateAdminProposal
 UpdateAdminProposal gov proposal content type to set an admin for a contract.
 
 
