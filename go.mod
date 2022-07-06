@@ -5,7 +5,7 @@ go 1.18
 require (
 	cosmossdk.io/math v1.0.0-beta.2
 	github.com/CosmWasm/wasmvm v1.0.0
-	github.com/cosmos/cosmos-sdk v0.46.0-rc2
+	github.com/cosmos/cosmos-sdk v0.46.0-rc2.0.20220705201857-c7c65880dfbe
 	github.com/cosmos/iavl v0.17.3
 	github.com/cosmos/ibc-go/v4 v4.0.0-rc0
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
