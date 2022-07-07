@@ -284,7 +284,7 @@ func CheckBalance(t *testing.T, app *WasmApp, addr sdk.AccAddress, balances sdk.
 	require.True(t, balances.IsEqual(app.BankKeeper.GetAllBalances(ctxCheck, addr)))
 }
 
-const DefaultGas = 1200000
+const DefaultGas = 1_500_000
 
 // SignCheckDeliver checks a generated signed transaction and simulates a
 // block commitment with the given transaction. A test assertion is made using

@@ -52,6 +52,8 @@ const (
 	DefaultPerCustomEventCost uint64 = 20
 	// DefaultEventAttributeDataFreeTier number of bytes of total attribute data we do not charge.
 	DefaultEventAttributeDataFreeTier = 100
+	// DefaultPerByteUncompressCost is how much SDK gas we charge per source byte to unpack
+	DefaultPerByteUncompressCost uint64 = 2
 )
 
 // GasRegister abstract source for gas costs
@@ -60,6 +62,8 @@ type GasRegister interface {
 	NewContractInstanceCosts(pinned bool, msgLen int) sdk.Gas
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCosts(byteLength int) sdk.Gas
+	// UncompressCosts costs to unpack a new wasm contract
+	UncompressCosts(byteLength int) sdk.Gas
 	// InstantiateContractCosts costs when interacting with a wasm contract
 	InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas
 	// ReplyCosts costs to to handle a message reply
@@ -78,6 +82,8 @@ type WasmGasRegisterConfig struct {
 	InstanceCost sdk.Gas
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCost sdk.Gas
+	// UncompressCost costs per byte to unpack a contract
+	UncompressCost sdk.Gas
 	// GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
 	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 	GasMultiplier sdk.Gas
@@ -107,6 +113,7 @@ func DefaultGasRegisterConfig() WasmGasRegisterConfig {
 		EventAttributeDataCost:     DefaultEventAttributeDataCost,
 		EventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 		ContractMessageDataCost:    DefaultContractMessageDataCost,
+		UncompressCost:             DefaultPerByteUncompressCost,
 	}
 }
 
@@ -141,6 +148,14 @@ func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
 	}
 	return g.c.CompileCost * uint64(byteLength)
+}
+
+// UncompressCosts costs to unpack a new wasm contract
+func (g WasmGasRegister) UncompressCosts(byteLength int) sdk.Gas {
+	if byteLength < 0 {
+		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
+	}
+	return g.c.UncompressCost * uint64(byteLength)
 }
 
 // InstantiateContractCosts costs when interacting with a wasm contract

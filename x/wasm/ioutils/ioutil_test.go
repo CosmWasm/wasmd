@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,29 +28,9 @@ func TestUncompress(t *testing.T) {
 		expError  error
 		expResult []byte
 	}{
-		"handle wasm uncompressed": {
-			src:       wasmRaw,
-			expResult: wasmRaw,
-		},
 		"handle wasm compressed": {
 			src:       wasmGzipped,
 			expResult: wasmRaw,
-		},
-		"handle nil slice": {
-			src:       nil,
-			expResult: nil,
-		},
-		"handle short unidentified": {
-			src:       []byte{0x1, 0x2},
-			expResult: []byte{0x1, 0x2},
-		},
-		"handle input slice exceeding limit": {
-			src:      []byte(strings.Repeat("a", maxSize+1)),
-			expError: types.ErrLimit,
-		},
-		"handle input slice at limit": {
-			src:       []byte(strings.Repeat("a", maxSize)),
-			expResult: []byte(strings.Repeat("a", maxSize)),
 		},
 		"handle gzip identifier only": {
 			src:      gzipIdent,

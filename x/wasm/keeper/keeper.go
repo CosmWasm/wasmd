@@ -178,11 +178,14 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "instantiate access must be subset of default upload access")
 	}
 
-	wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
-	if err != nil {
-		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	if ioutils.IsGzip(wasmCode) {
+		ctx.GasMeter().ConsumeGas(k.gasRegister.UncompressCosts(len(wasmCode)), "Uncompress gzip bytecode")
+		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
+		if err != nil {
+			return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		}
 	}
-	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling WASM Bytecode")
+	ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
 
 	checksum, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
@@ -216,9 +219,12 @@ func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.Cod
 }
 
 func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
-	wasmCode, err := ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
-	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	if ioutils.IsGzip(wasmCode) {
+		var err error
+		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
+		if err != nil {
+			return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		}
 	}
 	newCodeHash, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
