@@ -130,9 +130,9 @@ type TestFaucet struct {
 	minterModuleName string
 }
 
-func NewTestFaucet(t testing.TB, ctx sdk.Context, BankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
+func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
 	require.NotEmpty(t, initialAmount)
-	r := &TestFaucet{t: t, BankKeeper: BankKeeper, minterModuleName: minterModuleName}
+	r := &TestFaucet{t: t, BankKeeper: bankKeeper, minterModuleName: minterModuleName}
 	_, _, addr := keyPubAddr()
 	r.sender = addr
 	r.Mint(ctx, addr, initialAmount...)

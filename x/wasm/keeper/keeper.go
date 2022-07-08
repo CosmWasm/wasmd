@@ -91,13 +91,13 @@ func NewKeeper(
 	cdc codec.Codec,
 	storeKey sdk.StoreKey,
 	paramSpace paramtypes.Subspace,
-	AccountKeeper types.AccountKeeper,
-	BankKeeper types.BankKeeper,
-	StakingKeeper types.StakingKeeper,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
 	distKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
-	CapabilityKeeper types.CapabilityKeeper,
+	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
 	queryRouter GRPCQueryRouter,
@@ -119,17 +119,17 @@ func NewKeeper(
 		storeKey:          storeKey,
 		cdc:               cdc,
 		wasmVM:            wasmer,
-		AccountKeeper:     AccountKeeper,
-		bank:              NewBankCoinTransferrer(BankKeeper),
+		AccountKeeper:     accountKeeper,
+		bank:              NewBankCoinTransferrer(bankKeeper),
 		portKeeper:        portKeeper,
-		CapabilityKeeper:  CapabilityKeeper,
-		messenger:         NewDefaultMessageHandler(router, channelKeeper, CapabilityKeeper, BankKeeper, cdc, portSource),
+		CapabilityKeeper:  capabilityKeeper,
+		messenger:         NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:     wasmConfig.SmartQueryGasLimit,
 		paramSpace:        paramSpace,
 		gasRegister:       NewDefaultWasmGasRegister(),
 		maxQueryStackSize: types.DefaultMaxQueryStackSize,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(BankKeeper, StakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}

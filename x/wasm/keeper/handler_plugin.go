@@ -35,8 +35,8 @@ type SDKMessageHandler struct {
 func NewDefaultMessageHandler(
 	router MessageRouter,
 	channelKeeper types.ChannelKeeper,
-	CapabilityKeeper types.CapabilityKeeper,
-	BankKeeper types.Burner,
+	capabilityKeeper types.CapabilityKeeper,
+	bankKeeper types.Burner,
 	unpacker codectypes.AnyUnpacker,
 	portSource types.ICS20TransferPortSource,
 	customEncoders ...*MessageEncoders,
@@ -47,8 +47,8 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
-		NewIBCRawPacketHandler(channelKeeper, CapabilityKeeper),
-		NewBurnCoinMessageHandler(BankKeeper),
+		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
+		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
 
