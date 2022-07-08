@@ -360,6 +360,23 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	require.Equal(t, hackatomWasm, storedCode)
 }
 
+func TestCreateWithBrokenGzippedPayload(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	keeper := keepers.ContractKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+
+	wasmCode, err := os.ReadFile("./testdata/broken_crc.gzip")
+	require.NoError(t, err, "reading gzipped WASM code")
+
+	gm := sdk.NewInfiniteGasMeter()
+	contractID, err := keeper.Create(ctx.WithGasMeter(gm), creator, wasmCode, nil)
+	require.Error(t, err)
+	assert.Empty(t, contractID)
+	assert.GreaterOrEqual(t, gm.GasConsumed(), sdk.Gas(1618464)) // 809232 * 2 (default uncompress costs) = 1618464
+}
+
 func TestInstantiate(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	keeper := keepers.ContractKeeper
