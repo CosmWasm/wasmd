@@ -299,6 +299,7 @@ func createTestInput(
 		keys[stakingtypes.StoreKey],
 		accountKeeper,
 		bankKeeper,
+		nil, // TODO initialize wormhole keeper
 		subspace(stakingtypes.ModuleName),
 	)
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
@@ -394,7 +395,8 @@ func createTestInput(
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
 		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
-		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
+		// TODO initialize wormhole keeper
+		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper, nil),
 		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier))

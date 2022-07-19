@@ -378,6 +378,7 @@ func NewWasmApp(
 		keys[stakingtypes.StoreKey],
 		app.accountKeeper,
 		app.bankKeeper,
+		nil,
 		app.getSubspace(stakingtypes.ModuleName),
 	)
 	app.mintKeeper = mintkeeper.NewKeeper(
@@ -576,7 +577,7 @@ func NewWasmApp(
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper, nil),
 		upgrade.NewAppModule(app.upgradeKeeper),
 		wasm.NewAppModule(appCodec, &app.wasmKeeper, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
@@ -698,7 +699,7 @@ func NewWasmApp(
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
-		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
+		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper, nil),
 		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		params.NewAppModule(app.paramsKeeper),
