@@ -1,13 +1,16 @@
-# Security Policy
+# Security
 
-This repository is maintained by Confio as part of the CosmWasm stack.
-Please see https://github.com/CosmWasm/advisories/blob/main/SECURITY.md
-for our security policy.
+> **IMPORTANT**: If you find a security issue in the upstream version of the cosmos-sdk, you should refer to the upstream [SECURITY.md](https://github.com/CosmWasm/wasmd).
 
-## Supported Versions
+## Bug Bounty Program
 
-This is alpha software, do not run on a production system. Notably, we currently provide no migration path not even "dump state and restart" to move to future versions.
+This repository and it's changes from the upstream wasmd are not currently included in the [Wormhole bug bounty program](https://immunefi.com/bounty/wormhole/), but may be added in the future.
 
-We will have a stable v0.x version before the final v1.0.0 version with the same API as the v1.0 version in order to run last testnets and manual testing on it. We have not yet committed to that version number. wasmd 0.25 will support Cosmos SDK 0.44/0.45 and should be quite close to a final API, minus some minor details.
+In the mean-time, if you find a security issue, we ask that you reach out to our team via [Discord](https://discord.gg/wormholecrypto).
 
-Our v1.0.0 release plans were also delayed by upstream release cycles, and we have continued to refine APIs while we can.
+## 3rd Party Security Audits
+
+We engage 3rd party firms to conduct independent security audits of Wormhole.  At any given time, we likely have multiple audit streams in progress.
+
+As these 3rd party audits are completed and issues are sufficiently addressed, we make those audit reports public.
+
