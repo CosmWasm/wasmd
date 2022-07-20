@@ -3,8 +3,11 @@ package keeper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	proto "github.com/gogo/protobuf/proto"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
@@ -279,8 +282,32 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 }
 
 func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return func(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled."}
+	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+		binding, whitelisted := StargateLayerBindings.Load(request.Path)
+		if !whitelisted {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
+		}
+
+		route := queryRouter.Route(request.Path)
+		if route == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
+		}
+
+		res, err := route(ctx, abci.RequestQuery{
+			Data: request.Data,
+			Path: request.Path,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// normalize response to ensure backward compatibility
+		bz, err := NormalizeReponses(binding, res.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		return bz, nil
 	}
 }
 
@@ -525,6 +552,31 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 		Denom:  coin.Denom,
 		Amount: coin.Amount.String(),
 	}
+}
+
+func NormalizeReponses(binding interface{}, bz []byte) ([]byte, error) {
+	// all values are proto message
+	message, ok := binding.(proto.Message)
+	if !ok {
+		return nil, wasmvmtypes.Unknown{}
+	}
+
+	// unmarshal binary into stargate response data structure
+	err := proto.Unmarshal(bz, message)
+	if err != nil {
+		return nil, wasmvmtypes.Unknown{}
+	}
+
+	// build new deterministic response
+	bz, err = proto.Marshal(message)
+	if err != nil {
+		return nil, wasmvmtypes.Unknown{}
+	}
+
+	// clear proto message
+	message.Reset()
+
+	return bz, nil
 }
 
 var _ WasmVMQueryHandler = WasmVMQueryHandlerFn(nil)
