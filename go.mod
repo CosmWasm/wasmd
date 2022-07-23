@@ -161,4 +161,4 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 )
 
-replace github.com/cosmos/ibc-go/v5 => github.com/notional-labs/ibc-go/v5 v5.0.0-20220720034028-8dc9b016bcfc
+replace github.com/cosmos/ibc-go/v5 => github.com/notional-labs/ibc-go/v5 v5.0.0-20220722173444-eb12e81d2b4e
