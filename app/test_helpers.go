@@ -6,34 +6,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
-
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
+	"github.com/CosmWasm/wasmd/app/params"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/ibc-go/v5/testing/mock"
+	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/cosmos/cosmos-sdk/server/types"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,7 +38,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -63,35 +59,36 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 	},
 }
 
-func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
-	var appOpts servertypes.AppOptions = EmptyBaseAppOptions{}
-
-	nodeHome := t.TempDir()
-	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
-	snapshotDB, err := dbm.NewDB("metadata", server.GetAppDBBackend(appOpts), snapshotDir)
-	require.NoError(t, err)
-	snapshotStore, err := snapshots.NewStore(snapshotDB, snapshotDir)
-	require.NoError(t, err)
-	baseAppOpts := []func(*bam.BaseApp){bam.SetSnapshot(snapshotStore, snapshottypes.NewSnapshotOptions(10000, 1))}
+func setup(withGenesis bool, invCheckPeriod uint, wasmopts ...wasm.Option) (*WasmApp, GenesisState) {
 	db := dbm.NewMemDB()
-	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, nodeHome, invCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts, baseAppOpts...)
+	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, wasmopts)
 	if withGenesis {
 		return app, NewDefaultGenesisState()
 	}
 	return app, GenesisState{}
 }
 
-func NewValSet() *tmtypes.ValidatorSet {
-	privVal := wasmtypes.NewPV()
-	pubKey, err := privVal.GetPubKey()
-	if err != nil {
-		panic(err)
+// Setup initializes a new WasmApp. A Nop logger is set in WasmApp.
+func Setup(isCheckTx bool) *WasmApp {
+	app, genesisState := setup(!isCheckTx, 5)
+	if !isCheckTx {
+		// init chain must be called to stop deliverState from being nil
+		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+		if err != nil {
+			panic(err)
+		}
+
+		// Initialize the chain
+		app.InitChain(
+			abci.RequestInitChain{
+				Validators:      []abci.ValidatorUpdate{},
+				ConsensusParams: DefaultConsensusParams,
+				AppStateBytes:   stateBytes,
+			},
+		)
 	}
 
-	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
-	return valSet
+	return app
 }
 
 // SetupWithGenesisValSet initializes a new WasmApp with a validator set and genesis accounts
@@ -99,9 +96,7 @@ func NewValSet() *tmtypes.ValidatorSet {
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
 func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
-	t.Helper()
-
-	app, genesisState := setup(t, true, 5, opts...)
+	app, genesisState := setup(true, 5, opts...)
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.appCodec.MustMarshalJSON(authGenesis)
@@ -109,17 +104,13 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 
-	bondAmt := sdk.DefaultPowerReduction
+	bondAmt := sdk.NewInt(1000000)
 
 	for _, val := range valSet.Validators {
 		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 		pkAny, err := codectypes.NewAnyWithValue(pk)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
 			ConsensusPubkey:   pkAny,
@@ -159,9 +150,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	genesisState[banktypes.ModuleName] = app.appCodec.MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	// init chain will set the validator set and initialize the genesis accounts
 	app.InitChain(
@@ -184,9 +173,37 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	return app
 }
 
-// SetupWithEmptyStore setup a wasmd app instance with empty DB
-func SetupWithEmptyStore(t testing.TB) *WasmApp {
-	app, _ := setup(t, false, 0)
+// SetupWithGenesisAccounts initializes a new WasmApp with the provided genesis
+// accounts and possible balances.
+func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *WasmApp {
+	app, genesisState := setup(true, 0)
+	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
+	genesisState[authtypes.ModuleName] = app.appCodec.MustMarshalJSON(authGenesis)
+
+	totalSupply := sdk.NewCoins()
+	for _, b := range balances {
+		totalSupply = totalSupply.Add(b.Coins...)
+	}
+
+	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	genesisState[banktypes.ModuleName] = app.appCodec.MustMarshalJSON(bankGenesis)
+
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	app.InitChain(
+		abci.RequestInitChain{
+			Validators:      []abci.ValidatorUpdate{},
+			ConsensusParams: DefaultConsensusParams,
+			AppStateBytes:   stateBytes,
+		},
+	)
+
+	app.Commit()
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: app.LastBlockHeight() + 1}})
+
 	return app
 }
 
@@ -204,8 +221,9 @@ func createRandomAccounts(accNum int) []sdk.AccAddress {
 }
 
 // createIncrementalAccounts is a strategy used by addTestAddrs() in order to generated addresses in ascending order.
+// createIncrementalAccounts is a strategy used by addTestAddrs() in order to generated addresses in ascending order.
 func createIncrementalAccounts(accNum int) []sdk.AccAddress {
-	addresses := make([]sdk.AccAddress, 0, accNum)
+	var addresses []sdk.AccAddress
 	var buffer bytes.Buffer
 
 	// start at 100 so we can make up to 999 test addresses with valid test addresses
@@ -214,15 +232,9 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 		buffer.WriteString("A58856F0FD53BF058B4909A21AEC019107BA6") // base address string
 
 		buffer.WriteString(numString) // adding on final two digits to make addresses unique
-		res, err := sdk.AccAddressFromHexUnsafe(buffer.String())
-		if err != nil {
-			panic(err)
-		}
+		res, _ := sdk.AccAddressFromHexUnsafe(buffer.String())
 		bech := res.String()
-		addr, err := TestAddr(buffer.String(), bech)
-		if err != nil {
-			panic(err)
-		}
+		addr, _ := TestAddr(buffer.String(), bech)
 
 		addresses = append(addresses, addr)
 		buffer.Reset()
@@ -231,8 +243,8 @@ func createIncrementalAccounts(accNum int) []sdk.AccAddress {
 	return addresses
 }
 
-// AddTestAddrsFromPubKeys adds the addresses into the WasmApp providing only the public keys.
-func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotypes.PubKey, accAmt math.Int) {
+// AddTestAddrsFromPubKeys adds the addresses into the SimApp providing only the public keys.
+func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotypes.PubKey, accAmt sdk.Int) {
 	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
 
 	for _, pk := range pubKeys {
@@ -242,22 +254,21 @@ func AddTestAddrsFromPubKeys(app *WasmApp, ctx sdk.Context, pubKeys []cryptotype
 
 // AddTestAddrs constructs and returns accNum amount of accounts with an
 // initial balance of accAmt in random order
-func AddTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt math.Int) []sdk.AccAddress {
+func AddTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int) []sdk.AccAddress {
 	return addTestAddrs(app, ctx, accNum, accAmt, createRandomAccounts)
 }
 
-// AddTestAddrs constructs and returns accNum amount of accounts with an
+// AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
 // initial balance of accAmt in random order
-func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt math.Int) []sdk.AccAddress {
+func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int) []sdk.AccAddress {
 	return addTestAddrs(app, ctx, accNum, accAmt, createIncrementalAccounts)
 }
 
-func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt math.Int, strategy GenerateAccountStrategy) []sdk.AccAddress {
+func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdk.Int, strategy GenerateAccountStrategy) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 
 	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
 
-	// fill all the addresses with some coins, set the loose pool tokens simultaneously
 	for _, addr := range testAddrs {
 		initAccountWithCoins(app, ctx, addr, initCoins)
 	}
@@ -325,13 +336,12 @@ func SignCheckDeliver(
 	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
-	var r *rand.Rand
 	tx, err := helpers.GenSignedMockTx(
-		r,
+		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
-		2*DefaultGas,
+		helpers.DefaultGenTxGas,
 		chainID,
 		accNums,
 		accSeqs,
@@ -370,42 +380,46 @@ func SignCheckDeliver(
 	return gInfo, res, err
 }
 
-// SignAndDeliver signs and delivers a transaction. No simulation occurs as the
-// ibc testing package causes checkState and deliverState to diverge in block time.
-func SignAndDeliver(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
-	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
-) (sdk.GasInfo, *sdk.Result, error) {
-	var r *rand.Rand
-	tx, err := helpers.GenSignedMockTx(
-		r,
-		txCfg,
-		msgs,
-		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
-		2*DefaultGas,
-		chainID,
-		accNums,
-		accSeqs,
-		priv...,
-	)
+// NewSimappWithCustomOptions initializes a new SimApp with custom options.
+func NewSimappWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOptions) *WasmApp {
+	t.Helper()
+
+	privVal := mock.NewPV()
+	pubKey, err := privVal.GetPubKey()
 	require.NoError(t, err)
+	// create validator set with single validator
+	validator := tmtypes.NewValidator(pubKey, 1)
+	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 
-	// Simulate a sending a transaction and committing a block
-	app.BeginBlock(abci.RequestBeginBlock{Header: header})
-	gInfo, res, err := app.SimDeliver(txCfg.TxEncoder(), tx)
-
-	if expPass {
-		require.NoError(t, err)
-		require.NotNil(t, res)
-	} else {
-		require.Error(t, err)
-		require.Nil(t, res)
+	// generate genesis account
+	senderPrivKey := secp256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
 
-	app.EndBlock(abci.RequestEndBlock{})
-	app.Commit()
+	var emptyWasmOpts []wasm.Option = nil
+	app := NewWasmApp(options.Logger, options.DB, nil, true, options.SkipUpgradeHeights, options.HomePath, options.InvCheckPeriod, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
+	genesisState := NewDefaultGenesisState()
+	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 
-	return gInfo, res, err
+	if !isCheckTx {
+		// init chain must be called to stop deliverState from being nil
+		stateBytes, err := tmjson.MarshalIndent(genesisState, "", " ")
+		require.NoError(t, err)
+
+		// Initialize the chain
+		app.InitChain(
+			abci.RequestInitChain{
+				Validators:      []abci.ValidatorUpdate{},
+				ConsensusParams: DefaultConsensusParams,
+				AppStateBytes:   stateBytes,
+			},
+		)
+	}
+
+	return app
 }
 
 // GenSequenceOfTxs generates a set of signed transactions of messages, such
@@ -414,10 +428,9 @@ func SignAndDeliver(
 func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, initSeqNums []uint64, numToGenerate int, priv ...cryptotypes.PrivKey) ([]sdk.Tx, error) {
 	txs := make([]sdk.Tx, numToGenerate)
 	var err error
-	var r *rand.Rand
 	for i := 0; i < numToGenerate; i++ {
 		txs[i], err = helpers.GenSignedMockTx(
-			r,
+			rand.New(rand.NewSource(time.Now().UnixNano())),
 			txGen,
 			msgs,
 			sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
@@ -507,7 +520,8 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, minttypes.ModuleName, recipientMod, amounts)
 }
 
-func GenesisStateWithValSet(app *WasmApp, genesisState GenesisState,
+func genesisStateWithValSet(t *testing.T,
+	app *WasmApp, genesisState GenesisState,
 	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) GenesisState {
@@ -522,14 +536,9 @@ func GenesisStateWithValSet(app *WasmApp, genesisState GenesisState,
 
 	for _, val := range valSet.Validators {
 		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
-		if err != nil {
-			panic(err)
-		}
-
+		require.NoError(t, err)
 		pkAny, err := codectypes.NewAnyWithValue(pk)
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
 			ConsensusPubkey:   pkAny,
@@ -573,4 +582,17 @@ func GenesisStateWithValSet(app *WasmApp, genesisState GenesisState,
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	return genesisState
+}
+
+// SetupOptions defines arguments that are passed into `Simapp` constructor.
+type SetupOptions struct {
+	Logger             log.Logger
+	DB                 *dbm.MemDB
+	InvCheckPeriod     uint
+	HomePath           string
+	SkipUpgradeHeights map[int64]bool
+	EncConfig          params.EncodingConfig
+	EnabeledProposals  []wasm.ProposalType
+	AppOpts            types.AppOptions
+	WasmOpts           []wasm.Option
 }
