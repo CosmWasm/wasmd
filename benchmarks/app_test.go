@@ -3,7 +3,6 @@ package benchmarks
 import (
 	"encoding/json"
 	"io/ioutil"
-	"math/rand"
 	"testing"
 	"time"
 
@@ -15,11 +14,11 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/ibc-go/v5/testing/simapp/helpers"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
@@ -170,7 +169,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		WASMByteCode: cw20Code,
 	}
 
-	storeTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())), txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
+	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
 	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
@@ -204,7 +203,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Msg:    initBz,
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
-	initTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())), txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
+	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
 	require.NoError(b, err)
 	_, res, err = wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
@@ -236,8 +235,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
 		require.NoError(b, err)
-		txs[i], err = helpers.GenSignedMockTx(
-			rand.New(rand.NewSource(time.Now().UnixNano())),
+		txs[i], err = helpers.GenTx(
 			info.TxConfig,
 			msgs,
 			fees,
