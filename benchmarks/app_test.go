@@ -169,8 +169,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
-	var r *rand.Rand
-	storeTx, err := helpers.GenSignedMockTx(r, txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
+
+	storeTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())), txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
 	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
@@ -204,7 +204,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Msg:    initBz,
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
-	initTx, err := helpers.GenSignedMockTx(r, txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
+	initTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())), txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
 	require.NoError(b, err)
 	_, res, err = wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
@@ -236,9 +236,8 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
 		require.NoError(b, err)
-		var r *rand.Rand
 		txs[i], err = helpers.GenSignedMockTx(
-			r,
+			rand.New(rand.NewSource(time.Now().UnixNano())),
 			info.TxConfig,
 			msgs,
 			fees,
