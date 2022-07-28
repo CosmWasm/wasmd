@@ -500,6 +500,16 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
+	if reply.Result.Ok != nil {
+		events := reply.Result.Ok.Events
+		for _, e := range events {
+			attributes := e.Attributes
+			sort.SliceStable(attributes, func(i, j int) bool {
+				return bytes.Compare([]byte(attributes[i].Key), []byte(attributes[j].Key)) == -1
+			})
+		}
+	}
+
 	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
