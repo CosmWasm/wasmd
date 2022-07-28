@@ -107,6 +107,9 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			commit()
 			filteredEvents = filterEvents(append(em.Events(), events...))
 			ctx.EventManager().EmitEvents(filteredEvents)
+			if msg.Msg.Wasm != nil {
+				filteredEvents = []sdk.Event{}
+			}
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
 		// we only callback if requested. Short-circuit here the cases we don't want to
