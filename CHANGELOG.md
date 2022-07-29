@@ -16,6 +16,12 @@ No
 
 - Fix: Make events in reply completely determinisitic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
 
+Migration notes:
+
+* Contracts can no longer parse events from any calls except if they call another contract (or instantiate it, migrate it, etc).
+The main issue here is likely "Custom" queries from a blockchain, which want to send info (eg. how many tokens were swapped).
+Since those custom bindings are maintained by the chain, they can use the data field to pass any deterministic information
+back to the contract. We recommend using JSON encoding there with some documented format the contracts can parse out easily.
 
 ## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-19)
 
