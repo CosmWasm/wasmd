@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
 
-## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.28.0) (2022-07-29)
+## [v0.28.0](https://github.com/CosmWasm/wasmd/tree/v0.28.0) (2022-07-29)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.27.0...v0.28.0)
 
@@ -22,6 +22,7 @@ Migration notes:
 The main issue here is likely "Custom" queries from a blockchain, which want to send info (eg. how many tokens were swapped).
 Since those custom bindings are maintained by the chain, they can use the data field to pass any deterministic information
 back to the contract. We recommend using JSON encoding there with some documented format the contracts can parse out easily.
+* For possible non-determinism issues, we also sort all attributes in events. Better safe than sorry.
 
 ## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-19)
 
