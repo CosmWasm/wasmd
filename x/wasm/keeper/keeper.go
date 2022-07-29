@@ -506,7 +506,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		for _, e := range events {
 			attributes := e.Attributes
 			sort.SliceStable(attributes, func(i, j int) bool {
-				return bytes.Compare([]byte(attributes[i].Key), []byte(attributes[j].Key)) == -1
+				return attributes[i].Key < attributes[j].Key
 			})
 		}
 	}
