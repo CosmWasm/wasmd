@@ -2,7 +2,20 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.27.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
+
+## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.28.0) (2022-07-29)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.27.0...v0.28.0)
+
+**API Breaking**
+
+No
+
+**Fixed Bugs**
+
+- Fix: Make events in reply completely determinisitic by stripping out anything coming from Cosmos SDK (not CosmWasm codebase) [\#917](https://github.com/CosmWasm/wasmd/pull/917) ([assafmo](https://github.com/assafmo))
+
 
 ## [v0.27.0](https://github.com/CosmWasm/wasmd/tree/v0.27.0) (2022-05-19)
 
