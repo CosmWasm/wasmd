@@ -3,11 +3,11 @@ module github.com/CosmWasm/wasmd
 go 1.18
 
 require (
-	cosmossdk.io/math v1.0.0-beta.2
+	cosmossdk.io/math v1.0.0-beta.3
 	github.com/CosmWasm/wasmvm v1.0.0
 	github.com/cosmos/cosmos-sdk v0.46.0
-	github.com/cosmos/iavl v0.19.0
-	github.com/cosmos/ibc-go/v5 v5.0.0-20220801112651-041096304a27
+	github.com/cosmos/iavl v0.19.1
+	github.com/cosmos/ibc-go/v5 v5.0.0-beta1
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
