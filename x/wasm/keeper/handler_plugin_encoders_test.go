@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
@@ -50,7 +50,7 @@ func TestEncoding(t *testing.T) {
 	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
 	require.NoError(t, err)
 
-	proposalMsg := &govtypes.MsgSubmitProposal{
+	proposalMsg := &govv1.MsgSubmitProposal{
 		Proposer:       addr1.String(),
 		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
 		Content:        content,
@@ -509,10 +509,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionYes,
+					Option:     govv1.OptionYes,
 				},
 			},
 		},
@@ -525,10 +525,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNo,
+					Option:     govv1.OptionNo,
 				},
 			},
 		},
@@ -541,10 +541,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 10,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionAbstain,
+					Option:     govv1.OptionAbstain,
 				},
 			},
 		},
@@ -557,10 +557,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNoWithVeto,
+					Option:     govv1.OptionNoWithVeto,
 				},
 			},
 		},
@@ -569,7 +569,7 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
 			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.isError {
 				require.Error(t, err)

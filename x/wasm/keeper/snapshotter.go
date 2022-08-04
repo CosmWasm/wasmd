@@ -98,6 +98,15 @@ func (ws *WasmSnapshotter) Restore(
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
+func (ws *WasmSnapshotter) PruneSnapshotHeight(
+	height uint64, format uint32, protoReader protoio.Reader,
+) (snapshot.SnapshotItem, error) {
+	if format == SnapshotFormat {
+		return ws.processAllItems(height, protoReader, restoreV1, finalizeV1)
+	}
+	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
+}
+
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {

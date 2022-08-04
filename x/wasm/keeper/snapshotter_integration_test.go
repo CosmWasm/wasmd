@@ -69,7 +69,7 @@ func TestSnapshotter(t *testing.T) {
 			assert.NotNil(t, snapshot)
 
 			// when snapshot imported into dest app instance
-			destWasmApp := app.SetupWithEmptyStore(t)
+			destWasmApp := app.SetupWithEmptyStore()
 			require.NoError(t, destWasmApp.SnapshotManager().Restore(*snapshot))
 			for i := uint32(0); i < snapshot.Chunks; i++ {
 				chunkBz, err := srcWasmApp.SnapshotManager().LoadChunk(snapshot.Height, snapshot.Format, i)
