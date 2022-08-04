@@ -292,7 +292,7 @@ func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request 
 		}
 
 		// normalize response to ensure backward compatibility
-		bz, err := NormalizeReponses(binding, res.Value)
+		bz, err := NormalizeReponse(binding, res.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -544,7 +544,9 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 	}
 }
 
-func NormalizeReponses(binding interface{}, bz []byte) ([]byte, error) {
+// NormalizeReponse returns normalized responses given proto interface.
+// This is specifically important for type Any.
+func NormalizeReponse(binding interface{}, bz []byte) ([]byte, error) {
 	// all values are proto message
 	message, ok := binding.(proto.Message)
 	if !ok {
