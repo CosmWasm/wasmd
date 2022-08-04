@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/CosmWasm/wasmvm v1.0.0
 	github.com/cosmos/cosmos-sdk v0.46.0
-	github.com/cosmos/iavl v0.19.0
+	github.com/cosmos/iavl v0.19.1
 	github.com/cosmos/ibc-go/v5 v5.0.0-beta1
 	github.com/cosmos/interchain-accounts v0.1.0
 	github.com/dvsekhvalnov/jose2go v1.5.0
