@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 type ProposalType string
@@ -61,26 +62,26 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 }
 
 func init() { // register new content types with the sdk
-	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
-	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
-	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
-	govtypes.RegisterProposalType(string(ProposalTypeSudoContract))
-	govtypes.RegisterProposalType(string(ProposalTypeExecuteContract))
-	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
-	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
-	govtypes.RegisterProposalType(string(ProposalTypePinCodes))
-	govtypes.RegisterProposalType(string(ProposalTypeUnpinCodes))
-	govtypes.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
-	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
-	govtypes.RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
-	govtypes.RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
-	govtypes.RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
-	govtypes.RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
-	govtypes.RegisterProposalTypeCodec(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
-	govtypes.RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
-	govtypes.RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
-	govtypes.RegisterProposalTypeCodec(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
-	govtypes.RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
+	govv1beta1.RegisterProposalType(string(ProposalTypeStoreCode))
+	govv1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeMigrateContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeSudoContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeExecuteContract))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateAdmin))
+	govv1beta1.RegisterProposalType(string(ProposalTypeClearAdmin))
+	govv1beta1.RegisterProposalType(string(ProposalTypePinCodes))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
+	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
+	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal", nil)
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -536,8 +537,8 @@ func validateProposalCommons(title, description string) error {
 	if len(title) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
 	}
-	if len(title) > govtypes.MaxTitleLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govtypes.MaxTitleLength)
+	if len(title) > govv1beta1.MaxTitleLength {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govv1beta1.MaxTitleLength)
 	}
 	if strings.TrimSpace(description) != description {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
@@ -545,8 +546,8 @@ func validateProposalCommons(title, description string) error {
 	if len(description) == 0 {
 		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")
 	}
-	if len(description) > govtypes.MaxDescriptionLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", govtypes.MaxDescriptionLength)
+	if len(description) > govv1beta1.MaxDescriptionLength {
+		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", govv1beta1.MaxDescriptionLength)
 	}
 	return nil
 }
