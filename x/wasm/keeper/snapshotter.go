@@ -151,3 +151,7 @@ func (ws *WasmSnapshotter) processAllItems(
 
 	return item, finalize(ctx, ws.wasm)
 }
+
+func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {}
+
+func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {}
