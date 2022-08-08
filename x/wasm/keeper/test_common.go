@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -215,16 +216,16 @@ func createTestInput(
 	)
 	ms := store.NewCommitMultiStore(db)
 	for _, v := range keys {
-		ms.MountStoreWithDB(v, sdk.StoreTypeIAVL, db)
+		ms.MountStoreWithDB(v, storetypes.StoreTypeIAVL, db)
 	}
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	for _, v := range tkeys {
-		ms.MountStoreWithDB(v, sdk.StoreTypeTransient, db)
+		ms.MountStoreWithDB(v, storetypes.StoreTypeTransient, db)
 	}
 
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	for _, v := range memKeys {
-		ms.MountStoreWithDB(v, sdk.StoreTypeMemory, db)
+		ms.MountStoreWithDB(v, storetypes.StoreTypeMemory, db)
 	}
 
 	require.NoError(t, ms.LoadLatestVersion())

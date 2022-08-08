@@ -1,6 +1,7 @@
 package app
 
 import (
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -18,7 +19,7 @@ type HandlerOptions struct {
 
 	IBCKeeper         *keeper.Keeper
 	WasmConfig        *wasmTypes.WasmConfig
-	TXCounterStoreKey sdk.StoreKey
+	TXCounterStoreKey storetypes.StoreKey
 }
 
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
