@@ -1,6 +1,8 @@
 package simulation
 
 import (
+	"math/rand"
+
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -8,7 +10,7 @@ import (
 )
 
 // GenAndDeliverTxWithRandFees generates a transaction with a random fee and delivers it.
-func GenAndDeliverTxWithRandFees(txCtx simulation.OperationInput, gas uint64) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+func GenAndDeliverTxWithRandFees(r *rand.Rand, txCtx simulation.OperationInput, gas uint64) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 	account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
 	spendable := txCtx.Bankkeeper.SpendableCoins(txCtx.Context, account.GetAddress())
 
@@ -24,13 +26,14 @@ func GenAndDeliverTxWithRandFees(txCtx simulation.OperationInput, gas uint64) (s
 	if err != nil {
 		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate fees"), nil, err
 	}
-	return GenAndDeliverTx(txCtx, fees, gas)
+	return GenAndDeliverTx(r, txCtx, fees, gas)
 }
 
 // GenAndDeliverTx generates a transactions and delivers it.
-func GenAndDeliverTx(txCtx simulation.OperationInput, fees sdk.Coins, gas uint64) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+func GenAndDeliverTx(r *rand.Rand, txCtx simulation.OperationInput, fees sdk.Coins, gas uint64) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 	account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
 	tx, err := helpers.GenTx(
+		r,
 		txCtx.TxGen,
 		[]sdk.Msg{txCtx.Msg},
 		fees,
