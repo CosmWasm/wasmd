@@ -2,8 +2,8 @@ package simulation
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"math/rand"
+	"os"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -83,7 +83,7 @@ func WeightedOperations(
 		wasmBz = testdata.ReflectContractWasm()
 	} else {
 		var err error
-		wasmBz, err = ioutil.ReadFile(wasmContractPath)
+		wasmBz, err = os.ReadFile(wasmContractPath)
 		if err != nil {
 			panic(err)
 		}

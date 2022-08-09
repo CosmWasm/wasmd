@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	"crypto/sha256"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -53,7 +53,7 @@ func TestSnapshotter(t *testing.T) {
 
 			srcCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			for i, v := range spec.wasmFiles {
-				wasmCode, err := ioutil.ReadFile(v)
+				wasmCode, err := os.ReadFile(v)
 				require.NoError(t, err)
 				codeID, err := contractKeeper.Create(ctx, genesisAddr, wasmCode, nil)
 				require.NoError(t, err)
