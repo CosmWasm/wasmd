@@ -1,4 +1,4 @@
-FROM golang:1.16.8-alpine3.13 AS build
+FROM golang:1.19-alpine AS build
 
 #ARG PROTOTOOL_VERSION=1.10.0
 ARG PROTODOC_VERSION=1.3.2
@@ -39,7 +39,7 @@ RUN GO111MODULE=on go get \
 
 RUN upx --lzma /usr/local/bin/*
 
-FROM golang:1.17.3-alpine
+FROM golang:1.19-alpine
 ENV LD_LIBRARY_PATH=/lib64:/lib
 
 WORKDIR /work
