@@ -4,7 +4,6 @@ executors:
   golang:
     docker:
       - image: cimg/go:1.19.0
-    working_directory: /go/src/github.com/cosmwasm/wasmd
 
 commands:
   make:
