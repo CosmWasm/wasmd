@@ -1,9 +1,9 @@
 version: 2.1
 
-jobs:
-  build:
+executors:
+  golang:
     docker:
-      - image: cimg/go:1.19.0
+      - image: cimg/go:1.18
 
 commands:
   make:
@@ -29,7 +29,6 @@ commands:
           command: |
             export BINDIR=/tmp/bin
             make << parameters.target >>
-
 jobs:
   setup-dependencies:
     executor: golang
@@ -69,7 +68,6 @@ jobs:
           command: |
             golangci-lint run --version
             golangci-lint run --tests=false --timeout=5m0s
-
   test-cover:
     executor: golang
     parallelism: 4
@@ -114,7 +112,6 @@ jobs:
           command: |
             cd ./benchmarks
             go test -bench .
-
   simulations:
     executor: golang
     parallelism: 1
@@ -138,7 +135,6 @@ jobs:
           name: gather
           command: |
             set -ex
-
             echo "--> Concatenating profiles:"
             ls /tmp/workspace/profiles/
             echo "mode: atomic" > coverage.txt
@@ -170,7 +166,6 @@ jobs:
               docker push cosmwasm/wasmd:latest
               docker logout
             fi
-
   docker-tagged:
     executor: golang
     steps:
@@ -189,7 +184,6 @@ jobs:
             docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
-
 workflows:
   version: 2
   test-suite:
