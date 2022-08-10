@@ -263,6 +263,8 @@ github.com/cosmos/gorocksdb v1.2.0 h1:d0l3jJG8M4hBouIZq0mDUHZ+zjOx044J3nGRskwTb4
 github.com/cosmos/gorocksdb v1.2.0/go.mod h1:aaKvKItm514hKfNJpUJXnnOWeBnk2GL4+Qw9NHizILw=
 github.com/cosmos/iavl v0.19.1 h1:3gaq9b6SjiB0KBTygRnAvEGml2pQlu1TH8uma5g63Ys=
 github.com/cosmos/iavl v0.19.1/go.mod h1:X9PKD3J0iFxdmgNLa7b2LYWdsGd90ToV5cAONApkEPw=
+github.com/cosmos/ibc-go/v3 v3.1.1-0.20220810102546-33bb3fe41704 h1:aW44sH31ywX7Brq2mEDi3oTfpZ5GTPPjyQHvzxupntA=
+github.com/cosmos/ibc-go/v3 v3.1.1-0.20220810102546-33bb3fe41704/go.mod h1:p+EN8SdPbOBidmX0Q08visElGMdon8hPhvlk0vaxF6Q=
 github.com/cosmos/ibc-go/v3 v3.1.1 h1:Yodps4ezxbKS8u0TNJkdYsf+MCb0XzUuIuxIkSUMwbA=
 github.com/cosmos/ibc-go/v3 v3.1.1/go.mod h1:IR1bpjywC1i0YcElPa4d2IevNUBZehKoD5bscQlbDyM=
 github.com/cosmos/interchain-accounts v0.1.0 h1:QmuwNsf1Hxl3P5GSGt7Z+JeuHPiZw4Z34R/038P5T6s=
