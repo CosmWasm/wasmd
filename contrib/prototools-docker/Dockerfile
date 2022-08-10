@@ -15,25 +15,24 @@ RUN go get -d \
   mv /go/src/github.com/gogo/protobuf/protobuf/google/protobuf/empty.proto /usr/include/google/protobuf/ && \
   mv /go/src/github.com/gogo/protobuf/protobuf/google/protobuf/descriptor.proto /usr/include/google/protobuf/
 
-RUN GO111MODULE=on go get \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION} \
-    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@v${GRPC_GATEWAY_VERSION} && \
-    mv /go/bin/protoc-gen-grpc-gateway /usr/local/bin/ && \
-    mv /go/bin/protoc-gen-swagger /usr/local/bin/
+RUN go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@v${GRPC_GATEWAY_VERSION} \
+  go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@v${GRPC_GATEWAY_VERSION} && \
+  mv /go/bin/protoc-gen-grpc-gateway /usr/local/bin/ && \
+  mv /go/bin/protoc-gen-swagger /usr/local/bin/
 
 # Install regen fork of gogo proto
 # To install a fix version this can only be done via this go.mod workaround
 WORKDIR /work
 RUN GO111MODULE=on go mod init foobar && \
-    go mod edit -replace github.com/gogo/protobuf=github.com/regen-network/protobuf@v${REGEN_PROTOBUF_VERSION} && \
-    go get github.com/regen-network/cosmos-proto/protoc-gen-gocosmos@v${REGEN_GOGOPROTO_VERSION} && \
-    mv /go/bin/protoc-gen-gocosmos* /usr/local/bin/
+  go mod edit -replace github.com/gogo/protobuf=github.com/regen-network/protobuf@v${REGEN_PROTOBUF_VERSION} && \
+  go get github.com/regen-network/cosmos-proto/protoc-gen-gocosmos@v${REGEN_GOGOPROTO_VERSION} && \
+  mv /go/bin/protoc-gen-gocosmos* /usr/local/bin/
 
-RUN GO111MODULE=on go get \
+RUN go install \
   github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@v${PROTODOC_VERSION} && \
   mv /go/bin/protoc-gen-doc /usr/local/bin/
 
-RUN GO111MODULE=on go get \
+RUN go install \
   github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION} && \
   mv /go/bin/buf /usr/local/bin/
 
