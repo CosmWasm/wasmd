@@ -288,7 +288,7 @@ func ExecuteContractProposalFixture(mutators ...func(p *ExecuteContractProposal)
 		RunAs:       anyAddress,
 		Msg:         []byte(`{"do":"something"}`),
 		Funds: sdk.Coins{{
-			Denom:  "wasm.cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr/channel-0/stake",
+			Denom:  "stake",
 			Amount: sdk.NewInt(1),
 		}},
 	}
