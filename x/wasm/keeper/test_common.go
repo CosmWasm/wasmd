@@ -124,6 +124,7 @@ var TestingStakeParams = stakingtypes.Params{
 	MaxEntries:        10,
 	HistoricalEntries: 10,
 	BondDenom:         "stake",
+	MinCommissionRate: sdk.NewDecWithPrec(10, 2),
 }
 
 type TestFaucet struct {
