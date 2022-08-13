@@ -103,7 +103,7 @@ func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {
 }
 
 func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {
-	return bapp.snapshotInterval()
+	//
 }
 
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
