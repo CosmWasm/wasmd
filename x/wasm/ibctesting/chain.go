@@ -2,9 +2,12 @@ package ibctesting
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 	"time"
+
+	tmprotoversion "github.com/tendermint/tendermint/proto/tendermint/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -20,21 +23,20 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v3/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v3/modules/core/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-	"github.com/cosmos/ibc-go/v3/testing/mock"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v5/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+	"github.com/cosmos/ibc-go/v5/modules/core/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	"github.com/cosmos/ibc-go/v5/testing/mock"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmprotoversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmversion "github.com/tendermint/tendermint/version"
 
@@ -243,7 +245,6 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
-
 	_, r, err := wasmd.SignAndDeliver(
 		chain.t,
 		chain.TxConfig,
@@ -423,7 +424,7 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	blockID := MakeBlockID(hhash, 3, tmhash.Sum([]byte("part_set")))
 	voteSet := tmtypes.NewVoteSet(chainID, blockHeight, 1, tmproto.PrecommitType, tmValSet)
 
-	commit, err := tmtypes.MakeCommit(blockID, blockHeight, 1, voteSet, signers, timestamp)
+	commit, err := MakeCommit(context.Background(), blockID, blockHeight, 1, voteSet, signers, timestamp)
 	require.NoError(chain.t, err)
 
 	signedHeader := &tmproto.SignedHeader{
@@ -570,6 +571,14 @@ func (a TestingAppDecorator) GetBaseApp() *baseapp.BaseApp {
 	return a.TestSupport().GetBaseApp()
 }
 
+func (a TestingAppDecorator) AppCodec() codec.Codec {
+	return a.TestSupport().AppCodec()
+}
+
+func (a TestingAppDecorator) AppplySnapshotChunk() func(abci.RequestApplySnapshotChunk) abci.ResponseApplySnapshotChunk {
+	return a.TestSupport().AppplySnapshotChunk()
+}
+
 func (a TestingAppDecorator) GetStakingKeeper() stakingkeeper.Keeper {
 	return a.TestSupport().StakingKeeper()
 }
@@ -588,4 +597,35 @@ func (a TestingAppDecorator) GetTxConfig() client.TxConfig {
 
 func (a TestingAppDecorator) TestSupport() *wasmd.TestSupport {
 	return wasmd.NewTestSupport(a.t, a.WasmApp)
+}
+
+func MakeCommit(ctx context.Context, blockID tmtypes.BlockID, height int64, round int32, voteSet *tmtypes.VoteSet, validators []tmtypes.PrivValidator, now time.Time) (*tmtypes.Commit, error) {
+	// all sign
+	for i := 0; i < len(validators); i++ {
+		pubKey, err := validators[i].GetPubKey()
+		if err != nil {
+			return nil, err
+		}
+		vote := &tmtypes.Vote{
+			ValidatorAddress: pubKey.Address(),
+			ValidatorIndex:   int32(i),
+			Height:           height,
+			Round:            round,
+			Type:             tmproto.PrecommitType,
+			BlockID:          blockID,
+			Timestamp:        now,
+		}
+
+		v := vote.ToProto()
+
+		if err := validators[i].SignVote(voteSet.ChainID(), v); err != nil {
+			return nil, err
+		}
+		vote.Signature = v.Signature
+		if _, err := voteSet.AddVote(vote); err != nil {
+			return nil, err
+		}
+	}
+
+	return voteSet.MakeCommit(), nil
 }

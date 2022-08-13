@@ -676,8 +676,8 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 		Value:             value,
 	}
 
-	h := staking.NewHandler(stakingKeeper)
-	_, err = h(ctx, &msg)
+	h := stakingkeeper.NewMsgServerImpl(stakingKeeper)
+	_, err = h.CreateValidator(ctx, &msg)
 	require.NoError(t, err)
 	return addr
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
@@ -22,7 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -56,6 +54,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -74,27 +74,28 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	ica "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v5/modules/apps/27-interchain-accounts/types"
+	transfer "github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v5/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v5/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v5/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. It has no known issues, but do your own research before using it.
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
 	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
 	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
@@ -183,17 +184,15 @@ var (
 		staking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(
-			append(
-				wasmclient.ProposalHandlers,
-				paramsclient.ProposalHandler,
-				distrclient.ProposalHandler,
-				upgradeclient.ProposalHandler,
-				upgradeclient.CancelProposalHandler,
-				ibcclientclient.UpdateClientProposalHandler,
-				ibcclientclient.UpgradeProposalHandler,
-			)...,
-		),
+		gov.NewAppModuleBasic(append(
+			wasmclient.ProposalHandlers,
+			paramsclient.ProposalHandler,
+			distrclient.ProposalHandler,
+			upgradeclient.LegacyProposalHandler,
+			upgradeclient.LegacyCancelProposalHandler,
+			ibcclientclient.UpdateClientProposalHandler,
+			ibcclientclient.UpgradeProposalHandler,
+		)),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
@@ -238,9 +237,9 @@ type WasmApp struct {
 	invCheckPeriod uint
 
 	// keys to access the substores
-	keys    map[string]*sdk.KVStoreKey
-	tkeys   map[string]*sdk.TransientStoreKey
-	memKeys map[string]*sdk.MemoryStoreKey
+	keys    map[string]*storetypes.KVStoreKey
+	tkeys   map[string]*storetypes.TransientStoreKey
+	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
 	accountKeeper       authkeeper.AccountKeeper
@@ -332,7 +331,7 @@ func NewWasmApp(
 	)
 
 	// set the BaseApp's parameter store
-	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
+	bApp.SetParamStore(app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable()))
 
 	// add capability keeper and ScopeToModule for ibc module
 	app.capabilityKeeper = capabilitykeeper.NewKeeper(
@@ -355,6 +354,7 @@ func NewWasmApp(
 		app.getSubspace(authtypes.ModuleName),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
+		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 	)
 	app.bankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -367,6 +367,7 @@ func NewWasmApp(
 		keys[authzkeeper.StoreKey],
 		appCodec,
 		app.BaseApp.MsgServiceRouter(),
+		app.accountKeeper,
 	)
 	app.feeGrantKeeper = feegrantkeeper.NewKeeper(
 		appCodec,
@@ -395,9 +396,7 @@ func NewWasmApp(
 		app.getSubspace(distrtypes.ModuleName),
 		app.accountKeeper,
 		app.bankKeeper,
-		&stakingKeeper,
-		authtypes.FeeCollectorName,
-		app.ModuleAccountAddrs(),
+		&stakingKeeper, authtypes.FeeCollectorName,
 	)
 	app.slashingKeeper = slashingkeeper.NewKeeper(
 		appCodec,
@@ -417,6 +416,7 @@ func NewWasmApp(
 		appCodec,
 		homePath,
 		app.BaseApp,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// register the staking hooks
@@ -434,10 +434,13 @@ func NewWasmApp(
 		scopedIBCKeeper,
 	)
 
-	// register the proposal types
-	govRouter := govtypes.NewRouter()
-	govRouter.
-		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+	// Register the proposal types
+	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
+	// by granting the governance module the right to execute the message.
+	// See: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/x/gov/spec/01_concepts.md#proposal-messages
+	govRouter := govv1beta1.NewRouter()
+	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
+		AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.distrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.upgradeKeeper)).
@@ -487,9 +490,8 @@ func NewWasmApp(
 	// supported IBC team implementation. Do your own research before using it.
 	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
 	interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
-	// You will likely want to swap out the second argument with your own reviewed and maintained ica auth module
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
-
+	// You will likely want to swap out the interTxIBCModule with your own reviewed and maintained ica auth module
+	icaControllerIBCModule := icacontroller.NewIBCMiddleware(interTxIBCModule, app.icaControllerKeeper)
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -543,14 +545,20 @@ func NewWasmApp(
 		AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
 	app.ibcKeeper.SetRouter(ibcRouter)
 
-	app.govKeeper = govkeeper.NewKeeper(
-		appCodec,
-		keys[govtypes.StoreKey],
-		app.getSubspace(govtypes.ModuleName),
-		app.accountKeeper,
-		app.bankKeeper,
-		&stakingKeeper,
-		govRouter,
+	govConfig := govtypes.DefaultConfig()
+	/*
+		Example of setting gov params:
+		govConfig.MaxMetadataLen = 10000
+	*/
+	govKeeper := govkeeper.NewKeeper(
+		appCodec, keys[govtypes.StoreKey], app.getSubspace(govtypes.ModuleName), app.accountKeeper, app.bankKeeper,
+		&stakingKeeper, govRouter, app.MsgServiceRouter(), govConfig,
+	)
+
+	app.govKeeper = *govKeeper.SetHooks(
+		govtypes.NewMultiGovHooks(
+		// register the governance hooks
+		),
 	)
 	/****  Module Options ****/
 
@@ -572,7 +580,7 @@ func NewWasmApp(
 		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, nil),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
@@ -696,7 +704,7 @@ func NewWasmApp(
 		feegrantmodule.NewAppModule(appCodec, app.accountKeeper, app.bankKeeper, app.feeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, nil),
 		staking.NewAppModule(appCodec, app.stakingKeeper, app.accountKeeper, app.bankKeeper),
 		distr.NewAppModule(appCodec, app.distrKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
 		slashing.NewAppModule(appCodec, app.slashingKeeper, app.accountKeeper, app.bankKeeper, app.stakingKeeper),
@@ -739,6 +747,7 @@ func NewWasmApp(
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption
 	// see cmd/wasmd/root.go: 206 - 214 approx
+
 	if manager := app.SnapshotManager(); manager != nil {
 		err := manager.RegisterExtensions(
 			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.wasmKeeper),
@@ -835,16 +844,11 @@ func (app *WasmApp) SimulationManager() *module.SimulationManager {
 // API server.
 func (app *WasmApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
-	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
-	// Register legacy tx routes.
-	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
-	// Register legacy and grpc-gateway routes for all modules.
-	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register swagger API from root so that other applications can override easily
@@ -860,7 +864,12 @@ func (app *WasmApp) RegisterTxService(clientCtx client.Context) {
 
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *WasmApp) RegisterTendermintService(clientCtx client.Context) {
-	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+	tmservice.RegisterTendermintService(
+		clientCtx,
+		app.BaseApp.GRPCQueryRouter(),
+		app.interfaceRegistry,
+		app.Query,
+	)
 }
 
 func (app *WasmApp) AppCodec() codec.Codec {
@@ -888,7 +897,7 @@ func GetMaccPerms() map[string][]string {
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
 	paramsKeeper.Subspace(authtypes.ModuleName)
@@ -897,7 +906,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(minttypes.ModuleName)
 	paramsKeeper.Subspace(distrtypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)

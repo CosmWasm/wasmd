@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 

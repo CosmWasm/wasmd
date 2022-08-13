@@ -11,9 +11,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -400,7 +400,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			// and total supply reduced by burned amount
 			after, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 			require.NoError(t, err)
-			diff := before.Supply.Sub(after.Supply)
+			diff := before.Supply.Sub(after.Supply...)
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
 		})
 	}

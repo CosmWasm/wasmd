@@ -634,7 +634,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	assert.Equal(t, sdk.NewCoin(denom, sdk.NewInt(10)), gotBalance)
 }
 
-func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	t.Helper()
 	tempDir, err := ioutil.TempDir("", "wasm")
 	require.NoError(t, err)
@@ -670,7 +670,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
 	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.ModuleName), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
-	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
+	return &srcKeeper, ctx, []storetypes.StoreKey{keyWasm, keyParams}
 }
 
 type StakingKeeperMock struct {
