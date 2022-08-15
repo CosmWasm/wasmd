@@ -875,6 +875,10 @@ func TestMigrate(t *testing.T) {
 	ibcCodeID := StoreIBCReflectContract(t, ctx, keepers).CodeID
 	require.NotEqual(t, originalCodeID, newCodeID)
 
+	restrictedCodeID := StoreHackatomExampleContract(t, ctx, keepers).CodeID
+	keeper.SetAccessConfig(ctx, restrictedCodeID, types.AllowNobody)
+	require.NotEqual(t, originalCodeID, restrictedCodeID)
+
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
 	initMsgBz := HackatomExampleInitMsg{
@@ -950,6 +954,15 @@ func TestMigrate(t *testing.T) {
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
+			expErr:     sdkerrors.ErrUnauthorized,
+		},
+		"prevent migration when new code is restricted": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   restrictedCodeID,
+			migrateMsg: migMsgBz,
 			expErr:     sdkerrors.ErrUnauthorized,
 		},
 		"fail with non existing code id": {

@@ -395,6 +395,10 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
+	if !authZ.CanInstantiateContract(newCodeInfo.InstantiateConfig, caller) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "to use new code")
+	}
+
 	// check for IBC flag
 	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
 	case err != nil:
