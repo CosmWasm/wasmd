@@ -150,7 +150,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 			ModuleName:    types.ModuleName,
 		}
 
-		return GenAndDeliverTxWithRandFees(txCtx, gas)
+		return GenAndDeliverTxWithRandFees(r, txCtx, gas)
 	}
 }
 
