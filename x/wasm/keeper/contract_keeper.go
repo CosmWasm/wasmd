@@ -75,7 +75,7 @@ func (p PermissionedKeeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
 	return p.nested.unpinCode(ctx, codeID)
 }
 
-// SetExtraContractAttributes updates the extra attributes that can be stored with the contract info
+// SetContractInfoExtension updates the extra attributes that can be stored with the contract info
 func (p PermissionedKeeper) SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error {
 	return p.nested.setContractInfoExtension(ctx, contract, extra)
 }
