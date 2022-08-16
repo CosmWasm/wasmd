@@ -154,7 +154,7 @@ func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	var params types.Params
-	k.paramSpace.GetParamSetIfExists(ctx, &params)
+	k.paramSpace.GetParamSet(ctx, &params)
 	return params
 }
 

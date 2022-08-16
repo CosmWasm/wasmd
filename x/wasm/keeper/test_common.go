@@ -42,6 +42,7 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -114,6 +115,7 @@ func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	// add wasmd types
 	types.RegisterInterfaces(interfaceRegistry)
 	types.RegisterLegacyAminoCodec(amino)
+	govv1beta1.RegisterInterfaces(interfaceRegistry)
 
 	return encodingConfig
 }
@@ -413,7 +415,6 @@ func createTestInput(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
 		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
-
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -428,9 +429,12 @@ func createTestInput(
 		bankKeeper,
 		stakingKeeper,
 		govRouter,
-		baseapp.NewMsgServiceRouter(),
+		router,
 		govConfig,
 	)
+
+	govv1.RegisterMsgServer(router, govkeeper.NewMsgServerImpl(govKeeper))
+	v1beta1.RegisterQueryServer(querier, govkeeper.NewLegacyQueryServer(govKeeper))
 
 	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
 	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
