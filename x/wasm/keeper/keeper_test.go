@@ -520,7 +520,9 @@ func TestInstantiateWithPermissions(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
-			fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, deposit)
+			if spec.srcActor != nil {
+				fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, deposit)
+			}
 
 			contractID, err := keeper.Create(ctx, myAddr, hackatomWasm, &spec.srcPermission)
 			require.NoError(t, err)
