@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/CosmWasm/wasmvm v1.0.0
-	github.com/cosmos/cosmos-sdk v0.46.1-0.20220811143248-629b3b9df8de
+	github.com/cosmos/cosmos-sdk v0.46.0
 	github.com/cosmos/iavl v0.19.1
 	github.com/cosmos/ibc-go/v5 v5.0.0-beta1.0.20220812090728-e1f7e89dc1e2
 	github.com/cosmos/interchain-accounts v0.3.1-0.20220812171121-8d8742554e53

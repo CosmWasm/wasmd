@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,8 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
@@ -546,7 +545,7 @@ func TestQueryContractInfo(t *testing.T) {
 	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
 	myExtension := func(info *types.ContractInfo) {
 		// abuse gov proposal as a random protobuf extension with an Any type
-		myExt, err := govv1beta1.NewProposal(&govv1beta1.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
+		myExt, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
 		require.NoError(t, err)
 		myExt.TotalDeposit = nil
 		info.SetExtension(&myExt)

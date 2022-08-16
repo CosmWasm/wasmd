@@ -42,7 +42,6 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -115,7 +114,6 @@ func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	// add wasmd types
 	types.RegisterInterfaces(interfaceRegistry)
 	types.RegisterLegacyAminoCodec(amino)
-	govv1beta1.RegisterInterfaces(interfaceRegistry)
 
 	return encodingConfig
 }
@@ -434,7 +432,7 @@ func createTestInput(
 	)
 
 	govv1.RegisterMsgServer(router, govkeeper.NewMsgServerImpl(govKeeper))
-	v1beta1.RegisterQueryServer(querier, govkeeper.NewLegacyQueryServer(govKeeper))
+	govv1beta1.RegisterQueryServer(querier, govkeeper.NewLegacyQueryServer(govKeeper))
 
 	govKeeper.SetProposalID(ctx, govv1beta1.DefaultStartingProposalID)
 	govKeeper.SetDepositParams(ctx, govv1.DefaultDepositParams())
