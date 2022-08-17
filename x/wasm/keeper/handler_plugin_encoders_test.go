@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
@@ -509,10 +511,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionYes,
+					Option:     govv1.OptionYes,
 				},
 			},
 		},
@@ -525,10 +527,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNo,
+					Option:     govv1.OptionNo,
 				},
 			},
 		},
@@ -541,10 +543,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 10,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionAbstain,
+					Option:     govv1.OptionAbstain,
 				},
 			},
 		},
@@ -557,10 +559,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     govtypes.OptionNoWithVeto,
+					Option:     govv1.OptionNoWithVeto,
 				},
 			},
 		},
