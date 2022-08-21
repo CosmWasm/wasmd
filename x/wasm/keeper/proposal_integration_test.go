@@ -41,7 +41,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	})
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -89,7 +89,7 @@ func TestInstantiateProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -148,7 +148,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.Admin = "invalid"
 		p.Label = "testing"
 	})
-	_, err = govKeeper.SubmitProposal(ctx, src)
+	_, err = govKeeper.SubmitProposal(ctx, src, true)
 	require.Error(t, err)
 
 	// test with no admin
@@ -161,7 +161,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -242,7 +242,7 @@ func TestMigrateProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -305,7 +305,7 @@ func TestExecuteProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// fails on store - this doesn't have permission
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &badSrc)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &badSrc, true)
 	require.Error(t, err)
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
@@ -323,7 +323,7 @@ func TestExecuteProposal(t *testing.T) {
 	em = sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err = govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err = govKeeper.SubmitProposal(ctx, &src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -374,7 +374,7 @@ func TestSudoProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &src, true)
 	require.NoError(t, err)
 
 	// and proposal execute
@@ -459,7 +459,7 @@ func TestAdminProposals(t *testing.T) {
 
 			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}))
 			// when stored
-			storedProposal, err := govKeeper.SubmitProposal(ctx, spec.srcProposal)
+			storedProposal, err := govKeeper.SubmitProposal(ctx, spec.srcProposal, true)
 			require.NoError(t, err)
 
 			// and execute proposal
@@ -556,7 +556,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 				Changes:     jsonProposal.Changes.ToParamChanges(),
 			}
 			// when stored
-			storedProposal, err := govKeeper.SubmitProposal(ctx, &proposal)
+			storedProposal, err := govKeeper.SubmitProposal(ctx, &proposal, true)
 			require.NoError(t, err)
 
 			// and proposal execute
@@ -639,7 +639,7 @@ func TestPinCodesProposal(t *testing.T) {
 			}
 
 			// when stored
-			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal, true)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -727,7 +727,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			}
 
 			// when stored
-			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal, true)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -821,7 +821,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			}
 
 			// when stored
-			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal, true)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return

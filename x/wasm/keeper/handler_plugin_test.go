@@ -332,8 +332,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // with deposit of 100 stake
 
-	before, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
-	require.NoError(t, err)
+	before := keepers.BankKeeper.GetSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 
 	specs := map[string]struct {
 		msg    wasmvmtypes.BurnMsg
