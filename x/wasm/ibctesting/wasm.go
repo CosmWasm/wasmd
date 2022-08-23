@@ -138,5 +138,5 @@ func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.Contrac
 	type testSupporter interface {
 		TestSupport() *wasmd.TestSupport
 	}
-	return chain.App.(testSupporter).TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
 }
