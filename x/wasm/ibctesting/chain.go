@@ -37,7 +37,6 @@ import (
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/params"
 
-	wasmd "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
@@ -103,7 +102,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
-	wasmApp := wasmd.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, opts, balance)
+	wasmApp := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, opts, balance)
 
 	// create current header and call begin block
 	header := tmproto.Header{
@@ -243,7 +242,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, r, err := wasmd.SignAndDeliver(
+	_, r, err := app.SignAndDeliver(
 		chain.t,
 		chain.TxConfig,
 		chain.App.BaseApp,

@@ -3,7 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -81,7 +81,7 @@ func StoreCodeCmd() *cobra.Command {
 }
 
 func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgStoreCode, error) {
-	wasm, err := ioutil.ReadFile(file)
+	wasm, err := os.ReadFile(file)
 	if err != nil {
 		return types.MsgStoreCode{}, err
 	}
