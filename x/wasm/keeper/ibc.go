@@ -25,7 +25,7 @@ func (k Keeper) bindIbcPort(ctx sdk.Context, portID string) error {
 // (lack of permissions or someone else has it)
 func (k Keeper) ensureIbcPort(ctx sdk.Context, contractAddr sdk.AccAddress) (string, error) {
 	portID := PortIDForContract(contractAddr)
-	if _, ok := k.CapabilityKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
+	if _, ok := k.capabilityKeeper.GetCapability(ctx, host.PortPath(portID)); ok {
 		return portID, nil
 	}
 	return portID, k.bindIbcPort(ctx, portID)
@@ -46,11 +46,11 @@ func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 
 // AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
 func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool {
-	return k.CapabilityKeeper.AuthenticateCapability(ctx, cap, name)
+	return k.capabilityKeeper.AuthenticateCapability(ctx, cap, name)
 }
 
 // ClaimCapability allows the transfer module to claim a capability
 // that IBC module passes to it
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.CapabilityKeeper.ClaimCapability(ctx, cap, name)
+	return k.capabilityKeeper.ClaimCapability(ctx, cap, name)
 }

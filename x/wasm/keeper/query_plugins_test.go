@@ -319,7 +319,7 @@ func TestIBCQuerier(t *testing.T) {
 }
 
 func TestBankQuerierBalance(t *testing.T) {
-	mock := BankKeeperMock{GetBalanceFn: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+	mock := bankKeeperMock{GetBalanceFn: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 		return sdk.NewCoin(denom, sdk.NewInt(1))
 	}}
 
@@ -510,19 +510,19 @@ func (m mockWasmQueryKeeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 	return m.IsPinnedCodeFn(ctx, codeID)
 }
 
-type BankKeeperMock struct {
+type bankKeeperMock struct {
 	GetBalanceFn     func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalancesFn func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 }
 
-func (m BankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+func (m bankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	if m.GetBalanceFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetBalanceFn(ctx, addr, denom)
 }
 
-func (m BankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
 	if m.GetAllBalancesFn == nil {
 		panic("not expected to be called")
 	}

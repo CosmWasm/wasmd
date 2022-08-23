@@ -373,7 +373,7 @@ func NewWasmApp(
 		keys[feegrant.StoreKey],
 		app.AccountKeeper,
 	)
-	StakingKeeper := stakingkeeper.NewKeeper(
+	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
@@ -384,7 +384,7 @@ func NewWasmApp(
 		appCodec,
 		keys[minttypes.StoreKey],
 		app.getSubspace(minttypes.ModuleName),
-		&StakingKeeper,
+		&stakingKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
@@ -395,14 +395,14 @@ func NewWasmApp(
 		app.getSubspace(distrtypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
-		&StakingKeeper,
+		&stakingKeeper,
 		authtypes.FeeCollectorName,
 		app.ModuleAccountAddrs(),
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
 		appCodec,
 		keys[slashingtypes.StoreKey],
-		&StakingKeeper,
+		&stakingKeeper,
 		app.getSubspace(slashingtypes.ModuleName),
 	)
 	app.CrisisKeeper = crisiskeeper.NewKeeper(
@@ -420,8 +420,8 @@ func NewWasmApp(
 	)
 
 	// register the staking hooks
-	// NOTE: StakingKeeper above is passed by reference, so that it will contain these hooks
-	app.StakingKeeper = *StakingKeeper.SetHooks(
+	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	app.StakingKeeper = *stakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
@@ -491,13 +491,13 @@ func NewWasmApp(
 	icaControllerIBCModule := icacontroller.NewIBCModule(app.ICAControllerKeeper, interTxIBCModule)
 
 	// create evidence keeper with router
-	EvidenceKeeper := evidencekeeper.NewKeeper(
+	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
 		keys[evidencetypes.StoreKey],
 		&app.StakingKeeper,
 		app.SlashingKeeper,
 	)
-	app.EvidenceKeeper = *EvidenceKeeper
+	app.EvidenceKeeper = *evidenceKeeper
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -549,7 +549,7 @@ func NewWasmApp(
 		app.getSubspace(govtypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
-		&StakingKeeper,
+		&stakingKeeper,
 		govRouter,
 	)
 	/****  Module Options ****/
@@ -889,21 +889,21 @@ func GetMaccPerms() map[string][]string {
 
 // initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
-	ParamsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	ParamsKeeper.Subspace(authtypes.ModuleName)
-	ParamsKeeper.Subspace(banktypes.ModuleName)
-	ParamsKeeper.Subspace(stakingtypes.ModuleName)
-	ParamsKeeper.Subspace(minttypes.ModuleName)
-	ParamsKeeper.Subspace(distrtypes.ModuleName)
-	ParamsKeeper.Subspace(slashingtypes.ModuleName)
-	ParamsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
-	ParamsKeeper.Subspace(crisistypes.ModuleName)
-	ParamsKeeper.Subspace(ibctransfertypes.ModuleName)
-	ParamsKeeper.Subspace(ibchost.ModuleName)
-	ParamsKeeper.Subspace(icahosttypes.SubModuleName)
-	ParamsKeeper.Subspace(icacontrollertypes.SubModuleName)
-	ParamsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(authtypes.ModuleName)
+	paramsKeeper.Subspace(banktypes.ModuleName)
+	paramsKeeper.Subspace(stakingtypes.ModuleName)
+	paramsKeeper.Subspace(minttypes.ModuleName)
+	paramsKeeper.Subspace(distrtypes.ModuleName)
+	paramsKeeper.Subspace(slashingtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
+	paramsKeeper.Subspace(crisistypes.ModuleName)
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	paramsKeeper.Subspace(wasm.ModuleName)
 
-	return ParamsKeeper
+	return paramsKeeper
 }

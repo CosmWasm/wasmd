@@ -70,10 +70,10 @@ type WasmVMResponseHandler interface {
 type Keeper struct {
 	storeKey              sdk.StoreKey
 	cdc                   codec.Codec
-	AccountKeeper         types.AccountKeeper
+	accountKeeper         types.AccountKeeper
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
-	CapabilityKeeper      types.CapabilityKeeper
+	capabilityKeeper      types.CapabilityKeeper
 	wasmVM                types.WasmerEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
@@ -119,10 +119,10 @@ func NewKeeper(
 		storeKey:          storeKey,
 		cdc:               cdc,
 		wasmVM:            wasmer,
-		AccountKeeper:     accountKeeper,
+		accountKeeper:     accountKeeper,
 		bank:              NewBankCoinTransferrer(bankKeeper),
 		portKeeper:        portKeeper,
-		CapabilityKeeper:  capabilityKeeper,
+		capabilityKeeper:  capabilityKeeper,
 		messenger:         NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:     wasmConfig.SmartQueryGasLimit,
 		paramSpace:        paramSpace,
@@ -246,7 +246,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 
 	// create contract address
 	contractAddress := k.generateContractAddress(ctx, codeID)
-	existingAcct := k.AccountKeeper.GetAccount(ctx, contractAddress)
+	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
 	if existingAcct != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
 	}
@@ -259,8 +259,8 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	} else {
 		// create an empty account (so we don't have issues later)
 		// TODO: can we remove this?
-		contractAccount := k.AccountKeeper.NewAccountWithAddress(ctx, contractAddress)
-		k.AccountKeeper.SetAccount(ctx, contractAccount)
+		contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		k.accountKeeper.SetAccount(ctx, contractAccount)
 	}
 
 	// get contact info

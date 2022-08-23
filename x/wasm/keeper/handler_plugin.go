@@ -143,11 +143,11 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 // IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
 	channelKeeper    types.ChannelKeeper
-	CapabilityKeeper types.CapabilityKeeper
+	capabilityKeeper types.CapabilityKeeper
 }
 
 func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper) IBCRawPacketHandler {
-	return IBCRawPacketHandler{channelKeeper: chk, CapabilityKeeper: cak}
+	return IBCRawPacketHandler{channelKeeper: chk, capabilityKeeper: cak}
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
@@ -174,7 +174,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrInvalidChannel, "not found")
 	}
-	channelCap, ok := h.CapabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
+	channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
