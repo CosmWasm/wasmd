@@ -18,6 +18,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
+// Deprecated: use public app attributes directly
 type TestSupport struct {
 	t   testing.TB
 	app *WasmApp
