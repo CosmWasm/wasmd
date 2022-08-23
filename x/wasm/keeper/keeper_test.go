@@ -1836,3 +1836,87 @@ func TestBuildContractAddress(t *testing.T) {
 		})
 	}
 }
+func TestSetAccessConfig(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k := keepers.WasmKeeper
+	creatorAddr := RandomAccountAddress(t)
+	nonCreatorAddr := RandomAccountAddress(t)
+
+	specs := map[string]struct {
+		authz           AuthorizationPolicy
+		chainPermission types.AccessType
+		newConfig       types.AccessConfig
+		caller          sdk.AccAddress
+		expErr          bool
+	}{
+		"user with new permissions == chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+		},
+		"user with new permissions < chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
+		},
+		"user with new permissions > chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+			expErr:          true,
+		},
+		"different actor": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          nonCreatorAddr,
+			expErr:          true,
+		},
+		"gov with new permissions == chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+		},
+		"gov with new permissions < chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
+		},
+		"gov with new permissions > chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AccessTypeOnlyAddress.With(creatorAddr),
+			caller:          creatorAddr,
+		},
+		"gov without actor": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+		},
+	}
+	const codeID = 1
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			newParams := types.DefaultParams()
+			newParams.InstantiateDefaultPermission = spec.chainPermission
+			k.SetParams(ctx, newParams)
+
+			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
+			// when
+			gotErr := k.setAccessConfig(ctx, codeID, spec.caller, spec.newConfig, spec.authz)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+
+		})
+	}
+
+}
