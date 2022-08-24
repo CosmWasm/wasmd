@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.17+](https://golang.org/dl/)
+**Note**: Requires [Go 1.18+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 ## Compatibility with CosmWasm contracts
