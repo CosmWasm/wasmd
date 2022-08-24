@@ -875,9 +875,9 @@ func TestMigrate(t *testing.T) {
 	ibcCodeID := StoreIBCReflectContract(t, ctx, keepers).CodeID
 	require.NotEqual(t, originalCodeID, newCodeID)
 
-	restrictedCodeID := StoreHackatomExampleContract(t, ctx, keepers).CodeID
-	keeper.SetAccessConfig(ctx, restrictedCodeID, types.AllowNobody)
-	require.NotEqual(t, originalCodeID, restrictedCodeID)
+	restrictedCodeExample := StoreHackatomExampleContract(t, ctx, keepers)
+	require.NoError(t, keeper.SetAccessConfig(ctx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
+	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
 
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
@@ -961,7 +961,7 @@ func TestMigrate(t *testing.T) {
 			caller:     creator,
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
-			toCodeID:   restrictedCodeID,
+			toCodeID:   restrictedCodeExample.CodeID,
 			migrateMsg: migMsgBz,
 			expErr:     sdkerrors.ErrUnauthorized,
 		},
@@ -1836,6 +1836,7 @@ func TestBuildContractAddress(t *testing.T) {
 		})
 	}
 }
+
 func TestSetAccessConfig(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
 	k := keepers.WasmKeeper
@@ -1915,8 +1916,6 @@ func TestSetAccessConfig(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-
 		})
 	}
-
 }
