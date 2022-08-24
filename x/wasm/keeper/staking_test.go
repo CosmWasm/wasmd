@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -106,7 +106,7 @@ func TestInitializeStaking(t *testing.T) {
 	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
@@ -189,7 +189,7 @@ func initializeStaking(t *testing.T) initInfo {
 	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
