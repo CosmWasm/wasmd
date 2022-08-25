@@ -175,7 +175,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
-	require.NoError(t, err)
+	require.Error(t, err)
 
 	// and proposal execute
 	handler := govKeeper.LegacyRouter().GetRoute(src.ProposalRoute())
