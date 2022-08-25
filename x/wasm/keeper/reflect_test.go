@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -52,7 +52,7 @@ func TestReflectContractSend(t *testing.T) {
 	require.Equal(t, uint64(1), reflectID)
 
 	// upload hackatom escrow code
-	escrowCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	escrowCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, err := keeper.Create(ctx, creator, escrowCode, nil)
 	require.NoError(t, err)

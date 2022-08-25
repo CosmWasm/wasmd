@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
+- Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
+
+
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
 

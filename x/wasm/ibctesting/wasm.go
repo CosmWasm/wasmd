@@ -5,10 +5,8 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
-
-	wasmd "github.com/CosmWasm/wasmd/app"
 
 	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 
@@ -37,7 +35,7 @@ func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
 }
 
 func (chain *TestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
-	wasmCode, err := ioutil.ReadFile(filename)
+	wasmCode, err := os.ReadFile(filename)
 	require.NoError(chain.t, err)
 	if strings.HasSuffix(filename, "wasm") { // compress for gas limit
 		var buf bytes.Buffer
@@ -135,8 +133,5 @@ func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	type testSupporter interface {
-		TestSupport() *wasmd.TestSupport
-	}
-	return chain.App.(testSupporter).TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
 }

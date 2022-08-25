@@ -2,8 +2,8 @@ package benchmarks
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
@@ -120,7 +120,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
-	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
+	cw20Code, err := os.ReadFile("./testdata/cw20_base.wasm")
 	require.NoError(b, err)
 	storeMsg := wasmtypes.MsgStoreCode{
 		Sender:       addr.String(),
