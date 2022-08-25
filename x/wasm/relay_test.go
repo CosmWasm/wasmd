@@ -193,7 +193,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.GetTestSupport().BankKeeper()
+	bankKeeperB := chainB.App.BankKeeper
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
@@ -268,7 +268,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.GetTestSupport().BankKeeper()
+	bankKeeperB := chainB.App.BankKeeper
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
@@ -535,7 +535,7 @@ func (c *ackReceiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmv
 	// call original ibctransfer keeper to not copy all code into this
 	ibcPacket := toIBCPacket(packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	err := c.chain.GetTestSupport().TransferKeeper().OnRecvPacket(ctx, ibcPacket, src)
+	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}
@@ -560,7 +560,7 @@ func (c *ackReceiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtyp
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
-	err := c.chain.GetTestSupport().TransferKeeper().OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
+	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
 	}

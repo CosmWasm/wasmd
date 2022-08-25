@@ -18,6 +18,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
+// Deprecated: use public app attributes directly
 type TestSupport struct {
 	t   testing.TB
 	app *WasmApp
@@ -28,11 +29,11 @@ func NewTestSupport(t testing.TB, app *WasmApp) *TestSupport {
 }
 
 func (s TestSupport) IBCKeeper() *ibckeeper.Keeper {
-	return s.app.ibcKeeper
+	return s.app.IBCKeeper
 }
 
 func (s TestSupport) WasmKeeper() wasm.Keeper {
-	return s.app.wasmKeeper
+	return s.app.WasmKeeper
 }
 
 func (s TestSupport) AppCodec() codec.Codec {
@@ -40,27 +41,27 @@ func (s TestSupport) AppCodec() codec.Codec {
 }
 
 func (s TestSupport) ScopedWasmIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedWasmKeeper
+	return s.app.ScopedWasmKeeper
 }
 
 func (s TestSupport) ScopeIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedIBCKeeper
+	return s.app.ScopedIBCKeeper
 }
 
 func (s TestSupport) ScopedTransferKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedTransferKeeper
+	return s.app.ScopedTransferKeeper
 }
 
 func (s TestSupport) StakingKeeper() stakingkeeper.Keeper {
-	return s.app.stakingKeeper
+	return s.app.StakingKeeper
 }
 
 func (s TestSupport) BankKeeper() bankkeeper.Keeper {
-	return s.app.bankKeeper
+	return s.app.BankKeeper
 }
 
 func (s TestSupport) TransferKeeper() ibctransferkeeper.Keeper {
-	return s.app.transferKeeper
+	return s.app.TransferKeeper
 }
 
 func (s TestSupport) GetBaseApp() *baseapp.BaseApp {

@@ -884,12 +884,17 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 }
 
 // setAccessConfig updates the access config of a code id.
-func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, config types.AccessConfig) error {
+func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, authz AuthorizationPolicy) error {
 	info := k.GetCodeInfo(ctx, codeID)
 	if info == nil {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
-	info.InstantiateConfig = config
+	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
+	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify code access config")
+	}
+
+	info.InstantiateConfig = newConfig
 	k.storeCodeInfo(ctx, codeID, *info)
 	return nil
 }

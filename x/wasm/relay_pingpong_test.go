@@ -328,7 +328,7 @@ func (p player) incrementCounter(key []byte, store wasmvm.KVStore) uint64 {
 }
 
 func (p player) QueryState(key []byte) uint64 {
-	raw := p.chain.GetTestSupport().WasmKeeper().QueryRaw(p.chain.GetContext(), p.contractAddr, key)
+	raw := p.chain.App.WasmKeeper.QueryRaw(p.chain.GetContext(), p.contractAddr, key)
 	return sdk.BigEndianToUint64(raw)
 }
 

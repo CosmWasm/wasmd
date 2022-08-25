@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -89,7 +89,7 @@ func BenchmarkCompilation(b *testing.B) {
 			ctx, keepers := createTestInput(b, false, SupportedFeatures, wasmConfig, db)
 
 			// print out code size for comparisons
-			code, err := ioutil.ReadFile(spec.wasmFile)
+			code, err := os.ReadFile(spec.wasmFile)
 			require.NoError(b, err)
 			b.Logf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b(size: %d)  ", len(code))
 
