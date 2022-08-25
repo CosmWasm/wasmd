@@ -52,9 +52,19 @@ const (
 	DefaultPerCustomEventCost uint64 = 20
 	// DefaultEventAttributeDataFreeTier number of bytes of total attribute data we do not charge.
 	DefaultEventAttributeDataFreeTier = 100
-	// DefaultPerByteUncompressCost is how much SDK gas we charge per source byte to unpack
-	DefaultPerByteUncompressCost uint64 = 2
 )
+
+// default: 0.15 gas.
+// see https://github.com/CosmWasm/wasmd/pull/898#discussion_r937727200
+var defaultPerByteUncompressCost = wasmvmtypes.UFraction{
+	Numerator:   15,
+	Denominator: 100,
+}
+
+// DefaultPerByteUncompressCost is how much SDK gas we charge per source byte to unpack
+func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
+	return defaultPerByteUncompressCost
+}
 
 // GasRegister abstract source for gas costs
 type GasRegister interface {
@@ -83,7 +93,7 @@ type WasmGasRegisterConfig struct {
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCost sdk.Gas
 	// UncompressCost costs per byte to unpack a contract
-	UncompressCost sdk.Gas
+	UncompressCost wasmvmtypes.UFraction
 	// GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
 	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 	GasMultiplier sdk.Gas
@@ -113,7 +123,7 @@ func DefaultGasRegisterConfig() WasmGasRegisterConfig {
 		EventAttributeDataCost:     DefaultEventAttributeDataCost,
 		EventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 		ContractMessageDataCost:    DefaultContractMessageDataCost,
-		UncompressCost:             DefaultPerByteUncompressCost,
+		UncompressCost:             DefaultPerByteUncompressCost(),
 	}
 }
 
@@ -155,7 +165,7 @@ func (g WasmGasRegister) UncompressCosts(byteLength int) sdk.Gas {
 	if byteLength < 0 {
 		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
 	}
-	return g.c.UncompressCost * uint64(byteLength)
+	return g.c.UncompressCost.Mul(uint64(byteLength)).Floor()
 }
 
 // InstantiateContractCosts costs when interacting with a wasm contract

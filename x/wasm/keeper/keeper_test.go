@@ -374,7 +374,7 @@ func TestCreateWithBrokenGzippedPayload(t *testing.T) {
 	contractID, err := keeper.Create(ctx.WithGasMeter(gm), creator, wasmCode, nil)
 	require.Error(t, err)
 	assert.Empty(t, contractID)
-	assert.GreaterOrEqual(t, gm.GasConsumed(), sdk.Gas(1618464)) // 809232 * 2 (default uncompress costs) = 1618464
+	assert.GreaterOrEqual(t, gm.GasConsumed(), sdk.Gas(121384)) // 809232 * 0.15 (default uncompress costs) = 121384
 }
 
 func TestInstantiate(t *testing.T) {
