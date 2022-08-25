@@ -2,6 +2,7 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
+- Upgrade to ibc-go v3.2.0 https[\#937](://github.com/CosmWasm/wasmd/pull/937) ([faddat](https://github.com/faddat))
 
 
 
