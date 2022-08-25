@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	wasmd "github.com/CosmWasm/wasmd/app"
+
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
@@ -124,8 +124,5 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	type testSupporter interface {
-		TestSupport() *wasmd.TestSupport
-	}
-	return chain.App.(testSupporter).TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
 }

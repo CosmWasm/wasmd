@@ -373,7 +373,7 @@ func TestVerifyAddressLen(t *testing.T) {
 	}
 }
 
-func TestAccesConfigSubset(t *testing.T) {
+func TestAccessConfigSubset(t *testing.T) {
 	specs := map[string]struct {
 		check    AccessConfig
 		superSet AccessConfig
@@ -446,6 +446,81 @@ func TestAccesConfigSubset(t *testing.T) {
 		},
 	}
 
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			subset := spec.check.IsSubset(spec.superSet)
+			require.Equal(t, spec.isSubSet, subset)
+		})
+	}
+}
+
+func TestAccessTypeSubset(t *testing.T) {
+	specs := map[string]struct {
+		check    AccessType
+		superSet AccessType
+		isSubSet bool
+	}{
+		"nobody <= nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only > nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: false,
+		},
+		"everybody > nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"unspecified > nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		"nobody <= everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only <= everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: true,
+		},
+		"everybody <= everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeEverybody,
+			isSubSet: true,
+		},
+		"unspecified > everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		"nobody <= only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only <= only(same)": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: true,
+		},
+		"everybody > only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"nobody > unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeNobody,
+			isSubSet: false,
+		},
+	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			subset := spec.check.IsSubset(spec.superSet)

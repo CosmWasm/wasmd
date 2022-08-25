@@ -2,8 +2,8 @@ package benchmarks
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
@@ -170,7 +170,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
-	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
+	cw20Code, err := os.ReadFile("./testdata/cw20_base.wasm")
 	require.NoError(b, err)
 	storeMsg := wasmtypes.MsgStoreCode{
 		Sender:       addr.String(),
@@ -212,7 +212,13 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
 	initTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())),
-		txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
+		txGen,
+		[]sdk.Msg{&initMsg},
+		nil, gasWanted,
+		"",
+		[]uint64{0},
+		[]uint64{1},
+		minter)
 	require.NoError(b, err)
 	_, res, err = wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)

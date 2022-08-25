@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math"
+	"os"
 	"testing"
 	"time"
 
@@ -31,7 +31,7 @@ import (
 
 // When migrated to go 1.16, embed package should be used instead.
 func init() {
-	b, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	b, err := os.ReadFile("./testdata/hackatom.wasm")
 	if err != nil {
 		panic(err)
 	}
@@ -348,7 +348,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm.gzip")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err, "reading gzipped WASM code")
 
 	contractID, err := keeper.Create(ctx, creator, wasmCode, nil)
@@ -877,6 +877,10 @@ func TestMigrate(t *testing.T) {
 	ibcCodeID := StoreIBCReflectContract(t, ctx, keepers).CodeID
 	require.NotEqual(t, originalCodeID, newCodeID)
 
+	restrictedCodeExample := StoreHackatomExampleContract(t, ctx, keepers)
+	require.NoError(t, keeper.SetAccessConfig(ctx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
+	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
+
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
 	initMsgBz := HackatomExampleInitMsg{
@@ -952,6 +956,15 @@ func TestMigrate(t *testing.T) {
 			initMsg:    initMsgBz,
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
+			expErr:     sdkerrors.ErrUnauthorized,
+		},
+		"prevent migration when new code is restricted": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   restrictedCodeExample.CodeID,
+			migrateMsg: migMsgBz,
 			expErr:     sdkerrors.ErrUnauthorized,
 		},
 		"fail with non existing code id": {
@@ -1086,7 +1099,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, sdk.NewInt64Coin("denom", 5000))
 
-	burnerCode, err := ioutil.ReadFile("./testdata/burner.wasm")
+	burnerCode, err := os.ReadFile("./testdata/burner.wasm")
 	require.NoError(t, err)
 
 	originalContractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
@@ -1822,6 +1835,89 @@ func TestBuildContractAddress(t *testing.T) {
 			if len(spec.expectedAddr) > 0 {
 				require.Equal(t, spec.expectedAddr, gotAddr.String())
 			}
+		})
+	}
+}
+
+func TestSetAccessConfig(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	k := keepers.WasmKeeper
+	creatorAddr := RandomAccountAddress(t)
+	nonCreatorAddr := RandomAccountAddress(t)
+
+	specs := map[string]struct {
+		authz           AuthorizationPolicy
+		chainPermission types.AccessType
+		newConfig       types.AccessConfig
+		caller          sdk.AccAddress
+		expErr          bool
+	}{
+		"user with new permissions == chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+		},
+		"user with new permissions < chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
+		},
+		"user with new permissions > chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+			expErr:          true,
+		},
+		"different actor": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          nonCreatorAddr,
+			expErr:          true,
+		},
+		"gov with new permissions == chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+		},
+		"gov with new permissions < chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
+		},
+		"gov with new permissions > chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AccessTypeOnlyAddress.With(creatorAddr),
+			caller:          creatorAddr,
+		},
+		"gov without actor": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+		},
+	}
+	const codeID = 1
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			newParams := types.DefaultParams()
+			newParams.InstantiateDefaultPermission = spec.chainPermission
+			k.SetParams(ctx, newParams)
+
+			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
+			// when
+			gotErr := k.setAccessConfig(ctx, codeID, spec.caller, spec.newConfig, spec.authz)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
 		})
 	}
 }
