@@ -155,7 +155,11 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.Admin = "invalid"
 		p.Label = "testing"
 	})
-	_, err = govKeeper.SubmitProposal(ctx, src)
+	msgContent, err := govv1.NewLegacyContent(src, oneAddress.String())
+	require.NoError(t, err)
+
+	// when stored
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.Error(t, err)
 
 	// test with no admin
@@ -166,14 +170,16 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.Label = "testing"
 	})
 	em := sdk.NewEventManager()
+	msgContent, err = govv1.NewLegacyContent(src, oneAddress.String())
+	require.NoError(t, err)
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
+	handler := govKeeper.LegacyRouter().GetRoute(src.ProposalRoute())
+	err = handler(ctx.WithEventManager(em), src)
 	require.NoError(t, err)
 
 	// then
@@ -566,21 +572,21 @@ func TestUpdateParamsProposal(t *testing.T) {
 
 			var jsonProposal utils.ParamChangeProposalJSON
 			require.NoError(t, legacyAmino.UnmarshalJSON(bz, &jsonProposal))
-			proposal := proposal.ParameterChangeProposal{
+			prop := proposal.ParameterChangeProposal{
 				Title:       jsonProposal.Title,
 				Description: jsonProposal.Description,
 				Changes:     jsonProposal.Changes.ToParamChanges(),
 			}
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
 
 			// and proposal execute
-			handler := govKeeper.LegacyRouter().GetRoute(proposal.ProposalRoute())
-			err = handler(ctx, &proposal)
+			handler := govKeeper.LegacyRouter().GetRoute(prop.ProposalRoute())
+			err = handler(ctx, &prop)
 			require.NoError(t, err)
 
 			// then
@@ -651,7 +657,7 @@ func TestPinCodesProposal(t *testing.T) {
 			gotPinnedChecksums = nil
 			ctx, _ := parentCtx.CacheContext()
 			mock.PinFn = spec.mockFn
-			proposal := types.PinCodesProposal{
+			prop := types.PinCodesProposal{
 				Title:       "Foo",
 				Description: "Bar",
 				CodeIDs:     spec.srcCodeIDs,
@@ -659,7 +665,7 @@ func TestPinCodesProposal(t *testing.T) {
 
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {
@@ -668,8 +674,8 @@ func TestPinCodesProposal(t *testing.T) {
 			}
 
 			// and proposal execute
-			handler := govKeeper.LegacyRouter().GetRoute(proposal.ProposalRoute())
-			err = handler(ctx, &proposal)
+			handler := govKeeper.LegacyRouter().GetRoute(prop.ProposalRoute())
+			err = handler(ctx, &prop)
 			require.NoError(t, err)
 
 			// then
@@ -741,7 +747,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			gotUnpinnedChecksums = nil
 			ctx, _ := parentCtx.CacheContext()
 			mock.UnpinFn = spec.mockFn
-			proposal := types.UnpinCodesProposal{
+			prop := types.UnpinCodesProposal{
 				Title:       "Foo",
 				Description: "Bar",
 				CodeIDs:     spec.srcCodeIDs,
@@ -749,7 +755,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-			msgContent, err := govv1.NewLegacyContent(&proposal, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {
@@ -758,8 +764,8 @@ func TestUnpinCodesProposal(t *testing.T) {
 			}
 
 			// and proposal execute
-			handler := govKeeper.LegacyRouter().GetRoute(proposal.ProposalRoute())
-			err = handler(ctx, &proposal)
+			handler := govKeeper.LegacyRouter().GetRoute(prop.ProposalRoute())
+			err = handler(ctx, &prop)
 			require.NoError(t, err)
 
 			// then

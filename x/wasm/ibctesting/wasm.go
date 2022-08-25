@@ -8,8 +8,6 @@ import (
 	"os"
 	"strings"
 
-
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 	"github.com/golang/protobuf/proto" //nolint
