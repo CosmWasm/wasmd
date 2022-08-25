@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"encoding/json"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -125,7 +126,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
-	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
+	storeTx, err := helpers.GenTx(rand.New(rand.NewSource(time.Now().UnixNano())),
+		txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
 	_, res, err := wasmApp.Deliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
@@ -159,7 +161,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Msg:    initBz,
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
-	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
+	initTx, err := helpers.GenTx(rand.New(rand.NewSource(time.Now().UnixNano())),
+		txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
 	require.NoError(b, err)
 	_, res, err = wasmApp.Deliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
@@ -192,6 +195,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 		msgs, err := msgGen(info)
 		require.NoError(b, err)
 		txs[i], err = helpers.GenTx(
+			rand.New(rand.NewSource(time.Now().UnixNano())),
 			info.TxConfig,
 			msgs,
 			fees,
