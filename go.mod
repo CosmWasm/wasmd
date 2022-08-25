@@ -9,7 +9,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.46.1
 	github.com/cosmos/iavl v0.19.1
 	github.com/cosmos/ibc-go/v5 v5.0.0-beta1.0.20220812090728-e1f7e89dc1e2
-	github.com/cosmos/interchain-accounts v0.3.1-0.20220812171121-8d8742554e53
+	github.com/cosmos/interchain-accounts v0.3.2
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
