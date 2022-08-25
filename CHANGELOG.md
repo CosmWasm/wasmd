@@ -2,6 +2,7 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
+- Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
 
 
 
