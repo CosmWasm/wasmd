@@ -23,6 +23,7 @@ const (
 
 	AttributeKeyContractAddr       = "_contract_address"
 	AttributeKeyCodeID             = "code_id"
+	AttributeKeyChecksum           = "code_checksum"
 	AttributeKeyResultDataHex      = "result"
 	AttributeKeyRequiredCapability = "required_capability"
 )

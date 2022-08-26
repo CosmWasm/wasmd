@@ -158,8 +158,9 @@ func TestQuerySmartContractState(t *testing.T) {
 
 func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	contractAddr := BuildContractAddress(1, 1)
-	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
+	creator := RandomAccountAddress(t)
+	contractAddr := BuildContractAddress([]byte("myCodeHash"), creator, "testing")
+	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{CodeHash: []byte("myCodeHash")})
 	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
@@ -262,13 +263,13 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
-	anyAddr := keepers.Faucet.NewFundedAccount(ctx, topUp...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()

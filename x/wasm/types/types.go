@@ -88,7 +88,7 @@ func (c *ContractInfo) ValidateBasic() error {
 			return sdkerrors.Wrap(err, "admin")
 		}
 	}
-	if err := validateLabel(c.Label); err != nil {
+	if err := ValidateLabel(c.Label); err != nil {
 		return sdkerrors.Wrap(err, "label")
 	}
 	if c.Extension == nil {

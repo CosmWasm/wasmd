@@ -430,6 +430,7 @@ MsgStoreCodeResponse returns store result data.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `checksum` | [bytes](#bytes) |  | Checksum is the sha256 hash of the stored code |
 
 
 

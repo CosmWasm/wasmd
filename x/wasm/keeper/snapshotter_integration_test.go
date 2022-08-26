@@ -55,11 +55,10 @@ func TestSnapshotter(t *testing.T) {
 			for i, v := range spec.wasmFiles {
 				wasmCode, err := os.ReadFile(v)
 				require.NoError(t, err)
-				codeID, err := contractKeeper.Create(ctx, genesisAddr, wasmCode, nil)
+				codeID, checksum, err := contractKeeper.Create(ctx, genesisAddr, wasmCode, nil)
 				require.NoError(t, err)
 				require.Equal(t, uint64(i+1), codeID)
-				hash := sha256.Sum256(wasmCode)
-				srcCodeIDToChecksum[codeID] = hash[:]
+				srcCodeIDToChecksum[codeID] = checksum
 			}
 			// create snapshot
 			srcWasmApp.Commit()

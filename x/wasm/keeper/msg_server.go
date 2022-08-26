@@ -32,13 +32,14 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
 	))
 
-	codeID, err := m.keeper.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
+	codeID, checksum, err := m.keeper.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.MsgStoreCodeResponse{
-		CodeID: codeID,
+		CodeID:   codeID,
+		Checksum: checksum,
 	}, nil
 }
 

@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -39,6 +40,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdListPinnedCode(),
 		GetCmdLibVersion(),
 		GetCmdQueryParams(),
+		GetCmdBuildAddress(),
 	)
 	return queryCmd
 }
@@ -57,6 +59,33 @@ func GetCmdLibVersion() *cobra.Command {
 				return fmt.Errorf("error retrieving libwasmvm version: %w", err)
 			}
 			fmt.Println(version)
+			return nil
+		},
+	}
+	return cmd
+}
+
+// GetCmdBuildAddress build a contract address
+func GetCmdBuildAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "build-address [code-hash] [creator-address] [label]",
+		Short:   "build contract address",
+		Aliases: []string{"address"},
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			codeHash, err := hex.DecodeString(args[0])
+			if err != nil {
+				return fmt.Errorf("code-hash: %s", err)
+			}
+			creator, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return fmt.Errorf("creator: %s", err)
+			}
+			label := args[2]
+			if err := types.ValidateLabel(label); err != nil {
+				return fmt.Errorf("label: %s", err)
+			}
+			cmd.Println(keeper.BuildContractAddress(codeHash, creator, label).String())
 			return nil
 		},
 	}
@@ -116,6 +145,9 @@ func GetCmdListContractByCode() *cobra.Command {
 			codeID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
+			}
+			if codeID == 0 {
+				return errors.New("empty code id")
 			}
 
 			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
