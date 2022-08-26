@@ -435,8 +435,9 @@ func TestFromWasmVMGasConversion(t *testing.T) {
 
 func TestUncompressCosts(t *testing.T) {
 	specs := map[string]struct {
-		lenIn int
-		exp   sdk.Gas
+		lenIn    int
+		exp      sdk.Gas
+		expPanic bool
 	}{
 		"0": {
 			exp: 0,
@@ -453,9 +454,17 @@ func TestUncompressCosts(t *testing.T) {
 			lenIn: types.MaxWasmSize,
 			exp:   122880,
 		},
+		"invalid len": {
+			lenIn:    -1,
+			expPanic: true,
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			if spec.expPanic {
+				assert.Panics(t, func() { NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn) })
+				return
+			}
 			got := NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn)
 			assert.Equal(t, spec.exp, got)
 		})
