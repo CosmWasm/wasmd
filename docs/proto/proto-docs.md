@@ -4,6 +4,9 @@
 
 ## Table of Contents
 
+- [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
+    - [ContractAuthorization](#cosmwasm.wasm.v1.ContractAuthorization)
+  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -81,6 +84,39 @@
     - [Query](#cosmwasm.wasm.v1.Query)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="cosmwasm/wasm/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/wasm/v1/authz.proto
+
+
+
+<a name="cosmwasm.wasm.v1.ContractAuthorization"></a>
+
+### ContractAuthorization
+ContractAuthorization defines authorization for wasm execute.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `messages` | [string](#string) | repeated | Messages is the list of messages that can be executed |
+| `once` | [bool](#bool) |  | Once specifies if the contract can only be called once |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
