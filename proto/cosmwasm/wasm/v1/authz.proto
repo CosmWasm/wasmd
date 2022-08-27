@@ -1,0 +1,21 @@
+syntax = "proto3";
+package cosmwasm.wasm.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
+
+// ContractAuthorization defines authorization for wasm execute.
+message ContractAuthorization {
+  option (cosmos_proto.implements_interface) = "Authorization";
+
+  // Contract is the address of the smart contract
+  string contract = 1;
+
+  // Messages is the list of messages that can be executed
+  repeated string messages = 2;
+
+  // Once specifies if the contract can only be called once
+  bool once = 3; 
+}
