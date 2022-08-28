@@ -6,9 +6,9 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
-var (
-	_ authztypes.Authorization = &ContractAuthorization{}
-)
+const gasDeserializationCostPerByte = uint64(1)
+
+var _ authztypes.Authorization = &ContractAuthorization{}
 
 // NewContractAuthorization creates a new ContractAuthorization object.
 func NewContractAuthorization(contractAddr sdk.AccAddress, messages []string, once bool) *ContractAuthorization {
@@ -35,6 +35,8 @@ func (a ContractAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.
 		return authztypes.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("cannot run %s contract", exec.Contract)
 	}
 
+	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(exec.Msg))
+	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
 	if err := IsJSONObjectWithTopLevelKey(exec.Msg, a.Messages); err != nil {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrUnauthorized.Wrapf("no allowed msg, %s", err.Error())
 	}
@@ -48,7 +50,7 @@ func (a ContractAuthorization) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "contract address cannot be empty")
 	}
 	if _, err := sdk.AccAddressFromBech32(a.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract address")
+		return sdkerrors.Wrap(err, "contract")
 	}
 	if len(a.Messages) == 0 {
 		return sdkerrors.ErrInvalidRequest.Wrap("empty msg list")

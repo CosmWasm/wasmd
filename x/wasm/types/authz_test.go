@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestAuthzAuthorizations(t *testing.T) {
-	ctx := sdk.Context{}
+	app := simapp.Setup(false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	contractAuth := NewContractAuthorization(sdk.AccAddress{}, []string{"bond"}, false)
 	require.Equal(t, contractAuth.MsgTypeURL(), "/cosmwasm.wasm.v1.MsgExecuteContract")
