@@ -286,7 +286,7 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 
 func GrantAuthorizationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] [contract_addr_bech32] --msgs [msg1,msg2,...]",
+		Use:   "grant [grantee] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
 		Short: "Grant authorization to an address",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
