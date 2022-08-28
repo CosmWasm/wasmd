@@ -11,9 +11,9 @@ var (
 )
 
 // NewContractAuthorization creates a new ContractAuthorization object.
-func NewContractAuthorization(contract string, messages []string, once bool) *ContractAuthorization {
+func NewContractAuthorization(contractAddr sdk.AccAddress, messages []string, once bool) *ContractAuthorization {
 	return &ContractAuthorization{
-		Contract: contract,
+		Contract: contractAddr.String(),
 		Messages: messages,
 		Once:     once,
 	}
