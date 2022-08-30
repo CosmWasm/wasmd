@@ -8,7 +8,7 @@ require (
 	github.com/CosmWasm/wasmvm v1.0.0
 	github.com/cosmos/cosmos-sdk v0.46.1
 	github.com/cosmos/iavl v0.19.1
-	github.com/cosmos/ibc-go/v5 v5.0.0-beta1.0.20220812090728-e1f7e89dc1e2
+	github.com/cosmos/ibc-go/v5 v5.0.0-rc1
 	github.com/cosmos/interchain-accounts v0.3.2
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
@@ -30,7 +30,7 @@ require (
 	github.com/tendermint/tendermint v0.34.21
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20220725144611-272f38e5d71b
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
