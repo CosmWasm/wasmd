@@ -311,3 +311,10 @@ func (q grpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 		Pagination: pageRes,
 	}, nil
 }
+
+// Params returns params of the module.
+func (q grpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	params := q.keeper.GetParams(ctx)
+	return &types.QueryParamsResponse{Params: params}, nil
+}

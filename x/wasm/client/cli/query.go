@@ -38,6 +38,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdGetContractState(),
 		GetCmdListPinnedCode(),
 		GetCmdLibVersion(),
+		GetCmdQueryParams(),
 	)
 	return queryCmd
 }
@@ -539,4 +540,33 @@ func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
 		panic(err.Error())
 	}
 	return flagSet
+}
+
+// GetCmdQueryParams implements a command to return the current wasm
+// parameters.
+func GetCmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the current wasm parameters",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryParamsRequest{}
+			res, err := queryClient.Params(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(&res.Params)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
 }

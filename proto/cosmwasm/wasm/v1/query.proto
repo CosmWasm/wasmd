@@ -58,6 +58,11 @@ service Query {
   rpc PinnedCodes(QueryPinnedCodesRequest) returns (QueryPinnedCodesResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/pinned";
   }
+
+  // Params gets the module params
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/codes/params";
+  }
 }
 
 // QueryContractInfoRequest is the request type for the Query/ContractInfo RPC
@@ -221,4 +226,13 @@ message QueryPinnedCodesResponse {
       [ (gogoproto.nullable) = false, (gogoproto.customname) = "CodeIDs" ];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
