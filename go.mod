@@ -7,7 +7,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.45.8
 	github.com/cosmos/iavl v0.19.1
 	github.com/cosmos/ibc-go/v3 v3.0.0
-	github.com/cosmos/interchain-accounts v0.1.0
+	github.com/cosmos/interchain-accounts v0.3.3
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
@@ -49,6 +49,7 @@ require (
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
+	github.com/cosmos/ibc-go/v4 v4.0.0-rc2 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
@@ -66,8 +67,8 @@ require (
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
-	github.com/golang/snappy v0.0.3 // indirect
-	github.com/google/btree v1.0.0 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/btree v1.0.1 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
