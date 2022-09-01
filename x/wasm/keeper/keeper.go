@@ -119,7 +119,7 @@ func NewKeeper(
 		paramSpace:       paramSpace,
 		gasRegister:      NewDefaultWasmGasRegister(),
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper, cdc)
 	for _, o := range opts {
 		o.apply(keeper)
 	}
