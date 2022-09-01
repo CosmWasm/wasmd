@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	proto "github.com/gogo/protobuf/proto"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -104,13 +105,14 @@ func DefaultQueryPlugins(
 	channelKeeper types.ChannelKeeper,
 	queryRouter GRPCQueryRouter,
 	wasm wasmQueryKeeper,
+	codec codec.Codec,
 ) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
 		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
-		Stargate: StargateQuerier(queryRouter),
+		Stargate: StargateQuerier(queryRouter, codec),
 		Wasm:     WasmQuerier(wasm),
 	}
 }
@@ -281,9 +283,9 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 	}
 }
 
-func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+func StargateQuerier(queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-		binding, whitelisted := StargateWhitelist.Load(request.Path)
+		protoResponse, whitelisted := StargateWhitelist.Load(request.Path)
 		if !whitelisted {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
@@ -301,8 +303,7 @@ func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request 
 			return nil, err
 		}
 
-		// normalize response to ensure backward compatibility
-		bz, err := NormalizeReponse(binding, res.Value)
+		bz, err := ConvertProtoToJsonMarshal(protoResponse, res.Value, codec)
 		if err != nil {
 			return nil, err
 		}
@@ -554,11 +555,12 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 	}
 }
 
-// NormalizeReponse returns normalized responses given proto interface.
-// This is specifically important for type Any.
-func NormalizeReponse(binding interface{}, bz []byte) ([]byte, error) {
+// ConvertProtoToJsonMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
+// This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
+// being able to use response directly by json marshalling, which is supported in cosmwasm.
+func ConvertProtoToJsonMarshal(protoResponse interface{}, bz []byte, codec codec.Codec) ([]byte, error) {
 	// all values are proto message
-	message, ok := binding.(proto.Message)
+	message, ok := protoResponse.(proto.Message)
 	if !ok {
 		return nil, wasmvmtypes.Unknown{}
 	}
@@ -569,14 +571,10 @@ func NormalizeReponse(binding interface{}, bz []byte) ([]byte, error) {
 		return nil, wasmvmtypes.Unknown{}
 	}
 
-	// build new deterministic response
-	bz, err = proto.Marshal(message)
+	bz, err = codec.MarshalJSON(message)
 	if err != nil {
 		return nil, wasmvmtypes.Unknown{}
 	}
-
-	// clear proto message
-	message.Reset()
 
 	return bz, nil
 }
