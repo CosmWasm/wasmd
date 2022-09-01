@@ -540,7 +540,7 @@ func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 	return m.GetAllBalancesFn(ctx, addr)
 }
 
-func TestConvertProtoToJsonMarshal(t *testing.T) {
+func TestConvertProtoToJSONMarshal(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		queryPath             string
@@ -578,7 +578,7 @@ func TestConvertProtoToJsonMarshal(t *testing.T) {
 			originalVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
 
-			jsonMarshalledResponse, err := keeper.ConvertProtoToJsonMarshal(tc.protoResponseStruct, originalVersionBz, wasmApp.AppCodec())
+			jsonMarshalledResponse, err := keeper.ConvertProtoToJSONMarshal(tc.protoResponseStruct, originalVersionBz, wasmApp.AppCodec())
 			if tc.expectedError {
 				require.Error(t, err)
 				return
@@ -708,14 +708,14 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 			require.True(t, ok)
 			protoResponse, ok = loadedResponseStruct.(proto.Message)
 
-			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJsonMarshal(protoResponse, originVersionBz, wasmApp.AppCodec())
+			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJSONMarshal(protoResponse, originVersionBz, wasmApp.AppCodec())
 			require.NoError(t, err)
 
 			wasmApp.AppCodec().MustUnmarshalJSON(jsonMarshalledOriginalBz, protoResponse)
 
 			newVersionBz, err := hex.DecodeString(tc.updatedResponse)
 			require.NoError(t, err)
-			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJsonMarshal(protoResponse, newVersionBz, wasmApp.AppCodec())
+			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(protoResponse, newVersionBz, wasmApp.AppCodec())
 			require.NoError(t, err)
 
 			// json marshalled bytes should be the same since we use the same proto sturct for unmarshalling

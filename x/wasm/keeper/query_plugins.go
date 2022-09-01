@@ -293,7 +293,7 @@ func StargateQuerier(queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sd
 			return nil, err
 		}
 
-		bz, err := ConvertProtoToJsonMarshal(protoResponse, res.Value, codec)
+		bz, err := ConvertProtoToJSONMarshal(protoResponse, res.Value, codec)
 		if err != nil {
 			return nil, err
 		}
@@ -545,10 +545,10 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 	}
 }
 
-// ConvertProtoToJsonMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
+// ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
 // This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
 // being able to use response directly by json marshalling, which is supported in cosmwasm.
-func ConvertProtoToJsonMarshal(protoResponse interface{}, bz []byte, codec codec.Codec) ([]byte, error) {
+func ConvertProtoToJSONMarshal(protoResponse interface{}, bz []byte, codec codec.Codec) ([]byte, error) {
 	// all values are proto message
 	message, ok := protoResponse.(proto.Message)
 	if !ok {
