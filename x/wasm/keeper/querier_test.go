@@ -655,6 +655,34 @@ func TestQueryPinnedCodes(t *testing.T) {
 	}
 }
 
+func TestQueryParams(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	keeper := keepers.WasmKeeper
+
+	q := Querier(keeper)
+
+	paramsResponse, err := q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, paramsResponse)
+
+	defaultParams := types.DefaultParams()
+
+	require.Equal(t, paramsResponse.Params.CodeUploadAccess, defaultParams.CodeUploadAccess)
+	require.Equal(t, paramsResponse.Params.InstantiateDefaultPermission, defaultParams.InstantiateDefaultPermission)
+
+	keeper.SetParams(ctx, types.Params{
+		CodeUploadAccess:             types.AllowNobody,
+		InstantiateDefaultPermission: types.AccessTypeNobody,
+	})
+
+	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, paramsResponse)
+
+	require.Equal(t, paramsResponse.Params.CodeUploadAccess, types.AllowNobody)
+	require.Equal(t, paramsResponse.Params.InstantiateDefaultPermission, types.AccessTypeNobody)
+}
+
 func TestQueryCodeInfo(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
