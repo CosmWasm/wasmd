@@ -342,9 +342,9 @@ func (a AccessType) IsSubset(superSet AccessType) bool {
 	case AccessTypeNobody:
 		// Only an exact match is a subset of this
 		return a == AccessTypeNobody
-	case AccessTypeOnlyAddress:
-		// An exact match or nobody
-		return a == AccessTypeNobody || a == AccessTypeOnlyAddress
+	case AccessTypeOnlyAddress, AccessTypeAnyOfAddresses:
+		// Nobody or address(es)
+		return a == AccessTypeNobody || a == AccessTypeOnlyAddress || a == AccessTypeAnyOfAddresses
 	default:
 		return false
 	}
@@ -356,8 +356,32 @@ func (a AccessConfig) IsSubset(superSet AccessConfig) bool {
 	switch superSet.Permission {
 	case AccessTypeOnlyAddress:
 		// An exact match or nobody
-		return a.Permission == AccessTypeNobody || (a.Permission == AccessTypeOnlyAddress && a.Address == superSet.Address)
+		return a.Permission == AccessTypeNobody || (a.Permission == AccessTypeOnlyAddress && a.Address == superSet.Address) ||
+			(a.Permission == AccessTypeAnyOfAddresses && isSubset([]string{superSet.Address}, a.Addresses))
+	case AccessTypeAnyOfAddresses:
+		// An exact match or nobody
+		return a.Permission == AccessTypeNobody || (a.Permission == AccessTypeOnlyAddress && isSubset(superSet.Addresses, []string{a.Address})) ||
+			a.Permission == AccessTypeAnyOfAddresses && isSubset(superSet.Addresses, a.Addresses)
+	case AccessTypeUnspecified:
+		return false
 	default:
 		return a.Permission.IsSubset(superSet.Permission)
 	}
+}
+
+// return true when all elements in sub are also part of super
+func isSubset(super, sub []string) bool {
+	if len(sub) == 0 {
+		return true
+	}
+	var matches int
+	for _, o := range sub {
+		for _, s := range super {
+			if o == s {
+				matches++
+				break
+			}
+		}
+	}
+	return matches == len(sub)
 }
