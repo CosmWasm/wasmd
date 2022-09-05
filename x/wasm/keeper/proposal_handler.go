@@ -68,7 +68,10 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 	if err != nil {
 		return err
 	}
-	return k.PinCode(ctx, codeID)
+	if p.PinCode {
+		return k.PinCode(ctx, codeID)
+	}
+	return nil
 }
 
 func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContractProposal) error {

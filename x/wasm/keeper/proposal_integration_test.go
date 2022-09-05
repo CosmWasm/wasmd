@@ -24,40 +24,58 @@ import (
 )
 
 func TestStoreCodeProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking")
+	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	wasmKeeper.SetParams(parentCtx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	myActorAddress := RandomBech32AccountAddress(t)
+	specs := map[string]struct {
+		codeID  int64
+		pinCode bool
+	}{
+		"upload without pinning": {
+			pinCode: false,
+		},
+		"upload with code pinning": {
+			pinCode: true,
+		},
+	}
 
-	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
-		p.RunAs = myActorAddress
-		p.WASMByteCode = wasmCode
-	})
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			myActorAddress := RandomBech32AccountAddress(t)
 
-	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
-	require.NoError(t, err)
+			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
+				p.RunAs = myActorAddress
+				p.WASMByteCode = wasmCode
+				p.PinCode = spec.pinCode
+			})
 
-	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx, storedProposal.GetContent())
-	require.NoError(t, err)
+			// when stored
+			storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+			require.NoError(t, err)
 
-	// then
-	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
-	require.NotNil(t, cInfo)
-	assert.Equal(t, myActorAddress, cInfo.Creator)
-	assert.True(t, wasmKeeper.IsPinnedCode(ctx, 1))
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			err = handler(ctx, storedProposal.GetContent())
+			require.NoError(t, err)
 
-	storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
-	require.NoError(t, err)
-	assert.Equal(t, wasmCode, storedCode)
+			// then
+			cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
+			require.NotNil(t, cInfo)
+			assert.Equal(t, myActorAddress, cInfo.Creator)
+			assert.Equal(t, spec.pinCode, wasmKeeper.IsPinnedCode(ctx, 1))
+
+			storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
+			require.NoError(t, err)
+			assert.Equal(t, wasmCode, storedCode)
+		})
+	}
 }
 
 func TestInstantiateProposal(t *testing.T) {

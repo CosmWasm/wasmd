@@ -776,6 +776,7 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `pin_code` | [bool](#bool) |  | Pin code on upload, optional |
 
 
 
