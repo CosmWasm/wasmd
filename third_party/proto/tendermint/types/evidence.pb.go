@@ -5,25 +5,21 @@ package types
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
-
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/gogo/protobuf/types"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-	_ = time.Kitchen
-)
+var _ = fmt.Errorf
+var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -44,11 +40,9 @@ func (*Evidence) ProtoMessage()    {}
 func (*Evidence) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6825fabc78e0a168, []int{0}
 }
-
 func (m *Evidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *Evidence) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Evidence.Marshal(b, m, deterministic)
@@ -61,15 +55,12 @@ func (m *Evidence) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *Evidence) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Evidence.Merge(m, src)
 }
-
 func (m *Evidence) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *Evidence) XXX_DiscardUnknown() {
 	xxx_messageInfo_Evidence.DiscardUnknown(m)
 }
@@ -136,11 +127,9 @@ func (*DuplicateVoteEvidence) ProtoMessage()    {}
 func (*DuplicateVoteEvidence) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6825fabc78e0a168, []int{1}
 }
-
 func (m *DuplicateVoteEvidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *DuplicateVoteEvidence) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_DuplicateVoteEvidence.Marshal(b, m, deterministic)
@@ -153,15 +142,12 @@ func (m *DuplicateVoteEvidence) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-
 func (m *DuplicateVoteEvidence) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_DuplicateVoteEvidence.Merge(m, src)
 }
-
 func (m *DuplicateVoteEvidence) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *DuplicateVoteEvidence) XXX_DiscardUnknown() {
 	xxx_messageInfo_DuplicateVoteEvidence.DiscardUnknown(m)
 }
@@ -218,11 +204,9 @@ func (*LightClientAttackEvidence) ProtoMessage()    {}
 func (*LightClientAttackEvidence) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6825fabc78e0a168, []int{2}
 }
-
 func (m *LightClientAttackEvidence) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *LightClientAttackEvidence) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_LightClientAttackEvidence.Marshal(b, m, deterministic)
@@ -235,15 +219,12 @@ func (m *LightClientAttackEvidence) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-
 func (m *LightClientAttackEvidence) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_LightClientAttackEvidence.Merge(m, src)
 }
-
 func (m *LightClientAttackEvidence) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *LightClientAttackEvidence) XXX_DiscardUnknown() {
 	xxx_messageInfo_LightClientAttackEvidence.DiscardUnknown(m)
 }
@@ -295,11 +276,9 @@ func (*EvidenceList) ProtoMessage()    {}
 func (*EvidenceList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6825fabc78e0a168, []int{3}
 }
-
 func (m *EvidenceList) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *EvidenceList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_EvidenceList.Marshal(b, m, deterministic)
@@ -312,15 +291,12 @@ func (m *EvidenceList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-
 func (m *EvidenceList) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_EvidenceList.Merge(m, src)
 }
-
 func (m *EvidenceList) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *EvidenceList) XXX_DiscardUnknown() {
 	xxx_messageInfo_EvidenceList.DiscardUnknown(m)
 }
@@ -434,7 +410,6 @@ func (m *Evidence_DuplicateVoteEvidence) MarshalToSizedBuffer(dAtA []byte) (int,
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Evidence_LightClientAttackEvidence) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -456,7 +431,6 @@ func (m *Evidence_LightClientAttackEvidence) MarshalToSizedBuffer(dAtA []byte) (
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *DuplicateVoteEvidence) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -637,7 +611,6 @@ func encodeVarintEvidence(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *Evidence) Size() (n int) {
 	if m == nil {
 		return 0
@@ -662,7 +635,6 @@ func (m *Evidence_DuplicateVoteEvidence) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Evidence_LightClientAttackEvidence) Size() (n int) {
 	if m == nil {
 		return 0
@@ -675,7 +647,6 @@ func (m *Evidence_LightClientAttackEvidence) Size() (n int) {
 	}
 	return n
 }
-
 func (m *DuplicateVoteEvidence) Size() (n int) {
 	if m == nil {
 		return 0
@@ -746,11 +717,9 @@ func (m *EvidenceList) Size() (n int) {
 func sovEvidence(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozEvidence(x uint64) (n int) {
 	return sovEvidence(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *Evidence) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -871,7 +840,6 @@ func (m *Evidence) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *DuplicateVoteEvidence) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1065,7 +1033,6 @@ func (m *DuplicateVoteEvidence) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *LightClientAttackEvidence) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1257,7 +1224,6 @@ func (m *LightClientAttackEvidence) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *EvidenceList) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1342,7 +1308,6 @@ func (m *EvidenceList) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipEvidence(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

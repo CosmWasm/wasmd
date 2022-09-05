@@ -6,25 +6,21 @@ package types
 import (
 	encoding_binary "encoding/binary"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
-
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/gogo/protobuf/types"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-	_ = time.Kitchen
-)
+var _ = fmt.Errorf
+var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -43,11 +39,9 @@ func (*CanonicalBlockID) ProtoMessage()    {}
 func (*CanonicalBlockID) Descriptor() ([]byte, []int) {
 	return fileDescriptor_8d1a1a84ff7267ed, []int{0}
 }
-
 func (m *CanonicalBlockID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CanonicalBlockID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CanonicalBlockID.Marshal(b, m, deterministic)
@@ -60,15 +54,12 @@ func (m *CanonicalBlockID) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-
 func (m *CanonicalBlockID) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CanonicalBlockID.Merge(m, src)
 }
-
 func (m *CanonicalBlockID) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CanonicalBlockID) XXX_DiscardUnknown() {
 	xxx_messageInfo_CanonicalBlockID.DiscardUnknown(m)
 }
@@ -100,11 +91,9 @@ func (*CanonicalPartSetHeader) ProtoMessage()    {}
 func (*CanonicalPartSetHeader) Descriptor() ([]byte, []int) {
 	return fileDescriptor_8d1a1a84ff7267ed, []int{1}
 }
-
 func (m *CanonicalPartSetHeader) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CanonicalPartSetHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CanonicalPartSetHeader.Marshal(b, m, deterministic)
@@ -117,15 +106,12 @@ func (m *CanonicalPartSetHeader) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *CanonicalPartSetHeader) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CanonicalPartSetHeader.Merge(m, src)
 }
-
 func (m *CanonicalPartSetHeader) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CanonicalPartSetHeader) XXX_DiscardUnknown() {
 	xxx_messageInfo_CanonicalPartSetHeader.DiscardUnknown(m)
 }
@@ -162,11 +148,9 @@ func (*CanonicalProposal) ProtoMessage()    {}
 func (*CanonicalProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_8d1a1a84ff7267ed, []int{2}
 }
-
 func (m *CanonicalProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CanonicalProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CanonicalProposal.Marshal(b, m, deterministic)
@@ -179,15 +163,12 @@ func (m *CanonicalProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-
 func (m *CanonicalProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CanonicalProposal.Merge(m, src)
 }
-
 func (m *CanonicalProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CanonicalProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_CanonicalProposal.DiscardUnknown(m)
 }
@@ -258,11 +239,9 @@ func (*CanonicalVote) ProtoMessage()    {}
 func (*CanonicalVote) Descriptor() ([]byte, []int) {
 	return fileDescriptor_8d1a1a84ff7267ed, []int{3}
 }
-
 func (m *CanonicalVote) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CanonicalVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CanonicalVote.Marshal(b, m, deterministic)
@@ -275,15 +254,12 @@ func (m *CanonicalVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *CanonicalVote) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CanonicalVote.Merge(m, src)
 }
-
 func (m *CanonicalVote) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CanonicalVote) XXX_DiscardUnknown() {
 	xxx_messageInfo_CanonicalVote.DiscardUnknown(m)
 }
@@ -601,7 +577,6 @@ func encodeVarintCanonical(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *CanonicalBlockID) Size() (n int) {
 	if m == nil {
 		return 0
@@ -695,11 +670,9 @@ func (m *CanonicalVote) Size() (n int) {
 func sovCanonical(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozCanonical(x uint64) (n int) {
 	return sovCanonical(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *CanonicalBlockID) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -817,7 +790,6 @@ func (m *CanonicalBlockID) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CanonicalPartSetHeader) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -921,7 +893,6 @@ func (m *CanonicalPartSetHeader) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CanonicalProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1131,7 +1102,6 @@ func (m *CanonicalProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CanonicalVote) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1322,7 +1292,6 @@ func (m *CanonicalVote) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipCanonical(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

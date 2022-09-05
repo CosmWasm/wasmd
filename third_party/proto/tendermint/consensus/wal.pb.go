@@ -5,27 +5,23 @@ package consensus
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
-
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/gogo/protobuf/types"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
 	_ "github.com/golang/protobuf/ptypes/duration"
 	types "github.com/tendermint/tendermint/proto/tendermint/types"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-	_ = time.Kitchen
-)
+var _ = fmt.Errorf
+var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -45,11 +41,9 @@ func (*MsgInfo) ProtoMessage()    {}
 func (*MsgInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ed0b60c2d348ab09, []int{0}
 }
-
 func (m *MsgInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgInfo.Marshal(b, m, deterministic)
@@ -62,15 +56,12 @@ func (m *MsgInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *MsgInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgInfo.Merge(m, src)
 }
-
 func (m *MsgInfo) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgInfo.DiscardUnknown(m)
 }
@@ -105,11 +96,9 @@ func (*TimeoutInfo) ProtoMessage()    {}
 func (*TimeoutInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ed0b60c2d348ab09, []int{1}
 }
-
 func (m *TimeoutInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *TimeoutInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_TimeoutInfo.Marshal(b, m, deterministic)
@@ -122,15 +111,12 @@ func (m *TimeoutInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-
 func (m *TimeoutInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_TimeoutInfo.Merge(m, src)
 }
-
 func (m *TimeoutInfo) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *TimeoutInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_TimeoutInfo.DiscardUnknown(m)
 }
@@ -177,11 +163,9 @@ func (*EndHeight) ProtoMessage()    {}
 func (*EndHeight) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ed0b60c2d348ab09, []int{2}
 }
-
 func (m *EndHeight) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *EndHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_EndHeight.Marshal(b, m, deterministic)
@@ -194,15 +178,12 @@ func (m *EndHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *EndHeight) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_EndHeight.Merge(m, src)
 }
-
 func (m *EndHeight) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *EndHeight) XXX_DiscardUnknown() {
 	xxx_messageInfo_EndHeight.DiscardUnknown(m)
 }
@@ -231,11 +212,9 @@ func (*WALMessage) ProtoMessage()    {}
 func (*WALMessage) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ed0b60c2d348ab09, []int{3}
 }
-
 func (m *WALMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *WALMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_WALMessage.Marshal(b, m, deterministic)
@@ -248,15 +227,12 @@ func (m *WALMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *WALMessage) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_WALMessage.Merge(m, src)
 }
-
 func (m *WALMessage) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *WALMessage) XXX_DiscardUnknown() {
 	xxx_messageInfo_WALMessage.DiscardUnknown(m)
 }
@@ -344,11 +320,9 @@ func (*TimedWALMessage) ProtoMessage()    {}
 func (*TimedWALMessage) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ed0b60c2d348ab09, []int{4}
 }
-
 func (m *TimedWALMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *TimedWALMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_TimedWALMessage.Marshal(b, m, deterministic)
@@ -361,15 +335,12 @@ func (m *TimedWALMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-
 func (m *TimedWALMessage) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_TimedWALMessage.Merge(m, src)
 }
-
 func (m *TimedWALMessage) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *TimedWALMessage) XXX_DiscardUnknown() {
 	xxx_messageInfo_TimedWALMessage.DiscardUnknown(m)
 }
@@ -605,7 +576,6 @@ func (m *WALMessage_EventDataRoundState) MarshalToSizedBuffer(dAtA []byte) (int,
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *WALMessage_MsgInfo) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -627,7 +597,6 @@ func (m *WALMessage_MsgInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *WALMessage_TimeoutInfo) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -649,7 +618,6 @@ func (m *WALMessage_TimeoutInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *WALMessage_EndHeight) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -671,7 +639,6 @@ func (m *WALMessage_EndHeight) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *TimedWALMessage) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -726,7 +693,6 @@ func encodeVarintWal(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *MsgInfo) Size() (n int) {
 	if m == nil {
 		return 0
@@ -798,7 +764,6 @@ func (m *WALMessage_EventDataRoundState) Size() (n int) {
 	}
 	return n
 }
-
 func (m *WALMessage_MsgInfo) Size() (n int) {
 	if m == nil {
 		return 0
@@ -811,7 +776,6 @@ func (m *WALMessage_MsgInfo) Size() (n int) {
 	}
 	return n
 }
-
 func (m *WALMessage_TimeoutInfo) Size() (n int) {
 	if m == nil {
 		return 0
@@ -824,7 +788,6 @@ func (m *WALMessage_TimeoutInfo) Size() (n int) {
 	}
 	return n
 }
-
 func (m *WALMessage_EndHeight) Size() (n int) {
 	if m == nil {
 		return 0
@@ -837,7 +800,6 @@ func (m *WALMessage_EndHeight) Size() (n int) {
 	}
 	return n
 }
-
 func (m *TimedWALMessage) Size() (n int) {
 	if m == nil {
 		return 0
@@ -856,11 +818,9 @@ func (m *TimedWALMessage) Size() (n int) {
 func sovWal(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozWal(x uint64) (n int) {
 	return sovWal(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *MsgInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -976,7 +936,6 @@ func (m *MsgInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *TimeoutInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1117,7 +1076,6 @@ func (m *TimeoutInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *EndHeight) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1187,7 +1145,6 @@ func (m *EndHeight) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *WALMessage) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1378,7 +1335,6 @@ func (m *WALMessage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *TimedWALMessage) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1498,7 +1454,6 @@ func (m *TimedWALMessage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipWal(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

@@ -5,21 +5,17 @@ package blockchain
 
 import (
 	fmt "fmt"
+	proto "github.com/gogo/protobuf/proto"
+	types "github.com/tendermint/tendermint/proto/tendermint/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
-
-	proto "github.com/gogo/protobuf/proto"
-	types "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -38,11 +34,9 @@ func (*BlockRequest) ProtoMessage()    {}
 func (*BlockRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{0}
 }
-
 func (m *BlockRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *BlockRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_BlockRequest.Marshal(b, m, deterministic)
@@ -55,15 +49,12 @@ func (m *BlockRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-
 func (m *BlockRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_BlockRequest.Merge(m, src)
 }
-
 func (m *BlockRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *BlockRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_BlockRequest.DiscardUnknown(m)
 }
@@ -88,11 +79,9 @@ func (*NoBlockResponse) ProtoMessage()    {}
 func (*NoBlockResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{1}
 }
-
 func (m *NoBlockResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *NoBlockResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_NoBlockResponse.Marshal(b, m, deterministic)
@@ -105,15 +94,12 @@ func (m *NoBlockResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-
 func (m *NoBlockResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_NoBlockResponse.Merge(m, src)
 }
-
 func (m *NoBlockResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *NoBlockResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_NoBlockResponse.DiscardUnknown(m)
 }
@@ -138,11 +124,9 @@ func (*BlockResponse) ProtoMessage()    {}
 func (*BlockResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{2}
 }
-
 func (m *BlockResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *BlockResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_BlockResponse.Marshal(b, m, deterministic)
@@ -155,15 +139,12 @@ func (m *BlockResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *BlockResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_BlockResponse.Merge(m, src)
 }
-
 func (m *BlockResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *BlockResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_BlockResponse.DiscardUnknown(m)
 }
@@ -178,7 +159,8 @@ func (m *BlockResponse) GetBlock() *types.Block {
 }
 
 // StatusRequest requests the status of a peer.
-type StatusRequest struct{}
+type StatusRequest struct {
+}
 
 func (m *StatusRequest) Reset()         { *m = StatusRequest{} }
 func (m *StatusRequest) String() string { return proto.CompactTextString(m) }
@@ -186,11 +168,9 @@ func (*StatusRequest) ProtoMessage()    {}
 func (*StatusRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{3}
 }
-
 func (m *StatusRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StatusRequest.Marshal(b, m, deterministic)
@@ -203,15 +183,12 @@ func (m *StatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-
 func (m *StatusRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StatusRequest.Merge(m, src)
 }
-
 func (m *StatusRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StatusRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_StatusRequest.DiscardUnknown(m)
 }
@@ -230,11 +207,9 @@ func (*StatusResponse) ProtoMessage()    {}
 func (*StatusResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{4}
 }
-
 func (m *StatusResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StatusResponse.Marshal(b, m, deterministic)
@@ -247,15 +222,12 @@ func (m *StatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-
 func (m *StatusResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StatusResponse.Merge(m, src)
 }
-
 func (m *StatusResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StatusResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_StatusResponse.DiscardUnknown(m)
 }
@@ -292,11 +264,9 @@ func (*Message) ProtoMessage()    {}
 func (*Message) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2927480384e78499, []int{5}
 }
-
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Message.Marshal(b, m, deterministic)
@@ -309,15 +279,12 @@ func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *Message) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Message.Merge(m, src)
 }
-
 func (m *Message) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *Message) XXX_DiscardUnknown() {
 	xxx_messageInfo_Message.DiscardUnknown(m)
 }
@@ -644,7 +611,6 @@ func (m *Message_BlockRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Message_NoBlockResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -666,7 +632,6 @@ func (m *Message_NoBlockResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Message_BlockResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -688,7 +653,6 @@ func (m *Message_BlockResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Message_StatusRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -710,7 +674,6 @@ func (m *Message_StatusRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Message_StatusResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -732,7 +695,6 @@ func (m *Message_StatusResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	}
 	return len(dAtA) - i, nil
 }
-
 func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTypes(v)
 	base := offset
@@ -744,7 +706,6 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *BlockRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -830,7 +791,6 @@ func (m *Message_BlockRequest) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Message_NoBlockResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -843,7 +803,6 @@ func (m *Message_NoBlockResponse) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Message_BlockResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -856,7 +815,6 @@ func (m *Message_BlockResponse) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Message_StatusRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -869,7 +827,6 @@ func (m *Message_StatusRequest) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Message_StatusResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -886,11 +843,9 @@ func (m *Message_StatusResponse) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *BlockRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -960,7 +915,6 @@ func (m *BlockRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *NoBlockResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1030,7 +984,6 @@ func (m *NoBlockResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *BlockResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1117,7 +1070,6 @@ func (m *BlockResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *StatusRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1168,7 +1120,6 @@ func (m *StatusRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *StatusResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1257,7 +1208,6 @@ func (m *StatusResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Message) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1483,7 +1433,6 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

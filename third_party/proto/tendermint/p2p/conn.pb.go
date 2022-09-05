@@ -5,22 +5,18 @@ package p2p
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -28,7 +24,8 @@ var (
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type PacketPing struct{}
+type PacketPing struct {
+}
 
 func (m *PacketPing) Reset()         { *m = PacketPing{} }
 func (m *PacketPing) String() string { return proto.CompactTextString(m) }
@@ -36,11 +33,9 @@ func (*PacketPing) ProtoMessage()    {}
 func (*PacketPing) Descriptor() ([]byte, []int) {
 	return fileDescriptor_22474b5527c8fa9f, []int{0}
 }
-
 func (m *PacketPing) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *PacketPing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PacketPing.Marshal(b, m, deterministic)
@@ -53,22 +48,20 @@ func (m *PacketPing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *PacketPing) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PacketPing.Merge(m, src)
 }
-
 func (m *PacketPing) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *PacketPing) XXX_DiscardUnknown() {
 	xxx_messageInfo_PacketPing.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_PacketPing proto.InternalMessageInfo
 
-type PacketPong struct{}
+type PacketPong struct {
+}
 
 func (m *PacketPong) Reset()         { *m = PacketPong{} }
 func (m *PacketPong) String() string { return proto.CompactTextString(m) }
@@ -76,11 +69,9 @@ func (*PacketPong) ProtoMessage()    {}
 func (*PacketPong) Descriptor() ([]byte, []int) {
 	return fileDescriptor_22474b5527c8fa9f, []int{1}
 }
-
 func (m *PacketPong) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *PacketPong) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PacketPong.Marshal(b, m, deterministic)
@@ -93,15 +84,12 @@ func (m *PacketPong) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *PacketPong) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PacketPong.Merge(m, src)
 }
-
 func (m *PacketPong) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *PacketPong) XXX_DiscardUnknown() {
 	xxx_messageInfo_PacketPong.DiscardUnknown(m)
 }
@@ -120,11 +108,9 @@ func (*PacketMsg) ProtoMessage()    {}
 func (*PacketMsg) Descriptor() ([]byte, []int) {
 	return fileDescriptor_22474b5527c8fa9f, []int{2}
 }
-
 func (m *PacketMsg) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *PacketMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PacketMsg.Marshal(b, m, deterministic)
@@ -137,15 +123,12 @@ func (m *PacketMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *PacketMsg) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PacketMsg.Merge(m, src)
 }
-
 func (m *PacketMsg) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *PacketMsg) XXX_DiscardUnknown() {
 	xxx_messageInfo_PacketMsg.DiscardUnknown(m)
 }
@@ -187,11 +170,9 @@ func (*Packet) ProtoMessage()    {}
 func (*Packet) Descriptor() ([]byte, []int) {
 	return fileDescriptor_22474b5527c8fa9f, []int{3}
 }
-
 func (m *Packet) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *Packet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Packet.Marshal(b, m, deterministic)
@@ -204,15 +185,12 @@ func (m *Packet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *Packet) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Packet.Merge(m, src)
 }
-
 func (m *Packet) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *Packet) XXX_DiscardUnknown() {
 	xxx_messageInfo_Packet.DiscardUnknown(m)
 }
@@ -287,11 +265,9 @@ func (*AuthSigMessage) ProtoMessage()    {}
 func (*AuthSigMessage) Descriptor() ([]byte, []int) {
 	return fileDescriptor_22474b5527c8fa9f, []int{4}
 }
-
 func (m *AuthSigMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AuthSigMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AuthSigMessage.Marshal(b, m, deterministic)
@@ -304,15 +280,12 @@ func (m *AuthSigMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
-
 func (m *AuthSigMessage) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AuthSigMessage.Merge(m, src)
 }
-
 func (m *AuthSigMessage) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AuthSigMessage) XXX_DiscardUnknown() {
 	xxx_messageInfo_AuthSigMessage.DiscardUnknown(m)
 }
@@ -516,7 +489,6 @@ func (m *Packet_PacketPing) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Packet_PacketPong) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -538,7 +510,6 @@ func (m *Packet_PacketPong) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *Packet_PacketMsg) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -560,7 +531,6 @@ func (m *Packet_PacketMsg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-
 func (m *AuthSigMessage) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -612,7 +582,6 @@ func encodeVarintConn(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *PacketPing) Size() (n int) {
 	if m == nil {
 		return 0
@@ -674,7 +643,6 @@ func (m *Packet_PacketPing) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Packet_PacketPong) Size() (n int) {
 	if m == nil {
 		return 0
@@ -687,7 +655,6 @@ func (m *Packet_PacketPong) Size() (n int) {
 	}
 	return n
 }
-
 func (m *Packet_PacketMsg) Size() (n int) {
 	if m == nil {
 		return 0
@@ -700,7 +667,6 @@ func (m *Packet_PacketMsg) Size() (n int) {
 	}
 	return n
 }
-
 func (m *AuthSigMessage) Size() (n int) {
 	if m == nil {
 		return 0
@@ -719,11 +685,9 @@ func (m *AuthSigMessage) Size() (n int) {
 func sovConn(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozConn(x uint64) (n int) {
 	return sovConn(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *PacketPing) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -774,7 +738,6 @@ func (m *PacketPing) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *PacketPong) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -825,7 +788,6 @@ func (m *PacketPong) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *PacketMsg) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -949,7 +911,6 @@ func (m *PacketMsg) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *Packet) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1105,7 +1066,6 @@ func (m *Packet) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AuthSigMessage) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1223,7 +1183,6 @@ func (m *AuthSigMessage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipConn(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
