@@ -189,6 +189,7 @@ func redactError(err error) error {
 }
 
 func filterEvents(events []sdk.Event) []sdk.Event {
+	return events
 	// pre-allocate space for efficiency
 	res := make([]sdk.Event, 0, len(events))
 	for _, ev := range events {
