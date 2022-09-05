@@ -5,18 +5,22 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
-	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
+	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -36,9 +40,11 @@ func (*ValidatorSet) ProtoMessage()    {}
 func (*ValidatorSet) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e92274df03d3088, []int{0}
 }
+
 func (m *ValidatorSet) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ValidatorSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ValidatorSet.Marshal(b, m, deterministic)
@@ -51,12 +57,15 @@ func (m *ValidatorSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *ValidatorSet) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ValidatorSet.Merge(m, src)
 }
+
 func (m *ValidatorSet) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ValidatorSet) XXX_DiscardUnknown() {
 	xxx_messageInfo_ValidatorSet.DiscardUnknown(m)
 }
@@ -97,9 +106,11 @@ func (*Validator) ProtoMessage()    {}
 func (*Validator) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e92274df03d3088, []int{1}
 }
+
 func (m *Validator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Validator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Validator.Marshal(b, m, deterministic)
@@ -112,12 +123,15 @@ func (m *Validator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Validator) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Validator.Merge(m, src)
 }
+
 func (m *Validator) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Validator) XXX_DiscardUnknown() {
 	xxx_messageInfo_Validator.DiscardUnknown(m)
 }
@@ -163,9 +177,11 @@ func (*SimpleValidator) ProtoMessage()    {}
 func (*SimpleValidator) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4e92274df03d3088, []int{2}
 }
+
 func (m *SimpleValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *SimpleValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_SimpleValidator.Marshal(b, m, deterministic)
@@ -178,12 +194,15 @@ func (m *SimpleValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *SimpleValidator) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_SimpleValidator.Merge(m, src)
 }
+
 func (m *SimpleValidator) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *SimpleValidator) XXX_DiscardUnknown() {
 	xxx_messageInfo_SimpleValidator.DiscardUnknown(m)
 }
@@ -394,6 +413,7 @@ func encodeVarintValidator(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *ValidatorSet) Size() (n int) {
 	if m == nil {
 		return 0
@@ -456,9 +476,11 @@ func (m *SimpleValidator) Size() (n int) {
 func sovValidator(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozValidator(x uint64) (n int) {
 	return sovValidator(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *ValidatorSet) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -598,6 +620,7 @@ func (m *ValidatorSet) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *Validator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -753,6 +776,7 @@ func (m *Validator) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *SimpleValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -858,6 +882,7 @@ func (m *SimpleValidator) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipValidator(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

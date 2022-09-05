@@ -5,17 +5,21 @@ package p2p
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -35,9 +39,11 @@ func (*NetAddress) ProtoMessage()    {}
 func (*NetAddress) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c8a29e659aeca578, []int{0}
 }
+
 func (m *NetAddress) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *NetAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_NetAddress.Marshal(b, m, deterministic)
@@ -50,12 +56,15 @@ func (m *NetAddress) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *NetAddress) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_NetAddress.Merge(m, src)
 }
+
 func (m *NetAddress) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *NetAddress) XXX_DiscardUnknown() {
 	xxx_messageInfo_NetAddress.DiscardUnknown(m)
 }
@@ -95,9 +104,11 @@ func (*ProtocolVersion) ProtoMessage()    {}
 func (*ProtocolVersion) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c8a29e659aeca578, []int{1}
 }
+
 func (m *ProtocolVersion) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ProtocolVersion) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ProtocolVersion.Marshal(b, m, deterministic)
@@ -110,12 +121,15 @@ func (m *ProtocolVersion) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *ProtocolVersion) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ProtocolVersion.Merge(m, src)
 }
+
 func (m *ProtocolVersion) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ProtocolVersion) XXX_DiscardUnknown() {
 	xxx_messageInfo_ProtocolVersion.DiscardUnknown(m)
 }
@@ -160,9 +174,11 @@ func (*DefaultNodeInfo) ProtoMessage()    {}
 func (*DefaultNodeInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c8a29e659aeca578, []int{2}
 }
+
 func (m *DefaultNodeInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *DefaultNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_DefaultNodeInfo.Marshal(b, m, deterministic)
@@ -175,12 +191,15 @@ func (m *DefaultNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
+
 func (m *DefaultNodeInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_DefaultNodeInfo.Merge(m, src)
 }
+
 func (m *DefaultNodeInfo) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *DefaultNodeInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_DefaultNodeInfo.DiscardUnknown(m)
 }
@@ -254,9 +273,11 @@ func (*DefaultNodeInfoOther) ProtoMessage()    {}
 func (*DefaultNodeInfoOther) Descriptor() ([]byte, []int) {
 	return fileDescriptor_c8a29e659aeca578, []int{3}
 }
+
 func (m *DefaultNodeInfoOther) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *DefaultNodeInfoOther) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_DefaultNodeInfoOther.Marshal(b, m, deterministic)
@@ -269,12 +290,15 @@ func (m *DefaultNodeInfoOther) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
+
 func (m *DefaultNodeInfoOther) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_DefaultNodeInfoOther.Merge(m, src)
 }
+
 func (m *DefaultNodeInfoOther) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *DefaultNodeInfoOther) XXX_DiscardUnknown() {
 	xxx_messageInfo_DefaultNodeInfoOther.DiscardUnknown(m)
 }
@@ -551,6 +575,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *NetAddress) Size() (n int) {
 	if m == nil {
 		return 0
@@ -646,9 +671,11 @@ func (m *DefaultNodeInfoOther) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *NetAddress) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -782,6 +809,7 @@ func (m *NetAddress) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ProtocolVersion) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -889,6 +917,7 @@ func (m *ProtocolVersion) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *DefaultNodeInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1199,6 +1228,7 @@ func (m *DefaultNodeInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *DefaultNodeInfoOther) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1313,6 +1343,7 @@ func (m *DefaultNodeInfoOther) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

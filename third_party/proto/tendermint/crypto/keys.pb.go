@@ -6,17 +6,21 @@ package crypto
 import (
 	bytes "bytes"
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -38,9 +42,11 @@ func (*PublicKey) ProtoMessage()    {}
 func (*PublicKey) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cb048658b234868c, []int{0}
 }
+
 func (m *PublicKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *PublicKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PublicKey.Marshal(b, m, deterministic)
@@ -53,12 +59,15 @@ func (m *PublicKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *PublicKey) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PublicKey.Merge(m, src)
 }
+
 func (m *PublicKey) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *PublicKey) XXX_DiscardUnknown() {
 	xxx_messageInfo_PublicKey.DiscardUnknown(m)
 }
@@ -197,6 +206,7 @@ func (this *PublicKey) Compare(that interface{}) int {
 	}
 	return 0
 }
+
 func (this *PublicKey_Ed25519) Compare(that interface{}) int {
 	if that == nil {
 		if this == nil {
@@ -227,6 +237,7 @@ func (this *PublicKey_Ed25519) Compare(that interface{}) int {
 	}
 	return 0
 }
+
 func (this *PublicKey_Secp256K1) Compare(that interface{}) int {
 	if that == nil {
 		if this == nil {
@@ -257,6 +268,7 @@ func (this *PublicKey_Secp256K1) Compare(that interface{}) int {
 	}
 	return 0
 }
+
 func (this *PublicKey) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -287,6 +299,7 @@ func (this *PublicKey) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *PublicKey_Ed25519) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -311,6 +324,7 @@ func (this *PublicKey_Ed25519) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *PublicKey_Secp256K1) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -335,6 +349,7 @@ func (this *PublicKey_Secp256K1) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (m *PublicKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -383,6 +398,7 @@ func (m *PublicKey_Ed25519) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *PublicKey_Secp256K1) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -399,6 +415,7 @@ func (m *PublicKey_Secp256K1) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func encodeVarintKeys(dAtA []byte, offset int, v uint64) int {
 	offset -= sovKeys(v)
 	base := offset
@@ -410,6 +427,7 @@ func encodeVarintKeys(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *PublicKey) Size() (n int) {
 	if m == nil {
 		return 0
@@ -434,6 +452,7 @@ func (m *PublicKey_Ed25519) Size() (n int) {
 	}
 	return n
 }
+
 func (m *PublicKey_Secp256K1) Size() (n int) {
 	if m == nil {
 		return 0
@@ -450,9 +469,11 @@ func (m *PublicKey_Secp256K1) Size() (n int) {
 func sovKeys(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozKeys(x uint64) (n int) {
 	return sovKeys(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *PublicKey) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -569,6 +590,7 @@ func (m *PublicKey) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipKeys(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

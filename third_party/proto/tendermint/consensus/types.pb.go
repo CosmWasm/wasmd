@@ -5,19 +5,23 @@ package consensus
 
 import (
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	bits "github.com/tendermint/tendermint/proto/tendermint/libs/bits"
 	types "github.com/tendermint/tendermint/proto/tendermint/types"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -41,9 +45,11 @@ func (*NewRoundStep) ProtoMessage()    {}
 func (*NewRoundStep) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{0}
 }
+
 func (m *NewRoundStep) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *NewRoundStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_NewRoundStep.Marshal(b, m, deterministic)
@@ -56,12 +62,15 @@ func (m *NewRoundStep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *NewRoundStep) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_NewRoundStep.Merge(m, src)
 }
+
 func (m *NewRoundStep) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *NewRoundStep) XXX_DiscardUnknown() {
 	xxx_messageInfo_NewRoundStep.DiscardUnknown(m)
 }
@@ -120,9 +129,11 @@ func (*NewValidBlock) ProtoMessage()    {}
 func (*NewValidBlock) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{1}
 }
+
 func (m *NewValidBlock) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *NewValidBlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_NewValidBlock.Marshal(b, m, deterministic)
@@ -135,12 +146,15 @@ func (m *NewValidBlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
+
 func (m *NewValidBlock) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_NewValidBlock.Merge(m, src)
 }
+
 func (m *NewValidBlock) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *NewValidBlock) XXX_DiscardUnknown() {
 	xxx_messageInfo_NewValidBlock.DiscardUnknown(m)
 }
@@ -193,9 +207,11 @@ func (*Proposal) ProtoMessage()    {}
 func (*Proposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{2}
 }
+
 func (m *Proposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Proposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Proposal.Marshal(b, m, deterministic)
@@ -208,12 +224,15 @@ func (m *Proposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Proposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Proposal.Merge(m, src)
 }
+
 func (m *Proposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Proposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_Proposal.DiscardUnknown(m)
 }
@@ -240,9 +259,11 @@ func (*ProposalPOL) ProtoMessage()    {}
 func (*ProposalPOL) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{3}
 }
+
 func (m *ProposalPOL) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ProposalPOL) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ProposalPOL.Marshal(b, m, deterministic)
@@ -255,12 +276,15 @@ func (m *ProposalPOL) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
+
 func (m *ProposalPOL) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ProposalPOL.Merge(m, src)
 }
+
 func (m *ProposalPOL) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ProposalPOL) XXX_DiscardUnknown() {
 	xxx_messageInfo_ProposalPOL.DiscardUnknown(m)
 }
@@ -301,9 +325,11 @@ func (*BlockPart) ProtoMessage()    {}
 func (*BlockPart) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{4}
 }
+
 func (m *BlockPart) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *BlockPart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_BlockPart.Marshal(b, m, deterministic)
@@ -316,12 +342,15 @@ func (m *BlockPart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *BlockPart) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_BlockPart.Merge(m, src)
 }
+
 func (m *BlockPart) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *BlockPart) XXX_DiscardUnknown() {
 	xxx_messageInfo_BlockPart.DiscardUnknown(m)
 }
@@ -360,9 +389,11 @@ func (*Vote) ProtoMessage()    {}
 func (*Vote) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{5}
 }
+
 func (m *Vote) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Vote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Vote.Marshal(b, m, deterministic)
@@ -375,12 +406,15 @@ func (m *Vote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Vote) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Vote.Merge(m, src)
 }
+
 func (m *Vote) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Vote) XXX_DiscardUnknown() {
 	xxx_messageInfo_Vote.DiscardUnknown(m)
 }
@@ -408,9 +442,11 @@ func (*HasVote) ProtoMessage()    {}
 func (*HasVote) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{6}
 }
+
 func (m *HasVote) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *HasVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_HasVote.Marshal(b, m, deterministic)
@@ -423,12 +459,15 @@ func (m *HasVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *HasVote) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_HasVote.Merge(m, src)
 }
+
 func (m *HasVote) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *HasVote) XXX_DiscardUnknown() {
 	xxx_messageInfo_HasVote.DiscardUnknown(m)
 }
@@ -477,9 +516,11 @@ func (*VoteSetMaj23) ProtoMessage()    {}
 func (*VoteSetMaj23) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{7}
 }
+
 func (m *VoteSetMaj23) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *VoteSetMaj23) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_VoteSetMaj23.Marshal(b, m, deterministic)
@@ -492,12 +533,15 @@ func (m *VoteSetMaj23) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *VoteSetMaj23) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_VoteSetMaj23.Merge(m, src)
 }
+
 func (m *VoteSetMaj23) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *VoteSetMaj23) XXX_DiscardUnknown() {
 	xxx_messageInfo_VoteSetMaj23.DiscardUnknown(m)
 }
@@ -547,9 +591,11 @@ func (*VoteSetBits) ProtoMessage()    {}
 func (*VoteSetBits) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{8}
 }
+
 func (m *VoteSetBits) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *VoteSetBits) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_VoteSetBits.Marshal(b, m, deterministic)
@@ -562,12 +608,15 @@ func (m *VoteSetBits) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
+
 func (m *VoteSetBits) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_VoteSetBits.Merge(m, src)
 }
+
 func (m *VoteSetBits) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *VoteSetBits) XXX_DiscardUnknown() {
 	xxx_messageInfo_VoteSetBits.DiscardUnknown(m)
 }
@@ -629,9 +678,11 @@ func (*Message) ProtoMessage()    {}
 func (*Message) Descriptor() ([]byte, []int) {
 	return fileDescriptor_81a22d2efc008981, []int{9}
 }
+
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Message.Marshal(b, m, deterministic)
@@ -644,12 +695,15 @@ func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Message) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Message.Merge(m, src)
 }
+
 func (m *Message) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Message) XXX_DiscardUnknown() {
 	xxx_messageInfo_Message.DiscardUnknown(m)
 }
@@ -1327,6 +1381,7 @@ func (m *Message_NewRoundStep) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_NewValidBlock) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1348,6 +1403,7 @@ func (m *Message_NewValidBlock) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_Proposal) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1369,6 +1425,7 @@ func (m *Message_Proposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_ProposalPol) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1390,6 +1447,7 @@ func (m *Message_ProposalPol) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_BlockPart) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1411,6 +1469,7 @@ func (m *Message_BlockPart) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_Vote) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1432,6 +1491,7 @@ func (m *Message_Vote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_HasVote) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1453,6 +1513,7 @@ func (m *Message_HasVote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_VoteSetMaj23) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1474,6 +1535,7 @@ func (m *Message_VoteSetMaj23) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_VoteSetBits) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -1495,6 +1557,7 @@ func (m *Message_VoteSetBits) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTypes(v)
 	base := offset
@@ -1506,6 +1569,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *NewRoundStep) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1699,6 +1763,7 @@ func (m *Message_NewRoundStep) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_NewValidBlock) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1711,6 +1776,7 @@ func (m *Message_NewValidBlock) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_Proposal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1723,6 +1789,7 @@ func (m *Message_Proposal) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_ProposalPol) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1735,6 +1802,7 @@ func (m *Message_ProposalPol) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_BlockPart) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1747,6 +1815,7 @@ func (m *Message_BlockPart) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_Vote) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1759,6 +1828,7 @@ func (m *Message_Vote) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_HasVote) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1771,6 +1841,7 @@ func (m *Message_HasVote) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_VoteSetMaj23) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1783,6 +1854,7 @@ func (m *Message_VoteSetMaj23) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_VoteSetBits) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1799,9 +1871,11 @@ func (m *Message_VoteSetBits) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *NewRoundStep) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1947,6 +2021,7 @@ func (m *NewRoundStep) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *NewValidBlock) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2124,6 +2199,7 @@ func (m *NewValidBlock) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *Proposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2207,6 +2283,7 @@ func (m *Proposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ProposalPOL) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2328,6 +2405,7 @@ func (m *ProposalPOL) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *BlockPart) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2449,6 +2527,7 @@ func (m *BlockPart) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *Vote) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2535,6 +2614,7 @@ func (m *Vote) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *HasVote) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2661,6 +2741,7 @@ func (m *HasVote) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *VoteSetMaj23) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2801,6 +2882,7 @@ func (m *VoteSetMaj23) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *VoteSetBits) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2974,6 +3056,7 @@ func (m *VoteSetBits) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *Message) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3339,6 +3422,7 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

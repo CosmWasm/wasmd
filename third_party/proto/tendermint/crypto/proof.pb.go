@@ -5,17 +5,21 @@ package crypto
 
 import (
 	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -36,9 +40,11 @@ func (*Proof) ProtoMessage()    {}
 func (*Proof) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b60b6ba2ab5b856, []int{0}
 }
+
 func (m *Proof) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Proof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Proof.Marshal(b, m, deterministic)
@@ -51,12 +57,15 @@ func (m *Proof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Proof) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Proof.Merge(m, src)
 }
+
 func (m *Proof) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Proof) XXX_DiscardUnknown() {
 	xxx_messageInfo_Proof.DiscardUnknown(m)
 }
@@ -104,9 +113,11 @@ func (*ValueOp) ProtoMessage()    {}
 func (*ValueOp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b60b6ba2ab5b856, []int{1}
 }
+
 func (m *ValueOp) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ValueOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ValueOp.Marshal(b, m, deterministic)
@@ -119,12 +130,15 @@ func (m *ValueOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *ValueOp) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ValueOp.Merge(m, src)
 }
+
 func (m *ValueOp) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ValueOp) XXX_DiscardUnknown() {
 	xxx_messageInfo_ValueOp.DiscardUnknown(m)
 }
@@ -157,9 +171,11 @@ func (*DominoOp) ProtoMessage()    {}
 func (*DominoOp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b60b6ba2ab5b856, []int{2}
 }
+
 func (m *DominoOp) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *DominoOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_DominoOp.Marshal(b, m, deterministic)
@@ -172,12 +188,15 @@ func (m *DominoOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *DominoOp) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_DominoOp.Merge(m, src)
 }
+
 func (m *DominoOp) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *DominoOp) XXX_DiscardUnknown() {
 	xxx_messageInfo_DominoOp.DiscardUnknown(m)
 }
@@ -206,7 +225,7 @@ func (m *DominoOp) GetOutput() string {
 }
 
 // ProofOp defines an operation used for calculating Merkle root
-// The data could be arbitrary format, providing nessecary data
+// The data could be arbitrary format, providing necessary data
 // for example neighbouring node hash
 type ProofOp struct {
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
@@ -220,9 +239,11 @@ func (*ProofOp) ProtoMessage()    {}
 func (*ProofOp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b60b6ba2ab5b856, []int{3}
 }
+
 func (m *ProofOp) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ProofOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ProofOp.Marshal(b, m, deterministic)
@@ -235,12 +256,15 @@ func (m *ProofOp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *ProofOp) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ProofOp.Merge(m, src)
 }
+
 func (m *ProofOp) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ProofOp) XXX_DiscardUnknown() {
 	xxx_messageInfo_ProofOp.DiscardUnknown(m)
 }
@@ -279,9 +303,11 @@ func (*ProofOps) ProtoMessage()    {}
 func (*ProofOps) Descriptor() ([]byte, []int) {
 	return fileDescriptor_6b60b6ba2ab5b856, []int{4}
 }
+
 func (m *ProofOps) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ProofOps) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ProofOps.Marshal(b, m, deterministic)
@@ -294,12 +320,15 @@ func (m *ProofOps) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *ProofOps) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ProofOps.Merge(m, src)
 }
+
 func (m *ProofOps) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ProofOps) XXX_DiscardUnknown() {
 	xxx_messageInfo_ProofOps.DiscardUnknown(m)
 }
@@ -576,6 +605,7 @@ func encodeVarintProof(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *Proof) Size() (n int) {
 	if m == nil {
 		return 0
@@ -678,9 +708,11 @@ func (m *ProofOps) Size() (n int) {
 func sovProof(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozProof(x uint64) (n int) {
 	return sovProof(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *Proof) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -835,6 +867,7 @@ func (m *Proof) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ValueOp) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -955,6 +988,7 @@ func (m *ValueOp) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *DominoOp) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1101,6 +1135,7 @@ func (m *DominoOp) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ProofOp) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1251,6 +1286,7 @@ func (m *ProofOp) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ProofOps) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1335,6 +1371,7 @@ func (m *ProofOps) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipProof(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

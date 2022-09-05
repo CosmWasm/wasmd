@@ -6,20 +6,24 @@ package coregrpc
 import (
 	context "context"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	proto "github.com/gogo/protobuf/proto"
 	types "github.com/tendermint/tendermint/abci/types"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -27,8 +31,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type RequestPing struct {
-}
+type RequestPing struct{}
 
 func (m *RequestPing) Reset()         { *m = RequestPing{} }
 func (m *RequestPing) String() string { return proto.CompactTextString(m) }
@@ -36,9 +39,11 @@ func (*RequestPing) ProtoMessage()    {}
 func (*RequestPing) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0ffff5682c662b95, []int{0}
 }
+
 func (m *RequestPing) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *RequestPing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_RequestPing.Marshal(b, m, deterministic)
@@ -51,12 +56,15 @@ func (m *RequestPing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
+
 func (m *RequestPing) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_RequestPing.Merge(m, src)
 }
+
 func (m *RequestPing) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *RequestPing) XXX_DiscardUnknown() {
 	xxx_messageInfo_RequestPing.DiscardUnknown(m)
 }
@@ -73,9 +81,11 @@ func (*RequestBroadcastTx) ProtoMessage()    {}
 func (*RequestBroadcastTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0ffff5682c662b95, []int{1}
 }
+
 func (m *RequestBroadcastTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *RequestBroadcastTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_RequestBroadcastTx.Marshal(b, m, deterministic)
@@ -88,12 +98,15 @@ func (m *RequestBroadcastTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *RequestBroadcastTx) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_RequestBroadcastTx.Merge(m, src)
 }
+
 func (m *RequestBroadcastTx) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *RequestBroadcastTx) XXX_DiscardUnknown() {
 	xxx_messageInfo_RequestBroadcastTx.DiscardUnknown(m)
 }
@@ -107,8 +120,7 @@ func (m *RequestBroadcastTx) GetTx() []byte {
 	return nil
 }
 
-type ResponsePing struct {
-}
+type ResponsePing struct{}
 
 func (m *ResponsePing) Reset()         { *m = ResponsePing{} }
 func (m *ResponsePing) String() string { return proto.CompactTextString(m) }
@@ -116,9 +128,11 @@ func (*ResponsePing) ProtoMessage()    {}
 func (*ResponsePing) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0ffff5682c662b95, []int{2}
 }
+
 func (m *ResponsePing) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ResponsePing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ResponsePing.Marshal(b, m, deterministic)
@@ -131,12 +145,15 @@ func (m *ResponsePing) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *ResponsePing) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ResponsePing.Merge(m, src)
 }
+
 func (m *ResponsePing) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ResponsePing) XXX_DiscardUnknown() {
 	xxx_messageInfo_ResponsePing.DiscardUnknown(m)
 }
@@ -154,9 +171,11 @@ func (*ResponseBroadcastTx) ProtoMessage()    {}
 func (*ResponseBroadcastTx) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0ffff5682c662b95, []int{3}
 }
+
 func (m *ResponseBroadcastTx) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ResponseBroadcastTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ResponseBroadcastTx.Marshal(b, m, deterministic)
@@ -169,12 +188,15 @@ func (m *ResponseBroadcastTx) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *ResponseBroadcastTx) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ResponseBroadcastTx.Merge(m, src)
 }
+
 func (m *ResponseBroadcastTx) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ResponseBroadcastTx) XXX_DiscardUnknown() {
 	xxx_messageInfo_ResponseBroadcastTx.DiscardUnknown(m)
 }
@@ -277,12 +299,12 @@ type BroadcastAPIServer interface {
 }
 
 // UnimplementedBroadcastAPIServer can be embedded to have forward compatible implementations.
-type UnimplementedBroadcastAPIServer struct {
-}
+type UnimplementedBroadcastAPIServer struct{}
 
 func (*UnimplementedBroadcastAPIServer) Ping(ctx context.Context, req *RequestPing) (*ResponsePing, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
+
 func (*UnimplementedBroadcastAPIServer) BroadcastTx(ctx context.Context, req *RequestBroadcastTx) (*ResponseBroadcastTx, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadcastTx not implemented")
 }
@@ -478,6 +500,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *RequestPing) Size() (n int) {
 	if m == nil {
 		return 0
@@ -529,9 +552,11 @@ func (m *ResponseBroadcastTx) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *RequestPing) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -582,6 +607,7 @@ func (m *RequestPing) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *RequestBroadcastTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -666,6 +692,7 @@ func (m *RequestBroadcastTx) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ResponsePing) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -716,6 +743,7 @@ func (m *ResponsePing) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ResponseBroadcastTx) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -838,6 +866,7 @@ func (m *ResponseBroadcastTx) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

@@ -5,6 +5,11 @@ package state
 
 import (
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
+
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/gogo/protobuf/types"
@@ -12,17 +17,16 @@ import (
 	types "github.com/tendermint/tendermint/abci/types"
 	types1 "github.com/tendermint/tendermint/proto/tendermint/types"
 	version "github.com/tendermint/tendermint/proto/tendermint/version"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
-var _ = time.Kitchen
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+	_ = time.Kitchen
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -45,9 +49,11 @@ func (*ABCIResponses) ProtoMessage()    {}
 func (*ABCIResponses) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{0}
 }
+
 func (m *ABCIResponses) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ABCIResponses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ABCIResponses.Marshal(b, m, deterministic)
@@ -60,12 +66,15 @@ func (m *ABCIResponses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
+
 func (m *ABCIResponses) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ABCIResponses.Merge(m, src)
 }
+
 func (m *ABCIResponses) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ABCIResponses) XXX_DiscardUnknown() {
 	xxx_messageInfo_ABCIResponses.DiscardUnknown(m)
 }
@@ -105,9 +114,11 @@ func (*ValidatorsInfo) ProtoMessage()    {}
 func (*ValidatorsInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{1}
 }
+
 func (m *ValidatorsInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ValidatorsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ValidatorsInfo.Marshal(b, m, deterministic)
@@ -120,12 +131,15 @@ func (m *ValidatorsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return b[:n], nil
 	}
 }
+
 func (m *ValidatorsInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ValidatorsInfo.Merge(m, src)
 }
+
 func (m *ValidatorsInfo) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ValidatorsInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_ValidatorsInfo.DiscardUnknown(m)
 }
@@ -158,9 +172,11 @@ func (*ConsensusParamsInfo) ProtoMessage()    {}
 func (*ConsensusParamsInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{2}
 }
+
 func (m *ConsensusParamsInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ConsensusParamsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ConsensusParamsInfo.Marshal(b, m, deterministic)
@@ -173,12 +189,15 @@ func (m *ConsensusParamsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *ConsensusParamsInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ConsensusParamsInfo.Merge(m, src)
 }
+
 func (m *ConsensusParamsInfo) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ConsensusParamsInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_ConsensusParamsInfo.DiscardUnknown(m)
 }
@@ -210,9 +229,11 @@ func (*ABCIResponsesInfo) ProtoMessage()    {}
 func (*ABCIResponsesInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{3}
 }
+
 func (m *ABCIResponsesInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ABCIResponsesInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ABCIResponsesInfo.Marshal(b, m, deterministic)
@@ -225,12 +246,15 @@ func (m *ABCIResponsesInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *ABCIResponsesInfo) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ABCIResponsesInfo.Merge(m, src)
 }
+
 func (m *ABCIResponsesInfo) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ABCIResponsesInfo) XXX_DiscardUnknown() {
 	xxx_messageInfo_ABCIResponsesInfo.DiscardUnknown(m)
 }
@@ -262,9 +286,11 @@ func (*Version) ProtoMessage()    {}
 func (*Version) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{4}
 }
+
 func (m *Version) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Version) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Version.Marshal(b, m, deterministic)
@@ -277,12 +303,15 @@ func (m *Version) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Version) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Version.Merge(m, src)
 }
+
 func (m *Version) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Version) XXX_DiscardUnknown() {
 	xxx_messageInfo_Version.DiscardUnknown(m)
 }
@@ -338,9 +367,11 @@ func (*State) ProtoMessage()    {}
 func (*State) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ccfacf933f22bf93, []int{5}
 }
+
 func (m *State) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *State) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_State.Marshal(b, m, deterministic)
@@ -353,12 +384,15 @@ func (m *State) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *State) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_State.Merge(m, src)
 }
+
 func (m *State) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *State) XXX_DiscardUnknown() {
 	xxx_messageInfo_State.DiscardUnknown(m)
 }
@@ -897,6 +931,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *ABCIResponses) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1037,9 +1072,11 @@ func (m *State) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *ABCIResponses) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1196,6 +1233,7 @@ func (m *ABCIResponses) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ValidatorsInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1301,6 +1339,7 @@ func (m *ValidatorsInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ConsensusParamsInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1403,6 +1442,7 @@ func (m *ConsensusParamsInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ABCIResponsesInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1508,6 +1548,7 @@ func (m *ABCIResponsesInfo) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *Version) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1623,6 +1664,7 @@ func (m *Version) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *State) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2089,6 +2131,7 @@ func (m *State) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

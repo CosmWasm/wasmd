@@ -5,16 +5,20 @@ package statesync
 
 import (
 	fmt "fmt"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+
+var (
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -37,9 +41,11 @@ func (*Message) ProtoMessage()    {}
 func (*Message) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a1c2869546ca7914, []int{0}
 }
+
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Message.Marshal(b, m, deterministic)
@@ -52,12 +58,15 @@ func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Message) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Message.Merge(m, src)
 }
+
 func (m *Message) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Message) XXX_DiscardUnknown() {
 	xxx_messageInfo_Message.DiscardUnknown(m)
 }
@@ -133,8 +142,7 @@ func (*Message) XXX_OneofWrappers() []interface{} {
 	}
 }
 
-type SnapshotsRequest struct {
-}
+type SnapshotsRequest struct{}
 
 func (m *SnapshotsRequest) Reset()         { *m = SnapshotsRequest{} }
 func (m *SnapshotsRequest) String() string { return proto.CompactTextString(m) }
@@ -142,9 +150,11 @@ func (*SnapshotsRequest) ProtoMessage()    {}
 func (*SnapshotsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a1c2869546ca7914, []int{1}
 }
+
 func (m *SnapshotsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *SnapshotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_SnapshotsRequest.Marshal(b, m, deterministic)
@@ -157,12 +167,15 @@ func (m *SnapshotsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
+
 func (m *SnapshotsRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_SnapshotsRequest.Merge(m, src)
 }
+
 func (m *SnapshotsRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *SnapshotsRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_SnapshotsRequest.DiscardUnknown(m)
 }
@@ -183,9 +196,11 @@ func (*SnapshotsResponse) ProtoMessage()    {}
 func (*SnapshotsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a1c2869546ca7914, []int{2}
 }
+
 func (m *SnapshotsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *SnapshotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_SnapshotsResponse.Marshal(b, m, deterministic)
@@ -198,12 +213,15 @@ func (m *SnapshotsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *SnapshotsResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_SnapshotsResponse.Merge(m, src)
 }
+
 func (m *SnapshotsResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *SnapshotsResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_SnapshotsResponse.DiscardUnknown(m)
 }
@@ -257,9 +275,11 @@ func (*ChunkRequest) ProtoMessage()    {}
 func (*ChunkRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a1c2869546ca7914, []int{3}
 }
+
 func (m *ChunkRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ChunkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ChunkRequest.Marshal(b, m, deterministic)
@@ -272,12 +292,15 @@ func (m *ChunkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *ChunkRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ChunkRequest.Merge(m, src)
 }
+
 func (m *ChunkRequest) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ChunkRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_ChunkRequest.DiscardUnknown(m)
 }
@@ -319,9 +342,11 @@ func (*ChunkResponse) ProtoMessage()    {}
 func (*ChunkResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a1c2869546ca7914, []int{4}
 }
+
 func (m *ChunkResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ChunkResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ChunkResponse.Marshal(b, m, deterministic)
@@ -334,12 +359,15 @@ func (m *ChunkResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
+
 func (m *ChunkResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ChunkResponse.Merge(m, src)
 }
+
 func (m *ChunkResponse) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ChunkResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_ChunkResponse.DiscardUnknown(m)
 }
@@ -473,6 +501,7 @@ func (m *Message_SnapshotsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_SnapshotsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -494,6 +523,7 @@ func (m *Message_SnapshotsResponse) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_ChunkRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -515,6 +545,7 @@ func (m *Message_ChunkRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *Message_ChunkResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -536,6 +567,7 @@ func (m *Message_ChunkResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+
 func (m *SnapshotsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -715,6 +747,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *Message) Size() (n int) {
 	if m == nil {
 		return 0
@@ -739,6 +772,7 @@ func (m *Message_SnapshotsRequest) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_SnapshotsResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -751,6 +785,7 @@ func (m *Message_SnapshotsResponse) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_ChunkRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -763,6 +798,7 @@ func (m *Message_ChunkRequest) Size() (n int) {
 	}
 	return n
 }
+
 func (m *Message_ChunkResponse) Size() (n int) {
 	if m == nil {
 		return 0
@@ -775,6 +811,7 @@ func (m *Message_ChunkResponse) Size() (n int) {
 	}
 	return n
 }
+
 func (m *SnapshotsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -856,9 +893,11 @@ func (m *ChunkResponse) Size() (n int) {
 func sovTypes(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozTypes(x uint64) (n int) {
 	return sovTypes(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *Message) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1049,6 +1088,7 @@ func (m *Message) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *SnapshotsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1099,6 +1139,7 @@ func (m *SnapshotsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *SnapshotsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1274,6 +1315,7 @@ func (m *SnapshotsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ChunkRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1381,6 +1423,7 @@ func (m *ChunkRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ChunkResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1542,6 +1585,7 @@ func (m *ChunkResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipTypes(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
