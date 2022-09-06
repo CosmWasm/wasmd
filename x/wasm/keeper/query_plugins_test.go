@@ -588,7 +588,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			// check response by json marshalling proto response into json response manually
 			jsonMarshalExpectedResponse, err := wasmApp.AppCodec().MarshalJSON(tc.expectedProtoResponse)
 			require.NoError(t, err)
-			require.Equal(t, jsonMarshalledResponse, jsonMarshalExpectedResponse)
+			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
 		})
 	}
 }
@@ -596,7 +596,6 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 // TestDeterministicJsonMarshal tests that we get deterministic JSON marshalled response upon
 // proto struct update in the state machine.
 func TestDeterministicJsonMarshal(t *testing.T) {
-
 	testCases := []struct {
 		name                string
 		originalResponse    string
@@ -605,50 +604,6 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 		responseProtoStruct interface{}
 		expectedProto       func() proto.Message
 	}{
-
-		/**
-		   * Origin Response
-		   * balances:<denom:"bar" amount:"30" > pagination:<next_key:"foo" >
-		   * "0a090a036261721202333012050a03666f6f"
-		   *
-		   * New Version Response
-		   * The binary built from the proto response with additional field address
-		   * balances:<denom:"bar" amount:"30" > pagination:<next_key:"foo" > address:"cosmos1j6j5tsquq2jlw2af7l3xekyaq7zg4l8jsufu78"
-		   * "0a090a036261721202333012050a03666f6f1a2d636f736d6f73316a366a357473717571326a6c77326166376c3378656b796171377a67346c386a737566753738"
-		   // Origin proto
-		   message QueryAllBalancesResponse {
-		  	// balances is the balances of all the coins.
-		  	repeated cosmos.base.v1beta1.Coin balances = 1
-		  	[(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
-		  	// pagination defines the pagination in the response.
-		  	cosmos.base.query.v1beta1.PageResponse pagination = 2;
-		  }
-		  // Updated proto
-		  message QueryAllBalancesResponse {
-		  	// balances is the balances of all the coins.
-		  	repeated cosmos.base.v1beta1.Coin balances = 1
-		  	[(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
-		  	// pagination defines the pagination in the response.
-		  	cosmos.base.query.v1beta1.PageResponse pagination = 2;
-		  	// address is the address to query all balances for.
-		  	string address = 3;
-		  }
-		*/
-		{
-			"Query All Balances",
-			"0a090a036261721202333012050a03666f6f",
-			"0a090a036261721202333012050a03666f6f1a2d636f736d6f73316a366a357473717571326a6c77326166376c3378656b796171377a67346c386a737566753738",
-			"/cosmos.bank.v1beta1.Query/AllBalances",
-			&banktypes.QueryAllBalancesResponse{},
-			func() proto.Message {
-				return &banktypes.QueryAllBalancesResponse{
-					Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
-					Pagination: &query.PageResponse{
-						NextKey: []byte("foo"),
-					},
-				}
-			},
-		},
 		/**
 		   *
 		   * Origin Response
@@ -690,38 +645,22 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			// set up app for testing
 			wasmApp := app.SetupWithEmptyStore(t)
-			// wasmApp := app.SetupWithEmptyStore(t)
 
-			// set up whitelist manually for testing
-			protoResponse, ok := tc.responseProtoStruct.(proto.Message)
-			require.True(t, ok)
-			keeper.StargateWhitelist.Store(tc.queryPath, protoResponse)
-
-			// decode original response
 			originVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
-
-			// use proto response struct by loading from whitelist
-			loadedResponseStruct, ok := keeper.StargateWhitelist.Load(tc.queryPath)
-			require.True(t, ok)
-			protoResponse, ok = loadedResponseStruct.(proto.Message)
-
-			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJSONMarshal(protoResponse, originVersionBz, wasmApp.AppCodec())
+			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJSONMarshal(tc.responseProtoStruct, originVersionBz, wasmApp.AppCodec())
 			require.NoError(t, err)
-
-			wasmApp.AppCodec().MustUnmarshalJSON(jsonMarshalledOriginalBz, protoResponse)
 
 			newVersionBz, err := hex.DecodeString(tc.updatedResponse)
 			require.NoError(t, err)
-			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(protoResponse, newVersionBz, wasmApp.AppCodec())
+			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(tc.responseProtoStruct, newVersionBz, wasmApp.AppCodec())
 			require.NoError(t, err)
 
-			// json marshalled bytes should be the same since we use the same proto sturct for unmarshalling
+			// json marshalled bytes should be the same since we use the same proto struct for unmarshalling
 			require.Equal(t, jsonMarshalledOriginalBz, jsonMarshalledUpdatedBz)
 
-			// raw build should also make same result
+			// raw build also make same result
 			jsonMarshalExpectedResponse, err := wasmApp.AppCodec().MarshalJSON(tc.expectedProto())
 			require.NoError(t, err)
 			require.Equal(t, jsonMarshalledUpdatedBz, jsonMarshalExpectedResponse)
