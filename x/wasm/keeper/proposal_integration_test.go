@@ -34,14 +34,14 @@ func TestStoreCodeProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		codeID  int64
-		pinCode bool
+		codeID    int64
+		unpinCode bool
 	}{
-		"upload without pinning": {
-			pinCode: false,
+		"upload with pinning (default)": {
+			unpinCode: false,
 		},
-		"upload with code pinning": {
-			pinCode: true,
+		"upload with code unpin": {
+			unpinCode: true,
 		},
 	}
 
@@ -53,7 +53,7 @@ func TestStoreCodeProposal(t *testing.T) {
 			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 				p.RunAs = myActorAddress
 				p.WASMByteCode = wasmCode
-				p.PinCode = spec.pinCode
+				p.UnpinCode = spec.unpinCode
 			})
 
 			// when stored
@@ -69,7 +69,7 @@ func TestStoreCodeProposal(t *testing.T) {
 			cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
 			require.NotNil(t, cInfo)
 			assert.Equal(t, myActorAddress, cInfo.Creator)
-			assert.Equal(t, spec.pinCode, wasmKeeper.IsPinnedCode(ctx, 1))
+			assert.Equal(t, !spec.unpinCode, wasmKeeper.IsPinnedCode(ctx, 1))
 
 			storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
 			require.NoError(t, err)

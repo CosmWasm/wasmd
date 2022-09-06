@@ -27,7 +27,7 @@ const (
 	flagInstantiateByEverybody = "instantiate-everybody"
 	flagInstantiateNobody      = "instantiate-nobody"
 	flagInstantiateByAddress   = "instantiate-only-address"
-	flagPinCode                = "pin-code"
+	flagUnpinCode              = "unpin-code"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -56,7 +56,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			pinCode, err := cmd.Flags().GetBool(flagPinCode)
+			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
 			if err != nil {
 				return err
 			}
@@ -67,7 +67,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				RunAs:                 runAs,
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
-				PinCode:               pinCode,
+				UnpinCode:             unpinCode,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -86,7 +86,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
-	cmd.Flags().Bool(flagPinCode, false, "Pin code on upload, optional")
+	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
