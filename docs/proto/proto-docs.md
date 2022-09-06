@@ -5,7 +5,14 @@
 ## Table of Contents
 
 - [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
-    - [ContractAuthorization](#cosmwasm.wasm.v1.ContractAuthorization)
+    - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
+    - [AllowAllWildcard](#cosmwasm.wasm.v1.AllowAllWildcard)
+    - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
+    - [ContractExecutionAuthorization.ContractExecutionGrant](#cosmwasm.wasm.v1.ContractExecutionAuthorization.ContractExecutionGrant)
+    - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [ContractMigrationAuthorization.ContractMigrationGrant](#cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant)
+    - [InfiniteCalls](#cosmwasm.wasm.v1.InfiniteCalls)
+    - [MaxCalls](#cosmwasm.wasm.v1.MaxCalls)
   
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
@@ -94,17 +101,119 @@
 
 
 
-<a name="cosmwasm.wasm.v1.ContractAuthorization"></a>
+<a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
 
-### ContractAuthorization
-ContractAuthorization defines authorization for wasm execute.
+### AcceptedMessageKeysFilter
+AcceptedMessageKeysFilter accept specific contract message keys in the json
+object that can be executed
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `messages` | [string](#string) | repeated | Messages is the list of unique keys |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AllowAllWildcard"></a>
+
+### AllowAllWildcard
+AllowAllWildcard is a wildcard to allow any type of contract execution
+message
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
+
+### ContractExecutionAuthorization
+ContractExecutionAuthorization defines authorization for wasm execute.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractExecutionAuthorization.ContractExecutionGrant](#cosmwasm.wasm.v1.ContractExecutionAuthorization.ContractExecutionGrant) | repeated |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization.ContractExecutionGrant"></a>
+
+### ContractExecutionAuthorization.ContractExecutionGrant
+ContractExecutionGrant a granted execute permission for a single contract
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `messages` | [string](#string) | repeated | Messages is the list of messages that can be executed |
-| `once` | [bool](#bool) |  | Once specifies if the contract can only be called once |
+| `infinite_calls` | [InfiniteCalls](#cosmwasm.wasm.v1.InfiniteCalls) |  |  |
+| `max_calls` | [MaxCalls](#cosmwasm.wasm.v1.MaxCalls) |  |  |
+| `accepted_message_keys` | [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter) |  |  |
+| `allow_all_wildcard` | [AllowAllWildcard](#cosmwasm.wasm.v1.AllowAllWildcard) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
+
+### ContractMigrationAuthorization
+ContractMigrationAuthorization defines authorization for wasm contract
+migration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractMigrationAuthorization.ContractMigrationGrant](#cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant) | repeated |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant"></a>
+
+### ContractMigrationAuthorization.ContractMigrationGrant
+ContractExecutionGrant a granted migrate permission for a single contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `infinite_calls` | [InfiniteCalls](#cosmwasm.wasm.v1.InfiniteCalls) |  |  |
+| `max_calls` | [MaxCalls](#cosmwasm.wasm.v1.MaxCalls) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.InfiniteCalls"></a>
+
+### InfiniteCalls
+InfiniteCalls unlimited number of calls
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxCalls"></a>
+
+### MaxCalls
+MaxCalls limited number of calls
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
 
 
 
