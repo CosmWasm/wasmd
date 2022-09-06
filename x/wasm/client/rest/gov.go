@@ -29,7 +29,7 @@ type StoreCodeProposalJSONReq struct {
 	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
 
 	// UnpinCode indicates if the code should not be pinned as part of the proposal.
-	UnpinCode bool `json:"pin_code" yaml:"pin_code"`
+	UnpinCode bool `json:"unpin_code" yaml:"unpin_code"`
 }
 
 func (s StoreCodeProposalJSONReq) Content() govtypes.Content {
