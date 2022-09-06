@@ -1,7 +1,10 @@
 package types
 
 import (
+	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	// sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
@@ -54,7 +57,7 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 			allowedKeys: []string{"msg"},
 			exp:         nil,
 		},
-		"happy with excaped key": {
+		"happy with escaped key": {
 			src:         []byte(`{"event\u2468thing": {"foo":"bar"}}`),
 			allowedKeys: []string{"event⑨thing"},
 			exp:         nil,
@@ -73,6 +76,11 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 		},
 		"errors for valid JSON (array)": {
 			src:         []byte(`[1, 2, 3]`),
+			allowedKeys: []string{"claim"},
+			exp:         ErrNotAJSONObject,
+		},
+		"errors for duplicate key": {
+			src:         []byte(`{"claim": "foo", "claim":"bar"}`),
 			allowedKeys: []string{"claim"},
 			exp:         ErrNotAJSONObject,
 		},
@@ -111,5 +119,14 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 				require.Contains(t, result.Error(), spec.exp.Error())
 			}
 		})
+	}
+}
+
+func TestName(t *testing.T) {
+	jsonBytes := []byte(`{"event⑨thing": "foo", "event⑨thing":"bar"}`)
+	for i := 0; i < 10000; i++ {
+		document := map[string]interface{}{}
+		require.NoError(t, json.Unmarshal(jsonBytes, &document))
+		assert.Equal(t, "bar", document["event⑨thing"])
 	}
 }
