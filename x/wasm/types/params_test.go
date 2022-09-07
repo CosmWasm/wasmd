@@ -224,3 +224,83 @@ func TestParamsUnmarshalJson(t *testing.T) {
 		})
 	}
 }
+
+func TestAccessTypeWith(t *testing.T) {
+	myAddress := sdk.AccAddress(randBytes(SDKAddrLen))
+	myOtherAddress := sdk.AccAddress(randBytes(SDKAddrLen))
+	specs := map[string]struct {
+		src      AccessType
+		addrs    []sdk.AccAddress
+		exp      AccessConfig
+		expPanic bool
+	}{
+		"nobody": {
+			src: AccessTypeNobody,
+			exp: AccessConfig{Permission: AccessTypeNobody},
+		},
+		"nobody with address": {
+			src:   AccessTypeNobody,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeNobody},
+		},
+		"everybody": {
+			src: AccessTypeEverybody,
+			exp: AccessConfig{Permission: AccessTypeEverybody},
+		},
+		"everybody with address": {
+			src:   AccessTypeEverybody,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeEverybody},
+		},
+		"only address without address": {
+			src:      AccessTypeOnlyAddress,
+			expPanic: true,
+		},
+		"only address with address": {
+			src:   AccessTypeOnlyAddress,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeOnlyAddress, Address: myAddress.String()},
+		},
+		"only address with invalid address": {
+			src:      AccessTypeOnlyAddress,
+			addrs:    []sdk.AccAddress{nil},
+			expPanic: true,
+		},
+		"any of address without address": {
+			src:      AccessTypeAnyOfAddresses,
+			expPanic: true,
+		},
+		"any of address with single address": {
+			src:   AccessTypeAnyOfAddresses,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{myAddress.String()}},
+		},
+		"any of address with multiple addresses": {
+			src:   AccessTypeAnyOfAddresses,
+			addrs: []sdk.AccAddress{myAddress, myOtherAddress},
+			exp:   AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{myAddress.String(), myOtherAddress.String()}},
+		},
+		"any of address with duplicate addresses": {
+			src:      AccessTypeAnyOfAddresses,
+			addrs:    []sdk.AccAddress{myAddress, myAddress},
+			expPanic: true,
+		},
+		"any of address with invalid address": {
+			src:      AccessTypeAnyOfAddresses,
+			addrs:    []sdk.AccAddress{nil},
+			expPanic: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			if !spec.expPanic {
+				got := spec.src.With(spec.addrs...)
+				assert.Equal(t, spec.exp, got)
+				return
+			}
+			assert.Panics(t, func() {
+				spec.src.With(spec.addrs...)
+			})
+		})
+	}
+}

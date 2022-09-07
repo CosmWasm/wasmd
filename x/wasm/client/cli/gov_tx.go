@@ -597,27 +597,33 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	return cmd
 }
 
-func parseAccessConfig(config string) (types.AccessConfig, error) {
-	switch config {
+func parseAccessConfig(raw string) (types.AccessConfig, error) {
+	switch raw {
 	case "nobody":
 		return types.AllowNobody, nil
 	case "everybody":
 		return types.AllowEverybody, nil
 	default:
-		address, err := sdk.AccAddressFromBech32(config)
-		if err != nil {
-			return types.AccessConfig{}, fmt.Errorf("unable to parse address %s", config)
+		parts := strings.Split(raw, ",")
+		addrs := make([]sdk.AccAddress, len(parts))
+		for i, v := range parts {
+			addr, err := sdk.AccAddressFromBech32(v)
+			if err != nil {
+				return types.AccessConfig{}, fmt.Errorf("unable to parse address %q: %s", v, err)
+			}
+			addrs[i] = addr
 		}
-		return types.AccessTypeOnlyAddress.With(address), nil
+		cfg := types.AccessTypeAnyOfAddresses.With(addrs...)
+		return cfg, cfg.ValidateBasic()
 	}
 }
 
 func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error) {
 	updates := make([]types.AccessConfigUpdate, len(args))
 	for i, c := range args {
-		// format: code_id,access_config
-		// access_config: nobody|everybody|address
-		parts := strings.Split(c, ",")
+		// format: code_id:access_config
+		// access_config: nobody|everybody|address(es)
+		parts := strings.Split(c, ":")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid format")
 		}
@@ -642,15 +648,15 @@ func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error)
 func ProposalUpdateInstantiateConfigCmd() *cobra.Command {
 	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	cmd := &cobra.Command{
-		Use:   "update-instantiate-config [code-id,permission]...",
+		Use:   "update-instantiate-config [code-id:permission]...",
 		Short: "Submit an update instantiate config proposal.",
 		Args:  cobra.MinimumNArgs(1),
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Submit an update instantiate config  proposal for multiple code ids.
 
 Example: 
-$ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm
-`, version.AppName, bech32Prefix)),
+$ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
+`, version.AppName, bech32Prefix, bech32Prefix)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

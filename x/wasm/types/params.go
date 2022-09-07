@@ -162,6 +162,7 @@ func validateAccessType(i interface{}) error {
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
 }
 
+// ValidateBasic performs basic validation
 func (a AccessConfig) ValidateBasic() error {
 	switch a.Permission {
 	case AccessTypeUnspecified:
@@ -203,6 +204,8 @@ func assertValidAddresses(addrs []string) error {
 	return nil
 }
 
+// Allowed returns if permission includes the actor.
+// Actor address must be valid and not nil
 func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
 	switch a.Permission {
 	case AccessTypeNobody:
