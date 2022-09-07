@@ -110,6 +110,20 @@ func TestValidateParams(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"reject empty addresses in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{}},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
+		"reject addresses not set in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
 		"reject invalid address in any of addresses": {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{invalidAddress}},

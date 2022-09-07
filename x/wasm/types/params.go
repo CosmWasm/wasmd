@@ -44,7 +44,7 @@ func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
 			bech32Addrs[i] = v.String()
 		}
 		if err := assertValidAddresses(bech32Addrs); err != nil {
-			panic(err)
+			panic(sdkerrors.Wrap(err, "addresses"))
 		}
 		return AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: bech32Addrs}
 	}
@@ -181,12 +181,15 @@ func (a AccessConfig) ValidateBasic() error {
 		if a.Address != "" {
 			return ErrInvalid.Wrap("address field set")
 		}
-		return assertValidAddresses(a.Addresses)
+		return sdkerrors.Wrap(assertValidAddresses(a.Addresses), "addresses")
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
 }
 
 func assertValidAddresses(addrs []string) error {
+	if len(addrs) == 0 {
+		return ErrEmpty
+	}
 	idx := make(map[string]struct{}, len(addrs))
 	for _, a := range addrs {
 		if _, err := sdk.AccAddressFromBech32(a); err != nil {
