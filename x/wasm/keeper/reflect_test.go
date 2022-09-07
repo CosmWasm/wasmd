@@ -35,7 +35,7 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 	require.NoError(t, err)
 }
 
-const ReflectFeatures = "staking,mask,stargate"
+const ReflectFeatures = "staking,mask,stargate,cosmwasm_1_1"
 
 func TestReflectContractSend(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Marshaler
@@ -296,6 +296,57 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.Equal(t, len(expectedBalance), len(simpleBalance.Amount))
 	assert.Equal(t, simpleBalance.Amount[0].Amount, expectedBalance[0].Amount.String())
 	assert.Equal(t, simpleBalance.Amount[0].Denom, expectedBalance[0].Denom)
+}
+
+func TestReflectTotalSupplyQuery(t *testing.T) {
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	keeper := keepers.WasmKeeper
+	// upload code
+	codeID := StoreReflectContract(t, ctx, keepers)
+	// creator instantiates a contract and gives it tokens
+	creator := RandomAccountAddress(t)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "testing", nil)
+	require.NoError(t, err)
+
+	currentStateSupply := keepers.BankKeeper.GetSupply(ctx, "stake")
+	require.NotEmpty(t, currentStateSupply.Amount) // ensure we have real data
+	specs := map[string]struct {
+		denom     string
+		expAmount wasmvmtypes.Coin
+	}{
+		"known denom": {
+			denom:     "stake",
+			expAmount: ConvertSdkCoinToWasmCoin(currentStateSupply),
+		},
+		"unknown denom": {
+			denom:     "unknown",
+			expAmount: wasmvmtypes.Coin{Denom: "unknown", Amount: "0"},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// when
+			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
+				Chain: &testdata.ChainQuery{
+					Request: &wasmvmtypes.QueryRequest{
+						Bank: &wasmvmtypes.BankQuery{
+							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+						},
+					},
+				},
+			})
+			simpleRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
+
+			// then
+			require.NoError(t, err)
+			var rsp testdata.ChainResponse
+			mustParse(t, simpleRes, &rsp)
+			var supplyRsp wasmvmtypes.SupplyResponse
+			mustParse(t, rsp.Data, &supplyRsp)
+			assert.Equal(t, spec.expAmount, supplyRsp.Amount, spec.expAmount)
+		})
+	}
 }
 
 func TestReflectInvalidStargateQuery(t *testing.T) {

@@ -40,7 +40,7 @@ func init() {
 
 var hackatomWasm []byte
 
-const SupportedFeatures = "iterator,staking,stargate"
+const SupportedFeatures = "iterator,staking,stargate,cosmwasm_1_1"
 
 func TestNewKeeper(t *testing.T) {
 	_, keepers := CreateTestInput(t, false, SupportedFeatures)
