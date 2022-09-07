@@ -25,7 +25,9 @@ version is communicated by the contract via a Wasm export. This is the current
 compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
-| ----- | ------------ | ----------- | ------------ |
+|-------|--------------|-------------|--------------|
+| 0.29  | v1.1.0       |             | 1.0-1.1      |
+| 0.28  | v1.0.0       |             | 1.0-1.1      |
 | 0.27  | v1.0.0       |             | 1.0          |
 | 0.26  | 1.0.0-beta10 |             | 1.0          |
 | 0.25  | 1.0.0-beta10 |             | 1.0          |

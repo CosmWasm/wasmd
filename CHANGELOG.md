@@ -3,7 +3,7 @@
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
-
+- Upgrade wasmvm to v1.1.0 [\#984](https://github.com/CosmWasm/wasmd/pull/984), see [wasmvm v1.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v1.1.0)
 
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
