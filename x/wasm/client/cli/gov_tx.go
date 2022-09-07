@@ -597,7 +597,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	return cmd
 }
 
-func parseAccessConfig(raw string) (types.AccessConfig, error) {
+func parseAccessConfig(raw string) (c types.AccessConfig, err error) {
 	switch raw {
 	case "nobody":
 		return types.AllowNobody, nil
@@ -613,6 +613,11 @@ func parseAccessConfig(raw string) (types.AccessConfig, error) {
 			}
 			addrs[i] = addr
 		}
+		defer func() { // convert panic in ".With" to error for better output
+			if r := recover(); r != nil {
+				err = r.(error)
+			}
+		}()
 		cfg := types.AccessTypeAnyOfAddresses.With(addrs...)
 		return cfg, cfg.ValidateBasic()
 	}

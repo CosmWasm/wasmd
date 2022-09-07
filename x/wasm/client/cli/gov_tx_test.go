@@ -70,6 +70,18 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 				},
 			},
 		},
+		"any of addresses - empty list": {
+			src:    []string{"1:"},
+			expErr: true,
+		},
+		"any of addresses - invalid address": {
+			src:    []string{"1:foo"},
+			expErr: true,
+		},
+		"any of addresses - duplicate address": {
+			src:    []string{"1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			expErr: true,
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
