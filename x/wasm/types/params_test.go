@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 func TestValidateParams(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = make([]byte, ContractAddrLen)
+		otherAddress   sdk.AccAddress = bytes.Repeat([]byte{1}, ContractAddrLen)
 		invalidAddress                = "invalid address"
 	)
 
@@ -42,6 +44,18 @@ func TestValidateParams(t *testing.T) {
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
 			},
 		},
+		"all good with anyOf address": {
+			src: Params{
+				CodeUploadAccess:             AccessTypeAnyOfAddresses.With(anyAddress),
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+		},
+		"all good with anyOf addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessTypeAnyOfAddresses.With(anyAddress, otherAddress),
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+		},
 		"reject empty type in instantiate permission": {
 			src: Params{
 				CodeUploadAccess: AllowNobody,
@@ -58,6 +72,13 @@ func TestValidateParams(t *testing.T) {
 		"reject invalid address in only address": {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeOnlyAddress, Address: invalidAddress},
+				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+			},
+			expErr: true,
+		},
+		"reject wrong field addresses in only address": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeOnlyAddress, Address: anyAddress.String(), Addresses: []string{anyAddress.String()}},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
 			},
 			expErr: true,
@@ -89,6 +110,41 @@ func TestValidateParams(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"reject empty addresses in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{}},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
+		"reject addresses not set in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
+		"reject invalid address in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{invalidAddress}},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
+		"reject duplicate address in any of addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anyAddress.String(), anyAddress.String()}},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
+		"reject wrong field address in any of  addresses": {
+			src: Params{
+				CodeUploadAccess:             AccessConfig{Permission: AccessTypeAnyOfAddresses, Address: anyAddress.String(), Addresses: []string{anyAddress.String()}},
+				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
+			},
+			expErr: true,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -107,11 +163,12 @@ func TestAccessTypeMarshalJson(t *testing.T) {
 		src AccessType
 		exp string
 	}{
-		"Unspecified": {src: AccessTypeUnspecified, exp: `"Unspecified"`},
-		"Nobody":      {src: AccessTypeNobody, exp: `"Nobody"`},
-		"OnlyAddress": {src: AccessTypeOnlyAddress, exp: `"OnlyAddress"`},
-		"Everybody":   {src: AccessTypeEverybody, exp: `"Everybody"`},
-		"unknown":     {src: 999, exp: `"Unspecified"`},
+		"Unspecified":              {src: AccessTypeUnspecified, exp: `"Unspecified"`},
+		"Nobody":                   {src: AccessTypeNobody, exp: `"Nobody"`},
+		"OnlyAddress":              {src: AccessTypeOnlyAddress, exp: `"OnlyAddress"`},
+		"AccessTypeAnyOfAddresses": {src: AccessTypeAnyOfAddresses, exp: `"AnyOfAddresses"`},
+		"Everybody":                {src: AccessTypeEverybody, exp: `"Everybody"`},
+		"unknown":                  {src: 999, exp: `"Unspecified"`},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -127,11 +184,12 @@ func TestAccessTypeUnmarshalJson(t *testing.T) {
 		src string
 		exp AccessType
 	}{
-		"Unspecified": {src: `"Unspecified"`, exp: AccessTypeUnspecified},
-		"Nobody":      {src: `"Nobody"`, exp: AccessTypeNobody},
-		"OnlyAddress": {src: `"OnlyAddress"`, exp: AccessTypeOnlyAddress},
-		"Everybody":   {src: `"Everybody"`, exp: AccessTypeEverybody},
-		"unknown":     {src: `""`, exp: AccessTypeUnspecified},
+		"Unspecified":    {src: `"Unspecified"`, exp: AccessTypeUnspecified},
+		"Nobody":         {src: `"Nobody"`, exp: AccessTypeNobody},
+		"OnlyAddress":    {src: `"OnlyAddress"`, exp: AccessTypeOnlyAddress},
+		"AnyOfAddresses": {src: `"AnyOfAddresses"`, exp: AccessTypeAnyOfAddresses},
+		"Everybody":      {src: `"Everybody"`, exp: AccessTypeEverybody},
+		"unknown":        {src: `""`, exp: AccessTypeUnspecified},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -163,6 +221,86 @@ func TestParamsUnmarshalJson(t *testing.T) {
 			err := marshaler.UnmarshalJSON([]byte(spec.src), &val)
 			require.NoError(t, err)
 			assert.Equal(t, spec.exp, val)
+		})
+	}
+}
+
+func TestAccessTypeWith(t *testing.T) {
+	myAddress := sdk.AccAddress(randBytes(SDKAddrLen))
+	myOtherAddress := sdk.AccAddress(randBytes(SDKAddrLen))
+	specs := map[string]struct {
+		src      AccessType
+		addrs    []sdk.AccAddress
+		exp      AccessConfig
+		expPanic bool
+	}{
+		"nobody": {
+			src: AccessTypeNobody,
+			exp: AccessConfig{Permission: AccessTypeNobody},
+		},
+		"nobody with address": {
+			src:   AccessTypeNobody,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeNobody},
+		},
+		"everybody": {
+			src: AccessTypeEverybody,
+			exp: AccessConfig{Permission: AccessTypeEverybody},
+		},
+		"everybody with address": {
+			src:   AccessTypeEverybody,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeEverybody},
+		},
+		"only address without address": {
+			src:      AccessTypeOnlyAddress,
+			expPanic: true,
+		},
+		"only address with address": {
+			src:   AccessTypeOnlyAddress,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeOnlyAddress, Address: myAddress.String()},
+		},
+		"only address with invalid address": {
+			src:      AccessTypeOnlyAddress,
+			addrs:    []sdk.AccAddress{nil},
+			expPanic: true,
+		},
+		"any of address without address": {
+			src:      AccessTypeAnyOfAddresses,
+			expPanic: true,
+		},
+		"any of address with single address": {
+			src:   AccessTypeAnyOfAddresses,
+			addrs: []sdk.AccAddress{myAddress},
+			exp:   AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{myAddress.String()}},
+		},
+		"any of address with multiple addresses": {
+			src:   AccessTypeAnyOfAddresses,
+			addrs: []sdk.AccAddress{myAddress, myOtherAddress},
+			exp:   AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{myAddress.String(), myOtherAddress.String()}},
+		},
+		"any of address with duplicate addresses": {
+			src:      AccessTypeAnyOfAddresses,
+			addrs:    []sdk.AccAddress{myAddress, myAddress},
+			expPanic: true,
+		},
+		"any of address with invalid address": {
+			src:      AccessTypeAnyOfAddresses,
+			addrs:    []sdk.AccAddress{nil},
+			expPanic: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			if !spec.expPanic {
+				got := spec.src.With(spec.addrs...)
+				assert.Equal(t, spec.exp, got)
+				return
+			}
+			assert.Panics(t, func() {
+				spec.src.With(spec.addrs...)
+			})
 		})
 	}
 }

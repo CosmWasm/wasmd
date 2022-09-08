@@ -119,7 +119,8 @@ AccessConfig access control type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `permission` | [AccessType](#cosmwasm.wasm.v1.AccessType) |  |  |
-| `address` | [string](#string) |  |  |
+| `address` | [string](#string) |  | Address Deprecated: replaced by addresses |
+| `addresses` | [string](#string) | repeated |  |
 
 
 
@@ -240,8 +241,9 @@ AccessType permission types
 | ---- | ------ | ----------- |
 | ACCESS_TYPE_UNSPECIFIED | 0 | AccessTypeUnspecified placeholder for empty value |
 | ACCESS_TYPE_NOBODY | 1 | AccessTypeNobody forbidden |
-| ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to an address |
+| ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to a single address Deprecated: use AccessTypeAnyOfAddresses instead |
 | ACCESS_TYPE_EVERYBODY | 3 | AccessTypeEverybody unrestricted |
+| ACCESS_TYPE_ANY_OF_ADDRESSES | 4 | AccessTypeAnyOfAddresses allow any of the addresses |
 
 
 
