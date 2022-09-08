@@ -24,5 +24,5 @@ const (
 	AttributeKeyContractAddr  = "_contract_address"
 	AttributeKeyCodeID        = "code_id"
 	AttributeKeyResultDataHex = "result"
-	AttributeKeyFeature       = "feature"
+	AttributeKeyCapability    = "capability"
 )

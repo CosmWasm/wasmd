@@ -27,7 +27,7 @@ import (
 )
 
 func TestQueryAllContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -114,7 +114,7 @@ func TestQueryAllContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -157,7 +157,7 @@ func TestQuerySmartContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractPanics(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	contractAddr := BuildContractAddress(1, 1)
 	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
 	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
@@ -202,7 +202,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 }
 
 func TestQueryRawContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -257,7 +257,7 @@ func TestQueryRawContractState(t *testing.T) {
 }
 
 func TestQueryContractListByCodeOrdering(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
@@ -313,7 +313,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 }
 
 func TestQueryContractHistory(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	var (
@@ -457,7 +457,7 @@ func TestQueryCodeList(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	specs := map[string]struct {
@@ -533,7 +533,7 @@ func TestQueryContractInfo(t *testing.T) {
 		contractAddr = RandomAccountAddress(t)
 		anyDate      = time.Now().UTC()
 	)
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	// register an example extension. must be protobuf
 	keepers.EncodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*types.ContractInfoExtension)(nil),
@@ -599,7 +599,7 @@ func TestQueryContractInfo(t *testing.T) {
 }
 
 func TestQueryPinnedCodes(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	exampleContract1 := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -656,7 +656,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 }
 
 func TestQueryParams(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	q := Querier(keeper)
@@ -687,7 +687,7 @@ func TestQueryCodeInfo(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
@@ -742,7 +742,7 @@ func TestQueryCodeInfoList(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")

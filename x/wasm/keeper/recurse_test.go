@@ -45,7 +45,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 			return realWasmQuerier.HandleQuery(ctx, caller, request)
 		})
 	}
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, WithQueryHandlerDecorator(countingQuerierDec))
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithQueryHandlerDecorator(countingQuerierDec))
 	keeper = keepers.WasmKeeper
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	return exampleContract.Contract, exampleContract.CreatorAddr, ctx, keeper
