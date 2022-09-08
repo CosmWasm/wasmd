@@ -21,8 +21,8 @@ const (
 const (
 	AttributeReservedPrefix = "_"
 
-	AttributeKeyContractAddr  = "_contract_address"
-	AttributeKeyCodeID        = "code_id"
-	AttributeKeyResultDataHex = "result"
-	AttributeKeyCapability    = "capability"
+	AttributeKeyContractAddr       = "_contract_address"
+	AttributeKeyCodeID             = "code_id"
+	AttributeKeyResultDataHex      = "result"
+	AttributeKeyRequiredCapability = "required_capability"
 )

@@ -205,7 +205,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
 	)
 	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
-		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyCapability, strings.TrimSpace(f)))
+		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
 	}
 	ctx.EventManager().EmitEvent(evt)
 
