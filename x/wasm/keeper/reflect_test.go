@@ -309,15 +309,15 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "testing", nil)
 	require.NoError(t, err)
 
-	currentStateSupply := keepers.BankKeeper.GetSupply(ctx, "stake")
-	require.NotEmpty(t, currentStateSupply.Amount) // ensure we have real data
+	currentStakeSupply := keepers.BankKeeper.GetSupply(ctx, "stake")
+	require.NotEmpty(t, currentStakeSupply.Amount) // ensure we have real data
 	specs := map[string]struct {
 		denom     string
 		expAmount wasmvmtypes.Coin
 	}{
 		"known denom": {
 			denom:     "stake",
-			expAmount: ConvertSdkCoinToWasmCoin(currentStateSupply),
+			expAmount: ConvertSdkCoinToWasmCoin(currentStakeSupply),
 		},
 		"unknown denom": {
 			denom:     "unknown",
