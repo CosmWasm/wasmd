@@ -202,5 +202,5 @@ the SDK is implemented properly.
 
 Once you have tested this and are happy with the results, you can wire it up in `app.go`.
 Just edit [the default `NewKeeper` constructor](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/app/app.go#L257-L258)
-to have the proper `supportedFeatures` and pass in the `CustomEncoder` and `CustomQuerier` as the last two arguments to `NewKeeper`.
+to have the proper `availableCapabilities` and pass in the `CustomEncoder` and `CustomQuerier` as the last two arguments to `NewKeeper`.
 Now you can compile your chain and upload your custom contracts on it.
