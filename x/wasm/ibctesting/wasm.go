@@ -62,6 +62,7 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	var pInstResp types.MsgStoreCodeResponse
 	require.NoError(chain.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
 	require.NotEmpty(chain.t, pInstResp.CodeID)
+	require.NotEmpty(chain.t, pInstResp.Checksum)
 	return pInstResp
 }
 

@@ -84,6 +84,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgInstantiateContract

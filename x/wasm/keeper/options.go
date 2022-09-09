@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"fmt"
+	"reflect"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -89,8 +91,22 @@ func WithMessageEncoders(x *MessageEncoders) Option {
 
 // WithCoinTransferrer is an optional constructor parameter to set a custom coin transferrer
 func WithCoinTransferrer(x CoinTransferrer) Option {
+	if x == nil {
+		panic("must not be nil")
+	}
 	return optsFn(func(k *Keeper) {
 		k.bank = x
+	})
+}
+
+// WithCoinPruner is an optional constructor parameter to set a custom type that handles balances
+// for accounts pruned on contract instantiate
+func WithCoinPruner(x CoinPruner) Option {
+	if x == nil {
+		panic("must not be nil")
+	}
+	return optsFn(func(k *Keeper) {
+		k.coinPruner = x
 	})
 }
 
@@ -104,6 +120,9 @@ func WithVMCacheMetrics(r prometheus.Registerer) Option {
 // When the "gas multiplier" for wasmvm gas conversion is modified inside the new register,
 // make sure to also use `WithApiCosts` option for non default values
 func WithGasRegister(x GasRegister) Option {
+	if x == nil {
+		panic("must not be nil")
+	}
 	return optsFn(func(k *Keeper) {
 		k.gasRegister = x
 	})
@@ -122,4 +141,43 @@ func WithMaxQueryStackSize(m uint32) Option {
 	return optsFn(func(k *Keeper) {
 		k.maxQueryStackSize = m
 	})
+}
+
+// WithAcceptedAccountTypesOnContractInstantiation sets the accepted account types. Account types of this list won't be overwritten or cause a failure
+// when they exist for an address on contract instantiation.
+//
+// Values should be references and contain the `*authtypes.BaseAccount` as default bank account type.
+func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
+	m := asTypeMap(accts)
+	return optsFn(func(k *Keeper) {
+		k.acceptedAccountTypes = m
+	})
+}
+
+// WithPruneAccountTypesOnContractInstantiation sets the account types that should be cleared. Account types of this list
+// will be overwritten with the BaseAccount type and their balance burned, when they exist for an address on contract
+// instantiation.
+//
+// Values should be references and contain the `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.ContinuousVestingAccount`
+// as post genesis account types with an open address range.
+func WithPruneAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
+	m := asTypeMap(accts)
+	return optsFn(func(k *Keeper) {
+		k.pruneAccountTypes = m
+	})
+}
+
+func asTypeMap(accts []authtypes.AccountI) map[reflect.Type]struct{} {
+	m := make(map[reflect.Type]struct{}, len(accts))
+	for _, a := range accts {
+		if a == nil {
+			panic(types.ErrEmpty.Wrap("address"))
+		}
+		at := reflect.TypeOf(a)
+		if _, exists := m[at]; exists {
+			panic(types.ErrDuplicate.Wrapf("%T", a))
+		}
+		m[at] = struct{}{}
+	}
+	return m
 }
