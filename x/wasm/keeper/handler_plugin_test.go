@@ -125,7 +125,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 	}{
 		"all good": {
 			srcRoute: capturingMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				myMsg := types.MsgExecuteContract{
 					Sender:   myContractAddr.String(),
 					Contract: RandomBech32AccountAddress(t),
@@ -137,7 +137,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		},
 		"multiple output msgs": {
 			srcRoute: capturingMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				first := &types.MsgExecuteContract{
 					Sender:   myContractAddr.String(),
 					Contract: RandomBech32AccountAddress(t),
@@ -154,7 +154,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		},
 		"invalid sdk message rejected": {
 			srcRoute: capturingMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				invalidMsg := types.MsgExecuteContract{
 					Sender:   myContractAddr.String(),
 					Contract: RandomBech32AccountAddress(t),
@@ -166,7 +166,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		},
 		"invalid sender rejected": {
 			srcRoute: capturingMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				invalidMsg := types.MsgExecuteContract{
 					Sender:   RandomBech32AccountAddress(t),
 					Contract: RandomBech32AccountAddress(t),
@@ -178,7 +178,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		},
 		"unroutable message rejected": {
 			srcRoute: noRouteMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				myMsg := types.MsgExecuteContract{
 					Sender:   myContractAddr.String(),
 					Contract: RandomBech32AccountAddress(t),
@@ -190,7 +190,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		},
 		"encoding error passed": {
 			srcRoute: capturingMessageRouter,
-			srcEncoder: func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+			srcEncoder: func(ctx sdk.Context, accountKeeper types.AccountKeeper, sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
 				myErr := types.ErrUnpinContractFailed // any error that is not used
 				return nil, myErr
 			},

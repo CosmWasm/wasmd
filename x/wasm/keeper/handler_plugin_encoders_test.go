@@ -67,6 +67,8 @@ func TestEncoding(t *testing.T) {
 		output []sdk.Msg
 		// set if invalid
 		isError bool
+		// set for Custom with ctx case only
+		accountKeeper types.AccountKeeper
 	}{
 		"simple send": {
 			sender: addr1,
@@ -569,7 +571,7 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource, tc.accountKeeper)
 			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.isError {
 				require.Error(t, err)
