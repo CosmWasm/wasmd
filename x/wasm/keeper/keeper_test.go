@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	fuzz "github.com/google/gofuzz"
+	"github.com/tendermint/tendermint/libs/rand"
 	"math"
 	"os"
 	"testing"
@@ -1935,4 +1937,21 @@ func TestSetAccessConfig(t *testing.T) {
 			require.NoError(t, gotErr)
 		})
 	}
+}
+
+func TestAppendToContractHistory(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	var contractAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	var orderedEntries []types.ContractCodeHistoryEntry
+
+	f := fuzz.New().Funcs(ModelFuzzers...)
+	for i := 0; i < 10; i++ {
+		var entry types.ContractCodeHistoryEntry
+		f.Fuzz(&entry)
+		keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry)
+		orderedEntries = append(orderedEntries, entry)
+	}
+	// when
+	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
+	assert.Equal(t, orderedEntries, gotHistory)
 }
