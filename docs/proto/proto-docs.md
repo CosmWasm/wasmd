@@ -71,6 +71,8 @@
     - [QueryContractInfoResponse](#cosmwasm.wasm.v1.QueryContractInfoResponse)
     - [QueryContractsByCodeRequest](#cosmwasm.wasm.v1.QueryContractsByCodeRequest)
     - [QueryContractsByCodeResponse](#cosmwasm.wasm.v1.QueryContractsByCodeResponse)
+    - [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest)
+    - [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse)
     - [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest)
     - [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse)
     - [QueryRawContractStateRequest](#cosmwasm.wasm.v1.QueryRawContractStateRequest)
@@ -117,7 +119,8 @@ AccessConfig access control type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `permission` | [AccessType](#cosmwasm.wasm.v1.AccessType) |  |  |
-| `address` | [string](#string) |  |  |
+| `address` | [string](#string) |  | Address Deprecated: replaced by addresses |
+| `addresses` | [string](#string) | repeated |  |
 
 
 
@@ -238,8 +241,9 @@ AccessType permission types
 | ---- | ------ | ----------- |
 | ACCESS_TYPE_UNSPECIFIED | 0 | AccessTypeUnspecified placeholder for empty value |
 | ACCESS_TYPE_NOBODY | 1 | AccessTypeNobody forbidden |
-| ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to an address |
+| ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to a single address Deprecated: use AccessTypeAnyOfAddresses instead |
 | ACCESS_TYPE_EVERYBODY | 3 | AccessTypeEverybody unrestricted |
+| ACCESS_TYPE_ANY_OF_ADDRESSES | 4 | AccessTypeAnyOfAddresses allow any of the addresses |
 
 
 
@@ -426,6 +430,7 @@ MsgStoreCodeResponse returns store result data.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `checksum` | [bytes](#bytes) |  | Checksum is the sha256 hash of the stored code |
 
 
 
@@ -774,6 +779,7 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
 
 
 
@@ -1083,6 +1089,31 @@ Query/ContractsByCode RPC method
 
 
 
+<a name="cosmwasm.wasm.v1.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest is the request type for the Query/Params RPC method.
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse is the response type for the Query/Params RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#cosmwasm.wasm.v1.Params) |  | params defines the parameters of the module. |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryPinnedCodesRequest"></a>
 
 ### QueryPinnedCodesRequest
@@ -1204,6 +1235,7 @@ Query provides defines the gRPC querier service
 | `Code` | [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest) | [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse) | Code gets the binary code and metadata for a singe wasm code | GET|/cosmwasm/wasm/v1/code/{code_id}|
 | `Codes` | [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest) | [QueryCodesResponse](#cosmwasm.wasm.v1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes | GET|/cosmwasm/wasm/v1/code|
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
+| `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 
  <!-- end services -->
 

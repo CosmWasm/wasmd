@@ -86,7 +86,6 @@ var (
 	ErrQueryFailed       = types.ErrQueryFailed
 	ErrInvalidMsg        = types.ErrInvalidMsg
 	KeyLastCodeID        = types.KeyLastCodeID
-	KeyLastInstanceID    = types.KeyLastInstanceID
 	CodeKeyPrefix        = types.CodeKeyPrefix
 	ContractKeyPrefix    = types.ContractKeyPrefix
 	ContractStorePrefix  = types.ContractStorePrefix

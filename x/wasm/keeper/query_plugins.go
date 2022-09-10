@@ -189,6 +189,16 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			}
 			return json.Marshal(res)
 		}
+		if request.Supply != nil {
+			coin := bankKeeper.GetSupply(ctx, request.Supply.Denom)
+			res := wasmvmtypes.SupplyResponse{
+				Amount: wasmvmtypes.Coin{
+					Denom:  coin.Denom,
+					Amount: coin.Amount.String(),
+				},
+			}
+			return json.Marshal(res)
+		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
 }

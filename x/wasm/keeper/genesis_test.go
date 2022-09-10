@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/address"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -66,7 +68,7 @@ func TestGenesisExportImport(t *testing.T) {
 
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
-		codeID, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
+		codeID, checksum, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
 			contractKeeper.PinCode(srcCtx, codeID)
@@ -81,7 +83,7 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 
 		contract.CodeID = codeID
-		contractAddr := wasmKeeper.generateContractAddress(srcCtx, codeID)
+		contractAddr := BuildContractAddress(checksum, creatorAddr, "testing")
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
@@ -157,6 +159,16 @@ func TestGenesisInit(t *testing.T) {
 	require.NoError(t, err)
 
 	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
+	mySenderAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	myLabel := "testing"
+	myContractInfoFixture := func(mutators ...func(*types.ContractInfo)) types.ContractInfo {
+		return types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) {
+			c.CodeID = 1
+			c.Creator = mySenderAddr.String()
+			c.Label = myLabel
+		}, types.OnlyGenesisFields)
+	}
+
 	specs := map[string]struct {
 		src            types.GenesisState
 		stakingMock    StakingKeeperMock
@@ -172,7 +184,6 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -191,7 +202,6 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 10},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -211,7 +221,6 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: nil,
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 3},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -268,13 +277,12 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 					},
 				},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 2},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -289,16 +297,17 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 					}, {
-						ContractAddress: BuildContractAddress(1, 2).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, "other-label").String(),
+						ContractInfo: myContractInfoFixture(func(i *wasmTypes.ContractInfo) {
+							i.Label = "other-label"
+						}),
 					},
 				},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 3},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -308,8 +317,8 @@ func TestGenesisInit(t *testing.T) {
 			src: types.GenesisState{
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -324,11 +333,11 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 					}, {
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -343,8 +352,8 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractInfo:    myContractInfoFixture(),
 						ContractState: []types.Model{
 							{
 								Key:   []byte{0x1},
@@ -378,26 +387,6 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 1},
-				},
-				Params: types.DefaultParams(),
-			},
-		},
-		"prevent contract id seq init value == count contracts": {
-			src: types.GenesisState{
-				Codes: []types.Code{{
-					CodeID:    firstCodeID,
-					CodeInfo:  myCodeInfo,
-					CodeBytes: wasmCode,
-				}},
-				Contracts: []types.Contract{
-					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
-					},
-				},
-				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -560,16 +549,17 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))
-	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
 }
 
 func TestSupportedGenMsgTypes(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
+	wasmHash := sha256.Sum256(wasmCode)
 	var (
 		myAddress          sdk.AccAddress = bytes.Repeat([]byte{1}, types.ContractAddrLen)
 		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, types.ContractAddrLen)
 		beneficiaryAddress sdk.AccAddress = bytes.Repeat([]byte{3}, types.ContractAddrLen)
+		contractAddr                      = BuildContractAddress(wasmHash[:], myAddress, "testing")
 	)
 	const denom = "stake"
 	importState := types.GenesisState{
@@ -601,7 +591,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 				Sum: &types.GenesisState_GenMsgs_ExecuteContract{
 					ExecuteContract: &types.MsgExecuteContract{
 						Sender:   verifierAddress.String(),
-						Contract: BuildContractAddress(1, 1).String(),
+						Contract: contractAddr.String(),
 						Msg:      []byte(`{"release":{}}`),
 					},
 				},
@@ -626,7 +616,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NotNil(t, codeInfo)
 
 	// verify contract instantiated
-	cInfo := keeper.GetContractInfo(ctx, BuildContractAddress(1, 1))
+	cInfo := keeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 
 	// verify contract executed
@@ -669,7 +659,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
-	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.ModuleName), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures)
+	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.ModuleName), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, AvailableCapabilities)
 	return &srcKeeper, ctx, []storetypes.StoreKey{keyWasm, keyParams}
 }
 

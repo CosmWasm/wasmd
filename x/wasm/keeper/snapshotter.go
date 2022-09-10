@@ -107,6 +107,9 @@ func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {
 }
 
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
+	if !ioutils.IsGzip(compressedCode) {
+		return types.ErrInvalid.Wrap("not a gzip")
+	}
 	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())

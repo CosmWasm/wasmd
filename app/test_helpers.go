@@ -75,6 +75,29 @@ func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Opt
 	return app, GenesisState{}
 }
 
+// Setup initializes a new WasmApp with DefaultNodeHome for integration tests
+func Setup(isCheckTx bool, opts ...wasm.Option) *WasmApp {
+	db := dbm.NewMemDB()
+	app := NewWasmApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, opts)
+
+	if !isCheckTx {
+		genesisState := NewDefaultGenesisState()
+		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+		if err != nil {
+			panic(err)
+		}
+
+		app.InitChain(
+			abci.RequestInitChain{
+				Validators:      []abci.ValidatorUpdate{},
+				ConsensusParams: DefaultConsensusParams,
+				AppStateBytes:   stateBytes,
+			},
+		)
+	}
+	return app
+}
+
 // SetupWithGenesisValSet initializes a new WasmApp with a validator set and genesis accounts
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the WasmApp from first genesis
@@ -288,7 +311,7 @@ func CheckBalance(t *testing.T, app *WasmApp, addr sdk.AccAddress, balances sdk.
 	require.True(t, balances.IsEqual(app.BankKeeper.GetAllBalances(ctxCheck, addr)))
 }
 
-const DefaultGas = 1200000
+const DefaultGas = 1_500_000
 
 // SignCheckDeliver checks a generated signed transaction and simulates a
 // block commitment with the given transaction. A test assertion is made using

@@ -41,6 +41,8 @@ func TestIsGzip(t *testing.T) {
 
 	require.False(t, IsGzip(wasmCode))
 	require.False(t, IsGzip(someRandomStr))
+	require.False(t, IsGzip(nil))
+	require.True(t, IsGzip(gzipData[0:3]))
 	require.True(t, IsGzip(gzipData))
 }
 
