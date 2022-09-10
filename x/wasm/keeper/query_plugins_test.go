@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/store"
+	dbm "github.com/tendermint/tm-db"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
