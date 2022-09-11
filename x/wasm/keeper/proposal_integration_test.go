@@ -35,7 +35,6 @@ func TestStoreCodeProposal(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	specs := map[string]struct {
 		codeID    int64
 		unpinCode bool
@@ -53,30 +52,24 @@ func TestStoreCodeProposal(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
 			myActorAddress := RandomBech32AccountAddress(t)
 
-			msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
-			require.NoError(t, err)
-
-			// when stored
-			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
-			require.NoError(t, err)
-
-			// and proposal execute
-			handler := govKeeper.LegacyRouter().GetRoute(src.ProposalRoute())
-			err = handler(ctx, src)
-			require.NoError(t, err)
 			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 				p.RunAs = myActorAddress
 				p.WASMByteCode = wasmCode
 				p.UnpinCode = spec.unpinCode
 			})
 
+			msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
+			require.NoError(t, err)
+
+			em := sdk.NewEventManager()
+
 			// when stored
-			storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing123")
 			require.NoError(t, err)
 
 			// and proposal execute
-			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-			err = handler(ctx, storedProposal.GetContent())
+			handler := govKeeper.LegacyRouter().GetRoute(src.ProposalRoute())
+			err = handler(ctx.WithEventManager(em), src)
 			require.NoError(t, err)
 
 			// then

@@ -94,7 +94,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -172,7 +172,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -235,7 +235,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -314,7 +314,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -374,7 +374,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -435,7 +435,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -490,7 +490,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -549,7 +549,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -620,7 +620,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
 
@@ -738,6 +738,6 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)") //nolint:staticcheck
 	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	cmd.Flags().String(cli.FlagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade") //nolint:staticcheck
 	return cmd
 }
