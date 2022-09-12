@@ -274,7 +274,6 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte{},
 			expCommits: []bool{false, false},
 		},
-		// NOTE: event filtering has been disabled, test looks a bit useless
 		"message event filtered without reply": {
 			msgs: []wasmvmtypes.SubMsg{{
 				ReplyOn: wasmvmtypes.ReplyNever,
@@ -295,9 +294,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			expData:    nil,
 			expCommits: []bool{true},
-			expEvents:  []sdk.Event{sdk.NewEvent("message"), sdk.NewEvent("execute", sdk.NewAttribute("foo", "bar"))},
+			expEvents:  []sdk.Event{sdk.NewEvent("execute", sdk.NewAttribute("foo", "bar"))},
 		},
-		// NOTE: event filtering has been disabled, test looks a bit useless
 		"wasm reply gets proper events": {
 			// put fake wasmmsg in here to show where it comes from
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Wasm: &wasmvmtypes.WasmMsg{}}}},
@@ -310,16 +308,13 @@ func TestDispatchSubmessages(t *testing.T) {
 
 					// ensure the input events are what we expect
 					// I didn't use require.Equal() to act more like a contract... but maybe that would be better
-					if len(res.Events) != 3 {
+					if len(res.Events) != 2 {
 						return nil, fmt.Errorf("event count: %#v", res.Events)
 					}
-					if res.Events[0].Type != "message" {
-						return nil, fmt.Errorf("event0: %#v", res.Events[0])
-					}
-					if res.Events[1].Type != "execute" {
+					if res.Events[0].Type != "execute" {
 						return nil, fmt.Errorf("event1: %#v", res.Events[1])
 					}
-					if res.Events[2].Type != "wasm" {
+					if res.Events[1].Type != "wasm" {
 						return nil, fmt.Errorf("event2: %#v", res.Events[2])
 					}
 
@@ -333,7 +328,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 					events = []sdk.Event{
-						sdk.NewEvent("message", sdk.NewAttribute("_contract_address", "placeholder-random-addr")),
+						sdk.NewEvent("message", sdk.NewAttribute("_contract_address", contractAddr.String())),
 						// we don't know what the contarctAddr will be so we can't use it in the final tests
 						sdk.NewEvent("execute", sdk.NewAttribute("_contract_address", "placeholder-random-addr")),
 						sdk.NewEvent("wasm", sdk.NewAttribute("random", "data")),
@@ -344,13 +339,11 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte("subData"),
 			expCommits: []bool{true},
 			expEvents: []sdk.Event{
-				sdk.NewEvent("message", sdk.NewAttribute("_contract_address", "placeholder-random-addr")),
 				sdk.NewEvent("execute", sdk.NewAttribute("_contract_address", "placeholder-random-addr")),
 				sdk.NewEvent("wasm", sdk.NewAttribute("random", "data")),
 				sdk.NewEvent("wasm-reply"),
 			},
 		},
-		// NOTE: event filtering has been disabled, test looks a bit useless
 		"non-wasm reply events get filtered": {
 			// show events from a stargate message gets filtered out
 			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Stargate: &wasmvmtypes.StargateMsg{}}}},
@@ -388,7 +381,6 @@ func TestDispatchSubmessages(t *testing.T) {
 			expData:    []byte("subData"),
 			expCommits: []bool{true},
 			expEvents: []sdk.Event{
-				sdk.NewEvent("message", sdk.NewAttribute("stargate", "something-something")),
 				sdk.NewEvent("non-determinstic"),
 				// the event from reply is also exposed
 				sdk.NewEvent("stargate-reply"),
