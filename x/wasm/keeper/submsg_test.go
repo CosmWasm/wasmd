@@ -207,7 +207,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
 		// should get the events emitted on new contract
-		event := response.Ok.Events[1]
+		event := response.Ok.Events[0]
 		require.Equal(t, event.Type, "instantiate")
 		assert.Equal(t, event.Attributes[0].Key, "_contract_address")
 		eventAddr := event.Attributes[0].Value
@@ -277,7 +277,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
 			msg:              instantiateContract,
-			resultAssertions: []assertion{assertReturnedEvents(2), assertGotContractAddr},
+			resultAssertions: []assertion{assertReturnedEvents(1), assertGotContractAddr},
 		},
 	}
 	for name, tc := range cases {

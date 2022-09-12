@@ -188,12 +188,21 @@ func redactError(err error) error {
 	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }
 
+func isIBCEvent(event sdk.Event) bool {
+	for _, attr := range event.Attributes {
+		if bytes.Contains(attr.Value, []byte("ibc_")) {
+			return true
+		}
+	}
+	return false
+}
+
 func filterEvents(events []sdk.Event) []sdk.Event {
-	return events
 	// pre-allocate space for efficiency
 	res := make([]sdk.Event, 0, len(events))
 	for _, ev := range events {
-		if ev.Type != "message" {
+		// we filter out all 'message' type events but if they are ibc events we must keep them for the IBC relayer (hermes particularly)
+		if ev.Type != "message" || isIBCEvent(ev) {
 			res = append(res, ev)
 		}
 	}
