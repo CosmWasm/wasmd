@@ -190,7 +190,9 @@ func redactError(err error) error {
 
 func isIBCEvent(event sdk.Event) bool {
 	for _, attr := range event.Attributes {
-		if bytes.Contains(attr.Value, []byte("ibc_")) {
+		// Hermes ibc-rs subscribes on such events, so we need to keep them to have the ibc-rs working properly
+		// https://github.com/informalsystems/ibc-rs/blob/ed4dd8c8b4ebd695730de2a1c69f3011cb179352/relayer/src/event/monitor.rs#L134
+		if bytes.HasPrefix(attr.Value, []byte("ibc_")) {
 			return true
 		}
 	}
