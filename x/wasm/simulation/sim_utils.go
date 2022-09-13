@@ -20,6 +20,9 @@ func GenAndDeliverTxWithRandFees(txCtx simulation.OperationInput, gas uint64) (s
 		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "message doesn't leave room for fees"), nil, err
 	}
 
+	// Only allow fees in "uosmo"
+	coins = sdk.NewCoins(sdk.NewCoin("uosmo", coins.AmountOf("uosmo")))
+
 	fees, err = simtypes.RandomFees(txCtx.R, txCtx.Context, coins)
 	if err != nil {
 		return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate fees"), nil, err
