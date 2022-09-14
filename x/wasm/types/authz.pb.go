@@ -9,6 +9,8 @@ import (
 	math "math"
 	math_bits "math/bits"
 
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/regen-network/cosmos-proto"
@@ -82,12 +84,13 @@ func (m *ContractExecutionAuthorization) GetGrants() []ContractExecutionAuthoriz
 type ContractExecutionAuthorization_ContractExecutionGrant struct {
 	// Contract is the address of the smart contract
 	Contract string `protobuf:"bytes,1,opt,name=contract,proto3" json:"contract,omitempty"`
-	// MaxExecutions specifies the number of authorized executions remaining
+	// ExecutionLimit specifies number of executions or spendable amounts
 	//
-	// Types that are valid to be assigned to MaxExecutions:
+	// Types that are valid to be assigned to ExecutionLimit:
 	//	*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls
 	//	*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls
-	MaxExecutions isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions `protobuf_oneof:"max_executions"`
+	//	*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds
+	ExecutionLimit isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit `protobuf_oneof:"execution_limit"`
 	// Filter rules to apply
 	//
 	// Types that are valid to be assigned to Filter:
@@ -139,8 +142,8 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_DiscardUnkno
 
 var xxx_messageInfo_ContractExecutionAuthorization_ContractExecutionGrant proto.InternalMessageInfo
 
-type isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions interface {
-	isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions()
+type isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit interface {
+	isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit()
 	MarshalTo([]byte) (int, error)
 	Size() int
 }
@@ -156,17 +159,23 @@ type ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls struct 
 type ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls struct {
 	MaxCalls *MaxCalls `protobuf:"bytes,3,opt,name=max_calls,json=maxCalls,proto3,oneof" json:"max_calls,omitempty"`
 }
+type ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds struct {
+	MaxFunds *MaxFunds `protobuf:"bytes,4,opt,name=max_funds,json=maxFunds,proto3,oneof" json:"max_funds,omitempty"`
+}
 type ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys struct {
-	AcceptedMessageKeys *AcceptedMessageKeysFilter `protobuf:"bytes,4,opt,name=accepted_message_keys,json=acceptedMessageKeys,proto3,oneof" json:"accepted_message_keys,omitempty"`
+	AcceptedMessageKeys *AcceptedMessageKeysFilter `protobuf:"bytes,5,opt,name=accepted_message_keys,json=acceptedMessageKeys,proto3,oneof" json:"accepted_message_keys,omitempty"`
 }
 type ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard struct {
-	AllowAllWildcard *AllowAllWildcard `protobuf:"bytes,5,opt,name=allow_all_wildcard,json=allowAllWildcard,proto3,oneof" json:"allow_all_wildcard,omitempty"`
+	AllowAllWildcard *AllowAllWildcard `protobuf:"bytes,6,opt,name=allow_all_wildcard,json=allowAllWildcard,proto3,oneof" json:"allow_all_wildcard,omitempty"`
 }
 
-func (*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions() {
+func (*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
 }
 
-func (*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions() {
+func (*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
+}
+
+func (*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
 }
 
 func (*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) isContractExecutionAuthorization_ContractExecutionGrant_Filter() {
@@ -175,9 +184,9 @@ func (*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys
 func (*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard) isContractExecutionAuthorization_ContractExecutionGrant_Filter() {
 }
 
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetMaxExecutions() isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions {
+func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetExecutionLimit() isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit {
 	if m != nil {
-		return m.MaxExecutions
+		return m.ExecutionLimit
 	}
 	return nil
 }
@@ -197,15 +206,22 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetContract() st
 }
 
 func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetInfiniteCalls() *InfiniteCalls {
-	if x, ok := m.GetMaxExecutions().(*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls); ok {
+	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls); ok {
 		return x.InfiniteCalls
 	}
 	return nil
 }
 
 func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetMaxCalls() *MaxCalls {
-	if x, ok := m.GetMaxExecutions().(*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls); ok {
+	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls); ok {
 		return x.MaxCalls
+	}
+	return nil
+}
+
+func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetMaxFunds() *MaxFunds {
+	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds); ok {
+		return x.MaxFunds
 	}
 	return nil
 }
@@ -229,6 +245,7 @@ func (*ContractExecutionAuthorization_ContractExecutionGrant) XXX_OneofWrappers(
 	return []interface{}{
 		(*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls)(nil),
 		(*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls)(nil),
+		(*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds)(nil),
 		(*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys)(nil),
 		(*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard)(nil),
 	}
@@ -487,6 +504,56 @@ func (m *MaxCalls) GetRemaining() uint64 {
 	return 0
 }
 
+// MaxFunds defines the max amounts that can be sent to a contract
+type MaxFunds struct {
+	Amounts github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=amounts,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"amounts"`
+}
+
+func (m *MaxFunds) Reset()         { *m = MaxFunds{} }
+func (m *MaxFunds) String() string { return proto.CompactTextString(m) }
+func (*MaxFunds) ProtoMessage()    {}
+func (*MaxFunds) Descriptor() ([]byte, []int) {
+	return fileDescriptor_36ff3a20cf32b258, []int{4}
+}
+
+func (m *MaxFunds) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+
+func (m *MaxFunds) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MaxFunds.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+
+func (m *MaxFunds) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MaxFunds.Merge(m, src)
+}
+
+func (m *MaxFunds) XXX_Size() int {
+	return m.Size()
+}
+
+func (m *MaxFunds) XXX_DiscardUnknown() {
+	xxx_messageInfo_MaxFunds.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MaxFunds proto.InternalMessageInfo
+
+func (m *MaxFunds) GetAmounts() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Amounts
+	}
+	return nil
+}
+
 // AllowAllWildcard is a wildcard to allow any type of contract execution
 // message
 type AllowAllWildcard struct{}
@@ -495,7 +562,7 @@ func (m *AllowAllWildcard) Reset()         { *m = AllowAllWildcard{} }
 func (m *AllowAllWildcard) String() string { return proto.CompactTextString(m) }
 func (*AllowAllWildcard) ProtoMessage()    {}
 func (*AllowAllWildcard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_36ff3a20cf32b258, []int{4}
+	return fileDescriptor_36ff3a20cf32b258, []int{5}
 }
 
 func (m *AllowAllWildcard) XXX_Unmarshal(b []byte) error {
@@ -540,7 +607,7 @@ func (m *AcceptedMessageKeysFilter) Reset()         { *m = AcceptedMessageKeysFi
 func (m *AcceptedMessageKeysFilter) String() string { return proto.CompactTextString(m) }
 func (*AcceptedMessageKeysFilter) ProtoMessage()    {}
 func (*AcceptedMessageKeysFilter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_36ff3a20cf32b258, []int{5}
+	return fileDescriptor_36ff3a20cf32b258, []int{6}
 }
 
 func (m *AcceptedMessageKeysFilter) XXX_Unmarshal(b []byte) error {
@@ -588,6 +655,7 @@ func init() {
 	proto.RegisterType((*ContractMigrationAuthorization_ContractMigrationGrant)(nil), "cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant")
 	proto.RegisterType((*InfiniteCalls)(nil), "cosmwasm.wasm.v1.InfiniteCalls")
 	proto.RegisterType((*MaxCalls)(nil), "cosmwasm.wasm.v1.MaxCalls")
+	proto.RegisterType((*MaxFunds)(nil), "cosmwasm.wasm.v1.MaxFunds")
 	proto.RegisterType((*AllowAllWildcard)(nil), "cosmwasm.wasm.v1.AllowAllWildcard")
 	proto.RegisterType((*AcceptedMessageKeysFilter)(nil), "cosmwasm.wasm.v1.AcceptedMessageKeysFilter")
 }
@@ -595,40 +663,45 @@ func init() {
 func init() { proto.RegisterFile("cosmwasm/wasm/v1/authz.proto", fileDescriptor_36ff3a20cf32b258) }
 
 var fileDescriptor_36ff3a20cf32b258 = []byte{
-	// 514 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x94, 0x4f, 0x6f, 0xd3, 0x30,
-	0x18, 0xc6, 0xe3, 0xb5, 0x54, 0xad, 0xa7, 0x8e, 0x62, 0xfe, 0x28, 0x8b, 0xa6, 0xac, 0xca, 0x01,
-	0x55, 0x42, 0x24, 0xda, 0x38, 0x20, 0x38, 0xd1, 0x56, 0xb0, 0x22, 0xd4, 0x4b, 0x2e, 0x93, 0xb8,
-	0x44, 0x5e, 0xea, 0xa5, 0x16, 0x4e, 0x5c, 0xc5, 0xee, 0xda, 0xee, 0x33, 0x70, 0xe0, 0x6b, 0x70,
-	0xe7, 0x43, 0x4c, 0xe2, 0x32, 0x71, 0xe2, 0x84, 0x50, 0x7b, 0xe1, 0x63, 0xa0, 0x38, 0xc9, 0x4a,
-	0x9b, 0xc0, 0x85, 0xcb, 0x2e, 0x96, 0x5f, 0x3f, 0x4f, 0x7e, 0xb1, 0x5f, 0x3f, 0x32, 0x3c, 0xf0,
-	0xb9, 0x08, 0x67, 0x58, 0x84, 0x8e, 0x1a, 0x2e, 0x8e, 0x1c, 0x3c, 0x95, 0xe3, 0x4b, 0x7b, 0x12,
-	0x73, 0xc9, 0x51, 0x2b, 0x57, 0x6d, 0x35, 0x5c, 0x1c, 0x19, 0x0f, 0x02, 0x1e, 0x70, 0x25, 0x3a,
-	0xc9, 0x2c, 0xf5, 0x19, 0xfb, 0x89, 0x8f, 0x0b, 0x2f, 0x15, 0xd2, 0x22, 0x95, 0xac, 0xcf, 0x55,
-	0x68, 0xf6, 0x79, 0x24, 0x63, 0xec, 0xcb, 0xd7, 0x73, 0xe2, 0x4f, 0x25, 0xe5, 0x51, 0x77, 0x2a,
-	0xc7, 0x3c, 0xa6, 0x97, 0x38, 0x29, 0x10, 0x81, 0xb5, 0x20, 0xc6, 0x91, 0x14, 0x3a, 0x68, 0x57,
-	0x3a, 0xbb, 0xc7, 0x27, 0xf6, 0xf6, 0x6f, 0xed, 0x7f, 0x13, 0x8a, 0xf2, 0x49, 0xc2, 0xeb, 0x55,
-	0xaf, 0x7e, 0x1c, 0x6a, 0x6e, 0x06, 0x37, 0x3e, 0x56, 0xe0, 0xa3, 0x72, 0x23, 0x32, 0x60, 0xdd,
-	0xcf, 0x14, 0x1d, 0xb4, 0x41, 0xa7, 0xe1, 0xde, 0xd4, 0x68, 0x00, 0xf7, 0x68, 0x74, 0x4e, 0x23,
-	0x2a, 0x89, 0xe7, 0x63, 0xc6, 0x84, 0xbe, 0xd3, 0x06, 0x9d, 0xdd, 0xe3, 0xc3, 0xe2, 0x2e, 0xdf,
-	0x66, 0xbe, 0x7e, 0x62, 0x1b, 0x68, 0x6e, 0x93, 0xfe, 0xb9, 0x80, 0x5e, 0xc0, 0x46, 0x88, 0xe7,
-	0x19, 0xa4, 0xa2, 0x20, 0x46, 0x11, 0x32, 0xc4, 0xf3, 0xfc, 0xfb, 0x7a, 0x98, 0xcd, 0x11, 0x86,
-	0x0f, 0xb1, 0xef, 0x93, 0x89, 0x24, 0x23, 0x2f, 0x24, 0x42, 0xe0, 0x80, 0x78, 0x1f, 0xc8, 0x42,
-	0xe8, 0x55, 0x85, 0x79, 0x52, 0xc4, 0x74, 0x33, 0xfb, 0x30, 0x75, 0xbf, 0x23, 0x0b, 0xf1, 0x86,
-	0x32, 0x49, 0xe2, 0x01, 0x70, 0xef, 0xe3, 0xa2, 0x88, 0x5c, 0x88, 0x30, 0x63, 0x7c, 0xe6, 0x61,
-	0xc6, 0xbc, 0x19, 0x65, 0x23, 0x1f, 0xc7, 0x23, 0xfd, 0x8e, 0xe2, 0x5b, 0x25, 0xfc, 0xc4, 0xdb,
-	0x65, 0xec, 0x34, 0x73, 0x0e, 0x80, 0xdb, 0xc2, 0x5b, 0x6b, 0xbd, 0x16, 0xdc, 0x4b, 0x4e, 0x4c,
-	0xf2, 0x6e, 0x8b, 0x5e, 0x1d, 0xd6, 0xce, 0xd5, 0x36, 0x5e, 0xde, 0xfb, 0xf6, 0xe5, 0x69, 0x73,
-	0xe3, 0x1a, 0xad, 0x5f, 0x3b, 0xeb, 0xac, 0x0c, 0x69, 0x10, 0xe3, 0xff, 0xca, 0x4a, 0x39, 0xa1,
-	0x28, 0x97, 0x65, 0xe5, 0x2b, 0x58, 0x67, 0x65, 0xd3, 0x78, 0xeb, 0xb3, 0x52, 0x6c, 0x7a, 0x59,
-	0xab, 0xef, 0xc2, 0xe6, 0xc6, 0x0e, 0xac, 0x0e, 0xac, 0xe7, 0x34, 0x74, 0x00, 0x1b, 0x31, 0x09,
-	0x31, 0x8d, 0x68, 0x14, 0xa8, 0x33, 0x56, 0xdd, 0xf5, 0x82, 0x85, 0x60, 0x6b, 0xfb, 0xf2, 0xad,
-	0xe7, 0x70, 0xff, 0xaf, 0x81, 0x4b, 0x3a, 0x96, 0x65, 0x36, 0xbd, 0xb5, 0x86, 0x7b, 0x53, 0xf7,
-	0x5e, 0x5d, 0x2d, 0x4d, 0x70, 0xbd, 0x34, 0xc1, 0xcf, 0xa5, 0x09, 0x3e, 0xad, 0x4c, 0xed, 0x7a,
-	0x65, 0x6a, 0xdf, 0x57, 0xa6, 0xf6, 0xfe, 0x71, 0x40, 0xe5, 0x78, 0x7a, 0x66, 0xfb, 0x3c, 0x74,
-	0xfa, 0x5c, 0x84, 0xa7, 0xf9, 0x23, 0x35, 0x72, 0xe6, 0xe9, 0x63, 0x25, 0x17, 0x13, 0x22, 0xce,
-	0x6a, 0xea, 0x9d, 0x79, 0xf6, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x2b, 0xf7, 0x8b, 0x46, 0xca, 0x04,
-	0x00, 0x00,
+	// 605 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x54, 0x4f, 0x6f, 0xd3, 0x30,
+	0x1c, 0x6d, 0xb6, 0x52, 0x5a, 0x4f, 0xdb, 0xba, 0xf0, 0x47, 0x59, 0x35, 0x65, 0x53, 0x0e, 0xa8,
+	0x12, 0x5a, 0x42, 0xc7, 0x01, 0xc1, 0x89, 0xa6, 0x62, 0x2b, 0x42, 0xbd, 0xe4, 0x32, 0x89, 0x4b,
+	0xe4, 0x26, 0x6e, 0x6a, 0x2d, 0x89, 0x4b, 0xec, 0xf4, 0xcf, 0x3e, 0x05, 0x9f, 0x83, 0x33, 0x1f,
+	0xa2, 0x12, 0x97, 0x89, 0x13, 0x27, 0x40, 0xad, 0x90, 0xf8, 0x18, 0x28, 0x8e, 0xd3, 0xae, 0x4d,
+	0xd9, 0x85, 0x0b, 0x17, 0xd7, 0x3f, 0xbf, 0xf7, 0x7b, 0xfa, 0xd5, 0x7e, 0x79, 0xe0, 0xc8, 0x21,
+	0x34, 0x18, 0x41, 0x1a, 0x18, 0x7c, 0x19, 0x36, 0x0c, 0x18, 0xb3, 0xfe, 0xb5, 0x3e, 0x88, 0x08,
+	0x23, 0x72, 0x35, 0x43, 0x75, 0xbe, 0x0c, 0x1b, 0xb5, 0x87, 0x1e, 0xf1, 0x08, 0x07, 0x8d, 0x64,
+	0x97, 0xf2, 0x6a, 0x87, 0x09, 0x8f, 0x50, 0x3b, 0x05, 0xd2, 0x42, 0x40, 0x6a, 0x5a, 0x19, 0x5d,
+	0x48, 0x91, 0x31, 0x6c, 0x74, 0x11, 0x83, 0x0d, 0xc3, 0x21, 0x38, 0x4c, 0x71, 0xed, 0x57, 0x11,
+	0xa8, 0x2d, 0x12, 0xb2, 0x08, 0x3a, 0xec, 0xcd, 0x18, 0x39, 0x31, 0xc3, 0x24, 0x6c, 0xc6, 0xac,
+	0x4f, 0x22, 0x7c, 0x0d, 0x93, 0x42, 0x46, 0xa0, 0xe4, 0x45, 0x30, 0x64, 0x54, 0x91, 0x4e, 0xb6,
+	0xeb, 0x3b, 0x67, 0x17, 0xfa, 0xfa, 0x58, 0xfa, 0xdd, 0x0a, 0x79, 0xf8, 0x22, 0xd1, 0x33, 0x8b,
+	0xd3, 0xef, 0xc7, 0x05, 0x4b, 0x88, 0xd7, 0xa6, 0xdb, 0xe0, 0xf1, 0x66, 0xa2, 0x5c, 0x03, 0x65,
+	0x47, 0x20, 0x8a, 0x74, 0x22, 0xd5, 0x2b, 0xd6, 0xa2, 0x96, 0xdb, 0x60, 0x0f, 0x87, 0x3d, 0x1c,
+	0x62, 0x86, 0x6c, 0x07, 0xfa, 0x3e, 0x55, 0xb6, 0x4e, 0xa4, 0xfa, 0xce, 0xd9, 0x71, 0x7e, 0xca,
+	0xb7, 0x82, 0xd7, 0x4a, 0x68, 0xed, 0x82, 0xb5, 0x8b, 0x6f, 0x1f, 0xc8, 0x2f, 0x41, 0x25, 0x80,
+	0x63, 0x21, 0xb2, 0xcd, 0x45, 0x6a, 0x79, 0x91, 0x0e, 0x1c, 0x67, 0xfd, 0xe5, 0x40, 0xec, 0xb3,
+	0xd6, 0x5e, 0x1c, 0xba, 0x54, 0x29, 0xde, 0xd1, 0x7a, 0x9e, 0x30, 0x44, 0x2b, 0xdf, 0xcb, 0x10,
+	0x3c, 0x82, 0x8e, 0x83, 0x06, 0x0c, 0xb9, 0x76, 0x80, 0x28, 0x85, 0x1e, 0xb2, 0xaf, 0xd0, 0x84,
+	0x2a, 0xf7, 0xb8, 0xcc, 0xd3, 0xbc, 0x4c, 0x53, 0xd0, 0x3b, 0x29, 0xfb, 0x1d, 0x9a, 0xd0, 0x73,
+	0xec, 0x33, 0x14, 0xb5, 0x25, 0xeb, 0x01, 0xcc, 0x83, 0xb2, 0x05, 0x64, 0xe8, 0xfb, 0x64, 0x64,
+	0x43, 0xdf, 0xb7, 0x47, 0xd8, 0x77, 0x1d, 0x18, 0xb9, 0x4a, 0x89, 0xeb, 0x6b, 0x1b, 0xf4, 0x13,
+	0x6e, 0xd3, 0xf7, 0x2f, 0x05, 0xb3, 0x2d, 0x59, 0x55, 0xb8, 0x76, 0x66, 0x1e, 0x80, 0x7d, 0x94,
+	0x3d, 0x92, 0xed, 0xe3, 0x00, 0x33, 0xb3, 0x0c, 0x4a, 0x3d, 0x3e, 0xc7, 0xab, 0x83, 0xaf, 0x9f,
+	0x4f, 0x77, 0x57, 0x2c, 0xa0, 0xfd, 0xde, 0x5a, 0xfa, 0xac, 0x83, 0xbd, 0x08, 0xfe, 0x93, 0xcf,
+	0x36, 0x2b, 0xe4, 0xe1, 0x4d, 0x3e, 0xfb, 0x22, 0x2d, 0x7d, 0xb6, 0x4a, 0xfc, 0xef, 0x7d, 0x66,
+	0x56, 0xc1, 0x5e, 0xd2, 0xba, 0xb8, 0x79, 0xba, 0xe9, 0xaa, 0xf7, 0xc1, 0xee, 0xca, 0x04, 0x5a,
+	0x1d, 0x94, 0x33, 0x35, 0xf9, 0x08, 0x54, 0x22, 0x14, 0x40, 0x1c, 0xe2, 0xd0, 0xe3, 0xff, 0xb1,
+	0x68, 0x2d, 0x0f, 0xb4, 0x0f, 0x9c, 0x99, 0x1a, 0x13, 0x81, 0xfb, 0x30, 0x20, 0xf1, 0xf2, 0x3d,
+	0x0e, 0x75, 0x91, 0x2c, 0x49, 0x96, 0xe8, 0x22, 0x4b, 0xf4, 0x16, 0xc1, 0xa1, 0xf9, 0x2c, 0xb9,
+	0xe1, 0x4f, 0x3f, 0x8e, 0xeb, 0x1e, 0x66, 0xfd, 0xb8, 0xab, 0x3b, 0x24, 0x10, 0x31, 0x24, 0x7e,
+	0x4e, 0xa9, 0x7b, 0x65, 0xb0, 0xc9, 0x00, 0x51, 0xde, 0x40, 0xad, 0x4c, 0x5b, 0x93, 0x41, 0x75,
+	0xdd, 0x70, 0xda, 0x0b, 0x70, 0xf8, 0x57, 0x93, 0x27, 0x8f, 0x24, 0xbe, 0x93, 0x74, 0xb0, 0x8a,
+	0xb5, 0xa8, 0xcd, 0xd7, 0xd3, 0x99, 0x2a, 0xdd, 0xcc, 0x54, 0xe9, 0xe7, 0x4c, 0x95, 0x3e, 0xce,
+	0xd5, 0xc2, 0xcd, 0x5c, 0x2d, 0x7c, 0x9b, 0xab, 0x85, 0xf7, 0x4f, 0x6e, 0x4d, 0xd6, 0x22, 0x34,
+	0xb8, 0xcc, 0x32, 0xd7, 0x35, 0xc6, 0x69, 0xf6, 0xf2, 0xe9, 0xba, 0x25, 0x1e, 0x8b, 0xcf, 0xff,
+	0x04, 0x00, 0x00, 0xff, 0xff, 0xd0, 0x9f, 0xfa, 0xa4, 0x99, 0x05, 0x00, 0x00,
 }
 
 func (m *ContractExecutionAuthorization) Marshal() (dAtA []byte, err error) {
@@ -697,11 +770,11 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) MarshalToSizedBu
 			}
 		}
 	}
-	if m.MaxExecutions != nil {
+	if m.ExecutionLimit != nil {
 		{
-			size := m.MaxExecutions.Size()
+			size := m.ExecutionLimit.Size()
 			i -= size
-			if _, err := m.MaxExecutions.MarshalTo(dAtA[i:]); err != nil {
+			if _, err := m.ExecutionLimit.MarshalTo(dAtA[i:]); err != nil {
 				return 0, err
 			}
 		}
@@ -760,6 +833,28 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) Marshal
 	return len(dAtA) - i, nil
 }
 
+func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MaxFunds != nil {
+		{
+			size, err := m.MaxFunds.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuthz(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
@@ -777,7 +872,7 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKe
 			i = encodeVarintAuthz(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x2a
 	}
 	return len(dAtA) - i, nil
 }
@@ -799,7 +894,7 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard)
 			i = encodeVarintAuthz(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x32
 	}
 	return len(dAtA) - i, nil
 }
@@ -975,6 +1070,43 @@ func (m *MaxCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *MaxFunds) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MaxFunds) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MaxFunds) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Amounts) > 0 {
+		for iNdEx := len(m.Amounts) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Amounts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAuthz(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *AllowAllWildcard) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1067,8 +1199,8 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAuthz(uint64(l))
 	}
-	if m.MaxExecutions != nil {
-		n += m.MaxExecutions.Size()
+	if m.ExecutionLimit != nil {
+		n += m.ExecutionLimit.Size()
 	}
 	if m.Filter != nil {
 		n += m.Filter.Size()
@@ -1097,6 +1229,19 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) Size() 
 	_ = l
 	if m.MaxCalls != nil {
 		l = m.MaxCalls.Size()
+		n += 1 + l + sovAuthz(uint64(l))
+	}
+	return n
+}
+
+func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MaxFunds != nil {
+		l = m.MaxFunds.Size()
 		n += 1 + l + sovAuthz(uint64(l))
 	}
 	return n
@@ -1202,6 +1347,21 @@ func (m *MaxCalls) Size() (n int) {
 	_ = l
 	if m.Remaining != 0 {
 		n += 1 + sovAuthz(uint64(m.Remaining))
+	}
+	return n
+}
+
+func (m *MaxFunds) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Amounts) > 0 {
+		for _, e := range m.Amounts {
+			l = e.Size()
+			n += 1 + l + sovAuthz(uint64(l))
+		}
 	}
 	return n
 }
@@ -1417,7 +1577,7 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) Unmarshal(dAtA [
 			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.MaxExecutions = &ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls{v}
+			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls{v}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -1452,9 +1612,44 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) Unmarshal(dAtA [
 			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.MaxExecutions = &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{v}
+			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{v}
 			iNdEx = postIndex
 		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxFunds", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &MaxFunds{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds{v}
+			iNdEx = postIndex
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AcceptedMessageKeys", wireType)
 			}
@@ -1489,7 +1684,7 @@ func (m *ContractExecutionAuthorization_ContractExecutionGrant) Unmarshal(dAtA [
 			}
 			m.Filter = &ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys{v}
 			iNdEx = postIndex
-		case 5:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AllowAllWildcard", wireType)
 			}
@@ -1883,6 +2078,91 @@ func (m *MaxCalls) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuthz(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *MaxFunds) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuthz
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MaxFunds: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MaxFunds: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amounts", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amounts = append(m.Amounts, types.Coin{})
+			if err := m.Amounts[len(m.Amounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAuthz(dAtA[iNdEx:])

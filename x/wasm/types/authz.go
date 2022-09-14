@@ -13,13 +13,13 @@ const gasDeserializationCostPerByte = uint64(1)
 var _ authztypes.Authorization = &ContractExecutionAuthorization{}
 
 // NewContractAuthorization creates a new ContractExecutionAuthorization object.
-func NewContractAuthorization(contractAddr sdk.AccAddress, filter isContractExecutionAuthorization_ContractExecutionGrant_Filter, max isContractExecutionAuthorization_ContractExecutionGrant_MaxExecutions) *ContractExecutionAuthorization {
+func NewContractAuthorization(contractAddr sdk.AccAddress, filter isContractExecutionAuthorization_ContractExecutionGrant_Filter, execLimit isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit) *ContractExecutionAuthorization {
 	return &ContractExecutionAuthorization{
 		Grants: []ContractExecutionAuthorization_ContractExecutionGrant{
 			{
-				Contract:      contractAddr.String(),
-				MaxExecutions: max,
-				Filter:        filter,
+				Contract:       contractAddr.String(),
+				ExecutionLimit: execLimit,
+				Filter:         filter,
 			},
 		},
 	}
@@ -60,13 +60,37 @@ func (a ContractExecutionAuthorization) applyGrants(ctx sdk.Context, exec *MsgEx
 		if g.Contract != exec.Contract {
 			continue
 		}
-		// first check execution counter
+		// first check limits
 		var modified bool
 		var newGrants []ContractExecutionAuthorization_ContractExecutionGrant
+
 		switch {
+		case g.GetMaxFunds() != nil:
+			if !exec.Funds.Empty() {
+				if exec.Funds.IsAnyGT(g.GetMaxFunds().GetAmounts()) {
+					return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
+				}
+				obj := ContractExecutionAuthorization_ContractExecutionGrant{
+					Contract: g.Contract,
+					ExecutionLimit: &ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds{
+						MaxFunds: &MaxFunds{Amounts: g.GetMaxFunds().GetAmounts().Sub(exec.Funds)},
+					},
+					Filter: g.Filter,
+				}
+				newGrants = append(append(a.Grants[0:i], obj), a.Grants[i+1:]...)
+				modified = true
+			}
 		case g.GetInfiniteCalls() != nil:
+			if !exec.Funds.Empty() {
+				return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
+			}
 			newGrants = a.GetGrants()
+			modified = true
+
 		case g.GetMaxCalls() != nil:
+			if !exec.Funds.Empty() {
+				return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
+			}
 			switch n := g.GetMaxCalls().Remaining; n {
 			case 0:
 				return nil, false, sdkerrors.ErrUnauthorized.Wrap("no executions allowed")
@@ -76,7 +100,7 @@ func (a ContractExecutionAuthorization) applyGrants(ctx sdk.Context, exec *MsgEx
 			default:
 				obj := ContractExecutionAuthorization_ContractExecutionGrant{
 					Contract: g.Contract,
-					MaxExecutions: &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{
+					ExecutionLimit: &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{
 						MaxCalls: &MaxCalls{Remaining: n - 1},
 					},
 					Filter: g.Filter,
@@ -85,7 +109,7 @@ func (a ContractExecutionAuthorization) applyGrants(ctx sdk.Context, exec *MsgEx
 				modified = true
 			}
 		default:
-			return nil, false, sdkerrors.ErrUnauthorized.Wrapf("unsupported max execution type: %T", g.MaxExecutions)
+			return nil, false, sdkerrors.ErrUnauthorized.Wrapf("unsupported max execution type: %T", g.ExecutionLimit)
 		}
 		// then check permission set
 		switch {
@@ -122,18 +146,22 @@ func (a ContractExecutionAuthorization) ValidateBasic() error {
 }
 
 func (g ContractExecutionAuthorization_ContractExecutionGrant) ValidateBasic() error {
+	// some sanity checks only, need more
+
 	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
 	// execution counter
 	switch {
+	case g.GetMaxFunds() != nil:
+		return g.GetMaxFunds().GetAmounts().Validate()
 	case g.GetInfiniteCalls() != nil:
 	case g.GetMaxCalls() != nil:
 		if g.GetMaxCalls().Remaining == 0 {
 			return ErrEmpty.Wrap("remaining calls")
 		}
 	default:
-		return ErrInvalid.Wrapf("unsupported max execution type: %T", g.MaxExecutions)
+		return ErrInvalid.Wrapf("unsupported max execution type: %T", g.ExecutionLimit)
 	}
 	// filter
 	switch {

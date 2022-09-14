@@ -13,6 +13,7 @@
     - [ContractMigrationAuthorization.ContractMigrationGrant](#cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant)
     - [InfiniteCalls](#cosmwasm.wasm.v1.InfiniteCalls)
     - [MaxCalls](#cosmwasm.wasm.v1.MaxCalls)
+    - [MaxFunds](#cosmwasm.wasm.v1.MaxFunds)
   
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
@@ -160,6 +161,7 @@ ContractExecutionGrant a granted execute permission for a single contract
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `infinite_calls` | [InfiniteCalls](#cosmwasm.wasm.v1.InfiniteCalls) |  |  |
 | `max_calls` | [MaxCalls](#cosmwasm.wasm.v1.MaxCalls) |  |  |
+| `max_funds` | [MaxFunds](#cosmwasm.wasm.v1.MaxFunds) |  |  |
 | `accepted_message_keys` | [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter) |  |  |
 | `allow_all_wildcard` | [AllowAllWildcard](#cosmwasm.wasm.v1.AllowAllWildcard) |  |  |
 
@@ -220,6 +222,21 @@ MaxCalls limited number of calls
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxFunds"></a>
+
+### MaxFunds
+MaxFunds defines the max amounts that can be sent to a contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated |  |
 
 
 
