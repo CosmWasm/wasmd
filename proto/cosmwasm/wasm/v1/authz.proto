@@ -3,6 +3,7 @@ package cosmwasm.wasm.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 
@@ -17,16 +18,17 @@ message ContractExecutionAuthorization {
     // Contract is the address of the smart contract
     string contract = 1;
 
-    // MaxExecutions specifies the number of authorized executions remaining
-    oneof max_executions {
+    // ExecutionLimit specifies number of executions or spendable amounts
+    oneof execution_limit {
       InfiniteCalls infinite_calls = 2;
       MaxCalls max_calls = 3;
+      MaxFunds max_funds = 4;
     }
 
     // Filter rules to apply
     oneof filter {
-      AcceptedMessageKeysFilter accepted_message_keys = 4;
-      AllowAllWildcard allow_all_wildcard = 5;
+      AcceptedMessageKeysFilter accepted_message_keys = 5;
+      AllowAllWildcard allow_all_wildcard = 6;
     }
   }
 }
@@ -58,6 +60,14 @@ message InfiniteCalls {}
 message MaxCalls {
   // Remaining number that is decremented on each execution
   uint64 remaining = 1;
+}
+
+// MaxFunds defines the max amounts that can be sent to a contract
+message MaxFunds {
+  repeated cosmos.base.v1beta1.Coin amounts = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }
 
 // AllowAllWildcard is a wildcard to allow any type of contract execution
