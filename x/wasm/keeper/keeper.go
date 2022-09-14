@@ -1178,6 +1178,7 @@ func NewCoinBurner(bank types.BankKeeper) CoinBurner {
 
 // PruneBalances burns all coins owned by the account.
 func (b CoinBurner) PruneBalances(ctx sdk.Context, address sdk.AccAddress) error {
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	if amt := b.bank.GetAllBalances(ctx, address); !amt.IsZero() {
 		if err := b.bank.SendCoinsFromAccountToModule(ctx, address, types.ModuleName, amt); err != nil {
 			return sdkerrors.Wrap(err, "prune account balance")

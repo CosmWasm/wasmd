@@ -2274,3 +2274,14 @@ func TestAppendToContractHistory(t *testing.T) {
 	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
 	assert.Equal(t, orderedEntries, gotHistory)
 }
+
+func TestCoinBurnerPruneBalances(t *testing.T) {
+	// should not use users gas
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	addr := keepers.Faucet.NewFundedRandomAccount(parentCtx, sdk.NewCoin("stake", sdk.NewInt(1)))
+	// when
+	ctx := parentCtx.WithGasMeter(sdk.NewGasMeter(0))
+	gotErr := NewCoinBurner(keepers.BankKeeper).PruneBalances(ctx, addr)
+	require.NoError(t, gotErr)
+	assert.Empty(t, keepers.BankKeeper.GetAllBalances(parentCtx, addr))
+}
