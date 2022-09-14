@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -283,7 +285,15 @@ func GetAllCodes(state *types.GenesisState) []CodeMeta {
 				creator := sdk.MustAccAddressFromBech32(msg.Sender)
 				accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
 			}
-			hash := sha256.Sum256(msg.WASMByteCode)
+			bz := msg.WASMByteCode
+			if ioutils.IsGzip(msg.WASMByteCode) {
+				var err error
+				bz, err = ioutils.Uncompress(msg.WASMByteCode, uint64(types.MaxWasmSize))
+				if err != nil {
+					panic(fmt.Sprintf("failed to unzip wasm binary: %s", err))
+				}
+			}
+			hash := sha256.Sum256(bz)
 			all = append(all, CodeMeta{
 				CodeID: seq,
 				Info: types.CodeInfo{
