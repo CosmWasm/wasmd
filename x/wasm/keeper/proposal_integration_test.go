@@ -51,14 +51,14 @@ func TestStoreCodeProposal(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
 			myActorAddress := RandomBech32AccountAddress(t)
-
+			govAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 				p.RunAs = myActorAddress
 				p.WASMByteCode = wasmCode
 				p.UnpinCode = spec.unpinCode
 			})
 
-			msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
+			msgContent, err := govv1.NewLegacyContent(src, govAddress)
 			require.NoError(t, err)
 
 			em := sdk.NewEventManager()
