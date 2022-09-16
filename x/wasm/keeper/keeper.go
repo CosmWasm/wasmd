@@ -302,7 +302,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
-	contractAddress := BuildContractAddress(codeInfo.CodeHash, creator, label)
+	contractAddress := BuildContractAddress(codeInfo.CodeHash, creator, label, initMsg)
 	if k.HasContractInfo(ctx, contractAddress) {
 		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
 	}
@@ -1020,16 +1020,18 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 
 // BuildContractAddress generates a contract address for the wasm module with len = types.ContractAddrLen using the
 // Cosmos SDK address.Module function.
-// Internally a key is built containing (len(checksum) | checksum | len(sender_address) | sender_address | len(label) | label).
+// Internally a key is built containing (len(checksum) | checksum | len(sender_address) | sender_address | len(label) | label| len(sort(initMsg))|sort(initMsg)).
 // All method parameter values must be valid and not be empty or nil.
-func BuildContractAddress(checksum []byte, creator sdk.AccAddress, label string) sdk.AccAddress {
+func BuildContractAddress(checksum []byte, creator sdk.AccAddress, label string, initMsg types.RawContractMessage) sdk.AccAddress {
 	checksum = address.MustLengthPrefix(checksum)
 	creator = address.MustLengthPrefix(creator)
 	labelBz := address.MustLengthPrefix([]byte(label))
-	key := make([]byte, len(checksum)+len(creator)+len(labelBz))
+	initMsg = address.MustLengthPrefix(sdk.MustSortJSON(initMsg))
+	key := make([]byte, len(checksum)+len(creator)+len(labelBz)+len(initMsg))
 	copy(key[0:], checksum)
 	copy(key[len(checksum):], creator)
 	copy(key[len(checksum)+len(creator):], labelBz)
+	copy(key[len(checksum)+len(creator)+len(labelBz):], initMsg)
 	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
 }
 

@@ -159,7 +159,7 @@ func TestQuerySmartContractState(t *testing.T) {
 func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	creator := RandomAccountAddress(t)
-	contractAddr := BuildContractAddress([]byte("myCodeHash"), creator, "testing")
+	contractAddr := BuildContractAddress([]byte("myCodeHash"), creator, "testing", []byte(`{}`))
 	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{CodeHash: []byte("myCodeHash")})
 	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,

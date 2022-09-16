@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -68,10 +70,10 @@ func GetCmdLibVersion() *cobra.Command {
 // GetCmdBuildAddress build a contract address
 func GetCmdBuildAddress() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "build-address [code-hash] [creator-address] [label]",
+		Use:     "build-address [code-hash] [creator-address] [label] [json_encoded_init_args]",
 		Short:   "build contract address",
 		Aliases: []string{"address"},
-		Args:    cobra.ExactArgs(3),
+		Args:    cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			codeHash, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -85,7 +87,12 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err := types.ValidateLabel(label); err != nil {
 				return fmt.Errorf("label: %s", err)
 			}
-			cmd.Println(keeper.BuildContractAddress(codeHash, creator, label).String())
+
+			initMsg := types.RawContractMessage(args[3])
+			if err := initMsg.ValidateBasic(); err != nil {
+				return sdkerrors.Wrap(err, "init message")
+			}
+			cmd.Println(keeper.BuildContractAddress(codeHash, creator, label, []byte(args[3])).String())
 			return nil
 		},
 	}

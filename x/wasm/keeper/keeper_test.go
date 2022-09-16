@@ -589,7 +589,7 @@ func TestInstantiateWithUniqueContractAddress(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-			expAddr := BuildContractAddress(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.label)
+			expAddr := BuildContractAddress(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.label, []byte(spec.initMsg))
 			assert.Equal(t, expAddr.String(), gotAddr.String())
 			require.NotContains(t, used, gotAddr.String())
 			used[gotAddr.String()] = struct{}{}
@@ -606,7 +606,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	senderAddr := DeterministicAccountAddress(t, 1)
 	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
 	const myLabel = "testing"
-	contractAddr := BuildContractAddress(example.Checksum, senderAddr, myLabel)
+	contractAddr := BuildContractAddress(example.Checksum, senderAddr, myLabel, types.ExampleHackatomInitMsg())
 
 	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
@@ -2010,6 +2010,7 @@ func TestBuildContractAddress(t *testing.T) {
 		checksum   []byte
 		label      string
 		creator    string
+		initMsg    []byte
 		expAddress string
 	}{
 		"initial account addr example": {
@@ -2073,6 +2074,7 @@ func TestBuildContractAddress(t *testing.T) {
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple1prkdvjmvv4s3tnppfxmlpj259v9cplf3wws4qq9qd7w3s4yqzqeqem4759",
 		},
+		// todo: add examples with init message
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
@@ -2080,7 +2082,7 @@ func TestBuildContractAddress(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotAddr := BuildContractAddress(spec.checksum, creatorAddr, spec.label)
+			gotAddr := BuildContractAddress(spec.checksum, creatorAddr, spec.label, spec.initMsg)
 
 			require.Equal(t, spec.expAddress, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))

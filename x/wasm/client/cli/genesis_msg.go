@@ -334,7 +334,7 @@ func GetAllContracts(state *types.GenesisState) ([]ContractMeta, error) {
 				return nil, types.ErrNotFound.Wrapf("hash for code-id: %d", msg.CodeID)
 			}
 			all = append(all, ContractMeta{
-				ContractAddress: keeper.BuildContractAddress(codeHash, senderAddr, msg.Label).String(),
+				ContractAddress: keeper.BuildContractAddress(codeHash, senderAddr, msg.Label, msg.Msg).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
@@ -381,7 +381,7 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 			if hash == nil {
 				panic(fmt.Sprintf("unknown code id: %d", msg.CodeID))
 			}
-			if keeper.BuildContractAddress(hash, senderAddr, msg.Label).String() == contractAddr {
+			if keeper.BuildContractAddress(hash, senderAddr, msg.Label, msg.Msg).String() == contractAddr {
 				return true
 			}
 		}

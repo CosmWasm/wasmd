@@ -367,7 +367,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 
 func TestExecuteContractCmd(t *testing.T) {
 	mySenderAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	myFirstContractAddress := keeper.BuildContractAddress([]byte("myCodeHash"), mySenderAddr, "my").String()
+	myFirstContractAddress := keeper.BuildContractAddress([]byte("myCodeHash"), mySenderAddr, "my", []byte(`{}`)).String()
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
@@ -585,17 +585,17 @@ func TestGetAllContracts(t *testing.T) {
 			src: types.GenesisState{
 				Codes: []types.Code{{CodeID: 1, CodeInfo: types.CodeInfo{CodeHash: []byte("firstCodeHash")}}},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "first", CodeID: 1}}},
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr2.String(), Label: "second", CodeID: 1}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "first", CodeID: 1, Msg: []byte(`{}`)}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr2.String(), Label: "second", CodeID: 1, Msg: []byte(`{}`)}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first", []byte(`{}`)).String(),
 					Info:            types.ContractInfo{Creator: creatorAddr1.String(), Label: "first", CodeID: 1},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr2, "second").String(),
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr2, "second", []byte(`{}`)).String(),
 					Info:            types.ContractInfo{Creator: creatorAddr2.String(), Label: "second", CodeID: 1},
 				},
 			},
@@ -608,21 +608,21 @@ func TestGetAllContracts(t *testing.T) {
 				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+						ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first", []byte(`{}`)).String(),
 						ContractInfo:    types.ContractInfo{Label: "first", CodeID: 1},
 					},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "hundred", CodeID: 100}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "hundred", CodeID: 100, Msg: []byte(`{"foo":"bar"}`)}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first", []byte(`{}`)).String(),
 					Info:            types.ContractInfo{Label: "first", CodeID: 1},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress([]byte("otherCodeHash"), creatorAddr1, "hundred").String(),
+					ContractAddress: keeper.BuildContractAddress([]byte("otherCodeHash"), creatorAddr1, "hundred", []byte(`{"foo":"bar"}`)).String(),
 					Info:            types.ContractInfo{Creator: creatorAddr1.String(), Label: "hundred", CodeID: 100},
 				},
 			},

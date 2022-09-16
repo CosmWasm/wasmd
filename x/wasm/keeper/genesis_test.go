@@ -84,7 +84,7 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 
 		contract.CodeID = codeID
-		contractAddr := BuildContractAddress(checksum, creatorAddr, "testing")
+		contractAddr := BuildContractAddress(checksum, creatorAddr, "testing", []byte(`{}`))
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
@@ -278,7 +278,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 					},
 				},
@@ -298,10 +298,10 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 					}, {
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, "other-label").String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, "other-label", []byte(`{}`)).String(),
 						ContractInfo: myContractInfoFixture(func(i *wasmTypes.ContractInfo) {
 							i.Label = "other-label"
 						}),
@@ -318,7 +318,7 @@ func TestGenesisInit(t *testing.T) {
 			src: types.GenesisState{
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 					},
 				},
@@ -334,10 +334,10 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 					}, {
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 					},
 				},
@@ -353,7 +353,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
+						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel, []byte(`{}`)).String(),
 						ContractInfo:    myContractInfoFixture(),
 						ContractState: []types.Model{
 							{
@@ -560,7 +560,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 		myAddress          sdk.AccAddress = bytes.Repeat([]byte{1}, types.ContractAddrLen)
 		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, types.ContractAddrLen)
 		beneficiaryAddress sdk.AccAddress = bytes.Repeat([]byte{3}, types.ContractAddrLen)
-		contractAddr                      = BuildContractAddress(wasmHash[:], myAddress, "testing")
+		contractAddr                      = BuildContractAddress(wasmHash[:], myAddress, "testing", []byte(`{}`))
 	)
 	const denom = "stake"
 	importState := types.GenesisState{

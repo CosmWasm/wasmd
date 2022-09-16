@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -104,6 +105,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
 		p.Label = "testing"
+		p.Msg = types.ExampleHackatomInitMsg()
 	})
 	em := sdk.NewEventManager()
 
@@ -118,7 +120,7 @@ func TestInstantiateProposal(t *testing.T) {
 
 	// then
 	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
-	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
+	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing", types.ExampleHackatomInitMsg())
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -165,6 +167,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.RunAs = oneAddress.String()
 		p.Admin = "invalid"
 		p.Label = "testing"
+		p.Msg = types.ExampleHackatomInitMsg()
 	})
 	_, err = govKeeper.SubmitProposal(ctx, src)
 	require.Error(t, err)
@@ -175,6 +178,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		p.RunAs = oneAddress.String()
 		p.Admin = ""
 		p.Label = "testing"
+		p.Msg = types.ExampleHackatomInitMsg()
 	})
 	em := sdk.NewEventManager()
 
@@ -189,7 +193,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 
 	// then
 	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
-	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
+	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing", types.ExampleHackatomInitMsg())
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -230,7 +234,7 @@ func TestMigrateProposal(t *testing.T) {
 	var (
 		anyAddress   = DeterministicAccountAddress(t, 1)
 		otherAddress = DeterministicAccountAddress(t, 2)
-		contractAddr = BuildContractAddress(codeInfoFixture.CodeHash, RandomAccountAddress(t), "")
+		contractAddr = BuildContractAddress(codeInfoFixture.CodeHash, RandomAccountAddress(t), "", []byte(fmt.Sprintf(`{"verifier":"%s","beneficiary":"%s"}`, DeterministicAccountAddress(t, 1).String(), DeterministicAccountAddress(t, 1).String())))
 	)
 
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
@@ -412,7 +416,7 @@ func TestAdminProposals(t *testing.T) {
 	var (
 		otherAddress = DeterministicAccountAddress(t, 2)
 		codeHash     = sha256.Sum256(wasmCode)
-		contractAddr = BuildContractAddress(codeHash[:], RandomAccountAddress(t), "")
+		contractAddr = BuildContractAddress(codeHash[:], RandomAccountAddress(t), "", types.ExampleHackatomInitMsg())
 	)
 
 	specs := map[string]struct {

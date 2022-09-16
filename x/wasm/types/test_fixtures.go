@@ -191,24 +191,25 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 	return p
 }
 
-func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
-	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
-
-		initMsg = struct {
-			Verifier    sdk.AccAddress `json:"verifier"`
-			Beneficiary sdk.AccAddress `json:"beneficiary"`
-		}{
-			Verifier:    anyValidAddress,
-			Beneficiary: anyValidAddress,
-		}
-	)
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
-
-	initMsgBz, err := json.Marshal(initMsg)
+// ExampleHackatomInitMsg deterministic init message to be used for tests only
+func ExampleHackatomInitMsg() []byte {
+	var anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
+	r, err := json.Marshal(struct {
+		Verifier    sdk.AccAddress `json:"verifier"`
+		Beneficiary sdk.AccAddress `json:"beneficiary"`
+	}{
+		Verifier:    anyValidAddress,
+		Beneficiary: anyValidAddress,
+	})
 	if err != nil {
 		panic(err)
 	}
+	return r
+}
+
+func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
+	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+
 	p := &InstantiateContractProposal{
 		Title:       "Foo",
 		Description: "Bar",
@@ -216,7 +217,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 		Admin:       anyAddress,
 		CodeID:      1,
 		Label:       "testing",
-		Msg:         initMsgBz,
+		Msg:         ExampleHackatomInitMsg(),
 		Funds:       nil,
 	}
 
