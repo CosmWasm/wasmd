@@ -128,8 +128,6 @@ require (
 replace (
 	// Our cosmos-sdk branch is:  https://github.com/osmosis-labs/cosmos-sdk v0.45.0x-osmo-v12, Direct link: https://github.com/osmosis-labs/cosmos-sdk/releases/tag/v0.45.0-osmo-v12
 	github.com/cosmos/cosmos-sdk => github.com/osmosis-labs/cosmos-sdk v0.45.0-osmo-v12
-	// Use Osmosis fast iavl
-	github.com/cosmos/iavl => github.com/osmosis-labs/iavl v0.17.3-osmo-v7
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
