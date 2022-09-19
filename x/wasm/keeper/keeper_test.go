@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -2276,12 +2276,59 @@ func TestAppendToContractHistory(t *testing.T) {
 }
 
 func TestCoinBurnerPruneBalances(t *testing.T) {
-	// should not use users gas
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	addr := keepers.Faucet.NewFundedRandomAccount(parentCtx, sdk.NewCoin("stake", sdk.NewInt(1)))
-	// when
-	ctx := parentCtx.WithGasMeter(sdk.NewGasMeter(0))
-	gotErr := NewCoinBurner(keepers.BankKeeper).PruneBalances(ctx, addr)
-	require.NoError(t, gotErr)
-	assert.Empty(t, keepers.BankKeeper.GetAllBalances(parentCtx, addr))
+	amts := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
+
+	// create vesting account
+	var vestingAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
+	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(sdk.WrapSDKContext(parentCtx), msgCreateVestingAccount)
+	require.NoError(t, err)
+	originalVestingAcc := keepers.AccountKeeper.GetAccount(parentCtx, vestingAddr)
+	require.NotNil(t, originalVestingAcc)
+
+	specs := map[string]struct {
+		setupAcc    func(t *testing.T, ctx sdk.Context)
+		expBalances sdk.Coins
+		expErr      *sdkerrors.Error
+	}{
+		"vesting account - all removed": {
+			setupAcc:    func(t *testing.T, ctx sdk.Context) {},
+			expBalances: sdk.NewCoins(),
+		},
+		"vesting account with other tokens - only original denoms removed": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) {
+				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
+			},
+			expBalances: sdk.NewCoins(sdk.NewCoin("other", sdk.NewInt(2))),
+		},
+		"non vesting account": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) {
+				originalVestingAcc = &authtypes.BaseAccount{Address: originalVestingAcc.GetAddress().String()}
+			},
+			expErr: types.ErrAccountExists,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			spec.setupAcc(t, ctx)
+			// overwrite account as in keeper before calling prune
+			contractAccount := keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr)
+			keepers.AccountKeeper.SetAccount(ctx, contractAccount)
+
+			// when
+			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
+			gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, originalVestingAcc)
+			// then
+			if spec.expErr != nil {
+				require.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expBalances, keepers.BankKeeper.GetAllBalances(ctx, vestingAddr))
+			// and no out of gas panic
+		})
+	}
 }

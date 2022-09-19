@@ -154,19 +154,6 @@ func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI
 	})
 }
 
-// WithPruneAccountTypesOnContractInstantiation sets the account types that should be cleared. Account types of this list
-// will be overwritten with the BaseAccount type and their balance burned, when they exist for an address on contract
-// instantiation.
-//
-// Values should be references and contain the `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.ContinuousVestingAccount`
-// as post genesis account types with an open address range.
-func WithPruneAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
-	m := asTypeMap(accts)
-	return optsFn(func(k *Keeper) {
-		k.pruneAccountTypes = m
-	})
-}
-
 func asTypeMap(accts []authtypes.AccountI) map[reflect.Type]struct{} {
 	m := make(map[reflect.Type]struct{}, len(accts))
 	for _, a := range accts {
