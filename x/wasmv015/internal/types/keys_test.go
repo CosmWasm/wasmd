@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +33,7 @@ func TestGetContractByCreatedSecondaryIndexKey(t *testing.T) {
 		CodeID:  1,
 		Created: &AbsoluteTxPosition{2 + 1<<(8*7), 3 + 1<<(8*7)},
 	}
-	addr := bytes.Repeat([]byte{4}, sdk.AddrLen)
+	addr := bytes.Repeat([]byte{4}, v040auth.AddrLen)
 	got := GetContractByCreatedSecondaryIndexKey(addr, c)
 	exp := []byte{6, // prefix
 		0, 0, 0, 0, 0, 0, 0, 1, // codeID

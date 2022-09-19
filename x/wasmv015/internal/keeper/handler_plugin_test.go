@@ -8,6 +8,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasmv015/internal/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -19,9 +20,9 @@ func TestEncoding(t *testing.T) {
 	_, _, addr1 := keyPubAddr()
 	_, _, addr2 := keyPubAddr()
 	invalidAddr := "xrnd1d02kd90n38qvr3qb9qof83fn2d2"
-	valAddr := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr := make(sdk.ValAddress, v040auth.AddrLen)
 	valAddr[0] = 12
-	valAddr2 := make(sdk.ValAddress, sdk.AddrLen)
+	valAddr2 := make(sdk.ValAddress, v040auth.AddrLen)
 	valAddr2[1] = 123
 
 	jsonMsg := json.RawMessage(`{"foo": 123}`)

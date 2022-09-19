@@ -181,13 +181,12 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	if sec < 0 {
 		panic("Block (unix) time must never be negative ")
 	}
-	nano := ctx.BlockTime().Nanosecond()
+	// nano := ctx.BlockTime().Nanosecond()
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
-			Height:    uint64(ctx.BlockHeight()),
-			Time:      uint64(sec),
-			TimeNanos: uint64(nano),
-			ChainID:   ctx.ChainID(),
+			Height:  uint64(ctx.BlockHeight()),
+			Time:    uint64(sec),
+			ChainID: ctx.ChainID(),
 		},
 		Contract: wasmvmtypes.ContractInfo{
 			Address: contractAddr.String(),
@@ -223,7 +222,7 @@ const AttributeKeyContractAddr = "contract_address"
 func ParseEvents(wasmOutputAttrs []wasmvmtypes.EventAttribute, contractAddr sdk.AccAddress) sdk.Events {
 	// we always tag with the contract address issuing this event
 	attrs := []sdk.Attribute{sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String())}
-	
+
 	// append attributes from wasm to the sdk.Event
 	for _, l := range wasmOutputAttrs {
 		// and reserve the contract_address key for our use (not contract)
@@ -232,7 +231,7 @@ func ParseEvents(wasmOutputAttrs []wasmvmtypes.EventAttribute, contractAddr sdk.
 			attrs = append(attrs, attr)
 		}
 	}
-	
+
 	// each wasm invokation always returns one sdk.Event
 	return sdk.Events{sdk.NewEvent(CustomEventType, attrs...)}
 }

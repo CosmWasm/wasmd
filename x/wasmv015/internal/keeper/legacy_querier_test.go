@@ -10,6 +10,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasmv015/internal/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -220,7 +221,7 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	var (
-		otherAddr sdk.AccAddress = bytes.Repeat([]byte{0x2}, sdk.AddrLen)
+		otherAddr sdk.AccAddress = bytes.Repeat([]byte{0x2}, v040auth.AddrLen)
 	)
 
 	specs := map[string]struct {

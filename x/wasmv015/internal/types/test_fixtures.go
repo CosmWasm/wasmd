@@ -7,6 +7,7 @@ import (
 	"math/rand"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 )
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
@@ -199,7 +200,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 
 func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, v040auth.AddrLen)
 
 		initMsg = struct {
 			Verifier    sdk.AccAddress `json:"verifier"`
@@ -234,7 +235,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
-		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, sdk.AddrLen)
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, v040auth.AddrLen)
 
 		migMsg = struct {
 			Verifier sdk.AccAddress `json:"verifier"`

@@ -12,6 +12,7 @@ import (
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 	require.NoError(t, err)
 	var (
 		deposit                = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, sdk.AddrLen)
+		myAddr  sdk.AccAddress = bytes.Repeat([]byte{1}, v040auth.AddrLen)
 	)
 
 	specs := map[string]struct {
@@ -301,8 +302,8 @@ func TestInstantiateWithDeposit(t *testing.T) {
 	require.NoError(t, err)
 
 	var (
-		bob  = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob  = bytes.Repeat([]byte{1}, v040auth.AddrLen)
+		fred = bytes.Repeat([]byte{2}, v040auth.AddrLen)
 
 		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 		initMsg = HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob}
@@ -361,9 +362,9 @@ func TestInstantiateWithPermissions(t *testing.T) {
 
 	var (
 		deposit   = sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-		myAddr    = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		otherAddr = bytes.Repeat([]byte{2}, sdk.AddrLen)
-		anyAddr   = bytes.Repeat([]byte{3}, sdk.AddrLen)
+		myAddr    = bytes.Repeat([]byte{1}, v040auth.AddrLen)
+		otherAddr = bytes.Repeat([]byte{2}, v040auth.AddrLen)
+		anyAddr   = bytes.Repeat([]byte{3}, v040auth.AddrLen)
 	)
 
 	initMsg := HackatomExampleInitMsg{
@@ -528,8 +529,8 @@ func TestExecuteWithDeposit(t *testing.T) {
 	require.NoError(t, err)
 
 	var (
-		bob         = bytes.Repeat([]byte{1}, sdk.AddrLen)
-		fred        = bytes.Repeat([]byte{2}, sdk.AddrLen)
+		bob         = bytes.Repeat([]byte{1}, v040auth.AddrLen)
+		fred        = bytes.Repeat([]byte{2}, v040auth.AddrLen)
 		blockedAddr = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 		deposit     = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	)
