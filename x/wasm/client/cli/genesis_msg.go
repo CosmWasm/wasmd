@@ -282,7 +282,7 @@ func GetAllCodes(state *types.GenesisState) []CodeMeta {
 				accessConfig = *msg.InstantiatePermission
 			} else {
 				// default
-				creator := sdk.MustAccAddressFromBech32(msg.Sender)
+				creator, _ := sdk.AccAddressFromBech32(msg.Sender) //nolint:errcheck
 				accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
 			}
 			bz := msg.WASMByteCode

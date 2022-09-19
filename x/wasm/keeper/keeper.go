@@ -959,7 +959,11 @@ func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAd
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
 	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
-	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
+	acc, err := sdk.AccAddressFromBech32(info.Creator)
+	if err != nil {
+		return err
+	}
+	if !authz.CanModifyCodeAccessConfig(acc, caller, isSubset) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify code access config")
 	}
 
