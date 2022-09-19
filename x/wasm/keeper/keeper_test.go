@@ -6,10 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -753,6 +756,82 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 	_, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("my-response-data"), data)
+}
+
+func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
+	// Scenario:
+	// 	given a factory contract stored
+	// 	when instantiated, the contract creates a new child contract instance
+	// 	     and the child contracts queries the senders ContractInfo on instantiation
+	//	then the factory contract's ContractInfo should be returned to the child contract
+	//
+	// see also: https://github.com/CosmWasm/wasmd/issues/896
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	var instantiationCount int
+	callbacks := make([]func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error), 2)
+	wasmerMock := &wasmtesting.MockWasmer{
+		// dispatch instantiation calls to callbacks
+		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+			require.Greater(t, len(callbacks), instantiationCount, "unexpected call to instantiation")
+			do := callbacks[instantiationCount]
+			instantiationCount++
+			return do(codeID, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
+		},
+		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
+		CreateFn:      wasmtesting.NoOpCreateFn,
+	}
+
+	// overwrite wasmvm in router
+	router := baseapp.NewMsgServiceRouter()
+	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
+	types.RegisterMsgServer(router, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
+	// overwrite wasmvm in response handler
+	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
+
+	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
+	// factory contract
+	callbacks[0] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		t.Log("called factory")
+		return &wasmvmtypes.Response{Data: []byte("parent"), Messages: []wasmvmtypes.SubMsg{
+			{
+				ID: 1, ReplyOn: wasmvmtypes.ReplyNever,
+				Msg: wasmvmtypes.CosmosMsg{
+					Wasm: &wasmvmtypes.WasmMsg{
+						Instantiate: &wasmvmtypes.InstantiateMsg{CodeID: example.CodeID, Msg: []byte(`{}`), Label: "child"},
+					},
+				},
+			},
+		}}, 0, nil
+	}
+
+	// child contract
+	var capturedSenderAddr string
+	var capturedCodeInfo []byte
+	callbacks[1] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		t.Log("called child")
+		capturedSenderAddr = info.Sender
+		var err error
+		capturedCodeInfo, err = querier.Query(wasmvmtypes.QueryRequest{
+			Wasm: &wasmvmtypes.WasmQuery{
+				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: info.Sender},
+			},
+		}, gasLimit)
+		require.NoError(t, err)
+		return &wasmvmtypes.Response{Data: []byte("child")}, 0, nil
+	}
+
+	// when
+	parentAddr, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, []byte("parent"), data)
+	require.Equal(t, parentAddr.String(), capturedSenderAddr)
+	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String())
+	assert.JSONEq(t, expCodeInfo, string(capturedCodeInfo))
 }
 
 func TestExecute(t *testing.T) {
