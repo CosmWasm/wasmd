@@ -327,7 +327,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	// picks the message in the default handler chain
 	ctx, keepers := CreateDefaultTestInput(t)
 	// set some supply
-	keepers.Faucet.NewFundedAccount(ctx, sdk.NewCoin("denom", sdk.NewInt(10_000_000)))
+	keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoin("denom", sdk.NewInt(10_000_000)))
 	k := keepers.WasmKeeper
 
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // with deposit of 100 stake

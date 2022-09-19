@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/x/params/client/utils"
@@ -24,40 +25,58 @@ import (
 )
 
 func TestStoreCodeProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking")
+	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	wasmKeeper.SetParams(parentCtx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	myActorAddress := RandomBech32AccountAddress(t)
+	specs := map[string]struct {
+		codeID    int64
+		unpinCode bool
+	}{
+		"upload with pinning (default)": {
+			unpinCode: false,
+		},
+		"upload with code unpin": {
+			unpinCode: true,
+		},
+	}
 
-	src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
-		p.RunAs = myActorAddress
-		p.WASMByteCode = wasmCode
-	})
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			myActorAddress := RandomBech32AccountAddress(t)
 
-	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src, false)
-	require.NoError(t, err)
+			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
+				p.RunAs = myActorAddress
+				p.WASMByteCode = wasmCode
+				p.UnpinCode = spec.unpinCode
+			})
 
-	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx, storedProposal.GetContent())
-	require.NoError(t, err)
+			// when stored
+			storedProposal, err := govKeeper.SubmitProposal(ctx, src, false)
+			require.NoError(t, err)
 
-	// then
-	cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
-	require.NotNil(t, cInfo)
-	assert.Equal(t, myActorAddress, cInfo.Creator)
-	assert.True(t, wasmKeeper.IsPinnedCode(ctx, 1))
+			// and proposal execute
+			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+			err = handler(ctx, storedProposal.GetContent())
+			require.NoError(t, err)
 
-	storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
-	require.NoError(t, err)
-	assert.Equal(t, wasmCode, storedCode)
+			// then
+			cInfo := wasmKeeper.GetCodeInfo(ctx, 1)
+			require.NotNil(t, cInfo)
+			assert.Equal(t, myActorAddress, cInfo.Creator)
+			assert.Equal(t, !spec.unpinCode, wasmKeeper.IsPinnedCode(ctx, 1))
+
+			storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
+			require.NoError(t, err)
+			assert.Equal(t, wasmCode, storedCode)
+		})
+	}
 }
 
 func TestInstantiateProposal(t *testing.T) {
@@ -68,7 +87,7 @@ func TestInstantiateProposal(t *testing.T) {
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	require.NoError(t, wasmKeeper.importCode(ctx, 1,
@@ -98,9 +117,8 @@ func TestInstantiateProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
-	require.NoError(t, err)
-
+	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
+	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -131,7 +149,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	require.NoError(t, wasmKeeper.importCode(ctx, 1,
@@ -170,9 +188,8 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
-	require.NoError(t, err)
-
+	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
+	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -203,7 +220,7 @@ func TestMigrateProposal(t *testing.T) {
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
@@ -211,9 +228,9 @@ func TestMigrateProposal(t *testing.T) {
 	require.NoError(t, wasmKeeper.importCode(ctx, 2, codeInfoFixture, wasmCode))
 
 	var (
-		anyAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
-		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		contractAddr                = BuildContractAddress(1, 1)
+		anyAddress   = DeterministicAccountAddress(t, 1)
+		otherAddress = DeterministicAccountAddress(t, 2)
+		contractAddr = BuildContractAddress(codeInfoFixture.CodeHash, RandomAccountAddress(t), "")
 	)
 
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
@@ -390,12 +407,13 @@ func TestSudoProposal(t *testing.T) {
 }
 
 func TestAdminProposals(t *testing.T) {
-	var (
-		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		contractAddr                = BuildContractAddress(1, 1)
-	)
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
+	var (
+		otherAddress = DeterministicAccountAddress(t, 2)
+		codeHash     = sha256.Sum256(wasmCode)
+		contractAddr = BuildContractAddress(codeHash[:], RandomAccountAddress(t), "")
+	)
 
 	specs := map[string]struct {
 		state       types.ContractInfo

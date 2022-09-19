@@ -10,7 +10,7 @@ var _ types.ContractOpsKeeper = PermissionedKeeper{}
 
 // decoratedKeeper contains a subset of the wasm keeper that are already or can be guarded by an authorization policy in the future
 type decoratedKeeper interface {
-	create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error)
+	create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, checksum []byte, err error)
 	instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error)
 	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) ([]byte, error)
 	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error
@@ -19,7 +19,7 @@ type decoratedKeeper interface {
 	execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 	Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 	setContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
-	setAccessConfig(ctx sdk.Context, codeID uint64, config types.AccessConfig) error
+	setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, autz AuthorizationPolicy) error
 }
 
 type PermissionedKeeper struct {
@@ -39,7 +39,7 @@ func NewDefaultPermissionKeeper(nested decoratedKeeper) *PermissionedKeeper {
 	return NewPermissionedKeeper(nested, DefaultAuthorizationPolicy{})
 }
 
-func (p PermissionedKeeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig) (codeID uint64, err error) {
+func (p PermissionedKeeper) Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig) (codeID uint64, checksum []byte, err error) {
 	return p.nested.create(ctx, creator, wasmCode, instantiateAccess, p.authZPolicy)
 }
 
@@ -75,12 +75,12 @@ func (p PermissionedKeeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
 	return p.nested.unpinCode(ctx, codeID)
 }
 
-// SetExtraContractAttributes updates the extra attributes that can be stored with the contract info
+// SetContractInfoExtension updates the extra attributes that can be stored with the contract info
 func (p PermissionedKeeper) SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error {
 	return p.nested.setContractInfoExtension(ctx, contract, extra)
 }
 
 // SetAccessConfig updates the access config of a code id.
-func (p PermissionedKeeper) SetAccessConfig(ctx sdk.Context, codeID uint64, config types.AccessConfig) error {
-	return p.nested.setAccessConfig(ctx, codeID, config)
+func (p PermissionedKeeper) SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig) error {
+	return p.nested.setAccessConfig(ctx, codeID, caller, newConfig, p.authZPolicy)
 }

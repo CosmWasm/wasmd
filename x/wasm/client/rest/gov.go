@@ -27,6 +27,9 @@ type StoreCodeProposalJSONReq struct {
 	WASMByteCode []byte `json:"wasm_byte_code" yaml:"wasm_byte_code"`
 	// InstantiatePermission to apply on contract creation, optional
 	InstantiatePermission *types.AccessConfig `json:"instantiate_permission" yaml:"instantiate_permission"`
+
+	// UnpinCode indicates if the code should not be pinned as part of the proposal.
+	UnpinCode bool `json:"unpin_code" yaml:"unpin_code"`
 }
 
 func (s StoreCodeProposalJSONReq) Content() govtypes.Content {
@@ -36,6 +39,7 @@ func (s StoreCodeProposalJSONReq) Content() govtypes.Content {
 		RunAs:                 s.RunAs,
 		WASMByteCode:          s.WASMByteCode,
 		InstantiatePermission: s.InstantiatePermission,
+		UnpinCode:             s.UnpinCode,
 	}
 }
 

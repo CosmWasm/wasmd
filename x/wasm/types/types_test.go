@@ -373,53 +373,43 @@ func TestVerifyAddressLen(t *testing.T) {
 	}
 }
 
-func TestAccesConfigSubset(t *testing.T) {
+func TestAccessConfigSubset(t *testing.T) {
+	// read
+	// <, <= is subset of
+	// !< is not subset of
 	specs := map[string]struct {
 		check    AccessConfig
 		superSet AccessConfig
 		isSubSet bool
 	}{
+		// nobody
 		"nobody <= nobody": {
 			superSet: AccessConfig{Permission: AccessTypeNobody},
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: true,
 		},
-		"only > nobody": {
+		"only !< nobody": {
 			superSet: AccessConfig{Permission: AccessTypeNobody},
 			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
 			isSubSet: false,
 		},
-		"everybody > nobody": {
+		"anyOf !< nobody": {
+			superSet: AccessConfig{Permission: AccessTypeNobody},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
+			isSubSet: false,
+		},
+		"everybody !< nobody ": {
 			superSet: AccessConfig{Permission: AccessTypeNobody},
 			check:    AccessConfig{Permission: AccessTypeEverybody},
 			isSubSet: false,
 		},
-		"unspecified > nobody": {
+		"unspecified !< nobody": {
 			superSet: AccessConfig{Permission: AccessTypeNobody},
 			check:    AccessConfig{Permission: AccessTypeUnspecified},
 			isSubSet: false,
 		},
-		"nobody <= everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeNobody},
-			isSubSet: true,
-		},
-		"only <= everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
-			isSubSet: true,
-		},
-		"everybody <= everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeEverybody},
-			isSubSet: true,
-		},
-		"unspecified > everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeUnspecified},
-			isSubSet: false,
-		},
-		"nobody <= only": {
+		// only
+		"nobody < only": {
 			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: true,
@@ -429,23 +419,286 @@ func TestAccesConfigSubset(t *testing.T) {
 			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
 			isSubSet: true,
 		},
-		"only > only(other)": {
+		"only !< only(other)": {
 			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
 			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "other"},
 			isSubSet: false,
 		},
-		"everybody > only": {
+		"anyOf(same) <= only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			isSubSet: true,
+		},
+		"anyOf(other) !< only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
+			isSubSet: false,
+		},
+		"anyOf(same, other) !< only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "foobar"}},
+			isSubSet: false,
+		},
+		"everybody !< only": {
 			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
 			check:    AccessConfig{Permission: AccessTypeEverybody},
 			isSubSet: false,
 		},
-		"nobody > unspecified": {
+		"unspecified !<= only": {
+			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
+
+		// any of
+		"nobody < anyOf": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: true,
+		},
+		"only(same) < anyOf(same)": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			isSubSet: true,
+		},
+		"only(same) < anyOf(same, other)": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other"}},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
+			isSubSet: true,
+		},
+		"only(other) !< anyOf": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "other"},
+			isSubSet: false,
+		},
+		"anyOf < anyOf": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			isSubSet: true,
+		},
+		"anyOf(multiple) < anyOf(multiple)": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other"}},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other"}},
+			isSubSet: true,
+		},
+		"anyOf(multiple, other) !< anyOf(multiple)": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other", "foo"}},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other", "bar"}},
+			isSubSet: false,
+		},
+		"anyOf(multiple) !< anyOf": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other"}},
+			isSubSet: false,
+		},
+		"everybody !< anyOf": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: false,
+		},
+		"unspecified !< anyOf ": {
+			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
+		// everybody
+		"nobody < everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeNobody},
+			isSubSet: true,
+		},
+		"only < everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
+			isSubSet: true,
+		},
+		"anyOf < everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
+			isSubSet: true,
+		},
+		"everybody <= everybody": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: true,
+		},
+		"unspecified !< everybody ": {
+			superSet: AccessConfig{Permission: AccessTypeEverybody},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
+		// unspecified
+		"nobody !< unspecified": {
 			superSet: AccessConfig{Permission: AccessTypeUnspecified},
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: false,
 		},
+		"only !< unspecified": {
+			superSet: AccessConfig{Permission: AccessTypeUnspecified},
+			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
+			isSubSet: false,
+		},
+		"anyOf !< unspecified": {
+			superSet: AccessConfig{Permission: AccessTypeUnspecified},
+			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
+			isSubSet: false,
+		},
+		"everybody !< unspecified": {
+			superSet: AccessConfig{Permission: AccessTypeUnspecified},
+			check:    AccessConfig{Permission: AccessTypeEverybody},
+			isSubSet: false,
+		},
+		"unspecified !< unspecified ": {
+			superSet: AccessConfig{Permission: AccessTypeUnspecified},
+			check:    AccessConfig{Permission: AccessTypeUnspecified},
+			isSubSet: false,
+		},
 	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			subset := spec.check.IsSubset(spec.superSet)
+			require.Equal(t, spec.isSubSet, subset)
+		})
+	}
+}
 
+func TestAccessTypeSubset(t *testing.T) {
+	specs := map[string]struct {
+		check    AccessType
+		superSet AccessType
+		isSubSet bool
+	}{
+		// nobody
+		"nobody <= nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only !< nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: false,
+		},
+		"any !< nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeAnyOfAddresses,
+			isSubSet: false,
+		},
+		"everybody !< nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"unspecified !< nobody": {
+			superSet: AccessTypeNobody,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		// only
+		"nobody < only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only <= only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: true,
+		},
+		"anyOf !< only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeAnyOfAddresses,
+			isSubSet: true,
+		},
+		"everybody !< only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"unspecified !< only": {
+			superSet: AccessTypeOnlyAddress,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		// any of
+		"nobody < anyOf": {
+			superSet: AccessTypeAnyOfAddresses,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only <= anyOf": {
+			superSet: AccessTypeAnyOfAddresses,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: true,
+		},
+		"anyOf <= anyOf": {
+			superSet: AccessTypeAnyOfAddresses,
+			check:    AccessTypeAnyOfAddresses,
+			isSubSet: true,
+		},
+		"everybody !< anyOf": {
+			superSet: AccessTypeAnyOfAddresses,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"unspecified !< anyOf": {
+			superSet: AccessTypeAnyOfAddresses,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		// everybody
+		"nobody < everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeNobody,
+			isSubSet: true,
+		},
+		"only < everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: true,
+		},
+		"anyOf < everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeAnyOfAddresses,
+			isSubSet: true,
+		},
+		"everybody <= everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeEverybody,
+			isSubSet: true,
+		},
+		"unspecified !< everybody": {
+			superSet: AccessTypeEverybody,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+		// unspecified
+		"nobody !< unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeNobody,
+			isSubSet: false,
+		},
+		"only !< unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeOnlyAddress,
+			isSubSet: false,
+		},
+		"anyOf !< unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeAnyOfAddresses,
+			isSubSet: false,
+		},
+		"everybody !< unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeEverybody,
+			isSubSet: false,
+		},
+		"unspecified !< unspecified": {
+			superSet: AccessTypeUnspecified,
+			check:    AccessTypeUnspecified,
+			isSubSet: false,
+		},
+	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			subset := spec.check.IsSubset(spec.superSet)

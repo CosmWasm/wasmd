@@ -5,8 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"io"
-	"io/ioutil"
-	"strings"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,10 +15,10 @@ import (
 )
 
 func TestUncompress(t *testing.T) {
-	wasmRaw, err := ioutil.ReadFile("../keeper/testdata/hackatom.wasm")
+	wasmRaw, err := os.ReadFile("../keeper/testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmGzipped, err := ioutil.ReadFile("../keeper/testdata/hackatom.wasm.gzip")
+	wasmGzipped, err := os.ReadFile("../keeper/testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
 	const maxSize = 400_000
@@ -29,29 +28,9 @@ func TestUncompress(t *testing.T) {
 		expError  error
 		expResult []byte
 	}{
-		"handle wasm uncompressed": {
-			src:       wasmRaw,
-			expResult: wasmRaw,
-		},
 		"handle wasm compressed": {
 			src:       wasmGzipped,
 			expResult: wasmRaw,
-		},
-		"handle nil slice": {
-			src:       nil,
-			expResult: nil,
-		},
-		"handle short unidentified": {
-			src:       []byte{0x1, 0x2},
-			expResult: []byte{0x1, 0x2},
-		},
-		"handle input slice exceeding limit": {
-			src:      []byte(strings.Repeat("a", maxSize+1)),
-			expError: types.ErrLimit,
-		},
-		"handle input slice at limit": {
-			src:       []byte(strings.Repeat("a", maxSize)),
-			expResult: []byte(strings.Repeat("a", maxSize)),
 		},
 		"handle gzip identifier only": {
 			src:      gzipIdent,

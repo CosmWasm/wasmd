@@ -15,7 +15,6 @@ func RandomizedGenState(simstate *module.SimulationState) {
 		Contracts: nil,
 		Sequences: []types.Sequence{
 			{IDKey: types.KeyLastCodeID, Value: simstate.Rand.Uint64()},
-			{IDKey: types.KeyLastInstanceID, Value: simstate.Rand.Uint64()},
 		},
 		GenMsgs: nil,
 	}

@@ -64,9 +64,14 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	codeID, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
+	codeID, _, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
 	if err != nil {
 		return err
+	}
+
+	// if code should not be pinned return earlier
+	if p.UnpinCode {
+		return nil
 	}
 	return k.PinCode(ctx, codeID)
 }
@@ -107,9 +112,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	if err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
-	}
+
 	// runAs is not used if this is permissioned, so just put any valid address there (second contractAddr)
 	data, err := k.Migrate(ctx, contractAddr, contractAddr, p.CodeID, p.Msg)
 	if err != nil {
@@ -229,8 +232,9 @@ func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsK
 		return err
 	}
 
+	var emptyCaller sdk.AccAddress
 	for _, accessConfigUpdate := range p.AccessConfigUpdates {
-		if err := k.SetAccessConfig(ctx, accessConfigUpdate.CodeID, accessConfigUpdate.InstantiatePermission); err != nil {
+		if err := k.SetAccessConfig(ctx, accessConfigUpdate.CodeID, emptyCaller, accessConfigUpdate.InstantiatePermission); err != nil {
 			return sdkerrors.Wrapf(err, "code id: %d", accessConfigUpdate.CodeID)
 		}
 	}

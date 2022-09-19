@@ -381,7 +381,7 @@ func (endpoint *Endpoint) SendPacket(packet exported.PacketI) error {
 	channelCap := endpoint.Chain.GetChannelCapability(packet.GetSourcePort(), packet.GetSourceChannel())
 
 	// no need to send message, acting as a module
-	err := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet)
+	err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet)
 	if err != nil {
 		return err
 	}
@@ -415,7 +415,7 @@ func (endpoint *Endpoint) WriteAcknowledgement(ack exported.Acknowledgement, pac
 	channelCap := endpoint.Chain.GetChannelCapability(packet.GetDestPort(), packet.GetDestChannel())
 
 	// no need to send message, acting as a handler
-	err := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.WriteAcknowledgement(endpoint.Chain.GetContext(), channelCap, packet, ack)
+	err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.WriteAcknowledgement(endpoint.Chain.GetContext(), channelCap, packet, ack)
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func (endpoint *Endpoint) TimeoutPacket(packet channeltypes.Packet) error {
 	}
 
 	proof, proofHeight := endpoint.Counterparty.QueryProof(packetKey)
-	nextSeqRecv, found := endpoint.Counterparty.Chain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceRecv(endpoint.Counterparty.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID)
+	nextSeqRecv, found := endpoint.Counterparty.Chain.App.IBCKeeper.ChannelKeeper.GetNextSequenceRecv(endpoint.Counterparty.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID)
 	require.True(endpoint.Chain.t, found)
 
 	timeoutMsg := channeltypes.NewMsgTimeout(
@@ -468,7 +468,7 @@ func (endpoint *Endpoint) SetChannelClosed() error {
 	channel := endpoint.GetChannel()
 
 	channel.State = channeltypes.CLOSED
-	endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.SetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID, channel)
+	endpoint.Chain.App.IBCKeeper.ChannelKeeper.SetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID, channel)
 
 	endpoint.Chain.Coordinator.CommitBlock(endpoint.Chain)
 
@@ -483,7 +483,7 @@ func (endpoint *Endpoint) GetClientState() exported.ClientState {
 
 // SetClientState sets the client state for this endpoint.
 func (endpoint *Endpoint) SetClientState(clientState exported.ClientState) {
-	endpoint.Chain.App.GetIBCKeeper().ClientKeeper.SetClientState(endpoint.Chain.GetContext(), endpoint.ClientID, clientState)
+	endpoint.Chain.App.IBCKeeper.ClientKeeper.SetClientState(endpoint.Chain.GetContext(), endpoint.ClientID, clientState)
 }
 
 // GetConsensusState retrieves the Consensus State for this endpoint at the provided height.
@@ -497,13 +497,13 @@ func (endpoint *Endpoint) GetConsensusState(height exported.Height) exported.Con
 
 // SetConsensusState sets the consensus state for this endpoint.
 func (endpoint *Endpoint) SetConsensusState(consensusState exported.ConsensusState, height exported.Height) {
-	endpoint.Chain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(endpoint.Chain.GetContext(), endpoint.ClientID, height, consensusState)
+	endpoint.Chain.App.IBCKeeper.ClientKeeper.SetClientConsensusState(endpoint.Chain.GetContext(), endpoint.ClientID, height, consensusState)
 }
 
 // GetConnection retrieves an IBC Connection for the endpoint. The
 // connection is expected to exist otherwise testing will fail.
 func (endpoint *Endpoint) GetConnection() connectiontypes.ConnectionEnd {
-	connection, found := endpoint.Chain.App.GetIBCKeeper().ConnectionKeeper.GetConnection(endpoint.Chain.GetContext(), endpoint.ConnectionID)
+	connection, found := endpoint.Chain.App.IBCKeeper.ConnectionKeeper.GetConnection(endpoint.Chain.GetContext(), endpoint.ConnectionID)
 	require.True(endpoint.Chain.t, found)
 
 	return connection
@@ -511,13 +511,13 @@ func (endpoint *Endpoint) GetConnection() connectiontypes.ConnectionEnd {
 
 // SetConnection sets the connection for this endpoint.
 func (endpoint *Endpoint) SetConnection(connection connectiontypes.ConnectionEnd) {
-	endpoint.Chain.App.GetIBCKeeper().ConnectionKeeper.SetConnection(endpoint.Chain.GetContext(), endpoint.ConnectionID, connection)
+	endpoint.Chain.App.IBCKeeper.ConnectionKeeper.SetConnection(endpoint.Chain.GetContext(), endpoint.ConnectionID, connection)
 }
 
 // GetChannel retrieves an IBC Channel for the endpoint. The channel
 // is expected to exist otherwise testing will fail.
 func (endpoint *Endpoint) GetChannel() channeltypes.Channel {
-	channel, found := endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.GetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID)
+	channel, found := endpoint.Chain.App.IBCKeeper.ChannelKeeper.GetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID)
 	require.True(endpoint.Chain.t, found)
 
 	return channel
@@ -525,7 +525,7 @@ func (endpoint *Endpoint) GetChannel() channeltypes.Channel {
 
 // SetChannel sets the channel for this endpoint.
 func (endpoint *Endpoint) SetChannel(channel channeltypes.Channel) {
-	endpoint.Chain.App.GetIBCKeeper().ChannelKeeper.SetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID, channel)
+	endpoint.Chain.App.IBCKeeper.ChannelKeeper.SetChannel(endpoint.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID, channel)
 }
 
 // QueryClientStateProof performs and abci query for a client stat associated

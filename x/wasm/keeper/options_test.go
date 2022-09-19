@@ -1,9 +1,13 @@
 package keeper
 
 import (
+	"reflect"
 	"testing"
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -81,10 +85,36 @@ func TestConstructorOptions(t *testing.T) {
 				assert.IsType(t, uint32(1), k.maxQueryStackSize)
 			},
 		},
+		"accepted account types": {
+			srcOpt: WithAcceptedAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}, &vestingtypes.ContinuousVestingAccount{}),
+			verify: func(t *testing.T, k Keeper) {
+				exp := map[reflect.Type]struct{}{
+					reflect.TypeOf(&authtypes.BaseAccount{}):                 {},
+					reflect.TypeOf(&vestingtypes.ContinuousVestingAccount{}): {},
+				}
+				assert.Equal(t, exp, k.acceptedAccountTypes)
+			},
+		},
+		"prune account types": {
+			srcOpt: WithPruneAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}, &vestingtypes.ContinuousVestingAccount{}),
+			verify: func(t *testing.T, k Keeper) {
+				exp := map[reflect.Type]struct{}{
+					reflect.TypeOf(&authtypes.BaseAccount{}):                 {},
+					reflect.TypeOf(&vestingtypes.ContinuousVestingAccount{}): {},
+				}
+				assert.Equal(t, exp, k.pruneAccountTypes)
+			},
+		},
+		"coin pruner": {
+			srcOpt: WithCoinPruner(CoinBurner{}),
+			verify: func(t *testing.T, k Keeper) {
+				assert.Equal(t, CoinBurner{}, k.coinPruner)
+			},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, nil, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), SupportedFeatures, spec.srcOpt)
+			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

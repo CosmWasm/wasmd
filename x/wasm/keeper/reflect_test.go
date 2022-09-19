@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -35,7 +35,7 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 	require.NoError(t, err)
 }
 
-const ReflectFeatures = "staking,mask,stargate"
+const ReflectFeatures = "staking,mask,stargate,cosmwasm_1_1"
 
 func TestReflectContractSend(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Marshaler
@@ -43,18 +43,18 @@ func TestReflectContractSend(t *testing.T) {
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	_, _, bob := keyPubAddr()
 
 	// upload reflect code
-	reflectID, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
 	// upload hackatom escrow code
-	escrowCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	escrowCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	escrowID, err := keeper.Create(ctx, creator, escrowCode, nil)
+	escrowID, _, err := keeper.Create(ctx, creator, escrowCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), escrowID)
 
@@ -122,12 +122,12 @@ func TestReflectCustomMsg(t *testing.T) {
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
-	bob := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+	bob := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	codeID, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -213,10 +213,10 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -263,10 +263,10 @@ func TestReflectStargateQuery(t *testing.T) {
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 	expectedBalance := funds.Sub(contractStart)
-	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -298,6 +298,57 @@ func TestReflectStargateQuery(t *testing.T) {
 	assert.Equal(t, simpleBalance.Amount[0].Denom, expectedBalance[0].Denom)
 }
 
+func TestReflectTotalSupplyQuery(t *testing.T) {
+	cdc := MakeEncodingConfig(t).Marshaler
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	keeper := keepers.WasmKeeper
+	// upload code
+	codeID := StoreReflectContract(t, ctx, keepers).CodeID
+	// creator instantiates a contract and gives it tokens
+	creator := RandomAccountAddress(t)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "testing", nil)
+	require.NoError(t, err)
+
+	currentStakeSupply := keepers.BankKeeper.GetSupply(ctx, "stake")
+	require.NotEmpty(t, currentStakeSupply.Amount) // ensure we have real data
+	specs := map[string]struct {
+		denom     string
+		expAmount wasmvmtypes.Coin
+	}{
+		"known denom": {
+			denom:     "stake",
+			expAmount: ConvertSdkCoinToWasmCoin(currentStakeSupply),
+		},
+		"unknown denom": {
+			denom:     "unknown",
+			expAmount: wasmvmtypes.Coin{Denom: "unknown", Amount: "0"},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// when
+			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
+				Chain: &testdata.ChainQuery{
+					Request: &wasmvmtypes.QueryRequest{
+						Bank: &wasmvmtypes.BankQuery{
+							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+						},
+					},
+				},
+			})
+			simpleRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
+
+			// then
+			require.NoError(t, err)
+			var rsp testdata.ChainResponse
+			mustParse(t, simpleRes, &rsp)
+			var supplyRsp wasmvmtypes.SupplyResponse
+			mustParse(t, rsp.Data, &supplyRsp)
+			assert.Equal(t, spec.expAmount, supplyRsp.Amount, spec.expAmount)
+		})
+	}
+}
+
 func TestReflectInvalidStargateQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Marshaler
 	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -305,10 +356,10 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, funds...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -383,10 +434,10 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -453,10 +504,10 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 

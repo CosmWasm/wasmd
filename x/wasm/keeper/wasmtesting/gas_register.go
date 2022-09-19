@@ -14,6 +14,7 @@ type MockGasRegister struct {
 	EventCostsFn              func(evts []wasmvmtypes.EventAttribute) sdk.Gas
 	ToWasmVMGasFn             func(source sdk.Gas) uint64
 	FromWasmVMGasFn           func(source uint64) sdk.Gas
+	UncompressCostsFn         func(byteLength int) sdk.Gas
 }
 
 func (m MockGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) sdk.Gas {
@@ -28,6 +29,13 @@ func (m MockGasRegister) CompileCosts(byteLength int) sdk.Gas {
 		panic("not expected to be called")
 	}
 	return m.CompileCostFn(byteLength)
+}
+
+func (m MockGasRegister) UncompressCosts(byteLength int) sdk.Gas {
+	if m.UncompressCostsFn == nil {
+		panic("not expected to be called")
+	}
+	return m.UncompressCostsFn(byteLength)
 }
 
 func (m MockGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {

@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -426,6 +428,44 @@ func TestFromWasmVMGasConversion(t *testing.T) {
 			}
 			r := NewWasmGasRegister(spec.srcConfig)
 			got := r.FromWasmVMGas(spec.src)
+			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
+
+func TestUncompressCosts(t *testing.T) {
+	specs := map[string]struct {
+		lenIn    int
+		exp      sdk.Gas
+		expPanic bool
+	}{
+		"0": {
+			exp: 0,
+		},
+		"even": {
+			lenIn: 100,
+			exp:   15,
+		},
+		"round down when uneven": {
+			lenIn: 19,
+			exp:   2,
+		},
+		"max len": {
+			lenIn: types.MaxWasmSize,
+			exp:   122880,
+		},
+		"invalid len": {
+			lenIn:    -1,
+			expPanic: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			if spec.expPanic {
+				assert.Panics(t, func() { NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn) })
+				return
+			}
+			got := NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn)
 			assert.Equal(t, spec.exp, got)
 		})
 	}

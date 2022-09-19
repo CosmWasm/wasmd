@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/tendermint/tendermint/libs/rand"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
@@ -11,14 +13,14 @@ import (
 )
 
 func TestDontBindPortNonIBCContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // ensure we bound the port
 	_, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.Error(t, err)
 }
 
 func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := InstantiateIBCReflectContract(t, ctx, keepers) // ensure we bound the port
 	owner, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.NoError(t, err)
@@ -41,7 +43,7 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 }
 
 func TestContractFromPortID(t *testing.T) {
-	contractAddr := BuildContractAddress(1, 100)
+	contractAddr := BuildContractAddress(rand.Bytes(32), RandomAccountAddress(t), "testing")
 	specs := map[string]struct {
 		srcPort string
 		expAddr sdk.AccAddress

@@ -41,6 +41,8 @@ message MsgStoreCode {
 message MsgStoreCodeResponse {
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // Checksum is the sha256 hash of the stored code
+  bytes checksum = 2;
 }
 
 // MsgInstantiateContract create a new smart contract instance for the given

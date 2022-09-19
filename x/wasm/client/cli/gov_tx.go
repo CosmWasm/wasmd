@@ -56,12 +56,18 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
+			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
+			if err != nil {
+				return err
+			}
+
 			content := types.StoreCodeProposal{
 				Title:                 proposalTitle,
 				Description:           proposalDescr,
 				RunAs:                 runAs,
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
+				UnpinCode:             unpinCode,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -80,14 +86,12 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
+	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -163,9 +167,6 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -226,9 +227,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -305,9 +303,6 @@ func ProposalExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -365,9 +360,6 @@ func ProposalSudoContractCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -426,9 +418,6 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -481,9 +470,6 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -540,9 +526,6 @@ func ProposalPinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
@@ -611,33 +594,41 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }
 
-func parseAccessConfig(config string) (types.AccessConfig, error) {
-	switch config {
+func parseAccessConfig(raw string) (c types.AccessConfig, err error) {
+	switch raw {
 	case "nobody":
 		return types.AllowNobody, nil
 	case "everybody":
 		return types.AllowEverybody, nil
 	default:
-		address, err := sdk.AccAddressFromBech32(config)
-		if err != nil {
-			return types.AccessConfig{}, fmt.Errorf("unable to parse address %s", config)
+		parts := strings.Split(raw, ",")
+		addrs := make([]sdk.AccAddress, len(parts))
+		for i, v := range parts {
+			addr, err := sdk.AccAddressFromBech32(v)
+			if err != nil {
+				return types.AccessConfig{}, fmt.Errorf("unable to parse address %q: %s", v, err)
+			}
+			addrs[i] = addr
 		}
-		return types.AccessTypeOnlyAddress.With(address), nil
+		defer func() { // convert panic in ".With" to error for better output
+			if r := recover(); r != nil {
+				err = r.(error)
+			}
+		}()
+		cfg := types.AccessTypeAnyOfAddresses.With(addrs...)
+		return cfg, cfg.ValidateBasic()
 	}
 }
 
 func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error) {
 	updates := make([]types.AccessConfigUpdate, len(args))
 	for i, c := range args {
-		// format: code_id,access_config
-		// access_config: nobody|everybody|address
-		parts := strings.Split(c, ",")
+		// format: code_id:access_config
+		// access_config: nobody|everybody|address(es)
+		parts := strings.Split(c, ":")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid format")
 		}
@@ -662,15 +653,15 @@ func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error)
 func ProposalUpdateInstantiateConfigCmd() *cobra.Command {
 	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	cmd := &cobra.Command{
-		Use:   "update-instantiate-config [code-id,permission]...",
+		Use:   "update-instantiate-config [code-id:permission]...",
 		Short: "Submit an update instantiate config proposal.",
 		Args:  cobra.MinimumNArgs(1),
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Submit an update instantiate config  proposal for multiple code ids.
 
 Example: 
-$ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm
-`, version.AppName, bech32Prefix)),
+$ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
+`, version.AppName, bech32Prefix, bech32Prefix)),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -718,8 +709,5 @@ $ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
-	// type values must match the "ProposalHandler" "routes" in cli
-	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
 	return cmd
 }

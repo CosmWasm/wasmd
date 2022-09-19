@@ -3,7 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 
@@ -26,12 +26,12 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	creatorBalance := deposit.Sub(contractStart)
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -110,16 +110,16 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 	keeper := keepers.WasmKeeper
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin(fundedDenom, int64(fundedAmount)))
-	uploader := keepers.Faucet.NewFundedAccount(ctx, contractStart.Add(contractStart...)...)
+	uploader := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart.Add(contractStart...)...)
 
 	// upload code
-	reflectID, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
-	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	hackatomCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	hackatomID, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
+	hackatomID, _, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
@@ -282,7 +282,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			creator := keepers.Faucet.NewFundedAccount(ctx, contractStart...)
+			creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
 			_, _, empty := keyPubAddr()
 
 			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
@@ -366,11 +366,11 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
@@ -432,11 +432,11 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	codeID, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens

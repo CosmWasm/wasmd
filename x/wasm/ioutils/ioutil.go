@@ -4,29 +4,22 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// Uncompress returns gzip uncompressed content if input was gzip, or original src otherwise
-func Uncompress(src []byte, limit uint64) ([]byte, error) {
-	switch n := uint64(len(src)); {
-	case n < 3:
-		return src, nil
-	case n > limit:
+// Uncompress expects a valid gzip source to unpack or fails. See IsGzip
+func Uncompress(gzipSrc []byte, limit uint64) ([]byte, error) {
+	if uint64(len(gzipSrc)) > limit {
 		return nil, types.ErrLimit
 	}
-	if !bytes.Equal(gzipIdent, src[0:3]) {
-		return src, nil
-	}
-	zr, err := gzip.NewReader(bytes.NewReader(src))
+	zr, err := gzip.NewReader(bytes.NewReader(gzipSrc))
 	if err != nil {
 		return nil, err
 	}
 	zr.Multistream(false)
 	defer zr.Close()
-	return ioutil.ReadAll(LimitReader(zr, int64(limit)))
+	return io.ReadAll(LimitReader(zr, int64(limit)))
 }
 
 // LimitReader returns a Reader that reads from r

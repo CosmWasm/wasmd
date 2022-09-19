@@ -20,7 +20,7 @@ func TestOnOpenChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 
@@ -90,7 +90,7 @@ func TestOnConnectChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 
@@ -201,7 +201,7 @@ func TestOnCloseChannel(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 
@@ -311,7 +311,7 @@ func TestOnRecvPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 	const storageCosts = sdk.Gas(2903)
@@ -473,7 +473,7 @@ func TestOnAckPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 
@@ -578,7 +578,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 	var m wasmtesting.MockWasmer
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
-	parentCtx, keepers := CreateTestInput(t, false, SupportedFeatures, WithMessageHandler(messenger))
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
 	example := SeedNewContractInstance(t, parentCtx, keepers, &m)
 	const myContractGas = 40
 

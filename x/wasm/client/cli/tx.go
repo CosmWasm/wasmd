@@ -3,7 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -19,15 +19,16 @@ import (
 )
 
 const (
-	flagAmount                 = "amount"
-	flagLabel                  = "label"
-	flagAdmin                  = "admin"
-	flagNoAdmin                = "no-admin"
-	flagRunAs                  = "run-as"
-	flagInstantiateByEverybody = "instantiate-everybody"
-	flagInstantiateNobody      = "instantiate-nobody"
-	flagInstantiateByAddress   = "instantiate-only-address"
-	flagProposalType           = "type"
+	flagAmount                    = "amount"
+	flagLabel                     = "label"
+	flagAdmin                     = "admin"
+	flagNoAdmin                   = "no-admin"
+	flagRunAs                     = "run-as"
+	flagInstantiateByEverybody    = "instantiate-everybody"
+	flagInstantiateNobody         = "instantiate-nobody"
+	flagInstantiateByAddress      = "instantiate-only-address"
+	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
+	flagUnpinCode                 = "unpin-code"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -75,13 +76,14 @@ func StoreCodeCmd() *cobra.Command {
 
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
+	cmd.Flags().String(flagInstantiateByAddress, "", "Deprecated: Only this address can instantiate a contract from the code, optional")
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
 func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgStoreCode, error) {
-	wasm, err := ioutil.ReadFile(file)
+	wasm, err := os.ReadFile(file)
 	if err != nil {
 		return types.MsgStoreCode{}, err
 	}
@@ -97,47 +99,9 @@ func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet)
 		return types.MsgStoreCode{}, fmt.Errorf("invalid input file. Use wasm binary or gzip")
 	}
 
-	var perm *types.AccessConfig
-	onlyAddrStr, err := flags.GetString(flagInstantiateByAddress)
+	perm, err := parseAccessConfigFlags(flags)
 	if err != nil {
-		return types.MsgStoreCode{}, fmt.Errorf("instantiate by address: %s", err)
-	}
-	if onlyAddrStr != "" {
-		allowedAddr, err := sdk.AccAddressFromBech32(onlyAddrStr)
-		if err != nil {
-			return types.MsgStoreCode{}, sdkerrors.Wrap(err, flagInstantiateByAddress)
-		}
-		x := types.AccessTypeOnlyAddress.With(allowedAddr)
-		perm = &x
-	} else {
-		everybodyStr, err := flags.GetString(flagInstantiateByEverybody)
-		if err != nil {
-			return types.MsgStoreCode{}, fmt.Errorf("instantiate by everybody: %s", err)
-		}
-		if everybodyStr != "" {
-			ok, err := strconv.ParseBool(everybodyStr)
-			if err != nil {
-				return types.MsgStoreCode{}, fmt.Errorf("boolean value expected for instantiate by everybody: %s", err)
-			}
-			if ok {
-				perm = &types.AllowEverybody
-			}
-		}
-
-		nobodyStr, err := flags.GetString(flagInstantiateNobody)
-		if err != nil {
-			return types.MsgStoreCode{}, fmt.Errorf("instantiate by nobody: %s", err)
-		}
-		if nobodyStr != "" {
-			ok, err := strconv.ParseBool(nobodyStr)
-			if err != nil {
-				return types.MsgStoreCode{}, fmt.Errorf("boolean value expected for instantiate by nobody: %s", err)
-			}
-			if ok {
-				perm = &types.AllowNobody
-			}
-		}
-
+		return types.MsgStoreCode{}, err
 	}
 
 	msg := types.MsgStoreCode{
@@ -146,6 +110,65 @@ func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet)
 		InstantiatePermission: perm,
 	}
 	return msg, nil
+}
+
+func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
+	addrs, err := flags.GetStringSlice(flagInstantiateByAnyOfAddress)
+	if err != nil {
+		return nil, fmt.Errorf("flag any of: %s", err)
+	}
+	if len(addrs) != 0 {
+		acceptedAddrs := make([]sdk.AccAddress, len(addrs))
+		for i, v := range addrs {
+			acceptedAddrs[i], err = sdk.AccAddressFromBech32(v)
+			if err != nil {
+				return nil, fmt.Errorf("parse %q: %w", v, err)
+			}
+		}
+		x := types.AccessTypeAnyOfAddresses.With(acceptedAddrs...)
+		return &x, nil
+	}
+
+	onlyAddrStr, err := flags.GetString(flagInstantiateByAddress)
+	if err != nil {
+		return nil, fmt.Errorf("instantiate by address: %s", err)
+	}
+	if onlyAddrStr != "" {
+		allowedAddr, err := sdk.AccAddressFromBech32(onlyAddrStr)
+		if err != nil {
+			return nil, sdkerrors.Wrap(err, flagInstantiateByAddress)
+		}
+		x := types.AccessTypeOnlyAddress.With(allowedAddr)
+		return &x, nil
+	}
+	everybodyStr, err := flags.GetString(flagInstantiateByEverybody)
+	if err != nil {
+		return nil, fmt.Errorf("instantiate by everybody: %s", err)
+	}
+	if everybodyStr != "" {
+		ok, err := strconv.ParseBool(everybodyStr)
+		if err != nil {
+			return nil, fmt.Errorf("boolean value expected for instantiate by everybody: %s", err)
+		}
+		if ok {
+			return &types.AllowEverybody, nil
+		}
+	}
+
+	nobodyStr, err := flags.GetString(flagInstantiateNobody)
+	if err != nil {
+		return nil, fmt.Errorf("instantiate by nobody: %s", err)
+	}
+	if nobodyStr != "" {
+		ok, err := strconv.ParseBool(nobodyStr)
+		if err != nil {
+			return nil, fmt.Errorf("boolean value expected for instantiate by nobody: %s", err)
+		}
+		if ok {
+			return &types.AllowNobody, nil
+		}
+	}
+	return nil, nil
 }
 
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.

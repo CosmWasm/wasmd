@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/types/address"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -42,7 +44,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -109,7 +111,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -364,11 +366,12 @@ func TestInstantiateContractCmd(t *testing.T) {
 }
 
 func TestExecuteContractCmd(t *testing.T) {
-	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
+	mySenderAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	myFirstContractAddress := keeper.BuildContractAddress([]byte("myCodeHash"), mySenderAddr, "my").String()
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -391,7 +394,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: firstContractAddress,
+						ContractAddress: myFirstContractAddress,
 						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
 							info.Created = nil
 						}),
@@ -400,53 +403,34 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				cmd.SetArgs([]string{myFirstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expMsgCount: 1,
 		},
-		"all good with contract from genesis store messages without initial sequence": {
+		"all good with contract from genesis store messages": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
 				Codes: []types.Code{
 					{
-						CodeID:    1,
-						CodeInfo:  types.CodeInfoFixture(),
+						CodeID: 1,
+						CodeInfo: types.CodeInfoFixture(func(info *types.CodeInfo) {
+							info.CodeHash = []byte("myCodeHash")
+						}),
 						CodeBytes: wasmIdent,
 					},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: types.MsgInstantiateContractFixture()}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: types.MsgInstantiateContractFixture(
+						func(m *types.MsgInstantiateContract) {
+							m.Sender = mySenderAddr.String()
+							m.Label = "my"
+						})}},
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
-				flagSet := cmd.Flags()
-				flagSet.Set("run-as", myWellFundedAccount)
-			},
-			expMsgCount: 2,
-		},
-		"all good with contract from genesis store messages and contract sequence set": {
-			srcGenesis: types.GenesisState{
-				Params: types.DefaultParams(),
-				Codes: []types.Code{
-					{
-						CodeID:    1,
-						CodeInfo:  types.CodeInfoFixture(),
-						CodeBytes: wasmIdent,
-					},
-				},
-				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: types.MsgInstantiateContractFixture()}},
-				},
-				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
-				},
-			},
-			mutator: func(cmd *cobra.Command) {
-				// See TestBuildContractAddress in keeper_test.go
-				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8", `{}`})
+				cmd.SetArgs([]string{myFirstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
@@ -473,7 +457,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: firstContractAddress,
+						ContractAddress: myFirstContractAddress,
 						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
 							info.Created = nil
 						}),
@@ -482,7 +466,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				cmd.SetArgs([]string{myFirstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 			},
@@ -500,7 +484,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: firstContractAddress,
+						ContractAddress: myFirstContractAddress,
 						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
 							info.Created = nil
 						}),
@@ -509,7 +493,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				cmd.SetArgs([]string{myFirstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("amount", "100stake")
@@ -528,7 +512,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: firstContractAddress,
+						ContractAddress: myFirstContractAddress,
 						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
 							info.Created = nil
 						}),
@@ -537,7 +521,7 @@ func TestExecuteContractCmd(t *testing.T) {
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
+				cmd.SetArgs([]string{myFirstContractAddress, `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 				flagSet.Set("amount", "10stake")
@@ -566,6 +550,9 @@ func TestExecuteContractCmd(t *testing.T) {
 }
 
 func TestGetAllContracts(t *testing.T) {
+	creatorAddr1 := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	creatorAddr2 := sdk.AccAddress(bytes.Repeat([]byte{2}, address.Len))
+
 	specs := map[string]struct {
 		src types.GenesisState
 		exp []ContractMeta
@@ -596,68 +583,55 @@ func TestGetAllContracts(t *testing.T) {
 		},
 		"read from message state": {
 			src: types.GenesisState{
+				Codes: []types.Code{{CodeID: 1, CodeInfo: types.CodeInfo{CodeHash: []byte("firstCodeHash")}}},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "first"}}},
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "first", CodeID: 1}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr2.String(), Label: "second", CodeID: 1}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 1).String(),
-					Info:            types.ContractInfo{Label: "first"},
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+					Info:            types.ContractInfo{Creator: creatorAddr1.String(), Label: "first", CodeID: 1},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 2).String(),
-					Info:            types.ContractInfo{Label: "second"},
-				},
-			},
-		},
-		"read from message state with contract sequence": {
-			src: types.GenesisState{
-				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
-				},
-				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
-				},
-			},
-			exp: []ContractMeta{
-				{
-					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
-					Info:            types.ContractInfo{Label: "hundred"},
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr2, "second").String(),
+					Info:            types.ContractInfo{Creator: creatorAddr2.String(), Label: "second", CodeID: 1},
 				},
 			},
 		},
 		"read from contract and message state with contract sequence": {
 			src: types.GenesisState{
+				Codes: []types.Code{
+					{CodeID: 1, CodeInfo: types.CodeInfo{CodeHash: []byte("firstCodeHash")}},
+					{CodeID: 100, CodeInfo: types.CodeInfo{CodeHash: []byte("otherCodeHash")}},
+				},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: "first-contract",
-						ContractInfo:    types.ContractInfo{Label: "first"},
+						ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+						ContractInfo:    types.ContractInfo{Label: "first", CodeID: 1},
 					},
 				},
-				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
-				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Sender: creatorAddr1.String(), Label: "hundred", CodeID: 100}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: "first-contract",
-					Info:            types.ContractInfo{Label: "first"},
+					ContractAddress: keeper.BuildContractAddress([]byte("firstCodeHash"), creatorAddr1, "first").String(),
+					Info:            types.ContractInfo{Label: "first", CodeID: 1},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
-					Info:            types.ContractInfo{Label: "hundred"},
+					ContractAddress: keeper.BuildContractAddress([]byte("otherCodeHash"), creatorAddr1, "hundred").String(),
+					Info:            types.ContractInfo{Creator: creatorAddr1.String(), Label: "hundred", CodeID: 100},
 				},
 			},
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got := GetAllContracts(&spec.src)
+			got, err := GetAllContracts(&spec.src)
+			require.NoError(t, err)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
