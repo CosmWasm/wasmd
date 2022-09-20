@@ -2,25 +2,21 @@ package keeper
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/x/params/client/utils"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/params/client/utils"
 	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -232,7 +228,7 @@ func TestMigrateProposal(t *testing.T) {
 	var (
 		anyAddress   = DeterministicAccountAddress(t, 1)
 		otherAddress = DeterministicAccountAddress(t, 2)
-		contractAddr = BuildContractAddress(1, 1)
+		contractAddr = BuildContractAddressClassic(1, 1)
 	)
 
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
@@ -409,13 +405,12 @@ func TestSudoProposal(t *testing.T) {
 }
 
 func TestAdminProposals(t *testing.T) {
+	var (
+		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
+		contractAddr                = BuildContractAddressClassic(1, 1)
+	)
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	var (
-		otherAddress = DeterministicAccountAddress(t, 2)
-		codeHash     = sha256.Sum256(wasmCode)
-		contractAddr = BuildContractAddress2(codeHash[:], RandomAccountAddress(t), "")
-	)
 
 	specs := map[string]struct {
 		state       types.ContractInfo

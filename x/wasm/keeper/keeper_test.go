@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -554,46 +553,56 @@ func TestInstantiateWithUniqueContractAddress(t *testing.T) {
 	specs := map[string]struct {
 		codeID  uint64
 		sender  sdk.AccAddress
-		label   string
+		salt    []byte
 		initMsg json.RawMessage
 		expErr  error
 	}{
 		"reject duplicate which generates the same address": {
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			label:   example.Label,
+			salt:    []byte(`my salt`),
 			initMsg: initMsg,
 			expErr:  types.ErrDuplicate,
 		},
 		"different sender": {
 			codeID:  example.CodeID,
 			sender:  otherAddress,
-			label:   example.Label,
+			salt:    []byte(`my salt`),
 			initMsg: initMsg,
 		},
 		"different code": {
 			codeID:  otherExample.CodeID,
 			sender:  example.CreatorAddr,
-			label:   example.Label,
+			salt:    []byte(`my salt`),
 			initMsg: []byte(`{}`),
 		},
-		"different label": {
+		"different salt": {
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			label:   "other label",
+			salt:    []byte(`other salt`),
 			initMsg: initMsg,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
-			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate(ctx, spec.codeID, spec.sender, nil, spec.initMsg, spec.label, example.Deposit)
+			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate2(
+				ctx,
+				spec.codeID,
+				spec.sender,
+				nil,
+				spec.initMsg,
+				"my label",
+				example.Deposit,
+				spec.salt,
+				true,
+			)
 			if spec.expErr != nil {
 				assert.ErrorIs(t, gotErr, spec.expErr)
 				return
 			}
 			require.NoError(t, gotErr)
-			expAddr := BuildContractAddress2(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.label)
+			expAddr := BuildContractAddressPredictable1(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.salt)
 			assert.Equal(t, expAddr.String(), gotAddr.String())
 			require.NotContains(t, used, gotAddr.String())
 			used[gotAddr.String()] = struct{}{}
@@ -611,7 +620,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	senderAddr := DeterministicAccountAddress(t, 1)
 	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
 	const myLabel = "testing"
-	contractAddr := BuildContractAddress2(example.Checksum, senderAddr, myLabel)
+	contractAddr := BuildContractAddressPredictable1(example.Checksum, senderAddr, []byte(`my salt`))
 
 	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
@@ -2088,68 +2097,68 @@ func TestBuildContractAddress(t *testing.T) {
 	// test vectors from https://gist.github.com/webmaster128/e4d401d414bd0e7e6f70482f11877fbe
 	specs := map[string]struct {
 		checksum   []byte
-		label      string
+		salt       []byte
 		creator    string
 		expAddress string
 	}{
 		"initial account addr example": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      "instance 1",
+			salt:       []byte("instance 1"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple1jukvumwqfxapueg6un6rtmafxktcluzv70xc3edz2m5t3slgw49qrmhc03",
 		},
-		"account addr with different label": {
+		"account addr with different salt": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      "instance 2",
+			salt:       []byte("instance 2"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple1jpc2w2vu2t6k7u09p6v8e3w28ptnzvvt2snu5rytlj8qya27dq5sjkwm06",
 		},
 		"initial contract addr example": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      "instance 1",
+			salt:       []byte("instance 1"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvmhwamhwaamhwamhwlllsatsy6m",
 			expAddress: "purple1wde5zlcveuh79w37w5g244qu9xja3hgfulyfkjvkxvwvjzgd5l3qfraz3c",
 		},
-		"contract addr with different label": {
+		"contract addr with different salt": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      "instance 2",
+			salt:       []byte("instance 2"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvmhwamhwaamhwamhwlllsatsy6m",
 			expAddress: "purple1vae2kf0r3ehtq5q2jmfkg7wp4ckxwrw8dv4pvazz5nlzzu05lxzq878fa9",
 		},
 		"account addr with different checksum": {
 			checksum:   fromHex("1DA6C16DE2CBAF7AD8CBB66F0925BA33F5C278CB2491762D04658C1480EA229B"),
-			label:      "instance 1",
+			salt:       []byte("instance 1"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple1gmgvt9levtn52mpfal3gl5tv60f47zez3wgczrh5c9352sfm9crs47zt0k",
 		},
-		"account addr with different checksum and label": {
+		"account addr with different checksum and salt": {
 			checksum:   fromHex("1DA6C16DE2CBAF7AD8CBB66F0925BA33F5C278CB2491762D04658C1480EA229B"),
-			label:      "instance 2",
+			salt:       []byte("instance 2"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple13jrcqxknt05rhdxmegjzjel666yay6fj3xvfp6445k7a9q2km4wqa7ss34",
 		},
 		"contract addr with different checksum": {
 			checksum:   fromHex("1DA6C16DE2CBAF7AD8CBB66F0925BA33F5C278CB2491762D04658C1480EA229B"),
-			label:      "instance 1",
+			salt:       []byte("instance 1"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvmhwamhwaamhwamhwlllsatsy6m",
 			expAddress: "purple1lu0lf6wmqeuwtrx93ptzvf4l0dyyz2vz6s8h5y9cj42fvhsmracq49pww9",
 		},
-		"contract addr with different checksum and label": {
+		"contract addr with different checksum and salt": {
 			checksum:   fromHex("1DA6C16DE2CBAF7AD8CBB66F0925BA33F5C278CB2491762D04658C1480EA229B"),
-			label:      "instance 2",
+			salt:       []byte("instance 2"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvmhwamhwaamhwamhwlllsatsy6m",
 			expAddress: "purple1zmerc8a9ml2au29rq3knuu35fktef3akceurckr6pf370n0wku7sw3c9mj",
 		},
 		// regression tests
-		"min label size": {
+		"min salt size": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      "x",
+			salt:       []byte("x"),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple16pc8gt824lmp3dh2sxvttj0ykcs02n5p3ldswhv3j7y853gghlfq7mqeh9",
 		},
-		"max label size": {
+		"max salt size": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			label:      strings.Repeat("x", types.MaxLabelSize),
+			salt:       bytes.Repeat([]byte("x"), types.MaxLabelSize),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
 			expAddress: "purple1prkdvjmvv4s3tnppfxmlpj259v9cplf3wws4qq9qd7w3s4yqzqeqem4759",
 		},
@@ -2160,7 +2169,7 @@ func TestBuildContractAddress(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotAddr := BuildContractAddress2(spec.checksum, creatorAddr, spec.label)
+			gotAddr := BuildContractAddressPredictable1(spec.checksum, creatorAddr, spec.salt)
 
 			require.Equal(t, spec.expAddress, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))

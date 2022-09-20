@@ -342,8 +342,8 @@ func (msg MsgInstantiateContract2) ValidateBasic() error {
 	if err := msg.Msg.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "payload msg")
 	}
-	if len(msg.Salt) == 0 {
-		return ErrEmpty.Wrap("salt")
+	if err := ValidateSalt(msg.Salt); err != nil {
+		return sdkerrors.Wrap(err, "salt")
 	}
 	return nil
 }

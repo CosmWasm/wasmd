@@ -67,11 +67,12 @@ func GetCmdLibVersion() *cobra.Command {
 
 // GetCmdBuildAddress build a contract address
 func GetCmdBuildAddress() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use:     "build-address [code-hash] [creator-address] [label]",
+		Use:     "build-address [code-hash] [creator-address] [salt-encoded] [init-msg]",
 		Short:   "build contract address",
 		Aliases: []string{"address"},
-		Args:    cobra.ExactArgs(3),
+		Args:    cobra.RangeArgs(3, 4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			codeHash, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -81,14 +82,25 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("creator: %s", err)
 			}
-			label := args[2]
-			if err := types.ValidateLabel(label); err != nil {
-				return fmt.Errorf("label: %s", err)
+			salt, err := decoder.DecodeString(args[2])
+			switch {
+			case err != nil:
+				return fmt.Errorf("salt: %s", err)
+			case len(salt) == 0:
+				return errors.New("empty salt")
 			}
-			cmd.Println(keeper.BuildContractAddress2(codeHash, creator, label).String())
+			if len(args) == 3 {
+				cmd.Println(keeper.BuildContractAddressPredictable1(codeHash, creator, salt).String())
+			}
+			initMsg := types.RawContractMessage(args[3])
+			if err := initMsg.ValidateBasic(); err != nil {
+				return fmt.Errorf("init message: %s", err)
+			}
+			cmd.Println(keeper.BuildContractAddressPredictable2(codeHash, creator, salt, initMsg).String())
 			return nil
 		},
 	}
+	decoder.RegisterFlags(cmd.Flags(), "salt argument")
 	return cmd
 }
 

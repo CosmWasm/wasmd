@@ -321,7 +321,7 @@ func GetAllContracts(state *types.GenesisState) []ContractMeta {
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
 			all = append(all, ContractMeta{
-				ContractAddress: keeper.BuildContractAddress(msg.CodeID, seq).String(),
+				ContractAddress: keeper.BuildContractAddressClassic(msg.CodeID, seq).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
@@ -362,7 +362,7 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			if keeper.BuildContractAddress(msg.CodeID, seq).String() == contractAddr {
+			if keeper.BuildContractAddressClassic(msg.CodeID, seq).String() == contractAddr {
 				return true
 			}
 			seq++

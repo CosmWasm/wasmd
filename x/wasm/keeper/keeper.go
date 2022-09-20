@@ -19,7 +19,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
@@ -267,23 +266,6 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 	return nil
 }
 
-type AddressGenerator func(ctx sdk.Context, codeID uint64, checksum []byte) sdk.AccAddress
-
-func (k Keeper) ClassicAddressGenerator() AddressGenerator {
-	return func(ctx sdk.Context, codeID uint64, _ []byte) sdk.AccAddress {
-		return k.generateContractAddress(ctx, codeID)
-	}
-}
-
-func PredicableAddressGenerator(creator sdk.AccAddress, salt []byte, initMsg []byte, includeInitMsg bool) AddressGenerator {
-	return func(ctx sdk.Context, _ uint64, checksum []byte) sdk.AccAddress {
-		if includeInitMsg {
-			return BuildContractAddress3(checksum, creator, salt, initMsg)
-		}
-		return BuildContractAddress2(checksum, creator, salt)
-	}
-}
-
 func (k Keeper) instantiate(
 	ctx sdk.Context,
 	codeID uint64,
@@ -360,7 +342,7 @@ func (k Keeper) instantiate(
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
-	// 0x03 | BuildContractAddress (sdk.AccAddress)
+	// 0x03 | BuildContractAddressClassic (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
@@ -1026,48 +1008,6 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	if ctx.GasMeter().IsOutOfGas() {
 		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
 	}
-}
-
-// BuildContractAddress2 generates a contract address for the wasm module with len = types.ContractAddrLen using the
-// Cosmos SDK address.Module function.
-// Internally a key is built containing (len(checksum) | checksum | len(sender_address) | sender_address | len(salt) | salt).
-// All method parameter values must be valid and not be empty or nil.
-func BuildContractAddress2(checksum []byte, creator sdk.AccAddress, salt []byte) sdk.AccAddress {
-	checksum = address.MustLengthPrefix(checksum)
-	creator = address.MustLengthPrefix(creator)
-	salt = address.MustLengthPrefix(salt)
-	key := make([]byte, len(checksum)+len(creator)+len(salt))
-	copy(key[0:], checksum)
-	copy(key[len(checksum):], creator)
-	copy(key[len(checksum)+len(creator):], salt)
-	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
-}
-
-func BuildContractAddress3(checksum []byte, creator sdk.AccAddress, salt, initMsg []byte) sdk.AccAddress {
-	checksum = address.MustLengthPrefix(checksum)
-	creator = address.MustLengthPrefix(creator)
-	salt = address.MustLengthPrefix(salt)
-	initMsg = address.MustLengthPrefix(initMsg)
-	key := make([]byte, len(checksum)+len(creator)+len(salt)+len(initMsg))
-	copy(key[0:], checksum)
-	copy(key[len(checksum):], creator)
-	copy(key[len(checksum)+len(creator):], salt)
-	copy(key[len(checksum)+len(creator)+len(salt):], initMsg)
-	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
-}
-
-// generates a contract address from codeID + instanceID
-func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
-	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
-	return BuildContractAddress(codeID, instanceID)
-}
-
-// BuildContractAddress builds an sdk account address for a contract.
-func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
-	contractID := make([]byte, 16)
-	binary.BigEndian.PutUint64(contractID[:8], codeID)
-	binary.BigEndian.PutUint64(contractID[8:], instanceID)
-	return address.Module(types.ModuleName, contractID)[:types.ContractAddrLen]
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
