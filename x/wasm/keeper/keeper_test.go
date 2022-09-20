@@ -2285,27 +2285,28 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
 	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(sdk.WrapSDKContext(parentCtx), msgCreateVestingAccount)
 	require.NoError(t, err)
-	originalVestingAcc := keepers.AccountKeeper.GetAccount(parentCtx, vestingAddr)
-	require.NotNil(t, originalVestingAcc)
+	myVestingAccount := keepers.AccountKeeper.GetAccount(parentCtx, vestingAddr)
+	require.NotNil(t, myVestingAccount)
 
 	specs := map[string]struct {
-		setupAcc    func(t *testing.T, ctx sdk.Context)
+		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
 		expBalances sdk.Coins
 		expErr      *sdkerrors.Error
 	}{
 		"vesting account - all removed": {
-			setupAcc:    func(t *testing.T, ctx sdk.Context) {},
+			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
 			expBalances: sdk.NewCoins(),
 		},
 		"vesting account with other tokens - only original denoms removed": {
-			setupAcc: func(t *testing.T, ctx sdk.Context) {
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
 				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
+				return myVestingAccount
 			},
 			expBalances: sdk.NewCoins(sdk.NewCoin("other", sdk.NewInt(2))),
 		},
 		"non vesting account": {
-			setupAcc: func(t *testing.T, ctx sdk.Context) {
-				originalVestingAcc = &authtypes.BaseAccount{Address: originalVestingAcc.GetAddress().String()}
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
 			},
 			expErr: types.ErrAccountExists,
 		},
@@ -2313,14 +2314,13 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
-			spec.setupAcc(t, ctx)
-			// overwrite account as in keeper before calling prune
-			contractAccount := keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr)
-			keepers.AccountKeeper.SetAccount(ctx, contractAccount)
+			existingAccount := spec.setupAcc(t, ctx)
+			// overwrite account in store as in keeper before calling prune
+			keepers.AccountKeeper.SetAccount(ctx, keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr))
 
 			// when
 			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
-			gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, originalVestingAcc)
+			gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, existingAccount)
 			// then
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)
