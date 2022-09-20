@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 package ics23;
-option go_package = "github.com/confio/ics23/go";
 
 enum HashOp {
     // NO_HASH is the default if no data passed. Note this is an illegal argument some places.
@@ -11,6 +10,7 @@ enum HashOp {
     KECCAK = 3;
     RIPEMD160 = 4;
     BITCOIN = 5;  // ripemd160(sha256(x))
+    SHA512_256 = 6;
 }
 
 /**
