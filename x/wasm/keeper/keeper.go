@@ -60,8 +60,9 @@ type CoinTransferrer interface {
 // CoinPruner handles the balances for accounts that are pruned on contract instantiate.
 // This is an extension point to attach custom logic
 type CoinPruner interface {
-	// PruneBalances handle balances for given account
-	PruneBalances(ctx sdk.Context, existingAccount authtypes.AccountI) error
+	// PruneBalances handle balances for the given account. The method returns true when the account
+	// balance is handled. Unsupported account types are rejected by returning false
+	PruneBalances(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
 }
 
 // WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
@@ -312,8 +313,11 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 			contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
 			k.accountKeeper.SetAccount(ctx, contractAccount)
 			// also handle balance to not open cases where these accounts are abused and become liquid
-			if err := k.coinPruner.PruneBalances(ctx, existingAcct); err != nil {
-				return nil, nil, err
+			switch handled, err := k.coinPruner.PruneBalances(ctx, existingAcct); {
+			case err != nil:
+				return nil, nil, sdkerrors.Wrap(err, "prune balance")
+			case !handled:
+				return nil, nil, types.ErrAccountExists.Wrap("address is claimed by external account")
 			}
 		}
 	} else {
@@ -1159,25 +1163,26 @@ func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
 	return VestingCoinBurner{bank: bank}
 }
 
-// PruneBalances burns all coins owned by the account.
-func (b VestingCoinBurner) PruneBalances(ctx sdk.Context, existingAcc authtypes.AccountI) error {
+// PruneBalances accepts only vesting account types to burns all their original vesting coin balances.
+// Other account types will be rejected with a types.ErrAccountExists
+func (b VestingCoinBurner) PruneBalances(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
 	v, ok := existingAcc.(vestingexported.VestingAccount)
 	if !ok {
-		return types.ErrAccountExists.Wrapf("refusing to overwrite special account type:: %T", existingAcc)
+		return false, nil
 	}
 
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	coinsToBurn := sdk.NewCoins()
 	for _, orig := range v.GetOriginalVesting() { // focus on the coin denoms that were setup originally; getAllBalances has some issues
-		coinsToBurn = coinsToBurn.Add(b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))
+		coinsToBurn = append(coinsToBurn, b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))
 	}
 	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrap(err, "prune account balance")
+		return false, sdkerrors.Wrap(err, "prune account balance")
 	}
 	if err := b.bank.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
-		return sdkerrors.Wrap(err, "burn account balance")
+		return false, sdkerrors.Wrap(err, "burn account balance")
 	}
-	return nil
+	return true, nil
 }
 
 type msgDispatcher interface {

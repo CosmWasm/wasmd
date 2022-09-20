@@ -645,7 +645,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			deposit:    sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
 		},
-		"prune listed DelayedVestingAccount gets overwritten": {
+		"prunable DelayedVestingAccount gets overwritten": {
 			account: vestingtypes.NewDelayedVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
@@ -654,7 +654,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
 		},
-		"prune listed ContinuousVestingAccount gets overwritten": {
+		"prunable ContinuousVestingAccount gets overwritten": {
 			account: vestingtypes.NewContinuousVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
@@ -663,14 +663,14 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
 		},
-		"prune listed account without balance gets overwritten": {
+		"prunable account without balance gets overwritten": {
 			account: vestingtypes.NewContinuousVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(0))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
 			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance: sdk.NewCoins(),
 		},
-		"unknown account type creates error": {
+		"unknown account type is rejected with error": {
 			account: authtypes.NewModuleAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				"testing",
@@ -2291,11 +2291,13 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	specs := map[string]struct {
 		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
 		expBalances sdk.Coins
+		expHandled  bool
 		expErr      *sdkerrors.Error
 	}{
 		"vesting account - all removed": {
 			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
 			expBalances: sdk.NewCoins(),
+			expHandled:  true,
 		},
 		"vesting account with other tokens - only original denoms removed": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
@@ -2303,12 +2305,14 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 				return myVestingAccount
 			},
 			expBalances: sdk.NewCoins(sdk.NewCoin("other", sdk.NewInt(2))),
+			expHandled:  true,
 		},
-		"non vesting account": {
+		"non vesting account - not handled": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
 				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
 			},
-			expErr: types.ErrAccountExists,
+			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),
+			expHandled:  false,
 		},
 	}
 	for name, spec := range specs {
@@ -2320,7 +2324,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 
 			// when
 			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
-			gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, existingAccount)
+			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, existingAccount)
 			// then
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)
@@ -2328,6 +2332,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expBalances, keepers.BankKeeper.GetAllBalances(ctx, vestingAddr))
+			assert.Equal(t, spec.expHandled, gotHandled)
 			// and no out of gas panic
 		})
 	}
