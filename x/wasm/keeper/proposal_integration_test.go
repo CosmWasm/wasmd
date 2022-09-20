@@ -117,8 +117,9 @@ func TestInstantiateProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
-	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
+	contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
+	require.NoError(t, err)
+
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -188,8 +189,9 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	require.NoError(t, err)
 
 	// then
-	codeHash := keepers.WasmKeeper.GetCodeInfo(ctx, 1).CodeHash
-	contractAddr := BuildContractAddress(codeHash, oneAddress, "testing")
+	contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
+	require.NoError(t, err)
+
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(1), cInfo.CodeID)
@@ -230,7 +232,7 @@ func TestMigrateProposal(t *testing.T) {
 	var (
 		anyAddress   = DeterministicAccountAddress(t, 1)
 		otherAddress = DeterministicAccountAddress(t, 2)
-		contractAddr = BuildContractAddress(codeInfoFixture.CodeHash, RandomAccountAddress(t), "")
+		contractAddr = BuildContractAddress(1, 1)
 	)
 
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
@@ -412,7 +414,7 @@ func TestAdminProposals(t *testing.T) {
 	var (
 		otherAddress = DeterministicAccountAddress(t, 2)
 		codeHash     = sha256.Sum256(wasmCode)
-		contractAddr = BuildContractAddress(codeHash[:], RandomAccountAddress(t), "")
+		contractAddr = BuildContractAddress2(codeHash[:], RandomAccountAddress(t), "")
 	)
 
 	specs := map[string]struct {

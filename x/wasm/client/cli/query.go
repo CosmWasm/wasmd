@@ -85,7 +85,7 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err := types.ValidateLabel(label); err != nil {
 				return fmt.Errorf("label: %s", err)
 			}
-			cmd.Println(keeper.BuildContractAddress(codeHash, creator, label).String())
+			cmd.Println(keeper.BuildContractAddress2(codeHash, creator, label).String())
 			return nil
 		},
 	}

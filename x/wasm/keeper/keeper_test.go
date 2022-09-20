@@ -398,11 +398,11 @@ func TestInstantiate(t *testing.T) {
 	// create with no balance is also legal
 	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos1xaq0tcwz9fsqmtxlpzwjn2zr8gw66ljjr079ltfc5pelepcs7sjsk28n5n", gotContractAddr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x187b8), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1964f), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -542,6 +542,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 }
 
 func TestInstantiateWithUniqueContractAddress(t *testing.T) {
+	t.Skip("TODO (alex): fix when instantiate2 is added")
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := InstantiateHackatomExampleContract(t, parentCtx, keepers)
 	otherExample := InstantiateReflectExampleContract(t, parentCtx, keepers)
@@ -592,7 +593,7 @@ func TestInstantiateWithUniqueContractAddress(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-			expAddr := BuildContractAddress(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.label)
+			expAddr := BuildContractAddress2(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.label)
 			assert.Equal(t, expAddr.String(), gotAddr.String())
 			require.NotContains(t, used, gotAddr.String())
 			used[gotAddr.String()] = struct{}{}
@@ -601,6 +602,7 @@ func TestInstantiateWithUniqueContractAddress(t *testing.T) {
 }
 
 func TestInstantiateWithAccounts(t *testing.T) {
+	t.Skip("TODO (Alex): fix when instantiate2 is added")
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	require.Equal(t, uint64(1), example.CodeID)
@@ -609,7 +611,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	senderAddr := DeterministicAccountAddress(t, 1)
 	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
 	const myLabel = "testing"
-	contractAddr := BuildContractAddress(example.Checksum, senderAddr, myLabel)
+	contractAddr := BuildContractAddress2(example.Checksum, senderAddr, myLabel)
 
 	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
@@ -857,8 +859,7 @@ func TestExecute(t *testing.T) {
 
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	// cosmos1eycfqpgtcp4gc9g24cvg6useyncxspq8qurv2z7cs0wzcgvmffaquzwe2e build with code-id 1, DeterministicAccountAddress(t, 1) and label `demo contract 3`
-	require.Equal(t, "cosmos1eycfqpgtcp4gc9g24cvg6useyncxspq8qurv2z7cs0wzcgvmffaquzwe2e", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// ensure bob doesn't exist
 	bobAcct := accKeeper.GetAccount(ctx, bob)
@@ -1562,7 +1563,7 @@ func TestSudo(t *testing.T) {
 	require.NoError(t, err)
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, creator, nil, initMsgBz, "demo contract 3", deposit)
 	require.NoError(t, err)
-	require.Equal(t, "cosmos1eycfqpgtcp4gc9g24cvg6useyncxspq8qurv2z7cs0wzcgvmffaquzwe2e", addr.String())
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// the community is broke
 	_, _, community := keyPubAddr()
@@ -2159,7 +2160,7 @@ func TestBuildContractAddress(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotAddr := BuildContractAddress(spec.checksum, creatorAddr, spec.label)
+			gotAddr := BuildContractAddress2(spec.checksum, creatorAddr, spec.label)
 
 			require.Equal(t, spec.expAddress, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))

@@ -289,7 +289,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
-	contractAddress := BuildContractAddress(codeInfo.CodeHash, creator, label)
+	contractAddress := k.generateContractAddress(ctx, codeID)
 	if k.HasContractInfo(ctx, contractAddress) {
 		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
 	}
@@ -338,7 +338,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
-	// 0x03 | BuildContractAddress (sdk.AccAddress)
+	// 0x03 | BuildContractAddress2 (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
@@ -1006,11 +1006,11 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	}
 }
 
-// BuildContractAddress generates a contract address for the wasm module with len = types.ContractAddrLen using the
+// BuildContractAddress2 generates a contract address for the wasm module with len = types.ContractAddrLen using the
 // Cosmos SDK address.Module function.
 // Internally a key is built containing (len(checksum) | checksum | len(sender_address) | sender_address | len(label) | label).
 // All method parameter values must be valid and not be empty or nil.
-func BuildContractAddress(checksum []byte, creator sdk.AccAddress, label string) sdk.AccAddress {
+func BuildContractAddress2(checksum []byte, creator sdk.AccAddress, label string) sdk.AccAddress {
 	checksum = address.MustLengthPrefix(checksum)
 	creator = address.MustLengthPrefix(creator)
 	labelBz := address.MustLengthPrefix([]byte(label))
@@ -1019,6 +1019,20 @@ func BuildContractAddress(checksum []byte, creator sdk.AccAddress, label string)
 	copy(key[len(checksum):], creator)
 	copy(key[len(checksum)+len(creator):], labelBz)
 	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
+}
+
+// generates a contract address from codeID + instanceID
+func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
+	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
+	return BuildContractAddress(codeID, instanceID)
+}
+
+// BuildContractAddress builds an sdk account address for a contract.
+func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
+	contractID := make([]byte, 16)
+	binary.BigEndian.PutUint64(contractID[:8], codeID)
+	binary.BigEndian.PutUint64(contractID[8:], instanceID)
+	return address.Module(types.ModuleName, contractID)[:types.ContractAddrLen]
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {

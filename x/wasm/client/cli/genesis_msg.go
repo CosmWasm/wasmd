@@ -8,10 +8,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -24,6 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -238,10 +236,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 				return err
 			}
 			state := g.WasmModuleState
-			all, err := GetAllContracts(state)
-			if err != nil {
-				return err
-			}
+			all := GetAllContracts(state)
 			return printJSONOutput(cmd, all)
 		},
 	}
@@ -313,18 +308,7 @@ type ContractMeta struct {
 	Info            types.ContractInfo `json:"info"`
 }
 
-// returns nil when not found
-func codeHashByID(state *types.GenesisState, codeID uint64) []byte {
-	codes := GetAllCodes(state)
-	for _, v := range codes {
-		if v.CodeID == codeID {
-			return v.Info.CodeHash
-		}
-	}
-	return nil
-}
-
-func GetAllContracts(state *types.GenesisState) ([]ContractMeta, error) {
+func GetAllContracts(state *types.GenesisState) []ContractMeta {
 	all := make([]ContractMeta, len(state.Contracts))
 	for i, c := range state.Contracts {
 		all[i] = ContractMeta{
@@ -333,18 +317,11 @@ func GetAllContracts(state *types.GenesisState) ([]ContractMeta, error) {
 		}
 	}
 	// add inflight
+	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-			if err != nil {
-				panic(fmt.Sprintf("unsupported address %q: %s", msg.Sender, err))
-			}
-			codeHash := codeHashByID(state, msg.CodeID)
-			if codeHash == nil {
-				return nil, types.ErrNotFound.Wrapf("hash for code-id: %d", msg.CodeID)
-			}
 			all = append(all, ContractMeta{
-				ContractAddress: keeper.BuildContractAddress(codeHash, senderAddr, msg.Label).String(),
+				ContractAddress: keeper.BuildContractAddress(msg.CodeID, seq).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
@@ -352,9 +329,10 @@ func GetAllContracts(state *types.GenesisState) ([]ContractMeta, error) {
 					Label:   msg.Label,
 				},
 			})
+			seq++
 		}
 	}
-	return all, nil
+	return all
 }
 
 func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, sender sdk.AccAddress, coins sdk.Coins) (bool, error) {
@@ -381,19 +359,13 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 			return true
 		}
 	}
+	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-			if err != nil {
-				panic(fmt.Sprintf("unsupported address %q: %s", msg.Sender, err))
-			}
-			hash := codeHashByID(state, msg.CodeID)
-			if hash == nil {
-				panic(fmt.Sprintf("unknown code id: %d", msg.CodeID))
-			}
-			if keeper.BuildContractAddress(hash, senderAddr, msg.Label).String() == contractAddr {
+			if keeper.BuildContractAddress(msg.CodeID, seq).String() == contractAddr {
 				return true
 			}
+			seq++
 		}
 	}
 	return false
@@ -484,6 +456,19 @@ func (x DefaultGenesisIO) AlterWasmModuleState(cmd *cobra.Command, callback func
 
 	g.GenDoc.AppState = appStateJSON
 	return genutil.ExportGenesisFile(g.GenDoc, g.GenesisFile)
+}
+
+// contractSeqValue reads the contract sequence from the genesis or
+// returns default start value used in the keeper
+func contractSeqValue(state *types.GenesisState) uint64 {
+	var seq uint64 = 1
+	for _, s := range state.Sequences {
+		if bytes.Equal(s.IDKey, types.KeyLastInstanceID) {
+			seq = s.Value
+			break
+		}
+	}
+	return seq
 }
 
 // codeSeqValue reads the code sequence from the genesis or

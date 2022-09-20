@@ -43,7 +43,7 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 }
 
 func TestContractFromPortID(t *testing.T) {
-	contractAddr := BuildContractAddress(rand.Bytes(32), RandomAccountAddress(t), "testing")
+	contractAddr := BuildContractAddress2(rand.Bytes(32), RandomAccountAddress(t), "testing")
 	specs := map[string]struct {
 		srcPort string
 		expAddr sdk.AccAddress
