@@ -1,11 +1,23 @@
 # Changelog
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
+
+- Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
+- Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
+- Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
 - Upgrade to ibc-go v3.2.0 [\#937](https://github.com/CosmWasm/wasmd/pull/937) ([faddat](https://github.com/faddat))
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
 - Upgrade wasmvm to v1.1.0 [\#984](https://github.com/CosmWasm/wasmd/pull/984), see [wasmvm v1.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v1.1.0)
-
+- Add documentation how to add x/wasm to a new Cosmos SDK chain [\#876](https://github.com/CosmWasm/wasmd/issues/876)
+- Upgrade keyring / go-keychain dependencies (removes deprecate warning) [\#957](https://github.com/CosmWasm/wasmd/issues/957)
+- Make contract pinning an optional field in StoreCode proposals  [\#972](https://github.com/CosmWasm/wasmd/issues/972)
+- Add gRPC query for WASM params [\#889](https://github.com/CosmWasm/wasmd/issues/889)
+- Expose Keepers in app.go? [\#881](https://github.com/CosmWasm/wasmd/issues/881)
+- Remove unused `flagProposalType` flag in gov proposals [\#849](https://github.com/CosmWasm/wasmd/issues/849)
+- Restrict code access config modifications [\#901](https://github.com/CosmWasm/wasmd/pull/901) ([alpe](https://github.com/alpe))
+- Prevent migration to a restricted code [\#900](https://github.com/CosmWasm/wasmd/pull/900) ([alpe](https://github.com/alpe))
+- Charge gas to unzip wasm code [\#898](https://github.com/CosmWasm/wasmd/pull/898) ([alpe](https://github.com/alpe))
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
 
