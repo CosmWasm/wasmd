@@ -161,6 +161,17 @@ jobs:
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .
+      - run:
+          name: Ensure libwasmvm version is correct
+          command: |
+            IN_DOCKER=$(docker run --rm "cosmwasm/wasmd:${CIRCLE_SHA1}" /usr/bin/wasmd query wasm libwasmvm-version)
+            echo "Runtime libwasmvm-version in docker: $IN_DOCKER"
+            IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm | cut -d" " -f2 | cut -d"v" -f2)
+            echo "wasmvm version in go.mod: $IN_GOMOD"
+            if [[ "$IN_DOCKER" != "$IN_GOMOD" ]]; then
+              echo "Mismatch of wasmvm versions detected"
+              exit 1
+            fi
       - when:
           condition:
             equal: [ main, << pipeline.git.branch >> ]
