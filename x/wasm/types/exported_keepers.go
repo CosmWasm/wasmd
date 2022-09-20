@@ -28,8 +28,27 @@ type ContractOpsKeeper interface {
 	// Create uploads and compiles a WASM contract, returning a short identifier for the contract
 	Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *AccessConfig) (codeID uint64, checksum []byte, err error)
 
-	// Instantiate creates an instance of a WASM contract
-	Instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins) (sdk.AccAddress, []byte, error)
+	// Instantiate creates an instance of a WASM contract using the classic sequence based address generator
+	Instantiate(
+		ctx sdk.Context,
+		codeID uint64,
+		creator, admin sdk.AccAddress,
+		initMsg []byte,
+		label string,
+		deposit sdk.Coins,
+	) (sdk.AccAddress, []byte, error)
+
+	// Instantiate2 creates an instance of a WASM contract using the predictable address generator
+	Instantiate2(
+		ctx sdk.Context,
+		codeID uint64,
+		creator, admin sdk.AccAddress,
+		initMsg []byte,
+		label string,
+		deposit sdk.Coins,
+		salt []byte,
+		includeInitMsg bool,
+	) (sdk.AccAddress, []byte, error)
 
 	// Execute executes the contract instance
 	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)

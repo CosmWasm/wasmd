@@ -102,6 +102,7 @@ type (
 	MsgStoreCode                   = types.MsgStoreCode
 	MsgStoreCodeResponse           = types.MsgStoreCodeResponse
 	MsgInstantiateContract         = types.MsgInstantiateContract
+	MsgInstantiateContract2        = types.MsgInstantiateContract2
 	MsgInstantiateContractResponse = types.MsgInstantiateContractResponse
 	MsgExecuteContract             = types.MsgExecuteContract
 	MsgExecuteContractResponse     = types.MsgExecuteContractResponse

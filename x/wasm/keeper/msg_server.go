@@ -43,6 +43,7 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	}, nil
 }
 
+// InstantiateContract instantiate a new contract with classic sequence based address generation
 func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInstantiateContract) (*types.MsgInstantiateContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -69,6 +70,37 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 	}
 
 	return &types.MsgInstantiateContractResponse{
+		Address: contractAddr.String(),
+		Data:    data,
+	}, nil
+}
+
+// InstantiateContract2 instantiate a new contract with predicatable address generated
+func (m msgServer) InstantiateContract2(goCtx context.Context, msg *types.MsgInstantiateContract2) (*types.MsgInstantiateContract2Response, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "sender")
+	}
+	var adminAddr sdk.AccAddress
+	if msg.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return nil, sdkerrors.Wrap(err, "admin")
+		}
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		sdk.EventTypeMessage,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
+	))
+	contractAddr, data, err := m.keeper.Instantiate2(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, msg.Salt, msg.IncludeInitMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgInstantiateContract2Response{
 		Address: contractAddr.String(),
 		Data:    data,
 	}, nil

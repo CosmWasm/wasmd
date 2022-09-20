@@ -23,6 +23,8 @@
     - [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract)
     - [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse)
     - [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract)
+    - [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2)
+    - [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response)
     - [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse)
     - [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract)
     - [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse)
@@ -355,6 +357,45 @@ code id.
 
 
 
+<a name="cosmwasm.wasm.v1.MsgInstantiateContract2"></a>
+
+### MsgInstantiateContract2
+MsgInstantiateContract2 create a new smart contract instance for the given
+code id with a predicable address.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender |
+| `include_init_msg` | [bool](#bool) |  | IncludeInitMsg into the hash for the predictable address. Default is false |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgInstantiateContract2Response"></a>
+
+### MsgInstantiateContract2Response
+MsgInstantiateContract2Response return instantiation result data
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
+| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.MsgInstantiateContractResponse"></a>
 
 ### MsgInstantiateContractResponse
@@ -478,7 +519,8 @@ Msg defines the wasm Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `StoreCode` | [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode) | [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system | |
-| `InstantiateContract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse) | Instantiate creates a new smart contract instance for the given code id. | |
+| `InstantiateContract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse) | InstantiateContract creates a new smart contract instance for the given code id. | |
+| `InstantiateContract2` | [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2) | [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response) | InstantiateContract2 creates a new smart contract instance for the given code id with a predictable address | |
 | `ExecuteContract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) | [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
 | `MigrateContract` | [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract) | [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
 | `UpdateAdmin` | [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract | |
@@ -560,7 +602,7 @@ order. The intention is to have more human readable data that is auditable.
 | ----- | ---- | ----- | ----------- |
 | `store_code` | [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode) |  |  |
 | `instantiate_contract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) |  |  |
-| `execute_contract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) |  |  |
+| `execute_contract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) |  | MsgInstantiateContract2 intentionally not supported see https://github.com/CosmWasm/wasmd/issues/987 |
 
 
 
