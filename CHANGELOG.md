@@ -6,7 +6,7 @@
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
 - Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
-- Upgrade to ibc-go v3.2.0 [\#937](https://github.com/CosmWasm/wasmd/pull/937) ([faddat](https://github.com/faddat))
+- Upgrade to ibc-go v3.2.0 REQUIRES [MIGRATION](https://github.com/cosmos/ibc-go/blob/v3.2.0/docs/migrations/support-denoms-with-slashes.md) [\#937](https://github.com/CosmWasm/wasmd/pull/937) ([faddat](https://github.com/faddat))
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
 - Upgrade wasmvm to v1.1.0 [\#984](https://github.com/CosmWasm/wasmd/pull/984), see [wasmvm v1.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v1.1.0)
 - Add documentation how to add x/wasm to a new Cosmos SDK chain [\#876](https://github.com/CosmWasm/wasmd/issues/876)
@@ -18,6 +18,9 @@
 - Restrict code access config modifications [\#901](https://github.com/CosmWasm/wasmd/pull/901) ([alpe](https://github.com/alpe))
 - Prevent migration to a restricted code [\#900](https://github.com/CosmWasm/wasmd/pull/900) ([alpe](https://github.com/alpe))
 - Charge gas to unzip wasm code [\#898](https://github.com/CosmWasm/wasmd/pull/898) ([alpe](https://github.com/alpe))
+
+Migration notes:
+- See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v3.2.0/docs/migrations/support-denoms-with-slashes.md) [\#937](https://github.com/CosmWasm/wasmd/pull/937)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...HEAD)
 
