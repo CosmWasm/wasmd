@@ -196,14 +196,9 @@ workflows:
   version: 2
   test-suite:
     jobs:
-      # this is now a slow process... let's only run on main and PR branches we care about
       - docker-image:
           requires:
             - setup-dependencies
-          filters:
-            branches:
-              only:
-                - main
       - docker-tagged:
           filters:
             tags:
