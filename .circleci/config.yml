@@ -161,15 +161,17 @@ jobs:
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .
-      - run:
-          name: Push application Docker image to docker hub
-          command: |
-            if [ "${CIRCLE_BRANCH}" = "master" ]; then
-              docker tag "cosmwasm/wasmd:${CIRCLE_SHA1}" cosmwasm/wasmd:latest
-              docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
-              docker push cosmwasm/wasmd:latest
-              docker logout
-            fi
+      - when:
+          condition:
+            equal: [ main, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Push application Docker image to docker hub
+                command: |
+                  docker tag "cosmwasm/wasmd:${CIRCLE_SHA1}" cosmwasm/wasmd:latest
+                  docker login --password-stdin -u "$DOCKER_USER" \<<<"$DOCKER_PASS"
+                  docker push cosmwasm/wasmd:latest
+                  docker logout
 
   docker-tagged:
     executor: golang
@@ -194,14 +196,14 @@ workflows:
   version: 2
   test-suite:
     jobs:
-      # this is now a slow process... let's only run on master
+      # this is now a slow process... let's only run on main and PR branches we care about
       - docker-image:
           requires:
             - setup-dependencies
           filters:
             branches:
               only:
-                - master
+                - main
       - docker-tagged:
           filters:
             tags:
