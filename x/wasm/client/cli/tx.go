@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
@@ -178,7 +179,20 @@ func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional] " +
 			"--salt [hex,optional] --fix-msg [bool,optional]",
-		Short:   "Instantiate a wasm contract",
+		Short: "Instantiate a wasm contract",
+		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
+Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses 
+for special use cases, the '--salt' and '--fix-mesg' parameters can be used to generate a custom address.
+
+Normal example:
+$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
+  --from mykey --amount="100ustake" --label "local0.1.0" 
+
+Predictable address example (also see '%s query wasm build-address -h'):
+$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
+  --from mykey --amount="100ustake" --label "local0.1.0" \
+  --salt=$(echo -n "testing" | xxd -ps) --fix-msg 
+`, version.AppName, version.AppName, version.AppName, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
