@@ -5,7 +5,7 @@ import (
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract
-const MaxSaltSize = 255
+const MaxSaltSize = 64
 
 var (
 	// MaxLabelSize is the longest label that can be used when instantiating a contract

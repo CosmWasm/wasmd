@@ -199,7 +199,7 @@ type MsgInstantiateContract2 struct {
 	Msg RawContractMessage `protobuf:"bytes,5,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`
 	// Funds coins that are transferred to the contract on instantiation
 	Funds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,6,rep,name=funds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"funds"`
-	// Salt is an arbitrary value provided by the sender. Size can be 1 to 255.
+	// Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
 	Salt []byte `protobuf:"bytes,7,opt,name=salt,proto3" json:"salt,omitempty"`
 	// FixMsg include the msg value into the hash for the predictable address.
 	// Default is false
