@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -39,12 +40,24 @@ func BuildContractAddressClassic(codeID, instanceID uint64) sdk.AccAddress {
 }
 
 // BuildContractAddressPredictable generates a contract address for the wasm module with len = types.ContractAddrLen using the
-// Cosmos SDK address.Module function. Similar to BuildContractAddressPredictable1 but including the initMsg.
+// Cosmos SDK address.Module function.
 // Internally a key is built containing:
 // (len(checksum) | checksum | len(sender_address) | sender_address | len(salt) | salt| len(initMsg) | initMsg).
 //
 // All method parameter values must be valid and not nil.
-func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, salt, initMsg []byte) sdk.AccAddress {
+func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, salt, initMsg types.RawContractMessage) sdk.AccAddress {
+	if len(checksum) == 0 {
+		panic("empty checksum")
+	}
+	if err := sdk.VerifyAddressFormat(creator); err != nil {
+		panic(fmt.Sprintf("creator: %s", err))
+	}
+	if err := types.ValidateSalt(salt); err != nil {
+		panic(fmt.Sprintf("salt: %s", err))
+	}
+	if err := initMsg.ValidateBasic(); len(initMsg) != 0 && err != nil {
+		panic(fmt.Sprintf("initMsg: %s", err))
+	}
 	checksum = address.MustLengthPrefix(checksum)
 	creator = address.MustLengthPrefix(creator)
 	salt = address.MustLengthPrefix(salt)

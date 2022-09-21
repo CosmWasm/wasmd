@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -136,7 +138,7 @@ func TestInstantiate2(t *testing.T) {
 			codeID:  example.CodeID,
 			sender:  otherAddr,
 			salt:    []byte(mySalt),
-			initMsg: make([]byte, math.MaxInt32+1),
+			initMsg: []byte(fmt.Sprintf(`{"foo":%q}`, strings.Repeat("b", math.MaxInt32+1))),
 			fixMsg:  true,
 		},
 	}

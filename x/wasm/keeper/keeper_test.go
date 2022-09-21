@@ -2098,9 +2098,9 @@ func TestBuildContractAddress(t *testing.T) {
 		},
 		"max salt size": {
 			checksum:   fromHex("13A1FC994CC6D1C81B746EE0C0FF6F90043875E0BF1D9BE6B7D779FC978DC2A5"),
-			salt:       bytes.Repeat([]byte("x"), types.MaxLabelSize),
+			salt:       bytes.Repeat([]byte("x"), types.MaxSaltSize),
 			creator:    "purple1nxvenxve42424242hwamhwamenxvenxvhxf2py",
-			expAddress: "purple1prkdvjmvv4s3tnppfxmlpj259v9cplf3wws4qq9qd7w3s4yqzqeqem4759",
+			expAddress: "purple1hvau0pl7xedxhjjn0gpc86m7d8s9l9cslhyfd2k4c25k075xhugqr6jnr6",
 		},
 	}
 	for name, spec := range specs {
