@@ -194,7 +194,7 @@ func InstantiateContractCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("fix msg: %w", err)
 			}
-			if salt == nil && fixMsg {
+			if len(salt) == 0 && fixMsg {
 				return errors.New("salt required when fix-msg is set")
 			}
 			var msg sdk.Msg
@@ -202,7 +202,7 @@ func InstantiateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if salt == nil {
+			if len(salt) == 0 {
 				msg = instantiateClassicMsg
 			} else { // instantiate with predictable address
 				msg = &types.MsgInstantiateContract2{
@@ -227,7 +227,7 @@ func InstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
-	cmd.Flags().BytesHex(flagSalt, nil, "An optional hex encoded salt. When set it is used for the predictable address generation mode")
+	cmd.Flags().BytesHex(flagSalt, nil, fmt.Sprintf("An optional hex encoded salt. When set it is used for the predictable address generation mode. See also %s", flagFixMsg))
 	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
