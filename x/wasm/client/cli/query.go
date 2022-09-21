@@ -96,7 +96,7 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err := initMsg.ValidateBasic(); err != nil {
 				return fmt.Errorf("init message: %s", err)
 			}
-			cmd.Println(keeper.BuildContractAddressPredictable2(codeHash, creator, salt, initMsg).String())
+			cmd.Println(keeper.BuildContractAddressPredictable(codeHash, creator, salt, initMsg).String())
 			return nil
 		},
 	}

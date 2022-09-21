@@ -47,7 +47,7 @@ type ContractOpsKeeper interface {
 		label string,
 		deposit sdk.Coins,
 		salt []byte,
-		includeInitMsg bool,
+		fixMsg bool,
 	) (sdk.AccAddress, []byte, error)
 
 	// Execute executes the contract instance

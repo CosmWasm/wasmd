@@ -76,7 +76,7 @@ func (p PermissionedKeeper) Instantiate2(
 	label string,
 	deposit sdk.Coins,
 	salt []byte,
-	includeInitMsg bool,
+	fixMsg bool,
 ) (sdk.AccAddress, []byte, error) {
 	return p.nested.instantiate(
 		ctx,
@@ -86,7 +86,7 @@ func (p PermissionedKeeper) Instantiate2(
 		initMsg,
 		label,
 		deposit,
-		PredicableAddressGenerator(creator, salt, initMsg, includeInitMsg),
+		PredicableAddressGenerator(creator, salt, initMsg, fixMsg),
 		p.authZPolicy,
 	)
 }

@@ -4,10 +4,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-var (
-	// MaxSaltSize is the longest label that can be used when instantiating a contract
-	MaxSaltSize = 128 // extension point for chains to customize via compile flag.
+// MaxSaltSize is the longest salt that can be used when instantiating a contract
+const MaxSaltSize = 255
 
+var (
 	// MaxLabelSize is the longest label that can be used when instantiating a contract
 	MaxLabelSize = 128 // extension point for chains to customize via compile flag.
 

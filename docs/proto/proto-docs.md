@@ -329,7 +329,7 @@ MsgExecuteContractResponse returns execution result data.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
 
 
 
@@ -372,8 +372,8 @@ code id with a predicable address.
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
-| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender |
-| `include_init_msg` | [bool](#bool) |  | IncludeInitMsg into the hash for the predictable address. Default is false |
+| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 255. |
+| `fix_msg` | [bool](#bool) |  | FixMsg include the msg value into the hash for the predictable address. Default is false |
 
 
 
@@ -389,7 +389,7 @@ MsgInstantiateContract2Response return instantiation result data
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
-| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
 
 
 
@@ -405,7 +405,7 @@ MsgInstantiateContractResponse return instantiation result data
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
-| `data` | [bytes](#bytes) |  | Data contains base64-encoded bytes to returned from the contract |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
 
 
 
