@@ -48,11 +48,29 @@ func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, sa
 	checksum = address.MustLengthPrefix(checksum)
 	creator = address.MustLengthPrefix(creator)
 	salt = address.MustLengthPrefix(salt)
-	initMsg = address.MustLengthPrefix(initMsg)
+	initMsg = MustUInt64LengthPrefix(initMsg)
 	key := make([]byte, len(checksum)+len(creator)+len(salt)+len(initMsg))
 	copy(key[0:], checksum)
 	copy(key[len(checksum):], creator)
 	copy(key[len(checksum)+len(creator):], salt)
 	copy(key[len(checksum)+len(creator)+len(salt):], initMsg)
 	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
+}
+
+// UInt64LengthPrefix prepend big endian encoded byte length
+func UInt64LengthPrefix(bz []byte) ([]byte, error) {
+	bzLen := len(bz)
+	if bzLen == 0 {
+		return bz, nil
+	}
+	return append(sdk.Uint64ToBigEndian(uint64(bzLen)), bz...), nil
+}
+
+// MustUInt64LengthPrefix is UInt64LengthPrefix with panic on error.
+func MustUInt64LengthPrefix(bz []byte) []byte {
+	res, err := UInt64LengthPrefix(bz)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }

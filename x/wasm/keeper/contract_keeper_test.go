@@ -2,7 +2,10 @@ package keeper
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +18,9 @@ func TestInstantiate2(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	otherExample := StoreReflectContract(t, parentCtx, keepers)
+	mock := &wasmtesting.MockWasmer{}
+	wasmtesting.MakeInstantiable(mock)
+	keepers.WasmKeeper.wasmVM = mock // set mock to not fail on contract init message
 
 	verifierAddr := RandomAccountAddress(t)
 	beneficiaryAddr := RandomAccountAddress(t)
@@ -22,6 +28,10 @@ func TestInstantiate2(t *testing.T) {
 
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, sdk.NewInt64Coin("denom", 1_000_000_000))
 
+	const (
+		mySalt  = "my salt"
+		myLabel = "my label"
+	)
 	// create instances for duplicate checks
 	exampleContract := func(t *testing.T, ctx sdk.Context, fixMsg bool) {
 		_, _, err := keepers.ContractKeeper.Instantiate2(
@@ -30,9 +40,9 @@ func TestInstantiate2(t *testing.T) {
 			example.CreatorAddr,
 			nil,
 			initMsg,
-			"my label",
+			myLabel,
 			sdk.NewCoins(sdk.NewInt64Coin("denom", 1)),
-			[]byte(`my salt`),
+			[]byte(mySalt),
 			fixMsg,
 		)
 		require.NoError(t, err)
@@ -56,7 +66,7 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithoutFixMsg,
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: initMsg,
 			fixMsg:  true,
 		},
@@ -64,7 +74,7 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithFixMsg,
 			codeID:  example.CodeID,
 			sender:  otherAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: initMsg,
 			fixMsg:  true,
 		},
@@ -72,7 +82,7 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithFixMsg,
 			codeID:  otherExample.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: []byte(`{}`),
 			fixMsg:  true,
 		},
@@ -80,7 +90,7 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithFixMsg,
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`other salt`),
+			salt:    []byte("other salt"),
 			initMsg: initMsg,
 			fixMsg:  true,
 		},
@@ -88,7 +98,7 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithFixMsg,
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: mustMarshal(t, HackatomExampleInitMsg{Verifier: otherAddr, Beneficiary: beneficiaryAddr}),
 			fixMsg:  true,
 		},
@@ -96,14 +106,14 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithoutFixMsg,
 			codeID:  example.CodeID,
 			sender:  otherAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: initMsg,
 		},
 		"different code": {
 			setup:   exampleWithoutFixMsg,
 			codeID:  otherExample.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: []byte(`{}`),
 		},
 		"different salt": {
@@ -117,9 +127,17 @@ func TestInstantiate2(t *testing.T) {
 			setup:   exampleWithoutFixMsg,
 			codeID:  example.CodeID,
 			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
+			salt:    []byte(mySalt),
 			initMsg: mustMarshal(t, HackatomExampleInitMsg{Verifier: otherAddr, Beneficiary: beneficiaryAddr}),
 			expErr:  types.ErrDuplicate,
+		},
+		"fix msg - long msg": {
+			setup:   exampleWithFixMsg,
+			codeID:  example.CodeID,
+			sender:  otherAddr,
+			salt:    []byte(mySalt),
+			initMsg: make([]byte, math.MaxInt32+1),
+			fixMsg:  true,
 		},
 	}
 	for name, spec := range specs {
@@ -132,7 +150,7 @@ func TestInstantiate2(t *testing.T) {
 				spec.sender,
 				nil,
 				spec.initMsg,
-				"my label",
+				myLabel,
 				sdk.NewCoins(sdk.NewInt64Coin("denom", 2)),
 				spec.salt,
 				spec.fixMsg,
