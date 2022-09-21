@@ -61,7 +61,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
 	codeHash := "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5"
-	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_id", "1"), sdk.NewAttribute("code_checksum", codeHash))}
+	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
 
@@ -540,78 +540,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 	}
 }
 
-func TestInstantiateWithUniqueContractAddress(t *testing.T) {
-	t.Skip("TODO (alex): fix when instantiate2 is added")
-	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	example := InstantiateHackatomExampleContract(t, parentCtx, keepers)
-	otherExample := InstantiateReflectExampleContract(t, parentCtx, keepers)
-	initMsg := mustMarshal(t, HackatomExampleInitMsg{Verifier: example.VerifierAddr, Beneficiary: example.BeneficiaryAddr})
-
-	otherAddress := DeterministicAccountAddress(t, 1)
-	keepers.Faucet.Fund(parentCtx, otherAddress, sdk.NewInt64Coin("denom", 100000000))
-	used := make(map[string]struct{})
-	specs := map[string]struct {
-		codeID  uint64
-		sender  sdk.AccAddress
-		salt    []byte
-		initMsg json.RawMessage
-		expErr  error
-	}{
-		"reject duplicate which generates the same address": {
-			codeID:  example.CodeID,
-			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
-			initMsg: initMsg,
-			expErr:  types.ErrDuplicate,
-		},
-		"different sender": {
-			codeID:  example.CodeID,
-			sender:  otherAddress,
-			salt:    []byte(`my salt`),
-			initMsg: initMsg,
-		},
-		"different code": {
-			codeID:  otherExample.CodeID,
-			sender:  example.CreatorAddr,
-			salt:    []byte(`my salt`),
-			initMsg: []byte(`{}`),
-		},
-		"different salt": {
-			codeID:  example.CodeID,
-			sender:  example.CreatorAddr,
-			salt:    []byte(`other salt`),
-			initMsg: initMsg,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			ctx, _ := parentCtx.CacheContext()
-			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate2(
-				ctx,
-				spec.codeID,
-				spec.sender,
-				nil,
-				spec.initMsg,
-				"my label",
-				example.Deposit,
-				spec.salt,
-				true,
-			)
-			if spec.expErr != nil {
-				assert.ErrorIs(t, gotErr, spec.expErr)
-				return
-			}
-			require.NoError(t, gotErr)
-			expAddr := BuildContractAddressPredictable(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.salt, []byte{})
-			assert.Equal(t, expAddr.String(), gotAddr.String())
-			require.NotContains(t, used, gotAddr.String())
-			used[gotAddr.String()] = struct{}{}
-		})
-	}
-}
-
 func TestInstantiateWithAccounts(t *testing.T) {
-	t.Skip("TODO (Alex): fix when instantiate2 is added")
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	require.Equal(t, uint64(1), example.CodeID)
@@ -620,12 +549,13 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	senderAddr := DeterministicAccountAddress(t, 1)
 	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
 	const myLabel = "testing"
-	contractAddr := BuildContractAddressPredictable(example.Checksum, senderAddr, []byte(`my salt`), []byte{})
+	mySalt := []byte(`my salt`)
+	contractAddr := BuildContractAddressPredictable(example.Checksum, senderAddr, mySalt, []byte{})
 
 	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
 	specs := map[string]struct {
-		acceptList  Option
+		option      Option
 		account     authtypes.AccountI
 		initBalance sdk.Coin
 		deposit     sdk.Coins
@@ -690,7 +620,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expErr:      types.ErrAccountExists,
 		},
 		"with option used to set non default type to accept list": {
-			acceptList: WithAcceptedAccountTypesOnContractInstantiation(&vestingtypes.DelayedVestingAccount{}),
+			option: WithAcceptedAccountTypesOnContractInstantiation(&vestingtypes.DelayedVestingAccount{}),
 			account: vestingtypes.NewDelayedVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
@@ -699,6 +629,15 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount: vestingtypes.NewDelayedVestingAccount(authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_001))),
+		},
+		"pruning account fails": {
+			option: WithAccountPruner(wasmtesting.AccountPrunerMock{CleanupExistingAccountFn: func(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error) {
+				return false, types.ErrUnsupportedForContract.Wrap("testing")
+			}}),
+			account: vestingtypes.NewDelayedVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
+			expErr: types.ErrUnsupportedForContract,
 		},
 	}
 	for name, spec := range specs {
@@ -710,16 +649,17 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			if !spec.initBalance.IsNil() {
 				keepers.Faucet.Fund(ctx, spec.account.GetAddress(), spec.initBalance)
 			}
-			if spec.acceptList != nil {
-				spec.acceptList.apply(keepers.WasmKeeper)
+			if spec.option != nil {
+				spec.option.apply(keepers.WasmKeeper)
 			}
 			defer func() {
-				if spec.acceptList != nil { // reset
+				if spec.option != nil { // reset
 					WithAcceptedAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}).apply(keepers.WasmKeeper)
+					WithAccountPruner(NewVestingCoinBurner(keepers.BankKeeper)).apply(keepers.WasmKeeper)
 				}
 			}()
 			// when
-			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate(ctx, 1, senderAddr, nil, initMsg, myLabel, spec.deposit)
+			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate2(ctx, 1, senderAddr, nil, initMsg, myLabel, spec.deposit, mySalt, false)
 			if spec.expErr != nil {
 				assert.ErrorIs(t, gotErr, spec.expErr)
 				return
