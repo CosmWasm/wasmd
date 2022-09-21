@@ -22,7 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -57,11 +57,13 @@ type CoinTransferrer interface {
 	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
-// CoinPruner handles the balances for accounts that are pruned on contract instantiate.
+// AccountPruner handles the balances and data cleanup for accounts that are pruned on contract instantiate.
 // This is an extension point to attach custom logic
-type CoinPruner interface {
-	// PruneBalances handle balances for given address
-	PruneBalances(ctx sdk.Context, contractAddress sdk.AccAddress) error
+type AccountPruner interface {
+	// CleanupExistingAccount handles the cleanup process for balances and data of the given account. The persisted account
+	// type is already reset to base account at this stage.
+	// The method returns true when the account address can be reused. Unsupported account types are rejected by returning false
+	CleanupExistingAccount(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
 }
 
 // WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
@@ -82,19 +84,6 @@ var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
 	reflect.TypeOf(&authtypes.BaseAccount{}): {},
 }
 
-// list of account types that are replaced with base accounts. Chains importing wasmd
-// can overwrite this list with the WithPruneAccountTypesOnContractInstantiation option.
-//
-// contains vesting account types that can be created post genesis
-var defaultPruneAccountTypes = map[reflect.Type]struct{}{
-	reflect.TypeOf(&vestingtypes.DelayedVestingAccount{}):    {},
-	reflect.TypeOf(&vestingtypes.ContinuousVestingAccount{}): {},
-	// intentionally not added: genesis account types
-	// reflect.TypeOf(&vestingtypes.BaseVestingAccount{}):       {},
-	// reflect.TypeOf(&vestingtypes.PeriodicVestingAccount{}):   {},
-	// reflect.TypeOf(&vestingtypes.PermanentLockedAccount{}):   {},
-}
-
 // Keeper will have a reference to Wasmer with it's own data directory.
 type Keeper struct {
 	storeKey              sdk.StoreKey
@@ -113,8 +102,7 @@ type Keeper struct {
 	gasRegister          GasRegister
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
-	pruneAccountTypes    map[reflect.Type]struct{}
-	coinPruner           CoinPruner
+	accountPruner        AccountPruner
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -153,7 +141,7 @@ func NewKeeper(
 		wasmVM:               wasmer,
 		accountKeeper:        accountKeeper,
 		bank:                 NewBankCoinTransferrer(bankKeeper),
-		coinPruner:           NewCoinBurner(bankKeeper),
+		accountPruner:        NewVestingCoinBurner(bankKeeper),
 		portKeeper:           portKeeper,
 		capabilityKeeper:     capabilityKeeper,
 		messenger:            NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
@@ -162,7 +150,6 @@ func NewKeeper(
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
-		pruneAccountTypes:    defaultPruneAccountTypes,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
 	for _, o := range opts {
@@ -321,17 +308,18 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 		if _, accept := k.acceptedAccountTypes[reflect.TypeOf(existingAcct)]; accept {
 			// keep account and balance as it is
 			k.Logger(ctx).Info("instantiate contract with existing account", "address", contractAddress.String())
-		} else if _, clear := k.pruneAccountTypes[reflect.TypeOf(existingAcct)]; clear {
-			k.Logger(ctx).Info("pruning existing account for contract instantiation", "address", contractAddress.String())
+		} else {
 			// consider an account in the wasmd namespace spam and overwrite it.
+			k.Logger(ctx).Info("pruning existing account for contract instantiation", "address", contractAddress.String())
 			contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
 			k.accountKeeper.SetAccount(ctx, contractAccount)
 			// also handle balance to not open cases where these accounts are abused and become liquid
-			if err := k.coinPruner.PruneBalances(ctx, contractAddress); err != nil {
-				return nil, nil, err
+			switch handled, err := k.accountPruner.CleanupExistingAccount(ctx, existingAcct); {
+			case err != nil:
+				return nil, nil, sdkerrors.Wrap(err, "prune balance")
+			case !handled:
+				return nil, nil, types.ErrAccountExists.Wrap("address is claimed by external account")
 			}
-		} else { // unknown account type
-			return nil, nil, types.ErrAccountExists.Wrapf("refusing to overwrite special account type:: %T", existingAcct)
 		}
 	} else {
 		// create an empty account (so we don't have issues later)
@@ -1161,32 +1149,41 @@ func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.A
 	return nil
 }
 
-var _ CoinPruner = CoinBurner{}
+var _ AccountPruner = VestingCoinBurner{}
 
-// CoinBurner default implementation for CoinPruner to burn the coins
-type CoinBurner struct {
+// VestingCoinBurner default implementation for AccountPruner to burn the coins
+type VestingCoinBurner struct {
 	bank types.BankKeeper
 }
 
-// NewCoinBurner constructor
-func NewCoinBurner(bank types.BankKeeper) CoinBurner {
+// NewVestingCoinBurner constructor
+func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
 	if bank == nil {
 		panic("bank keeper must not be nil")
 	}
-	return CoinBurner{bank: bank}
+	return VestingCoinBurner{bank: bank}
 }
 
-// PruneBalances burns all coins owned by the account.
-func (b CoinBurner) PruneBalances(ctx sdk.Context, address sdk.AccAddress) error {
-	if amt := b.bank.GetAllBalances(ctx, address); !amt.IsZero() {
-		if err := b.bank.SendCoinsFromAccountToModule(ctx, address, types.ModuleName, amt); err != nil {
-			return sdkerrors.Wrap(err, "prune account balance")
-		}
-		if err := b.bank.BurnCoins(ctx, types.ModuleName, amt); err != nil {
-			return sdkerrors.Wrap(err, "burn account balance")
-		}
+// CleanupExistingAccount accepts only vesting account types to burns all their original vesting coin balances.
+// Other account types will be rejected and returned as unhandled.
+func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
+	v, ok := existingAcc.(vestingexported.VestingAccount)
+	if !ok {
+		return false, nil
 	}
-	return nil
+
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	coinsToBurn := sdk.NewCoins()
+	for _, orig := range v.GetOriginalVesting() { // focus on the coin denoms that were setup originally; getAllBalances has some issues
+		coinsToBurn = append(coinsToBurn, b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))
+	}
+	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
+		return false, sdkerrors.Wrap(err, "prune account balance")
+	}
+	if err := b.bank.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+		return false, sdkerrors.Wrap(err, "burn account balance")
+	}
+	return true, nil
 }
 
 type msgDispatcher interface {

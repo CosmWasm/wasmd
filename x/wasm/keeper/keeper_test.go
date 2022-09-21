@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -645,7 +645,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			deposit:    sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
 		},
-		"prune listed DelayedVestingAccount gets overwritten": {
+		"prunable DelayedVestingAccount gets overwritten": {
 			account: vestingtypes.NewDelayedVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
@@ -654,7 +654,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
 		},
-		"prune listed ContinuousVestingAccount gets overwritten": {
+		"prunable ContinuousVestingAccount gets overwritten": {
 			account: vestingtypes.NewContinuousVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
@@ -663,14 +663,14 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
 		},
-		"prune listed account without balance gets overwritten": {
+		"prunable account without balance gets overwritten": {
 			account: vestingtypes.NewContinuousVestingAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(0))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
 			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance: sdk.NewCoins(),
 		},
-		"unknown account type creates error": {
+		"unknown account type is rejected with error": {
 			account: authtypes.NewModuleAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 				"testing",
@@ -2273,4 +2273,67 @@ func TestAppendToContractHistory(t *testing.T) {
 	// when
 	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
 	assert.Equal(t, orderedEntries, gotHistory)
+}
+
+func TestCoinBurnerPruneBalances(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	amts := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
+
+	// create vesting account
+	var vestingAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
+	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(sdk.WrapSDKContext(parentCtx), msgCreateVestingAccount)
+	require.NoError(t, err)
+	myVestingAccount := keepers.AccountKeeper.GetAccount(parentCtx, vestingAddr)
+	require.NotNil(t, myVestingAccount)
+
+	specs := map[string]struct {
+		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
+		expBalances sdk.Coins
+		expHandled  bool
+		expErr      *sdkerrors.Error
+	}{
+		"vesting account - all removed": {
+			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
+			expBalances: sdk.NewCoins(),
+			expHandled:  true,
+		},
+		"vesting account with other tokens - only original denoms removed": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
+				return myVestingAccount
+			},
+			expBalances: sdk.NewCoins(sdk.NewCoin("other", sdk.NewInt(2))),
+			expHandled:  true,
+		},
+		"non vesting account - not handled": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
+			},
+			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),
+			expHandled:  false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			existingAccount := spec.setupAcc(t, ctx)
+			// overwrite account in store as in keeper before calling prune
+			keepers.AccountKeeper.SetAccount(ctx, keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr))
+
+			// when
+			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
+			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).CleanupExistingAccount(noGasCtx, existingAccount)
+			// then
+			if spec.expErr != nil {
+				require.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expBalances, keepers.BankKeeper.GetAllBalances(ctx, vestingAddr))
+			assert.Equal(t, spec.expHandled, gotHandled)
+			// and no out of gas panic
+		})
+	}
 }
