@@ -95,10 +95,10 @@ func TestConstructorOptions(t *testing.T) {
 				assert.Equal(t, exp, k.acceptedAccountTypes)
 			},
 		},
-		"coin pruner": {
-			srcOpt: WithCoinPruner(VestingCoinBurner{}),
+		"account pruner": {
+			srcOpt: WithAccountPruner(VestingCoinBurner{}),
 			verify: func(t *testing.T, k Keeper) {
-				assert.Equal(t, VestingCoinBurner{}, k.coinPruner)
+				assert.Equal(t, VestingCoinBurner{}, k.accountPruner)
 			},
 		},
 	}

@@ -99,14 +99,14 @@ func WithCoinTransferrer(x CoinTransferrer) Option {
 	})
 }
 
-// WithCoinPruner is an optional constructor parameter to set a custom type that handles balances
+// WithAccountPruner is an optional constructor parameter to set a custom type that handles balances and data cleanup
 // for accounts pruned on contract instantiate
-func WithCoinPruner(x CoinPruner) Option {
+func WithAccountPruner(x AccountPruner) Option {
 	if x == nil {
 		panic("must not be nil")
 	}
 	return optsFn(func(k *Keeper) {
-		k.coinPruner = x
+		k.accountPruner = x
 	})
 }
 

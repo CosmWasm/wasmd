@@ -57,12 +57,13 @@ type CoinTransferrer interface {
 	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
-// CoinPruner handles the balances for accounts that are pruned on contract instantiate.
+// AccountPruner handles the balances and data cleanup for accounts that are pruned on contract instantiate.
 // This is an extension point to attach custom logic
-type CoinPruner interface {
-	// PruneBalances handle balances for the given account. The method returns true when the account
-	// balance is handled. Unsupported account types are rejected by returning false
-	PruneBalances(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
+type AccountPruner interface {
+	// CleanupExistingAccount handles the cleanup process for balances and data of the given account. The persisted account
+	// type is already reset to base account at this stage.
+	// The method returns true when the account address can be reused. Unsupported account types are rejected by returning false
+	CleanupExistingAccount(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
 }
 
 // WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
@@ -101,7 +102,7 @@ type Keeper struct {
 	gasRegister          GasRegister
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
-	coinPruner           CoinPruner
+	accountPruner        AccountPruner
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -140,7 +141,7 @@ func NewKeeper(
 		wasmVM:               wasmer,
 		accountKeeper:        accountKeeper,
 		bank:                 NewBankCoinTransferrer(bankKeeper),
-		coinPruner:           NewVestingCoinBurner(bankKeeper),
+		accountPruner:        NewVestingCoinBurner(bankKeeper),
 		portKeeper:           portKeeper,
 		capabilityKeeper:     capabilityKeeper,
 		messenger:            NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
@@ -313,7 +314,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 			contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
 			k.accountKeeper.SetAccount(ctx, contractAccount)
 			// also handle balance to not open cases where these accounts are abused and become liquid
-			switch handled, err := k.coinPruner.PruneBalances(ctx, existingAcct); {
+			switch handled, err := k.accountPruner.CleanupExistingAccount(ctx, existingAcct); {
 			case err != nil:
 				return nil, nil, sdkerrors.Wrap(err, "prune balance")
 			case !handled:
@@ -1148,9 +1149,9 @@ func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.A
 	return nil
 }
 
-var _ CoinPruner = VestingCoinBurner{}
+var _ AccountPruner = VestingCoinBurner{}
 
-// VestingCoinBurner default implementation for CoinPruner to burn the coins
+// VestingCoinBurner default implementation for AccountPruner to burn the coins
 type VestingCoinBurner struct {
 	bank types.BankKeeper
 }
@@ -1163,9 +1164,9 @@ func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
 	return VestingCoinBurner{bank: bank}
 }
 
-// PruneBalances accepts only vesting account types to burns all their original vesting coin balances.
-// Other account types will be rejected with a types.ErrAccountExists
-func (b VestingCoinBurner) PruneBalances(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
+// CleanupExistingAccount accepts only vesting account types to burns all their original vesting coin balances.
+// Other account types will be rejected and returned as unhandled.
+func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
 	v, ok := existingAcc.(vestingexported.VestingAccount)
 	if !ok {
 		return false, nil

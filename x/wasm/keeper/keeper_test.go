@@ -2324,7 +2324,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 
 			// when
 			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
-			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).PruneBalances(noGasCtx, existingAccount)
+			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).CleanupExistingAccount(noGasCtx, existingAccount)
 			// then
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)
