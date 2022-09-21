@@ -602,7 +602,7 @@ func TestInstantiateWithUniqueContractAddress(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-			expAddr := BuildContractAddressPredictable1(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.salt)
+			expAddr := BuildContractAddressPredictable(keepers.WasmKeeper.GetCodeInfo(ctx, spec.codeID).CodeHash, spec.sender, spec.salt, []byte{})
 			assert.Equal(t, expAddr.String(), gotAddr.String())
 			require.NotContains(t, used, gotAddr.String())
 			used[gotAddr.String()] = struct{}{}
@@ -620,7 +620,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 	senderAddr := DeterministicAccountAddress(t, 1)
 	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
 	const myLabel = "testing"
-	contractAddr := BuildContractAddressPredictable1(example.Checksum, senderAddr, []byte(`my salt`))
+	contractAddr := BuildContractAddressPredictable(example.Checksum, senderAddr, []byte(`my salt`), []byte{})
 
 	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
 
@@ -2169,7 +2169,7 @@ func TestBuildContractAddress(t *testing.T) {
 			require.NoError(t, err)
 
 			// when
-			gotAddr := BuildContractAddressPredictable1(spec.checksum, creatorAddr, spec.salt)
+			gotAddr := BuildContractAddressPredictable(spec.checksum, creatorAddr, spec.salt, []byte{})
 
 			require.Equal(t, spec.expAddress, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))

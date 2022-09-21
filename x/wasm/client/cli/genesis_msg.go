@@ -131,7 +131,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 					return fmt.Errorf("permissions were not granted for %s", senderAddr)
 				}
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
-					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &msg},
+					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: msg},
 				})
 				return nil
 			})

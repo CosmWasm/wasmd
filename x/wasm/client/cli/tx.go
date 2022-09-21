@@ -23,6 +23,8 @@ const (
 	flagLabel                     = "label"
 	flagAdmin                     = "admin"
 	flagNoAdmin                   = "no-admin"
+	flagSalt                      = "salt"
+	flagFixMsg                    = "fix-msg"
 	flagRunAs                     = "run-as"
 	flagInstantiateByEverybody    = "instantiate-everybody"
 	flagInstantiateNobody         = "instantiate-nobody"
@@ -174,7 +176,8 @@ func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional]",
+		Use: "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional] " +
+			"--salt [hex,optional] --fix-msg [bool,optional]",
 		Short:   "Instantiate a wasm contract",
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(2),
@@ -183,15 +186,40 @@ func InstantiateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
+			salt, err := cmd.Flags().GetBytesHex(flagSalt)
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
+			if err != nil {
+				return fmt.Errorf("fix msg: %w", err)
+			}
+			if salt == nil && fixMsg {
+				return errors.New("salt required when fix-msg is set")
+			}
+			var msg sdk.Msg
+			instantiateClassicMsg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
+			}
+			if salt == nil {
+				msg = instantiateClassicMsg
+			} else { // instantiate with predictable address
+				msg = &types.MsgInstantiateContract2{
+					Sender: instantiateClassicMsg.Sender,
+					Admin:  instantiateClassicMsg.Admin,
+					CodeID: instantiateClassicMsg.CodeID,
+					Label:  instantiateClassicMsg.Label,
+					Msg:    instantiateClassicMsg.Msg,
+					Funds:  instantiateClassicMsg.Funds,
+					Salt:   salt,
+					FixMsg: fixMsg,
+				}
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -199,47 +227,49 @@ func InstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+	cmd.Flags().BytesHex(flagSalt, nil, "An optional hex encoded salt. When set it is used for the predictable address generation mode")
+	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
-func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgInstantiateContract, error) {
+func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (*types.MsgInstantiateContract, error) {
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
-		return types.MsgInstantiateContract{}, err
+		return nil, err
 	}
 
 	amountStr, err := flags.GetString(flagAmount)
 	if err != nil {
-		return types.MsgInstantiateContract{}, fmt.Errorf("amount: %s", err)
+		return nil, fmt.Errorf("amount: %s", err)
 	}
 	amount, err := sdk.ParseCoinsNormalized(amountStr)
 	if err != nil {
-		return types.MsgInstantiateContract{}, fmt.Errorf("amount: %s", err)
+		return nil, fmt.Errorf("amount: %s", err)
 	}
 	label, err := flags.GetString(flagLabel)
 	if err != nil {
-		return types.MsgInstantiateContract{}, fmt.Errorf("label: %s", err)
+		return nil, fmt.Errorf("label: %s", err)
 	}
 	if label == "" {
-		return types.MsgInstantiateContract{}, errors.New("label is required on all contracts")
+		return nil, errors.New("label is required on all contracts")
 	}
 	adminStr, err := flags.GetString(flagAdmin)
 	if err != nil {
-		return types.MsgInstantiateContract{}, fmt.Errorf("admin: %s", err)
+		return nil, fmt.Errorf("admin: %s", err)
 	}
 	noAdmin, err := flags.GetBool(flagNoAdmin)
 	if err != nil {
-		return types.MsgInstantiateContract{}, fmt.Errorf("no-admin: %s", err)
+		return nil, fmt.Errorf("no-admin: %s", err)
 	}
 
 	// ensure sensible admin is set (or explicitly immutable)
 	if adminStr == "" && !noAdmin {
-		return types.MsgInstantiateContract{}, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
+		return nil, fmt.Errorf("you must set an admin or explicitly pass --no-admin to make it immutible (wasmd issue #719)")
 	}
 	if adminStr != "" && noAdmin {
-		return types.MsgInstantiateContract{}, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
+		return nil, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
@@ -251,7 +281,7 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 		Msg:    []byte(initMsg),
 		Admin:  adminStr,
 	}
-	return msg, nil
+	return &msg, nil
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
