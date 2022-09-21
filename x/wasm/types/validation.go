@@ -37,8 +37,8 @@ func ValidateLabel(label string) error {
 }
 
 // ValidateSalt ensure salt constraints
-func ValidateSalt(label []byte) error {
-	switch n := len(label); {
+func ValidateSalt(salt []byte) error {
+	switch n := len(salt); {
 	case n == 0:
 		return sdkerrors.Wrap(ErrEmpty, "is required")
 	case n > MaxSaltSize:

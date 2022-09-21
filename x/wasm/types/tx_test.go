@@ -296,7 +296,6 @@ func TestInstantiateContract2Validation(t *testing.T) {
 				CodeID: firstCodeID,
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
-				Salt:   []byte{0},
 			},
 			valid: false,
 		},
