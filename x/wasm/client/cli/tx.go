@@ -178,8 +178,7 @@ func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional] " +
-			"--salt [hex,optional] --fix-msg [bool,optional]",
+		Use:   "instantiate [code_id_int64] [json_encoded_init_args] --label [text] --admin [address,optional] --amount [coins,optional] ",
 		Short: "Instantiate a wasm contract",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
 Each contract instance has a unique address assigned.
@@ -222,12 +221,12 @@ func InstantiateContract2Cmd() *cobra.Command {
 		Short: "Instantiate a wasm contract with predictable address",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
 Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses 
-for special use cases, the given 'salt' argument and '--fix-mesg' parameters can be used to generate a custom address.
+for special use cases, the given 'salt' argument and '--fix-msg' parameters can be used to generate a custom address.
 
 Predictable address example (also see '%s query wasm build-address -h'):
-$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
+$ %s wasmd tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --admin="$(%s keys show mykey -a)" \
   --from mykey --amount="100ustake" --label "local0.1.0" \
-  --salt=$(echo -n "testing" | xxd -ps) --fix-msg 
+   --fix-msg 
 `, version.AppName, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(3),
