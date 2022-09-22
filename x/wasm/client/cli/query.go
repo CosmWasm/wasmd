@@ -67,6 +67,7 @@ func GetCmdLibVersion() *cobra.Command {
 
 // GetCmdBuildAddress build a contract address
 func GetCmdBuildAddress() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
 		Use:     "build-address [code-hash] [creator-address] [salt-hex-encoded] [json_encoded_init_args (required when set as fixed)]",
 		Short:   "build contract address",
@@ -101,6 +102,7 @@ func GetCmdBuildAddress() *cobra.Command {
 			return nil
 		},
 	}
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 	return cmd
 }
 
@@ -538,7 +540,7 @@ func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
 
 func (a *argumentDecoder) RegisterFlags(f *flag.FlagSet, argName string) {
 	f.BoolVar(&a.asciiF, "ascii", false, "ascii encoded "+argName)
-	f.BoolVar(&a.hexF, "hex", false, "hex encoded  "+argName)
+	f.BoolVar(&a.hexF, "hex", false, "hex encoded "+argName)
 	f.BoolVar(&a.b64F, "b64", false, "base64 encoded "+argName)
 }
 

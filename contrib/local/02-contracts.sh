@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o errexit -o nounset -o pipefail
+set -o errexit -o nounset -o pipefail -x
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
@@ -32,13 +32,15 @@ CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.c
 echo "* Contract address: $CONTRACT"
 
 echo "## Create new contract instance with predictable address"
-wasmd tx wasm instantiate "$CODE_ID" "$INIT" --admin="$(wasmd keys show validator -a)" \
+wasmd tx wasm instantiate2 "$CODE_ID" "$INIT" $(echo -n "testing" | xxd -ps) \
+  --admin="$(wasmd keys show validator -a)" \
   --from validator --amount="100ustake" --label "local0.1.0" \
-  --salt=$(echo -n "testing" | xxd -ps) --fix-msg \
+  --fix-msg \
   --gas 1000000 -y --chain-id=testing -b block -o json | jq
 
 predictedAdress=$(wasmd q wasm build-address "$CODE_HASH" $(wasmd keys show validator -a) $(echo -n "testing" | xxd -ps) "$INIT")
-wasmd q wasm contract "$predictedAdress" -o json
+wasmd q wasm contract "$predictedAdress" -o json | jq
+exit 0
 
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)

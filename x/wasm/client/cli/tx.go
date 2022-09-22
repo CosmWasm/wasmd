@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -46,6 +47,7 @@ func GetTxCmd() *cobra.Command {
 	txCmd.AddCommand(
 		StoreCodeCmd(),
 		InstantiateContractCmd(),
+		InstantiateContract2Cmd(),
 		ExecuteContractCmd(),
 		MigrateContractCmd(),
 		UpdateContractAdminCmd(),
@@ -181,18 +183,11 @@ func InstantiateContractCmd() *cobra.Command {
 			"--salt [hex,optional] --fix-msg [bool,optional]",
 		Short: "Instantiate a wasm contract",
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
-Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses 
-for special use cases, the '--salt' and '--fix-mesg' parameters can be used to generate a custom address.
-
-Normal example:
+Each contract instance has a unique address assigned.
+Example:
 $ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
   --from mykey --amount="100ustake" --label "local0.1.0" 
-
-Predictable address example (also see '%s query wasm build-address -h'):
-$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
-  --from mykey --amount="100ustake" --label "local0.1.0" \
-  --salt=$(echo -n "testing" | xxd -ps) --fix-msg 
-`, version.AppName, version.AppName, version.AppName, version.AppName, version.AppName),
+`, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -200,35 +195,9 @@ $ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -
 			if err != nil {
 				return err
 			}
-			salt, err := cmd.Flags().GetBytesHex(flagSalt)
-			if err != nil {
-				return fmt.Errorf("salt: %w", err)
-			}
-			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
-			if err != nil {
-				return fmt.Errorf("fix msg: %w", err)
-			}
-			if len(salt) == 0 && fixMsg {
-				return errors.New("salt required when fix-msg is set")
-			}
-			var msg sdk.Msg
-			instantiateClassicMsg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
+			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
-			}
-			if len(salt) == 0 {
-				msg = instantiateClassicMsg
-			} else { // instantiate with predictable address
-				msg = &types.MsgInstantiateContract2{
-					Sender: instantiateClassicMsg.Sender,
-					Admin:  instantiateClassicMsg.Admin,
-					CodeID: instantiateClassicMsg.CodeID,
-					Label:  instantiateClassicMsg.Label,
-					Msg:    instantiateClassicMsg.Msg,
-					Funds:  instantiateClassicMsg.Funds,
-					Salt:   salt,
-					FixMsg: fixMsg,
-				}
 			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -243,6 +212,68 @@ $ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().BytesHex(flagSalt, nil, fmt.Sprintf("An optional hex encoded salt. When set it is used for the predictable address generation mode. See also %s", flagFixMsg))
 	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// InstantiateContract2Cmd will instantiate a contract from previously uploaded code with predicable address generated
+func InstantiateContract2Cmd() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
+	cmd := &cobra.Command{
+		Use: "instantiate2 [code_id_int64] [json_encoded_init_args] [salt] --label [text] --admin [address,optional] --amount [coins,optional] " +
+			"--fix-msg [bool,optional]",
+		Short: "Instantiate a wasm contract with predictable address",
+		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
+Each contract instance has a unique address assigned. They are assigned automatically but in order to have predictable addresses 
+for special use cases, the given 'salt' argument and '--fix-mesg' parameters can be used to generate a custom address.
+
+Predictable address example (also see '%s query wasm build-address -h'):
+$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
+  --from mykey --amount="100ustake" --label "local0.1.0" \
+  --salt=$(echo -n "testing" | xxd -ps) --fix-msg 
+`, version.AppName, version.AppName, version.AppName),
+		Aliases: []string{"start", "init", "inst", "i"},
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			salt, err := decoder.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
+			if err != nil {
+				return fmt.Errorf("fix msg: %w", err)
+			}
+			data, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgInstantiateContract2{
+				Sender: data.Sender,
+				Admin:  data.Admin,
+				CodeID: data.CodeID,
+				Label:  data.Label,
+				Msg:    data.Msg,
+				Funds:  data.Funds,
+				Salt:   salt,
+				FixMsg: fixMsg,
+			}
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
+	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

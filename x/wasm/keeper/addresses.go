@@ -46,8 +46,8 @@ func BuildContractAddressClassic(codeID, instanceID uint64) sdk.AccAddress {
 //
 // All method parameter values must be valid and not nil.
 func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, salt, initMsg types.RawContractMessage) sdk.AccAddress {
-	if len(checksum) == 0 {
-		panic("empty checksum")
+	if len(checksum) != 32 {
+		panic("invalid checksum")
 	}
 	if err := sdk.VerifyAddressFormat(creator); err != nil {
 		panic(fmt.Sprintf("creator: %s", err))
@@ -58,10 +58,10 @@ func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, sa
 	if err := initMsg.ValidateBasic(); len(initMsg) != 0 && err != nil {
 		panic(fmt.Sprintf("initMsg: %s", err))
 	}
-	checksum = address.MustLengthPrefix(checksum)
-	creator = address.MustLengthPrefix(creator)
-	salt = address.MustLengthPrefix(salt)
-	initMsg = MustUInt64LengthPrefix(initMsg)
+	checksum = UInt64LengthPrefix(checksum)
+	creator = UInt64LengthPrefix(creator)
+	salt = UInt64LengthPrefix(salt)
+	initMsg = UInt64LengthPrefix(initMsg)
 	key := make([]byte, len(checksum)+len(creator)+len(salt)+len(initMsg))
 	copy(key[0:], checksum)
 	copy(key[len(checksum):], creator)
@@ -71,19 +71,6 @@ func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, sa
 }
 
 // UInt64LengthPrefix prepend big endian encoded byte length
-func UInt64LengthPrefix(bz []byte) ([]byte, error) {
-	bzLen := len(bz)
-	if bzLen == 0 {
-		return bz, nil
-	}
-	return append(sdk.Uint64ToBigEndian(uint64(bzLen)), bz...), nil
-}
-
-// MustUInt64LengthPrefix is UInt64LengthPrefix with panic on error.
-func MustUInt64LengthPrefix(bz []byte) []byte {
-	res, err := UInt64LengthPrefix(bz)
-	if err != nil {
-		panic(err)
-	}
-	return res
+func UInt64LengthPrefix(bz []byte) []byte {
+	return append(sdk.Uint64ToBigEndian(uint64(len(bz))), bz...)
 }
