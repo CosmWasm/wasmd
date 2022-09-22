@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
 
-## [v0.29.0-rc1](https://github.com/CosmWasm/wasmd/tree/v0.28.0) (2022-08-22)
+## [v0.29.0-rc1](https://github.com/CosmWasm/wasmd/tree/v0.29.0-rc1) (2022-09-22)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0-rc1)
 
