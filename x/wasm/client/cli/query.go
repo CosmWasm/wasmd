@@ -67,11 +67,12 @@ func GetCmdLibVersion() *cobra.Command {
 
 // GetCmdBuildAddress build a contract address
 func GetCmdBuildAddress() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use:     "build-address [code-hash] [creator-address] [label]",
+		Use:     "build-address [code-hash] [creator-address] [salt-hex-encoded] [json_encoded_init_args (required when set as fixed)]",
 		Short:   "build contract address",
 		Aliases: []string{"address"},
-		Args:    cobra.ExactArgs(3),
+		Args:    cobra.RangeArgs(3, 4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			codeHash, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -81,14 +82,27 @@ func GetCmdBuildAddress() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("creator: %s", err)
 			}
-			label := args[2]
-			if err := types.ValidateLabel(label); err != nil {
-				return fmt.Errorf("label: %s", err)
+			salt, err := hex.DecodeString(args[2])
+			switch {
+			case err != nil:
+				return fmt.Errorf("salt: %s", err)
+			case len(salt) == 0:
+				return errors.New("empty salt")
 			}
-			cmd.Println(keeper.BuildContractAddress(codeHash, creator, label).String())
+
+			if len(args) == 3 {
+				cmd.Println(keeper.BuildContractAddressPredictable(codeHash, creator, salt, []byte{}).String())
+				return nil
+			}
+			msg := types.RawContractMessage(args[3])
+			if err := msg.ValidateBasic(); err != nil {
+				return fmt.Errorf("init message: %s", err)
+			}
+			cmd.Println(keeper.BuildContractAddressPredictable(codeHash, creator, salt, msg).String())
 			return nil
 		},
 	}
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 	return cmd
 }
 
@@ -526,7 +540,7 @@ func newArgDecoder(def func(string) ([]byte, error)) *argumentDecoder {
 
 func (a *argumentDecoder) RegisterFlags(f *flag.FlagSet, argName string) {
 	f.BoolVar(&a.asciiF, "ascii", false, "ascii encoded "+argName)
-	f.BoolVar(&a.hexF, "hex", false, "hex encoded  "+argName)
+	f.BoolVar(&a.hexF, "hex", false, "hex encoded "+argName)
 	f.BoolVar(&a.b64F, "b64", false, "base64 encoded "+argName)
 }
 

@@ -86,6 +86,7 @@ var (
 	ErrQueryFailed       = types.ErrQueryFailed
 	ErrInvalidMsg        = types.ErrInvalidMsg
 	KeyLastCodeID        = types.KeyLastCodeID
+	KeyLastInstanceID    = types.KeyLastInstanceID
 	CodeKeyPrefix        = types.CodeKeyPrefix
 	ContractKeyPrefix    = types.ContractKeyPrefix
 	ContractStorePrefix  = types.ContractStorePrefix
@@ -101,6 +102,7 @@ type (
 	MsgStoreCode                   = types.MsgStoreCode
 	MsgStoreCodeResponse           = types.MsgStoreCodeResponse
 	MsgInstantiateContract         = types.MsgInstantiateContract
+	MsgInstantiateContract2        = types.MsgInstantiateContract2
 	MsgInstantiateContractResponse = types.MsgInstantiateContractResponse
 	MsgExecuteContract             = types.MsgExecuteContract
 	MsgExecuteContractResponse     = types.MsgExecuteContractResponse

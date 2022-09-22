@@ -11,14 +11,11 @@ import (
 	"testing"
 	"time"
 
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-
-	"github.com/cosmos/cosmos-sdk/types/address"
-
 	"github.com/cosmos/cosmos-sdk/store"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -69,7 +66,7 @@ func TestGenesisExportImport(t *testing.T) {
 
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
-		codeID, checksum, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
+		codeID, _, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
 			contractKeeper.PinCode(srcCtx, codeID)
@@ -84,7 +81,7 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 
 		contract.CodeID = codeID
-		contractAddr := BuildContractAddress(checksum, creatorAddr, "testing")
+		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
@@ -160,16 +157,6 @@ func TestGenesisInit(t *testing.T) {
 	require.NoError(t, err)
 
 	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
-	mySenderAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	myLabel := "testing"
-	myContractInfoFixture := func(mutators ...func(*types.ContractInfo)) types.ContractInfo {
-		return types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) {
-			c.CodeID = 1
-			c.Creator = mySenderAddr.String()
-			c.Label = myLabel
-		}, types.OnlyGenesisFields)
-	}
-
 	specs := map[string]struct {
 		src            types.GenesisState
 		stakingMock    StakingKeeperMock
@@ -185,6 +172,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
+					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -203,6 +191,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 10},
+					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -222,6 +211,7 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: nil,
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 3},
+					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -278,12 +268,13 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
+					{IDKey: types.KeyLastInstanceID, Value: 2},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -298,17 +289,16 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, "other-label").String(),
-						ContractInfo: myContractInfoFixture(func(i *wasmTypes.ContractInfo) {
-							i.Label = "other-label"
-						}),
+						ContractAddress: BuildContractAddressClassic(1, 2).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 2},
+					{IDKey: types.KeyLastInstanceID, Value: 3},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -318,8 +308,8 @@ func TestGenesisInit(t *testing.T) {
 			src: types.GenesisState{
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -334,11 +324,11 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -353,8 +343,8 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(myCodeInfo.CodeHash, mySenderAddr, myLabel).String(),
-						ContractInfo:    myContractInfoFixture(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 						ContractState: []types.Model{
 							{
 								Key:   []byte{0x1},
@@ -388,6 +378,26 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastCodeID, Value: 1},
+				},
+				Params: types.DefaultParams(),
+			},
+		},
+		"prevent contract id seq init value == count contracts": {
+			src: types.GenesisState{
+				Codes: []types.Code{{
+					CodeID:    firstCodeID,
+					CodeInfo:  myCodeInfo,
+					CodeBytes: wasmCode,
+				}},
+				Contracts: []types.Contract{
+					{
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
+					},
+				},
+				Sequences: []types.Sequence{
+					{IDKey: types.KeyLastCodeID, Value: 2},
+					{IDKey: types.KeyLastInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -550,17 +560,16 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))
+	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
 }
 
 func TestSupportedGenMsgTypes(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	wasmHash := sha256.Sum256(wasmCode)
 	var (
 		myAddress          sdk.AccAddress = bytes.Repeat([]byte{1}, types.ContractAddrLen)
 		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, types.ContractAddrLen)
 		beneficiaryAddress sdk.AccAddress = bytes.Repeat([]byte{3}, types.ContractAddrLen)
-		contractAddr                      = BuildContractAddress(wasmHash[:], myAddress, "testing")
 	)
 	const denom = "stake"
 	importState := types.GenesisState{
@@ -592,7 +601,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 				Sum: &types.GenesisState_GenMsgs_ExecuteContract{
 					ExecuteContract: &types.MsgExecuteContract{
 						Sender:   verifierAddress.String(),
-						Contract: contractAddr.String(),
+						Contract: BuildContractAddressClassic(1, 1).String(),
 						Msg:      []byte(`{"release":{}}`),
 					},
 				},
@@ -617,7 +626,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NotNil(t, codeInfo)
 
 	// verify contract instantiated
-	cInfo := keeper.GetContractInfo(ctx, contractAddr)
+	cInfo := keeper.GetContractInfo(ctx, BuildContractAddressClassic(1, 1))
 	require.NotNil(t, cInfo)
 
 	// verify contract executed

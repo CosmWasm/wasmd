@@ -19,7 +19,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
@@ -224,8 +223,8 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 
 	evt := sdk.NewEvent(
 		types.EventTypeStoreCode,
-		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
 		sdk.NewAttribute(types.AttributeKeyChecksum, hex.EncodeToString(checksum)),
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)), // last element to be compatible with scripts
 	)
 	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
 		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
@@ -267,7 +266,16 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 	return nil
 }
 
-func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authPolicy AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
+func (k Keeper) instantiate(
+	ctx sdk.Context,
+	codeID uint64,
+	creator, admin sdk.AccAddress,
+	initMsg []byte,
+	label string,
+	deposit sdk.Coins,
+	addressGenerator AddressGenerator,
+	authPolicy AuthorizationPolicy,
+) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
 
 	if creator == nil {
@@ -277,19 +285,15 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
 
 	// get contact info
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetCodeKey(codeID))
-	if bz == nil {
+	codeInfo := k.GetCodeInfo(ctx, codeID)
+	if codeInfo == nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrNotFound, "code")
 	}
-	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshal(bz, &codeInfo)
-
 	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
 		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
-	contractAddress := BuildContractAddress(codeInfo.CodeHash, creator, label)
+	contractAddress := addressGenerator(ctx, codeID, codeInfo.CodeHash)
 	if k.HasContractInfo(ctx, contractAddress) {
 		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
 	}
@@ -338,7 +342,7 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
-	// 0x03 | BuildContractAddress (sdk.AccAddress)
+	// 0x03 | BuildContractAddressClassic (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 
@@ -1004,21 +1008,6 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	if ctx.GasMeter().IsOutOfGas() {
 		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
 	}
-}
-
-// BuildContractAddress generates a contract address for the wasm module with len = types.ContractAddrLen using the
-// Cosmos SDK address.Module function.
-// Internally a key is built containing (len(checksum) | checksum | len(sender_address) | sender_address | len(label) | label).
-// All method parameter values must be valid and not be empty or nil.
-func BuildContractAddress(checksum []byte, creator sdk.AccAddress, label string) sdk.AccAddress {
-	checksum = address.MustLengthPrefix(checksum)
-	creator = address.MustLengthPrefix(creator)
-	labelBz := address.MustLengthPrefix([]byte(label))
-	key := make([]byte, len(checksum)+len(creator)+len(labelBz))
-	copy(key[0:], checksum)
-	copy(key[len(checksum):], creator)
-	copy(key[len(checksum)+len(creator):], labelBz)
-	return address.Module(types.ModuleName, key)[:types.ContractAddrLen]
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {

@@ -7,11 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/types/address"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -24,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -148,8 +146,7 @@ type state struct {
 
 func TestHandleInstantiate(t *testing.T) {
 	data := setupTest(t)
-	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000))
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
 
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
@@ -183,7 +180,7 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
-	require.Equal(t, "cosmos1400ax8h2dxe8ch64sus5sczqdhwv28hpjkkaphpa83he4fhz6k4qcm9kul", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 	// this should be standard x/wasm init event, nothing from contract
 	require.Equal(t, 3, len(res.Events), prettyEvents(res.Events))
 	require.Equal(t, "message", res.Events[0].Type)
@@ -210,9 +207,7 @@ func TestHandleExecute(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
 
-	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000*2))
-
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
 	h := data.module.Route().Handler()
@@ -244,7 +239,7 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
-	require.Equal(t, "cosmos1400ax8h2dxe8ch64sus5sczqdhwv28hpjkkaphpa83he4fhz6k4qcm9kul", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 	// this should be standard x/wasm message event,  init event, plus a bank send event (2), with no custom contract events
 	require.Equal(t, 6, len(res.Events), prettyEvents(res.Events))
 	require.Equal(t, "message", res.Events[0].Type)
@@ -377,7 +372,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
-	require.Equal(t, "cosmos1400ax8h2dxe8ch64sus5sczqdhwv28hpjkkaphpa83he4fhz6k4qcm9kul", contractBech32Addr)
+	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
 
 	handleMsg := map[string]interface{}{
 		"release": map[string]interface{}{},
