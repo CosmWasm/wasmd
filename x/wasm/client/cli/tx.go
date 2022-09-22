@@ -25,7 +25,6 @@ const (
 	flagLabel                     = "label"
 	flagAdmin                     = "admin"
 	flagNoAdmin                   = "no-admin"
-	flagSalt                      = "salt"
 	flagFixMsg                    = "fix-msg"
 	flagRunAs                     = "run-as"
 	flagInstantiateByEverybody    = "instantiate-everybody"
@@ -210,8 +209,6 @@ $ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
-	cmd.Flags().BytesHex(flagSalt, nil, fmt.Sprintf("An optional hex encoded salt. When set it is used for the predictable address generation mode. See also %s", flagFixMsg))
-	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

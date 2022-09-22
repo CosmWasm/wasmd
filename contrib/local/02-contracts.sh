@@ -40,7 +40,6 @@ wasmd tx wasm instantiate2 "$CODE_ID" "$INIT" $(echo -n "testing" | xxd -ps) \
 
 predictedAdress=$(wasmd q wasm build-address "$CODE_HASH" $(wasmd keys show validator -a) $(echo -n "testing" | xxd -ps) "$INIT")
 wasmd q wasm contract "$predictedAdress" -o json | jq
-exit 0
 
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)
