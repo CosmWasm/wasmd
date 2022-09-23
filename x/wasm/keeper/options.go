@@ -99,14 +99,14 @@ func WithCoinTransferrer(x CoinTransferrer) Option {
 	})
 }
 
-// WithCoinPruner is an optional constructor parameter to set a custom type that handles balances
+// WithAccountPruner is an optional constructor parameter to set a custom type that handles balances and data cleanup
 // for accounts pruned on contract instantiate
-func WithCoinPruner(x CoinPruner) Option {
+func WithAccountPruner(x AccountPruner) Option {
 	if x == nil {
 		panic("must not be nil")
 	}
 	return optsFn(func(k *Keeper) {
-		k.coinPruner = x
+		k.accountPruner = x
 	})
 }
 
@@ -151,19 +151,6 @@ func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI
 	m := asTypeMap(accts)
 	return optsFn(func(k *Keeper) {
 		k.acceptedAccountTypes = m
-	})
-}
-
-// WithPruneAccountTypesOnContractInstantiation sets the account types that should be cleared. Account types of this list
-// will be overwritten with the BaseAccount type and their balance burned, when they exist for an address on contract
-// instantiation.
-//
-// Values should be references and contain the `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.ContinuousVestingAccount`
-// as post genesis account types with an open address range.
-func WithPruneAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
-	m := asTypeMap(accts)
-	return optsFn(func(k *Keeper) {
-		k.pruneAccountTypes = m
 	})
 }
 
