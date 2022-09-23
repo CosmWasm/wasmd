@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tendermint/tendermint/libs/rand"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
@@ -43,7 +41,7 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 }
 
 func TestContractFromPortID(t *testing.T) {
-	contractAddr := BuildContractAddress(rand.Bytes(32), RandomAccountAddress(t), "testing")
+	contractAddr := BuildContractAddressClassic(1, 100)
 	specs := map[string]struct {
 		srcPort string
 		expAddr sdk.AccAddress
