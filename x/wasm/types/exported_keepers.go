@@ -14,6 +14,7 @@ type ViewKeeper interface {
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
 	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *ContractInfo
 	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, ContractInfo) bool)
+	IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool)
 	IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool)
 	IterateContractState(ctx sdk.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool)
 	GetCodeInfo(ctx sdk.Context, codeID uint64) *CodeInfo

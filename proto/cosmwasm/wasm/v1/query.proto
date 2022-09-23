@@ -245,11 +245,11 @@ message QueryParamsResponse {
 message QueryContractsByCreatorRequest {
   // address is the address of creator
   string creator_address = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+
 }
 
 message QueryContractsByCreatorResponse {
-repeated string contract_address = 1
-    [ (gogoproto.customname) = "contractAdress" ];
-// pagination defines the pagination in the response.
-cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated string contract_address = 1
+    [ (gogoproto.customname) = "ContractAddress" ];
 }

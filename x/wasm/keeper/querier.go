@@ -318,3 +318,24 @@ func (q grpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*
 	params := q.keeper.GetParams(ctx)
 	return &types.QueryParamsResponse{Params: params}, nil
 }
+
+func (q grpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContractsByCreatorRequest) (*types.QueryContractsByCreatorResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	contracts := make([]string, 0)
+
+	creatorAddress, err := sdk.AccAddressFromBech32(req.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	q.keeper.IterateContractsByCreator(ctx, creatorAddress, func(addr sdk.AccAddress) bool {
+		contracts = append(contracts, addr.String())
+		return false
+	})
+
+	return &types.QueryContractsByCreatorResponse{
+		ContractAddress: contracts,
+	}, nil
+}
