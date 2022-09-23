@@ -378,6 +378,7 @@ func (k Keeper) instantiate(
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
+	k.addToContractCreatorThirdIndex(ctx, creator, contractAddress)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
@@ -489,13 +490,16 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
+	creatorAddress, err := sdk.AccAddressFromBech32(contractInfo.Creator)
 
 	// delete old secondary index entry
 	k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.getLastContractHistoryEntry(ctx, contractAddress))
+	k.removeFromContractCreatorThirdIndex(ctx, creatorAddress, contractAddress)
 	// persist migration updates
 	historyEntry := contractInfo.AddMigration(ctx, newCodeID, msg)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
+	k.addToContractCreatorThirdIndex(ctx, creatorAddress, contractAddress)
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
@@ -594,6 +598,28 @@ func (k Keeper) addToContractCodeSecondaryIndex(ctx sdk.Context, contractAddress
 // removeFromContractCodeSecondaryIndex removes element to the index for contracts-by-codeid queries
 func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAddress sdk.AccAddress, entry types.ContractCodeHistoryEntry) {
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, entry))
+}
+
+// addToContractCreatorThirdIndex adds element to the index for contracts-by-creator queries
+func (k Keeper) addToContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetContractByCreatorThirdIndexPrefix(creatorAddress, contractAddress), []byte{})
+}
+
+// removeFromContractCodeSecondaryIndex removes element to the index for contracts-by-creator queries
+func (k Keeper) removeFromContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
+	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatorThirdIndexPrefix(creatorAddress, contractAddress))
+}
+
+// IterateContractsByCode iterates over all contracts with given creator address.
+func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(creator))
+	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+		key := iter.Key()
+		if cb(key[types.AbsoluteTxPositionLen:]) {
+			return
+		}
+	}
 }
 
 // IterateContractsByCode iterates over all contracts with given codeID ASC on code update time.
@@ -1051,10 +1077,15 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
 	}
 
+	creatorAddress, err := sdk.AccAddressFromBech32(c.Creator)
+	if err != nil {
+		return err
+	}
 	historyEntry := c.ResetFromGenesis(ctx)
 	k.appendToContractHistory(ctx, contractAddr, historyEntry)
 	k.storeContractInfo(ctx, contractAddr, c)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
+	k.addToContractCreatorThirdIndex(ctx, creatorAddress, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 
