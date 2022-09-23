@@ -95,20 +95,10 @@ func TestConstructorOptions(t *testing.T) {
 				assert.Equal(t, exp, k.acceptedAccountTypes)
 			},
 		},
-		"prune account types": {
-			srcOpt: WithPruneAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}, &vestingtypes.ContinuousVestingAccount{}),
+		"account pruner": {
+			srcOpt: WithAccountPruner(VestingCoinBurner{}),
 			verify: func(t *testing.T, k Keeper) {
-				exp := map[reflect.Type]struct{}{
-					reflect.TypeOf(&authtypes.BaseAccount{}):                 {},
-					reflect.TypeOf(&vestingtypes.ContinuousVestingAccount{}): {},
-				}
-				assert.Equal(t, exp, k.pruneAccountTypes)
-			},
-		},
-		"coin pruner": {
-			srcOpt: WithCoinPruner(CoinBurner{}),
-			verify: func(t *testing.T, k Keeper) {
-				assert.Equal(t, CoinBurner{}, k.coinPruner)
+				assert.Equal(t, VestingCoinBurner{}, k.accountPruner)
 			},
 		},
 	}

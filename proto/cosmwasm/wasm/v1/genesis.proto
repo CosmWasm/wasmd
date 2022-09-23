@@ -33,6 +33,8 @@ message GenesisState {
       MsgStoreCode store_code = 1;
       MsgInstantiateContract instantiate_contract = 2;
       MsgExecuteContract execute_contract = 3;
+      // MsgInstantiateContract2 intentionally not supported
+      // see https://github.com/CosmWasm/wasmd/issues/987
     }
   }
 }
