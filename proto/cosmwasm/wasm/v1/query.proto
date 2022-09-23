@@ -63,6 +63,11 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/codes/params";
   }
+
+  // ContractsByCreator gets the contracts by creator
+  rpc ContractsByCreator(QueryContractsByCreatorRequest) returns (QueryContractsByCreatorResponse){
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contracts/creator/{creator_address}"; 
+  }
 }
 
 // QueryContractInfoRequest is the request type for the Query/ContractInfo RPC
@@ -235,4 +240,16 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params defines the parameters of the module.
   Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryContractsByCreatorRequest {
+  // address is the address of creator
+  string creator_address = 1;
+}
+
+message QueryContractsByCreatorResponse {
+repeated string contract_address = 1
+    [ (gogoproto.customname) = "contractAdress" ];
+// pagination defines the pagination in the response.
+cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
