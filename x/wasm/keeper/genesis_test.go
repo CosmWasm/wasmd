@@ -124,6 +124,7 @@ func TestGenesisExportImport(t *testing.T) {
 		newHistory := x.ResetFromGenesis(dstCtx)
 		wasmKeeper.storeContractInfo(srcCtx, address, x)
 		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, newHistory)
+		wasmKeeper.addToContractCreatorThirdIndex(srcCtx, creatorAddress, address)
 		wasmKeeper.appendToContractHistory(srcCtx, address, newHistory)
 		iter.Close()
 		return false
@@ -147,8 +148,8 @@ func TestGenesisExportImport(t *testing.T) {
 			dstIT.Next()
 			srcIT.Next()
 		}
-		if !assert.False(t, dstIT.Valid()) {
-			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
+		if !assert.False(t, srcIT.Valid()) {
+			t.Fatalf("dest Iterator still has key :%s", dstIT.Key())
 		}
 		srcIT.Close()
 		dstIT.Close()
