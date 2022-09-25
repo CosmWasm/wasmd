@@ -85,3 +85,33 @@ func TestGetContractByCreatedSecondaryIndexKey(t *testing.T) {
 	}
 	assert.Equal(t, exp, got)
 }
+
+func TestGetContractByCreatorThirdIndexKey(t *testing.T) {
+	creatorAddr := bytes.Repeat([]byte{4}, 20)
+
+	// test that contract addresses of 20 length are still supported
+	contractAddr := bytes.Repeat([]byte{4}, 20)
+	got := GetContractByCreatorThirdIndexKey(creatorAddr, contractAddr)
+	exp := []byte{
+		9,                            // prefix
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // creator address
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // address 20 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	}
+	assert.Equal(t, exp, got)
+
+	// test that contract addresses of 32 length are still supported
+	contractAddr = bytes.Repeat([]byte{4}, 32)
+	got = GetContractByCreatorThirdIndexKey(creatorAddr, contractAddr)
+	exp = []byte{
+		9,                            // prefix
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // creator address
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4, // address 32 bytes
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+		4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+		4, 4,
+	}
+	assert.Equal(t, exp, got)
+}
