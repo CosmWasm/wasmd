@@ -2188,3 +2188,41 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		})
 	}
 }
+
+func TestIteratorAllContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example2 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example3 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example4 := InstantiateHackatomExampleContract(t, ctx, keepers)
+
+	var allContract []string
+	keepers.WasmKeeper.IterateAllContract(ctx, func(addr sdk.AccAddress) bool {
+		allContract = append(allContract, addr.String())
+		return false
+	})
+	require.Equal(t,
+		allContract,
+		[]string{
+			example1.Contract.String(),
+			example2.Contract.String(),
+			example3.Contract.String(),
+			example4.Contract.String(),
+		})
+}
+
+func TestIteratorContractByCreator(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+
+	var allContract []string
+	keepers.WasmKeeper.IterateContractsByCreator(ctx, example1.CreatorAddr, func(addr sdk.AccAddress) bool {
+		allContract = append(allContract, addr.String())
+		return false
+	})
+	require.Equal(t,
+		allContract,
+		[]string{
+			example1.Contract.String(),
+		})
+}

@@ -612,7 +612,7 @@ func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddres
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(creator))
 	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
 		key := iter.Key()
-		if cb(key[types.AbsoluteTxPositionLen:]) {
+		if cb(key) {
 			return
 		}
 	}
@@ -620,10 +620,10 @@ func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddres
 
 // IterateAllContract iterates over all contracts.
 func (k Keeper) IterateAllContract(ctx sdk.Context, cb func(address sdk.AccAddress) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractKeyPrefix)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractByCodeIDAndCreatedSecondaryIndexPrefix)
 	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
 		key := iter.Key()
-		if cb(key[types.AbsoluteTxPositionLen:]) {
+		if cb(key[24:]) {
 			return
 		}
 	}
