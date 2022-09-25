@@ -603,9 +603,9 @@ func (k Keeper) addToContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, 
 }
 
 // removeFromContractCodeSecondaryIndex removes element to the index for contracts-by-creator queries
-func (k Keeper) removeFromContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
-	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatorThirdIndexKey(creatorAddress, contractAddress))
-}
+// func (k Keeper) removeFromContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
+// 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatorThirdIndexKey(creatorAddress, contractAddress))
+// }
 
 // IterateContractsByCreator iterates over all contracts with given creator address.
 func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {

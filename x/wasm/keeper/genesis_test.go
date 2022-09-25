@@ -112,7 +112,6 @@ func TestGenesisExportImport(t *testing.T) {
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
 		creatorAddress, _ := sdk.AccAddressFromBech32(info.Creator)
 		wasmKeeper.removeFromContractCodeSecondaryIndex(srcCtx, address, wasmKeeper.getLastContractHistoryEntry(srcCtx, address))
-		wasmKeeper.removeFromContractCreatorThirdIndex(srcCtx, creatorAddress, address)
 
 		prefixStore := prefix.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
 		iter := prefixStore.Iterator(nil, nil)
