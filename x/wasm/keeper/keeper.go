@@ -491,7 +491,9 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
 	creatorAddress, err := sdk.AccAddressFromBech32(contractInfo.Creator)
-
+	if err != nil {
+		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
+	}
 	// delete old secondary index entry
 	k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.getLastContractHistoryEntry(ctx, contractAddress))
 	k.removeFromContractCreatorThirdIndex(ctx, creatorAddress, contractAddress)
