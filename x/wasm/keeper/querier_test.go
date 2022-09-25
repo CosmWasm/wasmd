@@ -802,6 +802,62 @@ func TestQueryCodeInfoList(t *testing.T) {
 	require.EqualValues(t, allCodesResponse, got.CodeInfos)
 }
 
+func TestQueryContractsByCreatorList(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
+
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	// manage some realistic block settings
+	var h int64 = 10
+	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
+		ctx = ctx.WithBlockHeight(height)
+		meter := sdk.NewGasMeter(1000000)
+		ctx = ctx.WithGasMeter(meter)
+		ctx = ctx.WithBlockGasMeter(meter)
+		return ctx
+	}
+
+	// create 15 contracts with real block/gas setup
+	for i := 0; i < 15; i++ {
+		// 3 tx per block, so we ensure both comparisons work
+		if i%3 == 0 {
+			ctx = setBlock(ctx, h)
+			h++
+		}
+		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		require.NoError(t, err)
+	}
+
+	// query and check the results are properly sorted
+	q := Querier(keeper)
+	res, err := q.ContractsByCreator(sdk.WrapSDKContext(ctx), &types.QueryContractsByCreatorRequest{CreatorAddress: creator.String()})
+	require.NoError(t, err)
+
+	require.Equal(t, 15, len(res.ContractAddress))
+
+	for _, contractAddr := range res.ContractAddress {
+		assert.NotEmpty(t, contractAddr)
+	}
+}
+
 func fromBase64(s string) []byte {
 	r, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
