@@ -147,7 +147,7 @@ func TestGenesisExportImport(t *testing.T) {
 			dstIT.Next()
 			srcIT.Next()
 		}
-		if !assert.False(t, srcIT.Valid()) {
+		if !assert.False(t, dstIT.Valid()) {
 			t.Fatalf("dest Iterator still has key :%s", dstIT.Key())
 		}
 		srcIT.Close()
