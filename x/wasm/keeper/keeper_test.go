@@ -2208,17 +2208,61 @@ func TestIteratorAllContract(t *testing.T) {
 }
 
 func TestIteratorContractByCreator(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	// setup test
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.ContractKeeper
 
-	var allContract []string
-	keepers.WasmKeeper.IterateContractsByCreator(ctx, example1.CreatorAddr, func(addr sdk.AccAddress) bool {
-		allContract = append(allContract, addr.String())
-		return false
-	})
-	require.Equal(t,
-		allContract,
-		[]string{
-			example1.Contract.String(),
+	depositFund := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, creator, depositFund.Add(depositFund...)...)
+	mockAddress1 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+	mockAddress2 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+
+	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	require.NoError(t, err)
+
+	initMsgBz := HackatomExampleInitMsg{
+		Verifier:    mockAddress1,
+		Beneficiary: mockAddress1,
+	}.GetBytes(t)
+
+	depositContract := sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000)))
+
+	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, gotAddr1, nil, initMsgBz, "label", depositContract)
+
+	specs := map[string]struct {
+		creatorAddr   sdk.AccAddress
+		contractsAddr []string
+	}{
+		"mockAddres1": {
+			creatorAddr:   mockAddress1,
+			contractsAddr: []string{gotAddr3.String(), gotAddr1.String()},
+		},
+		"mockAddres2": {
+			creatorAddr:   mockAddress2,
+			contractsAddr: []string{gotAddr2.String()},
+		},
+		"contractAdress": {
+			creatorAddr:   gotAddr1,
+			contractsAddr: []string{gotAddr4.String()},
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var allContract []string
+			keepers.WasmKeeper.IterateContractsByCreator(parentCtx, spec.creatorAddr, func(addr sdk.AccAddress) bool {
+				allContract = append(allContract, addr.String())
+				return false
+			})
+			require.Equal(t,
+				allContract,
+				spec.contractsAddr,
+			)
 		})
+	}
 }
