@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
@@ -599,12 +600,14 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 // addToContractCreatorSecondaryIndex adds element to the index for contracts-by-creator queries
 func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, contractAddress), []byte{})
+	bz := address.MustLengthPrefix(creatorAddress)
+	store.Set(types.GetContractByCreatorSecondaryIndexKey(bz, contractAddress), []byte{})
 }
 
 // IterateContractsByCreator iterates over all contracts with given creator address.
 func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(creator))
+	bz := address.MustLengthPrefix(creator)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(bz))
 	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
 		key := iter.Key()
 		if cb(key) {
