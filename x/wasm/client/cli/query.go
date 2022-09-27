@@ -529,7 +529,7 @@ func GetCmdListPinnedCode() *cobra.Command {
 	return cmd
 }
 
-// GetCmdContractsByCreator lists all contracts by creator
+// GetCmdListContractsByCreator lists all contracts by creator
 func GetCmdListContractsByCreator() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-contracts-by-creator [creator]",
