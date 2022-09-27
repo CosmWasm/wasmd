@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -17,7 +18,7 @@ func NewMigrator(keeper Keeper) Migrator {
 // Migrate2to3 migrates from version 2 to 3.
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	var allContract []string
-	m.keeper.IterateAllContract(ctx, func(addr sdk.AccAddress) bool {
+	m.keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
 		allContract = append(allContract, addr.String())
 		return false
 	})
@@ -31,7 +32,7 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 		if err != nil {
 			return err
 		}
-		m.keeper.addToContractCreatorThirdIndex(ctx, creator, contractAddress)
+		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractAddress)
 	}
 	return nil
 }

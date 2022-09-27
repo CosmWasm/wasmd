@@ -2197,18 +2197,14 @@ func TestIteratorAllContract(t *testing.T) {
 	example4 := InstantiateHackatomExampleContract(t, ctx, keepers)
 
 	var allContract []string
-	keepers.WasmKeeper.IterateAllContract(ctx, func(addr sdk.AccAddress) bool {
+	keepers.WasmKeeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
 		allContract = append(allContract, addr.String())
 		return false
 	})
-	require.Equal(t,
-		allContract,
-		[]string{
-			example1.Contract.String(),
-			example2.Contract.String(),
-			example3.Contract.String(),
-			example4.Contract.String(),
-		})
+	require.Contains(t, allContract, example1.Contract.String())
+	require.Contains(t, allContract, example2.Contract.String())
+	require.Contains(t, allContract, example3.Contract.String())
+	require.Contains(t, allContract, example4.Contract.String())
 }
 
 func TestIteratorContractByCreator(t *testing.T) {
