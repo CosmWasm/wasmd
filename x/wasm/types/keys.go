@@ -81,8 +81,8 @@ func GetContractByCodeIDSecondaryIndexPrefix(codeID uint64) []byte {
 	return r
 }
 
-// GetContractByCreatorThirdIndexKey returns the key for the second index: `<prefix><creatorAddress><contractAddr>`
-func GetContractByCreatorThirdIndexKey(addr sdk.AccAddress, contractAddr sdk.AccAddress) []byte {
+// GetContractByCreatorSecondaryIndexKey returns the key for the second index: `<prefix><creatorAddress><contractAddr>`
+func GetContractByCreatorSecondaryIndexKey(addr sdk.AccAddress, contractAddr sdk.AccAddress) []byte {
 	prefixBytes := GetContractsByCreatorPrefix(addr)
 	return append(prefixBytes, contractAddr...)
 }

@@ -378,7 +378,7 @@ func (k Keeper) instantiate(
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
-	k.addToContractCreatorThirdIndex(ctx, creator, contractAddress)
+	k.addToContractCreatorSecondaryIndex(ctx, creator, contractAddress)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
@@ -596,16 +596,11 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, entry))
 }
 
-// addToContractCreatorThirdIndex adds element to the index for contracts-by-creator queries
-func (k Keeper) addToContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
+// addToContractCreatorSecondaryIndex adds element to the index for contracts-by-creator queries
+func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetContractByCreatorThirdIndexKey(creatorAddress, contractAddress), []byte{})
+	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, contractAddress), []byte{})
 }
-
-// removeFromContractCodeSecondaryIndex removes element to the index for contracts-by-creator queries
-// func (k Keeper) removeFromContractCreatorThirdIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
-// 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatorThirdIndexKey(creatorAddress, contractAddress))
-// }
 
 // IterateContractsByCreator iterates over all contracts with given creator address.
 func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {
@@ -613,17 +608,6 @@ func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddres
 	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
 		key := iter.Key()
 		if cb(key) {
-			return
-		}
-	}
-}
-
-// IterateAllContract iterates over all contracts.
-func (k Keeper) IterateAllContract(ctx sdk.Context, cb func(address sdk.AccAddress) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractByCodeIDAndCreatedSecondaryIndexPrefix)
-	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
-		key := iter.Key()
-		if cb(key[24:]) {
 			return
 		}
 	}
@@ -1092,7 +1076,7 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	k.appendToContractHistory(ctx, contractAddr, historyEntry)
 	k.storeContractInfo(ctx, contractAddr, c)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
-	k.addToContractCreatorThirdIndex(ctx, creatorAddress, contractAddr)
+	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 

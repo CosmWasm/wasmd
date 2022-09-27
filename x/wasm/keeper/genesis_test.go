@@ -123,7 +123,7 @@ func TestGenesisExportImport(t *testing.T) {
 		newHistory := x.ResetFromGenesis(dstCtx)
 		wasmKeeper.storeContractInfo(srcCtx, address, x)
 		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, newHistory)
-		wasmKeeper.addToContractCreatorThirdIndex(srcCtx, creatorAddress, address)
+		wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, address)
 		wasmKeeper.appendToContractHistory(srcCtx, address, newHistory)
 		iter.Close()
 		return false
