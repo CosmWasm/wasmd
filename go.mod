@@ -6,9 +6,9 @@ require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/CosmWasm/wasmvm v1.1.1
-	github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20220927191944-91d66f30e1d6
+	github.com/cosmos/cosmos-sdk v0.46.0
 	github.com/cosmos/iavl v0.19.2-0.20220916140702-9b6be3095313
-	github.com/cosmos/interchain-accounts v0.3.3
+	github.com/cosmos/interchain-accounts v0.3.1-0.20220823082033-cd7c200d14c4
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
