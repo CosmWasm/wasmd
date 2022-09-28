@@ -4,9 +4,9 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
 
-## [v0.29.0-rc1](https://github.com/CosmWasm/wasmd/tree/v0.29.0-rc1) (2022-09-22)
+## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-09-28)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0-rc1)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
@@ -21,15 +21,17 @@
 - Add gRPC query for WASM params [\#889](https://github.com/CosmWasm/wasmd/issues/889)
 - Expose Keepers in app.go? [\#881](https://github.com/CosmWasm/wasmd/issues/881)
 - Remove unused `flagProposalType` flag in gov proposals [\#849](https://github.com/CosmWasm/wasmd/issues/849)
-- Restrict code access config modifications [\#901](https://github.com/CosmWasm/wasmd/pull/901) ([alpe](https://github.com/alpe))
-- Prevent migration to a restricted code [\#900](https://github.com/CosmWasm/wasmd/pull/900) ([alpe](https://github.com/alpe))
-- Charge gas to unzip wasm code [\#898](https://github.com/CosmWasm/wasmd/pull/898) ([alpe](https://github.com/alpe))
+- Restrict code access config modifications [\#901](https://github.com/CosmWasm/wasmd/pull/901)
+- Prevent migration to a restricted code [\#900](https://github.com/CosmWasm/wasmd/pull/900)
+- Charge gas to unzip wasm code [\#898](https://github.com/CosmWasm/wasmd/pull/898)
 
 ### Notable changes:
 - BaseAccount and pruned vesting account types can be re-used for contracts addresses
 - A new [MsgInstantiateContract2](https://github.com/CosmWasm/wasmd/pull/1014/files#diff-bf58b9da4b674719f07dd5421c532c1ead13a15f8896b59c1f724215d2064b73R75) was introduced which is an additional value for `message` type events
 - Store event contains new attribute with code checksum now
 - New `wasmd tx wasm instantiate2` CLI command for predictable addresses on instantiation
+- New `cosmwasm_1_1` CosmWasm capability (former "feature") was introduced in [cosmwasm/#1356](https://github.com/CosmWasm/cosmwasm/pull/1356) to support total supply queries 
+- Module version was bumped to v2
 
 ### Migration notes:
 - See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v3.3.0/docs/migrations/support-denoms-with-slashes.md)
