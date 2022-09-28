@@ -17,22 +17,10 @@ func NewMigrator(keeper Keeper) Migrator {
 
 // Migrate2to3 migrates from version 2 to 3.
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	var allContract []string
-	m.keeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
-		allContract = append(allContract, addr.String())
+	m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
+		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
+		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractAddr)
 		return false
 	})
-	for _, contract := range allContract {
-		contractAddress, err := sdk.AccAddressFromBech32(contract)
-		if err != nil {
-			return err
-		}
-		contractInfo := m.keeper.GetContractInfo(ctx, contractAddress)
-		creator, err := sdk.AccAddressFromBech32(contractInfo.Creator)
-		if err != nil {
-			return err
-		}
-		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractAddress)
-	}
 	return nil
 }
