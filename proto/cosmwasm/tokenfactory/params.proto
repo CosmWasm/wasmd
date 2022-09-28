@@ -9,5 +9,5 @@ option go_package = "github.com/CosmWasm/wasmd/x/tokenfactory/types";
 
 // Params holds parameters for the tokenfactory module
 message Params {
-    option (gogoproto.goproto_stringer) = false;
+    option (gogoproto.goproto_stringer) = true;
 }
