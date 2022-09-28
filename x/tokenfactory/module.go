@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/CosmWasm/wasmd/x/tokenfactory/client/cli"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/keeper"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/types"
-	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
