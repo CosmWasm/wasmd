@@ -6,7 +6,7 @@ require (
 	github.com/CosmWasm/wasmvm v1.0.0
 	github.com/cosmos/cosmos-sdk v0.45.8
 	github.com/cosmos/iavl v0.19.1
-	github.com/cosmos/ibc-go/v4 v4.0.0
+	github.com/cosmos/ibc-go/v4 v4.1.0
 	github.com/cosmos/interchain-accounts v0.1.1-0.20220801105946-a4139e927530
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b
 	github.com/gogo/protobuf v1.3.3

@@ -168,8 +168,8 @@ github.com/cosmos/gorocksdb v1.2.0 h1:d0l3jJG8M4hBouIZq0mDUHZ+zjOx044J3nGRskwTb4
 github.com/cosmos/gorocksdb v1.2.0/go.mod h1:aaKvKItm514hKfNJpUJXnnOWeBnk2GL4+Qw9NHizILw=
 github.com/cosmos/iavl v0.19.1 h1:3gaq9b6SjiB0KBTygRnAvEGml2pQlu1TH8uma5g63Ys=
 github.com/cosmos/iavl v0.19.1/go.mod h1:X9PKD3J0iFxdmgNLa7b2LYWdsGd90ToV5cAONApkEPw=
-github.com/cosmos/ibc-go/v4 v4.0.0 h1:kqbbRDFB9bNLVfxImZ1wIsXZKjbS5NZ5xvnv/MoX138=
-github.com/cosmos/ibc-go/v4 v4.0.0/go.mod h1:qxfXOjgJKDzdJeTTDFowrFxxI1KD3x1k0pZifdf9fOg=
+github.com/cosmos/ibc-go/v4 v4.1.0 h1:08trrDnQ9hGriPIslEA8zmwGJ9Vc1Xdhlp7jocO7Tc4=
+github.com/cosmos/ibc-go/v4 v4.1.0/go.mod h1:GxWQw+t5eM3X2LVsyVLUJu+6uRNHkTRSZtSqOSXgmv4=
 github.com/cosmos/interchain-accounts v0.1.1-0.20220801105946-a4139e927530 h1:l7BrcxQZRPLBm3zTDsYeaj+YkYIXbF2WjEeF3TRJBMA=
 github.com/cosmos/interchain-accounts v0.1.1-0.20220801105946-a4139e927530/go.mod h1:mL7BBzhk1AvUza3UtlLe4F5yfhmjxOaKcwuPDWA62ak=
 github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76 h1:DdzS1m6o/pCqeZ8VOAit/gyATedRgjvkVI+UCrLpyuU=
