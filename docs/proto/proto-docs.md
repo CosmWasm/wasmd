@@ -4,6 +4,16 @@
 
 ## Table of Contents
 
+- [cosmwasm/tokenfactory/authorityMetadata.proto](#cosmwasm/tokenfactory/authorityMetadata.proto)
+    - [DenomAuthorityMetadata](#cosmwasm.tokenfactory.DenomAuthorityMetadata)
+  
+- [cosmwasm/tokenfactory/params.proto](#cosmwasm/tokenfactory/params.proto)
+    - [Params](#cosmwasm.tokenfactory.Params)
+  
+- [cosmwasm/tokenfactory/genesis.proto](#cosmwasm/tokenfactory/genesis.proto)
+    - [GenesisDenom](#cosmwasm.tokenfactory.GenesisDenom)
+    - [GenesisState](#cosmwasm.tokenfactory.GenesisState)
+  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -85,6 +95,111 @@
     - [Query](#cosmwasm.wasm.v1.Query)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="cosmwasm/tokenfactory/authorityMetadata.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/tokenfactory/authorityMetadata.proto
+
+
+
+<a name="cosmwasm.tokenfactory.DenomAuthorityMetadata"></a>
+
+### DenomAuthorityMetadata
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `admin` | [string](#string) |  | Can be empty for no admin, or a valid osmosis address |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/tokenfactory/params.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/tokenfactory/params.proto
+
+
+
+<a name="cosmwasm.tokenfactory.Params"></a>
+
+### Params
+Params holds parameters for the tokenfactory module
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/tokenfactory/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/tokenfactory/genesis.proto
+
+
+
+<a name="cosmwasm.tokenfactory.GenesisDenom"></a>
+
+### GenesisDenom
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |  |
+| `authority_metadata` | [DenomAuthorityMetadata](#cosmwasm.tokenfactory.DenomAuthorityMetadata) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.GenesisState"></a>
+
+### GenesisState
+GenesisState defines the tokenfactory module's genesis state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#cosmwasm.tokenfactory.Params) |  | params defines the paramaters of the module. |
+| `factory_denoms` | [GenesisDenom](#cosmwasm.tokenfactory.GenesisDenom) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
