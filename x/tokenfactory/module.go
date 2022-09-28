@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/api/tendermint/abci"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/client/cli"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/keeper"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/types"
@@ -16,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 var (
