@@ -51,7 +51,8 @@ func GetContractAddressKey(addr sdk.AccAddress) []byte {
 
 // GetContractsByCreatorPrefix returns the contracts by creator prefix for the WASM contract instance
 func GetContractsByCreatorPrefix(addr sdk.AccAddress) []byte {
-	return append(ContractsByCreatorPrefix, addr...)
+	bz := address.MustLengthPrefix(addr)
+	return append(ContractsByCreatorPrefix, bz...)
 }
 
 // GetContractStorePrefix returns the store prefix for the WASM contract instance
@@ -82,9 +83,8 @@ func GetContractByCodeIDSecondaryIndexPrefix(codeID uint64) []byte {
 	return r
 }
 
-// GetContractByCreatorSecondaryIndexKey returns the key for the second index: `<prefix><creatorAddress><contractAddr>`
-func GetContractByCreatorSecondaryIndexKey(addr sdk.AccAddress, contractAddr sdk.AccAddress) []byte {
-	bz := address.MustLengthPrefix(addr)
+// GetContractByCreatorSecondaryIndexKey returns the key for the second index: `<prefix><creatorAddress length><creatorAddress><contractAddr>`
+func GetContractByCreatorSecondaryIndexKey(bz []byte, contractAddr sdk.AccAddress) []byte {
 	prefixBytes := GetContractsByCreatorPrefix(bz)
 	return append(prefixBytes, contractAddr...)
 }

@@ -2201,10 +2201,10 @@ func TestIteratorAllContract(t *testing.T) {
 		allContract = append(allContract, addr.String())
 		return false
 	})
-	require.Contains(t, allContract, example1.Contract.String())
-	require.Contains(t, allContract, example2.Contract.String())
-	require.Contains(t, allContract, example3.Contract.String())
-	require.Contains(t, allContract, example4.Contract.String())
+
+	// IterateContractInfo not ordering
+	expContracts := []string{example4.Contract.String(), example2.Contract.String(), example1.Contract.String(), example3.Contract.String()}
+	require.Equal(t, allContract, expContracts)
 }
 
 func TestIteratorContractByCreator(t *testing.T) {
@@ -2218,8 +2218,11 @@ func TestIteratorContractByCreator(t *testing.T) {
 	keepers.Faucet.Fund(parentCtx, creator, depositFund.Add(depositFund...)...)
 	mockAddress1 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 	mockAddress2 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 
-	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+
 	require.NoError(t, err)
 
 	initMsgBz := HackatomExampleInitMsg{
@@ -2229,26 +2232,31 @@ func TestIteratorContractByCreator(t *testing.T) {
 
 	depositContract := sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000)))
 
-	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress1, nil, initMsgBz, "label", depositContract)
-	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress2, nil, initMsgBz, "label", depositContract)
-	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, mockAddress1, nil, initMsgBz, "label", depositContract)
-	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, originalContractID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr5, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
 
 	specs := map[string]struct {
 		creatorAddr   sdk.AccAddress
 		contractsAddr []string
 	}{
-		"mockAddres1": {
+		"single contract": {
 			creatorAddr:   mockAddress1,
-			contractsAddr: []string{gotAddr3.String(), gotAddr1.String()},
+			contractsAddr: []string{gotAddr1.String()},
 		},
-		"mockAddres2": {
+		"muliple contracts": {
 			creatorAddr:   mockAddress2,
-			contractsAddr: []string{gotAddr2.String()},
+			contractsAddr: []string{gotAddr2.String(), gotAddr5.String(), gotAddr4.String()},
 		},
 		"contractAdress": {
 			creatorAddr:   gotAddr1,
-			contractsAddr: []string{gotAddr4.String()},
+			contractsAddr: []string{gotAddr3.String()},
+		},
+		"no contracts- unknown": {
+			creatorAddr:   mockAddress3,
+			contractsAddr: nil,
 		},
 	}
 
