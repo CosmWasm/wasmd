@@ -541,12 +541,21 @@ func GetCmdListContractsByCreator() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			_, err = sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			if err != nil {
+				return err
+			}
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.ContractsByCreator(
 				context.Background(),
 				&types.QueryContractsByCreatorRequest{
 					CreatorAddress: args[0],
+					Pagination:     pageReq,
 				},
 			)
 			if err != nil {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -835,27 +836,34 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 		return ctx
 	}
 
-	// create 15 contracts with real block/gas setup
-	for i := 0; i < 15; i++ {
+	var expectedContractsAddr []string
+	// create 50 contracts with real block/gas setup
+	for i := 0; i < 50; i++ {
 		// 3 tx per block, so we ensure both comparisons work
 		if i%3 == 0 {
 			ctx = setBlock(ctx, h)
 			h++
 		}
-		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		expectedContractsAddr = append(expectedContractsAddr, contract.String())
 		require.NoError(t, err)
 	}
 
 	// query and check the results are properly sorted
 	q := Querier(keeper)
-	res, err := q.ContractsByCreator(sdk.WrapSDKContext(ctx), &types.QueryContractsByCreatorRequest{CreatorAddress: creator.String()})
+	res, err := q.ContractsByCreator(sdk.WrapSDKContext(ctx), &types.QueryContractsByCreatorRequest{
+		CreatorAddress: creator.String(),
+		Pagination: &query.PageRequest{
+			Limit: 50,
+		},
+	})
 	require.NoError(t, err)
 
-	require.Equal(t, 15, len(res.ContractAddress))
+	// need sort because `ContractsByCreator` not ordering
+	sort.Strings(res.ContractAddress)
+	sort.Strings(expectedContractsAddr)
 
-	for _, contractAddr := range res.ContractAddress {
-		assert.NotEmpty(t, contractAddr)
-	}
+	require.Equal(t, res.ContractAddress, expectedContractsAddr)
 }
 
 func fromBase64(s string) []byte {
