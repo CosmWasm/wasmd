@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -83,7 +84,8 @@ func GetContractByCodeIDSecondaryIndexPrefix(codeID uint64) []byte {
 
 // GetContractByCreatorSecondaryIndexKey returns the key for the second index: `<prefix><creatorAddress><contractAddr>`
 func GetContractByCreatorSecondaryIndexKey(addr sdk.AccAddress, contractAddr sdk.AccAddress) []byte {
-	prefixBytes := GetContractsByCreatorPrefix(addr)
+	bz := address.MustLengthPrefix(addr)
+	prefixBytes := GetContractsByCreatorPrefix(bz)
 	return append(prefixBytes, contractAddr...)
 }
 

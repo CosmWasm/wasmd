@@ -600,8 +600,7 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 // addToContractCreatorSecondaryIndex adds element to the index for contracts-by-creator queries
 func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	bz := address.MustLengthPrefix(creatorAddress)
-	store.Set(types.GetContractByCreatorSecondaryIndexKey(bz, contractAddress), []byte{})
+	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, contractAddress), []byte{})
 }
 
 // IterateContractsByCreator iterates over all contracts with given creator address.
