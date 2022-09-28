@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"

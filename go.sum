@@ -248,14 +248,19 @@ github.com/cosmos/gorocksdb v1.2.0 h1:d0l3jJG8M4hBouIZq0mDUHZ+zjOx044J3nGRskwTb4
 github.com/cosmos/gorocksdb v1.2.0/go.mod h1:aaKvKItm514hKfNJpUJXnnOWeBnk2GL4+Qw9NHizILw=
 github.com/cosmos/iavl v0.19.1 h1:3gaq9b6SjiB0KBTygRnAvEGml2pQlu1TH8uma5g63Ys=
 github.com/cosmos/iavl v0.19.1/go.mod h1:X9PKD3J0iFxdmgNLa7b2LYWdsGd90ToV5cAONApkEPw=
+<<<<<<< HEAD
 github.com/cosmos/iavl v0.19.2-0.20220916140702-9b6be3095313 h1:R7CnaI/0OLwOusy7n9750n8fqQ3yCQ8OJQI2L3ws9RA=
 github.com/cosmos/iavl v0.19.2-0.20220916140702-9b6be3095313/go.mod h1:X9PKD3J0iFxdmgNLa7b2LYWdsGd90ToV5cAONApkEPw=
-github.com/cosmos/ibc-go/v5 v5.0.0-rc2 h1:7rGkZwojUwK1Dvgze3ZP5K1upIKygudxU3WaeFFU2ts=
-github.com/cosmos/ibc-go/v5 v5.0.0-rc2/go.mod h1:Wqsguq98Iuns8tgTv8+xaGYbC+Q8zJfbpjzT6IgMJbs=
+github.com/cosmos/ibc-go/v6 v5.0.0-rc2 h1:7rGkZwojUwK1Dvgze3ZP5K1upIKygudxU3WaeFFU2ts=
+github.com/cosmos/ibc-go/v6 v5.0.0-rc2/go.mod h1:Wqsguq98Iuns8tgTv8+xaGYbC+Q8zJfbpjzT6IgMJbs=
 github.com/cosmos/interchain-accounts v0.2.3 h1:XKoFF76sBn3ZqQuC55utImL6sz2CsNWU1K0tl39MCzo=
 github.com/cosmos/interchain-accounts v0.2.3/go.mod h1:jeiJEb0zg609G0oCrCG0r6Guhb7YbA1uFiwww/1YgZE=
 github.com/cosmos/interchain-accounts v0.3.1-0.20220823082033-cd7c200d14c4 h1:+e6PuPDyGgaLhHA4UFX8+CLfcA8woTcJTPj4wa2/Vag=
 github.com/cosmos/interchain-accounts v0.3.1-0.20220823082033-cd7c200d14c4/go.mod h1:vNWr9YxBrI5c74jBwk9ooiUCIDvdOJeF8MQEA/z0IEk=
+=======
+github.com/cosmos/ibc-go/v6 v5.0.0 h1:MkObdarpoICPHXoRg/Ne9NRix4j7eQlJZq74/uzH3Zc=
+github.com/cosmos/ibc-go/v6 v5.0.0/go.mod h1:Wqsguq98Iuns8tgTv8+xaGYbC+Q8zJfbpjzT6IgMJbs=
+>>>>>>> fifth-46
 github.com/cosmos/interchain-accounts v0.3.2 h1:7S5rSndahpjkzUvG00kKZrTZsEuVHuVC9a7p0qDVcF8=
 github.com/cosmos/interchain-accounts v0.3.2/go.mod h1:vNWr9YxBrI5c74jBwk9ooiUCIDvdOJeF8MQEA/z0IEk=
 github.com/cosmos/interchain-accounts v0.3.3 h1:fOBm982wz2j3qZVrXcDBqdu0rf4bjIRPoVgowAyMZJ0=
