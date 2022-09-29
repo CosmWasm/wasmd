@@ -10,12 +10,17 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateDenom{}, "cosmwasm/tokenfactory/create-denom", nil)
 	cdc.RegisterConcrete(&MsgMint{}, "cosmwasm/tokenfactory/mint", nil)
+	cdc.RegisterConcrete(&MsgBurn{}, "cosmwasm/tokenfactory/burn", nil)
+	cdc.RegisterConcrete(&MsgChangeAdmin{}, "cosmwasm/tokenfactory/change-admin", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgCreateDenom{},
+		&MsgMint{},
+		&MsgBurn{},
+		&MsgChangeAdmin{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

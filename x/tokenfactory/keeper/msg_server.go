@@ -37,3 +37,27 @@ func (k msgServer) CreateDenom(goCtx context.Context, msg *types.MsgCreateDenom)
 		NewTokenDenom: msg.Subdenom,
 	}, nil
 }
+
+func (k msgServer) Mint(goCtx context.Context, msg *types.MsgMint) (*types.MsgMintResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+	// TODO: logic mint
+
+	return &types.MsgMintResponse{}, nil
+}
+
+func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBurnResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+	// TODO: logic burn
+
+	return &types.MsgBurnResponse{}, nil
+}
+
+func (k msgServer) ChangeAdmin(goCtx context.Context, msg *types.MsgChangeAdmin) (*types.MsgChangeAdminResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_ = ctx
+	// TODO: logic change admin
+
+	return &types.MsgChangeAdminResponse{}, nil
+}
