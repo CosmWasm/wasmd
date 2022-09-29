@@ -14,6 +14,18 @@
     - [GenesisDenom](#cosmwasm.tokenfactory.GenesisDenom)
     - [GenesisState](#cosmwasm.tokenfactory.GenesisState)
   
+- [cosmwasm/tokenfactory/query.proto](#cosmwasm/tokenfactory/query.proto)
+    - [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest)
+    - [QueryParamsResponse](#cosmwasm.tokenfactory.QueryParamsResponse)
+  
+    - [Query](#cosmwasm.tokenfactory.Query)
+  
+- [cosmwasm/tokenfactory/tx.proto](#cosmwasm/tokenfactory/tx.proto)
+    - [MsgCreateDenom](#cosmwasm.tokenfactory.MsgCreateDenom)
+    - [MsgCreateDenomResponse](#cosmwasm.tokenfactory.MsgCreateDenomResponse)
+  
+    - [Msg](#cosmwasm.tokenfactory.Msg)
+  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -198,6 +210,121 @@ GenesisState defines the tokenfactory module's genesis state.
  <!-- end enums -->
 
  <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/tokenfactory/query.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/tokenfactory/query.proto
+
+
+
+<a name="cosmwasm.tokenfactory.QueryParamsRequest"></a>
+
+### QueryParamsRequest
+QueryParamsRequest is request type for the Query/Params RPC method.
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.QueryParamsResponse"></a>
+
+### QueryParamsResponse
+QueryParamsResponse is response type for the Query/Params RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [Params](#cosmwasm.tokenfactory.Params) |  | params holds all the parameters of this module. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="cosmwasm.tokenfactory.Query"></a>
+
+### Query
+Query defines the gRPC querier service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `Params` | [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.tokenfactory.QueryParamsResponse) | Parameters queries the parameters of the module. | GET|/cosmwasm/tokenfactory/params|
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/tokenfactory/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/tokenfactory/tx.proto
+
+
+
+<a name="cosmwasm.tokenfactory.MsgCreateDenom"></a>
+
+### MsgCreateDenom
+MsgCreateDenom is the sdk.Msg type for allowing an account to create
+a new denom. It requires a sender address and a subdenomination.
+The (sender_address, sub_denomination) pair must be unique and cannot be
+re-used. The resulting denom created is `factory/{creator
+address}/{subdenom}`. The resultant denom's admin is originally set to be the
+creator, but this can be changed later. The token denom does not indicate the
+current admin.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `subdenom` | [string](#string) |  | subdenom can be up to 44 "alphanumeric" characters long. |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.MsgCreateDenomResponse"></a>
+
+### MsgCreateDenomResponse
+MsgCreateDenomResponse is the return value of MsgCreateDenom
+It returns the full string of the newly created denom
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `new_token_denom` | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="cosmwasm.tokenfactory.Msg"></a>
+
+### Msg
+
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `CreateDenom` | [MsgCreateDenom](#cosmwasm.tokenfactory.MsgCreateDenom) | [MsgCreateDenomResponse](#cosmwasm.tokenfactory.MsgCreateDenomResponse) |  | |
 
  <!-- end services -->
 

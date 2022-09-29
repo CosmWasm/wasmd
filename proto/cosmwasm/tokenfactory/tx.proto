@@ -1,0 +1,31 @@
+syntax = "proto3";
+package cosmwasm.tokenfactory;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/CosmWasm/wasmd/x/tokenfactory/types";
+
+service Msg {
+    rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
+}
+
+// MsgCreateDenom is the sdk.Msg type for allowing an account to create
+// a new denom. It requires a sender address and a subdenomination.
+// The (sender_address, sub_denomination) pair must be unique and cannot be
+// re-used. The resulting denom created is `factory/{creator
+// address}/{subdenom}`. The resultant denom's admin is originally set to be the
+// creator, but this can be changed later. The token denom does not indicate the
+// current admin.
+message MsgCreateDenom {
+    string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+    // subdenom can be up to 44 "alphanumeric" characters long.
+    string subdenom = 2 [ (gogoproto.moretags) = "yaml:\"subdenom\"" ];
+  }
+  
+  // MsgCreateDenomResponse is the return value of MsgCreateDenom
+  // It returns the full string of the newly created denom
+  message MsgCreateDenomResponse {
+    string new_token_denom = 1
+        [ (gogoproto.moretags) = "yaml:\"new_token_denom\"" ];
+  }
