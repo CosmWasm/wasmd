@@ -1,7 +1,12 @@
 package types
 
 const (
-	AttributeCreator       = "creator"
-	AttributeSubdenom      = "subdenom"
-	AttributeNewTokenDenom = "new_token_denom"
+	AttributeAmount          = "amount"
+	AttributeCreator         = "creator"
+	AttributeSubdenom        = "subdenom"
+	AttributeNewTokenDenom   = "new_token_denom"
+	AttributeMintToAddress   = "mint_to_address"
+	AttributeBurnFromAddress = "burn_from_address"
+	AttributeDenom           = "denom"
+	AttributeNewAdmin        = "new_admin"
 )

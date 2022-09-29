@@ -7,6 +7,9 @@ import (
 
 const (
 	TypeMsgCreateDenom = "create_denom"
+	TypeMsgMint        = "mint"
+	TypeMsgBurn        = "burn"
+	TypeMsgChangeAdmin = "change_admin"
 )
 
 var _ sdk.Msg = &MsgCreateDenom{}
@@ -39,6 +42,115 @@ func (m MsgCreateDenom) GetSignBytes() []byte {
 }
 
 func (m MsgCreateDenom) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+var _ sdk.Msg = &MsgMint{}
+
+// NewMsgMint creates a message to mint tokens
+func NewMsgMint(sender string, amount sdk.Coin) *MsgMint {
+	return &MsgMint{
+		Sender: sender,
+		Amount: amount,
+	}
+}
+
+func (m MsgMint) Route() string { return RouterKey }
+func (m MsgMint) Type() string  { return TypeMsgMint }
+func (m MsgMint) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	if !m.Amount.IsValid() || m.Amount.Amount.Equal(sdk.ZeroInt()) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, m.Amount.String())
+	}
+
+	return nil
+}
+
+func (m MsgMint) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgMint) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+var _ sdk.Msg = &MsgBurn{}
+
+// NewMsgBurn creates a message to burn tokens
+func NewMsgBurn(sender string, amount sdk.Coin) *MsgBurn {
+	return &MsgBurn{
+		Sender: sender,
+		Amount: amount,
+	}
+}
+
+func (m MsgBurn) Route() string { return RouterKey }
+func (m MsgBurn) Type() string  { return TypeMsgBurn }
+func (m MsgBurn) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	if !m.Amount.IsValid() || m.Amount.Amount.Equal(sdk.ZeroInt()) {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, m.Amount.String())
+	}
+
+	return nil
+}
+
+func (m MsgBurn) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgBurn) GetSigners() []sdk.AccAddress {
+	sender, _ := sdk.AccAddressFromBech32(m.Sender)
+	return []sdk.AccAddress{sender}
+}
+
+var _ sdk.Msg = &MsgChangeAdmin{}
+
+// NewMsgChangeAdmin creates a message to burn tokens
+func NewMsgChangeAdmin(sender, denom, newAdmin string) *MsgChangeAdmin {
+	return &MsgChangeAdmin{
+		Sender:   sender,
+		Denom:    denom,
+		NewAdmin: newAdmin,
+	}
+}
+
+func (m MsgChangeAdmin) Route() string { return RouterKey }
+func (m MsgChangeAdmin) Type() string  { return TypeMsgChangeAdmin }
+func (m MsgChangeAdmin) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid sender address (%s)", err)
+	}
+
+	_, err = sdk.AccAddressFromBech32(m.NewAdmin)
+	if err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "Invalid newadmin address (%s)", err)
+	}
+
+	_, _, err = DeconstructDenom(m.Denom)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m MsgChangeAdmin) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}
+
+func (m MsgChangeAdmin) GetSigners() []sdk.AccAddress {
 	sender, _ := sdk.AccAddressFromBech32(m.Sender)
 	return []sdk.AccAddress{sender}
 }
