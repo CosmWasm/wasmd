@@ -15,6 +15,8 @@
     - [GenesisState](#cosmwasm.tokenfactory.GenesisState)
   
 - [cosmwasm/tokenfactory/query.proto](#cosmwasm/tokenfactory/query.proto)
+    - [QueryDenomAuthorityMetadataRequest](#cosmwasm.tokenfactory.QueryDenomAuthorityMetadataRequest)
+    - [QueryDenomAuthorityMetadataResponse](#cosmwasm.tokenfactory.QueryDenomAuthorityMetadataResponse)
     - [QueryDenomsFromCreatorRequest](#cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest)
     - [QueryDenomsFromCreatorResponse](#cosmwasm.tokenfactory.QueryDenomsFromCreatorResponse)
     - [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest)
@@ -23,8 +25,14 @@
     - [Query](#cosmwasm.tokenfactory.Query)
   
 - [cosmwasm/tokenfactory/tx.proto](#cosmwasm/tokenfactory/tx.proto)
+    - [MsgBurn](#cosmwasm.tokenfactory.MsgBurn)
+    - [MsgBurnResponse](#cosmwasm.tokenfactory.MsgBurnResponse)
+    - [MsgChangeAdmin](#cosmwasm.tokenfactory.MsgChangeAdmin)
+    - [MsgChangeAdminResponse](#cosmwasm.tokenfactory.MsgChangeAdminResponse)
     - [MsgCreateDenom](#cosmwasm.tokenfactory.MsgCreateDenom)
     - [MsgCreateDenomResponse](#cosmwasm.tokenfactory.MsgCreateDenomResponse)
+    - [MsgMint](#cosmwasm.tokenfactory.MsgMint)
+    - [MsgMintResponse](#cosmwasm.tokenfactory.MsgMintResponse)
   
     - [Msg](#cosmwasm.tokenfactory.Msg)
   
@@ -224,6 +232,36 @@ GenesisState defines the tokenfactory module's genesis state.
 
 
 
+<a name="cosmwasm.tokenfactory.QueryDenomAuthorityMetadataRequest"></a>
+
+### QueryDenomAuthorityMetadataRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denom` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.QueryDenomAuthorityMetadataResponse"></a>
+
+### QueryDenomAuthorityMetadataResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority_metadata` | [DenomAuthorityMetadata](#cosmwasm.tokenfactory.DenomAuthorityMetadata) |  |  |
+
+
+
+
+
+
 <a name="cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest"></a>
 
 ### QueryDenomsFromCreatorRequest
@@ -293,6 +331,7 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.tokenfactory.QueryParamsResponse) | Parameters queries the parameters of the module. | GET|/cosmwasm/tokenfactory/params|
+| `DenomAuthorityMetadata` | [QueryDenomAuthorityMetadataRequest](#cosmwasm.tokenfactory.QueryDenomAuthorityMetadataRequest) | [QueryDenomAuthorityMetadataResponse](#cosmwasm.tokenfactory.QueryDenomAuthorityMetadataResponse) |  | GET|/cosmwasm/tokenfactory/denoms/{denom}/authority_metadata|
 | `DenomsFromCreator` | [QueryDenomsFromCreatorRequest](#cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest) | [QueryDenomsFromCreatorResponse](#cosmwasm.tokenfactory.QueryDenomsFromCreatorResponse) |  | GET|/cosmwasm/tokenfactory/denoms_from_creator/{creator}|
 
  <!-- end services -->
@@ -303,6 +342,59 @@ Query defines the gRPC querier service.
 <p align="right"><a href="#top">Top</a></p>
 
 ## cosmwasm/tokenfactory/tx.proto
+
+
+
+<a name="cosmwasm.tokenfactory.MsgBurn"></a>
+
+### MsgBurn
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.MsgBurnResponse"></a>
+
+### MsgBurnResponse
+
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.MsgChangeAdmin"></a>
+
+### MsgChangeAdmin
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `denom` | [string](#string) |  |  |
+| `new_admin` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.MsgChangeAdminResponse"></a>
+
+### MsgChangeAdminResponse
+
+
+
+
 
 
 
@@ -343,6 +435,33 @@ It returns the full string of the newly created denom
 
 
 
+
+<a name="cosmwasm.tokenfactory.MsgMint"></a>
+
+### MsgMint
+MsgMint is the sdk.Msg type for allowing an admin account to mint
+more of a token.  For now, we only support minting to the sender account
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  |  |
+| `amount` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.MsgMintResponse"></a>
+
+### MsgMintResponse
+
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -358,6 +477,9 @@ It returns the full string of the newly created denom
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `CreateDenom` | [MsgCreateDenom](#cosmwasm.tokenfactory.MsgCreateDenom) | [MsgCreateDenomResponse](#cosmwasm.tokenfactory.MsgCreateDenomResponse) |  | |
+| `Mint` | [MsgMint](#cosmwasm.tokenfactory.MsgMint) | [MsgMintResponse](#cosmwasm.tokenfactory.MsgMintResponse) |  | |
+| `Burn` | [MsgBurn](#cosmwasm.tokenfactory.MsgBurn) | [MsgBurnResponse](#cosmwasm.tokenfactory.MsgBurnResponse) |  | |
+| `ChangeAdmin` | [MsgChangeAdmin](#cosmwasm.tokenfactory.MsgChangeAdmin) | [MsgChangeAdminResponse](#cosmwasm.tokenfactory.MsgChangeAdminResponse) |  | |
 
  <!-- end services -->
 

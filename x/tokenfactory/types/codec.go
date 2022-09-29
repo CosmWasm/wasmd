@@ -9,6 +9,7 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateDenom{}, "cosmwasm/tokenfactory/create-denom", nil)
+	cdc.RegisterConcrete(&MsgMint{}, "cosmwasm/tokenfactory/mint", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmwasm/tokenfactory/params.proto";
+import "cosmwasm/tokenfactory/authorityMetadata.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/tokenfactory/types";
 
@@ -13,6 +14,10 @@ service Query {
     // Parameters queries the parameters of the module.
     rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
         option (google.api.http).get = "/cosmwasm/tokenfactory/params";
+    }
+
+    rpc DenomAuthorityMetadata(QueryDenomAuthorityMetadataRequest) returns (QueryDenomAuthorityMetadataResponse) {
+        option (google.api.http).get = "/cosmwasm/tokenfactory/denoms/{denom}/authority_metadata";
     }
 
     rpc DenomsFromCreator (QueryDenomsFromCreatorRequest) returns (QueryDenomsFromCreatorResponse) {
@@ -27,6 +32,17 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
     // params holds all the parameters of this module.
     Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryDenomAuthorityMetadataRequest {
+    string denom = 1 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+}
+
+message QueryDenomAuthorityMetadataResponse {
+    DenomAuthorityMetadata authority_metadata = 1 [
+        (gogoproto.moretags) = "yaml:\"authority_metadata\"",
+        (gogoproto.nullable) = false
+    ];
 }
 
 message QueryDenomsFromCreatorRequest {
