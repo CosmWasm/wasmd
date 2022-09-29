@@ -54,7 +54,7 @@ It will also run contracts compiled with 1.x assuming they don't opt into any ne
 The 1.x cosmwasm_vm will support all contracts with 1.0 <= version <= 1.x. 
 
 Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
-have been compiled with one of the supported `cosmwasm-std` versions, or will be rejeted upon upload (with some error
+have been compiled with one of the supported `cosmwasm-std` versions, or will be rejected upon upload (with some error
 message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
 breaking change to switch runtimes (you will need to organize a chain upgrade). As of `cosmwasm-vm 0.13` we are
 using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly more performant than the older versions.
@@ -97,9 +97,9 @@ The used cosmos-sdk version is in transition migrating from amino encoding to pr
 
 We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, 
 as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself 
-responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
+responsible for decoding. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
 valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is
-a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for 
+a relatively minor change to wasmd but would currently require a fork. Please open an issue if this is important for 
 your use case.
 
 ## Quick Start
