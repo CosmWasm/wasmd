@@ -46,7 +46,7 @@ func (k Keeper) DenomsFromCreator(goCtx context.Context, req *types.QueryDenomsF
 
 	_, err := sdk.AccAddressFromBech32(req.Creator)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "Unkown address of creator %v", req.Creator)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnknownAddress, "unknown address of creator %v", req.Creator)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

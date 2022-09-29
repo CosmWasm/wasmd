@@ -29,7 +29,7 @@ func (k msgServer) CreateDenom(goCtx context.Context, msg *types.MsgCreateDenom)
 		sdk.NewEvent(
 			types.TypeMsgCreateDenom,
 			sdk.NewAttribute(types.AttributeCreator, msg.Sender),
-			sdk.NewAttribute(types.AttributeNewTokenDenom, denom),
+			sdk.NewAttribute(types.AttributeNewCoinDenom, denom),
 		),
 	})
 

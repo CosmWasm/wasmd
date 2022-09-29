@@ -27,5 +27,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 var (
 	amino     = codec.NewLegacyAmino()
+	_         = amino
 	ModuleCdc = codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
 )

@@ -10,7 +10,7 @@ import (
 
 func (k Keeper) CreateDenom(ctx sdk.Context, creatorAddr string, subdenom string) (newTokenDenom string, err error) {
 	if k.bankKeeper.HasSupply(ctx, subdenom) {
-		return "", fmt.Errorf("Can't create denom that are the dame as a native denom")
+		return "", fmt.Errorf("can't create denom that are the dame as a native denom")
 	}
 
 	// generate denom from subdenom
