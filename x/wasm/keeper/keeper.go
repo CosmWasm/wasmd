@@ -378,7 +378,7 @@ func (k Keeper) instantiate(
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
-	k.addToContractCreatorSecondaryIndex(ctx, creator, contractAddress)
+	k.addToContractCreatorSecondaryIndex(ctx, creator, historyEntry.Updated, contractAddress)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
@@ -597,9 +597,9 @@ func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAd
 }
 
 // addToContractCreatorSecondaryIndex adds element to the index for contracts-by-creator queries
-func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress, contractAddress sdk.AccAddress) {
+func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress sdk.AccAddress, position *types.AbsoluteTxPosition, contractAddress sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, contractAddress), []byte{})
+	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, position.Bytes(), contractAddress), []byte{})
 }
 
 // IterateContractsByCreator iterates over all contracts with given creator address.
@@ -607,7 +607,7 @@ func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddres
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(creator))
 	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
 		key := iter.Key()
-		if cb(key) {
+		if cb(key[types.AbsoluteTxPositionLen:]) {
 			return
 		}
 	}
@@ -1076,7 +1076,7 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	k.appendToContractHistory(ctx, contractAddr, historyEntry)
 	k.storeContractInfo(ctx, contractAddr, c)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
-	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, contractAddr)
+	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, historyEntry.Updated, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 

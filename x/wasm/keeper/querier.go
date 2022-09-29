@@ -333,11 +333,15 @@ func (q grpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractsByCreatorPrefix(creatorAddress))
 	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			accAddres := sdk.AccAddress(key)
+			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
 			contracts = append(contracts, accAddres.String())
 		}
 		return true, nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryContractsByCreatorResponse{
 		ContractAddress: contracts,

@@ -400,7 +400,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1a5db), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1a7bb), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -2233,10 +2233,14 @@ func TestIteratorContractByCreator(t *testing.T) {
 	depositContract := sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000)))
 
 	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress1, nil, initMsgBz, "label", depositContract)
-	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
-	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
-	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
-	gotAddr5, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	ctx := parentCtx.WithBlockHeight(parentCtx.BlockHeight() + 1)
+	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr5, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
 
 	specs := map[string]struct {
 		creatorAddr   sdk.AccAddress
@@ -2248,7 +2252,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 		},
 		"muliple contracts": {
 			creatorAddr:   mockAddress2,
-			contractsAddr: []string{gotAddr2.String(), gotAddr5.String(), gotAddr4.String()},
+			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
 		},
 		"contractAdress": {
 			creatorAddr:   gotAddr1,

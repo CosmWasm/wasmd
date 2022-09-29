@@ -19,7 +19,7 @@ func NewMigrator(keeper Keeper) Migrator {
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 	m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
 		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
-		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractAddr)
+		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractInfo.Created, contractAddr)
 		return false
 	})
 	return nil
