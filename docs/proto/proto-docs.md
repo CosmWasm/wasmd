@@ -15,6 +15,8 @@
     - [GenesisState](#cosmwasm.tokenfactory.GenesisState)
   
 - [cosmwasm/tokenfactory/query.proto](#cosmwasm/tokenfactory/query.proto)
+    - [QueryDenomsFromCreatorRequest](#cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest)
+    - [QueryDenomsFromCreatorResponse](#cosmwasm.tokenfactory.QueryDenomsFromCreatorResponse)
     - [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest)
     - [QueryParamsResponse](#cosmwasm.tokenfactory.QueryParamsResponse)
   
@@ -222,6 +224,36 @@ GenesisState defines the tokenfactory module's genesis state.
 
 
 
+<a name="cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest"></a>
+
+### QueryDenomsFromCreatorRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator` | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="cosmwasm.tokenfactory.QueryDenomsFromCreatorResponse"></a>
+
+### QueryDenomsFromCreatorResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `denoms` | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="cosmwasm.tokenfactory.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
@@ -261,6 +293,7 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `Params` | [QueryParamsRequest](#cosmwasm.tokenfactory.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.tokenfactory.QueryParamsResponse) | Parameters queries the parameters of the module. | GET|/cosmwasm/tokenfactory/params|
+| `DenomsFromCreator` | [QueryDenomsFromCreatorRequest](#cosmwasm.tokenfactory.QueryDenomsFromCreatorRequest) | [QueryDenomsFromCreatorResponse](#cosmwasm.tokenfactory.QueryDenomsFromCreatorResponse) |  | GET|/cosmwasm/tokenfactory/denoms_from_creator/{creator}|
 
  <!-- end services -->
 

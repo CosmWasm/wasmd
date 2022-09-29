@@ -20,6 +20,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		GetParams(),
+		GetDenomsFromCreator(),
 	)
 
 	return cmd
@@ -46,5 +47,34 @@ func GetParams() *cobra.Command {
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func GetDenomsFromCreator() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "denom-from-creator [creator address] [flags]",
+		Short: "Returns a list of all tokens created by a specific creator address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			creator := args[0]
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := types.QueryDenomsFromCreatorRequest{
+				Creator: creator,
+			}
+			res, err := queryClient.DenomsFromCreator(cmd.Context(), &req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+
 	return cmd
 }

@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 option go_package = "github.com/CosmWasm/wasmd/x/tokenfactory/types";
 
 service Msg {
-    rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
+	rpc CreateDenom(MsgCreateDenom) returns (MsgCreateDenomResponse);
 }
 
 // MsgCreateDenom is the sdk.Msg type for allowing an account to create

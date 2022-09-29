@@ -12,9 +12,13 @@ option go_package = "github.com/CosmWasm/wasmd/x/tokenfactory/types";
 service Query {
     // Parameters queries the parameters of the module.
     rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-      option (google.api.http).get = "/cosmwasm/tokenfactory/params";
+        option (google.api.http).get = "/cosmwasm/tokenfactory/params";
     }
-  }
+
+    rpc DenomsFromCreator (QueryDenomsFromCreatorRequest) returns (QueryDenomsFromCreatorResponse) {
+        option (google.api.http).get = "/cosmwasm/tokenfactory/denoms_from_creator/{creator}";
+    }
+}
   
 // QueryParamsRequest is request type for the Query/Params RPC method.
 message QueryParamsRequest {}
@@ -23,4 +27,12 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
     // params holds all the parameters of this module.
     Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryDenomsFromCreatorRequest {
+    string creator = 1 [ (gogoproto.moretags) = "yaml:\"creator\"" ];
+}
+
+message QueryDenomsFromCreatorResponse {
+    repeated string denoms = 1 [ (gogoproto.moretags) = "yaml:\"denoms\"" ];
 }
