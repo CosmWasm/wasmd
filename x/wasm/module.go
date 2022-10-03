@@ -268,7 +268,6 @@ func getExpectedLibwasmVersion() string {
 		}
 		if d.Replace != nil {
 			return fmt.Sprintf(d.Replace.Version)
-
 		}
 		return fmt.Sprintf(d.Version)
 	}
@@ -281,6 +280,9 @@ func checkLibwasmVersion(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
 	}
 	wasmExpectedVersion := getExpectedLibwasmVersion()
+	if wasmExpectedVersion == "" {
+		return fmt.Errorf("wasmvm module not exist")
+	}
 	if !strings.Contains(wasmExpectedVersion, wasmVersion) {
 		return fmt.Errorf("libwasmversion mismatch. got: %s; expected: %s", wasmVersion, wasmExpectedVersion)
 	}
