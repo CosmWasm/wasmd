@@ -67,9 +67,12 @@ from the Cosmos SDK, and enabled them in `app.go`. If so, you can just look
 at [`wasmd/app/app.go`](https://github.com/CosmWasm/wasmd/blob/master/app/app.go#)
 for how to do so (just search there for lines with `wasm`).
 
-`wasmd` also comes with a custom `ante handler` that adds the TX position in the block into the context
-and passes it to the contracts. In order to support this feature you would need to add our custom
-ante handler into the `ante handler chain` as in: [`app/ante.go`](https://github.com/CosmWasm/wasmd/blob/master/app/ante.go)
+`wasmd` also comes with 2 custom `ante handlers`: 
+* `CountTXDecorator` adds the TX position in the block into the context and passes it to the contracts
+* `LimitSimulationGasDecorator` prevents an "infinite gas" query
+
+In order to support these features you would need to add our custom
+ante handlers into the `ante handler chain` as in: [`app/ante.go`](https://github.com/CosmWasm/wasmd/blob/master/app/ante.go)
 
 ### Copied into your app
 
