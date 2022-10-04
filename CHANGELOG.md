@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
 
-## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-09-28)
+## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-10-0x)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 
@@ -31,7 +31,6 @@
 - Store event contains new attribute with code checksum now
 - New `wasmd tx wasm instantiate2` CLI command for predictable addresses on instantiation
 - New `cosmwasm_1_1` CosmWasm capability (former "feature") was introduced in [cosmwasm/#1356](https://github.com/CosmWasm/cosmwasm/pull/1356) to support total supply queries 
-- Module version was bumped to v2
 
 ### Migration notes:
 - See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v3.3.0/docs/migrations/support-denoms-with-slashes.md)
