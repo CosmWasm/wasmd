@@ -94,6 +94,8 @@ func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 // RegisterInterfaces implements InterfaceModule
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
+
+	// support for legacy cosmwasm, proposal is unneccessary for querying
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&legacy.MsgStoreCode{},
 		&legacy.MsgInstantiateContract{},
