@@ -111,7 +111,7 @@ type AppModule struct {
 // module. It should be incremented on each consensus-breaking change
 // introduced by the module. To avoid wrong/empty versions, the initial version
 // should be set to 1.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
