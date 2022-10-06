@@ -12,7 +12,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func TestMigrate2To3(t *testing.T) {
+func TestMigrate1To2(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	wasmKeeper := keepers.WasmKeeper
 
@@ -48,7 +48,7 @@ func TestMigrate2To3(t *testing.T) {
 
 	// migrator
 	migrator := NewMigrator(*wasmKeeper)
-	migrator.Migrate2to3(ctx)
+	migrator.Migrate1to2(ctx)
 
 	// check new store
 	var allContract []string
