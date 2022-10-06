@@ -65,8 +65,10 @@ service Query {
   }
 
   // ContractsByCreator gets the contracts by creator
-  rpc ContractsByCreator(QueryContractsByCreatorRequest) returns (QueryContractsByCreatorResponse){
-    option (google.api.http).get = "/cosmwasm/wasm/v1/contracts/creator/{creator_address}"; 
+  rpc ContractsByCreator(QueryContractsByCreatorRequest)
+      returns (QueryContractsByCreatorResponse) {
+    option (google.api.http).get =
+        "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
   }
 }
 
@@ -242,17 +244,20 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
+// QueryContractsByCreatorRequest is the request type for the
+// Query/ContractsByCreator RPC method.
 message QueryContractsByCreatorRequest {
-  // address is the address of creator
+  // CreatorAddress is the address of contract creator
   string creator_address = 1;
-  // pagination defines an optional pagination for the request.
+  // Pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
+// QueryContractsByCreatorResponse is the response type for the
+// Query/ContractsByCreator RPC method.
 message QueryContractsByCreatorResponse {
-  repeated string contract_address = 1
-    [ (gogoproto.customname) = "ContractAddress" ];
-  // pagination defines the pagination in the response.
+  // ContractAddresses result set
+  repeated string contract_addresses = 1;
+  // Pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
-
 }

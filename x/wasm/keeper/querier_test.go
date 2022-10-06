@@ -876,7 +876,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 			expContractAddr: allExpecedContracts[0:1],
 			expErr:          nil,
 		},
-		"nil cretor": {
+		"nil creator": {
 			srcQuery: &types.QueryContractsByCreatorRequest{
 				Pagination: &query.PageRequest{},
 			},
@@ -899,9 +899,9 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 				require.Equal(t, spec.expErr, err)
 				return
 			}
-
+			require.NoError(t, err)
 			require.NotNil(t, got)
-			assert.Equal(t, spec.expContractAddr, got.ContractAddress)
+			assert.Equal(t, spec.expContractAddr, got.ContractAddresses)
 		})
 	}
 }

@@ -2250,7 +2250,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 			creatorAddr:   mockAddress1,
 			contractsAddr: []string{gotAddr1.String()},
 		},
-		"muliple contracts": {
+		"multiple contracts": {
 			creatorAddr:   mockAddress2,
 			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
 		},

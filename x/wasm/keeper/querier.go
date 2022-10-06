@@ -338,13 +338,12 @@ func (q grpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 		}
 		return true, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.QueryContractsByCreatorResponse{
-		ContractAddress: contracts,
-		Pagination:      pageRes,
+		ContractAddresses: contracts,
+		Pagination:        pageRes,
 	}, nil
 }
