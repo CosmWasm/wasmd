@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,7 +28,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm"
 )
 
 var (
