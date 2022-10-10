@@ -111,6 +111,12 @@ make test
 if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
 ## Protobuf
+The protobuf files for this project are published automatically to the [buf repository](https://buf.build/) to make integration easier:
+
+| wasmd version | buf tag                                                                                                                                     |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 0.26.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
+
 Generate protobuf
 ```shell script
 make proto-gen
