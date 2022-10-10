@@ -165,7 +165,7 @@ format: format-tools
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
-PROTO_BUILDER_IMAGE=tendermintdev/sdk-proto-gen:v0.2
+PROTO_BUILDER_IMAGE=tendermintdev/sdk-proto-gen:v0.7
 PROTO_FORMATTER_IMAGE=tendermintdev/docker-build-proto@sha256:aabcfe2fc19c31c0f198d4cd26393f5e5ca9502d7ea3feafbfe972448fee7cae
 
 proto-all: proto-format proto-lint proto-gen format
@@ -178,7 +178,7 @@ proto-format:
 	@echo "Formatting Protobuf files"
 	$(DOCKER) run --rm -v $(CURDIR):/workspace \
 	--workdir /workspace $(PROTO_FORMATTER_IMAGE) \
-	find ./ -not -path "./third_party/*" -name *.proto -exec clang-format -i {} \;
+	find ./ -name *.proto -exec clang-format -i {} \;
 
 proto-swagger-gen:
 	@./scripts/protoc-swagger-gen.sh
