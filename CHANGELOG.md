@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
 
-## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-10-0x)
+## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-10-10)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
 - Check wasmvm version on startup [\#1029](https://github.com/CosmWasm/wasmd/pull/1029/) 
