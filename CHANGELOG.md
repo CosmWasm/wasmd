@@ -4,6 +4,14 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
 
+## [v0.29.0-pio-1](https://github.com/provenance-io/wasmd/tree/v0.29.0-pio-1) (2022-10-12)
+
+[Full Changelog](https://github.com/provenance-io/wasmd/compare/v0.29.0...v0.29.0-pio-1)
+
+- Update [SDK v0.46.0 and IBC v5](https://github.com/CosmWasm/wasmd/pull/938) with the full release of v0.29.0.
+- Fix a test added in v0.29.0 that was failing because v0.46 requires a validator.
+- Bump Cosmos-SDK to v0.46.2.
+
 ## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-10-10)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.28.0...v0.29.0)
