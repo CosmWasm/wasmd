@@ -62,7 +62,7 @@ type TestChain struct {
 	Vals    *tmtypes.ValidatorSet
 	Signers []tmtypes.PrivValidator
 
-	senderPrivKey cryptotypes.PrivKey
+	SenderPrivKey cryptotypes.PrivKey
 	SenderAccount authtypes.AccountI
 
 	PendingSendPackets []channeltypes.Packet
@@ -127,7 +127,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		Codec:         wasmApp.AppCodec(),
 		Vals:          valSet,
 		Signers:       signers,
-		senderPrivKey: senderPrivKey,
+		SenderPrivKey: senderPrivKey,
 		SenderAccount: acc,
 	}
 
@@ -253,7 +253,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		chain.ChainID,
 		[]uint64{chain.SenderAccount.GetAccountNumber()},
 		[]uint64{chain.SenderAccount.GetSequence()},
-		true, true, chain.senderPrivKey,
+		true, true, chain.SenderPrivKey,
 	)
 	if err != nil {
 		return nil, err

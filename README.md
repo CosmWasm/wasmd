@@ -54,7 +54,7 @@ It will also run contracts compiled with 1.x assuming they don't opt into any ne
 The 1.x cosmwasm_vm will support all contracts with 1.0 <= version <= 1.x. 
 
 Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
-have been compiled with one of the supported `cosmwasm-std` versions, or will be rejeted upon upload (with some error
+have been compiled with one of the supported `cosmwasm-std` versions, or will be rejected upon upload (with some error
 message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
 breaking change to switch runtimes (you will need to organize a chain upgrade). As of `cosmwasm-vm 0.13` we are
 using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly more performant than the older versions.
@@ -97,9 +97,9 @@ The used cosmos-sdk version is in transition migrating from amino encoding to pr
 
 We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, 
 as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself 
-responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
+responsible for decoding. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
 valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is
-a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for 
+a relatively minor change to wasmd but would currently require a fork. Please open an issue if this is important for 
 your use case.
 
 ## Quick Start
@@ -111,6 +111,12 @@ make test
 if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
 ## Protobuf
+The protobuf files for this project are published automatically to the [buf repository](https://buf.build/) to make integration easier:
+
+| wasmd version | buf tag                                                                                                                                     |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 0.26.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
+
 Generate protobuf
 ```shell script
 make proto-gen
