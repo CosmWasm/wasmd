@@ -7,7 +7,7 @@ import (
 )
 
 type AuthorizationPolicy interface {
-	CanCreateCode(c types.AccessConfig, creator sdk.AccAddress) bool
+	CanCreateCode(c1 types.AccessConfig, creator sdk.AccAddress, c2 types.AccessConfig) bool
 	CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool
 	CanModifyContract(admin, actor sdk.AccAddress) bool
 	CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool
@@ -15,8 +15,12 @@ type AuthorizationPolicy interface {
 
 type DefaultAuthorizationPolicy struct{}
 
-func (p DefaultAuthorizationPolicy) CanCreateCode(config types.AccessConfig, actor sdk.AccAddress) bool {
-	return config.Allowed(actor)
+func (p DefaultAuthorizationPolicy) CanCreateCode(config types.AccessConfig, actor sdk.AccAddress, defaultConfig types.AccessConfig) bool {
+	isSubset := true
+	if !config.IsSubset(defaultConfig) {
+		isSubset = false
+	}
+	return config.Allowed(actor) && isSubset
 }
 
 func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessConfig, actor sdk.AccAddress) bool {
@@ -33,7 +37,7 @@ func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk
 
 type GovAuthorizationPolicy struct{}
 
-func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress) bool {
+func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress, types.AccessConfig) bool {
 	return true
 }
 
