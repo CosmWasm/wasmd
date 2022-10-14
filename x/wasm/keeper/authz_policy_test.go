@@ -62,7 +62,7 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 			instantiateAccess:   types.AllowEverybody,
 			defaultAccessConfig: types.AllowEverybody,
 		},
-		"instantiateAccess > defaultAccessConfig - panics": {
+		"instantiateAccess > defaultAccessConfig - not subset": {
 			config:              types.AllowEverybody,
 			exp:                 false,
 			instantiateAccess:   types.AllowEverybody,
