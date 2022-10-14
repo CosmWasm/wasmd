@@ -5,9 +5,9 @@ go 1.18
 require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7
-	github.com/cosmos/cosmos-sdk v0.45.8
+	github.com/cosmos/cosmos-sdk v0.45.9
 	github.com/cosmos/gogoproto v1.4.2
-	github.com/cosmos/iavl v0.19.1
+	github.com/cosmos/iavl v0.19.3
 	github.com/cosmos/ibc-go/v3 v3.3.0
 	github.com/cosmos/interchain-accounts v0.1.0
 	github.com/dvsekhvalnov/jose2go v1.5.0
@@ -128,6 +128,7 @@ require (
 )
 
 replace (
+	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
@@ -135,5 +136,4 @@ replace (
 	// the following version across all dependencies.
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
-
 )
