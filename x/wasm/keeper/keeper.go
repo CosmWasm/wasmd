@@ -192,7 +192,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		instantiateAccess = &defaultAccessConfig
 	}
 
-	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator, defaultAccessConfig) {
+	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator, *instantiateAccess, defaultAccessConfig) {
 		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
 

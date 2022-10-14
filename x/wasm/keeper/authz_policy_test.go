@@ -13,63 +13,72 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 	myActorAddress := RandomAccountAddress(t)
 	otherAddress := RandomAccountAddress(t)
 	specs := map[string]struct {
-		config            types.AccessConfig
-		actor             sdk.AccAddress
-		exp               bool
-		panics            bool
-		instantiateAccess types.AccessConfig
+		config              types.AccessConfig
+		actor               sdk.AccAddress
+		exp                 bool
+		panics              bool
+		instantiateAccess   types.AccessConfig
+		defaultAccessConfig types.AccessConfig
 	}{
 		"nobody": {
-			config:            types.AllowNobody,
-			exp:               false,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AllowNobody,
+			exp:                 false,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"everybody": {
-			config:            types.AllowEverybody,
-			exp:               true,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AllowEverybody,
+			exp:                 true,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"only address - same": {
-			config:            types.AccessTypeOnlyAddress.With(myActorAddress),
-			exp:               true,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AccessTypeOnlyAddress.With(myActorAddress),
+			exp:                 true,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"only address - different": {
-			config:            types.AccessTypeOnlyAddress.With(otherAddress),
-			exp:               false,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AccessTypeOnlyAddress.With(otherAddress),
+			exp:                 false,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"any address - included": {
-			config:            types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
-			exp:               true,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
+			exp:                 true,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"any address - not included": {
-			config:            types.AccessTypeAnyOfAddresses.With(otherAddress),
-			exp:               false,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AccessTypeAnyOfAddresses.With(otherAddress),
+			exp:                 false,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
 		"undefined config - panics": {
-			config:            types.AccessConfig{},
-			panics:            true,
-			instantiateAccess: types.AllowEverybody,
+			config:              types.AccessConfig{},
+			panics:              true,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowEverybody,
 		},
-		"instantiateAccess > govConfig - panics": {
-			config:            types.AllowEverybody,
-			exp:               false,
-			instantiateAccess: types.AllowNobody,
+		"instantiateAccess > defaultAccessConfig - panics": {
+			config:              types.AllowEverybody,
+			exp:                 false,
+			instantiateAccess:   types.AllowEverybody,
+			defaultAccessConfig: types.AllowNobody,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
 			if !spec.panics {
-				got := policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess)
+				got := policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess, spec.defaultAccessConfig)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess)
+				policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess, spec.defaultAccessConfig)
 			})
 		})
 	}
@@ -225,7 +234,7 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanCreateCode(spec.config, myActorAddress, spec.config)
+			got := policy.CanCreateCode(spec.config, myActorAddress, spec.config, spec.config)
 			assert.True(t, got)
 		})
 	}
