@@ -399,6 +399,85 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	assert.True(t, myContractB.closeCalled)
 }
 
+func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
+	// scenario: given two chains,
+	//           with a contract A1, A2 on chain A, contract B on chain B
+	//           contract A2 try to close ibc channel that create between A2 and B
+
+	myContractA1 := &captureCloseContract{}
+	myContractA2 := &captureCloseContract{}
+	myContractB := &captureCloseContract{}
+
+	var (
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractA1)),
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractA2)),
+		}
+		chainBOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractB)),
+		}
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
+
+		chainA = coordinator.GetChain(wasmibctesting.GetChainID(0))
+		chainB = coordinator.GetChain(wasmibctesting.GetChainID(1))
+	)
+
+	coordinator.CommitBlock(chainA, chainB)
+	myContractAddrA1 := chainA.SeedNewContractInstance()
+	myContractAddrA2 := chainA.SeedNewContractInstance()
+	_ = chainB.SeedNewContractInstance() // skip one instance
+	_ = chainB.SeedNewContractInstance() // skip one instance
+	myContractAddrB := chainB.SeedNewContractInstance()
+
+	path := wasmibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  chainA.ContractInfo(myContractAddrA1).IBCPortID,
+		Version: ibctransfertypes.Version,
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  chainB.ContractInfo(myContractAddrB).IBCPortID,
+		Version: ibctransfertypes.Version,
+		Order:   channeltypes.UNORDERED,
+	}
+	coordinator.SetupConnections(path)
+	coordinator.CreateChannels(path)
+
+	msgCloseChannel := &wasmvmtypes.CloseChannelMsg{
+		ChannelID: path.EndpointA.ChannelID,
+	}
+	ibcMsg := &wasmvmtypes.IBCMsg{
+		CloseChannel: msgCloseChannel,
+	}
+	cosmosMsg := &wasmvmtypes.CosmosMsg{
+		IBC: ibcMsg,
+	}
+	subMsgs := []wasmvmtypes.SubMsg{
+		{
+			Msg:     *cosmosMsg,
+			ReplyOn: wasmvmtypes.ReplyNever,
+		},
+	}
+
+	res := &wasmvmtypes.Response{
+		Messages: subMsgs,
+	}
+
+	_, err := chainA.App.WasmKeeper.HandleContractResponse(
+		chainA.GetContext(),
+		myContractAddrA2,
+		chainA.ContractInfo(myContractAddrA2).IBCPortID,
+		res.Messages,
+		res.Attributes,
+		res.Data,
+		res.Events,
+	)
+	require.Error(t, err)
+}
+
 var _ wasmtesting.IBCContractCallbacks = &captureCloseContract{}
 
 // contract that sets a flag on IBC channel close only.
