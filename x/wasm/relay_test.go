@@ -402,7 +402,7 @@ func TestContractHandlesChannelClose(t *testing.T) {
 func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	// scenario: given two chains,
 	//           with a contract A1, A2 on chain A, contract B on chain B
-	//           contract A2 try to close ibc channel that create between A2 and B
+	//           contract A2 try to close ibc channel that create between A1 and B
 
 	myContractA1 := &captureCloseContractNotOwned{}
 	myContractA2 := &captureCloseContractNotOwned{}
