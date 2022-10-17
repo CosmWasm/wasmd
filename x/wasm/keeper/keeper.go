@@ -960,26 +960,6 @@ func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAd
 	return nil
 }
 
-func (k *Keeper) HandleContractResponse(
-	ctx sdk.Context,
-	contractAddr sdk.AccAddress,
-	ibcPort string,
-	msgs []wasmvmtypes.SubMsg,
-	attrs []wasmvmtypes.EventAttribute,
-	data []byte,
-	evts wasmvmtypes.Events,
-) ([]byte, error) {
-	return k.handleContractResponse(
-		ctx,
-		contractAddr,
-		ibcPort,
-		msgs,
-		attrs,
-		data,
-		evts,
-	)
-}
-
 // handleContractResponse processes the contract response data by emitting events and sending sub-/messages.
 func (k *Keeper) handleContractResponse(
 	ctx sdk.Context,
