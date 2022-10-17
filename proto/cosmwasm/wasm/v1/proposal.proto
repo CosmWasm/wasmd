@@ -24,6 +24,8 @@ message StoreCodeProposal {
   reserved 5, 6;
   // InstantiatePermission to apply on contract creation, optional
   AccessConfig instantiate_permission = 7;
+  // UnpinCode code on upload, optional
+  bool unpin_code = 8;
 }
 
 // InstantiateContractProposal gov proposal content type to instantiate a

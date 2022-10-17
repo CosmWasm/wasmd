@@ -17,6 +17,7 @@ import (
 type BankViewKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 }
 
 // Burner is a subset of the sdk bank keeper methods

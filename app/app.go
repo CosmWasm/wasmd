@@ -507,7 +507,7 @@ func NewWasmApp(
 
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
-	supportedFeatures := "iterator,staking,stargate"
+	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1"
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
@@ -524,7 +524,7 @@ func NewWasmApp(
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		supportedFeatures,
+		availableCapabilities,
 		wasmOpts...,
 	)
 
@@ -773,7 +773,17 @@ func NewWasmApp(
 // Name returns the name of the App
 func (app *WasmApp) Name() string { return app.BaseApp.Name() }
 
-// application updates every begin block
+// ModuleManager returns instance
+func (app *WasmApp) ModuleManager() module.Manager {
+	return *app.mm
+}
+
+// ModuleConfigurator returns instance
+func (app *WasmApp) ModuleConfigurator() module.Configurator {
+	return app.configurator
+}
+
+// BeginBlocker application updates every begin block
 func (app *WasmApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }

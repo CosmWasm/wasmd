@@ -12,9 +12,14 @@ option (gogoproto.goproto_getters_all) = false;
 service Msg {
   // StoreCode to submit Wasm code to the system
   rpc StoreCode(MsgStoreCode) returns (MsgStoreCodeResponse);
-  //  Instantiate creates a new smart contract instance for the given code id.
+  //  InstantiateContract creates a new smart contract instance for the given
+  //  code id.
   rpc InstantiateContract(MsgInstantiateContract)
       returns (MsgInstantiateContractResponse);
+  //  InstantiateContract2 creates a new smart contract instance for the given
+  //  code id with a predictable address
+  rpc InstantiateContract2(MsgInstantiateContract2)
+      returns (MsgInstantiateContract2Response);
   // Execute submits the given message data to a smart contract
   rpc ExecuteContract(MsgExecuteContract) returns (MsgExecuteContractResponse);
   // Migrate runs a code upgrade/ downgrade for a smart contract
@@ -41,6 +46,8 @@ message MsgStoreCode {
 message MsgStoreCodeResponse {
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // Checksum is the sha256 hash of the stored code
+  bytes checksum = 2;
 }
 
 // MsgInstantiateContract create a new smart contract instance for the given
@@ -62,11 +69,45 @@ message MsgInstantiateContract {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+// MsgInstantiateContract2 create a new smart contract instance for the given
+// code id with a predicable address.
+message MsgInstantiateContract2 {
+  // Sender is the that actor that signed the messages
+  string sender = 1;
+  // Admin is an optional address that can execute migrations
+  string admin = 2;
+  // CodeID is the reference to the stored WASM code
+  uint64 code_id = 3 [ (gogoproto.customname) = "CodeID" ];
+  // Label is optional metadata to be stored with a contract instance.
+  string label = 4;
+  // Msg json encoded message to be passed to the contract on instantiation
+  bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 6 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
+  bytes salt = 7;
+  // FixMsg include the msg value into the hash for the predictable address.
+  // Default is false
+  bool fix_msg = 8;
+}
+
 // MsgInstantiateContractResponse return instantiation result data
 message MsgInstantiateContractResponse {
   // Address is the bech32 address of the new contract instance.
   string address = 1;
-  // Data contains base64-encoded bytes to returned from the contract
+  // Data contains bytes to returned from the contract
+  bytes data = 2;
+}
+
+// MsgInstantiateContract2Response return instantiation result data
+message MsgInstantiateContract2Response {
+  // Address is the bech32 address of the new contract instance.
+  string address = 1;
+  // Data contains bytes to returned from the contract
   bytes data = 2;
 }
 
@@ -87,7 +128,7 @@ message MsgExecuteContract {
 
 // MsgExecuteContractResponse returns execution result data.
 message MsgExecuteContractResponse {
-  // Data contains base64-encoded bytes to returned from the contract
+  // Data contains bytes to returned from the contract
   bytes data = 1;
 }
 

@@ -8,8 +8,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -22,6 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -73,6 +73,7 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
@@ -102,7 +103,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 			}
 
 			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
+				// simple sanity check that sender has some balance, although it may be consumed by appState previous message already
 				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
 				case err != nil:
 					return err
@@ -111,7 +112,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				}
 
 				//  does code id exists?
-				codeInfos, err := GetAllCodes(state)
+				codeInfos := GetAllCodes(state)
 				if err != nil {
 					return err
 				}
@@ -130,7 +131,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 					return fmt.Errorf("permissions were not granted for %s", senderAddr)
 				}
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
-					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &msg},
+					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: msg},
 				})
 				return nil
 			})
@@ -170,7 +171,7 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 			}
 
 			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance although it may be consumed by appState previous message already
+				// simple sanity check that sender has some balance, although it may be consumed by appState previous message already
 				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
 				case err != nil:
 					return err
@@ -210,7 +211,7 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 			if err != nil {
 				return err
 			}
-			all, err := GetAllCodes(g.WasmModuleState)
+			all := GetAllCodes(g.WasmModuleState)
 			if err != nil {
 				return err
 			}
@@ -244,7 +245,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 	return cmd
 }
 
-// clientCtx marshaller works only with proto or bytes so we marshal the output ourself
+// clientCtx marshaller works only with proto or bytes, so we marshal the output ourselves
 func printJSONOutput(cmd *cobra.Command, obj interface{}) error {
 	clientCtx := client.GetClientContextFromCmd(cmd)
 	bz, err := json.MarshalIndent(obj, "", " ")
@@ -259,7 +260,7 @@ type CodeMeta struct {
 	Info   types.CodeInfo `json:"info"`
 }
 
-func GetAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
+func GetAllCodes(state *types.GenesisState) []CodeMeta {
 	all := make([]CodeMeta, len(state.Codes))
 	for i, c := range state.Codes {
 		all[i] = CodeMeta{
@@ -276,13 +277,18 @@ func GetAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
 				accessConfig = *msg.InstantiatePermission
 			} else {
 				// default
-				creator, err := sdk.AccAddressFromBech32(msg.Sender)
-				if err != nil {
-					return nil, fmt.Errorf("sender: %s", err)
-				}
+				creator := sdk.MustAccAddressFromBech32(msg.Sender)
 				accessConfig = state.Params.InstantiateDefaultPermission.With(creator)
 			}
-			hash := sha256.Sum256(msg.WASMByteCode)
+			bz := msg.WASMByteCode
+			if ioutils.IsGzip(msg.WASMByteCode) {
+				var err error
+				bz, err = ioutils.Uncompress(msg.WASMByteCode, uint64(types.MaxWasmSize))
+				if err != nil {
+					panic(fmt.Sprintf("failed to unzip wasm binary: %s", err))
+				}
+			}
+			hash := sha256.Sum256(bz)
 			all = append(all, CodeMeta{
 				CodeID: seq,
 				Info: types.CodeInfo{
@@ -294,7 +300,7 @@ func GetAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
 			seq++
 		}
 	}
-	return all, nil
+	return all
 }
 
 type ContractMeta struct {
@@ -315,7 +321,7 @@ func GetAllContracts(state *types.GenesisState) []ContractMeta {
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
 			all = append(all, ContractMeta{
-				ContractAddress: keeper.BuildContractAddress(msg.CodeID, seq).String(),
+				ContractAddress: keeper.BuildContractAddressClassic(msg.CodeID, seq).String(),
 				Info: types.ContractInfo{
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
@@ -356,7 +362,7 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 	seq := contractSeqValue(state)
 	for _, m := range state.GenMsgs {
 		if msg := m.GetInstantiateContract(); msg != nil {
-			if keeper.BuildContractAddress(msg.CodeID, seq).String() == contractAddr {
+			if keeper.BuildContractAddressClassic(msg.CodeID, seq).String() == contractAddr {
 				return true
 			}
 			seq++

@@ -114,7 +114,7 @@ func WeightedOperations(
 }
 
 // SimulateMsgStoreCode generates a MsgStoreCode with random values
-func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte, gas uint64) simtypes.Operation {
+func SimulateMsgStoreCode(ak types.AccountKeeper, bk BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte, gas uint64) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -136,21 +136,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 			WASMByteCode:          wasmBz,
 			InstantiatePermission: &config,
 		}
-
-		txCtx := simulation.OperationInput{
-			R:             r,
-			App:           app,
-			TxGen:         simappparams.MakeTestEncodingConfig().TxConfig,
-			Cdc:           nil,
-			Msg:           &msg,
-			MsgType:       msg.Type(),
-			Context:       ctx,
-			SimAccount:    simAccount,
-			AccountKeeper: ak,
-			Bankkeeper:    bk,
-			ModuleName:    types.ModuleName,
-		}
-
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
 		return GenAndDeliverTxWithRandFees(r, txCtx, gas)
 	}
 }
@@ -202,22 +188,7 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmK
 			Msg:    []byte(`{}`),
 			Funds:  deposit,
 		}
-
-		txCtx := simulation.OperationInput{
-			R:               r,
-			App:             app,
-			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
-			Cdc:             nil,
-			Msg:             &msg,
-			MsgType:         msg.Type(),
-			Context:         ctx,
-			SimAccount:      simAccount,
-			AccountKeeper:   ak,
-			Bankkeeper:      bk,
-			ModuleName:      types.ModuleName,
-			CoinsSpentInMsg: deposit,
-		}
-
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, deposit)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
@@ -275,21 +246,38 @@ func SimulateMsgExecuteContract(
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgExecuteContract{}.Type(), "contract execute payload"), nil, err
 		}
 
-		txCtx := simulation.OperationInput{
-			R:               r,
-			App:             app,
-			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
-			Cdc:             nil,
-			Msg:             &msg,
-			MsgType:         msg.Type(),
-			Context:         ctx,
-			SimAccount:      simAccount,
-			AccountKeeper:   ak,
-			Bankkeeper:      bk,
-			ModuleName:      types.ModuleName,
-			CoinsSpentInMsg: deposit,
-		}
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, deposit)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+	}
+}
+
+// BuildOperationInput helper to build object
+func BuildOperationInput(
+	r *rand.Rand,
+	app *baseapp.BaseApp,
+	ctx sdk.Context,
+	msg interface {
+		sdk.Msg
+		Type() string
+	},
+	simAccount simtypes.Account,
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	deposit sdk.Coins,
+) simulation.OperationInput {
+	return simulation.OperationInput{
+		R:               r,
+		App:             app,
+		TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+		Cdc:             nil,
+		Msg:             msg,
+		MsgType:         msg.Type(),
+		Context:         ctx,
+		SimAccount:      simAccount,
+		AccountKeeper:   ak,
+		Bankkeeper:      bk,
+		ModuleName:      types.ModuleName,
+		CoinsSpentInMsg: deposit,
 	}
 }
 

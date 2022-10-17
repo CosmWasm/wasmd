@@ -1,14 +1,14 @@
 package wasm
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -21,6 +21,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -35,7 +36,7 @@ type testData struct {
 }
 
 func setupTest(t *testing.T) testData {
-	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate")
+	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1")
 	cdc := keeper.MakeTestCodec(t)
 	data := testData{
 		module:        NewAppModule(cdc, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper),
@@ -145,7 +146,7 @@ type state struct {
 
 func TestHandleInstantiate(t *testing.T) {
 	data := setupTest(t)
-	creator := data.faucet.NewFundedAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
 
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
@@ -174,6 +175,7 @@ func TestHandleInstantiate(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  nil,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -206,8 +208,8 @@ func TestHandleExecute(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
 
-	creator := data.faucet.NewFundedAccount(data.ctx, deposit.Add(deposit...)...)
-	fred := data.faucet.NewFundedAccount(data.ctx, topUp...)
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
+	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
@@ -233,6 +235,7 @@ func TestHandleExecute(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -341,8 +344,9 @@ func TestHandleExecuteEscrow(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := data.faucet.NewFundedAccount(data.ctx, deposit.Add(deposit...)...)
-	fred := data.faucet.NewFundedAccount(data.ctx, topUp...)
+	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000))
+	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
 	h := data.module.Route().Handler()
 
@@ -366,6 +370,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)

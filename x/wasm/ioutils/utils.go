@@ -17,7 +17,7 @@ var (
 
 // IsGzip returns checks if the file contents are gzip compressed
 func IsGzip(input []byte) bool {
-	return bytes.Equal(input[:3], gzipIdent)
+	return len(input) >= 3 && bytes.Equal(gzipIdent, input[0:3])
 }
 
 // IsWasm checks if the file contents are of wasm binary
