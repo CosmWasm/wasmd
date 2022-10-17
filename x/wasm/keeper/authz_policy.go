@@ -6,8 +6,19 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// ChainAccessConfigs chain settings
+type ChainAccessConfigs struct {
+	Upload      types.AccessConfig
+	Instantiate types.AccessConfig
+}
+
+// NewChainAccessConfigs constructor
+func NewChainAccessConfigs(upload types.AccessConfig, instantiate types.AccessConfig) ChainAccessConfigs {
+	return ChainAccessConfigs{Upload: upload, Instantiate: instantiate}
+}
+
 type AuthorizationPolicy interface {
-	CanCreateCode(c1 types.AccessConfig, creator sdk.AccAddress, c2 types.AccessConfig, c3 types.AccessConfig) bool
+	CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool
 	CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool
 	CanModifyContract(admin, actor sdk.AccAddress) bool
 	CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool
@@ -15,12 +26,9 @@ type AuthorizationPolicy interface {
 
 type DefaultAuthorizationPolicy struct{}
 
-func (p DefaultAuthorizationPolicy) CanCreateCode(config types.AccessConfig, actor sdk.AccAddress, instantiateAccess types.AccessConfig, defaultAccessConfig types.AccessConfig) bool {
-	isSubset := true
-	if !instantiateAccess.IsSubset(defaultAccessConfig) {
-		isSubset = false
-	}
-	return config.Allowed(actor) && isSubset
+func (p DefaultAuthorizationPolicy) CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+	return chainConfigs.Instantiate.Allowed(actor) &&
+		contractConfig.IsSubset(chainConfigs.Upload)
 }
 
 func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessConfig, actor sdk.AccAddress) bool {

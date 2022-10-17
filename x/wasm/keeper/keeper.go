@@ -181,18 +181,22 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
-
 func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
 	}
+
 	// figure out proper instantiate access
 	defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
 	if instantiateAccess == nil {
 		instantiateAccess = &defaultAccessConfig
 	}
+	chainConfigs := ChainAccessConfigs{
+		Instantiate: defaultAccessConfig,
+		Upload:      k.getUploadAccessConfig(ctx),
+	}
 
-	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator, *instantiateAccess, defaultAccessConfig) {
+	if !authZ.CanCreateCode(chainConfigs, creator, *instantiateAccess) {
 		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
 
