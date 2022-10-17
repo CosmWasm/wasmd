@@ -565,7 +565,6 @@ type captureCloseContractNotOwned struct {
 }
 
 func (c *captureCloseContractNotOwned) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-	// c.closeCalled = true
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
 
