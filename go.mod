@@ -138,6 +138,6 @@ replace (
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 
 	// go list -m -json github.com/oraichain/wasmvm@multiwasm-zk | jq '.|"\(.Path) \(.Version)"' -r
-	github.com/CosmWasm/wasmvm => github.com/oraichain/wasmvm v1.1.2-0.20221018034158-684db074d303
+	github.com/CosmWasm/wasmvm => github.com/oraichain/wasmvm v1.1.2-0.20221018044606-84e4d7fc21b7
 
 )
