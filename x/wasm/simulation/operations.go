@@ -128,6 +128,18 @@ func WeightedOperations(
 	}
 }
 
+func SimulateMsgMigrateContract() simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+
+	}
+}
+
 type ContractSelector func(sdk.Context, WasmKeeper) (sdk.AccAddress, types.ContractInfo)
 
 // DefaultSimulationContractSelector picks the first contract
