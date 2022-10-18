@@ -404,9 +404,9 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	//           with a contract A1, A2 on chain A, contract B on chain B
 	//           contract A2 try to close ibc channel that create between A1 and B
 
-	myContractA1 := &captureCloseContractNotOwned{}
-	myContractA2 := &captureCloseContractNotOwned{}
-	myContractB := &captureCloseContractNotOwned{}
+	myContractA1 := &closeChannelContract{}
+	myContractA2 := &closeChannelContract{}
+	myContractB := &closeChannelContract{}
 
 	var (
 		chainAOpts = []wasmkeeper.Option{
@@ -446,16 +446,16 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	coordinator.SetupConnections(path)
 	coordinator.CreateChannels(path)
 
-	closeChannelIbcMsg := &types.MsgExecuteContract{
+	closeIBCChannelMsg := &types.MsgExecuteContract{
 		Sender:   chainA.SenderAccount.GetAddress().String(),
 		Contract: myContractAddrA2.String(),
-		Msg: closeChannelIbc{
+		Msg: closeIBCChannel{
 			ChannelID: path.EndpointA.ChannelID,
 		}.GetBytes(),
 		Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))),
 	}
 
-	_, err := chainA.SendMsgsExpPass(false, closeChannelIbcMsg)
+	_, err := chainA.SendMsgsExpPass(false, closeIBCChannelMsg)
 	require.Error(t, err)
 }
 
@@ -557,19 +557,19 @@ func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksu
 	return &wasmvmtypes.IBCBasicResponse{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: returnTokens}}}}, 0, nil
 }
 
-var _ wasmtesting.IBCContractCallbacks = &captureCloseContractNotOwned{}
+var _ wasmtesting.IBCContractCallbacks = &closeChannelContract{}
 
-type captureCloseContractNotOwned struct {
+type closeChannelContract struct {
 	contractStub
 	t *testing.T
 }
 
-func (c *captureCloseContractNotOwned) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (c *closeChannelContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
 
-func (s *captureCloseContractNotOwned) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
-	var in closeChannelIbc
+func (s *closeChannelContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	var in closeIBCChannel
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
 	}
@@ -582,11 +582,11 @@ func (s *captureCloseContractNotOwned) Execute(code wasmvm.Checksum, env wasmvmt
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
-type closeChannelIbc struct {
+type closeIBCChannel struct {
 	ChannelID string
 }
 
-func (g closeChannelIbc) GetBytes() types.RawContractMessage {
+func (g closeIBCChannel) GetBytes() types.RawContractMessage {
 	b, err := json.Marshal(g)
 	if err != nil {
 		panic(err)
