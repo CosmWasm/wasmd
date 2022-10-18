@@ -599,3 +599,16 @@ func TestOldVersion(t *testing.T) {
 
 	t.Logf("MsgExecuteContract %v", msg)
 }
+
+func TestProposalOldVersion(t *testing.T) {
+	data := setupTest(t)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+
+	data.module.RegisterInterfaces(interfaceRegistry)
+
+	msg, err := interfaceRegistry.Resolve("/cosmwasm.wasm.v1beta1.UpdateAdminProposal")
+
+	require.NoError(t, err)
+
+	t.Logf("UpdateAdminProposal %v", msg)
+}
