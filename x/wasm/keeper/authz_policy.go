@@ -27,8 +27,8 @@ type AuthorizationPolicy interface {
 type DefaultAuthorizationPolicy struct{}
 
 func (p DefaultAuthorizationPolicy) CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
-	return chainConfigs.Instantiate.Allowed(actor) &&
-		contractConfig.IsSubset(chainConfigs.Upload)
+	return chainConfigs.Upload.Allowed(actor) &&
+		contractConfig.IsSubset(chainConfigs.Instantiate)
 }
 
 func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessConfig, actor sdk.AccAddress) bool {
@@ -45,7 +45,8 @@ func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk
 
 type GovAuthorizationPolicy struct{}
 
-func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress, types.AccessConfig, types.AccessConfig) bool {
+// CanCreateCode implements AuthorizationPolicy.CanCreateCode to allow gov actions. Always returns true.
+func (p GovAuthorizationPolicy) CanCreateCode(ChainAccessConfigs, sdk.AccAddress, types.AccessConfig) bool {
 	return true
 }
 
