@@ -273,6 +273,41 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	return r, nil
 }
 
+func (chain *TestChain) SendMsgsExpPass(expPass bool, msgs ...sdk.Msg) (*sdk.Result, error) {
+	// ensure the chain has the latest time
+	chain.Coordinator.UpdateTimeForChain(chain)
+
+	_, r, err := app.SignAndDeliver(
+		chain.t,
+		chain.TxConfig,
+		chain.App.BaseApp,
+		chain.GetContext().BlockHeader(),
+		msgs,
+		chain.ChainID,
+		[]uint64{chain.SenderAccount.GetAccountNumber()},
+		[]uint64{chain.SenderAccount.GetSequence()},
+		true, expPass, chain.SenderPrivKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// SignAndDeliver calls app.Commit()
+	chain.NextBlock()
+
+	// increment sequence for successful transaction execution
+	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+	if err != nil {
+		return nil, err
+	}
+
+	chain.Coordinator.IncrementTime()
+
+	chain.captureIBCEvents(r)
+
+	return r, nil
+}
+
 func (chain *TestChain) captureIBCEvents(r *sdk.Result) {
 	toSend := getSendPackets(r.Events)
 	if len(toSend) > 0 {
