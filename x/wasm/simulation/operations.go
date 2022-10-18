@@ -199,14 +199,14 @@ func SimulateMsgMigrateContract(
 	}
 }
 
-type MsgUpdateAdminContractSelector func(sdk.Context, WasmKeeper) (sdk.AccAddress, types.ContractInfo)
+type MsgUpdateAdminContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
 
 // DefaultSimulationUpdateAdminContractSelector picks the first contract which Admin != ""
-func DefaultSimulationUpdateAdminContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper) (sdk.AccAddress, types.ContractInfo) {
+func DefaultSimulationUpdateAdminContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
 	var contractAddress sdk.AccAddress
 	var contractInfo types.ContractInfo
 	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
-		if info.Admin == "" {
+		if info.Admin != adminAddress {
 			return false
 		}
 		contractAddress = address
@@ -229,15 +229,15 @@ func SimulateMsgUpdateAmin(
 		accs []simtypes.Account,
 		chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
-		ctAddress, ctInfo := contractSelector(ctx, wasmKeeper)
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress, _ := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
 		if ctAddress == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgUpdateAdmin{}.Type(), "no contract instance available"), nil, nil
 		}
-		simAccount, _ := simtypes.RandomAcc(r, accs)
 
 		msg := types.MsgUpdateAdmin{
-			Sender:   ctInfo.Admin,
-			NewAdmin: simAccount.Address.String(),
+			Sender:   simAccount.Address.String(),
+			NewAdmin: simtypes.RandomAccounts(r, 1)[0].Address.String(),
 			Contract: ctAddress.String(),
 		}
 		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
