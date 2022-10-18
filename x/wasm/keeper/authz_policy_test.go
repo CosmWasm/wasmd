@@ -13,50 +13,68 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 	myActorAddress := RandomAccountAddress(t)
 	otherAddress := RandomAccountAddress(t)
 	specs := map[string]struct {
-		upload types.AccessConfig
-		actor  sdk.AccAddress
-		exp    bool
-		panics bool
+		chainConfigs     ChainAccessConfigs
+		contractInstConf types.AccessConfig
+		actor            sdk.AccAddress
+		exp              bool
+		panics           bool
 	}{
 		"upload nobody": {
-			upload: types.AllowNobody,
-			exp:    false,
+			chainConfigs:     NewChainAccessConfigs(types.AllowNobody, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              false,
 		},
 		"upload everybody": {
-			upload: types.AllowEverybody,
-			exp:    true,
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              true,
 		},
 		"upload only address - same": {
-			upload: types.AccessTypeOnlyAddress.With(myActorAddress),
-			exp:    true,
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(myActorAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              true,
 		},
 		"upload only address - different": {
-			upload: types.AccessTypeOnlyAddress.With(otherAddress),
-			exp:    false,
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(otherAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              false,
 		},
 		"upload any address - included": {
-			upload: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
-			exp:    true,
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              true,
 		},
 		"upload any address - not included": {
-			upload: types.AccessTypeAnyOfAddresses.With(otherAddress),
-			exp:    false,
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			exp:              false,
+		},
+		"contract config -  subtype": {
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowEverybody),
+			contractInstConf: types.AccessTypeAnyOfAddresses.With(myActorAddress),
+			exp:              true,
+		},
+		"contract config - not subtype": {
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowNobody),
+			contractInstConf: types.AllowEverybody,
+			exp:              false,
 		},
 		"upload undefined config - panics": {
-			upload: types.AccessConfig{},
-			panics: true,
+			chainConfigs:     NewChainAccessConfigs(types.AccessConfig{}, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
+			panics:           true,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
 			if !spec.panics {
-				got := policy.CanCreateCode(NewChainAccessConfigs(spec.upload, types.AllowEverybody), myActorAddress, types.AllowEverybody)
+				got := policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				policy.CanCreateCode(NewChainAccessConfigs(spec.upload, types.AllowEverybody), myActorAddress, types.AllowEverybody)
+				policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
 			})
 		})
 	}
@@ -184,35 +202,51 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 	myActorAddress := RandomAccountAddress(t)
 	otherAddress := RandomAccountAddress(t)
 	specs := map[string]struct {
-		upload types.AccessConfig
-		actor  sdk.AccAddress
+		chainConfigs     ChainAccessConfigs
+		contractInstConf types.AccessConfig
+		actor            sdk.AccAddress
 	}{
 		"upload nobody": {
-			upload: types.AllowNobody,
+			chainConfigs:     NewChainAccessConfigs(types.AllowNobody, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 		"upload everybody": {
-			upload: types.AllowEverybody,
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 		"upload only address - same": {
-			upload: types.AccessTypeOnlyAddress.With(myActorAddress),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(myActorAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 		"upload only address - different": {
-			upload: types.AccessTypeOnlyAddress.With(otherAddress),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(otherAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 		"upload any address - included": {
-			upload: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 		"upload any address - not included": {
-			upload: types.AccessTypeAnyOfAddresses.With(otherAddress),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress), types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
-		"upload undefined config - panics": {
-			upload: types.AccessConfig{},
+		"contract config -  subtype": {
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowEverybody),
+			contractInstConf: types.AccessTypeAnyOfAddresses.With(myActorAddress),
+		},
+		"contract config - not subtype": {
+			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowNobody),
+			contractInstConf: types.AllowEverybody,
+		},
+		"upload undefined config - not panics": {
+			chainConfigs:     NewChainAccessConfigs(types.AccessConfig{}, types.AllowEverybody),
+			contractInstConf: types.AllowEverybody,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanCreateCode(NewChainAccessConfigs(spec.upload, types.AllowEverybody), myActorAddress, types.AllowEverybody)
+			got := policy.CanCreateCode(spec.chainConfigs, myActorAddress, spec.contractInstConf)
 			assert.True(t, got)
 		})
 	}
