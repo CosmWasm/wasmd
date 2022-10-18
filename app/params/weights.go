@@ -25,4 +25,5 @@ const (
 	DefaultWeightMsgInstantiateContract int = 100
 	DefaultWeightMsgExecuteContract     int = 100
 	DefaultWeightMsgUpdateAdmin         int = 100
+	DefaultWeightMsgMigrateContract     int = 100
 )
