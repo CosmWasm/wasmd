@@ -138,32 +138,40 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 
 func TestCreateWithParamPermissions(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	keeper := keepers.ContractKeeper
-
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
+		policy AuthorizationPolicy
 		srcPermission types.AccessConfig
 		expError      *sdkerrors.Error
 	}{
 		"default": {
+			policy: DefaultAuthorizationPolicy{},
 			srcPermission: types.DefaultUploadAccess,
 		},
 		"everybody": {
+			policy: DefaultAuthorizationPolicy{},
 			srcPermission: types.AllowEverybody,
 		},
 		"nobody": {
+			policy: DefaultAuthorizationPolicy{},
 			srcPermission: types.AllowNobody,
 			expError:      sdkerrors.ErrUnauthorized,
 		},
 		"onlyAddress with matching address": {
+			policy: DefaultAuthorizationPolicy{},
 			srcPermission: types.AccessTypeOnlyAddress.With(creator),
 		},
 		"onlyAddress with non matching address": {
+			policy: DefaultAuthorizationPolicy{},
 			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
 			expError:      sdkerrors.ErrUnauthorized,
+		},
+		"gov: always allowed": {
+			policy: GovAuthorizationPolicy{},
+			srcPermission: types.AllowNobody,
 		},
 	}
 	for msg, spec := range specs {
@@ -171,6 +179,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 			params := types.DefaultParams()
 			params.CodeUploadAccess = spec.srcPermission
 			keepers.WasmKeeper.SetParams(ctx, params)
+			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
 			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
