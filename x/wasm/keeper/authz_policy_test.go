@@ -72,13 +72,18 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := DefaultAuthorizationPolicy{}
+			chainAccessConfig := ChainAccessConfigs{
+				Upload:      spec.defaultAccessConfig,
+				Instantiate: spec.instantiateAccess,
+			}
+
 			if !spec.panics {
-				got := policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess, spec.defaultAccessConfig)
+				got := policy.CanCreateCode(chainAccessConfig, myActorAddress, spec.config)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				policy.CanCreateCode(spec.config, myActorAddress, spec.instantiateAccess, spec.defaultAccessConfig)
+				policy.CanCreateCode(chainAccessConfig, myActorAddress, spec.config)
 			})
 		})
 	}
@@ -234,7 +239,8 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			policy := GovAuthorizationPolicy{}
-			got := policy.CanCreateCode(spec.config, myActorAddress, spec.config, spec.config)
+			accessConfig := ChainAccessConfigs{}
+			got := policy.CanCreateCode(accessConfig, myActorAddress, spec.config)
 			assert.True(t, got)
 		})
 	}

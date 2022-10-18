@@ -98,6 +98,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 	specs := map[string]struct {
 		srcPermission types.AccessType
 		expInstConf   types.AccessConfig
+		expError      error
 	}{
 		"default": {
 			srcPermission: types.DefaultParams().InstantiateDefaultPermission,
@@ -110,10 +111,16 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 		"nobody": {
 			srcPermission: types.AccessTypeNobody,
 			expInstConf:   types.AllowNobody,
+			expError:      sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code"),
 		},
 		"onlyAddress with matching address": {
 			srcPermission: types.AccessTypeOnlyAddress,
 			expInstConf:   types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: myAddr.String()},
+		},
+		"instantiation permission > chain permission": {
+			srcPermission: types.AccessTypeNobody,
+			expInstConf:   types.AllowEverybody,
+			expError:      sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code"),
 		},
 	}
 	for msg, spec := range specs {
@@ -125,13 +132,17 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 				InstantiateDefaultPermission: spec.srcPermission,
 			})
 			fundAccounts(t, ctx, accKeeper, bankKeeper, myAddr, deposit)
+			if spec.expError == nil {
+				codeID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
+				require.NoError(t, err)
 
-			codeID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
-			require.NoError(t, err)
-
-			codeInfo := keepers.WasmKeeper.GetCodeInfo(ctx, codeID)
-			require.NotNil(t, codeInfo)
-			assert.True(t, spec.expInstConf.Equals(codeInfo.InstantiateConfig), "got %#v", codeInfo.InstantiateConfig)
+				codeInfo := keepers.WasmKeeper.GetCodeInfo(ctx, codeID)
+				require.NotNil(t, codeInfo)
+				assert.True(t, spec.expInstConf.Equals(codeInfo.InstantiateConfig), "got %#v", codeInfo.InstantiateConfig)
+			} else {
+				_, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
+				require.Error(t, err, spec.expError)
+			}
 		})
 	}
 }

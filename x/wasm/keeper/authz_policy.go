@@ -45,7 +45,7 @@ func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk
 
 type GovAuthorizationPolicy struct{}
 
-func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress, types.AccessConfig, types.AccessConfig) bool {
+func (p GovAuthorizationPolicy) CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
 	return true
 }
 
