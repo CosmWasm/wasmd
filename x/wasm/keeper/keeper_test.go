@@ -143,41 +143,41 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
-		policy AuthorizationPolicy
-		srcPermission types.AccessConfig
-		expError      *sdkerrors.Error
+		policy      AuthorizationPolicy
+		chainUpload types.AccessConfig
+		expError    *sdkerrors.Error
 	}{
 		"default": {
-			policy: DefaultAuthorizationPolicy{},
-			srcPermission: types.DefaultUploadAccess,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.DefaultUploadAccess,
 		},
 		"everybody": {
-			policy: DefaultAuthorizationPolicy{},
-			srcPermission: types.AllowEverybody,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowEverybody,
 		},
 		"nobody": {
-			policy: DefaultAuthorizationPolicy{},
-			srcPermission: types.AllowNobody,
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
+			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"onlyAddress with matching address": {
-			policy: DefaultAuthorizationPolicy{},
-			srcPermission: types.AccessTypeOnlyAddress.With(creator),
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(creator),
 		},
 		"onlyAddress with non matching address": {
-			policy: DefaultAuthorizationPolicy{},
-			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(otherAddr),
+			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"gov: always allowed": {
-			policy: GovAuthorizationPolicy{},
-			srcPermission: types.AllowNobody,
+			policy:      GovAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.CodeUploadAccess = spec.srcPermission
+			params.CodeUploadAccess = spec.chainUpload
 			keepers.WasmKeeper.SetParams(ctx, params)
 			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
 			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
