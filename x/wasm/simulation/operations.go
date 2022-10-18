@@ -132,6 +132,16 @@ func WeightedOperations(
 				DefaultSimulationUpdateAdminContractSelector,
 			),
 		),
+		simulation.NewWeightedOperation(
+			weightMsgMigrateContract,
+			SimulateMsgMigrateContract(
+				ak,
+				bk,
+				wasmKeeper,
+				DefaultSimulationMigrateContractSelector,
+				DefaultSimulationMigrateCodeIDSelector,
+			),
+		),
 	}
 }
 
