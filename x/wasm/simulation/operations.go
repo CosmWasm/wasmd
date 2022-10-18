@@ -135,6 +135,9 @@ func DefaultSimulationContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper) (
 	var contractAddress sdk.AccAddress
 	var contractInfo types.ContractInfo
 	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin == "" {
+			return false
+		}
 		contractAddress = address
 		contractInfo = info
 		return true
