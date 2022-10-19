@@ -156,8 +156,8 @@ func WeightedOperations(
 				bk,
 				wasmKeeper,
 				DefaultSimulationClearAdminContractSelector,
-			)
-		)
+			),
+		),
 	}
 }
 
