@@ -60,7 +60,7 @@ type TestChain struct {
 	Vals    *tmtypes.ValidatorSet
 	Signers []tmtypes.PrivValidator
 
-	senderPrivKey cryptotypes.PrivKey
+	SenderPrivKey cryptotypes.PrivKey
 	SenderAccount authtypes.AccountI
 
 	PendingSendPackets []channeltypes.Packet
@@ -125,7 +125,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		Codec:         wasmApp.AppCodec(),
 		Vals:          valSet,
 		Signers:       signers,
-		senderPrivKey: senderPrivKey,
+		SenderPrivKey: senderPrivKey,
 		SenderAccount: acc,
 	}
 
@@ -251,7 +251,42 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		chain.ChainID,
 		[]uint64{chain.SenderAccount.GetAccountNumber()},
 		[]uint64{chain.SenderAccount.GetSequence()},
-		true, true, chain.senderPrivKey,
+		true, true, chain.SenderPrivKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// SignAndDeliver calls app.Commit()
+	chain.NextBlock()
+
+	// increment sequence for successful transaction execution
+	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+	if err != nil {
+		return nil, err
+	}
+
+	chain.Coordinator.IncrementTime()
+
+	chain.captureIBCEvents(r)
+
+	return r, nil
+}
+
+func (chain *TestChain) SendMsgsExpPass(expPass bool, msgs ...sdk.Msg) (*sdk.Result, error) {
+	// ensure the chain has the latest time
+	chain.Coordinator.UpdateTimeForChain(chain)
+
+	_, r, err := app.SignAndDeliver(
+		chain.t,
+		chain.TxConfig,
+		chain.App.BaseApp,
+		chain.GetContext().BlockHeader(),
+		msgs,
+		chain.ChainID,
+		[]uint64{chain.SenderAccount.GetAccountNumber()},
+		[]uint64{chain.SenderAccount.GetSequence()},
+		true, expPass, chain.SenderPrivKey,
 	)
 	if err != nil {
 		return nil, err
