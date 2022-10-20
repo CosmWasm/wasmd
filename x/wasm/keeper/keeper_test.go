@@ -138,39 +138,48 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 
 func TestCreateWithParamPermissions(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	keeper := keepers.ContractKeeper
-
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
-		srcPermission types.AccessConfig
-		expError      *sdkerrors.Error
+		policy      AuthorizationPolicy
+		chainUpload types.AccessConfig
+		expError    *sdkerrors.Error
 	}{
 		"default": {
-			srcPermission: types.DefaultUploadAccess,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.DefaultUploadAccess,
 		},
 		"everybody": {
-			srcPermission: types.AllowEverybody,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowEverybody,
 		},
 		"nobody": {
-			srcPermission: types.AllowNobody,
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
+			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(creator),
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(creator),
 		},
 		"onlyAddress with non matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(otherAddr),
+			expError:    sdkerrors.ErrUnauthorized,
+		},
+		"gov: always allowed": {
+			policy:      GovAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.CodeUploadAccess = spec.srcPermission
+			params.CodeUploadAccess = spec.chainUpload
 			keepers.WasmKeeper.SetParams(ctx, params)
+			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
 			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
