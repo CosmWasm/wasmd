@@ -894,11 +894,9 @@ func (*QueryContractsByCreatorRequest) ProtoMessage()    {}
 func (*QueryContractsByCreatorRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9677c207036b9f2b, []int{21}
 }
-
 func (m *QueryContractsByCreatorRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryContractsByCreatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryContractsByCreatorRequest.Marshal(b, m, deterministic)
@@ -911,15 +909,12 @@ func (m *QueryContractsByCreatorRequest) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-
 func (m *QueryContractsByCreatorRequest) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryContractsByCreatorRequest.Merge(m, src)
 }
-
 func (m *QueryContractsByCreatorRequest) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryContractsByCreatorRequest) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryContractsByCreatorRequest.DiscardUnknown(m)
 }
@@ -941,11 +936,9 @@ func (*QueryContractsByCreatorResponse) ProtoMessage()    {}
 func (*QueryContractsByCreatorResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9677c207036b9f2b, []int{22}
 }
-
 func (m *QueryContractsByCreatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *QueryContractsByCreatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_QueryContractsByCreatorResponse.Marshal(b, m, deterministic)
@@ -958,15 +951,12 @@ func (m *QueryContractsByCreatorResponse) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-
 func (m *QueryContractsByCreatorResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_QueryContractsByCreatorResponse.Merge(m, src)
 }
-
 func (m *QueryContractsByCreatorResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *QueryContractsByCreatorResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_QueryContractsByCreatorResponse.DiscardUnknown(m)
 }
@@ -1380,7 +1370,6 @@ func (*UnimplementedQueryServer) PinnedCodes(ctx context.Context, req *QueryPinn
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-
 func (*UnimplementedQueryServer) ContractsByCreator(ctx context.Context, req *QueryContractsByCreatorRequest) (*QueryContractsByCreatorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ContractsByCreator not implemented")
 }
@@ -5170,7 +5159,6 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryContractsByCreatorRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5289,7 +5277,6 @@ func (m *QueryContractsByCreatorRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *QueryContractsByCreatorResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5408,7 +5395,6 @@ func (m *QueryContractsByCreatorResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipQuery(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
