@@ -188,16 +188,18 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
 	}
 
-	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
-		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
-	}
 	// figure out proper instantiate access
 	defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
 	if instantiateAccess == nil {
 		instantiateAccess = &defaultAccessConfig
-	} else if !instantiateAccess.IsSubset(defaultAccessConfig) {
-		// we enforce this must be subset of default upload access
-		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "instantiate access must be subset of default upload access")
+	}
+	chainConfigs := ChainAccessConfigs{
+		Instantiate: defaultAccessConfig,
+		Upload:      k.getUploadAccessConfig(ctx),
+	}
+
+	if !authZ.CanCreateCode(chainConfigs, creator, *instantiateAccess) {
+		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
 
 	if ioutils.IsGzip(wasmCode) {
@@ -379,6 +381,7 @@ func (k Keeper) instantiate(
 	// store contract before dispatch so that contract could be called back
 	historyEntry := contractInfo.InitialHistory(initMsg)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddress, historyEntry)
+	k.addToContractCreatorSecondaryIndex(ctx, creator, historyEntry.Updated, contractAddress)
 	k.appendToContractHistory(ctx, contractAddress, historyEntry)
 	k.storeContractInfo(ctx, contractAddress, &contractInfo)
 
@@ -490,7 +493,6 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
 	}
-
 	// delete old secondary index entry
 	k.removeFromContractCodeSecondaryIndex(ctx, contractAddress, k.getLastContractHistoryEntry(ctx, contractAddress))
 	// persist migration updates
@@ -595,6 +597,23 @@ func (k Keeper) addToContractCodeSecondaryIndex(ctx sdk.Context, contractAddress
 // removeFromContractCodeSecondaryIndex removes element to the index for contracts-by-codeid queries
 func (k Keeper) removeFromContractCodeSecondaryIndex(ctx sdk.Context, contractAddress sdk.AccAddress, entry types.ContractCodeHistoryEntry) {
 	ctx.KVStore(k.storeKey).Delete(types.GetContractByCreatedSecondaryIndexKey(contractAddress, entry))
+}
+
+// addToContractCreatorSecondaryIndex adds element to the index for contracts-by-creator queries
+func (k Keeper) addToContractCreatorSecondaryIndex(ctx sdk.Context, creatorAddress sdk.AccAddress, position *types.AbsoluteTxPosition, contractAddress sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetContractByCreatorSecondaryIndexKey(creatorAddress, position.Bytes(), contractAddress), []byte{})
+}
+
+// IterateContractsByCreator iterates over all contracts with given creator address in order of creation time asc.
+func (k Keeper) IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.GetContractsByCreatorPrefix(creator))
+	for iter := prefixStore.Iterator(nil, nil); iter.Valid(); iter.Next() {
+		key := iter.Key()
+		if cb(key[types.AbsoluteTxPositionLen:]) {
+			return
+		}
+	}
 }
 
 // IterateContractsByCode iterates over all contracts with given codeID ASC on code update time.
@@ -1053,10 +1072,15 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
 	}
 
+	creatorAddress, err := sdk.AccAddressFromBech32(c.Creator)
+	if err != nil {
+		return err
+	}
 	historyEntry := c.ResetFromGenesis(ctx)
 	k.appendToContractHistory(ctx, contractAddr, historyEntry)
 	k.storeContractInfo(ctx, contractAddr, c)
 	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
+	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, historyEntry.Updated, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 
