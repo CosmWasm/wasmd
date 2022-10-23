@@ -299,9 +299,11 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmK
 			}
 		}
 
+		adminAccount, _ := simtypes.RandomAcc(r, accs)
+
 		msg := types.MsgInstantiateContract{
 			Sender: simAccount.Address.String(),
-			Admin:  simAccount.Address.String(),
+			Admin:  adminAccount.Address.String(),
 			CodeID: codeID,
 			Label:  simtypes.RandStringOfLength(r, 10),
 			Msg:    []byte(`{}`),
