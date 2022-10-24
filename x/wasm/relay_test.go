@@ -356,6 +356,70 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	assert.Equal(t, initialSenderBalance.String(), newSenderBalance.String())
 }
 
+func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T) {
+	// scenario: given two chains, A and B
+	//           with 2 contract A1 and A2 on chain A
+	//           then the contract A2 try to send an ibc packet via IBC Channel that create by A1 and B
+	myContractA1 := &sendEmulatedIBCTransferContract{}
+	myContractA2 := &sendEmulatedIBCTransferContract{}
+
+	var (
+		chainAOpts = []wasmkeeper.Option{
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractA1),
+			),
+			wasmkeeper.WithWasmEngine(
+				wasmtesting.NewIBCContractMockWasmer(myContractA2),
+			),
+		}
+
+		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
+
+		chainA = coordinator.GetChain(wasmibctesting.GetChainID(0))
+		chainB = coordinator.GetChain(wasmibctesting.GetChainID(1))
+	)
+
+	coordinator.CommitBlock(chainA, chainB)
+	myContractAddr1 := chainA.SeedNewContractInstance()
+	myContractA1.contractAddr = myContractAddr1.String()
+	myContractAddr2 := chainA.SeedNewContractInstance()
+	myContractA2.contractAddr = myContractAddr2.String()
+
+	path := wasmibctesting.NewPath(chainA, chainB)
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  chainA.ContractInfo(myContractAddr1).IBCPortID,
+		Version: ibctransfertypes.Version,
+		Order:   channeltypes.UNORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  ibctransfertypes.PortID,
+		Version: ibctransfertypes.Version,
+		Order:   channeltypes.UNORDERED,
+	}
+	coordinator.SetupConnections(path)
+	coordinator.CreateChannels(path)
+
+	// when contract is triggered to send the ibc package to chain B
+	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
+	receiverAddress := chainB.SenderAccount.GetAddress()
+	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+
+	// start transfer from chainA - A2 to chainB via IBC channel
+	startMsg := &types.MsgExecuteContract{
+		Sender:   chainA.SenderAccount.GetAddress().String(),
+		Contract: myContractAddr2.String(),
+		Msg: startTransfer{
+			ChannelID:    path.EndpointA.ChannelID,
+			CoinsToSend:  coinToSendToB,
+			ReceiverAddr: receiverAddress.String(),
+			Timeout:      timeout,
+		}.GetBytes(),
+		Funds: sdk.NewCoins(coinToSendToB),
+	}
+	_, err := chainA.SendMsgsExpPass(false, startMsg)
+	require.Error(t, err)
+}
+
 func TestContractHandlesChannelClose(t *testing.T) {
 	// scenario: a contract is the sending side of an ics20 transfer but the packet was not received
 	// on the destination chain within the timeout boundaries
