@@ -236,7 +236,7 @@ func SimulateMsgMigrateContract(
 		var fees sdk.Coins
 		fees, err = simtypes.RandomFees(txCtx.R, txCtx.Context, spendable)
 		if err != nil {
-			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate fees"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate fees"), nil, err
 		}
 
 		tx, err := helpers.GenTx(
@@ -250,18 +250,18 @@ func SimulateMsgMigrateContract(
 			txCtx.SimAccount.PrivKey,
 		)
 		if err != nil {
-			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate mock tx"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate mock tx"), nil, err
 		}
 
 		_, data, err := app.Deliver(txCtx.TxGen.TxEncoder(), tx)
 		if err != nil {
-			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to deliver tx"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to deliver tx"), nil, err
 		}
 
 		var result sdk.TxMsgData
 		err = proto.Unmarshal(data.Data, &result)
 		if err != nil {
-			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to read response data"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to read response data"), nil, err
 		}
 
 		fmt.Printf("%v\n", result.Data[0].MsgType)
@@ -269,7 +269,7 @@ func SimulateMsgMigrateContract(
 		var msgStoreCodeRespone types.MsgStoreCodeResponse
 		err = proto.Unmarshal(result.Data[0].Data, &msgStoreCodeRespone)
 		if err != nil {
-			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to unmarshall response data"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to unmarshall response data"), nil, err
 		}
 
 		fmt.Printf("%v\n", msgStoreCodeRespone.CodeID)
@@ -316,7 +316,7 @@ func SimulateMsgClearAdmin(
 		simAccount, _ := simtypes.RandomAcc(r, accounts)
 		ctAddress := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
 		if ctAddress == nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no contract instance available"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgClearAdmin{}.Type(), "no contract instance available"), nil, nil
 		}
 
 		msg := types.MsgClearAdmin{
