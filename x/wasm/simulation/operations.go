@@ -2,17 +2,20 @@ package simulation
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/CosmWasm/wasmd/app/params"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -29,6 +32,7 @@ const (
 	OpWeightMsgExecuteContract     = "op_weight_msg_execute_contract"
 	OpWeightMsgUpdateAdmin         = "op_weight_msg_update_admin"
 	OpWeightMsgClearAdmin          = "op_weight_msg_clear_admin"
+	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"
 	OpReflectContractPath          = "op_reflect_contract_path"
 )
 
@@ -58,6 +62,7 @@ func WeightedOperations(
 		weightMsgExecuteContract     int
 		weightMsgUpdateAdmin         int
 		weightMsgClearAdmin          int
+		weightMsgMigrateContract     int
 		wasmContractPath             string
 	)
 
@@ -84,6 +89,11 @@ func WeightedOperations(
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil,
 		func(_ *rand.Rand) {
 			weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
+		},
+	)
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil,
+		func(_ *rand.Rand) {
+			weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
@@ -141,6 +151,138 @@ func WeightedOperations(
 				DefaultSimulationClearAdminContractSelector,
 			),
 		),
+		simulation.NewWeightedOperation(
+			weightMsgMigrateContract,
+			SimulateMsgMigrateContract(
+				ak,
+				bk,
+				wasmKeeper,
+				DefaultSimulationMigrateContractSelector,
+				DefaultSimulationMigrateCodeIDSelector,
+			),
+		),
+	}
+}
+
+type MsgMigrateContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+type MsgMigrateCodeIDSelector func(sdk.Context, WasmKeeper, uint64) uint64
+
+func DefaultSimulationMigrateContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
+	var contractAddress sdk.AccAddress
+	var contractInfo types.ContractInfo
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin != adminAddress {
+			return false
+		}
+		contractAddress = address
+		contractInfo = info
+		return true
+	})
+	return contractAddress, contractInfo
+}
+
+func DefaultSimulationMigrateCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper, currentCodeID uint64) uint64 {
+	var codeID uint64
+	wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
+		if (info.InstantiateConfig.Permission != types.AccessTypeEverybody) || (u == currentCodeID) {
+			return false
+		}
+		codeID = u
+		return true
+	})
+	return codeID
+}
+
+func SimulateMsgMigrateContract(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	contractSelector MsgMigrateContractSelector,
+	codeIDSelector MsgMigrateCodeIDSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress, _ := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		if ctAddress == nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no contract instance available"), nil, nil
+		}
+
+		var wasmBz []byte
+		var err error
+		wasmBz, err = os.ReadFile("./../x/wasm/keeper/testdata/ibc_reflect.wasm")
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no new wasmbyte code"), nil, err
+		}
+
+		permission := types.AccessTypeOnlyAddress
+		config := permission.With(simAccount.Address)
+
+		msg := types.MsgStoreCode{
+			Sender:                simAccount.Address.String(),
+			WASMByteCode:          wasmBz,
+			InstantiatePermission: &config,
+		}
+
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
+		account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
+		spendable := txCtx.Bankkeeper.SpendableCoins(txCtx.Context, account.GetAddress())
+
+		var fees sdk.Coins
+		fees, err = simtypes.RandomFees(txCtx.R, txCtx.Context, spendable)
+		if err != nil {
+			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate fees"), nil, err
+		}
+
+		tx, err := helpers.GenTx(
+			txCtx.TxGen,
+			[]sdk.Msg{txCtx.Msg},
+			fees,
+			helpers.DefaultGenTxGas,
+			txCtx.Context.ChainID(),
+			[]uint64{account.GetAccountNumber()},
+			[]uint64{account.GetSequence()},
+			txCtx.SimAccount.PrivKey,
+		)
+		if err != nil {
+			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to generate mock tx"), nil, err
+		}
+
+		_, data, err := app.Deliver(txCtx.TxGen.TxEncoder(), tx)
+		if err != nil {
+			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to deliver tx"), nil, err
+		}
+
+		var result sdk.TxMsgData
+		err = proto.Unmarshal(data.Data, &result)
+		if err != nil {
+			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to read response data"), nil, err
+		}
+
+		fmt.Printf("%v\n", result.Data[0].MsgType)
+
+		var msgStoreCodeRespone types.MsgStoreCodeResponse
+		err = proto.Unmarshal(result.Data[0].Data, &msgStoreCodeRespone)
+		if err != nil {
+			return simtypes.NoOpMsg(txCtx.ModuleName, txCtx.MsgType, "unable to unmarshall response data"), nil, err
+		}
+
+		fmt.Printf("%v\n", msgStoreCodeRespone.CodeID)
+
+		migrateMsg := types.MsgMigrateContract{
+			Sender:   simAccount.Address.String(),
+			Contract: ctAddress.String(),
+			CodeID:   msgStoreCodeRespone.CodeID,
+			Msg:      []byte(`{}`),
+		}
+
+		txCtx = BuildOperationInput(r, app, ctx, &migrateMsg, simAccount, ak, bk, nil)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
