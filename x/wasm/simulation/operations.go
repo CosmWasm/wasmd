@@ -215,7 +215,7 @@ func SimulateMsgMigrateContract(
 
 		var wasmBz []byte
 		var err error
-		wasmBz, err = os.ReadFile("./../x/wasm/keeper/testdata/ibc_reflect.wasm")
+		wasmBz, err = os.ReadFile("./../x/wasm/keeper/testdata/reflect_1_1.wasm")
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no new wasmbyte code"), nil, err
 		}
