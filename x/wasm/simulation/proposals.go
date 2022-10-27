@@ -16,6 +16,7 @@ const (
 	OpWeightInstantiateContractProposal = "op_weight_instantiate_contract_proposal"
 	OpWeightUpdateAdminProposal         = "op_weight_update_admin_proposal"
 	OpWeightExecuteContractProposal     = "op_weight_execute_contract_proposal"
+	OpWeightClearAdminProposal          = "op_weight_clear_admin_proposal"
 )
 
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
@@ -51,6 +52,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationExecuteContractSelector,
 				DefaultSimulationExecuteSenderSelector,
 				DefaultSimulationExecutePayloader,
+			),
+		),
+		simulation.NewWeightedProposalContent(
+			OpWeightClearAdminProposal,
+			params.DefaultWeightClearAdminProposal,
+			SimulateClearAdminProposal(
+				wasmKeeper,
+				DefaultSimulateClearAdminProposalContractSelector,
 			),
 		),
 	}
@@ -103,6 +112,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 	}
 }
 
+// Simulate execute contract proposal
 func SimulateExecuteContractProposal(
 	bk BankKeeper,
 	wasmKeeper WasmKeeper,
@@ -175,6 +185,35 @@ func SimulateUpdateAdminProposal(wasmKeeper WasmKeeper, contractSelector UpdateA
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandomAccounts(r, 1)[0].Address.String(),
+			ctAddress.String(),
+		)
+	}
+}
+
+type ClearAdminContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
+
+func DefaultSimulateClearAdminProposalContractSelector(
+	ctx sdk.Context,
+	wasmKeeper WasmKeeper,
+) sdk.AccAddress {
+	var contractAddr sdk.AccAddress
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		contractAddr = address
+		return true
+	})
+	return contractAddr
+}
+
+func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdminContractSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		ctAddress := contractSelector(ctx, wasmKeeper)
+		if ctAddress == nil {
+			return nil
+		}
+
+		return types.NewClearAdminProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
 			ctAddress.String(),
 		)
 	}

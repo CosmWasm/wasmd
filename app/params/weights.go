@@ -29,4 +29,5 @@ const (
 	DefaultWeightInstantiateContractProposal int = 5
 	DefaultWeightUpdateAdminProposal         int = 5
 	DefaultWeightExecuteContractProposal     int = 5
+	DefaultWeightClearAdminProposal          int = 5
 )

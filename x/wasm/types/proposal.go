@@ -477,6 +477,14 @@ func (p UpdateAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract, p.NewAdmin)
 }
 
+func NewClearAdminProposal(
+	title string,
+	description string,
+	contract string,
+) *ClearAdminProposal {
+	return &ClearAdminProposal{title, description, contract}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p ClearAdminProposal) ProposalRoute() string { return RouterKey }
 
