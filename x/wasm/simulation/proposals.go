@@ -49,6 +49,8 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				bk,
 				wasmKeeper,
 				DefaultSimulationExecuteContractSelector,
+				DefaultSimulationExecuteSenderSelector,
+				DefaultSimulationExecutePayloader,
 			),
 		),
 	}
@@ -88,14 +90,6 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			return nil
 		}
 
-		deposit := sdk.Coins{}
-		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
-		for _, v := range spendableCoins {
-			if bk.IsSendEnabledCoin(ctx, v) {
-				deposit = deposit.Add(simtypes.RandSubsetCoins(r, sdk.NewCoins(v))...)
-			}
-		}
-
 		return types.NewInstantiateContractProposal(
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
@@ -104,22 +98,37 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			codeID,
 			simtypes.RandStringOfLength(r, 10),
 			[]byte(`{}`),
-			deposit,
+			sdk.Coins{},
 		)
 	}
 }
 
-func SimulateExecuteContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, contractSelector MsgExecuteContractSelector) simtypes.ContentSimulatorFn {
+func SimulateExecuteContractProposal(
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	contractSelector MsgExecuteContractSelector,
+	senderSelector MsgExecuteSenderSelector,
+	payloader MsgExecutePayloader,
+) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
-		simAccount, _ := simtypes.RandomAcc(r, accs)
 		ctAddress := contractSelector(ctx, wasmKeeper)
+		if ctAddress == nil {
+			return nil
+		}
 
-		deposit := sdk.Coins{}
-		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
-		for _, v := range spendableCoins {
-			if bk.IsSendEnabledCoin(ctx, v) {
-				deposit = deposit.Add(simtypes.RandSubsetCoins(r, sdk.NewCoins(v))...)
-			}
+		simAccount, err := senderSelector(wasmKeeper, ctx, ctAddress, accs)
+		if err != nil {
+			return nil
+		}
+
+		msg := types.MsgExecuteContract{
+			Sender:   simAccount.Address.String(),
+			Contract: ctAddress.String(),
+			Funds:    sdk.Coins{},
+		}
+
+		if err := payloader(&msg); err != nil {
+			return nil
 		}
 
 		return types.NewExecuteContractProposal(
@@ -127,8 +136,8 @@ func SimulateExecuteContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, contr
 			simtypes.RandStringOfLength(r, 10),
 			simAccount.Address.String(),
 			ctAddress.String(),
-			[]byte(`{}`),
-			deposit,
+			msg.Msg,
+			sdk.Coins{},
 		)
 	}
 }
