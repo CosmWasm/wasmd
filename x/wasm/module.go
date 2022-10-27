@@ -202,7 +202,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 
 // ProposalContents doesn't return any content functions for governance proposals.
 func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	return simulation.ProposalContents(am.keeper)
+	return simulation.ProposalContents(am.bankKeeper, am.keeper)
 }
 
 // RandomizedParams creates randomized bank param changes for the simulator.

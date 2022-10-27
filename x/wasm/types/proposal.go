@@ -154,6 +154,19 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+func NewInstantiateContractProposal(
+	title string,
+	description string,
+	runAs string,
+	admin string,
+	codeID uint64,
+	label string,
+	msg RawContractMessage,
+	funds sdk.Coins,
+) *InstantiateContractProposal {
+	return &InstantiateContractProposal{title, description, runAs, admin, codeID, label, msg, funds}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p InstantiateContractProposal) ProposalRoute() string { return RouterKey }
 
