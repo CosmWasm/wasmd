@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"math/rand"
+	"os"
 
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -28,7 +29,12 @@ func SimulatetoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorFn
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
-		wasmBz := []byte("fdsagfds")
+		var wasmBz []byte
+		var err error
+		wasmBz, err = os.ReadFile("./../x/wasm/keeper/testdata/reflect_1_1.wasm")
+		if err != nil {
+			panic(err)
+		}
 
 		permission := wasmKeeper.GetParams(ctx).InstantiateDefaultPermission.With(simAccount.Address)
 
