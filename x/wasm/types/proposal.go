@@ -358,6 +358,17 @@ func (p SudoContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+func NewExecuteContractProposal(
+	title string,
+	description string,
+	runAs string,
+	contract string,
+	msg RawContractMessage,
+	funds sdk.Coins,
+) *ExecuteContractProposal {
+	return &ExecuteContractProposal{title, description, runAs, contract, msg, funds}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p ExecuteContractProposal) ProposalRoute() string { return RouterKey }
 

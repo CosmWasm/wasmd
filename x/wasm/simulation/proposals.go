@@ -15,6 +15,7 @@ const (
 	OpWeightStoreCodeProposal           = "op_weight_store_code_proposal"
 	OpWeightInstantiateContractProposal = "op_weight_instantiate_contract_proposal"
 	OpWeightUpdateAdminProposal         = "op_weight_update_admin_proposal"
+	OpWeightExecuteContractProposal     = "op_weight_execute_contract_proposal"
 )
 
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
@@ -39,6 +40,15 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 			SimulateUpdateAdminProposal(
 				wasmKeeper,
 				DefaultSimulateUpdateAdminProposalContractSelector,
+			),
+		),
+		simulation.NewWeightedProposalContent(
+			OpWeightExecuteContractProposal,
+			params.DefaultWeightExecuteContractProposal,
+			SimulateExecuteContractProposal(
+				bk,
+				wasmKeeper,
+				DefaultSimulationExecuteContractSelector,
 			),
 		),
 	}
@@ -93,6 +103,30 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			adminAccount.Address.String(),
 			codeID,
 			simtypes.RandStringOfLength(r, 10),
+			[]byte(`{}`),
+			deposit,
+		)
+	}
+}
+
+func SimulateExecuteContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, contractSelector MsgExecuteContractSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress := contractSelector(ctx, wasmKeeper)
+
+		deposit := sdk.Coins{}
+		spendableCoins := bk.SpendableCoins(ctx, simAccount.Address)
+		for _, v := range spendableCoins {
+			if bk.IsSendEnabledCoin(ctx, v) {
+				deposit = deposit.Add(simtypes.RandSubsetCoins(r, sdk.NewCoins(v))...)
+			}
+		}
+
+		return types.NewExecuteContractProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			simAccount.Address.String(),
+			ctAddress.String(),
 			[]byte(`{}`),
 			deposit,
 		)

@@ -21,10 +21,12 @@ const (
 	DefaultWeightTextProposal           int = 5
 	DefaultWeightParamChangeProposal    int = 5
 
-	DefaultWeightMsgStoreCode                int = 50
-	DefaultWeightMsgInstantiateContract      int = 100
-	DefaultWeightMsgExecuteContract          int = 100
+	DefaultWeightMsgStoreCode           int = 50
+	DefaultWeightMsgInstantiateContract int = 100
+	DefaultWeightMsgExecuteContract     int = 100
+
 	DefaultWeightStoreCodeProposal           int = 5
 	DefaultWeightInstantiateContractProposal int = 5
 	DefaultWeightUpdateAdminProposal         int = 5
+	DefaultWeightExecuteContractProposal     int = 5
 )
