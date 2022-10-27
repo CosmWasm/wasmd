@@ -12,22 +12,22 @@ import (
 )
 
 const (
-	OpWeightStoreCodeProposal           = "op_weight_store_code_proposal"
-	OpWeightInstantiateContractProposal = "op_weight_instantiate_contract_proposal"
-	OpWeightUpdateAdminProposal         = "op_weight_update_admin_proposal"
-	OpWeightExecuteContractProposal     = "op_weight_execute_contract_proposal"
-	OpWeightClearAdminProposal          = "op_weight_clear_admin_proposal"
+	WeightStoreCodeProposal           = "weight_store_code_proposal"
+	WeightInstantiateContractProposal = "weight_instantiate_contract_proposal"
+	WeightUpdateAdminProposal         = "weight_update_admin_proposal"
+	WeightExeContractProposal         = "weight_execute_contract_proposal"
+	WeightClearAdminProposal          = "weight_clear_admin_proposal"
 )
 
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
 	return []simtypes.WeightedProposalContent{
 		// simulation.NewWeightedProposalContent(
-		// 	OpWeightStoreCodeProposal,
+		// 	WeightStoreCodeProposal,
 		// 	params.DefaultWeightStoreCodeProposal,
 		// 	SimulateStoreCodeProposal(wasmKeeper),
 		// ),
 		simulation.NewWeightedProposalContent(
-			OpWeightInstantiateContractProposal,
+			WeightInstantiateContractProposal,
 			params.DefaultWeightInstantiateContractProposal,
 			SimulateInstantiateContractProposal(
 				bk,
@@ -36,7 +36,7 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 			),
 		),
 		simulation.NewWeightedProposalContent(
-			OpWeightUpdateAdminProposal,
+			WeightUpdateAdminProposal,
 			params.DefaultWeightUpdateAdminProposal,
 			SimulateUpdateAdminProposal(
 				wasmKeeper,
@@ -44,7 +44,7 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 			),
 		),
 		simulation.NewWeightedProposalContent(
-			OpWeightExecuteContractProposal,
+			WeightExeContractProposal,
 			params.DefaultWeightExecuteContractProposal,
 			SimulateExecuteContractProposal(
 				bk,
@@ -55,7 +55,7 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 			),
 		),
 		simulation.NewWeightedProposalContent(
-			OpWeightClearAdminProposal,
+			WeightClearAdminProposal,
 			params.DefaultWeightClearAdminProposal,
 			SimulateClearAdminProposal(
 				wasmKeeper,
