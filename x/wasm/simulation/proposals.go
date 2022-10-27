@@ -61,6 +61,8 @@ func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorF
 func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
+		// admin
+		adminAccount, _ := simtypes.RandomAcc(r, accs)
 		// get codeID
 		codeID := codeSelector(ctx, wasmKeeper)
 		if codeID == 0 {
@@ -79,7 +81,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			simAccount.Address.String(),
-			simAccount.Address.String(),
+			adminAccount.Address.String(),
 			codeID,
 			simtypes.RandStringOfLength(r, 10),
 			[]byte(`{}`),
