@@ -421,6 +421,15 @@ func (p ExecuteContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+func NewUpdateAdminProposal(
+	title string,
+	description string,
+	newAdmin string,
+	contract string,
+) *UpdateAdminProposal {
+	return &UpdateAdminProposal{title, description, newAdmin, contract}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p UpdateAdminProposal) ProposalRoute() string { return RouterKey }
 

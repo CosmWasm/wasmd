@@ -14,6 +14,7 @@ import (
 const (
 	OpWeightStoreCodeProposal           = "op_weight_store_code_proposal"
 	OpWeightInstantiateContractProposal = "op_weight_instantiate_contract_proposal"
+	OpWeightUpdateAdminProposal         = "op_weight_update_admin_proposal"
 )
 
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
@@ -32,11 +33,19 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
+		simulation.NewWeightedProposalContent(
+			OpWeightUpdateAdminProposal,
+			params.DefaultWeightUpdateAdminProposal,
+			SimulateUpdateAdminProposal(
+				wasmKeeper,
+				DefaultSimulateUpdateAdminProposalContractSelector,
+			),
+		),
 	}
 }
 
 // simulate store code proposal (unused now)
-// Current problem: out of gas (defaul gas config of gov SimulateMsgSubmitProposal is 10_000_000)
+// Current problem: out of gas (defaul gaswanted config of gov SimulateMsgSubmitProposal is 10_000_000)
 // but this proposal may need more than it
 func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
@@ -86,6 +95,44 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			simtypes.RandStringOfLength(r, 10),
 			[]byte(`{}`),
 			deposit,
+		)
+	}
+}
+
+type UpdateAdminContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+
+func DefaultSimulateUpdateAdminProposalContractSelector(
+	ctx sdk.Context,
+	wasmKeeper WasmKeeper,
+	adminAddress string,
+) (sdk.AccAddress, types.ContractInfo) {
+	var contractAddr sdk.AccAddress
+	var contractInfo types.ContractInfo
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin != adminAddress {
+			return false
+		}
+		contractAddr = address
+		contractInfo = info
+		return true
+	})
+	return contractAddr, contractInfo
+}
+
+// Simulate update admin contract proposal
+func SimulateUpdateAdminProposal(wasmKeeper WasmKeeper, contractSelector UpdateAdminContractSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress, _ := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		if ctAddress == nil {
+			return nil
+		}
+
+		return types.NewUpdateAdminProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandomAccounts(r, 1)[0].Address.String(),
+			ctAddress.String(),
 		)
 	}
 }
