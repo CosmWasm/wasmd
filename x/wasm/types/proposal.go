@@ -83,6 +83,17 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
 }
 
+func NewStoreCodeProposal(
+	title string,
+	description string,
+	runAs string,
+	wasmBz []byte,
+	permission *AccessConfig,
+	unpinCode bool,
+) *StoreCodeProposal {
+	return &StoreCodeProposal{title, description, runAs, wasmBz, permission, unpinCode}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p StoreCodeProposal) ProposalRoute() string { return RouterKey }
 
