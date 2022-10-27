@@ -204,6 +204,7 @@ func DefaultSimulateClearAdminProposalContractSelector(
 	return contractAddr
 }
 
+// Simulate clear admin proposal
 func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdminContractSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		ctAddress := contractSelector(ctx, wasmKeeper)
