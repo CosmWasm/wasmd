@@ -6,8 +6,19 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// ChainAccessConfigs chain settings
+type ChainAccessConfigs struct {
+	Upload      types.AccessConfig
+	Instantiate types.AccessConfig
+}
+
+// NewChainAccessConfigs constructor
+func NewChainAccessConfigs(upload types.AccessConfig, instantiate types.AccessConfig) ChainAccessConfigs {
+	return ChainAccessConfigs{Upload: upload, Instantiate: instantiate}
+}
+
 type AuthorizationPolicy interface {
-	CanCreateCode(c types.AccessConfig, creator sdk.AccAddress) bool
+	CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool
 	CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool
 	CanModifyContract(admin, actor sdk.AccAddress) bool
 	CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool
@@ -15,8 +26,9 @@ type AuthorizationPolicy interface {
 
 type DefaultAuthorizationPolicy struct{}
 
-func (p DefaultAuthorizationPolicy) CanCreateCode(config types.AccessConfig, actor sdk.AccAddress) bool {
-	return config.Allowed(actor)
+func (p DefaultAuthorizationPolicy) CanCreateCode(chainConfigs ChainAccessConfigs, actor sdk.AccAddress, contractConfig types.AccessConfig) bool {
+	return chainConfigs.Upload.Allowed(actor) &&
+		contractConfig.IsSubset(chainConfigs.Instantiate)
 }
 
 func (p DefaultAuthorizationPolicy) CanInstantiateContract(config types.AccessConfig, actor sdk.AccAddress) bool {
@@ -33,7 +45,8 @@ func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk
 
 type GovAuthorizationPolicy struct{}
 
-func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress) bool {
+// CanCreateCode implements AuthorizationPolicy.CanCreateCode to allow gov actions. Always returns true.
+func (p GovAuthorizationPolicy) CanCreateCode(ChainAccessConfigs, sdk.AccAddress, types.AccessConfig) bool {
 	return true
 }
 

@@ -41,6 +41,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdLibVersion(),
 		GetCmdQueryParams(),
 		GetCmdBuildAddress(),
+		GetCmdListContractsByCreator(),
 	)
 	return queryCmd
 }
@@ -525,6 +526,45 @@ func GetCmdListPinnedCode() *cobra.Command {
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list codes")
+	return cmd
+}
+
+// GetCmdListContractsByCreator lists all contracts by creator
+func GetCmdListContractsByCreator() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-contracts-by-creator [creator]",
+		Short: "List all contracts by creator",
+		Long:  "\t\tLong:    List all contracts by creator,\n",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			_, err = sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ContractsByCreator(
+				context.Background(),
+				&types.QueryContractsByCreatorRequest{
+					CreatorAddress: args[0],
+					Pagination:     pageReq,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
