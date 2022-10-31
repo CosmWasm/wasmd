@@ -29,7 +29,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/legacy"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var (
@@ -99,28 +98,8 @@ func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 // RegisterInterfaces implements InterfaceModule
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
-
-	// support for legacy cosmwasm
-	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&legacy.MsgStoreCode{},
-		&legacy.MsgInstantiateContract{},
-		&legacy.MsgExecuteContract{},
-		&legacy.MsgMigrateContract{},
-		&legacy.MsgUpdateAdmin{},
-		&legacy.MsgClearAdmin{},
-	)
-
-	// // support legacy proposal querying
-	registry.RegisterImplementations(
-		(*govtypes.Content)(nil),
-		&legacy.StoreCodeProposal{},
-		&legacy.InstantiateContractProposal{},
-		&legacy.MigrateContractProposal{},
-		&legacy.UpdateAdminProposal{},
-		&legacy.ClearAdminProposal{},
-		&legacy.PinCodesProposal{},
-		&legacy.UnpinCodesProposal{},
-	)
+	// legacy support
+	legacy.RegisterInterfaces(registry)
 }
 
 // ____________________________________________________________________________
