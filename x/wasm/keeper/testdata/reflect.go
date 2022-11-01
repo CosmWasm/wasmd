@@ -10,8 +10,15 @@ import (
 //go:embed reflect.wasm
 var reflectContract []byte
 
+//go:embed reflect_1_1.wasm
+var migrateReflectContract []byte
+
 func ReflectContractWasm() []byte {
 	return reflectContract
+}
+
+func MigrateReflectContractWasm() []byte {
+	return migrateReflectContract
 }
 
 // ReflectHandleMsg is used to encode handle messages

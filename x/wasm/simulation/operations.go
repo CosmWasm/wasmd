@@ -213,12 +213,7 @@ func SimulateMsgMigrateContract(
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no contract instance available"), nil, nil
 		}
 
-		var wasmBz []byte
-		var err error
-		wasmBz, err = os.ReadFile("./../x/wasm/keeper/testdata/reflect_1_1.wasm")
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no new wasmbyte code"), nil, err
-		}
+		wasmBz := testdata.MigrateReflectContractWasm()
 
 		permission := types.AccessTypeOnlyAddress
 		config := permission.With(simAccount.Address)
@@ -234,7 +229,7 @@ func SimulateMsgMigrateContract(
 		spendable := txCtx.Bankkeeper.SpendableCoins(txCtx.Context, account.GetAddress())
 
 		var fees sdk.Coins
-		fees, err = simtypes.RandomFees(txCtx.R, txCtx.Context, spendable)
+		fees, err := simtypes.RandomFees(txCtx.R, txCtx.Context, spendable)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate fees"), nil, err
 		}
@@ -250,7 +245,7 @@ func SimulateMsgMigrateContract(
 			txCtx.SimAccount.PrivKey,
 		)
 		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate mock tx"), nil, err
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate tx"), nil, err
 		}
 
 		_, data, err := app.Deliver(txCtx.TxGen.TxEncoder(), tx)
@@ -263,8 +258,6 @@ func SimulateMsgMigrateContract(
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to read response data"), nil, err
 		}
-
-		fmt.Printf("%v\n", result.Data[0].MsgType)
 
 		var msgStoreCodeRespone types.MsgStoreCodeResponse
 		err = proto.Unmarshal(result.Data[0].Data, &msgStoreCodeRespone)
@@ -364,9 +357,14 @@ func SimulateMsgUpdateAmin(
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgUpdateAdmin{}.Type(), "no contract instance available"), nil, nil
 		}
 
+		newAdmin, _ := simtypes.RandomAcc(r, accs)
+		if newAdmin.Address.String() == simAccount.Address.String() {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgUpdateAdmin{}.Type(), "new admin cannot be the same as current admin"), nil, nil
+		}
+
 		msg := types.MsgUpdateAdmin{
 			Sender:   simAccount.Address.String(),
-			NewAdmin: simtypes.RandomAccounts(r, 1)[0].Address.String(),
+			NewAdmin: newAdmin.Address.String(),
 			Contract: ctAddress.String(),
 		}
 		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
