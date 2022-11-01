@@ -110,7 +110,9 @@ func TestGenesisExportImport(t *testing.T) {
 
 	// reset contract code index in source DB for comparison with dest DB
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
+		creatorAddress := sdk.MustAccAddressFromBech32(info.Creator)
 		wasmKeeper.removeFromContractCodeSecondaryIndex(srcCtx, address, wasmKeeper.getLastContractHistoryEntry(srcCtx, address))
+
 		prefixStore := prefix.NewStore(srcCtx.KVStore(wasmKeeper.storeKey), types.GetContractCodeHistoryElementPrefix(address))
 		iter := prefixStore.Iterator(nil, nil)
 
@@ -121,6 +123,7 @@ func TestGenesisExportImport(t *testing.T) {
 		newHistory := x.ResetFromGenesis(dstCtx)
 		wasmKeeper.storeContractInfo(srcCtx, address, x)
 		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, newHistory)
+		wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, newHistory.Updated, address)
 		wasmKeeper.appendToContractHistory(srcCtx, address, newHistory)
 		iter.Close()
 		return false

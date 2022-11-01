@@ -27,5 +27,5 @@ func TestModuleMigrations(t *testing.T) {
 	gotVM, err := wasmApp.ModuleManager().RunMigrations(ctx, wasmApp.ModuleConfigurator(), fromVM)
 	// then
 	require.NoError(t, err)
-	assert.Equal(t, uint64(1), gotVM[wasm.ModuleName])
+	assert.Equal(t, uint64(2), gotVM[wasm.ModuleName])
 }

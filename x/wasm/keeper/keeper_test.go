@@ -138,39 +138,48 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 
 func TestCreateWithParamPermissions(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	keeper := keepers.ContractKeeper
-
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
-		srcPermission types.AccessConfig
-		expError      *sdkerrors.Error
+		policy      AuthorizationPolicy
+		chainUpload types.AccessConfig
+		expError    *sdkerrors.Error
 	}{
 		"default": {
-			srcPermission: types.DefaultUploadAccess,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.DefaultUploadAccess,
 		},
 		"everybody": {
-			srcPermission: types.AllowEverybody,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowEverybody,
 		},
 		"nobody": {
-			srcPermission: types.AllowNobody,
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
+			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(creator),
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(creator),
 		},
 		"onlyAddress with non matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
-			expError:      sdkerrors.ErrUnauthorized,
+			policy:      DefaultAuthorizationPolicy{},
+			chainUpload: types.AccessTypeOnlyAddress.With(otherAddr),
+			expError:    sdkerrors.ErrUnauthorized,
+		},
+		"gov: always allowed": {
+			policy:      GovAuthorizationPolicy{},
+			chainUpload: types.AllowNobody,
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
-			params.CodeUploadAccess = spec.srcPermission
+			params.CodeUploadAccess = spec.chainUpload
 			keepers.WasmKeeper.SetParams(ctx, params)
+			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
 			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
@@ -400,7 +409,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1964f), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1a7bb), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -2185,6 +2194,96 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 			assert.Equal(t, spec.expBalances, keepers.BankKeeper.GetAllBalances(ctx, vestingAddr))
 			assert.Equal(t, spec.expHandled, gotHandled)
 			// and no out of gas panic
+		})
+	}
+}
+
+func TestIteratorAllContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example2 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example3 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example4 := InstantiateHackatomExampleContract(t, ctx, keepers)
+
+	var allContract []string
+	keepers.WasmKeeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, _ types.ContractInfo) bool {
+		allContract = append(allContract, addr.String())
+		return false
+	})
+
+	// IterateContractInfo not ordering
+	expContracts := []string{example4.Contract.String(), example2.Contract.String(), example1.Contract.String(), example3.Contract.String()}
+	require.Equal(t, allContract, expContracts)
+}
+
+func TestIteratorContractByCreator(t *testing.T) {
+	// setup test
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.ContractKeeper
+
+	depositFund := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, creator, depositFund.Add(depositFund...)...)
+	mockAddress1 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+	mockAddress2 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
+
+	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+
+	require.NoError(t, err)
+
+	initMsgBz := HackatomExampleInitMsg{
+		Verifier:    mockAddress1,
+		Beneficiary: mockAddress1,
+	}.GetBytes(t)
+
+	depositContract := sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000)))
+
+	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	ctx := parentCtx.WithBlockHeight(parentCtx.BlockHeight() + 1)
+	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	gotAddr5, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+
+	specs := map[string]struct {
+		creatorAddr   sdk.AccAddress
+		contractsAddr []string
+	}{
+		"single contract": {
+			creatorAddr:   mockAddress1,
+			contractsAddr: []string{gotAddr1.String()},
+		},
+		"multiple contracts": {
+			creatorAddr:   mockAddress2,
+			contractsAddr: []string{gotAddr2.String(), gotAddr4.String(), gotAddr5.String()},
+		},
+		"contractAdress": {
+			creatorAddr:   gotAddr1,
+			contractsAddr: []string{gotAddr3.String()},
+		},
+		"no contracts- unknown": {
+			creatorAddr:   mockAddress3,
+			contractsAddr: nil,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			var allContract []string
+			keepers.WasmKeeper.IterateContractsByCreator(parentCtx, spec.creatorAddr, func(addr sdk.AccAddress) bool {
+				allContract = append(allContract, addr.String())
+				return false
+			})
+			require.Equal(t,
+				allContract,
+				spec.contractsAddr,
+			)
 		})
 	}
 }
