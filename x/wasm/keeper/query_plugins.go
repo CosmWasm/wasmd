@@ -102,16 +102,14 @@ func DefaultQueryPlugins(
 	staking types.StakingKeeper,
 	distKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
-	queryRouter GRPCQueryRouter,
 	wasm wasmQueryKeeper,
-	codec codec.Codec,
 ) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
 		Custom:   NoCustomQuerier,
 		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
-		Stargate: StargateQuerier(queryRouter, codec),
+		Stargate: RejectStargateQuerier(),
 		Wasm:     WasmQuerier(wasm),
 	}
 }
@@ -282,10 +280,30 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 	}
 }
 
-func StargateQuerier(queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+// RejectStargateQuerier rejects all stargate queries
+func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-		protoResponse, whitelisted := AcceptList.Load(request.Path)
-		if !whitelisted {
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled"}
+	}
+}
+
+// AcceptedStargateQueries define accepted Stargate queries as a map with path as key and response type as value.
+// For example:
+// acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
+type AcceptedStargateQueries map[string]codec.ProtoMarshaler
+
+// AcceptListStargateQuerier supports a preconfigured set of stargate queries only.
+// All arguments must be non nil.
+//
+// Warning: Chains need to test and maintain their accept list carefully.
+// There were critical consensus breaking issues in the past with non-deterministic behaviour in the SDK.
+//
+// This queries can be set via WithQueryPlugins option in the wasm keeper constructor:
+// WithQueryPlugins(&QueryPlugins{Stargate: AcceptListStargateQuerier(acceptList, queryRouter, codec)})
+func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+		protoResponse, accepted := acceptList[request.Path]
+		if !accepted {
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
 
@@ -302,12 +320,7 @@ func StargateQuerier(queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sd
 			return nil, err
 		}
 
-		bz, err := ConvertProtoToJSONMarshal(protoResponse, res.Value, codec)
-		if err != nil {
-			return nil, err
-		}
-
-		return bz, nil
+		return ConvertProtoToJSONMarshal(codec, protoResponse, res.Value)
 	}
 }
 
@@ -557,22 +570,16 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 // ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
 // This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
 // being able to use response directly by json marshalling, which is supported in cosmwasm.
-func ConvertProtoToJSONMarshal(protoResponse interface{}, bz []byte, cdc codec.Codec) ([]byte, error) {
-	// all values are proto message
-	message, ok := protoResponse.(codec.ProtoMarshaler)
-	if !ok {
-		return nil, wasmvmtypes.Unknown{}
-	}
-
+func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshaler, bz []byte) ([]byte, error) {
 	// unmarshal binary into stargate response data structure
-	err := cdc.Unmarshal(bz, message)
+	err := cdc.Unmarshal(bz, protoResponse)
 	if err != nil {
-		return nil, wasmvmtypes.Unknown{}
+		return nil, sdkerrors.Wrap(err, "to proto")
 	}
 
-	bz, err = cdc.MarshalJSON(message)
+	bz, err = cdc.MarshalJSON(protoResponse)
 	if err != nil {
-		return nil, wasmvmtypes.Unknown{}
+		return nil, sdkerrors.Wrap(err, "to json")
 	}
 
 	return bz, nil

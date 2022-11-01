@@ -5,25 +5,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-
-	"github.com/CosmWasm/wasmd/app"
-	"google.golang.org/protobuf/runtime/protoiface"
-
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
-	dbm "github.com/tendermint/tm-db"
+	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -486,6 +488,71 @@ func TestQueryErrors(t *testing.T) {
 	}
 }
 
+func TestAcceptListStargateQuerier(t *testing.T) {
+	wasmApp := app.SetupWithEmptyStore(t)
+	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
+	wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+
+	addrs := app.AddTestAddrs(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
+	accepted := keeper.AcceptedStargateQueries{
+		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
+		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
+	}
+
+	marshal := func(pb proto.Message) []byte {
+		b, err := proto.Marshal(pb)
+		require.NoError(t, err)
+		return b
+	}
+
+	specs := map[string]struct {
+		req     *wasmvmtypes.StargateQuery
+		expErr  bool
+		expResp string
+	}{
+		"in accept list - success result": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.auth.v1beta1.Query/Account",
+				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
+			},
+			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"1","sequence":"0"}}`, addrs[0].String()),
+		},
+		"in accept list - error result": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.auth.v1beta1.Query/Account",
+				Data: marshal(&authtypes.QueryAccountRequest{Address: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String()}),
+			},
+			expErr: true,
+		},
+		"not in accept list": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/cosmos.bank.v1beta1.Query/AllBalances",
+				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
+			},
+			expErr: true,
+		},
+		"unknown route": {
+			req: &wasmvmtypes.StargateQuery{
+				Path: "/no/route/to/this",
+				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			q := keeper.AcceptListStargateQuerier(accepted, wasmApp.GRPCQueryRouter(), wasmApp.AppCodec())
+			gotBz, gotErr := q(ctx, spec.req)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.JSONEq(t, spec.expResp, string(gotBz), string(gotBz))
+		})
+	}
+}
+
 type mockWasmQueryKeeper struct {
 	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
@@ -548,13 +615,13 @@ func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 	return m.GetAllBalancesFn(ctx, addr)
 }
 
-func TestConvertProtoToJSONMarshal(t *testing.T) {
+func TestCo3nvertProtoToJSONMarshal(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		queryPath             string
-		protoResponseStruct   proto.Message
+		protoResponseStruct   codec.ProtoMarshaler
 		originalResponse      string
-		expectedProtoResponse proto.Message
+		expectedProtoResponse codec.ProtoMarshaler
 		expectedError         bool
 	}{
 		{
@@ -573,20 +640,18 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			name:                "invalid proto response struct",
 			queryPath:           "/cosmos.bank.v1beta1.Query/AllBalances",
 			originalResponse:    "0a090a036261721202333012050a03666f6f",
-			protoResponseStruct: protoiface.MessageV1(nil),
+			protoResponseStruct: &authtypes.QueryAccountResponse{},
 			expectedError:       true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			// set up app for testing
-			wasmApp := app.SetupWithEmptyStore(t)
-
 			originalVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
+			appCodec := app.MakeEncodingConfig().Marshaler
 
-			jsonMarshalledResponse, err := keeper.ConvertProtoToJSONMarshal(tc.protoResponseStruct, originalVersionBz, wasmApp.AppCodec())
+			jsonMarshalledResponse, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.protoResponseStruct, originalVersionBz)
 			if tc.expectedError {
 				require.Error(t, err)
 				return
@@ -594,7 +659,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			require.NoError(t, err)
 
 			// check response by json marshalling proto response into json response manually
-			jsonMarshalExpectedResponse, err := wasmApp.AppCodec().MarshalJSON(tc.expectedProtoResponse)
+			jsonMarshalExpectedResponse, err := appCodec.MarshalJSON(tc.expectedProtoResponse)
 			require.NoError(t, err)
 			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
 		})
@@ -609,8 +674,8 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 		originalResponse    string
 		updatedResponse     string
 		queryPath           string
-		responseProtoStruct interface{}
-		expectedProto       func() proto.Message
+		responseProtoStruct codec.ProtoMarshaler
+		expectedProto       func() codec.ProtoMarshaler
 	}{
 		/**
 		   *
@@ -638,7 +703,7 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 			"0a530a202f636f736d6f732e617574682e763162657461312e426173654163636f756e74122f0a2d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679122d636f736d6f733166387578756c746e3873717a687a6e72737a3371373778776171756867727367366a79766679",
 			"/cosmos.auth.v1beta1.Query/Account",
 			&authtypes.QueryAccountResponse{},
-			func() proto.Message {
+			func() codec.ProtoMarshaler {
 				account := authtypes.BaseAccount{
 					Address: "cosmos1f8uxultn8sqzhznrsz3q77xwaquhgrsg6jyvfy",
 				}
@@ -653,23 +718,23 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			wasmApp := app.SetupWithEmptyStore(t)
+			appCodec := app.MakeEncodingConfig().Marshaler
 
 			originVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
-			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJSONMarshal(tc.responseProtoStruct, originVersionBz, wasmApp.AppCodec())
+			jsonMarshalledOriginalBz, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.responseProtoStruct, originVersionBz)
 			require.NoError(t, err)
 
 			newVersionBz, err := hex.DecodeString(tc.updatedResponse)
 			require.NoError(t, err)
-			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(tc.responseProtoStruct, newVersionBz, wasmApp.AppCodec())
+			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.responseProtoStruct, newVersionBz)
 			require.NoError(t, err)
 
 			// json marshalled bytes should be the same since we use the same proto struct for unmarshalling
 			require.Equal(t, jsonMarshalledOriginalBz, jsonMarshalledUpdatedBz)
 
 			// raw build also make same result
-			jsonMarshalExpectedResponse, err := wasmApp.AppCodec().MarshalJSON(tc.expectedProto())
+			jsonMarshalExpectedResponse, err := appCodec.MarshalJSON(tc.expectedProto())
 			require.NoError(t, err)
 			require.Equal(t, jsonMarshalledUpdatedBz, jsonMarshalExpectedResponse)
 		})
