@@ -28,7 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
-		SilenceUsage: true,
+		SilenceUsage:               true,
 	}
 	queryCmd.AddCommand(
 		GetCmdListCode(),
@@ -318,7 +318,7 @@ func GetCmdGetContractState() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
-		SilenceUsage: true,
+		SilenceUsage:               true,
 	}
 	cmd.AddCommand(
 		GetCmdGetContractStateAll(),

@@ -42,7 +42,7 @@ func GetTxCmd() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
-		SilenceUsage: true,
+		SilenceUsage:               true,
 	}
 	txCmd.AddCommand(
 		StoreCodeCmd(),
