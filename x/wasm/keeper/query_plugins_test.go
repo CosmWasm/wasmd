@@ -615,7 +615,7 @@ func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 	return m.GetAllBalancesFn(ctx, addr)
 }
 
-func TestCo3nvertProtoToJSONMarshal(t *testing.T) {
+func TestConvertProtoToJSONMarshal(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		queryPath             string
