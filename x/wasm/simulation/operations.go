@@ -2,20 +2,17 @@ package simulation
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"os"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/gogo/protobuf/proto"
 
 	"github.com/CosmWasm/wasmd/app/params"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -104,7 +101,7 @@ func WeightedOperations(
 
 	var wasmBz []byte
 	if wasmContractPath == "" {
-		wasmBz = testdata.ReflectContractWasm()
+		wasmBz = testdata.MigrateReflectContractWasm()
 	} else {
 		var err error
 		wasmBz, err = os.ReadFile(wasmContractPath)
@@ -164,8 +161,10 @@ func WeightedOperations(
 	}
 }
 
-type MsgMigrateContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
-type MsgMigrateCodeIDSelector func(sdk.Context, WasmKeeper, uint64) uint64
+type (
+	MsgMigrateContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+	MsgMigrateCodeIDSelector   func(sdk.Context, WasmKeeper, uint64) uint64
+)
 
 func DefaultSimulationMigrateContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
 	var contractAddress sdk.AccAddress
@@ -208,73 +207,23 @@ func SimulateMsgMigrateContract(
 		chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		ctAddress, _ := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		ctAddress, info := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
 		if ctAddress == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no contract instance available"), nil, nil
 		}
 
-		wasmBz := testdata.MigrateReflectContractWasm()
-
-		permission := types.AccessTypeOnlyAddress
-		config := permission.With(simAccount.Address)
-
-		msg := types.MsgStoreCode{
-			Sender:                simAccount.Address.String(),
-			WASMByteCode:          wasmBz,
-			InstantiatePermission: &config,
+		codeID := codeIDSelector(ctx, wasmKeeper, info.CodeID)
+		if codeID == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no target contract available"), nil, nil
 		}
-
-		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
-		account := txCtx.AccountKeeper.GetAccount(txCtx.Context, txCtx.SimAccount.Address)
-		spendable := txCtx.Bankkeeper.SpendableCoins(txCtx.Context, account.GetAddress())
-
-		var fees sdk.Coins
-		fees, err := simtypes.RandomFees(txCtx.R, txCtx.Context, spendable)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate fees"), nil, err
-		}
-
-		tx, err := helpers.GenTx(
-			txCtx.TxGen,
-			[]sdk.Msg{txCtx.Msg},
-			fees,
-			helpers.DefaultGenTxGas,
-			txCtx.Context.ChainID(),
-			[]uint64{account.GetAccountNumber()},
-			[]uint64{account.GetSequence()},
-			txCtx.SimAccount.PrivKey,
-		)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to generate tx"), nil, err
-		}
-
-		_, data, err := app.Deliver(txCtx.TxGen.TxEncoder(), tx)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to deliver tx"), nil, err
-		}
-
-		var result sdk.TxMsgData
-		err = proto.Unmarshal(data.Data, &result)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to read response data"), nil, err
-		}
-
-		var msgStoreCodeRespone types.MsgStoreCodeResponse
-		err = proto.Unmarshal(result.Data[0].Data, &msgStoreCodeRespone)
-		if err != nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "unable to unmarshall response data"), nil, err
-		}
-
-		fmt.Printf("%v\n", msgStoreCodeRespone.CodeID)
-
 		migrateMsg := types.MsgMigrateContract{
 			Sender:   simAccount.Address.String(),
 			Contract: ctAddress.String(),
-			CodeID:   msgStoreCodeRespone.CodeID,
+			CodeID:   codeID,
 			Msg:      []byte(`{}`),
 		}
 
-		txCtx = BuildOperationInput(r, app, ctx, &migrateMsg, simAccount, ak, bk, nil)
+		txCtx := BuildOperationInput(r, app, ctx, &migrateMsg, simAccount, ak, bk, nil)
 		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
