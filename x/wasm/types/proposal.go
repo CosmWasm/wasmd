@@ -83,6 +83,17 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
 }
 
+func NewStoreCodeProposal(
+	title string,
+	description string,
+	runAs string,
+	wasmBz []byte,
+	permission *AccessConfig,
+	unpinCode bool,
+) *StoreCodeProposal {
+	return &StoreCodeProposal{title, description, runAs, wasmBz, permission, unpinCode}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p StoreCodeProposal) ProposalRoute() string { return RouterKey }
 
@@ -141,6 +152,19 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 		WASMByteCode:          base64.StdEncoding.EncodeToString(p.WASMByteCode),
 		InstantiatePermission: p.InstantiatePermission,
 	}, nil
+}
+
+func NewInstantiateContractProposal(
+	title string,
+	description string,
+	runAs string,
+	admin string,
+	codeID uint64,
+	label string,
+	msg RawContractMessage,
+	funds sdk.Coins,
+) *InstantiateContractProposal {
+	return &InstantiateContractProposal{title, description, runAs, admin, codeID, label, msg, funds}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -334,6 +358,17 @@ func (p SudoContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+func NewExecuteContractProposal(
+	title string,
+	description string,
+	runAs string,
+	contract string,
+	msg RawContractMessage,
+	funds sdk.Coins,
+) *ExecuteContractProposal {
+	return &ExecuteContractProposal{title, description, runAs, contract, msg, funds}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p ExecuteContractProposal) ProposalRoute() string { return RouterKey }
 
@@ -397,6 +432,15 @@ func (p ExecuteContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
+func NewUpdateAdminProposal(
+	title string,
+	description string,
+	newAdmin string,
+	contract string,
+) *UpdateAdminProposal {
+	return &UpdateAdminProposal{title, description, newAdmin, contract}
+}
+
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p UpdateAdminProposal) ProposalRoute() string { return RouterKey }
 
@@ -431,6 +475,14 @@ func (p UpdateAdminProposal) String() string {
   Contract:    %s
   New Admin:   %s
 `, p.Title, p.Description, p.Contract, p.NewAdmin)
+}
+
+func NewClearAdminProposal(
+	title string,
+	description string,
+	contract string,
+) *ClearAdminProposal {
+	return &ClearAdminProposal{title, description, contract}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
