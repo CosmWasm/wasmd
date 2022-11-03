@@ -391,10 +391,8 @@ func TestExecuteContractCmd(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: firstContractAddress,
-						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-							info.Created = nil
-						}),
-						ContractState: []types.Model{},
+						ContractInfo:    types.ContractInfoFixture(),
+						ContractState:   []types.Model{},
 					},
 				},
 			},
@@ -473,10 +471,8 @@ func TestExecuteContractCmd(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: firstContractAddress,
-						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-							info.Created = nil
-						}),
-						ContractState: []types.Model{},
+						ContractInfo:    types.ContractInfoFixture(),
+						ContractState:   []types.Model{},
 					},
 				},
 			},
@@ -500,10 +496,8 @@ func TestExecuteContractCmd(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: firstContractAddress,
-						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-							info.Created = nil
-						}),
-						ContractState: []types.Model{},
+						ContractInfo:    types.ContractInfoFixture(),
+						ContractState:   []types.Model{},
 					},
 				},
 			},
@@ -528,10 +522,8 @@ func TestExecuteContractCmd(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: firstContractAddress,
-						ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-							info.Created = nil
-						}),
-						ContractState: []types.Model{},
+						ContractInfo:    types.ContractInfoFixture(),
+						ContractState:   []types.Model{},
 					},
 				},
 			},

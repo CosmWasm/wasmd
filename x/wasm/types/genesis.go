@@ -61,6 +61,9 @@ func (c Contract) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "contract info")
 	}
 
+	if c.ContractInfo.Created == nil {
+		return sdkerrors.Wrap(ErrInvalid, "created must not be empty")
+	}
 	for i := range c.ContractState {
 		if err := c.ContractState[i].ValidateBasic(); err != nil {
 			return sdkerrors.Wrapf(err, "contract state %d", i)

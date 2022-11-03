@@ -87,7 +87,7 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 
 	fixture := Contract{
 		ContractAddress: anyAddress,
-		ContractInfo:    ContractInfoFixture(OnlyGenesisFields),
+		ContractInfo:    ContractInfoFixture(RandCreatedFields),
 		ContractState:   []Model{{Key: []byte("anyKey"), Value: []byte("anyValue")}},
 	}
 

@@ -312,7 +312,7 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: BuildContractAddressClassic(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -328,10 +328,10 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: BuildContractAddressClassic(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 					}, {
 						ContractAddress: BuildContractAddressClassic(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 					},
 				},
 				Params: types.DefaultParams(),
@@ -347,7 +347,7 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: BuildContractAddressClassic(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractState: []types.Model{
 							{
 								Key:   []byte{0x1},
@@ -395,7 +395,7 @@ func TestGenesisInit(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: BuildContractAddressClassic(1, 1).String(),
-						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }),
+						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 					},
 				},
 				Sequences: []types.Sequence{
