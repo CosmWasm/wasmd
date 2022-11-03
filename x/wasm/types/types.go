@@ -173,7 +173,6 @@ func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) 
 
 // ResetFromGenesis resets contracts timestamp and history.
 func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntry {
-	c.Created = NewAbsoluteTxPosition(ctx)
 	return ContractCodeHistoryEntry{
 		Operation: ContractCodeHistoryOperationTypeGenesis,
 		CodeID:    c.CodeID,

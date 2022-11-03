@@ -107,8 +107,6 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			state = append(state, types.Model{Key: key, Value: value})
 			return false
 		})
-		// redact contract info
-		contract.Created = nil
 		genState.Contracts = append(genState.Contracts, types.Contract{
 			ContractAddress: addr.String(),
 			ContractInfo:    contract,

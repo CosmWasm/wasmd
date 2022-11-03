@@ -157,7 +157,7 @@ func TestContractValidateBasic(t *testing.T) {
 			srcMutator: func(c *Contract) {
 				c.ContractInfo.Created = &AbsoluteTxPosition{}
 			},
-			expError: true,
+			expError: false,
 		},
 		"contract state invalid": {
 			srcMutator: func(c *Contract) {

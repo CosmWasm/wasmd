@@ -234,6 +234,7 @@ func TestMigrateProposal(t *testing.T) {
 	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
 		c.Label = "testing"
 		c.Admin = anyAddress.String()
+		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
 	key, err := hex.DecodeString("636F6E666967")
 	require.NoError(t, err)

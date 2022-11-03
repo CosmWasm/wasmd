@@ -101,6 +101,10 @@ func OnlyGenesisFields(info *ContractInfo) {
 	info.Created = nil
 }
 
+func RandCreatedFields(info *ContractInfo) {
+	info.Created = &AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()}
+}
+
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 
