@@ -15,8 +15,10 @@ import (
 const gasDeserializationCostPerByte = uint64(1)
 
 var (
-	_ authztypes.Authorization = &ContractExecutionAuthorization{}
-	_ authztypes.Authorization = &ContractMigrationAuthorization{}
+	_ authztypes.Authorization         = &ContractExecutionAuthorization{}
+	_ authztypes.Authorization         = &ContractMigrationAuthorization{}
+	_ cdctypes.UnpackInterfacesMessage = &ContractExecutionAuthorization{}
+	_ cdctypes.UnpackInterfacesMessage = &ContractMigrationAuthorization{}
 )
 
 // AuthzableWasmMsg is abstract wasm tx message that is supported in authz
@@ -54,6 +56,16 @@ func (a ContractExecutionAuthorization) ValidateBasic() error {
 	return validateGrants(a.Grants)
 }
 
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (a ContractExecutionAuthorization) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	for _, g := range a.Grants {
+		if err := g.UnpackInterfaces(unpacker); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // NewContractMigrationAuthorization constructor
 func NewContractMigrationAuthorization(grants ...ContractGrant) *ContractMigrationAuthorization {
 	return &ContractMigrationAuthorization{
@@ -79,6 +91,16 @@ func (a ContractMigrationAuthorization) NewAuthz(g []ContractGrant) authztypes.A
 // ValidateBasic implements Authorization.ValidateBasic.
 func (a ContractMigrationAuthorization) ValidateBasic() error {
 	return validateGrants(a.Grants)
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (a ContractMigrationAuthorization) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	for _, g := range a.Grants {
+		if err := g.UnpackInterfaces(unpacker); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validateGrants(g []ContractGrant) error {
@@ -258,24 +280,11 @@ func (g ContractGrant) GetLimit() ContractAuthzLimitX {
 	if g.Limit == nil {
 		return &UndefinedLimit{}
 	}
-	a, ok := g.Filter.GetCachedValue().(ContractAuthzLimitX)
+	a, ok := g.Limit.GetCachedValue().(ContractAuthzLimitX)
 	if !ok {
 		return &UndefinedLimit{}
 	}
 	return a
-}
-
-// UndefinedLimit null object that is always rejected in execution
-type UndefinedLimit struct{}
-
-// ValidateBasic always returns error
-func (u UndefinedLimit) ValidateBasic() error {
-	return sdkerrors.ErrInvalidType.Wrapf("undefined limit")
-}
-
-// Accept always returns error
-func (u UndefinedLimit) Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
-	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
 }
 
 // GetFilter returns the cached value from the ContractGrant.Filter if present.
@@ -303,6 +312,11 @@ func (f UndefinedFilter) ValidateBasic() error {
 	return sdkerrors.ErrInvalidType.Wrapf("undefined filter")
 }
 
+// NewAllowAllMessagesFilter constructor
+func NewAllowAllMessagesFilter() *AllowAllMessagesFilter {
+	return &AllowAllMessagesFilter{}
+}
+
 // Accept accepts any message content.
 func (f *AllowAllMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
 	return true, nil
@@ -311,6 +325,11 @@ func (f *AllowAllMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage)
 // ValidateBasic returns always nil
 func (f AllowAllMessagesFilter) ValidateBasic() error {
 	return nil
+}
+
+// NewAcceptedMessageKeysFilter constructor
+func NewAcceptedMessageKeysFilter(acceptedKeys []string) *AcceptedMessageKeysFilter {
+	return &AcceptedMessageKeysFilter{Keys: acceptedKeys}
 }
 
 // Accept only payload messages which contain one of the accepted key names in the json object.
@@ -396,6 +415,31 @@ func (g ContractGrant) ValidateBasic() error {
 	return nil
 }
 
+var (
+	_ ContractAuthzLimitX = &UndefinedLimit{}
+	_ ContractAuthzLimitX = &MaxCallsLimit{}
+	_ ContractAuthzLimitX = &MaxFundsLimit{}
+	_ ContractAuthzLimitX = &CombinedLimit{}
+)
+
+// UndefinedLimit null object that is always rejected in execution
+type UndefinedLimit struct{}
+
+// ValidateBasic always returns error
+func (u UndefinedLimit) ValidateBasic() error {
+	return sdkerrors.ErrInvalidType.Wrapf("undefined limit")
+}
+
+// Accept always returns error
+func (u UndefinedLimit) Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
+}
+
+// NewMaxCallsLimit constructor
+func NewMaxCallsLimit(number uint64) *MaxCallsLimit {
+	return &MaxCallsLimit{Remaining: number}
+}
+
 // Accept only the defined number of message calls. No token transfers to the contract allowed.
 func (m MaxCallsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	if !msg.GetFunds().Empty() {
@@ -417,6 +461,11 @@ func (m MaxCallsLimit) ValidateBasic() error {
 		return ErrEmpty.Wrap("remaining calls")
 	}
 	return nil
+}
+
+// NewMaxFundsLimit constructor
+func NewMaxFundsLimit(max sdk.Coins) *MaxFundsLimit {
+	return &MaxFundsLimit{Amounts: max}
 }
 
 // Accept until the defined budget for token transfers to the contract is spent
@@ -443,6 +492,11 @@ func (m MaxFundsLimit) ValidateBasic() error {
 		return ErrEmpty.Wrap("amounts")
 	}
 	return nil
+}
+
+// NewCombinedLimit constructor
+func NewCombinedLimit(maxCalls uint64, maxAmounts sdk.Coins) *CombinedLimit {
+	return &CombinedLimit{CallsRemaining: maxCalls, Amounts: maxAmounts}
 }
 
 // Accept until the max calls is reached or the token budget is spent.

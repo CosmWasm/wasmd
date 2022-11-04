@@ -422,17 +422,6 @@ func GrantAuthorizationCmd() *cobra.Command {
 			_ = contract
 
 			return errors.New("not implemented")
-			//authorization := types.NewContractAuthorization(contract, msgs, once)
-			//if err = authorization.ValidateBasic(); err != nil {
-			//	return err
-			//}
-
-			//msg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(exp, 0))
-			//if err != nil {
-			//	return err
-			//}
-			//
-			//return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
