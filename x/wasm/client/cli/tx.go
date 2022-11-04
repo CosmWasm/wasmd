@@ -42,6 +42,7 @@ func GetTxCmd() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
+		SilenceUsage:               true,
 	}
 	txCmd.AddCommand(
 		StoreCodeCmd(),
@@ -76,6 +77,7 @@ func StoreCodeCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
@@ -202,6 +204,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -262,6 +265,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -347,6 +351,7 @@ func ExecuteContractCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract along with command")

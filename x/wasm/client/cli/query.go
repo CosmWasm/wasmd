@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
+		SilenceUsage:               true,
 	}
 	queryCmd.AddCommand(
 		GetCmdListCode(),
@@ -137,6 +138,7 @@ func GetCmdListCode() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list codes")
@@ -182,6 +184,7 @@ func GetCmdListContractByCode() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list contracts by code")
@@ -224,6 +227,7 @@ func GetCmdQueryCode() *cobra.Command {
 			fmt.Printf("Downloading wasm code to %s\n", args[1])
 			return os.WriteFile(args[1], res.Data, 0o600)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
@@ -263,6 +267,7 @@ func GetCmdQueryCodeInfo() *cobra.Command {
 
 			return clientCtx.PrintProto(res.CodeInfoResponse)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
@@ -298,6 +303,7 @@ func GetCmdGetContractInfo() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
@@ -312,6 +318,7 @@ func GetCmdGetContractState() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
+		SilenceUsage:               true,
 	}
 	cmd.AddCommand(
 		GetCmdGetContractStateAll(),
@@ -355,6 +362,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "contract state")
@@ -396,6 +404,7 @@ func GetCmdGetContractStateRaw() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "key argument")
 	flags.AddQueryFlagsToCmd(cmd)
@@ -444,6 +453,7 @@ func GetCmdGetContractStateSmart() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	decoder.RegisterFlags(cmd.PersistentFlags(), "query argument")
 	flags.AddQueryFlagsToCmd(cmd)
@@ -487,6 +497,7 @@ func GetCmdGetContractHistory() *cobra.Command {
 
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
@@ -499,7 +510,7 @@ func GetCmdListPinnedCode() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pinned",
 		Short: "List all pinned code ids",
-		Long:  "\t\tLong:    List all pinned code ids,\n",
+		Long:  "List all pinned code ids",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -523,6 +534,7 @@ func GetCmdListPinnedCode() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list codes")
@@ -534,7 +546,7 @@ func GetCmdListContractsByCreator() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list-contracts-by-creator [creator]",
 		Short: "List all contracts by creator",
-		Long:  "\t\tLong:    List all contracts by creator,\n",
+		Long:  "List all contracts by creator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -563,6 +575,7 @@ func GetCmdListContractsByCreator() *cobra.Command {
 			}
 			return clientCtx.PrintProto(res)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
@@ -650,6 +663,7 @@ func GetCmdQueryParams() *cobra.Command {
 
 			return clientCtx.PrintProto(&res.Params)
 		},
+		SilenceUsage: true,
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
