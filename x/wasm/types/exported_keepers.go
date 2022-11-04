@@ -51,6 +51,16 @@ type ContractOpsKeeper interface {
 		fixMsg bool,
 	) (sdk.AccAddress, []byte, error)
 
+	CreateAndInstantiate(
+		ctx sdk.Context,
+		creator, admin sdk.AccAddress,
+		wasmCode []byte,
+		instantiateAccess *AccessConfig,
+		initMsg []byte,
+		label string,
+		deposit sdk.Coins,
+	) (sdk.AccAddress, []byte, error)
+
 	// Execute executes the contract instance
 	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 
