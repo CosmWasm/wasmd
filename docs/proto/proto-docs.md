@@ -64,6 +64,7 @@
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
     - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
+    - [StoreAndInstantiateContractProposal](#cosmwasm.wasm.v1.StoreAndInstantiateContractProposal)
     - [StoreCodeProposal](#cosmwasm.wasm.v1.StoreCodeProposal)
     - [SudoContractProposal](#cosmwasm.wasm.v1.SudoContractProposal)
     - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
@@ -978,6 +979,31 @@ wasmvm cache.
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
 | `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the new WASM codes |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.StoreAndInstantiateContractProposal"></a>
+
+### StoreAndInstantiateContractProposal
+StoreAndInstantiateContractProposal gov proposal content type to store
+and instantiate the contract.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 
 
 
