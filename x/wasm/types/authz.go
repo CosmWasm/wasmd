@@ -3,6 +3,10 @@ package types
 import (
 	"strings"
 
+	"github.com/gogo/protobuf/proto"
+
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
@@ -10,18 +14,23 @@ import (
 
 const gasDeserializationCostPerByte = uint64(1)
 
-var _ authztypes.Authorization = &ContractExecutionAuthorization{}
+var (
+	_ authztypes.Authorization = &ContractExecutionAuthorization{}
+	_ authztypes.Authorization = &ContractMigrationAuthorization{}
+)
 
-// NewContractAuthorization creates a new ContractExecutionAuthorization object.
-func NewContractAuthorization(contractAddr sdk.AccAddress, filter isContractExecutionAuthorization_ContractExecutionGrant_Filter, execLimit isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit) *ContractExecutionAuthorization {
+// AuthzableWasmMsg is abstract wasm tx message that is supported in authz
+type AuthzableWasmMsg interface {
+	GetFunds() sdk.Coins
+	GetMsg() RawContractMessage
+	GetContract() string
+	ValidateBasic() error
+}
+
+// NewContractExecutionAuthorization constructor
+func NewContractExecutionAuthorization(grants ...ContractGrant) *ContractExecutionAuthorization {
 	return &ContractExecutionAuthorization{
-		Grants: []ContractExecutionAuthorization_ContractExecutionGrant{
-			{
-				Contract:       contractAddr.String(),
-				ExecutionLimit: execLimit,
-				Filter:         filter,
-			},
-		},
+		Grants: grants,
 	}
 }
 
@@ -30,161 +39,439 @@ func (a ContractExecutionAuthorization) MsgTypeURL() string {
 	return sdk.MsgTypeURL(&MsgExecuteContract{})
 }
 
+// NewAuthz factory method to create an Authorization with updated grants
+func (a ContractExecutionAuthorization) NewAuthz(g []ContractGrant) authztypes.Authorization {
+	return NewContractExecutionAuthorization(g...)
+}
+
 // Accept implements Authorization.Accept.
 func (a *ContractExecutionAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	exec, ok := msg.(*MsgExecuteContract)
+	return AcceptGrantedMessage[*MsgExecuteContract](ctx, a.Grants, msg, a)
+}
+
+// ValidateBasic implements Authorization.ValidateBasic.
+func (a ContractExecutionAuthorization) ValidateBasic() error {
+	return validateGrants(a.Grants)
+}
+
+// NewContractMigrationAuthorization constructor
+func NewContractMigrationAuthorization(grants ...ContractGrant) *ContractMigrationAuthorization {
+	return &ContractMigrationAuthorization{
+		Grants: grants,
+	}
+}
+
+// MsgTypeURL implements Authorization.MsgTypeURL.
+func (a ContractMigrationAuthorization) MsgTypeURL() string {
+	return sdk.MsgTypeURL(&MsgMigrateContract{})
+}
+
+// Accept implements Authorization.Accept.
+func (a *ContractMigrationAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return AcceptGrantedMessage[*MsgMigrateContract](ctx, a.Grants, msg, a)
+}
+
+// NewAuthz factory method to create an Authorization with updated grants
+func (a ContractMigrationAuthorization) NewAuthz(g []ContractGrant) authztypes.Authorization {
+	return NewContractMigrationAuthorization(g...)
+}
+
+// ValidateBasic implements Authorization.ValidateBasic.
+func (a ContractMigrationAuthorization) ValidateBasic() error {
+	return validateGrants(a.Grants)
+}
+
+func validateGrants(g []ContractGrant) error {
+	if len(g) == 0 {
+		return ErrEmpty.Wrap("grants")
+	}
+	for i, v := range g {
+		if err := v.ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "position %d", i)
+		}
+	}
+	// allow multiple grants for a contract:
+	// contractA:doThis:1,doThat:*  has with different counters for different methods
+	return nil
+}
+
+// ContractAuthzFactory factory to create an updated Authorization object
+type ContractAuthzFactory interface {
+	NewAuthz([]ContractGrant) authztypes.Authorization
+}
+
+// AcceptGrantedMessage determines whether this grant permits the provided sdk.Msg to be performed,
+// and if so provides an upgraded authorization instance.
+func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []ContractGrant, msg sdk.Msg, factory ContractAuthzFactory) (authztypes.AcceptResponse, error) {
+	exec, ok := msg.(T)
 	if !ok {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("type mismatch")
 	}
-	if exec == nil || exec.Msg == nil {
+	if exec.GetMsg() == nil {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("empty message")
 	}
+	if err := exec.ValidateBasic(); err != nil {
+		return authztypes.AcceptResponse{}, err
+	}
 
-	updatedGrants, modified, err := a.applyGrants(ctx, exec)
+	updatedGrants, modified, err := applyGrants(ctx, grants, exec)
 	switch {
 	case err != nil:
 		return authztypes.AcceptResponse{}, err
-	case len(updatedGrants) == 0:
-		return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
 	case modified:
-		return authztypes.AcceptResponse{Accept: true, Updated: &ContractExecutionAuthorization{
-			Grants: updatedGrants,
-		}}, nil
+		if len(updatedGrants) == 0 {
+			return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
+		}
+		newAuthz := factory.NewAuthz(updatedGrants)
+		if err := newAuthz.ValidateBasic(); err != nil { // sanity check
+			return authztypes.AcceptResponse{}, ErrInvalid.Wrapf("new grant state: %s", err)
+		}
+		return authztypes.AcceptResponse{Accept: true, Updated: newAuthz}, nil
 	default:
 		return authztypes.AcceptResponse{Accept: true}, nil
 	}
 }
 
-func (a ContractExecutionAuthorization) applyGrants(ctx sdk.Context, exec *MsgExecuteContract) ([]ContractExecutionAuthorization_ContractExecutionGrant, bool, error) {
-	for i, g := range a.Grants {
-		if g.Contract != exec.Contract {
+// iterate through the grants to find an applicable grant. Returns an error when none is found
+func applyGrants(ctx sdk.Context, grants []ContractGrant, exec AuthzableWasmMsg) ([]ContractGrant, bool, error) {
+	for i, g := range grants {
+		if g.Contract != exec.GetContract() {
 			continue
 		}
+
 		// first check limits
-		var modified bool
-		var newGrants []ContractExecutionAuthorization_ContractExecutionGrant
-
+		result, err := g.GetLimit().Accept(ctx, exec)
 		switch {
-		case g.GetMaxFunds() != nil:
-			if !exec.Funds.Empty() {
-				if exec.Funds.IsAnyGT(g.GetMaxFunds().GetAmounts()) {
-					return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
-				}
-				obj := ContractExecutionAuthorization_ContractExecutionGrant{
-					Contract: g.Contract,
-					ExecutionLimit: &ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds{
-						MaxFunds: &MaxFunds{Amounts: g.GetMaxFunds().GetAmounts().Sub(exec.Funds)},
-					},
-					Filter: g.Filter,
-				}
-				newGrants = append(append(a.Grants[0:i], obj), a.Grants[i+1:]...)
-				modified = true
-			}
-		case g.GetInfiniteCalls() != nil:
-			if !exec.Funds.Empty() {
-				return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
-			}
-			newGrants = a.GetGrants()
-			modified = true
-
-		case g.GetMaxCalls() != nil:
-			if !exec.Funds.Empty() {
-				return nil, false, sdkerrors.ErrUnauthorized.Wrap("funds amount not granted")
-			}
-			switch n := g.GetMaxCalls().Remaining; n {
-			case 0:
-				return nil, false, sdkerrors.ErrUnauthorized.Wrap("no executions allowed")
-			case 1: // remove
-				newGrants = append(a.Grants[0:i], a.Grants[i+1:]...)
-				modified = true
-			default:
-				obj := ContractExecutionAuthorization_ContractExecutionGrant{
-					Contract: g.Contract,
-					ExecutionLimit: &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{
-						MaxCalls: &MaxCalls{Remaining: n - 1},
-					},
-					Filter: g.Filter,
-				}
-				newGrants = append(append(a.Grants[0:i], obj), a.Grants[i+1:]...)
-				modified = true
-			}
-		default:
-			return nil, false, sdkerrors.ErrUnauthorized.Wrapf("unsupported max execution type: %T", g.ExecutionLimit)
+		case err != nil:
+			return nil, false, sdkerrors.Wrap(err, "limit")
+		case result == nil: // sanity check
+			return nil, false, sdkerrors.ErrInvalidType.Wrap("limit result must not be nil")
+		case !result.Accepted:
+			// not applicable, continue with next grant
+			continue
 		}
+
 		// then check permission set
+		ok, err := g.GetFilter().Accept(ctx, exec.GetMsg())
 		switch {
-		case g.GetAllowAllWildcard() != nil:
-		case g.GetAcceptedMessageKeys().GetMessages() != nil:
-			gasForDeserialization := gasDeserializationCostPerByte * uint64(len(exec.Msg))
-			ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
-
-			if err := IsJSONObjectWithTopLevelKey(exec.Msg, g.GetAcceptedMessageKeys().GetMessages()); err != nil {
-				return nil, false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
-			}
-		default:
-			return nil, false, sdkerrors.ErrUnauthorized.Wrapf("unsupported filter type: %T", g.Filter)
+		case err != nil:
+			return nil, false, sdkerrors.Wrap(err, "filter")
+		case !ok:
+			// no limit update and continue with next grant
+			continue
 		}
-		return newGrants, modified, nil
+
+		// finally do limit state updates
+		switch {
+		case result.DeleteLimit:
+			return append(grants[0:i], grants[i+1:]...), true, nil
+		case result.UpdateLimit != nil:
+			obj, err := g.WithNewLimits(result.UpdateLimit)
+			if err != nil {
+				return nil, false, err
+			}
+			return append(append(grants[0:i], *obj), grants[i+1:]...), true, nil
+		default: // accepted without a limit state update
+			return grants, false, nil
+		}
 	}
-	return nil, false, sdkerrors.ErrUnauthorized.Wrap("contract address")
+	return nil, false, sdkerrors.ErrUnauthorized.Wrap("no matching contract grants")
 }
 
-// ValidateBasic implements Authorization.ValidateBasic.
-func (a ContractExecutionAuthorization) ValidateBasic() error {
-	if len(a.Grants) == 0 {
-		return ErrEmpty.Wrap("grants")
+// ContractAuthzLimitX  define execution limits that are enforced and updated when the grant
+// is applied. When the limit lapsed the grant is removed.
+type ContractAuthzLimitX interface {
+	Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error)
+	ValidateBasic() error
+}
+
+// ContractAuthzLimitAcceptResult result of the ContractAuthzLimitX.Accept method
+type ContractAuthzLimitAcceptResult struct {
+	// Accepted is true when limit applies
+	Accepted bool
+	// DeleteLimit when set it is the end of life for this limit. Grant is removed from persistent store
+	DeleteLimit bool
+	// UpdateLimit update persistent state with new value
+	UpdateLimit ContractAuthzLimitX
+}
+
+// ContractAuthzFilterX define more fine-grained control on the message payload passed
+// to the contract in the operation. When no filter applies on execution, the
+// operation is prohibited.
+type ContractAuthzFilterX interface {
+	// Accept returns applicable or error
+	Accept(ctx sdk.Context, msg RawContractMessage) (bool, error)
+	ValidateBasic() error
+}
+
+var _ cdctypes.UnpackInterfacesMessage = &ContractGrant{}
+
+// NewContractGrant constructor
+func NewContractGrant(contract sdk.AccAddress, limit ContractAuthzLimitX, filter ContractAuthzFilterX) (*ContractGrant, error) {
+	pFilter, ok := filter.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.ErrInvalidType.Wrap("filter is not a proto type")
 	}
-	for i, v := range a.Grants {
-		if err := v.ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "position %d", i)
-		}
+	anyFilter, err := cdctypes.NewAnyWithValue(pFilter)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "filter")
 	}
-	// todo (Alex): do we want to allow multiple grants for a contract or enforce a unique constraint
-	// example: contractA:doThis:1 , applyGrants:doThat:*  has with different counters for different methods
-	// example: contractA:doThis:1 , applyGrants:*:*  would not be great but works as well
+	return ContractGrant{
+		Contract: contract.String(),
+		Filter:   anyFilter,
+	}.WithNewLimits(limit)
+}
+
+// WithNewLimits factory method to create a new grant with given limit
+func (g ContractGrant) WithNewLimits(limit ContractAuthzLimitX) (*ContractGrant, error) {
+	pLimit, ok := limit.(proto.Message)
+	if !ok {
+		return nil, sdkerrors.ErrInvalidType.Wrap("limit is not a proto type")
+	}
+	anyLimit, err := cdctypes.NewAnyWithValue(pLimit)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "limit")
+	}
+
+	return &ContractGrant{
+		Contract: g.Contract,
+		Limit:    anyLimit,
+		Filter:   g.Filter,
+	}, nil
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (g ContractGrant) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
+	var f ContractAuthzFilterX
+	if err := unpacker.UnpackAny(g.Filter, &f); err != nil {
+		return sdkerrors.Wrap(err, "filter")
+	}
+	var l ContractAuthzLimitX
+	if err := unpacker.UnpackAny(g.Limit, &l); err != nil {
+		return sdkerrors.Wrap(err, "limit")
+	}
 	return nil
 }
 
-func (g ContractExecutionAuthorization_ContractExecutionGrant) ValidateBasic() error {
-	// some sanity checks only, need more
+// GetLimit returns the cached value from the ContractGrant.Limit if present.
+func (g ContractGrant) GetLimit() ContractAuthzLimitX {
+	if g.Limit == nil {
+		return &UndefinedLimit{}
+	}
+	a, ok := g.Filter.GetCachedValue().(ContractAuthzLimitX)
+	if !ok {
+		return &UndefinedLimit{}
+	}
+	return a
+}
 
+// UndefinedLimit null object that is always rejected in execution
+type UndefinedLimit struct{}
+
+// ValidateBasic always returns error
+func (u UndefinedLimit) ValidateBasic() error {
+	return sdkerrors.ErrInvalidType.Wrapf("undefined limit")
+}
+
+// Accept always returns error
+func (u UndefinedLimit) Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
+}
+
+// GetFilter returns the cached value from the ContractGrant.Filter if present.
+func (g ContractGrant) GetFilter() ContractAuthzFilterX {
+	if g.Filter == nil {
+		return &UndefinedFilter{}
+	}
+	a, ok := g.Filter.GetCachedValue().(ContractAuthzFilterX)
+	if !ok {
+		return &UndefinedFilter{}
+	}
+	return a
+}
+
+// UndefinedFilter null object that is always rejected in execution
+type UndefinedFilter struct{}
+
+// Accept always returns error
+func (f *UndefinedFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	return false, sdkerrors.ErrNotFound.Wrapf("undefined filter")
+}
+
+// ValidateBasic always returns error
+func (f UndefinedFilter) ValidateBasic() error {
+	return sdkerrors.ErrInvalidType.Wrapf("undefined filter")
+}
+
+// Accept accepts any message content.
+func (f *AllowAllMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	return true, nil
+}
+
+// ValidateBasic returns always nil
+func (f AllowAllMessagesFilter) ValidateBasic() error {
+	return nil
+}
+
+// Accept only payload messages which contain one of the accepted key names in the json object.
+func (f *AcceptedMessageKeysFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
+	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
+
+	ok, err := IsJSONObjectWithTopLevelKey(msg, f.Keys)
+	if err != nil {
+		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
+	}
+	return ok, nil
+}
+
+// ValidateBasic validates the filter
+func (f AcceptedMessageKeysFilter) ValidateBasic() error {
+	if len(f.Keys) == 0 {
+		return ErrEmpty.Wrap("keys")
+	}
+	idx := make(map[string]struct{}, len(f.Keys))
+	for _, m := range f.Keys {
+		if m == "" {
+			return ErrEmpty.Wrap("key")
+		}
+		if m != strings.TrimSpace(m) {
+			return ErrInvalid.Wrapf("key %q contains whitespaces", m)
+		}
+		if _, exists := idx[m]; exists {
+			return ErrDuplicate.Wrapf("key %q", m)
+		}
+		idx[m] = struct{}{}
+	}
+	return nil
+}
+
+// Accept only payload messages which are equal to the granted one.
+func (f *AcceptedMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+	var found bool
+	for _, v := range f.Messages {
+		if v.Equal(msg) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return false, sdkerrors.ErrUnauthorized.Wrap("not an accepted payload msg")
+	}
+	return false, nil
+}
+
+// ValidateBasic validates the filter
+func (f AcceptedMessagesFilter) ValidateBasic() error {
+	if len(f.Messages) == 0 {
+		return ErrEmpty.Wrap("messages")
+	}
+	idx := make(map[string]struct{}, len(f.Messages))
+	for _, m := range f.Messages {
+		if m == nil {
+			return ErrEmpty.Wrap("message")
+		}
+		if _, exists := idx[string(m)]; exists {
+			return ErrDuplicate.Wrap("message")
+		}
+		idx[string(m)] = struct{}{}
+	}
+	return nil
+}
+
+// ValidateBasic validates the grant
+func (g ContractGrant) ValidateBasic() error {
+	// some sanity checks only, need more
 	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	// execution counter
-	switch {
-	case g.GetMaxFunds() != nil:
-		return g.GetMaxFunds().GetAmounts().Validate()
-	case g.GetInfiniteCalls() != nil:
-	case g.GetMaxCalls() != nil:
-		if g.GetMaxCalls().Remaining == 0 {
-			return ErrEmpty.Wrap("remaining calls")
-		}
-	default:
-		return ErrInvalid.Wrapf("unsupported max execution type: %T", g.ExecutionLimit)
+	// execution limits
+	if err := g.GetLimit().ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "limit")
 	}
 	// filter
-	switch {
-	case g.GetAllowAllWildcard() != nil:
-	case g.GetAcceptedMessageKeys().GetMessages() != nil:
-		if len(g.GetAcceptedMessageKeys().GetMessages()) == 0 {
-			return ErrEmpty.Wrap("messages")
-		}
-		idx := make(map[string]struct{}, len(g.GetAcceptedMessageKeys().GetMessages()))
-		for i, m := range g.GetAcceptedMessageKeys().GetMessages() {
-			if m == "" {
-				return ErrEmpty.Wrap("message")
-			}
-			if m != strings.TrimSpace(m) { // TODO (Alex): does this make sense? We should not make assumptions about payload
-				return ErrInvalid.Wrapf("message %d contains whitespaces", i)
-			}
-			if _, exists := idx[m]; exists {
-				return ErrDuplicate.Wrap("message")
-			}
-			idx[m] = struct{}{}
-		}
+	if err := g.GetFilter().ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "filter")
+	}
+	return nil
+}
+
+// Accept only the defined number of message calls. No token transfers to the contract allowed.
+func (m MaxCallsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+	if !msg.GetFunds().Empty() {
+		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil
+	}
+	switch n := m.Remaining; n {
+	case 0: // sanity check
+		return nil, sdkerrors.ErrUnauthorized.Wrap("no calls left")
+	case 1:
+		return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
 	default:
-		return ErrInvalid.Wrapf("unsupported filter type: %T", g.Filter)
+		return &ContractAuthzLimitAcceptResult{Accepted: true, UpdateLimit: &MaxCallsLimit{Remaining: n - 1}}, nil
+	}
+}
+
+// ValidateBasic validates the limit
+func (m MaxCallsLimit) ValidateBasic() error {
+	if m.Remaining == 0 {
+		return ErrEmpty.Wrap("remaining calls")
+	}
+	return nil
+}
+
+// Accept until the defined budget for token transfers to the contract is spent
+func (m MaxFundsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+	if msg.GetFunds().Empty() { // no state changes required
+		return &ContractAuthzLimitAcceptResult{Accepted: true}, nil
+	}
+	if msg.GetFunds().IsAnyGT(m.Amounts) {
+		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil
+	}
+	newAmounts := m.Amounts.Sub(msg.GetFunds())
+	if newAmounts.IsZero() {
+		return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
+	}
+	return &ContractAuthzLimitAcceptResult{Accepted: true, UpdateLimit: &MaxFundsLimit{Amounts: newAmounts}}, nil
+}
+
+// ValidateBasic validates the limit
+func (m MaxFundsLimit) ValidateBasic() error {
+	if err := m.Amounts.Validate(); err != nil {
+		return err
+	}
+	if m.Amounts.IsZero() {
+		return ErrEmpty.Wrap("amounts")
+	}
+	return nil
+}
+
+// Accept until the max calls is reached or the token budget is spent.
+func (l CombinedLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+	transferFunds := msg.GetFunds()
+	if !transferFunds.Empty() && transferFunds.IsAnyGT(l.Amounts) {
+		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil // does not apply
+	}
+	switch n := l.CallsRemaining; n {
+	case 0: // sanity check
+		return nil, sdkerrors.ErrUnauthorized.Wrap("no calls left")
+	case 1:
+		return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
+	default:
+		remainingAmounts := l.Amounts.Sub(transferFunds)
+		if remainingAmounts.IsZero() {
+			return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
+		}
+		return &ContractAuthzLimitAcceptResult{Accepted: true, UpdateLimit: &CombinedLimit{CallsRemaining: n - 1, Amounts: remainingAmounts}}, nil
+	}
+}
+
+// ValidateBasic validates the limit
+func (l CombinedLimit) ValidateBasic() error {
+	if err := l.Amounts.Validate(); err != nil {
+		return sdkerrors.Wrap(err, "amounts")
+	}
+	if l.CallsRemaining == 0 {
+		return ErrEmpty.Wrap("remaining calls")
 	}
 	return nil
 }

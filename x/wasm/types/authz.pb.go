@@ -9,11 +9,12 @@ import (
 	math "math"
 	math_bits "math/bits"
 
+	_ "github.com/cosmos/cosmos-proto"
+	types "github.com/cosmos/cosmos-sdk/codec/types"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/gogo/protobuf/gogoproto"
+	types1 "github.com/cosmos/cosmos-sdk/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	_ "github.com/regen-network/cosmos-proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -31,8 +32,10 @@ var (
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // ContractExecutionAuthorization defines authorization for wasm execute.
+// Since: wasmd 0.30
 type ContractExecutionAuthorization struct {
-	Grants []ContractExecutionAuthorization_ContractExecutionGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants"`
+	// Grants for contract executions
+	Grants []ContractGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants"`
 }
 
 func (m *ContractExecutionAuthorization) Reset()         { *m = ContractExecutionAuthorization{} }
@@ -73,188 +76,11 @@ func (m *ContractExecutionAuthorization) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractExecutionAuthorization proto.InternalMessageInfo
 
-func (m *ContractExecutionAuthorization) GetGrants() []ContractExecutionAuthorization_ContractExecutionGrant {
-	if m != nil {
-		return m.Grants
-	}
-	return nil
-}
-
-// ContractExecutionGrant a granted execute permission for a single contract
-type ContractExecutionAuthorization_ContractExecutionGrant struct {
-	// Contract is the address of the smart contract
-	Contract string `protobuf:"bytes,1,opt,name=contract,proto3" json:"contract,omitempty"`
-	// ExecutionLimit specifies number of executions or spendable amounts
-	//
-	// Types that are valid to be assigned to ExecutionLimit:
-	//	*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls
-	//	*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls
-	//	*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds
-	ExecutionLimit isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit `protobuf_oneof:"execution_limit"`
-	// Filter rules to apply
-	//
-	// Types that are valid to be assigned to Filter:
-	//	*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys
-	//	*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard
-	Filter isContractExecutionAuthorization_ContractExecutionGrant_Filter `protobuf_oneof:"filter"`
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) Reset() {
-	*m = ContractExecutionAuthorization_ContractExecutionGrant{}
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) String() string {
-	return proto.CompactTextString(m)
-}
-func (*ContractExecutionAuthorization_ContractExecutionGrant) ProtoMessage() {}
-func (*ContractExecutionAuthorization_ContractExecutionGrant) Descriptor() ([]byte, []int) {
-	return fileDescriptor_36ff3a20cf32b258, []int{0, 0}
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ContractExecutionAuthorization_ContractExecutionGrant.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContractExecutionAuthorization_ContractExecutionGrant.Merge(m, src)
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_Size() int {
-	return m.Size()
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContractExecutionAuthorization_ContractExecutionGrant.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContractExecutionAuthorization_ContractExecutionGrant proto.InternalMessageInfo
-
-type isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit interface {
-	isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit()
-	MarshalTo([]byte) (int, error)
-	Size() int
-}
-type isContractExecutionAuthorization_ContractExecutionGrant_Filter interface {
-	isContractExecutionAuthorization_ContractExecutionGrant_Filter()
-	MarshalTo([]byte) (int, error)
-	Size() int
-}
-
-type ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls struct {
-	InfiniteCalls *InfiniteCalls `protobuf:"bytes,2,opt,name=infinite_calls,json=infiniteCalls,proto3,oneof" json:"infinite_calls,omitempty"`
-}
-type ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls struct {
-	MaxCalls *MaxCalls `protobuf:"bytes,3,opt,name=max_calls,json=maxCalls,proto3,oneof" json:"max_calls,omitempty"`
-}
-type ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds struct {
-	MaxFunds *MaxFunds `protobuf:"bytes,4,opt,name=max_funds,json=maxFunds,proto3,oneof" json:"max_funds,omitempty"`
-}
-type ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys struct {
-	AcceptedMessageKeys *AcceptedMessageKeysFilter `protobuf:"bytes,5,opt,name=accepted_message_keys,json=acceptedMessageKeys,proto3,oneof" json:"accepted_message_keys,omitempty"`
-}
-type ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard struct {
-	AllowAllWildcard *AllowAllWildcard `protobuf:"bytes,6,opt,name=allow_all_wildcard,json=allowAllWildcard,proto3,oneof" json:"allow_all_wildcard,omitempty"`
-}
-
-func (*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
-}
-
-func (*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
-}
-
-func (*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit() {
-}
-
-func (*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) isContractExecutionAuthorization_ContractExecutionGrant_Filter() {
-}
-
-func (*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard) isContractExecutionAuthorization_ContractExecutionGrant_Filter() {
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetExecutionLimit() isContractExecutionAuthorization_ContractExecutionGrant_ExecutionLimit {
-	if m != nil {
-		return m.ExecutionLimit
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetFilter() isContractExecutionAuthorization_ContractExecutionGrant_Filter {
-	if m != nil {
-		return m.Filter
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetContract() string {
-	if m != nil {
-		return m.Contract
-	}
-	return ""
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetInfiniteCalls() *InfiniteCalls {
-	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls); ok {
-		return x.InfiniteCalls
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetMaxCalls() *MaxCalls {
-	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls); ok {
-		return x.MaxCalls
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetMaxFunds() *MaxFunds {
-	if x, ok := m.GetExecutionLimit().(*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds); ok {
-		return x.MaxFunds
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetAcceptedMessageKeys() *AcceptedMessageKeysFilter {
-	if x, ok := m.GetFilter().(*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys); ok {
-		return x.AcceptedMessageKeys
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) GetAllowAllWildcard() *AllowAllWildcard {
-	if x, ok := m.GetFilter().(*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard); ok {
-		return x.AllowAllWildcard
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*ContractExecutionAuthorization_ContractExecutionGrant) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls)(nil),
-		(*ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls)(nil),
-		(*ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds)(nil),
-		(*ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys)(nil),
-		(*ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard)(nil),
-	}
-}
-
 // ContractMigrationAuthorization defines authorization for wasm contract
-// migration.
+// migration. Since: wasmd 0.30
 type ContractMigrationAuthorization struct {
-	Grants []ContractMigrationAuthorization_ContractMigrationGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants"`
+	// Grants for contract migrations
+	Grants []ContractGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants"`
 }
 
 func (m *ContractMigrationAuthorization) Reset()         { *m = ContractMigrationAuthorization{} }
@@ -295,140 +121,34 @@ func (m *ContractMigrationAuthorization) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractMigrationAuthorization proto.InternalMessageInfo
 
-func (m *ContractMigrationAuthorization) GetGrants() []ContractMigrationAuthorization_ContractMigrationGrant {
-	if m != nil {
-		return m.Grants
-	}
-	return nil
-}
-
-// ContractExecutionGrant a granted migrate permission for a single contract
-type ContractMigrationAuthorization_ContractMigrationGrant struct {
-	// Contract is the address of the smart contract
+// ContractGrant a granted permission for a single contract
+// Since: wasmd 0.30
+type ContractGrant struct {
+	// Contract is the bech32 address of the smart contract
 	Contract string `protobuf:"bytes,1,opt,name=contract,proto3" json:"contract,omitempty"`
-	// MaxExecutions specifies the number of authorized migrations remaining
-	//
-	// Types that are valid to be assigned to MaxExecutions:
-	//	*ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls
-	//	*ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls
-	MaxExecutions isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions `protobuf_oneof:"max_executions"`
+	// Limit defines execution limits that are enforced and updated when the grant
+	// is applied. When the limit lapsed the grant is removed.
+	Limit *types.Any `protobuf:"bytes,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Filter define more fine-grained control on the message payload passed
+	// to the contract in the operation. When no filter applies on execution, the
+	// operation is prohibited.
+	Filter *types.Any `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) Reset() {
-	*m = ContractMigrationAuthorization_ContractMigrationGrant{}
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) String() string {
-	return proto.CompactTextString(m)
-}
-func (*ContractMigrationAuthorization_ContractMigrationGrant) ProtoMessage() {}
-func (*ContractMigrationAuthorization_ContractMigrationGrant) Descriptor() ([]byte, []int) {
-	return fileDescriptor_36ff3a20cf32b258, []int{1, 0}
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_ContractMigrationAuthorization_ContractMigrationGrant.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContractMigrationAuthorization_ContractMigrationGrant.Merge(m, src)
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) XXX_Size() int {
-	return m.Size()
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContractMigrationAuthorization_ContractMigrationGrant.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContractMigrationAuthorization_ContractMigrationGrant proto.InternalMessageInfo
-
-type isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions interface {
-	isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions()
-	MarshalTo([]byte) (int, error)
-	Size() int
-}
-
-type ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls struct {
-	InfiniteCalls *InfiniteCalls `protobuf:"bytes,2,opt,name=infinite_calls,json=infiniteCalls,proto3,oneof" json:"infinite_calls,omitempty"`
-}
-type ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls struct {
-	MaxCalls *MaxCalls `protobuf:"bytes,3,opt,name=max_calls,json=maxCalls,proto3,oneof" json:"max_calls,omitempty"`
-}
-
-func (*ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls) isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions() {
-}
-
-func (*ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls) isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions() {
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) GetMaxExecutions() isContractMigrationAuthorization_ContractMigrationGrant_MaxExecutions {
-	if m != nil {
-		return m.MaxExecutions
-	}
-	return nil
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) GetContract() string {
-	if m != nil {
-		return m.Contract
-	}
-	return ""
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) GetInfiniteCalls() *InfiniteCalls {
-	if x, ok := m.GetMaxExecutions().(*ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls); ok {
-		return x.InfiniteCalls
-	}
-	return nil
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) GetMaxCalls() *MaxCalls {
-	if x, ok := m.GetMaxExecutions().(*ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls); ok {
-		return x.MaxCalls
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*ContractMigrationAuthorization_ContractMigrationGrant) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls)(nil),
-		(*ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls)(nil),
-	}
-}
-
-// InfiniteCalls unlimited number of calls
-type InfiniteCalls struct{}
-
-func (m *InfiniteCalls) Reset()         { *m = InfiniteCalls{} }
-func (m *InfiniteCalls) String() string { return proto.CompactTextString(m) }
-func (*InfiniteCalls) ProtoMessage()    {}
-func (*InfiniteCalls) Descriptor() ([]byte, []int) {
+func (m *ContractGrant) Reset()         { *m = ContractGrant{} }
+func (m *ContractGrant) String() string { return proto.CompactTextString(m) }
+func (*ContractGrant) ProtoMessage()    {}
+func (*ContractGrant) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{2}
 }
 
-func (m *InfiniteCalls) XXX_Unmarshal(b []byte) error {
+func (m *ContractGrant) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
 
-func (m *InfiniteCalls) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *ContractGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InfiniteCalls.Marshal(b, m, deterministic)
+		return xxx_messageInfo_ContractGrant.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -439,40 +159,41 @@ func (m *InfiniteCalls) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 	}
 }
 
-func (m *InfiniteCalls) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InfiniteCalls.Merge(m, src)
+func (m *ContractGrant) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractGrant.Merge(m, src)
 }
 
-func (m *InfiniteCalls) XXX_Size() int {
+func (m *ContractGrant) XXX_Size() int {
 	return m.Size()
 }
 
-func (m *InfiniteCalls) XXX_DiscardUnknown() {
-	xxx_messageInfo_InfiniteCalls.DiscardUnknown(m)
+func (m *ContractGrant) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractGrant.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InfiniteCalls proto.InternalMessageInfo
+var xxx_messageInfo_ContractGrant proto.InternalMessageInfo
 
-// MaxCalls limited number of calls
-type MaxCalls struct {
+// MaxCallsLimit limited number of calls to the contract. No funds transferable.
+// Since: wasmd 0.30
+type MaxCallsLimit struct {
 	// Remaining number that is decremented on each execution
 	Remaining uint64 `protobuf:"varint,1,opt,name=remaining,proto3" json:"remaining,omitempty"`
 }
 
-func (m *MaxCalls) Reset()         { *m = MaxCalls{} }
-func (m *MaxCalls) String() string { return proto.CompactTextString(m) }
-func (*MaxCalls) ProtoMessage()    {}
-func (*MaxCalls) Descriptor() ([]byte, []int) {
+func (m *MaxCallsLimit) Reset()         { *m = MaxCallsLimit{} }
+func (m *MaxCallsLimit) String() string { return proto.CompactTextString(m) }
+func (*MaxCallsLimit) ProtoMessage()    {}
+func (*MaxCallsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{3}
 }
 
-func (m *MaxCalls) XXX_Unmarshal(b []byte) error {
+func (m *MaxCallsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
 
-func (m *MaxCalls) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MaxCallsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MaxCalls.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MaxCallsLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -483,46 +204,41 @@ func (m *MaxCalls) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	}
 }
 
-func (m *MaxCalls) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MaxCalls.Merge(m, src)
+func (m *MaxCallsLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MaxCallsLimit.Merge(m, src)
 }
 
-func (m *MaxCalls) XXX_Size() int {
+func (m *MaxCallsLimit) XXX_Size() int {
 	return m.Size()
 }
 
-func (m *MaxCalls) XXX_DiscardUnknown() {
-	xxx_messageInfo_MaxCalls.DiscardUnknown(m)
+func (m *MaxCallsLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MaxCallsLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MaxCalls proto.InternalMessageInfo
+var xxx_messageInfo_MaxCallsLimit proto.InternalMessageInfo
 
-func (m *MaxCalls) GetRemaining() uint64 {
-	if m != nil {
-		return m.Remaining
-	}
-	return 0
-}
-
-// MaxFunds defines the max amounts that can be sent to a contract
-type MaxFunds struct {
+// MaxFundsLimit defines the maximal amounts that can be sent to the contract.
+// Since: wasmd 0.30
+type MaxFundsLimit struct {
+	// Amounts is the maximal amount of tokens transferable to the contract.
 	Amounts github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=amounts,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"amounts"`
 }
 
-func (m *MaxFunds) Reset()         { *m = MaxFunds{} }
-func (m *MaxFunds) String() string { return proto.CompactTextString(m) }
-func (*MaxFunds) ProtoMessage()    {}
-func (*MaxFunds) Descriptor() ([]byte, []int) {
+func (m *MaxFundsLimit) Reset()         { *m = MaxFundsLimit{} }
+func (m *MaxFundsLimit) String() string { return proto.CompactTextString(m) }
+func (*MaxFundsLimit) ProtoMessage()    {}
+func (*MaxFundsLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{4}
 }
 
-func (m *MaxFunds) XXX_Unmarshal(b []byte) error {
+func (m *MaxFundsLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
 
-func (m *MaxFunds) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MaxFundsLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MaxFunds.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MaxFundsLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -533,45 +249,44 @@ func (m *MaxFunds) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	}
 }
 
-func (m *MaxFunds) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MaxFunds.Merge(m, src)
+func (m *MaxFundsLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MaxFundsLimit.Merge(m, src)
 }
 
-func (m *MaxFunds) XXX_Size() int {
+func (m *MaxFundsLimit) XXX_Size() int {
 	return m.Size()
 }
 
-func (m *MaxFunds) XXX_DiscardUnknown() {
-	xxx_messageInfo_MaxFunds.DiscardUnknown(m)
+func (m *MaxFundsLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_MaxFundsLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MaxFunds proto.InternalMessageInfo
+var xxx_messageInfo_MaxFundsLimit proto.InternalMessageInfo
 
-func (m *MaxFunds) GetAmounts() github_com_cosmos_cosmos_sdk_types.Coins {
-	if m != nil {
-		return m.Amounts
-	}
-	return nil
+// CombinedLimit defines the maximal amounts that can be sent to a contract and
+// the maximal number of calls executable. Both need to remain >0 to be valid.
+// Since: wasmd 0.30
+type CombinedLimit struct {
+	// Remaining number that is decremented on each execution
+	CallsRemaining uint64 `protobuf:"varint,1,opt,name=calls_remaining,json=callsRemaining,proto3" json:"calls_remaining,omitempty"`
+	// Amounts is the maximal amount of tokens transferable to the contract.
+	Amounts github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=amounts,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"amounts"`
 }
 
-// AllowAllWildcard is a wildcard to allow any type of contract execution
-// message
-type AllowAllWildcard struct{}
-
-func (m *AllowAllWildcard) Reset()         { *m = AllowAllWildcard{} }
-func (m *AllowAllWildcard) String() string { return proto.CompactTextString(m) }
-func (*AllowAllWildcard) ProtoMessage()    {}
-func (*AllowAllWildcard) Descriptor() ([]byte, []int) {
+func (m *CombinedLimit) Reset()         { *m = CombinedLimit{} }
+func (m *CombinedLimit) String() string { return proto.CompactTextString(m) }
+func (*CombinedLimit) ProtoMessage()    {}
+func (*CombinedLimit) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{5}
 }
 
-func (m *AllowAllWildcard) XXX_Unmarshal(b []byte) error {
+func (m *CombinedLimit) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
 
-func (m *AllowAllWildcard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *CombinedLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AllowAllWildcard.Marshal(b, m, deterministic)
+		return xxx_messageInfo_CombinedLimit.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -582,32 +297,76 @@ func (m *AllowAllWildcard) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 	}
 }
 
-func (m *AllowAllWildcard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AllowAllWildcard.Merge(m, src)
+func (m *CombinedLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CombinedLimit.Merge(m, src)
 }
 
-func (m *AllowAllWildcard) XXX_Size() int {
+func (m *CombinedLimit) XXX_Size() int {
 	return m.Size()
 }
 
-func (m *AllowAllWildcard) XXX_DiscardUnknown() {
-	xxx_messageInfo_AllowAllWildcard.DiscardUnknown(m)
+func (m *CombinedLimit) XXX_DiscardUnknown() {
+	xxx_messageInfo_CombinedLimit.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AllowAllWildcard proto.InternalMessageInfo
+var xxx_messageInfo_CombinedLimit proto.InternalMessageInfo
 
-// AcceptedMessageKeysFilter accept specific contract message keys in the json
-// object that can be executed
+// AllowAllMessagesFilter is a wildcard to allow any type of contract payload
+// message.
+// Since: wasmd 0.30
+type AllowAllMessagesFilter struct{}
+
+func (m *AllowAllMessagesFilter) Reset()         { *m = AllowAllMessagesFilter{} }
+func (m *AllowAllMessagesFilter) String() string { return proto.CompactTextString(m) }
+func (*AllowAllMessagesFilter) ProtoMessage()    {}
+func (*AllowAllMessagesFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_36ff3a20cf32b258, []int{6}
+}
+
+func (m *AllowAllMessagesFilter) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+
+func (m *AllowAllMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AllowAllMessagesFilter.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+
+func (m *AllowAllMessagesFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AllowAllMessagesFilter.Merge(m, src)
+}
+
+func (m *AllowAllMessagesFilter) XXX_Size() int {
+	return m.Size()
+}
+
+func (m *AllowAllMessagesFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_AllowAllMessagesFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AllowAllMessagesFilter proto.InternalMessageInfo
+
+// AcceptedMessageKeysFilter accept only the specific contract message keys in
+// the json object to be executed.
+// Since: wasmd 0.30
 type AcceptedMessageKeysFilter struct {
 	// Messages is the list of unique keys
-	Messages []string `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Keys []string `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
 }
 
 func (m *AcceptedMessageKeysFilter) Reset()         { *m = AcceptedMessageKeysFilter{} }
 func (m *AcceptedMessageKeysFilter) String() string { return proto.CompactTextString(m) }
 func (*AcceptedMessageKeysFilter) ProtoMessage()    {}
 func (*AcceptedMessageKeysFilter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_36ff3a20cf32b258, []int{6}
+	return fileDescriptor_36ff3a20cf32b258, []int{7}
 }
 
 func (m *AcceptedMessageKeysFilter) XXX_Unmarshal(b []byte) error {
@@ -641,67 +400,105 @@ func (m *AcceptedMessageKeysFilter) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AcceptedMessageKeysFilter proto.InternalMessageInfo
 
-func (m *AcceptedMessageKeysFilter) GetMessages() []string {
-	if m != nil {
-		return m.Messages
-	}
-	return nil
+// AcceptedMessagesFilter accept only the specific raw contract messages to be
+// executed.
+// Since: wasmd 0.30
+type AcceptedMessagesFilter struct {
+	// Messages is the list of raw contract messages
+	Messages []RawContractMessage `protobuf:"bytes,1,rep,name=messages,proto3,casttype=RawContractMessage" json:"messages,omitempty"`
 }
+
+func (m *AcceptedMessagesFilter) Reset()         { *m = AcceptedMessagesFilter{} }
+func (m *AcceptedMessagesFilter) String() string { return proto.CompactTextString(m) }
+func (*AcceptedMessagesFilter) ProtoMessage()    {}
+func (*AcceptedMessagesFilter) Descriptor() ([]byte, []int) {
+	return fileDescriptor_36ff3a20cf32b258, []int{8}
+}
+
+func (m *AcceptedMessagesFilter) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+
+func (m *AcceptedMessagesFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AcceptedMessagesFilter.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+
+func (m *AcceptedMessagesFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AcceptedMessagesFilter.Merge(m, src)
+}
+
+func (m *AcceptedMessagesFilter) XXX_Size() int {
+	return m.Size()
+}
+
+func (m *AcceptedMessagesFilter) XXX_DiscardUnknown() {
+	xxx_messageInfo_AcceptedMessagesFilter.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AcceptedMessagesFilter proto.InternalMessageInfo
 
 func init() {
 	proto.RegisterType((*ContractExecutionAuthorization)(nil), "cosmwasm.wasm.v1.ContractExecutionAuthorization")
-	proto.RegisterType((*ContractExecutionAuthorization_ContractExecutionGrant)(nil), "cosmwasm.wasm.v1.ContractExecutionAuthorization.ContractExecutionGrant")
 	proto.RegisterType((*ContractMigrationAuthorization)(nil), "cosmwasm.wasm.v1.ContractMigrationAuthorization")
-	proto.RegisterType((*ContractMigrationAuthorization_ContractMigrationGrant)(nil), "cosmwasm.wasm.v1.ContractMigrationAuthorization.ContractMigrationGrant")
-	proto.RegisterType((*InfiniteCalls)(nil), "cosmwasm.wasm.v1.InfiniteCalls")
-	proto.RegisterType((*MaxCalls)(nil), "cosmwasm.wasm.v1.MaxCalls")
-	proto.RegisterType((*MaxFunds)(nil), "cosmwasm.wasm.v1.MaxFunds")
-	proto.RegisterType((*AllowAllWildcard)(nil), "cosmwasm.wasm.v1.AllowAllWildcard")
+	proto.RegisterType((*ContractGrant)(nil), "cosmwasm.wasm.v1.ContractGrant")
+	proto.RegisterType((*MaxCallsLimit)(nil), "cosmwasm.wasm.v1.MaxCallsLimit")
+	proto.RegisterType((*MaxFundsLimit)(nil), "cosmwasm.wasm.v1.MaxFundsLimit")
+	proto.RegisterType((*CombinedLimit)(nil), "cosmwasm.wasm.v1.CombinedLimit")
+	proto.RegisterType((*AllowAllMessagesFilter)(nil), "cosmwasm.wasm.v1.AllowAllMessagesFilter")
 	proto.RegisterType((*AcceptedMessageKeysFilter)(nil), "cosmwasm.wasm.v1.AcceptedMessageKeysFilter")
+	proto.RegisterType((*AcceptedMessagesFilter)(nil), "cosmwasm.wasm.v1.AcceptedMessagesFilter")
 }
 
 func init() { proto.RegisterFile("cosmwasm/wasm/v1/authz.proto", fileDescriptor_36ff3a20cf32b258) }
 
 var fileDescriptor_36ff3a20cf32b258 = []byte{
-	// 605 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x54, 0x4f, 0x6f, 0xd3, 0x30,
-	0x1c, 0x6d, 0xb6, 0x52, 0x5a, 0x4f, 0xdb, 0xba, 0xf0, 0x47, 0x59, 0x35, 0x65, 0x53, 0x0e, 0xa8,
-	0x12, 0x5a, 0x42, 0xc7, 0x01, 0xc1, 0x89, 0xa6, 0x62, 0x2b, 0x42, 0xbd, 0xe4, 0x32, 0x89, 0x4b,
-	0xe4, 0x26, 0x6e, 0x6a, 0x2d, 0x89, 0x4b, 0xec, 0xf4, 0xcf, 0x3e, 0x05, 0x9f, 0x83, 0x33, 0x1f,
-	0xa2, 0x12, 0x97, 0x89, 0x13, 0x27, 0x40, 0xad, 0x90, 0xf8, 0x18, 0x28, 0x8e, 0xd3, 0xae, 0x4d,
-	0xd9, 0x85, 0x0b, 0x17, 0xd7, 0x3f, 0xbf, 0xf7, 0x7b, 0xfa, 0xd5, 0x7e, 0x79, 0xe0, 0xc8, 0x21,
-	0x34, 0x18, 0x41, 0x1a, 0x18, 0x7c, 0x19, 0x36, 0x0c, 0x18, 0xb3, 0xfe, 0xb5, 0x3e, 0x88, 0x08,
-	0x23, 0x72, 0x35, 0x43, 0x75, 0xbe, 0x0c, 0x1b, 0xb5, 0x87, 0x1e, 0xf1, 0x08, 0x07, 0x8d, 0x64,
-	0x97, 0xf2, 0x6a, 0x87, 0x09, 0x8f, 0x50, 0x3b, 0x05, 0xd2, 0x42, 0x40, 0x6a, 0x5a, 0x19, 0x5d,
-	0x48, 0x91, 0x31, 0x6c, 0x74, 0x11, 0x83, 0x0d, 0xc3, 0x21, 0x38, 0x4c, 0x71, 0xed, 0x57, 0x11,
-	0xa8, 0x2d, 0x12, 0xb2, 0x08, 0x3a, 0xec, 0xcd, 0x18, 0x39, 0x31, 0xc3, 0x24, 0x6c, 0xc6, 0xac,
-	0x4f, 0x22, 0x7c, 0x0d, 0x93, 0x42, 0x46, 0xa0, 0xe4, 0x45, 0x30, 0x64, 0x54, 0x91, 0x4e, 0xb6,
-	0xeb, 0x3b, 0x67, 0x17, 0xfa, 0xfa, 0x58, 0xfa, 0xdd, 0x0a, 0x79, 0xf8, 0x22, 0xd1, 0x33, 0x8b,
-	0xd3, 0xef, 0xc7, 0x05, 0x4b, 0x88, 0xd7, 0xa6, 0xdb, 0xe0, 0xf1, 0x66, 0xa2, 0x5c, 0x03, 0x65,
-	0x47, 0x20, 0x8a, 0x74, 0x22, 0xd5, 0x2b, 0xd6, 0xa2, 0x96, 0xdb, 0x60, 0x0f, 0x87, 0x3d, 0x1c,
-	0x62, 0x86, 0x6c, 0x07, 0xfa, 0x3e, 0x55, 0xb6, 0x4e, 0xa4, 0xfa, 0xce, 0xd9, 0x71, 0x7e, 0xca,
-	0xb7, 0x82, 0xd7, 0x4a, 0x68, 0xed, 0x82, 0xb5, 0x8b, 0x6f, 0x1f, 0xc8, 0x2f, 0x41, 0x25, 0x80,
-	0x63, 0x21, 0xb2, 0xcd, 0x45, 0x6a, 0x79, 0x91, 0x0e, 0x1c, 0x67, 0xfd, 0xe5, 0x40, 0xec, 0xb3,
-	0xd6, 0x5e, 0x1c, 0xba, 0x54, 0x29, 0xde, 0xd1, 0x7a, 0x9e, 0x30, 0x44, 0x2b, 0xdf, 0xcb, 0x10,
-	0x3c, 0x82, 0x8e, 0x83, 0x06, 0x0c, 0xb9, 0x76, 0x80, 0x28, 0x85, 0x1e, 0xb2, 0xaf, 0xd0, 0x84,
-	0x2a, 0xf7, 0xb8, 0xcc, 0xd3, 0xbc, 0x4c, 0x53, 0xd0, 0x3b, 0x29, 0xfb, 0x1d, 0x9a, 0xd0, 0x73,
-	0xec, 0x33, 0x14, 0xb5, 0x25, 0xeb, 0x01, 0xcc, 0x83, 0xb2, 0x05, 0x64, 0xe8, 0xfb, 0x64, 0x64,
-	0x43, 0xdf, 0xb7, 0x47, 0xd8, 0x77, 0x1d, 0x18, 0xb9, 0x4a, 0x89, 0xeb, 0x6b, 0x1b, 0xf4, 0x13,
-	0x6e, 0xd3, 0xf7, 0x2f, 0x05, 0xb3, 0x2d, 0x59, 0x55, 0xb8, 0x76, 0x66, 0x1e, 0x80, 0x7d, 0x94,
-	0x3d, 0x92, 0xed, 0xe3, 0x00, 0x33, 0xb3, 0x0c, 0x4a, 0x3d, 0x3e, 0xc7, 0xab, 0x83, 0xaf, 0x9f,
-	0x4f, 0x77, 0x57, 0x2c, 0xa0, 0xfd, 0xde, 0x5a, 0xfa, 0xac, 0x83, 0xbd, 0x08, 0xfe, 0x93, 0xcf,
-	0x36, 0x2b, 0xe4, 0xe1, 0x4d, 0x3e, 0xfb, 0x22, 0x2d, 0x7d, 0xb6, 0x4a, 0xfc, 0xef, 0x7d, 0x66,
-	0x56, 0xc1, 0x5e, 0xd2, 0xba, 0xb8, 0x79, 0xba, 0xe9, 0xaa, 0xf7, 0xc1, 0xee, 0xca, 0x04, 0x5a,
-	0x1d, 0x94, 0x33, 0x35, 0xf9, 0x08, 0x54, 0x22, 0x14, 0x40, 0x1c, 0xe2, 0xd0, 0xe3, 0xff, 0xb1,
-	0x68, 0x2d, 0x0f, 0xb4, 0x0f, 0x9c, 0x99, 0x1a, 0x13, 0x81, 0xfb, 0x30, 0x20, 0xf1, 0xf2, 0x3d,
-	0x0e, 0x75, 0x91, 0x2c, 0x49, 0x96, 0xe8, 0x22, 0x4b, 0xf4, 0x16, 0xc1, 0xa1, 0xf9, 0x2c, 0xb9,
-	0xe1, 0x4f, 0x3f, 0x8e, 0xeb, 0x1e, 0x66, 0xfd, 0xb8, 0xab, 0x3b, 0x24, 0x10, 0x31, 0x24, 0x7e,
-	0x4e, 0xa9, 0x7b, 0x65, 0xb0, 0xc9, 0x00, 0x51, 0xde, 0x40, 0xad, 0x4c, 0x5b, 0x93, 0x41, 0x75,
-	0xdd, 0x70, 0xda, 0x0b, 0x70, 0xf8, 0x57, 0x93, 0x27, 0x8f, 0x24, 0xbe, 0x93, 0x74, 0xb0, 0x8a,
-	0xb5, 0xa8, 0xcd, 0xd7, 0xd3, 0x99, 0x2a, 0xdd, 0xcc, 0x54, 0xe9, 0xe7, 0x4c, 0x95, 0x3e, 0xce,
-	0xd5, 0xc2, 0xcd, 0x5c, 0x2d, 0x7c, 0x9b, 0xab, 0x85, 0xf7, 0x4f, 0x6e, 0x4d, 0xd6, 0x22, 0x34,
-	0xb8, 0xcc, 0x32, 0xd7, 0x35, 0xc6, 0x69, 0xf6, 0xf2, 0xe9, 0xba, 0x25, 0x1e, 0x8b, 0xcf, 0xff,
-	0x04, 0x00, 0x00, 0xff, 0xff, 0xd0, 0x9f, 0xfa, 0xa4, 0x99, 0x05, 0x00, 0x00,
+	// 578 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x54, 0x4d, 0x8f, 0xd2, 0x40,
+	0x18, 0xa6, 0xbb, 0x2b, 0x2e, 0xb3, 0xe2, 0x47, 0x25, 0x08, 0x64, 0x53, 0x08, 0x07, 0xe5, 0x42,
+	0x2b, 0x78, 0x23, 0xf1, 0x00, 0x28, 0xc6, 0x28, 0x97, 0x5e, 0xdc, 0x78, 0xd9, 0x4c, 0xcb, 0x50,
+	0x26, 0xdb, 0x76, 0x48, 0x67, 0xca, 0xd7, 0x9f, 0xd0, 0xdf, 0xe1, 0x99, 0x83, 0x3f, 0x81, 0x70,
+	0xda, 0xa3, 0xa7, 0x55, 0xe1, 0x5f, 0x78, 0x32, 0x9d, 0x99, 0xb2, 0x40, 0xc2, 0x1e, 0xf5, 0x52,
+	0xe6, 0xfd, 0x78, 0x9e, 0xf7, 0x99, 0xf7, 0x7d, 0x19, 0x70, 0x6e, 0x13, 0xea, 0x8d, 0x21, 0xf5,
+	0x0c, 0xfe, 0x19, 0xd5, 0x0c, 0x18, 0xb2, 0xc1, 0x4c, 0x1f, 0x06, 0x84, 0x11, 0xf5, 0x71, 0x1c,
+	0xd5, 0xf9, 0x67, 0x54, 0x2b, 0x64, 0x1c, 0xe2, 0x10, 0x1e, 0x34, 0xa2, 0x93, 0xc8, 0x2b, 0xe4,
+	0xa3, 0x3c, 0x42, 0x2f, 0x45, 0x40, 0x18, 0x32, 0xa4, 0x09, 0xcb, 0xb0, 0x20, 0x45, 0xc6, 0xa8,
+	0x66, 0x21, 0x06, 0x6b, 0x86, 0x4d, 0xb0, 0x1f, 0x43, 0x1d, 0x42, 0x1c, 0x17, 0x19, 0xdc, 0xb2,
+	0xc2, 0xbe, 0x01, 0xfd, 0xa9, 0x08, 0x95, 0x03, 0xa0, 0xb5, 0x89, 0xcf, 0x02, 0x68, 0xb3, 0xb7,
+	0x13, 0x64, 0x87, 0x0c, 0x13, 0xbf, 0x19, 0xb2, 0x01, 0x09, 0xf0, 0x0c, 0x46, 0x86, 0xfa, 0x1a,
+	0x24, 0x9d, 0x00, 0xfa, 0x8c, 0xe6, 0x94, 0xd2, 0x71, 0xe5, 0xac, 0x5e, 0xd4, 0xf7, 0x05, 0xeb,
+	0x31, 0xc3, 0xbb, 0x28, 0xaf, 0x75, 0xb2, 0xb8, 0x29, 0x26, 0x4c, 0x09, 0x6a, 0x3c, 0x59, 0xce,
+	0xab, 0xe9, 0x1d, 0xc6, 0xed, 0x9a, 0x5d, 0xec, 0x04, 0xf0, 0x5f, 0xd4, 0xfc, 0xae, 0x80, 0xf4,
+	0x0e, 0x44, 0x2d, 0x80, 0x53, 0x5b, 0x3a, 0x72, 0x4a, 0x49, 0xa9, 0xa4, 0xcc, 0x8d, 0xad, 0xb6,
+	0xc1, 0x3d, 0x17, 0x7b, 0x98, 0xe5, 0x8e, 0x4a, 0x4a, 0xe5, 0xac, 0x9e, 0xd1, 0x45, 0x03, 0xf5,
+	0xb8, 0x81, 0x7a, 0xd3, 0x9f, 0xb6, 0x9e, 0x2d, 0xe7, 0xd5, 0xa7, 0x31, 0x67, 0x54, 0x6d, 0xf6,
+	0x31, 0xc2, 0x5c, 0x98, 0x02, 0xab, 0x76, 0x40, 0xb2, 0x8f, 0x5d, 0x86, 0x82, 0xdc, 0xf1, 0x1d,
+	0x2c, 0xb9, 0xe5, 0xbc, 0x9a, 0xd9, 0x61, 0xe9, 0x70, 0xd0, 0x85, 0x29, 0xd1, 0xe5, 0x0e, 0x48,
+	0x77, 0xe1, 0xa4, 0x0d, 0x5d, 0x97, 0xf2, 0x02, 0xea, 0x39, 0x48, 0x05, 0xc8, 0x83, 0xd8, 0xc7,
+	0xbe, 0xc3, 0xa5, 0x9f, 0x98, 0xb7, 0x8e, 0xc6, 0x21, 0x59, 0xe5, 0x2f, 0x0a, 0x27, 0xea, 0x84,
+	0x7e, 0x4f, 0x12, 0x21, 0x70, 0x1f, 0x7a, 0x24, 0xbc, 0xed, 0x73, 0x5e, 0x97, 0x7b, 0x15, 0x6d,
+	0x92, 0x2e, 0x37, 0x49, 0x6f, 0x13, 0xec, 0xb7, 0x5e, 0x46, 0x1d, 0xfe, 0xf6, 0xb3, 0x58, 0x71,
+	0x30, 0x1b, 0x84, 0x96, 0x6e, 0x13, 0x4f, 0x2e, 0xa1, 0xfc, 0xa9, 0xd2, 0xde, 0x95, 0xc1, 0xa6,
+	0x43, 0x44, 0x39, 0x80, 0x9a, 0x31, 0xf7, 0x61, 0x45, 0x62, 0x28, 0x9e, 0x85, 0x7d, 0xd4, 0x13,
+	0x8a, 0x5e, 0x80, 0x47, 0x76, 0x74, 0xd1, 0xcb, 0xfd, 0x0b, 0x3e, 0xe4, 0x6e, 0x33, 0xf6, 0x6e,
+	0x4b, 0x3f, 0xfa, 0x1f, 0xd2, 0xeb, 0x20, 0xdb, 0x74, 0x5d, 0x32, 0x6e, 0xba, 0x6e, 0x17, 0x51,
+	0x0a, 0x1d, 0x44, 0xc5, 0xdc, 0x1a, 0x07, 0x07, 0x5a, 0x7e, 0x0f, 0xf2, 0x4d, 0xdb, 0x46, 0x43,
+	0x86, 0x7a, 0x12, 0xf3, 0x01, 0x4d, 0x25, 0x4c, 0x55, 0xc1, 0xc9, 0x15, 0x9a, 0x8a, 0x41, 0xa4,
+	0x4c, 0x7e, 0xbe, 0x83, 0xaa, 0x0f, 0xb2, 0x7b, 0x54, 0x31, 0x4f, 0x1d, 0x9c, 0x7a, 0xd2, 0xc3,
+	0xb9, 0x1e, 0xb4, 0xb2, 0x7f, 0x6e, 0x8a, 0xaa, 0x09, 0xc7, 0x9b, 0xff, 0x9c, 0x08, 0x9b, 0x9b,
+	0xbc, 0xc3, 0x75, 0x5a, 0x6f, 0x16, 0xbf, 0xb5, 0xc4, 0x62, 0xa5, 0x29, 0xd7, 0x2b, 0x4d, 0xf9,
+	0xb5, 0xd2, 0x94, 0xaf, 0x6b, 0x2d, 0x71, 0xbd, 0xd6, 0x12, 0x3f, 0xd6, 0x5a, 0xe2, 0xf3, 0xf3,
+	0xad, 0x86, 0xb6, 0x09, 0xf5, 0x3e, 0xc5, 0x6f, 0x5c, 0xcf, 0x98, 0x88, 0xb7, 0x8e, 0x37, 0xd5,
+	0x4a, 0xf2, 0x8d, 0x7f, 0xf5, 0x37, 0x00, 0x00, 0xff, 0xff, 0x13, 0xc8, 0x1d, 0x99, 0x09, 0x05,
+	0x00, 0x00,
 }
 
 func (m *ContractExecutionAuthorization) Marshal() (dAtA []byte, err error) {
@@ -737,164 +534,6 @@ func (m *ContractExecutionAuthorization) MarshalToSizedBuffer(dAtA []byte) (int,
 			i--
 			dAtA[i] = 0xa
 		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Filter != nil {
-		{
-			size := m.Filter.Size()
-			i -= size
-			if _, err := m.Filter.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-		}
-	}
-	if m.ExecutionLimit != nil {
-		{
-			size := m.ExecutionLimit.Size()
-			i -= size
-			if _, err := m.ExecutionLimit.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-		}
-	}
-	if len(m.Contract) > 0 {
-		i -= len(m.Contract)
-		copy(dAtA[i:], m.Contract)
-		i = encodeVarintAuthz(dAtA, i, uint64(len(m.Contract)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.InfiniteCalls != nil {
-		{
-			size, err := m.InfiniteCalls.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.MaxCalls != nil {
-		{
-			size, err := m.MaxCalls.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.MaxFunds != nil {
-		{
-			size, err := m.MaxFunds.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x22
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.AcceptedMessageKeys != nil {
-		{
-			size, err := m.AcceptedMessageKeys.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x2a
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.AllowAllWildcard != nil {
-		{
-			size, err := m.AllowAllWildcard.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x32
 	}
 	return len(dAtA) - i, nil
 }
@@ -936,7 +575,7 @@ func (m *ContractMigrationAuthorization) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) Marshal() (dAtA []byte, err error) {
+func (m *ContractGrant) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -946,24 +585,39 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Marshal() (dAtA 
 	return dAtA[:n], nil
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) MarshalTo(dAtA []byte) (int, error) {
+func (m *ContractGrant) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ContractGrant) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.MaxExecutions != nil {
+	if m.Filter != nil {
 		{
-			size := m.MaxExecutions.Size()
-			i -= size
-			if _, err := m.MaxExecutions.MarshalTo(dAtA[i:]); err != nil {
+			size, err := m.Filter.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
+			i -= size
+			i = encodeVarintAuthz(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Limit != nil {
+		{
+			size, err := m.Limit.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAuthz(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
 	}
 	if len(m.Contract) > 0 {
 		i -= len(m.Contract)
@@ -975,51 +629,7 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) MarshalToSizedBu
 	return len(dAtA) - i, nil
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.InfiniteCalls != nil {
-		{
-			size, err := m.InfiniteCalls.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.MaxCalls != nil {
-		{
-			size, err := m.MaxCalls.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintAuthz(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *InfiniteCalls) Marshal() (dAtA []byte, err error) {
+func (m *MaxCallsLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1029,35 +639,12 @@ func (m *InfiniteCalls) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InfiniteCalls) MarshalTo(dAtA []byte) (int, error) {
+func (m *MaxCallsLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *InfiniteCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MaxCalls) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MaxCalls) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MaxCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MaxCallsLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1070,7 +657,7 @@ func (m *MaxCalls) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MaxFunds) Marshal() (dAtA []byte, err error) {
+func (m *MaxFundsLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1080,12 +667,12 @@ func (m *MaxFunds) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MaxFunds) MarshalTo(dAtA []byte) (int, error) {
+func (m *MaxFundsLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MaxFunds) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MaxFundsLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1107,7 +694,7 @@ func (m *MaxFunds) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *AllowAllWildcard) Marshal() (dAtA []byte, err error) {
+func (m *CombinedLimit) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1117,12 +704,54 @@ func (m *AllowAllWildcard) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AllowAllWildcard) MarshalTo(dAtA []byte) (int, error) {
+func (m *CombinedLimit) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AllowAllWildcard) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *CombinedLimit) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Amounts) > 0 {
+		for iNdEx := len(m.Amounts) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Amounts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAuthz(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.CallsRemaining != 0 {
+		i = encodeVarintAuthz(dAtA, i, uint64(m.CallsRemaining))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AllowAllMessagesFilter) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AllowAllMessagesFilter) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AllowAllMessagesFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1146,6 +775,38 @@ func (m *AcceptedMessageKeysFilter) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *AcceptedMessageKeysFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Keys) > 0 {
+		for iNdEx := len(m.Keys) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Keys[iNdEx])
+			copy(dAtA[i:], m.Keys[iNdEx])
+			i = encodeVarintAuthz(dAtA, i, uint64(len(m.Keys[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AcceptedMessagesFilter) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AcceptedMessagesFilter) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AcceptedMessagesFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1189,90 +850,6 @@ func (m *ContractExecutionAuthorization) Size() (n int) {
 	return n
 }
 
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Contract)
-	if l > 0 {
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	if m.ExecutionLimit != nil {
-		n += m.ExecutionLimit.Size()
-	}
-	if m.Filter != nil {
-		n += m.Filter.Size()
-	}
-	return n
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.InfiniteCalls != nil {
-		l = m.InfiniteCalls.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.MaxCalls != nil {
-		l = m.MaxCalls.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.MaxFunds != nil {
-		l = m.MaxFunds.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.AcceptedMessageKeys != nil {
-		l = m.AcceptedMessageKeys.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.AllowAllWildcard != nil {
-		l = m.AllowAllWildcard.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
 func (m *ContractMigrationAuthorization) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1288,7 +865,7 @@ func (m *ContractMigrationAuthorization) Size() (n int) {
 	return n
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) Size() (n int) {
+func (m *ContractGrant) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1298,48 +875,18 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAuthz(uint64(l))
 	}
-	if m.MaxExecutions != nil {
-		n += m.MaxExecutions.Size()
+	if m.Limit != nil {
+		l = m.Limit.Size()
+		n += 1 + l + sovAuthz(uint64(l))
 	}
-	return n
-}
-
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.InfiniteCalls != nil {
-		l = m.InfiniteCalls.Size()
+	if m.Filter != nil {
+		l = m.Filter.Size()
 		n += 1 + l + sovAuthz(uint64(l))
 	}
 	return n
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.MaxCalls != nil {
-		l = m.MaxCalls.Size()
-		n += 1 + l + sovAuthz(uint64(l))
-	}
-	return n
-}
-
-func (m *InfiniteCalls) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MaxCalls) Size() (n int) {
+func (m *MaxCallsLimit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1351,7 +898,7 @@ func (m *MaxCalls) Size() (n int) {
 	return n
 }
 
-func (m *MaxFunds) Size() (n int) {
+func (m *MaxFundsLimit) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1366,7 +913,25 @@ func (m *MaxFunds) Size() (n int) {
 	return n
 }
 
-func (m *AllowAllWildcard) Size() (n int) {
+func (m *CombinedLimit) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CallsRemaining != 0 {
+		n += 1 + sovAuthz(uint64(m.CallsRemaining))
+	}
+	if len(m.Amounts) > 0 {
+		for _, e := range m.Amounts {
+			l = e.Size()
+			n += 1 + l + sovAuthz(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *AllowAllMessagesFilter) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1381,9 +946,24 @@ func (m *AcceptedMessageKeysFilter) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if len(m.Messages) > 0 {
-		for _, s := range m.Messages {
+	if len(m.Keys) > 0 {
+		for _, s := range m.Keys {
 			l = len(s)
+			n += 1 + l + sovAuthz(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *AcceptedMessagesFilter) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Messages) > 0 {
+		for _, b := range m.Messages {
+			l = len(b)
 			n += 1 + l + sovAuthz(uint64(l))
 		}
 	}
@@ -1456,268 +1036,10 @@ func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Grants = append(m.Grants, ContractExecutionAuthorization_ContractExecutionGrant{})
+			m.Grants = append(m.Grants, ContractGrant{})
 			if err := m.Grants[len(m.Grants)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-
-func (m *ContractExecutionAuthorization_ContractExecutionGrant) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: ContractExecutionGrant: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ContractExecutionGrant: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Contract", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Contract = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InfiniteCalls", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &InfiniteCalls{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_InfiniteCalls{v}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxCalls", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &MaxCalls{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_MaxCalls{v}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxFunds", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &MaxFunds{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.ExecutionLimit = &ContractExecutionAuthorization_ContractExecutionGrant_MaxFunds{v}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AcceptedMessageKeys", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &AcceptedMessageKeysFilter{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.Filter = &ContractExecutionAuthorization_ContractExecutionGrant_AcceptedMessageKeys{v}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllowAllWildcard", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAuthz
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &AllowAllWildcard{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.Filter = &ContractExecutionAuthorization_ContractExecutionGrant_AllowAllWildcard{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1799,7 +1121,7 @@ func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Grants = append(m.Grants, ContractMigrationAuthorization_ContractMigrationGrant{})
+			m.Grants = append(m.Grants, ContractGrant{})
 			if err := m.Grants[len(m.Grants)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1826,7 +1148,7 @@ func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA []byte) error {
+func (m *ContractGrant) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1849,10 +1171,10 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA [
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ContractMigrationGrant: wiretype end group for non-group")
+			return fmt.Errorf("proto: ContractGrant: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ContractMigrationGrant: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ContractGrant: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1889,7 +1211,7 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA [
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InfiniteCalls", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1916,15 +1238,16 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA [
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := &InfiniteCalls{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Limit == nil {
+				m.Limit = &types.Any{}
+			}
+			if err := m.Limit.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.MaxExecutions = &ContractMigrationAuthorization_ContractMigrationGrant_InfiniteCalls{v}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MaxCalls", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Filter", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1951,11 +1274,12 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA [
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := &MaxCalls{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Filter == nil {
+				m.Filter = &types.Any{}
+			}
+			if err := m.Filter.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.MaxExecutions = &ContractMigrationAuthorization_ContractMigrationGrant_MaxCalls{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1979,7 +1303,7 @@ func (m *ContractMigrationAuthorization_ContractMigrationGrant) Unmarshal(dAtA [
 	return nil
 }
 
-func (m *InfiniteCalls) Unmarshal(dAtA []byte) error {
+func (m *MaxCallsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2002,61 +1326,10 @@ func (m *InfiniteCalls) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InfiniteCalls: wiretype end group for non-group")
+			return fmt.Errorf("proto: MaxCallsLimit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InfiniteCalls: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipAuthz(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthAuthz
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-
-func (m *MaxCalls) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowAuthz
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MaxCalls: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MaxCalls: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MaxCallsLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2100,7 +1373,7 @@ func (m *MaxCalls) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-func (m *MaxFunds) Unmarshal(dAtA []byte) error {
+func (m *MaxFundsLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2123,10 +1396,10 @@ func (m *MaxFunds) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MaxFunds: wiretype end group for non-group")
+			return fmt.Errorf("proto: MaxFundsLimit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MaxFunds: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MaxFundsLimit: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2158,7 +1431,7 @@ func (m *MaxFunds) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Amounts = append(m.Amounts, types.Coin{})
+			m.Amounts = append(m.Amounts, types1.Coin{})
 			if err := m.Amounts[len(m.Amounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -2185,7 +1458,7 @@ func (m *MaxFunds) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-func (m *AllowAllWildcard) Unmarshal(dAtA []byte) error {
+func (m *CombinedLimit) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2208,10 +1481,114 @@ func (m *AllowAllWildcard) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AllowAllWildcard: wiretype end group for non-group")
+			return fmt.Errorf("proto: CombinedLimit: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AllowAllWildcard: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CombinedLimit: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CallsRemaining", wireType)
+			}
+			m.CallsRemaining = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CallsRemaining |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amounts", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amounts = append(m.Amounts, types1.Coin{})
+			if err := m.Amounts[len(m.Amounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuthz(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *AllowAllMessagesFilter) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuthz
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AllowAllMessagesFilter: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AllowAllMessagesFilter: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -2267,7 +1644,7 @@ func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Messages", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Keys", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2295,7 +1672,90 @@ func (m *AcceptedMessageKeysFilter) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Messages = append(m.Messages, string(dAtA[iNdEx:postIndex]))
+			m.Keys = append(m.Keys, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuthz(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *AcceptedMessagesFilter) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuthz
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AcceptedMessagesFilter: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AcceptedMessagesFilter: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Messages", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuthz
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuthz
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Messages = append(m.Messages, make([]byte, postIndex-iNdEx))
+			copy(m.Messages[len(m.Messages)-1], dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

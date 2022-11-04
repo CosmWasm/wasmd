@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -14,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
@@ -34,9 +32,9 @@ const (
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
-	flagAllowedMsgs            = "allow-msgs"
-	flagRunOnce                = "run-once"
-	flagExpiration             = "expiration"
+	flagAllowedMsgs               = "allow-msgs"
+	flagRunOnce                   = "run-once"
+	flagExpiration                = "expiration"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -414,23 +412,32 @@ func GrantAuthorizationCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			authorization := types.NewContractAuthorization(contract, msgs, once)
-			if err = authorization.ValidateBasic(); err != nil {
-				return err
+			if exp == 0 {
+				return errors.New("expiration must be set")
 			}
+			_ = clientCtx
+			_ = grantee
+			_ = msgs
+			_ = once
+			_ = contract
 
-			msg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(exp, 0))
-			if err != nil {
-				return err
-			}
+			return errors.New("not implemented")
+			//authorization := types.NewContractAuthorization(contract, msgs, once)
+			//if err = authorization.ValidateBasic(); err != nil {
+			//	return err
+			//}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			//msg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(exp, 0))
+			//if err != nil {
+			//	return err
+			//}
+			//
+			//return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().StringSlice(flagAllowedMsgs, []string{}, "Allowed msgs")
 	cmd.Flags().Bool(flagRunOnce, false, "Allow to execute only once")
-	cmd.Flags().Int64(flagExpiration, time.Now().AddDate(1, 0, 0).Unix(), "The Unix timestamp. Default is one year.")
+	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
 	return cmd
 }
