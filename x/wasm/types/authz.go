@@ -328,7 +328,7 @@ func (f AllowAllMessagesFilter) ValidateBasic() error {
 }
 
 // NewAcceptedMessageKeysFilter constructor
-func NewAcceptedMessageKeysFilter(acceptedKeys []string) *AcceptedMessageKeysFilter {
+func NewAcceptedMessageKeysFilter(acceptedKeys ...string) *AcceptedMessageKeysFilter {
 	return &AcceptedMessageKeysFilter{Keys: acceptedKeys}
 }
 
