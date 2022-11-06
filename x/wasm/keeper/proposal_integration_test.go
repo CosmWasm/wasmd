@@ -236,10 +236,13 @@ func TestMigrateProposal(t *testing.T) {
 		c.Admin = anyAddress.String()
 		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
+	entries := []types.ContractCodeHistoryEntry{
+		contractInfoFixture.ResetFromGenesis(ctx),
+	}
 	key, err := hex.DecodeString("636F6E666967")
 	require.NoError(t, err)
 	m := types.Model{Key: key, Value: []byte(`{"verifier":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","beneficiary":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","funder":"AQEBAQEBAQEBAQEBAQEBAQEBAQE="}`)}
-	require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &contractInfoFixture, []types.Model{m}))
+	require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &contractInfoFixture, []types.Model{m}, entries))
 
 	migMsg := struct {
 		Verifier sdk.AccAddress `json:"verifier"`
@@ -473,7 +476,11 @@ func TestAdminProposals(t *testing.T) {
 			codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfoFixture, wasmCode))
 
-			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}))
+			entries := []types.ContractCodeHistoryEntry{
+				spec.state.ResetFromGenesis(ctx),
+			}
+
+			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}, entries))
 			// when stored
 			storedProposal, err := govKeeper.SubmitProposal(ctx, spec.srcProposal)
 			require.NoError(t, err)
