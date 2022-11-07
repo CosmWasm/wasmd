@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -13,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
@@ -33,8 +35,9 @@ const (
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
 	flagAllowedMsgs               = "allow-msgs"
-	flagRunOnce                   = "run-once"
 	flagExpiration                = "expiration"
+	flagMaxCalls                  = "max-calls"
+	flagsMaxFunds                 = "max-funds"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -379,9 +382,9 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 
 func GrantAuthorizationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
+		Use:   "grant [grantee] [authorization_type=\"execution\"|\"migration\"] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
 		Short: "Grant authorization to an address",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -393,7 +396,7 @@ func GrantAuthorizationCmd() *cobra.Command {
 				return err
 			}
 
-			contract, err := sdk.AccAddressFromBech32(args[1])
+			contract, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
 				return err
 			}
@@ -403,7 +406,12 @@ func GrantAuthorizationCmd() *cobra.Command {
 				return err
 			}
 
-			once, err := cmd.Flags().GetBool(flagRunOnce)
+			maxFundsStr, err := cmd.Flags().GetString(flagsMaxFunds)
+			if err != nil {
+				return fmt.Errorf("max funds: %s", err)
+			}
+
+			maxCalls, err := cmd.Flags().GetUint64(flagMaxCalls)
 			if err != nil {
 				return err
 			}
@@ -415,18 +423,61 @@ func GrantAuthorizationCmd() *cobra.Command {
 			if exp == 0 {
 				return errors.New("expiration must be set")
 			}
-			_ = clientCtx
-			_ = grantee
-			_ = msgs
-			_ = once
-			_ = contract
 
-			return errors.New("not implemented")
+			var limit types.ContractAuthzLimitX
+			switch {
+			case maxFundsStr != "" && maxCalls != 0:
+				maxFunds, err := sdk.ParseCoinsNormalized(maxFundsStr)
+				if err != nil {
+					return fmt.Errorf("max funds: %s", err)
+				}
+				limit = types.NewCombinedLimit(maxCalls, maxFunds)
+			case maxFundsStr != "":
+				maxFunds, err := sdk.ParseCoinsNormalized(maxFundsStr)
+				if err != nil {
+					return fmt.Errorf("max funds: %s", err)
+				}
+				limit = types.NewMaxFundsLimit(maxFunds)
+			case maxCalls != 0:
+				limit = types.NewMaxCallsLimit(maxCalls)
+			default:
+				limit = types.UndefinedLimit{}
+			}
+
+			var filter types.ContractAuthzFilterX
+			switch len(msgs) {
+			case 0:
+				filter = types.NewAllowAllMessagesFilter()
+			default:
+				filter = types.NewAcceptedMessageKeysFilter(msgs...)
+			}
+
+			grant, err := types.NewContractGrant(contract, limit, filter)
+			if err != nil {
+				return err
+			}
+
+			var authorization authz.Authorization
+			switch args[1] {
+			case "execution":
+				authorization = types.NewContractExecutionAuthorization(*grant)
+			case "migration":
+				authorization = types.NewContractMigrationAuthorization(*grant)
+			default:
+				return fmt.Errorf("%s authorization type not supported", args[1])
+			}
+
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(0, exp))
+			if err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), grantMsg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().StringSlice(flagAllowedMsgs, []string{}, "Allowed msgs")
-	cmd.Flags().Bool(flagRunOnce, false, "Allow to execute only once")
+	cmd.Flags().Uint64(flagMaxCalls, 0, "Maximal number of calls to the contract")
+	cmd.Flags().String(flagsMaxFunds, "", "Maximal amount of tokens transferable to the contract.")
 	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
 	return cmd
 }

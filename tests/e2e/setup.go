@@ -3,7 +3,6 @@ package e2e
 import (
 	"testing"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
@@ -14,16 +13,16 @@ import (
 // Any method implemented for this struct will be ran when suite.Run() is called.
 type CCVTestSuite struct {
 	suite.Suite
-	coordinator   *ibctesting.Coordinator
-	providerChain *ibctesting.TestChain
-	consumerChain *ibctesting.TestChain
+	// coordinator   *ibctesting.Coordinator
+	// providerChain *ibctesting.TestChain
+	// consumerChain *ibctesting.TestChain
 	// providerApp       e2e.ProviderApp
 	// consumerApp       e2e.ConsumerApp
-	providerClient    *ibctmtypes.ClientState
-	providerConsState *ibctmtypes.ConsensusState
-	path              *ibctesting.Path
-	transferPath      *ibctesting.Path
-	setupCallback     SetupCallback
+	// providerClient    *ibctmtypes.ClientState
+	// providerConsState *ibctmtypes.ConsensusState
+	// path              *ibctesting.Path
+	// transferPath  *ibctesting.Path
+	setupCallback SetupCallback
 }
 
 // NewCCVTestSuite returns a new instance of CCVTestSuite, ready to be tested against using suite.Run().
