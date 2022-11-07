@@ -10,7 +10,6 @@ This document is an extension to [CONTRIBUTING](./CONTRIBUTING.md) and provides 
     * think about maintainbility and testability.
 * "Depend upon abstractions, [not] concretions".
 * Try to limit the number of methods you are exposing. It's easier to expose something later than to hide it.
-* Take advantage of `internal` package concept.
 * Follow agreed-upon design patterns and naming conventions.
 * publicly-exposed functions are named logically, have forward-thinking arguments and return types.
 * Avoid global variables and global configurators.

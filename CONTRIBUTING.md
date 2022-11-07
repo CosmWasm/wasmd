@@ -35,7 +35,7 @@ taken place in a GitHub issue, that PR runs a high likelihood of being rejected.
     * Fork the repo (core developers must create a branch directly in the Wasmd repo),
     branch from the HEAD of `main`, make some commits, and submit a PR to `main`.
     * For core developers working within the `wasmd` repo, follow branch name conventions to ensure a clear
-    ownership of branches: `{moniker}/{issue#}-branch-name`.
+    ownership of branches: `{issue#}-branch-name`.
     * See [Branching Model](#branching-model-and-release) for more details.
 * Be sure to run `make format` before every commit. The easiest way
   to do this is have your editor run it for you upon saving a file (most of the editors
@@ -46,7 +46,7 @@ Code is merged into main through pull request procedure.
 
 ### Testing
 
-Tests can be executed by running `make test` at the top level of the Cosmos SDK repository.
+Tests can be executed by running `make test` at the top level of the wasmd repository.
 
 ### Pull Requests
 
@@ -60,16 +60,10 @@ Then:
 1. If you have something to show, **start with a `Draft` PR**. It's good to have early validation of your work and we highly recommend this practice. A Draft PR also indicates to the community that the work is in progress.
    Draft PRs also helps the core team provide early feedback and ensure the work is in the right direction.
 2. When the code is complete, change your PR from `Draft` to `Ready for Review`.
-3. Go through the actions for each checkbox present in the PR template description. The PR actions are automatically provided for each new PR.
-4. Be sure to include a relevant changelog entry in the `Unreleased` section of `CHANGELOG.md` (see file for log format). The entry should be on top of all others changes in the section.
+3. Be sure to include a relevant changelog entry in the `Unreleased` section of `CHANGELOG.md` (see file for log format). The entry should be on top of all others changes in the section.
 
-PRs should have a category prefix that is based on the type of changes being made (for example, `fix`, `feat`,
-`refactor`, `docs`, and so on). The *type* must be included in the PR title as a prefix (for example,
-`fix: <description>`). This convention ensures that all changes that are committed to the base branch follow the
-[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
+PRs name should start upper case.
 Additionally, each PR should only address a single issue.
-
-Pull requests are merged automatically using [`A:automerge` action](https://mergify.io/features/auto-merge).
 
 NOTE: when merging, GitHub will squash commits and rebase on top of the main.
 
