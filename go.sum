@@ -185,6 +185,8 @@ github.com/cosmos/btcutil v1.0.4 h1:n7C2ngKXo7UC9gNyMNLbzqz7Asuf+7Qv4gnX/rOdQ44=
 github.com/cosmos/btcutil v1.0.4/go.mod h1:Ffqc8Hn6TJUdDgHBwIZLtrLQC1KdJ9jGJl/TvgUaxbU=
 github.com/cosmos/cosmos-proto v1.0.0-alpha8 h1:d3pCRuMYYvGA5bM0ZbbjKn+AoQD4A7dyNG2wzwWalUw=
 github.com/cosmos/cosmos-proto v1.0.0-alpha8/go.mod h1:6/p+Bc4O8JKeZqe0VqUGTX31eoYqemTT4C1hLCWsO7I=
+github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20221107225151-b49f948b36bc h1:IAZUCFMfN4ylL9WeUyRupnzTxq7Q4ZBZ3tFz5BdCxqU=
+github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20221107225151-b49f948b36bc/go.mod h1:w1zGNu4tm2FZRDnntTcEiTG5bith46GuyI2spdbRyS0=
 github.com/cosmos/cosmos-sdk v0.46.4 h1:I4CPfnz7lAPM7cEvvyTxL1h3M/ugbhTNr5ZRcnW8WsU=
 github.com/cosmos/cosmos-sdk v0.46.4/go.mod h1:b5usG7aBEEvhaatYCdV6orFbDUsj4BG1V6UtKwNcJeQ=
 github.com/cosmos/cosmos-sdk/ics23/go v0.8.0 h1:iKclrn3YEOwk4jQHT2ulgzuXyxmzmPczUalMwW4XH9k=
@@ -202,6 +204,7 @@ github.com/cosmos/ibc-go/v5 v5.0.0-beta1 h1:YqC9giQlZId8Wui8xpaUFI+TpVmEupQZSoDl
 github.com/cosmos/ibc-go/v5 v5.0.0-beta1/go.mod h1:9mmcbzuidgX7nhafIKng/XhXAHDEnRqDjGy/60W1cvg=
 github.com/cosmos/ibc-go/v6 v6.0.0-beta1 h1:5cOxYzUEQE3lwiE5PcKjbZtQxh10/2eBjOPMmA9o3cc=
 github.com/cosmos/ibc-go/v6 v6.0.0-beta1/go.mod h1:V730eLbVaETn0UMfxtVLnss7pCvA8lMV1E7k9q42pA0=
+github.com/cosmos/interchain-accounts v0.2.4/go.mod h1:jeiJEb0zg609G0oCrCG0r6Guhb7YbA1uFiwww/1YgZE=
 github.com/cosmos/interchain-accounts v0.3.2 h1:7S5rSndahpjkzUvG00kKZrTZsEuVHuVC9a7p0qDVcF8=
 github.com/cosmos/interchain-accounts v0.3.2/go.mod h1:vNWr9YxBrI5c74jBwk9ooiUCIDvdOJeF8MQEA/z0IEk=
 github.com/cosmos/ledger-cosmos-go v0.11.1 h1:9JIYsGnXP613pb2vPjFeMMjBI5lEDsEaF6oYorTy6J4=
@@ -614,6 +617,7 @@ github.com/nats-io/nkeys v0.1.0/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxzi
 github.com/nats-io/nkeys v0.1.3/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxziKVo7w=
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/notional-labs/ibc-go/v6 v6.0.0-20221108013925-c649fcca7b7d/go.mod h1:kKDD8N4yNaSU6m4Jo8l5uARfh33cl2qusYa1+E5AJxE=
 github.com/nxadm/tail v1.4.4 h1:DQuhQpB1tVlglWS2hLQ5OV6B5r8aGxSrPc5Qo6uTN78=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
