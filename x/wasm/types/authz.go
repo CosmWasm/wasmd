@@ -136,26 +136,7 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 		return authztypes.AcceptResponse{}, err
 	}
 
-	updatedGrants, modified, err := applyGrants(ctx, grants, exec)
-	switch {
-	case err != nil:
-		return authztypes.AcceptResponse{}, err
-	case modified:
-		if len(updatedGrants) == 0 {
-			return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
-		}
-		newAuthz := factory.NewAuthz(updatedGrants)
-		if err := newAuthz.ValidateBasic(); err != nil { // sanity check
-			return authztypes.AcceptResponse{}, ErrInvalid.Wrapf("new grant state: %s", err)
-		}
-		return authztypes.AcceptResponse{Accept: true, Updated: newAuthz}, nil
-	default:
-		return authztypes.AcceptResponse{Accept: true}, nil
-	}
-}
-
-// iterate through the grants to find an applicable grant. Returns an error when none is found
-func applyGrants(ctx sdk.Context, grants []ContractGrant, exec AuthzableWasmMsg) ([]ContractGrant, bool, error) {
+	// iterate though all grants
 	for i, g := range grants {
 		if g.Contract != exec.GetContract() {
 			continue
@@ -165,9 +146,9 @@ func applyGrants(ctx sdk.Context, grants []ContractGrant, exec AuthzableWasmMsg)
 		result, err := g.GetLimit().Accept(ctx, exec)
 		switch {
 		case err != nil:
-			return nil, false, sdkerrors.Wrap(err, "limit")
+			return authztypes.AcceptResponse{}, sdkerrors.Wrap(err, "limit")
 		case result == nil: // sanity check
-			return nil, false, sdkerrors.ErrInvalidType.Wrap("limit result must not be nil")
+			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("limit result must not be nil")
 		case !result.Accepted:
 			// not applicable, continue with next grant
 			continue
@@ -177,27 +158,39 @@ func applyGrants(ctx sdk.Context, grants []ContractGrant, exec AuthzableWasmMsg)
 		ok, err := g.GetFilter().Accept(ctx, exec.GetMsg())
 		switch {
 		case err != nil:
-			return nil, false, sdkerrors.Wrap(err, "filter")
+			return authztypes.AcceptResponse{}, sdkerrors.Wrap(err, "filter")
 		case !ok:
 			// no limit update and continue with next grant
 			continue
 		}
 
-		// finally do limit state updates
+		// finally do limit state updates in result
 		switch {
 		case result.DeleteLimit:
-			return append(grants[0:i], grants[i+1:]...), true, nil
+			updatedGrants := append(grants[0:i], grants[i+1:]...)
+			if len(updatedGrants) == 0 { // remove when empty
+				return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
+			}
+			newAuthz := factory.NewAuthz(updatedGrants)
+			if err := newAuthz.ValidateBasic(); err != nil { // sanity check
+				return authztypes.AcceptResponse{}, ErrInvalid.Wrapf("new grant state: %s", err)
+			}
+			return authztypes.AcceptResponse{Accept: true, Updated: newAuthz}, nil
 		case result.UpdateLimit != nil:
 			obj, err := g.WithNewLimits(result.UpdateLimit)
 			if err != nil {
-				return nil, false, err
+				return authztypes.AcceptResponse{}, err
 			}
-			return append(append(grants[0:i], *obj), grants[i+1:]...), true, nil
+			newAuthz := factory.NewAuthz(append(append(grants[0:i], *obj), grants[i+1:]...))
+			if err := newAuthz.ValidateBasic(); err != nil { // sanity check
+				return authztypes.AcceptResponse{}, ErrInvalid.Wrapf("new grant state: %s", err)
+			}
+			return authztypes.AcceptResponse{Accept: true, Updated: newAuthz}, nil
 		default: // accepted without a limit state update
-			return grants, false, nil
+			return authztypes.AcceptResponse{Accept: true}, nil
 		}
 	}
-	return nil, false, sdkerrors.ErrUnauthorized.Wrap("no matching contract grants")
+	return authztypes.AcceptResponse{Accept: false}, nil
 }
 
 // ContractAuthzLimitX  define execution limits that are enforced and updated when the grant
@@ -301,7 +294,6 @@ func (g ContractGrant) GetFilter() ContractAuthzFilterX {
 
 // ValidateBasic validates the grant
 func (g ContractGrant) ValidateBasic() error {
-	// some sanity checks only, need more
 	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}

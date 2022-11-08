@@ -4,6 +4,9 @@ import (
 	"math"
 	"testing"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -387,45 +390,36 @@ func TestContractAuthzLimitAccept(t *testing.T) {
 
 func TestValidateContractGrant(t *testing.T) {
 	specs := map[string]struct {
-		setup  func(t *testing.T) *ContractGrant
+		setup  func(t *testing.T) ContractGrant
 		expErr bool
 	}{
 		"all good": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
-				require.NoError(t, err)
-				return r
+			setup: func(t *testing.T) ContractGrant {
+				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 		},
 		"invalid address": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant([]byte{}, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
-				require.NoError(t, err)
-				return r
+			setup: func(t *testing.T) ContractGrant {
+				return mustGrant([]byte{}, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
 		},
 		"invalid limit": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
-				require.NoError(t, err)
-				return r
+			setup: func(t *testing.T) ContractGrant {
+				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
 		},
 
 		"invalid filter ": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
-				require.NoError(t, err)
-				return r
+			setup: func(t *testing.T) ContractGrant {
+				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 			},
 			expErr: true,
 		},
 		"empty limit": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
-				require.NoError(t, err)
+			setup: func(t *testing.T) ContractGrant {
+				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = nil
 				return r
 			},
@@ -433,18 +427,16 @@ func TestValidateContractGrant(t *testing.T) {
 		},
 
 		"empty filter ": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
-				require.NoError(t, err)
+			setup: func(t *testing.T) ContractGrant {
+				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = nil
 				return r
 			},
 			expErr: true,
 		},
 		"wrong limit type": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
-				require.NoError(t, err)
+			setup: func(t *testing.T) ContractGrant {
+				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = r.Filter
 				return r
 			},
@@ -452,9 +444,8 @@ func TestValidateContractGrant(t *testing.T) {
 		},
 
 		"wrong filter type": {
-			setup: func(t *testing.T) *ContractGrant {
-				r, err := NewContractGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
-				require.NoError(t, err)
+			setup: func(t *testing.T) ContractGrant {
+				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = r.Limit
 				return r
 			},
@@ -471,4 +462,267 @@ func TestValidateContractGrant(t *testing.T) {
 			require.NoError(t, gotErr)
 		})
 	}
+}
+
+func TestValidateContractAuthorization(t *testing.T) {
+	validGrant, err := NewContractGrant(randBytes(SDKAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
+	require.NoError(t, err)
+	invalidGrant, err := NewContractGrant(randBytes(SDKAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
+	require.NoError(t, err)
+	invalidGrant.Limit = nil
+
+	specs := map[string]struct {
+		setup  func(t *testing.T) validatable
+		expErr bool
+	}{
+		"contract execution": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant)
+			},
+		},
+		"contract execution - duplicate grants": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant, *validGrant)
+			},
+		},
+		"contract execution - invalid grant": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
+			},
+			expErr: true,
+		},
+		"contract execution - empty grants": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization()
+			},
+			expErr: true,
+		},
+		"contract migration": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant)
+			},
+		},
+		"contract migration - duplicate grants": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant, *validGrant)
+			},
+		},
+		"contract migration - invalid grant": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
+			},
+			expErr: true,
+		},
+		"contract migration - empty grant": {
+			setup: func(t *testing.T) validatable {
+				return NewContractMigrationAuthorization()
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotErr := spec.setup(t).ValidateBasic()
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestAcceptGrantedMessage(t *testing.T) {
+	myContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
+	otherContractAddr := sdk.AccAddress(randBytes(SDKAddrLen))
+	specs := map[string]struct {
+		auth      authztypes.Authorization
+		msg       sdk.Msg
+		expResult authztypes.AcceptResponse
+		expErr    *sdkerrors.Error
+	}{
+		"accepted and updated - contract execution": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(2), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept:  true,
+				Updated: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			},
+		},
+		"accepted and not updated - limit not touched": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{Accept: true},
+		},
+		"accepted and removed - single": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{Accept: true, Delete: true},
+		},
+		"accepted and updated - multi, one removed": {
+			auth: NewContractExecutionAuthorization(
+				mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
+				mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
+			),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept:  true,
+				Updated: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			},
+		},
+		"accepted and updated - multi, one updated": {
+			auth: NewContractExecutionAuthorization(
+				mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
+				mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+				mustGrant(myContractAddr, NewCombinedLimit(2, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("foo")),
+			),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+				Updated: NewContractExecutionAuthorization(
+					mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
+					mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+					mustGrant(myContractAddr, NewCombinedLimit(1, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))), NewAcceptedMessageKeysFilter("foo")),
+				),
+			},
+		},
+		"not accepted - no matching contract address": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{Accept: false},
+		},
+		"not accepted - max calls but tokens": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+			},
+			expResult: authztypes.AcceptResponse{Accept: false},
+		},
+		"not accepted - max calls exceeds limit": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))),
+			},
+			expResult: authztypes.AcceptResponse{Accept: false},
+		},
+		"not accepted - no matching filter": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter("other"))),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+			},
+			expResult: authztypes.AcceptResponse{Accept: false},
+		},
+		"invalid msg type - contract execution": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgMigrateContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				CodeID:   1,
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expErr: sdkerrors.ErrInvalidType,
+		},
+		"payload is empty": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+			},
+			expErr: sdkerrors.ErrInvalidType,
+		},
+		"payload is invalid": {
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`not json`),
+			},
+			expErr: ErrInvalid,
+		},
+		"invalid grant": {
+			auth: NewContractExecutionAuthorization(ContractGrant{Contract: myContractAddr.String()}),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expErr: sdkerrors.ErrNotFound,
+		},
+		"invalid msg type - contract migration": {
+			auth: NewContractMigrationAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			msg: &MsgExecuteContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expErr: sdkerrors.ErrInvalidType,
+		},
+		"accepted and updated - contract migration": {
+			auth: NewContractMigrationAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(2), NewAllowAllMessagesFilter())),
+			msg: &MsgMigrateContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: myContractAddr.String(),
+				CodeID:   1,
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept:  true,
+				Updated: NewContractMigrationAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())),
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+			gotResult, gotErr := spec.auth.Accept(ctx, spec.msg)
+			if spec.expErr != nil {
+				require.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expResult, gotResult)
+		})
+	}
+}
+
+func mustGrant(contract sdk.AccAddress, limit ContractAuthzLimitX, filter ContractAuthzFilterX) ContractGrant {
+	g, err := NewContractGrant(contract, limit, filter)
+	if err != nil {
+		panic(err)
+	}
+	return *g
 }
