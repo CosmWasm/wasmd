@@ -2,24 +2,22 @@ package types
 
 import (
 	"encoding/json"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// IsJSONObjectWithTopLevelKey returns if the given bytes are a valid JSON object
+// isJSONObjectWithTopLevelKey returns true if the given bytes are a valid JSON object
 // with exactly one top-level key that is contained in the list of allowed keys.
-func IsJSONObjectWithTopLevelKey(jsonBytes []byte, allowedKeys []string) (bool, error) {
+func isJSONObjectWithTopLevelKey(jsonBytes RawContractMessage, allowedKeys []string) (bool, error) {
+	if err := jsonBytes.ValidateBasic(); err != nil {
+		return false, err
+	}
+
 	document := map[string]interface{}{}
 	if err := json.Unmarshal(jsonBytes, &document); err != nil {
-		return false, sdkerrors.Wrap(ErrNotAJSONObject, "failed to unmarshal JSON to map")
+		return false, nil // not a map
 	}
 
-	if len(document) == 0 {
-		return false, sdkerrors.Wrap(ErrNoTopLevelKey, "JSON object has no top-level key")
-	}
-
-	if len(document) > 1 {
-		return false, sdkerrors.Wrap(ErrMultipleTopLevelKeys, "JSON object has multiple top-level keys")
+	if len(document) != 1 {
+		return false, nil // unsupported type
 	}
 
 	// Loop is executed exactly once

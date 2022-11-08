@@ -299,6 +299,23 @@ func (g ContractGrant) GetFilter() ContractAuthzFilterX {
 	return a
 }
 
+// ValidateBasic validates the grant
+func (g ContractGrant) ValidateBasic() error {
+	// some sanity checks only, need more
+	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
+		return sdkerrors.Wrap(err, "contract")
+	}
+	// execution limits
+	if err := g.GetLimit().ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "limit")
+	}
+	// filter
+	if err := g.GetFilter().ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "filter")
+	}
+	return nil
+}
+
 // UndefinedFilter null object that is always rejected in execution
 type UndefinedFilter struct{}
 
@@ -317,9 +334,9 @@ func NewAllowAllMessagesFilter() *AllowAllMessagesFilter {
 	return &AllowAllMessagesFilter{}
 }
 
-// Accept accepts any message content.
+// Accept accepts any valid json message content.
 func (f *AllowAllMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
-	return true, nil
+	return true, msg.ValidateBasic()
 }
 
 // ValidateBasic returns always nil
@@ -337,7 +354,7 @@ func (f *AcceptedMessageKeysFilter) Accept(ctx sdk.Context, msg RawContractMessa
 	gasForDeserialization := gasDeserializationCostPerByte * uint64(len(msg))
 	ctx.GasMeter().ConsumeGas(gasForDeserialization, "contract authorization")
 
-	ok, err := IsJSONObjectWithTopLevelKey(msg, f.Keys)
+	ok, err := isJSONObjectWithTopLevelKey(msg, f.Keys)
 	if err != nil {
 		return false, sdkerrors.ErrUnauthorized.Wrapf("not an allowed msg: %s", err.Error())
 	}
@@ -365,17 +382,17 @@ func (f AcceptedMessageKeysFilter) ValidateBasic() error {
 	return nil
 }
 
+// NewAcceptedMessagesFilter constructor
+func NewAcceptedMessagesFilter(msgs ...RawContractMessage) *AcceptedMessagesFilter {
+	return &AcceptedMessagesFilter{Messages: msgs}
+}
+
 // Accept only payload messages which are equal to the granted one.
 func (f *AcceptedMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
-	var found bool
 	for _, v := range f.Messages {
 		if v.Equal(msg) {
-			found = true
-			break
+			return true, nil
 		}
-	}
-	if !found {
-		return false, sdkerrors.ErrUnauthorized.Wrap("not an accepted payload msg")
 	}
 	return false, nil
 }
@@ -387,30 +404,16 @@ func (f AcceptedMessagesFilter) ValidateBasic() error {
 	}
 	idx := make(map[string]struct{}, len(f.Messages))
 	for _, m := range f.Messages {
-		if m == nil {
+		if len(m) == 0 {
 			return ErrEmpty.Wrap("message")
+		}
+		if err := m.ValidateBasic(); err != nil {
+			return err
 		}
 		if _, exists := idx[string(m)]; exists {
 			return ErrDuplicate.Wrap("message")
 		}
 		idx[string(m)] = struct{}{}
-	}
-	return nil
-}
-
-// ValidateBasic validates the grant
-func (g ContractGrant) ValidateBasic() error {
-	// some sanity checks only, need more
-	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
-	}
-	// execution limits
-	if err := g.GetLimit().ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "limit")
-	}
-	// filter
-	if err := g.GetFilter().ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "filter")
 	}
 	return nil
 }
@@ -464,8 +467,9 @@ func (m MaxCallsLimit) ValidateBasic() error {
 }
 
 // NewMaxFundsLimit constructor
-func NewMaxFundsLimit(max sdk.Coins) *MaxFundsLimit {
-	return &MaxFundsLimit{Amounts: max}
+// A panic will occur if the coin set is not valid.
+func NewMaxFundsLimit(max ...sdk.Coin) *MaxFundsLimit {
+	return &MaxFundsLimit{Amounts: sdk.NewCoins(max...)}
 }
 
 // Accept until the defined budget for token transfers to the contract is spent
@@ -473,7 +477,7 @@ func (m MaxFundsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAut
 	if msg.GetFunds().Empty() { // no state changes required
 		return &ContractAuthzLimitAcceptResult{Accepted: true}, nil
 	}
-	if msg.GetFunds().IsAnyGT(m.Amounts) {
+	if !msg.GetFunds().IsAllLTE(m.Amounts) {
 		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil
 	}
 	newAmounts := m.Amounts.Sub(msg.GetFunds())
@@ -495,14 +499,15 @@ func (m MaxFundsLimit) ValidateBasic() error {
 }
 
 // NewCombinedLimit constructor
-func NewCombinedLimit(maxCalls uint64, maxAmounts sdk.Coins) *CombinedLimit {
-	return &CombinedLimit{CallsRemaining: maxCalls, Amounts: maxAmounts}
+// A panic will occur if the coin set is not valid.
+func NewCombinedLimit(maxCalls uint64, maxAmounts ...sdk.Coin) *CombinedLimit {
+	return &CombinedLimit{CallsRemaining: maxCalls, Amounts: sdk.NewCoins(maxAmounts...)}
 }
 
 // Accept until the max calls is reached or the token budget is spent.
 func (l CombinedLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	transferFunds := msg.GetFunds()
-	if !transferFunds.Empty() && transferFunds.IsAnyGT(l.Amounts) {
+	if !transferFunds.IsAllLTE(l.Amounts) {
 		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil // does not apply
 	}
 	switch n := l.CallsRemaining; n {
@@ -515,17 +520,23 @@ func (l CombinedLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAut
 		if remainingAmounts.IsZero() {
 			return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
 		}
-		return &ContractAuthzLimitAcceptResult{Accepted: true, UpdateLimit: &CombinedLimit{CallsRemaining: n - 1, Amounts: remainingAmounts}}, nil
+		return &ContractAuthzLimitAcceptResult{
+			Accepted:    true,
+			UpdateLimit: NewCombinedLimit(n-1, remainingAmounts...),
+		}, nil
 	}
 }
 
 // ValidateBasic validates the limit
 func (l CombinedLimit) ValidateBasic() error {
-	if err := l.Amounts.Validate(); err != nil {
-		return sdkerrors.Wrap(err, "amounts")
-	}
 	if l.CallsRemaining == 0 {
 		return ErrEmpty.Wrap("remaining calls")
+	}
+	if l.Amounts.IsZero() {
+		return ErrEmpty.Wrap("amounts")
+	}
+	if err := l.Amounts.Validate(); err != nil {
+		return sdkerrors.Wrap(err, "amounts")
 	}
 	return nil
 }

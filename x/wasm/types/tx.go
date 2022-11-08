@@ -44,7 +44,7 @@ func (r RawContractMessage) Bytes() []byte {
 
 // Equal content is equal json. Byte equal but this can change in the future.
 func (r RawContractMessage) Equal(o RawContractMessage) bool {
-	return bytes.Equal(r, o)
+	return bytes.Equal(r.Bytes(), o.Bytes())
 }
 
 func (msg MsgStoreCode) Route() string {

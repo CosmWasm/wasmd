@@ -51,27 +51,27 @@ func TestGrants(t *testing.T) {
 		expErr         *sdkerrors.Error
 	}{
 		"in limits and filter": {
-			limit:          types.NewMaxFundsLimit(sdk.NewCoins(myAmount)),
+			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAllowAllMessagesFilter(),
 			transferAmount: myAmount,
 			senderKey:      granteePrivKey,
 		},
 		"exceed limits": {
-			limit:          types.NewMaxFundsLimit(sdk.NewCoins(myAmount)),
+			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAllowAllMessagesFilter(),
 			transferAmount: myAmount.Add(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},
 		"not match filter": {
-			limit:          types.NewMaxFundsLimit(sdk.NewCoins(myAmount)),
+			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAcceptedMessageKeysFilter("foo"),
 			transferAmount: sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt()),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},
 		"non authorized sender address": { // sanity check - testing sdk
-			limit:          types.NewMaxFundsLimit(sdk.NewCoins(myAmount)),
+			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAllowAllMessagesFilter(),
 			senderKey:      otherPrivKey,
 			transferAmount: myAmount,

@@ -68,17 +68,17 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 		"errors for bytes that are no JSON": {
 			src:         []byte(`nope`),
 			allowedKeys: []string{"claim"},
-			expErr:      ErrNotAJSONObject,
+			expErr:      ErrInvalid,
 		},
-		"errors for valid JSON (string)": {
+		"false for valid JSON (string)": {
 			src:         []byte(`"nope"`),
 			allowedKeys: []string{"claim"},
-			expErr:      ErrNotAJSONObject,
+			expResult:   false,
 		},
-		"errors for valid JSON (array)": {
+		"false for valid JSON (array)": {
 			src:         []byte(`[1, 2, 3]`),
 			allowedKeys: []string{"claim"},
-			expErr:      ErrNotAJSONObject,
+			expResult:   false,
 		},
 		// not supported: https://github.com/golang/go/issues/24415
 		//"errors for duplicate key": {
@@ -88,15 +88,15 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 		//},
 
 		// Not one top-level key
-		"errors for no top-level key": {
+		"false for no top-level key": {
 			src:         []byte(`{}`),
 			allowedKeys: []string{"claim"},
-			expErr:      ErrNoTopLevelKey,
+			expResult:   false,
 		},
-		"errors for multiple top-level keys": {
+		"false for multiple top-level keys": {
 			src:         []byte(`{"claim": {}, "and_swap": {}}`),
 			allowedKeys: []string{"claim"},
-			expErr:      ErrMultipleTopLevelKeys,
+			expResult:   false,
 		},
 
 		// Wrong top-level key
@@ -113,7 +113,7 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			exists, gotErr := IsJSONObjectWithTopLevelKey(spec.src, spec.allowedKeys)
+			exists, gotErr := isJSONObjectWithTopLevelKey(spec.src, spec.allowedKeys)
 			if spec.expErr != nil {
 				assert.ErrorIs(t, gotErr, spec.expErr)
 				return
