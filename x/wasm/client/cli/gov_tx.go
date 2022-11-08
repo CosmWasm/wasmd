@@ -80,7 +80,6 @@ func ProposalStoreCodeCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
@@ -160,7 +159,6 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
@@ -229,7 +227,6 @@ func ProposalMigrateContractCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 
 	// proposal flags
@@ -307,7 +304,6 @@ func ProposalExecuteContractCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -370,7 +366,6 @@ func ProposalSudoContractCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 
 	// proposal flagsExecute
@@ -433,7 +428,6 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
@@ -489,7 +483,6 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
@@ -549,7 +542,6 @@ func ProposalPinCodesCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
@@ -621,7 +613,6 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
@@ -740,7 +731,6 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
-		SilenceUsage: true,
 	}
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck

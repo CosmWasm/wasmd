@@ -34,7 +34,6 @@ func MigrateContractCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -80,7 +79,6 @@ func UpdateContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -117,7 +115,6 @@ func ClearContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd

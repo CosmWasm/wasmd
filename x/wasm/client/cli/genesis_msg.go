@@ -68,7 +68,6 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 				return nil
 			})
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
@@ -137,7 +136,6 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				return nil
 			})
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
@@ -191,7 +189,6 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 				return nil
 			})
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract along with command")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the funds.")
@@ -220,7 +217,6 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 			}
 			return printJSONOutput(cmd, all)
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	flags.AddQueryFlagsToCmd(cmd)
@@ -243,7 +239,6 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 			all := GetAllContracts(state)
 			return printJSONOutput(cmd, all)
 		},
-		SilenceUsage: true,
 	}
 	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
 	flags.AddQueryFlagsToCmd(cmd)
