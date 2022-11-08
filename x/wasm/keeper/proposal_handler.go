@@ -29,7 +29,7 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unsupported wasm proposal content type: %q", content.ProposalType())
 		}
 		switch c := content.(type) {
-		case *types.StoreCodeProposal:
+		case *types.StoreCodeProposal: //nolint:typecheck
 			return handleStoreCodeProposal(ctx, k, *c)
 		case *types.InstantiateContractProposal:
 			return handleInstantiateProposal(ctx, k, *c)

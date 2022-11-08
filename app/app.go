@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"cosmossdk.io/simapp"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -228,10 +227,7 @@ var (
 	}
 )
 
-var (
-	_ simapp.App              = (*WasmApp)(nil)
-	_ servertypes.Application = (*WasmApp)(nil)
-)
+var _ servertypes.Application = (*WasmApp)(nil)
 
 // WasmApp extended ABCI application
 type WasmApp struct {
@@ -553,7 +549,7 @@ func NewWasmApp(
 	ibcRouter.
 		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)).
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
-		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
+		//	AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		//	AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
 		app.IBCKeeper.SetRouter(ibcRouter)
@@ -917,13 +913,21 @@ func RegisterSwaggerAPI(rtr *mux.Router) {
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
+// TxConfig returns SimApp's TxConfig
+func (app *WasmApp) TxConfig() client.TxConfig {
+	return app.txConfig
+}
+
 // GetMaccPerms returns a copy of the module account permissions
+//
+// NOTE: This is solely to be used for testing purposes.
 func GetMaccPerms() map[string][]string {
-	dupMaccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		dupMaccPerms[k] = v
+	dup := make(map[string][]string)
+	for _, perms := range moduleAccPerms {
+		dup[perms.Account] = perms.Permissions
 	}
-	return dupMaccPerms
+
+	return dup
 }
 
 // initParamsKeeper init params keeper and its subspaces

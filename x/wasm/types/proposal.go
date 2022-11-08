@@ -72,7 +72,7 @@ func init() { // register new content types with the sdk
 	govv1beta1.RegisterProposalType(string(ProposalTypePinCodes))
 	govv1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
 	govv1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
-	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
+	govv1beta1.RegisterLegacyAminoCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
 	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
 	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
 	govv1beta1.ModuleCdc.LegacyAmino.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
