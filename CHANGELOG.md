@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...HEAD)
+
+## [v0.29.2](https://github.com/CosmWasm/wasmd/tree/v0.29.2) (2022-11-08)
+
+- Fixes missing instantiate-anyof-addresses flag declaration for gov [/#1084](https://github.com/CosmWasm/wasmd/issues/1084)
+
+## [v0.29.1](https://github.com/CosmWasm/wasmd/tree/v0.29.1) (2022-10-14)
+
+- Upgrade to Cosmos-sdk to v45.9 [/#1052](https://github.com/CosmWasm/wasmd/pull/1052/)
 
 ## [v0.29.0](https://github.com/CosmWasm/wasmd/tree/v0.29.0) (2022-10-10)
 
