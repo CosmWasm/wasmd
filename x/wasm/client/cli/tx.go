@@ -34,11 +34,13 @@ const (
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
-	flagAllowedMsgs               = "allow-msgs"
+	flagAllowedMsgKeys            = "allow-msg-keys"
+	flagAllowedRawMsgs            = "allow-raw-msgs"
 	flagExpiration                = "expiration"
 	flagMaxCalls                  = "max-calls"
 	flagMaxFunds                  = "max-funds"
 	flagAllowAllMsgs              = "allow-all-messages"
+	flagNoTokenTransfer           = "no-token-transfer"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -383,7 +385,7 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 
 func GrantAuthorizationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] [authorization_type=\"execution\"|\"migration\"] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
+		Use:   "grant [grantee] [authorization_type=\"execution\"|\"migration\"] [contract_addr_bech32] --allow-raw-msgs `[msg1,msg2,...]` --allow-msg-keys [key1,key2,...]",
 		Short: "Grant authorization to an address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -402,7 +404,12 @@ func GrantAuthorizationCmd() *cobra.Command {
 				return err
 			}
 
-			msgs, err := cmd.Flags().GetStringSlice(flagAllowedMsgs)
+			msgKeys, err := cmd.Flags().GetStringSlice(flagAllowedMsgKeys)
+			if err != nil {
+				return err
+			}
+
+			rawMsgsStr, err := cmd.Flags().GetString(flagAllowedRawMsgs)
 			if err != nil {
 				return err
 			}
@@ -430,6 +437,11 @@ func GrantAuthorizationCmd() *cobra.Command {
 				return err
 			}
 
+			noTokenTransfer, err := cmd.Flags().GetBool(flagNoTokenTransfer)
+			if err != nil {
+				return err
+			}
+
 			var limit types.ContractAuthzLimitX
 			switch {
 			case maxFundsStr != "" && maxCalls != 0:
@@ -444,7 +456,9 @@ func GrantAuthorizationCmd() *cobra.Command {
 					return fmt.Errorf("max funds: %s", err)
 				}
 				limit = types.NewMaxFundsLimit(maxFunds...)
-			case maxCalls != 0:
+			case maxCalls != 0 && noTokenTransfer:
+				// TODO set combined limit
+			case maxCalls != 0 && !noTokenTransfer:
 				limit = types.NewMaxCallsLimit(maxCalls)
 			default:
 				limit = types.UndefinedLimit{}
@@ -454,8 +468,10 @@ func GrantAuthorizationCmd() *cobra.Command {
 			switch {
 			case allowAllMsgs:
 				filter = types.NewAllowAllMessagesFilter()
-			case len(msgs) > 0:
-				filter = types.NewAcceptedMessageKeysFilter(msgs...)
+			case len(msgKeys) > 0:
+				filter = types.NewAcceptedMessageKeysFilter(msgKeys...)
+			case rawMsgsStr != "":
+				filter = types.NewAcceptedMessagesFilter([]byte(rawMsgsStr))
 			default:
 				filter = &types.UndefinedFilter{}
 			}
@@ -483,10 +499,12 @@ func GrantAuthorizationCmd() *cobra.Command {
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
-	cmd.Flags().StringSlice(flagAllowedMsgs, []string{}, "Allowed msgs")
+	cmd.Flags().StringSlice(flagAllowedMsgKeys, []string{}, "Allowed msg keys")
+	cmd.Flags().String(flagAllowedRawMsgs, "", "Allowed raw msgs")
 	cmd.Flags().Uint64(flagMaxCalls, 0, "Maximal number of calls to the contract")
 	cmd.Flags().String(flagMaxFunds, "", "Maximal amount of tokens transferable to the contract.")
 	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
 	cmd.Flags().Bool(flagAllowAllMsgs, false, "Allow all messages")
+	cmd.Flags().Bool(flagNoTokenTransfer, false, "Don't allow token transfer")
 	return cmd
 }
