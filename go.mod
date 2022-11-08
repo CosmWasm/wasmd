@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
-	github.com/cosmos/cosmos-sdk v0.46.4
+	github.com/cosmos/cosmos-sdk v0.46.0-beta2.0.20221107225151-b49f948b36bc
 	github.com/cosmos/gogoproto v1.4.2
 	github.com/cosmos/iavl v0.19.4
 	github.com/cosmos/ibc-go/v6 v6.0.0-beta1
@@ -162,6 +162,9 @@ require (
 
 replace (
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
+
+	github.com/cosmos/ibc-go/v6 => github.com/notional-labs/ibc-go/v6 c649fcc
+
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.8.1
@@ -169,3 +172,4 @@ replace (
 	// the following version across all dependencies.
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 )
+

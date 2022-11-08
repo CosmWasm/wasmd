@@ -583,7 +583,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	require.Equal(s.t, in.CoinsToSend.Amount.String(), info.Funds[0].Amount)
 	require.Equal(s.t, in.CoinsToSend.Denom, info.Funds[0].Denom)
 	dataPacket := ibctransfertypes.NewFungibleTokenPacketData(
-		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), info.Sender, in.ReceiverAddr,
+		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), info.Sender, in.ReceiverAddr, "",
 	)
 	if err := dataPacket.ValidateBasic(); err != nil {
 		return nil, 0, err

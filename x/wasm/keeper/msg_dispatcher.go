@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 
@@ -115,7 +114,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 				for _, e := range filteredEvents {
 					attributes := e.Attributes
 					sort.SliceStable(attributes, func(i, j int) bool {
-						return bytes.Compare(attributes[i].Key, attributes[j].Key) < 0
+						return string.Len(attributes[i].Key, attributes[j].Key) < 0
 					})
 				}
 			}
