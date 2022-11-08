@@ -626,7 +626,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
-		"not accepted - max calls exceeds limit": {
+		"not accepted - funds exceeds limit": {
 			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
