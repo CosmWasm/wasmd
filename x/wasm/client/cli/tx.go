@@ -385,9 +385,13 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 
 func GrantAuthorizationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] [authorization_type=\"execution\"|\"migration\"] [contract_addr_bech32] --allow-raw-msgs `[msg1,msg2,...]` --allow-msg-keys [key1,key2,...]",
+		Use:   "grant [grantee] [message_type=\"execution\"|\"migration\"] [contract_addr_bech32] --allow-raw-msgs [msg1,msg2,...] --allow-msg-keys [key1,key2,...] --allow-all-messages",
 		Short: "Grant authorization to an address",
-		Args:  cobra.ExactArgs(3),
+		Long: fmt.Sprintf(`Grant authorization to an address.
+Examples:
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxCalls 1 --no-token-transfer --expiration 1667979596
+`, version.AppName),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -409,7 +413,7 @@ func GrantAuthorizationCmd() *cobra.Command {
 				return err
 			}
 
-			rawMsgsStr, err := cmd.Flags().GetString(flagAllowedRawMsgs)
+			rawMsgs, err := cmd.Flags().GetStringSlice(flagAllowedRawMsgs)
 			if err != nil {
 				return err
 			}
@@ -466,12 +470,18 @@ func GrantAuthorizationCmd() *cobra.Command {
 
 			var filter types.ContractAuthzFilterX
 			switch {
+			case allowAllMsgs && len(msgKeys) > 0 || allowAllMsgs && len(rawMsgs) > 0 || len(msgKeys) > 0 && len(rawMsgs) > 0:
+				return fmt.Errorf("cannot set more than one filter within one grant")
 			case allowAllMsgs:
 				filter = types.NewAllowAllMessagesFilter()
 			case len(msgKeys) > 0:
 				filter = types.NewAcceptedMessageKeysFilter(msgKeys...)
-			case rawMsgsStr != "":
-				filter = types.NewAcceptedMessagesFilter([]byte(rawMsgsStr))
+			case len(rawMsgs) > 0:
+				msgs := make([]types.RawContractMessage, len(rawMsgs))
+				for i, msg := range rawMsgs {
+					msgs[i] = types.RawContractMessage(msg)
+				}
+				filter = types.NewAcceptedMessagesFilter(msgs...)
 			default:
 				filter = &types.UndefinedFilter{}
 			}
@@ -500,7 +510,7 @@ func GrantAuthorizationCmd() *cobra.Command {
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().StringSlice(flagAllowedMsgKeys, []string{}, "Allowed msg keys")
-	cmd.Flags().String(flagAllowedRawMsgs, "", "Allowed raw msgs")
+	cmd.Flags().StringSlice(flagAllowedRawMsgs, []string{}, "Allowed raw msgs")
 	cmd.Flags().Uint64(flagMaxCalls, 0, "Maximal number of calls to the contract")
 	cmd.Flags().String(flagMaxFunds, "", "Maximal amount of tokens transferable to the contract.")
 	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
