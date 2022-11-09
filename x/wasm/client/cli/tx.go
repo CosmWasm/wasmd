@@ -40,7 +40,7 @@ const (
 	flagMaxCalls                  = "max-calls"
 	flagMaxFunds                  = "max-funds"
 	flagAllowAllMsgs              = "allow-all-messages"
-	flagNoTokenTransfer           = "no-token-transfer"
+	flagNoTokenTransfer           = "no-token-transfer" //nolint:gosec
 )
 
 // GetTxCmd returns the transaction commands for this module
