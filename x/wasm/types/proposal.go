@@ -339,11 +339,13 @@ func (p StoreAndInstantiateContractProposal) String() string {
   Description: %s
   Run as:      %s
   WasmCode:    %X
+  Instantiate permission: %s
+  Unpin code:  %t  
   Admin:       %s
   Label:       %s
   Msg:         %q
   Funds:       %s
-`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.Admin, p.Label, p.Msg, p.Funds)
+`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.InstantiatePermission, p.UnpinCode, p.Admin, p.Label, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the wasm byte code and the init message
@@ -354,6 +356,7 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		RunAs                 string        `yaml:"run_as"`
 		WASMByteCode          string        `yaml:"wasm_byte_code"`
 		InstantiatePermission *AccessConfig `yaml:"instantiate_permission"`
+		UnpinCode             bool          `yaml:"unpin_code"`
 		Admin                 string        `yaml:"admin"`
 		Label                 string        `yaml:"label"`
 		Msg                   string        `yaml:"msg"`
@@ -364,6 +367,7 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		RunAs:                 p.RunAs,
 		WASMByteCode:          base64.StdEncoding.EncodeToString(p.WASMByteCode),
 		InstantiatePermission: p.InstantiatePermission,
+		UnpinCode:             p.UnpinCode,
 		Admin:                 p.Admin,
 		Label:                 p.Label,
 		Msg:                   string(p.Msg),
