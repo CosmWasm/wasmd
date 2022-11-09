@@ -69,6 +69,14 @@ func (c Contract) ValidateBasic() error {
 			return sdkerrors.Wrapf(err, "contract state %d", i)
 		}
 	}
+	if len(c.ContractCodeHistory) == 0 {
+		return ErrEmpty.Wrap("code history")
+	}
+	for i, v := range c.ContractCodeHistory {
+		if err := v.ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "code history element %d", i)
+		}
+	}
 	return nil
 }
 

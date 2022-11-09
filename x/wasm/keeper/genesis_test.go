@@ -266,6 +266,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{}`),
 							},
 						},
 					},
@@ -294,6 +295,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{}`),
 							},
 						},
 					}, {
@@ -304,6 +306,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -327,6 +330,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -350,6 +354,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
 					}, {
@@ -360,6 +365,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{"other":"value"}`),
 							},
 						},
 					},
@@ -393,6 +399,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -438,6 +445,7 @@ func TestGenesisInit(t *testing.T) {
 								Operation: types.ContractCodeHistoryOperationTypeMigrate,
 								CodeID:    1,
 								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:       []byte(`{}`),
 							},
 						},
 					},
@@ -503,7 +511,7 @@ func TestGenesisInit(t *testing.T) {
 	}
 }
 
-func TestImportContractWithCodeHistoryReset(t *testing.T) {
+func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	genesisTemplate := `
 {
 	"params":{
@@ -546,7 +554,8 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 			"updated": {
 				"block_height" : "100",
 				"tx_index" : "10"
-			}
+			},
+			"msg": {"foo": "bar"}
 	  	},
 		{
 			"operation": "CONTRACT_CODE_HISTORY_OPERATION_TYPE_MIGRATE",
@@ -554,7 +563,8 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 			"updated": {
 				"block_height" : "200",
 				"tx_index" : "10"
-			}
+			},
+			"msg": {"other": "msg"}
 	  	}
 		]
     }
@@ -628,6 +638,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 				BlockHeight: 100,
 				TxIndex:     10,
 			},
+			Msg: []byte(`{"foo": "bar"}`),
 		},
 		{
 			Operation: types.ContractCodeHistoryOperationTypeMigrate,
@@ -636,6 +647,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 				BlockHeight: 200,
 				TxIndex:     10,
 			},
+			Msg: []byte(`{"other": "msg"}`),
 		},
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))

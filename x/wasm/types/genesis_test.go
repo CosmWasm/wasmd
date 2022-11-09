@@ -165,6 +165,12 @@ func TestContractValidateBasic(t *testing.T) {
 			},
 			expError: true,
 		},
+		"contract history invalid": {
+			srcMutator: func(c *Contract) {
+				c.ContractCodeHistory = []ContractCodeHistoryEntry{{}}
+			},
+			expError: true,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

@@ -243,6 +243,27 @@ func (a *AbsoluteTxPosition) Bytes() []byte {
 	return r
 }
 
+// ValidateBasic syntax checks
+func (c ContractCodeHistoryEntry) ValidateBasic() error {
+	var found bool
+	for _, v := range AllCodeHistoryTypes {
+		if c.Operation == v {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return ErrInvalid.Wrap("operation")
+	}
+	if c.CodeID == 0 {
+		return ErrEmpty.Wrap("code id")
+	}
+	if c.Updated == nil {
+		return ErrEmpty.Wrap("updated")
+	}
+	return sdkerrors.Wrap(c.Msg.ValidateBasic(), "msg")
+}
+
 // NewEnv initializes the environment for a contract instance
 func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	// safety checks before casting below

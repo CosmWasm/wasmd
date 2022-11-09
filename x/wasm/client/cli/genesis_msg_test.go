@@ -393,6 +393,9 @@ func TestExecuteContractCmd(t *testing.T) {
 						ContractAddress: firstContractAddress,
 						ContractInfo:    types.ContractInfoFixture(),
 						ContractState:   []types.Model{},
+						ContractCodeHistory: []types.ContractCodeHistoryEntry{
+							types.ContractCodeHistoryEntryFixture(),
+						},
 					},
 				},
 			},
@@ -473,6 +476,9 @@ func TestExecuteContractCmd(t *testing.T) {
 						ContractAddress: firstContractAddress,
 						ContractInfo:    types.ContractInfoFixture(),
 						ContractState:   []types.Model{},
+						ContractCodeHistory: []types.ContractCodeHistoryEntry{
+							types.ContractCodeHistoryEntryFixture(),
+						},
 					},
 				},
 			},
@@ -498,6 +504,9 @@ func TestExecuteContractCmd(t *testing.T) {
 						ContractAddress: firstContractAddress,
 						ContractInfo:    types.ContractInfoFixture(),
 						ContractState:   []types.Model{},
+						ContractCodeHistory: []types.ContractCodeHistoryEntry{
+							types.ContractCodeHistoryEntryFixture(),
+						},
 					},
 				},
 			},
@@ -524,6 +533,9 @@ func TestExecuteContractCmd(t *testing.T) {
 						ContractAddress: firstContractAddress,
 						ContractInfo:    types.ContractInfoFixture(),
 						ContractState:   []types.Model{},
+						ContractCodeHistory: []types.ContractCodeHistoryEntry{
+							types.ContractCodeHistoryEntryFixture(),
+						},
 					},
 				},
 			},
