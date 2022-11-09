@@ -453,21 +453,19 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 
 			var limit types.ContractAuthzLimitX
 			switch {
-			case maxFundsStr != "" && maxCalls != 0:
+			case maxFundsStr != "" && maxCalls != 0 && !noTokenTransfer:
 				maxFunds, err := sdk.ParseCoinsNormalized(maxFundsStr)
 				if err != nil {
 					return fmt.Errorf("max funds: %s", err)
 				}
 				limit = types.NewCombinedLimit(maxCalls, maxFunds...)
-			case maxFundsStr != "":
+			case maxFundsStr != "" && !noTokenTransfer:
 				maxFunds, err := sdk.ParseCoinsNormalized(maxFundsStr)
 				if err != nil {
 					return fmt.Errorf("max funds: %s", err)
 				}
 				limit = types.NewMaxFundsLimit(maxFunds...)
 			case maxCalls != 0 && noTokenTransfer:
-				// TODO set combined limit
-			case maxCalls != 0 && !noTokenTransfer:
 				limit = types.NewMaxCallsLimit(maxCalls)
 			default:
 				limit = types.UndefinedLimit{}
