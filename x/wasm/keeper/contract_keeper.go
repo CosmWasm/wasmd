@@ -23,18 +23,6 @@ type decoratedKeeper interface {
 		authZ AuthorizationPolicy,
 	) (sdk.AccAddress, []byte, error)
 
-	createAndInstantiate(
-		ctx sdk.Context,
-		creator, admin sdk.AccAddress,
-		wasmCode []byte,
-		instantiateAccess *types.AccessConfig,
-		initMsg []byte,
-		label string,
-		deposit sdk.Coins,
-		addressGenerator AddressGenerator,
-		authZ AuthorizationPolicy,
-	) (sdk.AccAddress, []byte, error)
-
 	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) ([]byte, error)
 	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ AuthorizationPolicy) error
 	pinCode(ctx sdk.Context, codeID uint64) error
@@ -139,16 +127,4 @@ func (p PermissionedKeeper) SetContractInfoExtension(ctx sdk.Context, contract s
 // SetAccessConfig updates the access config of a code id.
 func (p PermissionedKeeper) SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig) error {
 	return p.nested.setAccessConfig(ctx, codeID, caller, newConfig, p.authZPolicy)
-}
-
-func (p PermissionedKeeper) CreateAndInstantiate(
-	ctx sdk.Context,
-	creator, admin sdk.AccAddress,
-	wasmCode []byte,
-	instantiateAccess *types.AccessConfig,
-	initMsg []byte,
-	label string,
-	deposit sdk.Coins,
-) (sdk.AccAddress, []byte, error) {
-	return p.nested.createAndInstantiate(ctx, creator, admin, wasmCode, instantiateAccess, initMsg, label, deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
 }
