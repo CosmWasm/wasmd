@@ -24,7 +24,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
+	"github.com/CosmWasm/wasmd/x/wasm/client/rest" //nolint:staticcheck
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
