@@ -171,15 +171,6 @@ func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) 
 	return h
 }
 
-// ResetFromGenesis resets contracts timestamp and history.
-func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntry {
-	return ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryOperationTypeGenesis,
-		CodeID:    c.CodeID,
-		Updated:   c.Created,
-	}
-}
-
 // AdminAddr convert into sdk.AccAddress or nil when not set
 func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 	if c.Admin == "" {
