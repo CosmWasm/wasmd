@@ -73,6 +73,7 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypePinCodes))
 	govtypes.RegisterProposalType(string(ProposalTypeUnpinCodes))
 	govtypes.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
+	govtypes.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
 	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
 	govtypes.RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
 	govtypes.RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
@@ -265,7 +266,18 @@ func NewStoreAndInstantiateContractProposal(
 	msg RawContractMessage,
 	funds sdk.Coins,
 ) *StoreAndInstantiateContractProposal {
-	return &StoreAndInstantiateContractProposal{title, description, runAs, wasmBz, permission, unpinCode, admin, label, msg, funds}
+	return &StoreAndInstantiateContractProposal{
+		Title:                 title,
+		Description:           description,
+		RunAs:                 runAs,
+		WASMByteCode:          wasmBz,
+		InstantiatePermission: permission,
+		UnpinCode:             unpinCode,
+		Admin:                 admin,
+		Label:                 label,
+		Msg:                   msg,
+		Funds:                 funds,
+	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.

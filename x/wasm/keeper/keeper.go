@@ -398,24 +398,6 @@ func (k Keeper) instantiate(
 	return contractAddress, data, nil
 }
 
-func (k Keeper) createAndInstantiate(
-	ctx sdk.Context,
-	creator, admin sdk.AccAddress,
-	wasmCode []byte,
-	instantiateAccess *types.AccessConfig,
-	initMsg []byte,
-	label string,
-	deposit sdk.Coins,
-	addressGenerator AddressGenerator,
-	authZ AuthorizationPolicy,
-) (sdk.AccAddress, []byte, error) {
-	codeID, _, err := k.create(ctx, creator, wasmCode, instantiateAccess, authZ)
-	if err != nil {
-		return nil, nil, err
-	}
-	return k.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, addressGenerator, authZ)
-}
-
 // Execute executes the contract instance
 func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
