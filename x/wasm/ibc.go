@@ -3,17 +3,16 @@ package wasm
 import (
 	"math"
 
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
 
-	types "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
@@ -37,14 +36,14 @@ func (i IBCHandler) OnChanOpenInit(
 	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
-		return err
+		return "", err
 	}
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
-		return sdkerrors.Wrapf(err, "contract port id")
+		return "", sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	msg := wasmvmtypes.IBCChannelOpenMsg{
@@ -59,15 +58,21 @@ func (i IBCHandler) OnChanOpenInit(
 			},
 		},
 	}
-	_, err = i.keeper.OnOpenChannel(ctx, contractAddr, msg)
+
+	// Allow contracts to return a version (or default to proposed version if unset)
+	acceptedVersion, err := i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
-		return err
+		return "", err
 	}
+	if acceptedVersion == "" {
+		acceptedVersion = version
+	}
+
 	// Claim channel capability passed back by IBC module
 	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return sdkerrors.Wrap(err, "claim capability")
+		return "", sdkerrors.Wrap(err, "claim capability")
 	}
-	return nil
+	return acceptedVersion, nil
 }
 
 // OnChanOpenTry implements the IBCModule interface
@@ -240,12 +245,12 @@ func (i IBCHandler) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(err, "contract port id").Error())
+		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(err, "contract port id"))
 	}
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return channeltypes.NewErrorAcknowledgement(err)
 	}
 	return ContractConfirmStateAck(ack)
 }

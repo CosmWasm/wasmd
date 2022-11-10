@@ -3,18 +3,16 @@ package ibctesting
 import (
 	"fmt"
 
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-
-	//	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v4/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v4/modules/core/23-commitment/types"
+	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v4/modules/core/exported"
+	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	ibctesting "github.com/cosmos/ibc-go/v4/testing"
 	"github.com/stretchr/testify/require"
-
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v3/modules/core/exported"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 )
 
 // Endpoint is a which represents a channel endpoint and its associated
@@ -69,7 +67,7 @@ func (endpoint *Endpoint) QueryProof(key []byte) ([]byte, clienttypes.Height) {
 }
 
 // QueryProofAtHeight queries proof associated with this endpoint using the proof height
-// providied
+// provided
 func (endpoint *Endpoint) QueryProofAtHeight(key []byte, height uint64) ([]byte, clienttypes.Height) {
 	// query proof on the counterparty using the latest height of the IBC client
 	return endpoint.Chain.QueryProofAtHeight(key, int64(height))
@@ -184,8 +182,7 @@ func (endpoint *Endpoint) ConnOpenTry() error {
 	counterpartyClient, proofClient, proofConsensus, consensusHeight, proofInit, proofHeight := endpoint.QueryConnectionHandshakeProof()
 
 	msg := connectiontypes.NewMsgConnectionOpenTry(
-		"", endpoint.ClientID, // does not support handshake continuation
-		endpoint.Counterparty.ConnectionID, endpoint.Counterparty.ClientID,
+		endpoint.ClientID, endpoint.Counterparty.ConnectionID, endpoint.Counterparty.ClientID,
 		counterpartyClient, endpoint.Counterparty.Chain.GetPrefix(), []*connectiontypes.Version{ibctesting.ConnectionVersion}, endpoint.ConnectionConfig.DelayPeriod,
 		proofInit, proofClient, proofConsensus,
 		proofHeight, consensusHeight,
@@ -284,6 +281,10 @@ func (endpoint *Endpoint) ChanOpenInit() error {
 	endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
 	require.NoError(endpoint.Chain.t, err)
 
+	// update version to selected app version
+	// NOTE: this update must be performed after SendMsgs()
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
+
 	return nil
 }
 
@@ -297,7 +298,7 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 	proof, height := endpoint.Counterparty.Chain.QueryProof(channelKey)
 
 	msg := channeltypes.NewMsgChannelOpenTry(
-		endpoint.ChannelConfig.PortID, "", // does not support handshake continuation
+		endpoint.ChannelConfig.PortID,
 		endpoint.ChannelConfig.Version, endpoint.ChannelConfig.Order, []string{endpoint.ConnectionID},
 		endpoint.Counterparty.ChannelConfig.PortID, endpoint.Counterparty.ChannelID, endpoint.Counterparty.ChannelConfig.Version,
 		proof, height,
@@ -312,6 +313,10 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 		endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
 		require.NoError(endpoint.Chain.t, err)
 	}
+
+	// update version to selected app version
+	// NOTE: this update must be performed after the endpoint channelID is set
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
 
 	return nil
 }
@@ -331,7 +336,12 @@ func (endpoint *Endpoint) ChanOpenAck() error {
 		proof, height,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
-	return endpoint.Chain.sendMsgs(msg)
+	if err := endpoint.Chain.sendMsgs(msg); err != nil {
+		return err
+	}
+
+	endpoint.ChannelConfig.Version = endpoint.GetChannel().Version
+	return nil
 }
 
 // ChanOpenConfirm will construct and execute a MsgChannelOpenConfirm on the associated endpoint.
@@ -395,6 +405,17 @@ func (endpoint *Endpoint) SendPacket(packet exported.PacketI) error {
 // RecvPacket receives a packet on the associated endpoint.
 // The counterparty client is updated.
 func (endpoint *Endpoint) RecvPacket(packet channeltypes.Packet) error {
+	_, err := endpoint.RecvPacketWithResult(packet)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RecvPacketWithResult receives a packet on the associated endpoint and the result
+// of the transaction is returned. The counterparty client is updated.
+func (endpoint *Endpoint) RecvPacketWithResult(packet channeltypes.Packet) (*sdk.Result, error) {
 	// get proof of packet commitment on source
 	packetKey := host.PacketCommitmentKey(packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
 	proof, proofHeight := endpoint.Counterparty.Chain.QueryProof(packetKey)
@@ -402,11 +423,16 @@ func (endpoint *Endpoint) RecvPacket(packet channeltypes.Packet) error {
 	recvMsg := channeltypes.NewMsgRecvPacket(packet, proof, proofHeight, endpoint.Chain.SenderAccount.GetAddress().String())
 
 	// receive on counterparty and update source client
-	if err := endpoint.Chain.sendMsgs(recvMsg); err != nil {
-		return err
+	res, err := endpoint.Chain.SendMsgs(recvMsg)
+	if err != nil {
+		return nil, err
 	}
 
-	return endpoint.Counterparty.UpdateClient()
+	if err := endpoint.Counterparty.UpdateClient(); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // WriteAcknowledgement writes an acknowledgement on the channel associated with the endpoint.
@@ -461,6 +487,36 @@ func (endpoint *Endpoint) TimeoutPacket(packet channeltypes.Packet) error {
 	)
 
 	return endpoint.Chain.sendMsgs(timeoutMsg)
+}
+
+// TimeoutOnClose sends a MsgTimeoutOnClose to the channel associated with the endpoint.
+func (endpoint *Endpoint) TimeoutOnClose(packet channeltypes.Packet) error {
+	// get proof for timeout based on channel order
+	var packetKey []byte
+
+	switch endpoint.ChannelConfig.Order {
+	case channeltypes.ORDERED:
+		packetKey = host.NextSequenceRecvKey(packet.GetDestPort(), packet.GetDestChannel())
+	case channeltypes.UNORDERED:
+		packetKey = host.PacketReceiptKey(packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
+	default:
+		return fmt.Errorf("unsupported order type %s", endpoint.ChannelConfig.Order)
+	}
+
+	proof, proofHeight := endpoint.Counterparty.QueryProof(packetKey)
+
+	channelKey := host.ChannelKey(packet.GetDestPort(), packet.GetDestChannel())
+	proofClosed, _ := endpoint.Counterparty.QueryProof(channelKey)
+
+	nextSeqRecv, found := endpoint.Counterparty.Chain.App.IBCKeeper.ChannelKeeper.GetNextSequenceRecv(endpoint.Counterparty.Chain.GetContext(), endpoint.ChannelConfig.PortID, endpoint.ChannelID)
+	require.True(endpoint.Chain.t, found)
+
+	timeoutOnCloseMsg := channeltypes.NewMsgTimeoutOnClose(
+		packet, nextSeqRecv,
+		proof, proofClosed, proofHeight, endpoint.Chain.SenderAccount.GetAddress().String(),
+	)
+
+	return endpoint.Chain.sendMsgs(timeoutOnCloseMsg)
 }
 
 // SetChannelClosed sets a channel state to CLOSED.
