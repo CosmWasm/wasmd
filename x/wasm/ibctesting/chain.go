@@ -92,7 +92,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
-		validators         []*tmtypes.Validator
+		validators         = make([]*tmtypes.Validator, 0, validatorsPerChain)
 		signersByAddress   = make(map[string]tmtypes.PrivValidator, validatorsPerChain)
 	)
 
@@ -488,9 +488,9 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	// MakeCommit expects a signer array in the same order as the validator array.
 	// Thus we iterate over the ordered validator set and construct a signer array
 	// from the signer map in the same order.
-	var signerArr []tmtypes.PrivValidator
-	for _, v := range tmValSet.Validators {
-		signerArr = append(signerArr, signers[v.Address.String()])
+	signerArr := make([]tmtypes.PrivValidator, len(tmValSet.Validators))
+	for i, v := range tmValSet.Validators {
+		signerArr[i] = signers[v.Address.String()]
 	}
 
 	commit, err := tmtypes.MakeCommit(blockID, blockHeight, 1, voteSet, signerArr, timestamp)
@@ -501,10 +501,8 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 		Commit: commit.ToProto(),
 	}
 
-	if tmValSet != nil {
-		valSet, err = tmValSet.ToProto()
-		require.NoError(chain.t, err)
-	}
+	valSet, err = tmValSet.ToProto()
+	require.NoError(chain.t, err)
 
 	if tmTrustedVals != nil {
 		trustedVals, err = tmTrustedVals.ToProto()

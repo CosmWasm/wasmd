@@ -252,19 +252,18 @@ func (coord *Coordinator) ChanOpenInitOnBothChains(path *Path) error {
 	return nil
 }
 
-// from A to B
+// RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
 func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
-	toSend := src.Chain.PendingSendPackets
-	coord.t.Logf("Relay %d Packets A->B\n", len(toSend))
+	coord.t.Logf("Relay %d Packets A->B\n", len(src.Chain.PendingSendPackets))
 
-	for i, v := range toSend {
+	for i, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
 		if err != nil {
 			return err
 		}
-		src.Chain.PendingSendPackets = append(toSend[0:i], toSend[i+1:]...)
+		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
 	}
 	return nil
 }

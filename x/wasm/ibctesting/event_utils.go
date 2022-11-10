@@ -21,21 +21,6 @@ func getSendPackets(evts []abci.Event) []channeltypes.Packet {
 	return res
 }
 
-func getAckPackets(evts []abci.Event) []PacketAck {
-	var res []PacketAck
-	for _, evt := range evts {
-		if evt.Type == channeltypes.EventTypeWriteAck {
-			packet := parsePacketFromEvent(evt)
-			ack := PacketAck{
-				Packet: packet,
-				Ack:    []byte(getField(evt, "packet_ack")),
-			}
-			res = append(res, ack)
-		}
-	}
-	return res
-}
-
 // Used for various debug statements above when needed... do not remove
 // func showEvent(evt abci.Event) {
 //	fmt.Printf("evt.Type: %s\n", evt.Type)
