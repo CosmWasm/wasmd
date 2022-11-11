@@ -145,7 +145,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "store-instantiate [wasm file] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit and instantiate a wasm contract proposal",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
 			if err != nil {
@@ -232,6 +232,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
