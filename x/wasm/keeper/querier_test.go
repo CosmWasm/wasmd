@@ -330,7 +330,7 @@ func TestQueryContractHistory(t *testing.T) {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}},
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
@@ -338,23 +338,24 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 5, TxIndex: 6},
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
@@ -362,26 +363,29 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
 				Msg:       []byte(`"migrate message 2"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 5, TxIndex: 6},
 			}},
 		},
 		"with pagination offset": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}},
 			req: types.QueryContractHistoryRequest{
@@ -394,18 +398,19 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 			}},
 		},
 		"with pagination limit": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}},
 			req: types.QueryContractHistoryRequest{
@@ -418,6 +423,7 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
 		},
 		"unknown contract address": {
