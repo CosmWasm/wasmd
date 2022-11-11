@@ -231,14 +231,18 @@ func TestMigrateProposal(t *testing.T) {
 		contractAddr = BuildContractAddressClassic(1, 1)
 	)
 
-	contractInfoFixture := types.ContractInfoFixture(func(c *types.ContractInfo) {
+	contractInfo := types.ContractInfoFixture(func(c *types.ContractInfo) {
 		c.Label = "testing"
 		c.Admin = anyAddress.String()
+		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
+	entries := []types.ContractCodeHistoryEntry{
+		{Operation: types.ContractCodeHistoryOperationTypeInit, CodeID: 1, Updated: contractInfo.Created},
+	}
 	key, err := hex.DecodeString("636F6E666967")
 	require.NoError(t, err)
 	m := types.Model{Key: key, Value: []byte(`{"verifier":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","beneficiary":"AAAAAAAAAAAAAAAAAAAAAAAAAAA=","funder":"AQEBAQEBAQEBAQEBAQEBAQEBAQE="}`)}
-	require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &contractInfoFixture, []types.Model{m}))
+	require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &contractInfo, []types.Model{m}, entries))
 
 	migMsg := struct {
 		Verifier sdk.AccAddress `json:"verifier"`
@@ -273,7 +277,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, anyAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeGenesis,
+		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    firstCodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 	}, {
@@ -469,10 +473,18 @@ func TestAdminProposals(t *testing.T) {
 				InstantiateDefaultPermission: types.AccessTypeNobody,
 			})
 
-			codeInfoFixture := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
-			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfoFixture, wasmCode))
+			codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
+			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfo, wasmCode))
 
-			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}))
+			entries := []types.ContractCodeHistoryEntry{
+				{
+					Operation: types.ContractCodeHistoryOperationTypeInit,
+					CodeID:    1,
+					Updated:   spec.state.Created,
+				},
+			}
+
+			require.NoError(t, wasmKeeper.importContract(ctx, contractAddr, &spec.state, []types.Model{}, entries))
 			// when stored
 			storedProposal, err := govKeeper.SubmitProposal(ctx, spec.srcProposal)
 			require.NoError(t, err)

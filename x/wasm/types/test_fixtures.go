@@ -87,9 +87,12 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 
 	fixture := Contract{
 		ContractAddress: anyAddress,
-		ContractInfo:    ContractInfoFixture(OnlyGenesisFields),
+		ContractInfo:    ContractInfoFixture(RandCreatedFields),
 		ContractState:   []Model{{Key: []byte("anyKey"), Value: []byte("anyValue")}},
 	}
+	fixture.ContractCodeHistory = []ContractCodeHistoryEntry{ContractCodeHistoryEntryFixture(func(e *ContractCodeHistoryEntry) {
+		e.Updated = fixture.ContractInfo.Created
+	})}
 
 	for _, m := range mutators {
 		m(&fixture)
@@ -99,6 +102,10 @@ func ContractFixture(mutators ...func(*Contract)) Contract {
 
 func OnlyGenesisFields(info *ContractInfo) {
 	info.Created = nil
+}
+
+func RandCreatedFields(info *ContractInfo) {
+	info.Created = &AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()}
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
@@ -111,6 +118,20 @@ func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
 		Created: &AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
 	}
 
+	for _, m := range mutators {
+		m(&fixture)
+	}
+	return fixture
+}
+
+// ContractCodeHistoryEntryFixture test fixture
+func ContractCodeHistoryEntryFixture(mutators ...func(*ContractCodeHistoryEntry)) ContractCodeHistoryEntry {
+	fixture := ContractCodeHistoryEntry{
+		Operation: ContractCodeHistoryOperationTypeInit,
+		CodeID:    1,
+		Updated:   ContractInfoFixture().Created,
+		Msg:       []byte(`{"foo":"bar"}`),
+	}
 	for _, m := range mutators {
 		m(&fixture)
 	}

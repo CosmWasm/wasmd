@@ -257,8 +257,6 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	if info == nil {
 		return nil, types.ErrNotFound
 	}
-	// redact the Created field (just used for sorting, not part of public API)
-	info.Created = nil
 	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),
 		ContractInfo: *info,

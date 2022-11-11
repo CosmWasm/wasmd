@@ -560,20 +560,16 @@ func TestQueryContractInfo(t *testing.T) {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(),
 			expRsp: &types.QueryContractInfoResponse{
-				Address: contractAddr.String(),
-				ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-					info.Created = nil // not returned on queries
-				}),
+				Address:      contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(),
 			},
 		},
 		"with extension": {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(myExtension),
 			expRsp: &types.QueryContractInfoResponse{
-				Address: contractAddr.String(),
-				ContractInfo: types.ContractInfoFixture(myExtension, func(info *types.ContractInfo) {
-					info.Created = nil // not returned on queries
-				}),
+				Address:      contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(myExtension),
 			},
 		},
 		"not found": {

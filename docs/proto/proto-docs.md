@@ -193,7 +193,7 @@ ContractInfo stores a WASM contract instance
 | `creator` | [string](#string) |  | Creator address who initially instantiated the contract |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
-| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. This data should kept internal and not be exposed via query results. Just use for sorting |
+| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. |
 | `ibc_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
 
@@ -568,6 +568,7 @@ Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 | `contract_address` | [string](#string) |  |  |
 | `contract_info` | [ContractInfo](#cosmwasm.wasm.v1.ContractInfo) |  |  |
 | `contract_state` | [Model](#cosmwasm.wasm.v1.Model) | repeated |  |
+| `contract_code_history` | [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry) | repeated |  |
 
 
 
