@@ -395,7 +395,11 @@ func GrantAuthorizationCmd() *cobra.Command {
 		Long: fmt.Sprintf(`Grant authorization to an address.
 Examples:
 $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxCalls 1 --no-token-transfer --expiration 1667979596
-`, version.AppName),
+
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxFunds 100000uwasm --expiration 1667979596
+
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxCalls 5 --maxFunds 100000uwasm --expiration 1667979596
+`, version.AppName, version.AppName, version.AppName),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -459,34 +463,34 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 					return fmt.Errorf("max funds: %s", err)
 				}
 				limit = types.NewCombinedLimit(maxCalls, maxFunds...)
-			case maxFundsStr != "" && !noTokenTransfer:
+			case maxFundsStr != "" && maxCalls == 0 && !noTokenTransfer:
 				maxFunds, err := sdk.ParseCoinsNormalized(maxFundsStr)
 				if err != nil {
 					return fmt.Errorf("max funds: %s", err)
 				}
 				limit = types.NewMaxFundsLimit(maxFunds...)
-			case maxCalls != 0 && noTokenTransfer:
+			case maxCalls != 0 && noTokenTransfer && maxFundsStr == "":
 				limit = types.NewMaxCallsLimit(maxCalls)
 			default:
-				limit = types.UndefinedLimit{}
+				return errors.New("invalid limit setup")
 			}
 
 			var filter types.ContractAuthzFilterX
 			switch {
-			case allowAllMsgs && len(msgKeys) > 0 || allowAllMsgs && len(rawMsgs) > 0 || len(msgKeys) > 0 && len(rawMsgs) > 0:
-				return fmt.Errorf("cannot set more than one filter within one grant")
+			case allowAllMsgs && len(msgKeys) != 0 || allowAllMsgs && len(rawMsgs) != 0 || len(msgKeys) != 0 && len(rawMsgs) != 0:
+				return errors.New("cannot set more than one filter within one grant")
 			case allowAllMsgs:
 				filter = types.NewAllowAllMessagesFilter()
-			case len(msgKeys) > 0:
+			case len(msgKeys) != 0:
 				filter = types.NewAcceptedMessageKeysFilter(msgKeys...)
-			case len(rawMsgs) > 0:
+			case len(rawMsgs) != 0:
 				msgs := make([]types.RawContractMessage, len(rawMsgs))
 				for i, msg := range rawMsgs {
 					msgs[i] = types.RawContractMessage(msg)
 				}
 				filter = types.NewAcceptedMessagesFilter(msgs...)
 			default:
-				filter = &types.UndefinedFilter{}
+				return errors.New("invalid filter setup")
 			}
 
 			grant, err := types.NewContractGrant(contract, limit, filter)
