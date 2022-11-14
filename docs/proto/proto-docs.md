@@ -4,6 +4,17 @@
 
 ## Table of Contents
 
+- [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
+    - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
+    - [AcceptedMessagesFilter](#cosmwasm.wasm.v1.AcceptedMessagesFilter)
+    - [AllowAllMessagesFilter](#cosmwasm.wasm.v1.AllowAllMessagesFilter)
+    - [CombinedLimit](#cosmwasm.wasm.v1.CombinedLimit)
+    - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
+    - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
+    - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
+    - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
+  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -53,6 +64,7 @@
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
     - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
+    - [StoreAndInstantiateContractProposal](#cosmwasm.wasm.v1.StoreAndInstantiateContractProposal)
     - [StoreCodeProposal](#cosmwasm.wasm.v1.StoreCodeProposal)
     - [SudoContractProposal](#cosmwasm.wasm.v1.SudoContractProposal)
     - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
@@ -87,6 +99,168 @@
     - [Query](#cosmwasm.wasm.v1.Query)
   
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="cosmwasm/wasm/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/wasm/v1/authz.proto
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
+
+### AcceptedMessageKeysFilter
+AcceptedMessageKeysFilter accept only the specific contract message keys in
+the json object to be executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `keys` | [string](#string) | repeated | Messages is the list of unique keys |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessagesFilter"></a>
+
+### AcceptedMessagesFilter
+AcceptedMessagesFilter accept only the specific raw contract messages to be
+executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `messages` | [bytes](#bytes) | repeated | Messages is the list of raw contract messages |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AllowAllMessagesFilter"></a>
+
+### AllowAllMessagesFilter
+AllowAllMessagesFilter is a wildcard to allow any type of contract payload
+message.
+Since: wasmd 0.30
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.CombinedLimit"></a>
+
+### CombinedLimit
+CombinedLimit defines the maximal amounts that can be sent to a contract and
+the maximal number of calls executable. Both need to remain >0 to be valid.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `calls_remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
+
+### ContractExecutionAuthorization
+ContractExecutionAuthorization defines authorization for wasm execute.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract executions |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractGrant"></a>
+
+### ContractGrant
+ContractGrant a granted permission for a single contract
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract` | [string](#string) |  | Contract is the bech32 address of the smart contract |
+| `limit` | [google.protobuf.Any](#google.protobuf.Any) |  | Limit defines execution limits that are enforced and updated when the grant is applied. When the limit lapsed the grant is removed. |
+| `filter` | [google.protobuf.Any](#google.protobuf.Any) |  | Filter define more fine-grained control on the message payload passed to the contract in the operation. When no filter applies on execution, the operation is prohibited. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
+
+### ContractMigrationAuthorization
+ContractMigrationAuthorization defines authorization for wasm contract
+migration. Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxCallsLimit"></a>
+
+### MaxCallsLimit
+MaxCallsLimit limited number of calls to the contract. No funds transferable.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxFundsLimit"></a>
+
+### MaxFundsLimit
+MaxFundsLimit defines the maximal amounts that can be sent to the contract.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -193,7 +367,7 @@ ContractInfo stores a WASM contract instance
 | `creator` | [string](#string) |  | Creator address who initially instantiated the contract |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
-| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. This data should kept internal and not be exposed via query results. Just use for sorting |
+| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. |
 | `ibc_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
 
@@ -568,6 +742,7 @@ Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 | `contract_address` | [string](#string) |  |  |
 | `contract_info` | [ContractInfo](#cosmwasm.wasm.v1.ContractInfo) |  |  |
 | `contract_state` | [Model](#cosmwasm.wasm.v1.Model) | repeated |  |
+| `contract_code_history` | [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry) | repeated |  |
 
 
 
@@ -804,6 +979,31 @@ wasmvm cache.
 | `title` | [string](#string) |  | Title is a short summary |
 | `description` | [string](#string) |  | Description is a human readable text |
 | `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the new WASM codes |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.StoreAndInstantiateContractProposal"></a>
+
+### StoreAndInstantiateContractProposal
+StoreAndInstantiateContractProposal gov proposal content type to store
+and instantiate the contract.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
 
 
 

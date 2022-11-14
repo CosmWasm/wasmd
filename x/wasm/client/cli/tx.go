@@ -32,6 +32,9 @@ const (
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
+	flagAllowedMsgs               = "allow-msgs"
+	flagRunOnce                   = "run-once"
+	flagExpiration                = "expiration"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -52,6 +55,7 @@ func GetTxCmd() *cobra.Command {
 		MigrateContractCmd(),
 		UpdateContractAdminCmd(),
 		ClearContractAdminCmd(),
+		GrantAuthorizationCmd(),
 	)
 	return txCmd
 }
@@ -376,4 +380,58 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 		Funds:    amount,
 		Msg:      []byte(execMsg),
 	}, nil
+}
+
+func GrantAuthorizationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "grant [grantee] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
+		Short: "Grant authorization to an address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantee, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			contract, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			msgs, err := cmd.Flags().GetStringSlice(flagAllowedMsgs)
+			if err != nil {
+				return err
+			}
+
+			once, err := cmd.Flags().GetBool(flagRunOnce)
+			if err != nil {
+				return err
+			}
+
+			exp, err := cmd.Flags().GetInt64(flagExpiration)
+			if err != nil {
+				return err
+			}
+			if exp == 0 {
+				return errors.New("expiration must be set")
+			}
+			_ = clientCtx
+			_ = grantee
+			_ = msgs
+			_ = once
+			_ = contract
+
+			return errors.New("not implemented")
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().StringSlice(flagAllowedMsgs, []string{}, "Allowed msgs")
+	cmd.Flags().Bool(flagRunOnce, false, "Allow to execute only once")
+	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
+	return cmd
 }

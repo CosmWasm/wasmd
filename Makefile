@@ -149,8 +149,9 @@ test-sim-multi-seed-short: runsim
 ###############################################################################
 
 format-tools:
-	go install mvdan.cc/gofumpt@v0.3.1
+	go install mvdan.cc/gofumpt@v0.4.0
 	go install github.com/client9/misspell/cmd/misspell@v0.3.4
+	go install golang.org/x/tools/cmd/goimports@latest
 
 lint: format-tools
 	golangci-lint run --tests=false

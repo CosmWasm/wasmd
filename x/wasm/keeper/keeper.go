@@ -1062,7 +1062,7 @@ func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uin
 	return nil
 }
 
-func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
+func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, entries []types.ContractCodeHistoryEntry) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
 	}
@@ -1074,11 +1074,11 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	if err != nil {
 		return err
 	}
-	historyEntry := c.ResetFromGenesis(ctx)
-	k.appendToContractHistory(ctx, contractAddr, historyEntry)
+
+	k.appendToContractHistory(ctx, contractAddr, entries...)
 	k.storeContractInfo(ctx, contractAddr, c)
-	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
-	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, historyEntry.Updated, contractAddr)
+	k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
+	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 
