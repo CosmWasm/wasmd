@@ -386,9 +386,6 @@ func SignAndDeliver(
 	// Simulate a sending a transaction and committing a block
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 	gInfo, res, err := app.Deliver(txCfg.TxEncoder(), tx)
-
-	app.EndBlock(abci.RequestEndBlock{})
-	app.Commit()
 	return gInfo, res, err
 }
 

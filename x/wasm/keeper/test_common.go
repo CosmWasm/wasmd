@@ -170,18 +170,19 @@ func (f *TestFaucet) NewFundedRandomAccount(ctx sdk.Context, amounts ...sdk.Coin
 }
 
 type TestKeepers struct {
-	AccountKeeper  authkeeper.AccountKeeper
-	StakingKeeper  stakingkeeper.Keeper
-	DistKeeper     distributionkeeper.Keeper
-	BankKeeper     bankkeeper.Keeper
-	GovKeeper      govkeeper.Keeper
-	ContractKeeper types.ContractOpsKeeper
-	WasmKeeper     *Keeper
-	IBCKeeper      *ibckeeper.Keeper
-	Router         *baseapp.Router
-	EncodingConfig wasmappparams.EncodingConfig
-	Faucet         *TestFaucet
-	MultiStore     sdk.CommitMultiStore
+	AccountKeeper    authkeeper.AccountKeeper
+	StakingKeeper    stakingkeeper.Keeper
+	DistKeeper       distributionkeeper.Keeper
+	BankKeeper       bankkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	ContractKeeper   types.ContractOpsKeeper
+	WasmKeeper       *Keeper
+	IBCKeeper        *ibckeeper.Keeper
+	Router           *baseapp.Router
+	EncodingConfig   wasmappparams.EncodingConfig
+	Faucet           *TestFaucet
+	MultiStore       sdk.CommitMultiStore
+	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -426,18 +427,19 @@ func createTestInput(
 	govKeeper.SetTallyParams(ctx, govtypes.DefaultTallyParams())
 
 	keepers := TestKeepers{
-		AccountKeeper:  accountKeeper,
-		StakingKeeper:  stakingKeeper,
-		DistKeeper:     distKeeper,
-		ContractKeeper: contractKeeper,
-		WasmKeeper:     &keeper,
-		BankKeeper:     bankKeeper,
-		GovKeeper:      govKeeper,
-		IBCKeeper:      ibcKeeper,
-		Router:         router,
-		EncodingConfig: encodingConfig,
-		Faucet:         faucet,
-		MultiStore:     ms,
+		AccountKeeper:    accountKeeper,
+		StakingKeeper:    stakingKeeper,
+		DistKeeper:       distKeeper,
+		ContractKeeper:   contractKeeper,
+		WasmKeeper:       &keeper,
+		BankKeeper:       bankKeeper,
+		GovKeeper:        govKeeper,
+		IBCKeeper:        ibcKeeper,
+		Router:           router,
+		EncodingConfig:   encodingConfig,
+		Faucet:           faucet,
+		MultiStore:       ms,
+		ScopedWasmKeeper: scopedWasmKeeper,
 	}
 	return ctx, keepers
 }
