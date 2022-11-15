@@ -394,11 +394,11 @@ func GrantAuthorizationCmd() *cobra.Command {
 		Short: "Grant authorization to an address",
 		Long: fmt.Sprintf(`Grant authorization to an address.
 Examples:
-$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxCalls 1 --no-token-transfer --expiration 1667979596
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --max-calls 1 --no-token-transfer --expiration 1667979596
 
-$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxFunds 100000uwasm --expiration 1667979596
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --max-funds 100000uwasm --expiration 1667979596
 
-$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --maxCalls 5 --maxFunds 100000uwasm --expiration 1667979596
+$ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --max-calls 5 --max-funds 100000uwasm --expiration 1667979596
 `, version.AppName, version.AppName, version.AppName),
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
