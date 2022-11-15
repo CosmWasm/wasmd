@@ -2,8 +2,11 @@ package ibctesting
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
@@ -86,4 +89,30 @@ func parseTimeoutHeight(raw string) clienttypes.Height {
 		RevisionNumber: toUint64(chunks[0]),
 		RevisionHeight: toUint64(chunks[1]),
 	}
+}
+
+func ParsePortIDFromEvents(events sdk.Events) (string, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
+			for _, attr := range ev.Attributes {
+				if string(attr.Key) == channeltypes.AttributeKeyPortID {
+					return string(attr.Value), nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("port id event attribute not found")
+}
+
+func ParseChannelVersionFromEvents(events sdk.Events) (string, error) {
+	for _, ev := range events {
+		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
+			for _, attr := range ev.Attributes {
+				if string(attr.Key) == channeltypes.AttributeVersion {
+					return string(attr.Value), nil
+				}
+			}
+		}
+	}
+	return "", fmt.Errorf("version event attribute not found")
 }
