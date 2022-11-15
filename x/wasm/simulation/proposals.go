@@ -86,7 +86,7 @@ func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorF
 			false,
 			"",
 			"",
-			nil,
+			[]byte{},
 		)
 	}
 }

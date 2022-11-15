@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"github.com/docker/distribution/reference"
 	"net/url"
 	"strconv"
 	"strings"
@@ -88,7 +89,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
 	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
-	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
+	cmd.Flags().BytesHex(flagCodeHash, []byte{}, "CodeHash is the sha256 hash of the wasm code")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
@@ -100,7 +101,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
 	source, err := flags.GetString(flagSource)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("source: %s", err)
+		return "", "", []byte{}, fmt.Errorf("source: %s", err)
 	}
 	builder, err := flags.GetString(flagBuilder)
 	if err != nil {
@@ -132,7 +133,7 @@ func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byt
 		// checksum generation will be decoupled here
 		// reference https://github.com/CosmWasm/wasmvm/issues/359
 		checksum := sha256.Sum256(wasm)
-		if !bytes.Equal(checksum[:], codeHash) {
+		if !bytes.Equal(checksum[:], codeHash[:]) {
 			return "", "", []byte{}, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
 		}
 	}
