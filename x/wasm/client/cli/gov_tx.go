@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"github.com/docker/distribution/reference"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/docker/distribution/reference"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -131,7 +132,7 @@ func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byt
 		// checksum generation will be decoupled here
 		// reference https://github.com/CosmWasm/wasmvm/issues/359
 		checksum := sha256.Sum256(wasm)
-		if !bytes.Equal(checksum[:], codeHash[:]) {
+		if !bytes.Equal(checksum[:], codeHash) {
 			return "", "", []byte{}, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
 		}
 	}
