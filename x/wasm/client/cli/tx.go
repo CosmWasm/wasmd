@@ -32,6 +32,9 @@ const (
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
+	flagAllowedMsgs               = "allow-msgs"
+	flagRunOnce                   = "run-once"
+	flagExpiration                = "expiration"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -42,6 +45,7 @@ func GetTxCmd() *cobra.Command {
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
+		SilenceUsage:               true,
 	}
 	txCmd.AddCommand(
 		StoreCodeCmd(),
@@ -51,6 +55,7 @@ func GetTxCmd() *cobra.Command {
 		MigrateContractCmd(),
 		UpdateContractAdminCmd(),
 		ClearContractAdminCmd(),
+		GrantAuthorizationCmd(),
 	)
 	return txCmd
 }
@@ -76,6 +81,7 @@ func StoreCodeCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
@@ -183,7 +189,7 @@ func InstantiateContractCmd() *cobra.Command {
 		Long: fmt.Sprintf(`Creates a new instance of an uploaded wasm code with the given 'constructor' message.
 Each contract instance has a unique address assigned.
 Example:
-$ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
+$ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
   --from mykey --amount="100ustake" --label "local0.1.0" 
 `, version.AppName, version.AppName),
 		Aliases: []string{"start", "init", "inst", "i"},
@@ -202,6 +208,7 @@ $ %s wasmd tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -224,7 +231,7 @@ Each contract instance has a unique address assigned. They are assigned automati
 for special use cases, the given 'salt' argument and '--fix-msg' parameters can be used to generate a custom address.
 
 Predictable address example (also see '%s query wasm build-address -h'):
-$ %s wasmd tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --admin="$(%s keys show mykey -a)" \
+$ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --admin="$(%s keys show mykey -a)" \
   --from mykey --amount="100ustake" --label "local0.1.0" \
    --fix-msg 
 `, version.AppName, version.AppName, version.AppName),
@@ -262,6 +269,7 @@ $ %s wasmd tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps)
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
@@ -347,6 +355,7 @@ func ExecuteContractCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract along with command")
@@ -371,4 +380,58 @@ func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress
 		Funds:    amount,
 		Msg:      []byte(execMsg),
 	}, nil
+}
+
+func GrantAuthorizationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "grant [grantee] [contract_addr_bech32] --allow-msgs [msg1,msg2,...]",
+		Short: "Grant authorization to an address",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantee, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			contract, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			msgs, err := cmd.Flags().GetStringSlice(flagAllowedMsgs)
+			if err != nil {
+				return err
+			}
+
+			once, err := cmd.Flags().GetBool(flagRunOnce)
+			if err != nil {
+				return err
+			}
+
+			exp, err := cmd.Flags().GetInt64(flagExpiration)
+			if err != nil {
+				return err
+			}
+			if exp == 0 {
+				return errors.New("expiration must be set")
+			}
+			_ = clientCtx
+			_ = grantee
+			_ = msgs
+			_ = once
+			_ = contract
+
+			return errors.New("not implemented")
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().StringSlice(flagAllowedMsgs, []string{}, "Allowed msgs")
+	cmd.Flags().Bool(flagRunOnce, false, "Allow to execute only once")
+	cmd.Flags().Int64(flagExpiration, 0, "The Unix timestamp.")
+	return cmd
 }

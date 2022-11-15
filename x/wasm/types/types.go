@@ -171,16 +171,6 @@ func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) 
 	return h
 }
 
-// ResetFromGenesis resets contracts timestamp and history.
-func (c *ContractInfo) ResetFromGenesis(ctx sdk.Context) ContractCodeHistoryEntry {
-	c.Created = NewAbsoluteTxPosition(ctx)
-	return ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryOperationTypeGenesis,
-		CodeID:    c.CodeID,
-		Updated:   c.Created,
-	}
-}
-
 // AdminAddr convert into sdk.AccAddress or nil when not set
 func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 	if c.Admin == "" {
@@ -251,6 +241,27 @@ func (a *AbsoluteTxPosition) Bytes() []byte {
 	copy(r[0:], sdk.Uint64ToBigEndian(a.BlockHeight))
 	copy(r[8:], sdk.Uint64ToBigEndian(a.TxIndex))
 	return r
+}
+
+// ValidateBasic syntax checks
+func (c ContractCodeHistoryEntry) ValidateBasic() error {
+	var found bool
+	for _, v := range AllCodeHistoryTypes {
+		if c.Operation == v {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return ErrInvalid.Wrap("operation")
+	}
+	if c.CodeID == 0 {
+		return ErrEmpty.Wrap("code id")
+	}
+	if c.Updated == nil {
+		return ErrEmpty.Wrap("updated")
+	}
+	return sdkerrors.Wrap(c.Msg.ValidateBasic(), "msg")
 }
 
 // NewEnv initializes the environment for a contract instance

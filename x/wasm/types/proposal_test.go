@@ -254,6 +254,120 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 	}
 }
 
+func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
+	var (
+		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
+		invalidAddress                = "invalid address"
+	)
+
+	specs := map[string]struct {
+		src    *StoreAndInstantiateContractProposal
+		expErr bool
+	}{
+		"all good": {
+			src: StoreAndInstantiateContractProposalFixture(),
+		},
+		"with instantiate permission": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				p.InstantiatePermission = &accessConfig
+			}),
+		},
+		"base data missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Title = ""
+			}),
+			expErr: true,
+		},
+		"run_as missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.RunAs = ""
+			}),
+			expErr: true,
+		},
+		"run_as invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.RunAs = invalidAddress
+			}),
+			expErr: true,
+		},
+		"wasm code missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.WASMByteCode = nil
+			}),
+			expErr: true,
+		},
+		"wasm code invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
+			}),
+			expErr: true,
+		},
+		"with invalid instantiate permission": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.InstantiatePermission = &AccessConfig{}
+			}),
+			expErr: true,
+		},
+		"without admin": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Admin = ""
+			}),
+		},
+		"without init msg": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Msg = nil
+			}),
+			expErr: true,
+		},
+		"with invalid init msg": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Msg = []byte("not a json string")
+			}),
+			expErr: true,
+		},
+		"without init funds": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Funds = nil
+			}),
+		},
+		"admin invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Admin = invalidAddress
+			}),
+			expErr: true,
+		},
+		"label empty": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Label = ""
+			}),
+			expErr: true,
+		},
+		"init funds negative": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+			}),
+			expErr: true,
+		},
+		"init funds with duplicates": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+			}),
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateMigrateContractProposal(t *testing.T) {
 	invalidAddress := "invalid address2"
 

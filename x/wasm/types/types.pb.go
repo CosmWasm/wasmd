@@ -296,8 +296,6 @@ type ContractInfo struct {
 	// Label is optional metadata to be stored with a contract instance.
 	Label string `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
 	// Created Tx position when the contract was instantiated.
-	// This data should kept internal and not be exposed via query results. Just
-	// use for sorting
 	Created   *AbsoluteTxPosition `protobuf:"bytes,5,opt,name=created,proto3" json:"created,omitempty"`
 	IBCPortID string              `protobuf:"bytes,6,opt,name=ibc_port_id,json=ibcPortId,proto3" json:"ibc_port_id,omitempty"`
 	// Extension is an extension point to store custom metadata within the

@@ -119,7 +119,7 @@ func NewKeeper(
 	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
-	queryRouter GRPCQueryRouter,
+	_ GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
@@ -150,7 +150,7 @@ func NewKeeper(
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}
@@ -1062,7 +1062,7 @@ func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uin
 	return nil
 }
 
-func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model) error {
+func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, entries []types.ContractCodeHistoryEntry) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
 	}
@@ -1074,11 +1074,11 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 	if err != nil {
 		return err
 	}
-	historyEntry := c.ResetFromGenesis(ctx)
-	k.appendToContractHistory(ctx, contractAddr, historyEntry)
+
+	k.appendToContractHistory(ctx, contractAddr, entries...)
 	k.storeContractInfo(ctx, contractAddr, c)
-	k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntry)
-	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, historyEntry.Updated, contractAddr)
+	k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
+	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
 	return k.importContractState(ctx, contractAddr, state)
 }
 

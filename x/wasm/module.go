@@ -24,12 +24,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
+	"github.com/CosmWasm/wasmd/x/wasm/client/rest" //nolint:staticcheck
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/legacy"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var (
@@ -99,28 +98,8 @@ func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 // RegisterInterfaces implements InterfaceModule
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
-
-	// support for legacy cosmwasm
-	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&legacy.MsgStoreCode{},
-		&legacy.MsgInstantiateContract{},
-		&legacy.MsgExecuteContract{},
-		&legacy.MsgMigrateContract{},
-		&legacy.MsgUpdateAdmin{},
-		&legacy.MsgClearAdmin{},
-	)
-
-	// // support legacy proposal querying
-	registry.RegisterImplementations(
-		(*govtypes.Content)(nil),
-		&legacy.StoreCodeProposal{},
-		&legacy.InstantiateContractProposal{},
-		&legacy.MigrateContractProposal{},
-		&legacy.UpdateAdminProposal{},
-		&legacy.ClearAdminProposal{},
-		&legacy.PinCodesProposal{},
-		&legacy.UnpinCodesProposal{},
-	)
+	// legacy support
+	legacy.RegisterInterfaces(registry)
 }
 
 // ____________________________________________________________________________
@@ -225,8 +204,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	return nil
+func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+	return simulation.ProposalContents(am.bankKeeper, am.keeper)
 }
 
 // RandomizedParams creates randomized bank param changes for the simulator.
