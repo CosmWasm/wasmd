@@ -25,6 +25,9 @@ import (
 const (
 	flagAmount                    = "amount"
 	flagLabel                     = "label"
+	flagSource                    = "code-source-url"
+	flagBuilder                   = "builder"
+	flagCodeHash                  = "code-hash"
 	flagAdmin                     = "admin"
 	flagNoAdmin                   = "no-admin"
 	flagFixMsg                    = "fix-msg"

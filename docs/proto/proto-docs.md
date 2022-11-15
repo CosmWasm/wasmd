@@ -1024,6 +1024,9 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `source` | [string](#string) |  | Source is the URL where the code is hosted |
+| `builder` | [string](#string) |  | Builder is the docker image used to build the code deterministically, used for smart contract verification |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the SHA256 sum of the code outputted by builder, used for smart contract verification |
 
 
 

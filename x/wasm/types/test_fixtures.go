@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"math/rand"
 
@@ -200,11 +201,19 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 
 func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+	codeHash, err := base64.StdEncoding.DecodeString("2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125")
+	if err != nil {
+		panic(err)
+	}
+
 	p := &StoreCodeProposal{
 		Title:        "Foo",
 		Description:  "Bar",
 		RunAs:        anyAddress,
 		WASMByteCode: []byte{0x0},
+		Source:       "https://example.com/",
+		Builder:      "cosmwasm/workspace-optimizer:v0.12.8",
+		CodeHash:     codeHash,
 	}
 	for _, m := range mutators {
 		m(p)

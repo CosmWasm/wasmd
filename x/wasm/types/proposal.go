@@ -94,8 +94,11 @@ func NewStoreCodeProposal(
 	wasmBz []byte,
 	permission *AccessConfig,
 	unpinCode bool,
+	source string,
+	builder string,
+	codeHash []byte,
 ) *StoreCodeProposal {
-	return &StoreCodeProposal{title, description, runAs, wasmBz, permission, unpinCode}
+	return &StoreCodeProposal{title, description, runAs, wasmBz, permission, unpinCode, source, builder, codeHash}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -138,7 +141,10 @@ func (p StoreCodeProposal) String() string {
   Description: %s
   Run as:      %s
   WasmCode:    %X
-`, p.Title, p.Description, p.RunAs, p.WASMByteCode)
+  Source:      %s
+  Builder:     %s
+  Code Hash:   %X
+`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.CodeHash)
 }
 
 // MarshalYAML pretty prints the wasm byte code
@@ -149,12 +155,18 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 		RunAs                 string        `yaml:"run_as"`
 		WASMByteCode          string        `yaml:"wasm_byte_code"`
 		InstantiatePermission *AccessConfig `yaml:"instantiate_permission"`
+		Source                string        `yaml:"source"`
+		Builder               string        `yaml:"builder"`
+		CodeHash              string        `yaml:"code_hash"`
 	}{
 		Title:                 p.Title,
 		Description:           p.Description,
 		RunAs:                 p.RunAs,
 		WASMByteCode:          base64.StdEncoding.EncodeToString(p.WASMByteCode),
 		InstantiatePermission: p.InstantiatePermission,
+		Source:                p.Source,
+		Builder:               p.Builder,
+		CodeHash:              base64.StdEncoding.EncodeToString(p.CodeHash),
 	}, nil
 }
 

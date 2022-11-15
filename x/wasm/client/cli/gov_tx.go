@@ -1,7 +1,11 @@
 package cli
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
+	"github.com/docker/distribution/reference"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -13,6 +17,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -45,6 +50,10 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
+			source, builder, codeHash, err := parseCodeInfoFlags(src.WASMByteCode, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			content := types.StoreCodeProposal{
 				Title:                 proposalTitle,
 				Description:           proposalDescr,
@@ -52,6 +61,9 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
 				UnpinCode:             unpinCode,
+				Source:                source,
+				Builder:               builder,
+				CodeHash:              codeHash,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -73,12 +85,57 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
+	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
+	cmd.Flags().BytesHex(flagCodeHash, []byte{}, "CodeHash is the sha256 hash of the wasm code")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	return cmd
+}
+
+func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
+	source, err := flags.GetString(flagSource)
+	if err != nil {
+		return "", "", []byte{}, fmt.Errorf("source: %s", err)
+	}
+	builder, err := flags.GetString(flagBuilder)
+	if err != nil {
+		return "", "", []byte{}, fmt.Errorf("builder: %s", err)
+	}
+	codeHash, err := flags.GetBytesHex(flagCodeHash)
+	if err != nil {
+		return "", "", []byte{}, fmt.Errorf("codeHash: %s", err)
+	}
+
+	// if any set require others to be set
+	if len(source) != 0 || len(builder) != 0 || len(codeHash) != 0 {
+		if source == "" {
+			return "", "", []byte{}, fmt.Errorf("source is required")
+		}
+		if _, err = url.ParseRequestURI(source); err != nil {
+			return "", "", []byte{}, fmt.Errorf("source: %s", err)
+		}
+		if builder == "" {
+			return "", "", []byte{}, fmt.Errorf("builder is required")
+		}
+		if _, err := reference.ParseDockerRef(builder); err != nil {
+			return "", "", []byte{}, fmt.Errorf("builder: %s", err)
+		}
+		if len(codeHash) == 0 {
+			return "", "", []byte{}, fmt.Errorf("code hash is required")
+		}
+		// wasm is unzipped in parseStoreCodeArgs
+		// checksum generation will be decoupled here
+		// reference https://github.com/CosmWasm/wasmvm/issues/359
+		checksum := sha256.Sum256(wasm)
+		if !bytes.Equal(checksum[:], codeHash[:]) {
+			return "", "", []byte{}, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
+		}
+	}
+	return source, builder, codeHash, nil
 }
 
 func ProposalInstantiateContractCmd() *cobra.Command {

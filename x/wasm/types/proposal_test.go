@@ -647,6 +647,9 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   WasmCode:    0102030405060708090A
+  Source:      https://example.com/
+  Builder:     cosmwasm/workspace-optimizer:v0.12.8
+  Code Hash:   D9B69D739E9ED76EF5D5CEB7F3B6F76FB7FDF38D9FD5ED7B6B6E387F97DEDF9E3DD34F76D37EB67FAEBAF1FDBAEB5DB9
 `,
 		},
 		"instantiate contract": {
@@ -763,6 +766,9 @@ description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 wasm_byte_code: AQIDBAUGBwgJCg==
 instantiate_permission: null
+source: https://example.com/
+builder: cosmwasm/workspace-optimizer:v0.12.8
+code_hash: 2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125
 `,
 		},
 		"instantiate contract": {
