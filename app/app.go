@@ -185,7 +185,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			append(
-				wasmclient.ProposalHandlers,
+				wasmclient.ProposalHandlers, //nolint:staticcheck
 				paramsclient.ProposalHandler,
 				distrclient.ProposalHandler,
 				upgradeclient.ProposalHandler,

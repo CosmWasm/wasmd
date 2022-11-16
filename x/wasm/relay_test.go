@@ -416,7 +416,7 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 		}.GetBytes(),
 		Funds: sdk.NewCoins(coinToSendToB),
 	}
-	_, err := chainA.SendMsgsExpPass(false, startMsg)
+	_, err := chainA.SendMsgs(startMsg)
 	require.Error(t, err)
 }
 
@@ -519,7 +519,7 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 		Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))),
 	}
 
-	_, err := chainA.SendMsgsExpPass(false, closeIBCChannelMsg)
+	_, err := chainA.SendMsgs(closeIBCChannelMsg)
 	require.Error(t, err)
 }
 
