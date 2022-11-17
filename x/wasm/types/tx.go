@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -41,6 +42,11 @@ func (r RawContractMessage) Bytes() []byte {
 	return r
 }
 
+// Equal content is equal json. Byte equal but this can change in the future.
+func (r RawContractMessage) Equal(o RawContractMessage) bool {
+	return bytes.Equal(r.Bytes(), o.Bytes())
+}
+
 func (msg MsgStoreCode) Route() string {
 	return RouterKey
 }
@@ -54,7 +60,7 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		return err
 	}
 
-	if err := validateWasmCode(msg.WASMByteCode); err != nil {
+	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
@@ -163,6 +169,21 @@ func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{senderAddr}
 }
 
+// GetMsg returns the payload message send to the contract
+func (msg MsgExecuteContract) GetMsg() RawContractMessage {
+	return msg.Msg
+}
+
+// GetFunds returns tokens send to the contract
+func (msg MsgExecuteContract) GetFunds() sdk.Coins {
+	return msg.Funds
+}
+
+// GetContract returns the bech32 address of the contract
+func (msg MsgExecuteContract) GetContract() string {
+	return msg.Contract
+}
+
 func (msg MsgMigrateContract) Route() string {
 	return RouterKey
 }
@@ -199,6 +220,21 @@ func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
 		panic(err.Error())
 	}
 	return []sdk.AccAddress{senderAddr}
+}
+
+// GetMsg returns the payload message send to the contract
+func (msg MsgMigrateContract) GetMsg() RawContractMessage {
+	return msg.Msg
+}
+
+// GetFunds returns tokens send to the contract
+func (msg MsgMigrateContract) GetFunds() sdk.Coins {
+	return sdk.NewCoins()
+}
+
+// GetContract returns the bech32 address of the contract
+func (msg MsgMigrateContract) GetContract() string {
+	return msg.Contract
 }
 
 func (msg MsgUpdateAdmin) Route() string {

@@ -47,7 +47,7 @@ func (c Code) ValidateBasic() error {
 	if err := c.CodeInfo.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "code info")
 	}
-	if err := validateWasmCode(c.CodeBytes); err != nil {
+	if err := validateWasmCode(c.CodeBytes, MaxProposalWasmSize); err != nil {
 		return sdkerrors.Wrap(err, "code bytes")
 	}
 	return nil
@@ -61,12 +61,20 @@ func (c Contract) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "contract info")
 	}
 
-	if c.ContractInfo.Created != nil {
-		return sdkerrors.Wrap(ErrInvalid, "created must be empty")
+	if c.ContractInfo.Created == nil {
+		return sdkerrors.Wrap(ErrInvalid, "created must not be empty")
 	}
 	for i := range c.ContractState {
 		if err := c.ContractState[i].ValidateBasic(); err != nil {
 			return sdkerrors.Wrapf(err, "contract state %d", i)
+		}
+	}
+	if len(c.ContractCodeHistory) == 0 {
+		return ErrEmpty.Wrap("code history")
+	}
+	for i, v := range c.ContractCodeHistory {
+		if err := v.ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "code history element %d", i)
 		}
 	}
 	return nil

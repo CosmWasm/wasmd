@@ -706,3 +706,42 @@ func TestAccessTypeSubset(t *testing.T) {
 		})
 	}
 }
+
+func TestContractCodeHistoryEntryValidation(t *testing.T) {
+	specs := map[string]struct {
+		src    ContractCodeHistoryEntry
+		expErr bool
+	}{
+		"all good": {
+			src: ContractCodeHistoryEntryFixture(),
+		},
+		"unknown operation": {
+			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
+				entry.Operation = 0
+			}),
+			expErr: true,
+		},
+		"empty code id": {
+			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
+				entry.CodeID = 0
+			}),
+			expErr: true,
+		},
+		"empty updated": {
+			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
+				entry.Updated = nil
+			}),
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotErr := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}

@@ -13,14 +13,17 @@ var (
 
 	// MaxWasmSize is the largest a compiled contract code can be when storing code on chain
 	MaxWasmSize = 800 * 1024 // extension point for chains to customize via compile flag.
+
+	// MaxProposalWasmSize is the largest a gov proposal compiled contract code can be when storing code on chain
+	MaxProposalWasmSize = 3 * 1024 * 1024 // extension point for chains to customize via compile flag.
 )
 
-func validateWasmCode(s []byte) error {
+func validateWasmCode(s []byte, maxSize int) error {
 	if len(s) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "is required")
 	}
-	if len(s) > MaxWasmSize {
-		return sdkerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", MaxWasmSize)
+	if len(s) > maxSize {
+		return sdkerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
 	}
 	return nil
 }

@@ -28,6 +28,7 @@ const (
 )
 
 // NewLegacyQuerier creates a new querier
+// Deprecated: the rest support will be removed. You can use the GRPC gateway instead
 func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 	return func(ctx sdk.Context, path []string, req abci.RequestQuery) ([]byte, error) {
 		var (

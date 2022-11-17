@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -23,11 +24,10 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
+	"github.com/CosmWasm/wasmd/x/wasm/client/rest" //nolint:staticcheck
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm"
 )
 
 var (
@@ -115,7 +115,7 @@ type AppModule struct {
 // module. It should be incremented on each consensus-breaking change
 // introduced by the module. To avoid wrong/empty versions, the initial version
 // should be set to 1.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
@@ -138,6 +138,12 @@ func NewAppModule(
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper)))
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
+
+	m := keeper.NewMigrator(*am.keeper)
+	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { //nolint:staticcheck
@@ -195,8 +201,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	return nil
+func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+	return simulation.ProposalContents(am.bankKeeper, am.keeper)
 }
 
 // RandomizedParams creates randomized bank param changes for the simulator.

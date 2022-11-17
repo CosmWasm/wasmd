@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -318,7 +317,6 @@ func SignCheckDeliver(
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := helpers.GenTx(
-		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
@@ -365,10 +363,9 @@ func SignCheckDeliver(
 // ibc testing package causes checkState and deliverState to diverge in block time.
 func SignAndDeliver(
 	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
-	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
+	chainID string, accNums, accSeqs []uint64, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := helpers.GenTx(
-		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
@@ -384,14 +381,6 @@ func SignAndDeliver(
 	app.BeginBlock(abci.RequestBeginBlock{Header: header})
 	gInfo, res, err := app.Deliver(txCfg.TxEncoder(), tx)
 
-	if expPass {
-		require.NoError(t, err)
-		require.NotNil(t, res)
-	} else {
-		require.Error(t, err)
-		require.Nil(t, res)
-	}
-
 	app.EndBlock(abci.RequestEndBlock{})
 	app.Commit()
 
@@ -406,7 +395,6 @@ func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, i
 	var err error
 	for i := 0; i < numToGenerate; i++ {
 		txs[i], err = helpers.GenTx(
-			rand.New(rand.NewSource(time.Now().UnixNano())),
 			txGen,
 			msgs,
 			sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},

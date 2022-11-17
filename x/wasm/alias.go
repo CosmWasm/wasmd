@@ -59,7 +59,6 @@ var (
 	EncodeStakingMsg          = keeper.EncodeStakingMsg
 	EncodeWasmMsg             = keeper.EncodeWasmMsg
 	NewKeeper                 = keeper.NewKeeper
-	NewLegacyQuerier          = keeper.NewLegacyQuerier
 	DefaultQueryPlugins       = keeper.DefaultQueryPlugins
 	BankQuerier               = keeper.BankQuerier
 	NoCustomQuerier           = keeper.NoCustomQuerier
