@@ -12,7 +12,7 @@
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
 - Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
-- Upgrade go to v1.19 [\#1044]https://github.com/CosmWasm/wasmd/pull/1044)
+- Upgrade go to v1.19 [\#1044](https://github.com/CosmWasm/wasmd/pull/1044)
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
 - Upgrade to ibc-go v3.3.0 REQUIRES [MIGRATION](https://github.com/cosmos/ibc-go/blob/v3.2.3/docs/migrations/support-denoms-with-slashes.md) [\#1016](https://github.com/CosmWasm/wasmd/pull/1016)
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
