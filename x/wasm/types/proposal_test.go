@@ -138,7 +138,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"wasm code invalid": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
+				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxProposalWasmSize+1)
 			}),
 			expErr: true,
 		},
@@ -299,7 +299,7 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 		},
 		"wasm code invalid": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
-				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
+				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxProposalWasmSize+1)
 			}),
 			expErr: true,
 		},
