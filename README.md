@@ -209,6 +209,7 @@ file of your custom chain.
 
 * `wasmtypes.MaxLabelSize = 64` to set the maximum label size on instantiation (default 128)
 * `wasmtypes.MaxWasmSize=777000` to set the max size of compiled wasm to be accepted (default 819200)
+* `wasmtypes.MaxProposalWasmSize=888000` to set the max size of gov proposal compiled wasm to be accepted (default 3145728)
 
 ## Genesis Configuration
 We strongly suggest **to limit the max block gas in the genesis** and not use the default value (`-1` for infinite).

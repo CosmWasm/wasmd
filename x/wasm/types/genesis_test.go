@@ -117,7 +117,7 @@ func TestCodeValidateBasic(t *testing.T) {
 		},
 		"codeBytes greater limit": {
 			srcMutator: func(c *Code) {
-				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxWasmSize+1)
+				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxProposalWasmSize+1)
 			},
 			expError: true,
 		},

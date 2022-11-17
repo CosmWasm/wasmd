@@ -119,7 +119,7 @@ func (p StoreCodeProposal) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "run as")
 	}
 
-	if err := validateWasmCode(p.WASMByteCode); err != nil {
+	if err := validateWasmCode(p.WASMByteCode, MaxProposalWasmSize); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
@@ -303,7 +303,7 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "run as")
 	}
 
-	if err := validateWasmCode(p.WASMByteCode); err != nil {
+	if err := validateWasmCode(p.WASMByteCode, MaxProposalWasmSize); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 

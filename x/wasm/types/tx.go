@@ -60,7 +60,7 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		return err
 	}
 
-	if err := validateWasmCode(msg.WASMByteCode); err != nil {
+	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
