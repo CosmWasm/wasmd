@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
-	github.com/cosmos/cosmos-sdk v0.45.10
+	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
 	github.com/cosmos/ibc-go/v3 v3.3.1
@@ -21,12 +21,12 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/snikch/goodman v0.0.0-20171125024755-10e37e294daa
 	github.com/spf13/cast v1.5.0
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
-	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
-	github.com/tendermint/tendermint v0.34.22
+	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	github.com/tendermint/tendermint v0.34.23
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
 	google.golang.org/grpc v1.50.1
@@ -84,7 +84,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.14.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
-	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -115,13 +115,13 @@ require (
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/zondax/hid v0.9.0 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
-	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
-	golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect
-	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
+	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
