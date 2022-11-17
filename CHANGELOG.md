@@ -7,7 +7,7 @@
 ## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-11-xx)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
-- Upgrade to Cosmos-sdk to v45.11 [/#10XX](https://github.com/CosmWasm/wasmd/pull/10XX/)
+- Upgrade to Cosmos-sdk to v0.45.11 [/#1096](https://github.com/CosmWasm/wasmd/pull/1096/)
 - Upgrade to IBC v4.2.0 with interchain-accounts v0.2.4 [\#1088](https://github.com/CosmWasm/wasmd/pull/1088)
 - Preserve contract history/ created date on genesis import [\#878](https://github.com/CosmWasm/wasmd/issues/878)
 - Authz module integration - more granularity for WasmExecuteMsg authorizations [\#803](https://github.com/CosmWasm/wasmd/issues/803)
