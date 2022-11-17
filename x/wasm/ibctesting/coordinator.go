@@ -256,8 +256,16 @@ func (coord *Coordinator) ChanOpenInitOnBothChains(path *Path) error {
 func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
-	coord.t.Logf("Relay %d Packets A->B\n", len(src.Chain.PendingSendPackets))
+	coord.t.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(src.Chain.PendingSendPackets), len(path.EndpointB.Chain.PendingSendPackets))
+	for i, v := range src.Chain.PendingSendPackets {
+		err := path.RelayPacket(v, nil)
+		if err != nil {
+			return err
+		}
+		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
+	}
 
+	src = path.EndpointB
 	for i, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
 		if err != nil {

@@ -108,11 +108,6 @@ func TestPinPong(t *testing.T) {
 		require.Len(t, chainA.PendingSendPackets, 1)
 		err := coordinator.RelayAndAckPendingPackets(path)
 		require.NoError(t, err)
-
-		// switch side
-		require.Len(t, chainB.PendingSendPackets, 1)
-		err = coordinator.RelayAndAckPendingPackets(path.Invert())
-		require.NoError(t, err)
 	}
 
 	// then receive/response state is as expected

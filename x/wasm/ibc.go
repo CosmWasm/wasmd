@@ -2,11 +2,13 @@ package wasm
 
 import (
 	"math"
+	"strings"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	ibcfees "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
@@ -228,11 +230,19 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 }
 
 func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel) wasmvmtypes.IBCChannel {
+	version := channelInfo.Version
+	if strings.TrimSpace(version) != "" {
+		// check for ics-29 middleware versions
+		var versionMetadata ibcfees.Metadata
+		if err := types.ModuleCdc.UnmarshalJSON([]byte(channelInfo.Version), &versionMetadata); err == nil {
+			version = versionMetadata.AppVersion
+		}
+	}
 	return wasmvmtypes.IBCChannel{
 		Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
 		CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: channelInfo.Counterparty.PortId, ChannelID: channelInfo.Counterparty.ChannelId},
 		Order:                channelInfo.Ordering.String(),
-		Version:              channelInfo.Version,
+		Version:              version,
 		ConnectionID:         channelInfo.ConnectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
 	}
 }

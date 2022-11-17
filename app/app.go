@@ -562,10 +562,15 @@ func NewWasmApp(
 	icaHostStack = icahost.NewIBCModule(app.ICAHostKeeper)
 	icaHostStack = ibcfee.NewIBCMiddleware(icaHostStack, app.IBCFeeKeeper)
 
+	// Create fee enabled wasm ibc Stack
+	var wasmStack porttypes.IBCModule
+	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)
+	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
+
 	// Create static IBC router, add app routes, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(wasm.ModuleName, wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper)).
+		AddRoute(wasm.ModuleName, wasmStack).
 		AddRoute(intertxtypes.ModuleName, icaControllerStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
