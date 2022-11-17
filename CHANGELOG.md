@@ -2,7 +2,25 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...HEAD)
+
+## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-11-xx)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
+- Upgrade to Cosmos-sdk to v45.11 [/#10XX](https://github.com/CosmWasm/wasmd/pull/10XX/)
+- Upgrade to IBC v4.2.0 with interchain-accounts v0.2.4 [\#1088](https://github.com/CosmWasm/wasmd/pull/1088)
+- Preserve contract history/ created date on genesis import [\#878](https://github.com/CosmWasm/wasmd/issues/878)
+- Authz module integration - more granularity for WasmExecuteMsg authorizations [\#803](https://github.com/CosmWasm/wasmd/issues/803)
+- StoreAndInstantiate gov proposal [\#785](https://github.com/CosmWasm/wasmd/issues/785)
+- Start developer guide for contributors [\#654](https://github.com/CosmWasm/wasmd/issues/654)
+
+### Notable changes:
+- IBC fee middleware is setup in `app.go`. Please note that it can be enabled with new channels only. A nice read is this [article](https://medium.com/the-interchain-foundation/ibc-relaying-as-a-service-the-in-protocol-incentivization-story-2c008861a957).
+- Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command  
+
+### Migration notes:
+- See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v4.2.0/docs/migrations)
+- See interchain-accounts [`MsgRegisterAccount.Version` field](https://github.com/cosmos/interchain-accounts-demo/compare/v0.1.0...v0.2.4#diff-ac8bca25810de6d3eef95f74fc9acf2223f3687822e6227b584e0d3b40db6566). Full diff [v0.1.0 to v0.2.4](https://github.com/cosmos/interchain-accounts-demo/compare/v0.1.0...v0.2.4)
 
 ## [v0.29.2](https://github.com/CosmWasm/wasmd/tree/v0.29.2) (2022-11-08)
 
