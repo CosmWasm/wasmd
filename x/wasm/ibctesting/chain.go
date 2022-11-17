@@ -145,7 +145,7 @@ func (chain *TestChain) QueryProof(key []byte) ([]byte, clienttypes.Height) {
 	return chain.QueryProofAtHeight(key, chain.App.LastBlockHeight())
 }
 
-// QueryProof performs an abci query with the given key and returns the proto encoded merkle proof
+// QueryProofAtHeight performs an abci query with the given key and returns the proto encoded merkle proof
 // for the query and the height at which the proof will succeed on a tendermint verifier.
 func (chain *TestChain) QueryProofAtHeight(key []byte, height int64) ([]byte, clienttypes.Height) {
 	res := chain.App.Query(abci.RequestQuery{
@@ -251,14 +251,14 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		chain.ChainID,
 		[]uint64{chain.SenderAccount.GetAccountNumber()},
 		[]uint64{chain.SenderAccount.GetSequence()},
-		true, true, chain.SenderPrivKey,
+		chain.SenderPrivKey,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// SignAndDeliver calls app.Commit()
 	chain.NextBlock()
+	if err != nil {
+		return r, err
+	}
 
 	// increment sequence for successful transaction execution
 	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)

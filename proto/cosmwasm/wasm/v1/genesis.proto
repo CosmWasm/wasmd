@@ -53,6 +53,8 @@ message Contract {
   string contract_address = 1;
   ContractInfo contract_info = 2 [ (gogoproto.nullable) = false ];
   repeated Model contract_state = 3 [ (gogoproto.nullable) = false ];
+  repeated ContractCodeHistoryEntry contract_code_history = 4
+      [ (gogoproto.nullable) = false ];
 }
 
 // Sequence key and value of an id generation counter

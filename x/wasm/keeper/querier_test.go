@@ -330,7 +330,7 @@ func TestQueryContractHistory(t *testing.T) {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}},
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
@@ -338,23 +338,24 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
 		},
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 5, TxIndex: 6},
 				Msg:       []byte(`"migrate message 2"`),
 			}},
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
@@ -362,26 +363,29 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    3,
 				Msg:       []byte(`"migrate message 2"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 5, TxIndex: 6},
 			}},
 		},
 		"with pagination offset": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}},
 			req: types.QueryContractHistoryRequest{
@@ -394,18 +398,19 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
 				Msg:       []byte(`"migrate message 1"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 			}},
 		},
 		"with pagination limit": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
 				Operation: types.ContractCodeHistoryOperationTypeMigrate,
 				CodeID:    2,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 3, TxIndex: 4},
 				Msg:       []byte(`"migrate message 1"`),
 			}},
 			req: types.QueryContractHistoryRequest{
@@ -418,6 +423,7 @@ func TestQueryContractHistory(t *testing.T) {
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    firstCodeID,
 				Msg:       []byte(`"init message"`),
+				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
 		},
 		"unknown contract address": {
@@ -560,20 +566,16 @@ func TestQueryContractInfo(t *testing.T) {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(),
 			expRsp: &types.QueryContractInfoResponse{
-				Address: contractAddr.String(),
-				ContractInfo: types.ContractInfoFixture(func(info *types.ContractInfo) {
-					info.Created = nil // not returned on queries
-				}),
+				Address:      contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(),
 			},
 		},
 		"with extension": {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(myExtension),
 			expRsp: &types.QueryContractInfoResponse{
-				Address: contractAddr.String(),
-				ContractInfo: types.ContractInfoFixture(myExtension, func(info *types.ContractInfo) {
-					info.Created = nil // not returned on queries
-				}),
+				Address:      contractAddr.String(),
+				ContractInfo: types.ContractInfoFixture(myExtension),
 			},
 		},
 		"not found": {
@@ -800,6 +802,110 @@ func TestQueryCodeInfoList(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got.CodeInfos, 3)
 	require.EqualValues(t, allCodesResponse, got.CodeInfos)
+}
+
+func TestQueryContractsByCreatorList(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
+	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 500))
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
+	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
+
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
+	require.NoError(t, err)
+
+	_, _, bob := keyPubAddr()
+	initMsg := HackatomExampleInitMsg{
+		Verifier:    anyAddr,
+		Beneficiary: bob,
+	}
+	initMsgBz, err := json.Marshal(initMsg)
+	require.NoError(t, err)
+
+	// manage some realistic block settings
+	var h int64 = 10
+	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
+		ctx = ctx.WithBlockHeight(height)
+		meter := sdk.NewGasMeter(1000000)
+		ctx = ctx.WithGasMeter(meter)
+		ctx = ctx.WithBlockGasMeter(meter)
+		return ctx
+	}
+
+	var allExpecedContracts []string
+	// create 10 contracts with real block/gas setup
+	for i := 0; i < 10; i++ {
+		ctx = setBlock(ctx, h)
+		h++
+		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		allExpecedContracts = append(allExpecedContracts, contract.String())
+		require.NoError(t, err)
+	}
+
+	specs := map[string]struct {
+		srcQuery        *types.QueryContractsByCreatorRequest
+		expContractAddr []string
+		expErr          error
+	}{
+		"query all": {
+			srcQuery: &types.QueryContractsByCreatorRequest{
+				CreatorAddress: creator.String(),
+			},
+			expContractAddr: allExpecedContracts,
+			expErr:          nil,
+		},
+		"with pagination offset": {
+			srcQuery: &types.QueryContractsByCreatorRequest{
+				CreatorAddress: creator.String(),
+				Pagination: &query.PageRequest{
+					Offset: 1,
+				},
+			},
+			expContractAddr: allExpecedContracts[1:],
+			expErr:          nil,
+		},
+		"with pagination limit": {
+			srcQuery: &types.QueryContractsByCreatorRequest{
+				CreatorAddress: creator.String(),
+				Pagination: &query.PageRequest{
+					Limit: 1,
+				},
+			},
+			expContractAddr: allExpecedContracts[0:1],
+			expErr:          nil,
+		},
+		"nil creator": {
+			srcQuery: &types.QueryContractsByCreatorRequest{
+				Pagination: &query.PageRequest{},
+			},
+			expContractAddr: allExpecedContracts,
+			expErr:          errors.New("empty address string is not allowed"),
+		},
+		"nil req": {
+			srcQuery:        nil,
+			expContractAddr: allExpecedContracts,
+			expErr:          status.Error(codes.InvalidArgument, "empty request"),
+		},
+	}
+
+	q := Querier(keepers.WasmKeeper)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := q.ContractsByCreator(sdk.WrapSDKContext(ctx), spec.srcQuery)
+
+			if spec.expErr != nil {
+				require.Equal(t, spec.expErr, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, got)
+			assert.Equal(t, spec.expContractAddr, got.ContractAddresses)
+		})
+	}
 }
 
 func fromBase64(s string) []byte {

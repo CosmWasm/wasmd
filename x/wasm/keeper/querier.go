@@ -68,7 +68,6 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 			if err := q.cdc.Unmarshal(value, &e); err != nil {
 				return false, err
 			}
-			e.Updated = nil // redact
 			r = append(r, e)
 		}
 		return true, nil
@@ -257,8 +256,6 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	if info == nil {
 		return nil, types.ErrNotFound
 	}
-	// redact the Created field (just used for sorting, not part of public API)
-	info.Created = nil
 	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),
 		ContractInfo: *info,
@@ -317,4 +314,33 @@ func (q grpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*
 	ctx := sdk.UnwrapSDKContext(c)
 	params := q.keeper.GetParams(ctx)
 	return &types.QueryParamsResponse{Params: params}, nil
+}
+
+func (q grpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContractsByCreatorRequest) (*types.QueryContractsByCreatorResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	contracts := make([]string, 0)
+
+	creatorAddress, err := sdk.AccAddressFromBech32(req.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	prefixStore := prefix.NewStore(ctx.KVStore(q.storeKey), types.GetContractsByCreatorPrefix(creatorAddress))
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
+			contracts = append(contracts, accAddres.String())
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryContractsByCreatorResponse{
+		ContractAddresses: contracts,
+		Pagination:        pageRes,
+	}, nil
 }
