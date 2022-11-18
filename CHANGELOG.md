@@ -7,6 +7,7 @@
 ## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-11-xx)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
+- Upgrade to Go v1.19 [\#1044](https://github.com/CosmWasm/wasmd/pull/1044)
 - Upgrade to Cosmos-sdk to v0.45.11 [/#1096](https://github.com/CosmWasm/wasmd/pull/1096/)
 - Upgrade to IBC v4.2.0 with interchain-accounts v0.2.4 [\#1088](https://github.com/CosmWasm/wasmd/pull/1088)
 - Preserve contract history/ created date on genesis import [\#878](https://github.com/CosmWasm/wasmd/issues/878)
@@ -17,6 +18,7 @@
 ### Notable changes:
 - IBC fee middleware is setup in `app.go`. Please note that it can be enabled with new channels only. A nice read is this [article](https://medium.com/the-interchain-foundation/ibc-relaying-as-a-service-the-in-protocol-incentivization-story-2c008861a957).
 - Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command  
+- Go v1.19 required to prevent a mixed chain setup with older versions. Just to be on the safe side.
 
 ### Migration notes:
 - See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v4.2.0/docs/migrations)
@@ -38,7 +40,6 @@
 - Allow AccessConfig to use a list of addresses instead of just a single address [\#945](https://github.com/CosmWasm/wasmd/issues/945)
 - Make contract addresses predictable \("deterministic"\) [\#942](https://github.com/CosmWasm/wasmd/issues/942)
 - Add query for the total supply of a coin [\#903](https://github.com/CosmWasm/wasmd/pull/903) ([larry0x](https://github.com/larry0x))
-- Upgrade go to v1.19 [\#1044](https://github.com/CosmWasm/wasmd/pull/1044)
 - Upgrade go to v1.18 [\#866]https://github.com/CosmWasm/wasmd/pull/866/) ([faddat](https://github.com/faddat))
 - Upgrade to ibc-go v3.3.0 REQUIRES [MIGRATION](https://github.com/cosmos/ibc-go/blob/v3.2.3/docs/migrations/support-denoms-with-slashes.md) [\#1016](https://github.com/CosmWasm/wasmd/pull/1016)
 - Upgrade to cosmos-sdk v0.45.8 [\#964](https://github.com/CosmWasm/wasmd/pull/964/) ([faddat](https://github.com/faddat))
