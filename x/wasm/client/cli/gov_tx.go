@@ -100,7 +100,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
 	source, err := flags.GetString(flagSource)
 	if err != nil {
-		return "", "", []byte{}, fmt.Errorf("source: %s", err)
+		return "", "", nil, fmt.Errorf("source: %s", err)
 	}
 	builder, err := flags.GetString(flagBuilder)
 	if err != nil {
