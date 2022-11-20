@@ -1004,6 +1004,9 @@ and instantiate the contract.
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `source` | [string](#string) |  | Source is the URL where the code is hosted |
+| `builder` | [string](#string) |  | Builder is the docker image used to build the code deterministically, used for smart contract verification |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the SHA256 sum of the code outputted by builder, used for smart contract verification |
 
 
 

@@ -1,7 +1,12 @@
 package types
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"fmt"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/docker/distribution/reference"
+	"net/url"
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract
@@ -46,6 +51,35 @@ func ValidateSalt(salt []byte) error {
 		return sdkerrors.Wrap(ErrEmpty, "is required")
 	case n > MaxSaltSize:
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxSaltSize)
+	}
+	return nil
+}
+
+// ValidateCodeInfo ensure source, builder and checksum constraints
+func ValidateCodeInfo(source, builder string, codeHash []byte, wasmCode []byte) error {
+	// if any set require others to be set
+	if len(source) != 0 || len(builder) != 0 || len(codeHash) != 0 {
+		if source == "" {
+			return fmt.Errorf("source is required")
+		}
+		if _, err := url.ParseRequestURI(source); err != nil {
+			return fmt.Errorf("source: %s", err)
+		}
+		if builder == "" {
+			return fmt.Errorf("builder is required")
+		}
+		if _, err := reference.ParseDockerRef(builder); err != nil {
+			fmt.Errorf("builder: %s", err)
+		}
+		if len(codeHash) == 0 {
+			fmt.Errorf("code hash is required")
+		}
+		// checksum generation will be decoupled here
+		// reference https://github.com/CosmWasm/wasmvm/issues/359
+		checksum := sha256.Sum256(wasmCode)
+		if !bytes.Equal(checksum[:], codeHash) {
+			return fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
+		}
 	}
 	return nil
 }

@@ -131,6 +131,10 @@ func (p StoreCodeProposal) ValidateBasic() error {
 			return sdkerrors.Wrap(err, "instantiate permission")
 		}
 	}
+
+	if err := ValidateCodeInfo(p.Source, p.Builder, p.CodeHash, p.WASMByteCode); err != nil {
+		return sdkerrors.Wrapf(err, "code info %s", err.Error())
+	}
 	return nil
 }
 
@@ -271,6 +275,9 @@ func NewStoreAndInstantiateContractProposal(
 	description string,
 	runAs string,
 	wasmBz []byte,
+	source string,
+	builder string,
+	codeHash []byte,
 	permission *AccessConfig,
 	unpinCode bool,
 	admin string,
@@ -283,6 +290,9 @@ func NewStoreAndInstantiateContractProposal(
 		Description:           description,
 		RunAs:                 runAs,
 		WASMByteCode:          wasmBz,
+		Source:                source,
+		Builder:               builder,
+		CodeHash:              codeHash,
 		InstantiatePermission: permission,
 		UnpinCode:             unpinCode,
 		Admin:                 admin,
@@ -319,6 +329,10 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
+	if err := ValidateCodeInfo(p.Source, p.Builder, p.CodeHash, p.WASMByteCode); err != nil {
+		return sdkerrors.Wrap(err, "code info")
+	}
+
 	if p.InstantiatePermission != nil {
 		if err := p.InstantiatePermission.ValidateBasic(); err != nil {
 			return sdkerrors.Wrap(err, "instantiate permission")
@@ -351,13 +365,16 @@ func (p StoreAndInstantiateContractProposal) String() string {
   Description: %s
   Run as:      %s
   WasmCode:    %X
+  Source:      %s
+  Builder:     %s
+  Code Hash:   %X
   Instantiate permission: %s
   Unpin code:  %t  
   Admin:       %s
   Label:       %s
   Msg:         %q
   Funds:       %s
-`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.InstantiatePermission, p.UnpinCode, p.Admin, p.Label, p.Msg, p.Funds)
+`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.CodeHash, p.InstantiatePermission, p.UnpinCode, p.Admin, p.Label, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the wasm byte code and the init message
@@ -367,6 +384,9 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		Description           string        `yaml:"description"`
 		RunAs                 string        `yaml:"run_as"`
 		WASMByteCode          string        `yaml:"wasm_byte_code"`
+		Source                string        `yaml:"source"`
+		Builder               string        `yaml:"builder"`
+		CodeHash              string        `yaml:"code_hash"`
 		InstantiatePermission *AccessConfig `yaml:"instantiate_permission"`
 		UnpinCode             bool          `yaml:"unpin_code"`
 		Admin                 string        `yaml:"admin"`
@@ -382,6 +402,9 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		UnpinCode:             p.UnpinCode,
 		Admin:                 p.Admin,
 		Label:                 p.Label,
+		Source:                p.Source,
+		Builder:               p.Builder,
+		CodeHash:              base64.StdEncoding.EncodeToString(p.CodeHash),
 		Msg:                   string(p.Msg),
 		Funds:                 p.Funds,
 	}, nil
