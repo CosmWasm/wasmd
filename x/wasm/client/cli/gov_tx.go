@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"github.com/docker/distribution/reference"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/docker/distribution/reference"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"

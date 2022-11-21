@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
+	"net/url"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/docker/distribution/reference"
-	"net/url"
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract
