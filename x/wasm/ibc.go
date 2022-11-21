@@ -2,13 +2,11 @@ package wasm
 
 import (
 	"math"
-	"strings"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	ibcfees "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
@@ -19,13 +17,20 @@ import (
 
 var _ porttypes.IBCModule = IBCHandler{}
 
-type IBCHandler struct {
-	keeper        types.IBCContractKeeper
-	channelKeeper types.ChannelKeeper
+// internal interface that is implemented by ibc middleware
+type appVersionGetter interface {
+	// GetAppVersion returns the application level version with all middleware data stripped out
+	GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool)
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper) IBCHandler {
-	return IBCHandler{keeper: k, channelKeeper: ck}
+type IBCHandler struct {
+	keeper           types.IBCContractKeeper
+	channelKeeper    types.ChannelKeeper
+	appVersionGetter appVersionGetter
+}
+
+func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
+	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg}
 }
 
 // OnChanOpenInit implements the IBCModule interface
@@ -121,8 +126,8 @@ func (i IBCHandler) OnChanOpenTry(
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
 	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
-	// If module can already authenticate the capability then module already owns it so we don't need to claim
-	// Otherwise, module does not have channel capability and we must claim it from IBC
+	// If module can already authenticate the capability then module already owns it, so we don't need to claim
+	// Otherwise, module does not have channel capability, and we must claim it from IBC
 	if !i.keeper.AuthenticateCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)) {
 		// Only claim channel capability passed back by IBC module if we do not already own it
 		if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
@@ -155,9 +160,15 @@ func (i IBCHandler) OnChanOpenAck(
 	// OnChanOpenAck entry point)
 	// https://github.com/cosmos/ibc-go/pull/647/files#diff-54b5be375a2333c56f2ae1b5b4dc13ac9c734561e30286505f39837ee75762c7R25
 	i.channelKeeper.SetChannel(ctx, portID, channelID, channelInfo)
+
+	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
+	}
+
 	msg := wasmvmtypes.IBCChannelConnectMsg{
 		OpenAck: &wasmvmtypes.IBCOpenAck{
-			Channel:             toWasmVMChannel(portID, channelID, channelInfo),
+			Channel:             toWasmVMChannel(portID, channelID, channelInfo, appVersion),
 			CounterpartyVersion: counterpartyVersion,
 		},
 	}
@@ -174,9 +185,13 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
+	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
+	}
 	msg := wasmvmtypes.IBCChannelConnectMsg{
 		OpenConfirm: &wasmvmtypes.IBCOpenConfirm{
-			Channel: toWasmVMChannel(portID, channelID, channelInfo),
+			Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion),
 		},
 	}
 	return i.keeper.OnConnectChannel(ctx, contractAddr, msg)
@@ -192,9 +207,13 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 	if !ok {
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
+	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
+	}
 
 	msg := wasmvmtypes.IBCChannelCloseMsg{
-		CloseInit: &wasmvmtypes.IBCCloseInit{Channel: toWasmVMChannel(portID, channelID, channelInfo)},
+		CloseInit: &wasmvmtypes.IBCCloseInit{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
 	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
 	if err != nil {
@@ -216,9 +235,13 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	if !ok {
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
+	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
+	if !ok {
+		return sdkerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
+	}
 
 	msg := wasmvmtypes.IBCChannelCloseMsg{
-		CloseConfirm: &wasmvmtypes.IBCCloseConfirm{Channel: toWasmVMChannel(portID, channelID, channelInfo)},
+		CloseConfirm: &wasmvmtypes.IBCCloseConfirm{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
 	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
 	if err != nil {
@@ -229,20 +252,12 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	return err
 }
 
-func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel) wasmvmtypes.IBCChannel {
-	version := channelInfo.Version
-	if strings.TrimSpace(version) != "" {
-		// check for ics-29 middleware versions
-		var versionMetadata ibcfees.Metadata
-		if err := types.ModuleCdc.UnmarshalJSON([]byte(channelInfo.Version), &versionMetadata); err == nil {
-			version = versionMetadata.AppVersion
-		}
-	}
+func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel, appVersion string) wasmvmtypes.IBCChannel {
 	return wasmvmtypes.IBCChannel{
 		Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
 		CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: channelInfo.Counterparty.PortId, ChannelID: channelInfo.Counterparty.ChannelId},
 		Order:                channelInfo.Ordering.String(),
-		Version:              version,
+		Version:              appVersion,
 		ConnectionID:         channelInfo.ConnectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
 	}
 }
