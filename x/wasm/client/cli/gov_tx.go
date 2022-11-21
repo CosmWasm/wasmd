@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/distribution/reference"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,7 +50,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
-			source, builder, codeHash, err := parseCodeInfoFlags(src.WASMByteCode, cmd.Flags())
+			source, builder, codeHash, err := parseVerificationFlags(src.WASMByteCode, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -98,7 +96,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	return cmd
 }
 
-func parseCodeInfoFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
+func parseVerificationFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
 	source, err := flags.GetString(flagSource)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("source: %s", err)
@@ -229,7 +227,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			source, builder, codeHash, err := parseCodeInfoFlags(src.WASMByteCode, cmd.Flags())
+			source, builder, codeHash, err := parseVerificationFlags(src.WASMByteCode, cmd.Flags())
 			if err != nil {
 				return err
 			}

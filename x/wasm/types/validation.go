@@ -1,8 +1,6 @@
 package types
 
 import (
-	"bytes"
-	"crypto/sha256"
 	"fmt"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/docker/distribution/reference"
@@ -55,10 +53,10 @@ func ValidateSalt(salt []byte) error {
 	return nil
 }
 
-// ValidateCodeInfo ensure source, builder and checksum constraints
-func ValidateCodeInfo(source, builder string, codeHash []byte, wasmCode []byte) error {
+// ValidateVerificationInfo ensure source, builder and checksum constraints
+func ValidateVerificationInfo(source, builder string, codeHash []byte) error {
 	// if any set require others to be set
-	if len(source) != 0 || len(builder) != 0 || len(codeHash) != 0 {
+	if len(source) != 0 || len(builder) != 0 || codeHash != nil {
 		if source == "" {
 			return fmt.Errorf("source is required")
 		}
@@ -69,17 +67,12 @@ func ValidateCodeInfo(source, builder string, codeHash []byte, wasmCode []byte) 
 			return fmt.Errorf("builder is required")
 		}
 		if _, err := reference.ParseDockerRef(builder); err != nil {
-			fmt.Errorf("builder: %s", err)
+			return fmt.Errorf("builder: %s", err)
 		}
-		if len(codeHash) == 0 {
-			fmt.Errorf("code hash is required")
+		if codeHash == nil {
+			return fmt.Errorf("code hash is required")
 		}
-		// checksum generation will be decoupled here
-		// reference https://github.com/CosmWasm/wasmvm/issues/359
-		checksum := sha256.Sum256(wasmCode)
-		if !bytes.Equal(checksum[:], codeHash) {
-			return fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
-		}
+		// code hash checksum match validation is done in the keeper, ungzipping consumes gas
 	}
 	return nil
 }

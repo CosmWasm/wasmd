@@ -97,6 +97,7 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 	}
 }
 
+// TODO: move tests
 func TestParseCodeInfoFlags(t *testing.T) {
 	correctSource := "https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/testdata/hackatom.wasm"
 	correctBuilderRef := "cosmwasm/workspace-optimizer:0.12.9"
@@ -147,7 +148,7 @@ func TestParseCodeInfoFlags(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			flags := ProposalStoreCodeCmd().Flags()
 			require.NoError(t, flags.Parse(spec.args))
-			_, _, _, gotErr := parseCodeInfoFlags(wasmBin, flags)
+			_, _, _, gotErr := parseVerificationFlags(wasmBin, flags)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return

@@ -63,7 +63,25 @@ func TestGovRestHandlers(t *testing.T) {
 				"wasm_byte_code": []byte("valid wasm byte code"),
 				"source":         "https://example.com/",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
+				"instantiate_permission": dict{
+					"permission": "OnlyAddress",
+					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
+				},
+				"deposit":  []dict{{"denom": "ustake", "amount": "10"}},
+				"proposer": "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
+				"base_req": aBaseReq,
+			},
+			expCode: http.StatusOK,
+		},
+		"store-code without verification info": {
+			srcPath: "/gov/proposals/wasm_store_code",
+			srcBody: dict{
+				"title":          "Test Proposal",
+				"description":    "My proposal",
+				"type":           "store-code",
+				"run_as":         "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				"wasm_byte_code": []byte("valid wasm byte code"),
 				"instantiate_permission": dict{
 					"permission": "OnlyAddress",
 					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
@@ -84,7 +102,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"wasm_byte_code": []byte("valid wasm byte code"),
 				"source":         "https://example.com/",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"deposit":        []dict{{"denom": "ustake", "amount": "10"}},
 				"proposer":       "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
 				"base_req":       aBaseReq,
@@ -101,7 +119,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"wasm_byte_code": []byte("valid wasm byte code"),
 				"source":         "https://example.com/",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"instantiate_permission": dict{
 					"permission": "Nobody",
 					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
@@ -121,7 +139,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"run_as":         "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"wasm_byte_code": []byte("valid wasm byte code"),
 				"source":         "https://example.com/",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
 				"instantiate_permission": dict{
 					"permission": "OnlyAddress",
@@ -143,7 +161,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"wasm_byte_code": "",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
 				"source":         "https://example.com/",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"instantiate_permission": dict{
 					"permission": "OnlyAddress",
 					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
@@ -163,7 +181,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"run_as":         "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"wasm_byte_code": "",
 				"source":         "https://example.com/",
-				"code_hash":      "2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"instantiate_permission": dict{
 					"permission": "OnlyAddress",
 					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",
@@ -203,6 +221,7 @@ func TestGovRestHandlers(t *testing.T) {
 				"run_as":         "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				"wasm_byte_code": "",
 				"builder":        "cosmwasm/workspace-optimizer:v0.12.9",
+				"code_hash":      "79F174F09BFE3F83398BF7C147929D5F735161BD46D645E85216BB13BF91D42D",
 				"instantiate_permission": dict{
 					"permission": "OnlyAddress",
 					"address":    "cosmos1ve557a5g9yw2g2z57js3pdmcvd5my6g8ze20np",

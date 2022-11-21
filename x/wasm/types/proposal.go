@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -132,8 +133,8 @@ func (p StoreCodeProposal) ValidateBasic() error {
 		}
 	}
 
-	if err := ValidateCodeInfo(p.Source, p.Builder, p.CodeHash, p.WASMByteCode); err != nil {
-		return sdkerrors.Wrapf(err, "code info %s", err.Error())
+	if err := ValidateVerificationInfo(p.Source, p.Builder, p.CodeHash); err != nil {
+		return sdkerrors.Wrapf(err, "code verification info")
 	}
 	return nil
 }
@@ -170,7 +171,7 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 		InstantiatePermission: p.InstantiatePermission,
 		Source:                p.Source,
 		Builder:               p.Builder,
-		CodeHash:              base64.StdEncoding.EncodeToString(p.CodeHash),
+		CodeHash:              hex.EncodeToString(p.CodeHash),
 	}, nil
 }
 
@@ -329,7 +330,7 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
-	if err := ValidateCodeInfo(p.Source, p.Builder, p.CodeHash, p.WASMByteCode); err != nil {
+	if err := ValidateVerificationInfo(p.Source, p.Builder, p.CodeHash); err != nil {
 		return sdkerrors.Wrap(err, "code info")
 	}
 
@@ -404,7 +405,7 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		Label:                 p.Label,
 		Source:                p.Source,
 		Builder:               p.Builder,
-		CodeHash:              base64.StdEncoding.EncodeToString(p.CodeHash),
+		CodeHash:              hex.EncodeToString(p.CodeHash),
 		Msg:                   string(p.Msg),
 		Funds:                 p.Funds,
 	}, nil

@@ -106,6 +106,31 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		"all good": {
 			src: StoreCodeProposalFixture(),
 		},
+		"all good no code verification info": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Source = ""
+				p.Builder = ""
+				p.CodeHash = nil
+			}),
+		},
+		"source missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Source = ""
+			}),
+			expErr: true,
+		},
+		"builder missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Builder = ""
+			}),
+			expErr: true,
+		},
+		"code hash missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.CodeHash = nil
+			}),
+			expErr: true,
+		},
 		"with instantiate permission": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
@@ -266,6 +291,31 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 	}{
 		"all good": {
 			src: StoreAndInstantiateContractProposalFixture(),
+		},
+		"all good no code verification info": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Source = ""
+				p.Builder = ""
+				p.CodeHash = nil
+			}),
+		},
+		"source missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Source = ""
+			}),
+			expErr: true,
+		},
+		"builder missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Builder = ""
+			}),
+			expErr: true,
+		},
+		"code hash missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.CodeHash = nil
+			}),
+			expErr: true,
 		},
 		"with instantiate permission": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
@@ -649,7 +699,7 @@ func TestProposalStrings(t *testing.T) {
   WasmCode:    0102030405060708090A
   Source:      https://example.com/
   Builder:     cosmwasm/workspace-optimizer:v0.12.8
-  Code Hash:   D9B69D739E9ED76EF5D5CEB7F3B6F76FB7FDF38D9FD5ED7B6B6E387F97DEDF9E3DD34F76D37EB67FAEBAF1FDBAEB5DB9
+  Code Hash:   6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D
 `,
 		},
 		"instantiate contract": {
@@ -768,7 +818,7 @@ wasm_byte_code: AQIDBAUGBwgJCg==
 instantiate_permission: null
 source: https://example.com/
 builder: cosmwasm/workspace-optimizer:v0.12.8
-code_hash: 2badc56e12711c6387b3b7f9842f1e17a244f5fe354900920362f6668f266125
+code_hash: 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
 `,
 		},
 		"instantiate contract": {
