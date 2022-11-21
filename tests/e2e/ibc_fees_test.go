@@ -106,6 +106,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 }
 
 func TestIBCFeesWasm(t *testing.T) {
+	t.Skip("Deactivated until ibc middleware is setup for wasm")
 	// scenario:
 	// given 2 chains with cw20-ibc on chain A and native ics20 module on B
 	//   and an ibc channel established
