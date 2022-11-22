@@ -6,23 +6,19 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-
-var (
-	_ = fmt.Errorf
-	_ = math.Inf
-)
+var _ = fmt.Errorf
+var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -51,11 +47,9 @@ func (*StoreCodeProposal) ProtoMessage() {}
 func (*StoreCodeProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{0}
 }
-
 func (m *StoreCodeProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StoreCodeProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreCodeProposal.Marshal(b, m, deterministic)
@@ -68,15 +62,12 @@ func (m *StoreCodeProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
-
 func (m *StoreCodeProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreCodeProposal.Merge(m, src)
 }
-
 func (m *StoreCodeProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StoreCodeProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreCodeProposal.DiscardUnknown(m)
 }
@@ -109,11 +100,9 @@ func (*InstantiateContractProposal) ProtoMessage() {}
 func (*InstantiateContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{1}
 }
-
 func (m *InstantiateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *InstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_InstantiateContractProposal.Marshal(b, m, deterministic)
@@ -126,20 +115,74 @@ func (m *InstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-
 func (m *InstantiateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_InstantiateContractProposal.Merge(m, src)
 }
-
 func (m *InstantiateContractProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *InstantiateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_InstantiateContractProposal.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_InstantiateContractProposal proto.InternalMessageInfo
+
+// InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+type InstantiateContract2Proposal struct {
+	// Title is a short summary
+	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	// Description is a human readable text
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// RunAs is the address that is passed to the contract's enviroment as sender
+	RunAs string `protobuf:"bytes,3,opt,name=run_as,json=runAs,proto3" json:"run_as,omitempty"`
+	// Admin is an optional address that can execute migrations
+	Admin string `protobuf:"bytes,4,opt,name=admin,proto3" json:"admin,omitempty"`
+	// CodeID is the reference to the stored WASM code
+	CodeID uint64 `protobuf:"varint,5,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
+	// Label is optional metadata to be stored with a constract instance.
+	Label string `protobuf:"bytes,6,opt,name=label,proto3" json:"label,omitempty"`
+	// Msg json encode message to be passed to the contract on instantiation
+	Msg RawContractMessage `protobuf:"bytes,7,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`
+	// Funds coins that are transferred to the contract on instantiation
+	Funds github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,8,rep,name=funds,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"funds"`
+	// Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
+	Salt []byte `protobuf:"bytes,9,opt,name=salt,proto3" json:"salt,omitempty"`
+	// FixMsg include the msg value into the hash for the predictable address.
+	// Default is false
+	FixMsg bool `protobuf:"varint,10,opt,name=fix_msg,json=fixMsg,proto3" json:"fix_msg,omitempty"`
+}
+
+func (m *InstantiateContract2Proposal) Reset()      { *m = InstantiateContract2Proposal{} }
+func (*InstantiateContract2Proposal) ProtoMessage() {}
+func (*InstantiateContract2Proposal) Descriptor() ([]byte, []int) {
+	return fileDescriptor_be6422d717c730cb, []int{2}
+}
+func (m *InstantiateContract2Proposal) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *InstantiateContract2Proposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_InstantiateContract2Proposal.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *InstantiateContract2Proposal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstantiateContract2Proposal.Merge(m, src)
+}
+func (m *InstantiateContract2Proposal) XXX_Size() int {
+	return m.Size()
+}
+func (m *InstantiateContract2Proposal) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstantiateContract2Proposal.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_InstantiateContract2Proposal proto.InternalMessageInfo
 
 // MigrateContractProposal gov proposal content type to migrate a contract.
 type MigrateContractProposal struct {
@@ -158,13 +201,11 @@ type MigrateContractProposal struct {
 func (m *MigrateContractProposal) Reset()      { *m = MigrateContractProposal{} }
 func (*MigrateContractProposal) ProtoMessage() {}
 func (*MigrateContractProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{2}
+	return fileDescriptor_be6422d717c730cb, []int{3}
 }
-
 func (m *MigrateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MigrateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MigrateContractProposal.Marshal(b, m, deterministic)
@@ -177,15 +218,12 @@ func (m *MigrateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-
 func (m *MigrateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MigrateContractProposal.Merge(m, src)
 }
-
 func (m *MigrateContractProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MigrateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_MigrateContractProposal.DiscardUnknown(m)
 }
@@ -207,13 +245,11 @@ type SudoContractProposal struct {
 func (m *SudoContractProposal) Reset()      { *m = SudoContractProposal{} }
 func (*SudoContractProposal) ProtoMessage() {}
 func (*SudoContractProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{3}
+	return fileDescriptor_be6422d717c730cb, []int{4}
 }
-
 func (m *SudoContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *SudoContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_SudoContractProposal.Marshal(b, m, deterministic)
@@ -226,15 +262,12 @@ func (m *SudoContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-
 func (m *SudoContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_SudoContractProposal.Merge(m, src)
 }
-
 func (m *SudoContractProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *SudoContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_SudoContractProposal.DiscardUnknown(m)
 }
@@ -261,13 +294,11 @@ type ExecuteContractProposal struct {
 func (m *ExecuteContractProposal) Reset()      { *m = ExecuteContractProposal{} }
 func (*ExecuteContractProposal) ProtoMessage() {}
 func (*ExecuteContractProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{4}
+	return fileDescriptor_be6422d717c730cb, []int{5}
 }
-
 func (m *ExecuteContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ExecuteContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ExecuteContractProposal.Marshal(b, m, deterministic)
@@ -280,15 +311,12 @@ func (m *ExecuteContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-
 func (m *ExecuteContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ExecuteContractProposal.Merge(m, src)
 }
-
 func (m *ExecuteContractProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ExecuteContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_ExecuteContractProposal.DiscardUnknown(m)
 }
@@ -310,13 +338,11 @@ type UpdateAdminProposal struct {
 func (m *UpdateAdminProposal) Reset()      { *m = UpdateAdminProposal{} }
 func (*UpdateAdminProposal) ProtoMessage() {}
 func (*UpdateAdminProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{5}
+	return fileDescriptor_be6422d717c730cb, []int{6}
 }
-
 func (m *UpdateAdminProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *UpdateAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UpdateAdminProposal.Marshal(b, m, deterministic)
@@ -329,15 +355,12 @@ func (m *UpdateAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-
 func (m *UpdateAdminProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UpdateAdminProposal.Merge(m, src)
 }
-
 func (m *UpdateAdminProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *UpdateAdminProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpdateAdminProposal.DiscardUnknown(m)
 }
@@ -358,13 +381,11 @@ type ClearAdminProposal struct {
 func (m *ClearAdminProposal) Reset()      { *m = ClearAdminProposal{} }
 func (*ClearAdminProposal) ProtoMessage() {}
 func (*ClearAdminProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{6}
+	return fileDescriptor_be6422d717c730cb, []int{7}
 }
-
 func (m *ClearAdminProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *ClearAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ClearAdminProposal.Marshal(b, m, deterministic)
@@ -377,15 +398,12 @@ func (m *ClearAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-
 func (m *ClearAdminProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ClearAdminProposal.Merge(m, src)
 }
-
 func (m *ClearAdminProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *ClearAdminProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_ClearAdminProposal.DiscardUnknown(m)
 }
@@ -406,13 +424,11 @@ type PinCodesProposal struct {
 func (m *PinCodesProposal) Reset()      { *m = PinCodesProposal{} }
 func (*PinCodesProposal) ProtoMessage() {}
 func (*PinCodesProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{7}
+	return fileDescriptor_be6422d717c730cb, []int{8}
 }
-
 func (m *PinCodesProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *PinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PinCodesProposal.Marshal(b, m, deterministic)
@@ -425,15 +441,12 @@ func (m *PinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-
 func (m *PinCodesProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PinCodesProposal.Merge(m, src)
 }
-
 func (m *PinCodesProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *PinCodesProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_PinCodesProposal.DiscardUnknown(m)
 }
@@ -454,13 +467,11 @@ type UnpinCodesProposal struct {
 func (m *UnpinCodesProposal) Reset()      { *m = UnpinCodesProposal{} }
 func (*UnpinCodesProposal) ProtoMessage() {}
 func (*UnpinCodesProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{8}
+	return fileDescriptor_be6422d717c730cb, []int{9}
 }
-
 func (m *UnpinCodesProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *UnpinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UnpinCodesProposal.Marshal(b, m, deterministic)
@@ -473,15 +484,12 @@ func (m *UnpinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-
 func (m *UnpinCodesProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UnpinCodesProposal.Merge(m, src)
 }
-
 func (m *UnpinCodesProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *UnpinCodesProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UnpinCodesProposal.DiscardUnknown(m)
 }
@@ -500,13 +508,11 @@ type AccessConfigUpdate struct {
 func (m *AccessConfigUpdate) Reset()      { *m = AccessConfigUpdate{} }
 func (*AccessConfigUpdate) ProtoMessage() {}
 func (*AccessConfigUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{9}
+	return fileDescriptor_be6422d717c730cb, []int{10}
 }
-
 func (m *AccessConfigUpdate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *AccessConfigUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AccessConfigUpdate.Marshal(b, m, deterministic)
@@ -519,15 +525,12 @@ func (m *AccessConfigUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-
 func (m *AccessConfigUpdate) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AccessConfigUpdate.Merge(m, src)
 }
-
 func (m *AccessConfigUpdate) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *AccessConfigUpdate) XXX_DiscardUnknown() {
 	xxx_messageInfo_AccessConfigUpdate.DiscardUnknown(m)
 }
@@ -549,13 +552,11 @@ type UpdateInstantiateConfigProposal struct {
 func (m *UpdateInstantiateConfigProposal) Reset()      { *m = UpdateInstantiateConfigProposal{} }
 func (*UpdateInstantiateConfigProposal) ProtoMessage() {}
 func (*UpdateInstantiateConfigProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{10}
+	return fileDescriptor_be6422d717c730cb, []int{11}
 }
-
 func (m *UpdateInstantiateConfigProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *UpdateInstantiateConfigProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UpdateInstantiateConfigProposal.Marshal(b, m, deterministic)
@@ -568,15 +569,12 @@ func (m *UpdateInstantiateConfigProposal) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-
 func (m *UpdateInstantiateConfigProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UpdateInstantiateConfigProposal.Merge(m, src)
 }
-
 func (m *UpdateInstantiateConfigProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *UpdateInstantiateConfigProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpdateInstantiateConfigProposal.DiscardUnknown(m)
 }
@@ -611,13 +609,11 @@ type StoreAndInstantiateContractProposal struct {
 func (m *StoreAndInstantiateContractProposal) Reset()      { *m = StoreAndInstantiateContractProposal{} }
 func (*StoreAndInstantiateContractProposal) ProtoMessage() {}
 func (*StoreAndInstantiateContractProposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_be6422d717c730cb, []int{11}
+	return fileDescriptor_be6422d717c730cb, []int{12}
 }
-
 func (m *StoreAndInstantiateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StoreAndInstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreAndInstantiateContractProposal.Marshal(b, m, deterministic)
@@ -630,15 +626,12 @@ func (m *StoreAndInstantiateContractProposal) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-
 func (m *StoreAndInstantiateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreAndInstantiateContractProposal.Merge(m, src)
 }
-
 func (m *StoreAndInstantiateContractProposal) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StoreAndInstantiateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreAndInstantiateContractProposal.DiscardUnknown(m)
 }
@@ -648,6 +641,7 @@ var xxx_messageInfo_StoreAndInstantiateContractProposal proto.InternalMessageInf
 func init() {
 	proto.RegisterType((*StoreCodeProposal)(nil), "cosmwasm.wasm.v1.StoreCodeProposal")
 	proto.RegisterType((*InstantiateContractProposal)(nil), "cosmwasm.wasm.v1.InstantiateContractProposal")
+	proto.RegisterType((*InstantiateContract2Proposal)(nil), "cosmwasm.wasm.v1.InstantiateContract2Proposal")
 	proto.RegisterType((*MigrateContractProposal)(nil), "cosmwasm.wasm.v1.MigrateContractProposal")
 	proto.RegisterType((*SudoContractProposal)(nil), "cosmwasm.wasm.v1.SudoContractProposal")
 	proto.RegisterType((*ExecuteContractProposal)(nil), "cosmwasm.wasm.v1.ExecuteContractProposal")
@@ -663,62 +657,65 @@ func init() {
 func init() { proto.RegisterFile("cosmwasm/wasm/v1/proposal.proto", fileDescriptor_be6422d717c730cb) }
 
 var fileDescriptor_be6422d717c730cb = []byte{
-	// 877 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x56, 0xcd, 0x6e, 0xe3, 0x44,
-	0x1c, 0xcf, 0xe4, 0xc3, 0x49, 0xa6, 0x11, 0x04, 0x6f, 0xda, 0x0d, 0x05, 0xec, 0xc8, 0x8b, 0x56,
-	0xbe, 0xe0, 0x90, 0x22, 0x21, 0xe0, 0x16, 0x07, 0x0e, 0x5d, 0x51, 0xa9, 0x72, 0x55, 0xad, 0x04,
-	0x12, 0xd1, 0xc4, 0x9e, 0x7a, 0x2d, 0xe2, 0x19, 0xcb, 0x33, 0x6e, 0xb7, 0x6f, 0x01, 0x12, 0xe2,
-	0xb4, 0x0f, 0x80, 0xb8, 0x20, 0xee, 0x3c, 0x40, 0xc5, 0x69, 0x8f, 0x2b, 0x21, 0x19, 0x36, 0x7d,
-	0x83, 0x1e, 0x39, 0xa1, 0x99, 0x71, 0xb2, 0x69, 0x77, 0xdb, 0xdd, 0x15, 0x4d, 0xa5, 0xbd, 0x38,
-	0x99, 0xf9, 0x7f, 0xfd, 0xe6, 0xa7, 0xff, 0x17, 0x34, 0x7d, 0xca, 0xe2, 0x23, 0xc4, 0xe2, 0xbe,
-	0xfc, 0x1c, 0x0e, 0xfa, 0x49, 0x4a, 0x13, 0xca, 0xd0, 0xd4, 0x49, 0x52, 0xca, 0xa9, 0xde, 0x9e,
-	0x2b, 0x38, 0xf2, 0x73, 0x38, 0xd8, 0xec, 0x84, 0x34, 0xa4, 0x52, 0xd8, 0x17, 0xff, 0x94, 0xde,
-	0xa6, 0x21, 0xf4, 0x28, 0xeb, 0x4f, 0x10, 0xc3, 0xfd, 0xc3, 0xc1, 0x04, 0x73, 0x34, 0xe8, 0xfb,
-	0x34, 0x22, 0x85, 0xfc, 0xfd, 0xe7, 0x02, 0xf1, 0xe3, 0x04, 0x33, 0x25, 0xb5, 0x1e, 0x95, 0xe1,
-	0x3b, 0x7b, 0x9c, 0xa6, 0x78, 0x44, 0x03, 0xbc, 0x5b, 0x20, 0xd0, 0x3b, 0xb0, 0xc6, 0x23, 0x3e,
-	0xc5, 0x5d, 0xd0, 0x03, 0x76, 0xd3, 0x53, 0x07, 0xbd, 0x07, 0xd7, 0x02, 0xcc, 0xfc, 0x34, 0x4a,
-	0x78, 0x44, 0x49, 0xb7, 0x2c, 0x65, 0xcb, 0x57, 0xfa, 0x3a, 0xd4, 0xd2, 0x8c, 0x8c, 0x11, 0xeb,
-	0x56, 0x94, 0x61, 0x9a, 0x91, 0x21, 0xd3, 0x3f, 0x85, 0x6f, 0x89, 0xd8, 0xe3, 0xc9, 0x31, 0xc7,
-	0x63, 0x9f, 0x06, 0xb8, 0x5b, 0xed, 0x01, 0xbb, 0xe5, 0xb6, 0x67, 0xb9, 0xd9, 0xba, 0x3f, 0xdc,
-	0xdb, 0x71, 0x8f, 0xb9, 0x04, 0xe0, 0xb5, 0x84, 0xde, 0xfc, 0xa4, 0xef, 0xc3, 0x8d, 0x88, 0x30,
-	0x8e, 0x08, 0x8f, 0x10, 0xc7, 0xe3, 0x04, 0xa7, 0x71, 0xc4, 0x98, 0x88, 0x5d, 0xef, 0x01, 0x7b,
-	0x6d, 0xcb, 0x70, 0x2e, 0x72, 0xe4, 0x0c, 0x7d, 0x1f, 0x33, 0x36, 0xa2, 0xe4, 0x20, 0x0a, 0xbd,
-	0xf5, 0x25, 0xeb, 0xdd, 0x85, 0xb1, 0xfe, 0x01, 0x84, 0x19, 0x49, 0x22, 0xa2, 0xa0, 0x34, 0x7a,
-	0xc0, 0x6e, 0x78, 0x4d, 0x79, 0x23, 0xa2, 0xde, 0xab, 0x36, 0x6a, 0x6d, 0xed, 0x5e, 0xb5, 0xa1,
-	0xb5, 0xeb, 0xd6, 0x9f, 0x65, 0xf8, 0xde, 0xf6, 0x33, 0x27, 0x23, 0x4a, 0x78, 0x8a, 0x7c, 0xbe,
-	0x2a, 0xa2, 0x3a, 0xb0, 0x86, 0x82, 0x38, 0x22, 0x92, 0x9f, 0xa6, 0xa7, 0x0e, 0xfa, 0x1d, 0x58,
-	0x17, 0x48, 0xc7, 0x51, 0xd0, 0xad, 0xf5, 0x80, 0x5d, 0x75, 0xe1, 0x2c, 0x37, 0x35, 0x81, 0x75,
-	0xfb, 0x4b, 0x4f, 0x13, 0xa2, 0xed, 0x40, 0x98, 0x4e, 0xd1, 0x04, 0x4f, 0xbb, 0x9a, 0x32, 0x95,
-	0x07, 0xdd, 0x86, 0x95, 0x98, 0x85, 0x92, 0xae, 0x96, 0xbb, 0xf1, 0x6f, 0x6e, 0xea, 0x1e, 0x3a,
-	0x9a, 0xbf, 0x62, 0x07, 0x33, 0x86, 0x42, 0xec, 0x09, 0x15, 0x1d, 0xc1, 0xda, 0x41, 0x46, 0x02,
-	0xd6, 0x6d, 0xf4, 0x2a, 0xf6, 0xda, 0xd6, 0xbb, 0x8e, 0x4a, 0x2b, 0x47, 0xa4, 0x95, 0x53, 0xa4,
-	0x95, 0x33, 0xa2, 0x11, 0x71, 0x3f, 0x3e, 0xc9, 0xcd, 0xd2, 0xaf, 0x7f, 0x9b, 0x76, 0x18, 0xf1,
-	0x07, 0xd9, 0xc4, 0xf1, 0x69, 0xdc, 0x2f, 0x72, 0x50, 0xfd, 0x7c, 0xc4, 0x82, 0xef, 0x8b, 0x24,
-	0x13, 0x06, 0xcc, 0x53, 0x9e, 0xad, 0x3f, 0x00, 0xbc, 0xbd, 0x13, 0x85, 0xe9, 0x75, 0x12, 0xb9,
-	0x09, 0x1b, 0x7e, 0xe1, 0xab, 0x20, 0x6d, 0x71, 0x7e, 0x35, 0xde, 0x0a, 0x86, 0xb4, 0x97, 0x32,
-	0x64, 0xfd, 0x04, 0x60, 0x67, 0x2f, 0x0b, 0xe8, 0x4a, 0xb0, 0x57, 0x2e, 0x60, 0x2f, 0x60, 0x55,
-	0x5f, 0x0e, 0xeb, 0xc7, 0x32, 0xbc, 0xfd, 0xd5, 0x43, 0xec, 0x67, 0xab, 0x4f, 0xcf, 0xab, 0xc8,
-	0x2e, 0x00, 0xd7, 0x5e, 0x23, 0xd3, 0xb4, 0x95, 0x65, 0xda, 0x23, 0x00, 0x6f, 0xed, 0x27, 0x01,
-	0xe2, 0x78, 0x28, 0x2a, 0xe8, 0x7f, 0xf3, 0x31, 0x80, 0x4d, 0x82, 0x8f, 0xc6, 0xaa, 0x36, 0x25,
-	0x25, 0x6e, 0xe7, 0x2c, 0x37, 0xdb, 0xc7, 0x28, 0x9e, 0x7e, 0x61, 0x2d, 0x44, 0x96, 0xd7, 0x20,
-	0xf8, 0x48, 0x86, 0xbc, 0x8a, 0x2b, 0xeb, 0x01, 0xd4, 0x47, 0x53, 0x8c, 0xd2, 0xeb, 0x01, 0x77,
-	0x45, 0x1a, 0x59, 0xbf, 0x01, 0xd8, 0xde, 0x55, 0x7d, 0x8d, 0x2d, 0x02, 0xdd, 0x3d, 0x17, 0xc8,
-	0x6d, 0x9f, 0xe5, 0x66, 0x4b, 0xbd, 0x44, 0x5e, 0x5b, 0xf3, 0xd0, 0x9f, 0xbd, 0x20, 0xb4, 0xbb,
-	0x71, 0x96, 0x9b, 0xba, 0xd2, 0x5e, 0x12, 0x5a, 0xe7, 0x21, 0x7d, 0x2e, 0x20, 0xc9, 0xca, 0x13,
-	0x19, 0x54, 0xb1, 0xab, 0xae, 0x31, 0xcb, 0xcd, 0xba, 0x2a, 0x3d, 0x76, 0x96, 0x9b, 0x6f, 0x2b,
-	0x0f, 0x73, 0x25, 0xcb, 0xab, 0xab, 0x72, 0x64, 0xd6, 0xef, 0x00, 0xea, 0xfb, 0xf3, 0x5e, 0xfc,
-	0x86, 0x60, 0xfe, 0x19, 0x40, 0x7d, 0x79, 0xf0, 0xa8, 0xd4, 0x5b, 0xee, 0x3f, 0xe0, 0xd2, 0xfe,
-	0xf3, 0xed, 0xa5, 0x33, 0xae, 0xfc, 0x2a, 0x33, 0xce, 0xad, 0x8a, 0x1a, 0xb9, 0x64, 0xd2, 0x59,
-	0xa7, 0x00, 0x9a, 0x0a, 0xcc, 0xf9, 0x21, 0x76, 0x10, 0x85, 0x37, 0xc8, 0xec, 0x77, 0x70, 0x1d,
-	0x49, 0xc8, 0x63, 0x5f, 0x86, 0x1e, 0x67, 0x12, 0x92, 0xa2, 0x79, 0x6d, 0xeb, 0xc3, 0xab, 0x5f,
-	0xa8, 0xf0, 0x17, 0xef, 0xbc, 0x85, 0x9e, 0x93, 0x30, 0xeb, 0xaf, 0x0a, 0xbc, 0x23, 0x77, 0x98,
-	0x21, 0x09, 0x6e, 0x70, 0x58, 0x5f, 0xff, 0x56, 0x53, 0xbb, 0xbe, 0xad, 0x46, 0xbb, 0xb0, 0xd5,
-	0x3c, 0x5b, 0x2d, 0xea, 0xcb, 0xab, 0xc5, 0x62, 0x6b, 0x68, 0xbc, 0x60, 0x6b, 0x68, 0xbe, 0x46,
-	0x2f, 0x87, 0xab, 0xea, 0xe5, 0xee, 0xd7, 0x27, 0x4f, 0x8d, 0xd2, 0x93, 0xa7, 0x46, 0xe9, 0x97,
-	0x99, 0x01, 0x4e, 0x66, 0x06, 0x78, 0x3c, 0x33, 0xc0, 0x3f, 0x33, 0x03, 0xfc, 0x70, 0x6a, 0x94,
-	0x1e, 0x9f, 0x1a, 0xa5, 0x27, 0xa7, 0x46, 0xe9, 0x9b, 0xbb, 0x4b, 0x6e, 0x47, 0x94, 0xc5, 0xf7,
-	0xe7, 0x0b, 0x6f, 0xd0, 0x7f, 0xa8, 0x16, 0x5f, 0xe9, 0x7a, 0xa2, 0xc9, 0xb5, 0xf7, 0x93, 0xff,
-	0x02, 0x00, 0x00, 0xff, 0xff, 0x50, 0x71, 0x76, 0x67, 0x7f, 0x0b, 0x00, 0x00,
+	// 924 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0x4d, 0x6f, 0xe3, 0x44,
+	0x18, 0xce, 0xe4, 0xc3, 0x49, 0xa6, 0x11, 0x84, 0xd9, 0xb4, 0x0d, 0x65, 0xb1, 0x23, 0x2f, 0x5a,
+	0xf9, 0x82, 0x43, 0x8a, 0x84, 0x80, 0x5b, 0x1c, 0x38, 0x74, 0x45, 0xa5, 0xca, 0x55, 0xb5, 0x12,
+	0x48, 0x58, 0x13, 0x7b, 0xe2, 0xb5, 0x48, 0x3c, 0x91, 0x67, 0xd2, 0x8f, 0x7f, 0x01, 0x12, 0xe2,
+	0xb4, 0x3f, 0x00, 0x71, 0x41, 0xdc, 0xf9, 0x01, 0x15, 0xa7, 0x3d, 0xae, 0x84, 0x64, 0xd8, 0xf4,
+	0x1f, 0xf4, 0x84, 0x38, 0xa1, 0x99, 0x71, 0xb2, 0x69, 0xb7, 0xed, 0xee, 0x42, 0xb2, 0x12, 0xd2,
+	0x5e, 0x12, 0x8f, 0xdf, 0xaf, 0x67, 0x1e, 0xbd, 0xef, 0xcc, 0x63, 0x68, 0xf8, 0x94, 0x8d, 0x8e,
+	0x30, 0x1b, 0xb5, 0xe5, 0xcf, 0x61, 0xa7, 0x3d, 0x4e, 0xe8, 0x98, 0x32, 0x3c, 0xb4, 0xc7, 0x09,
+	0xe5, 0x14, 0xd5, 0x67, 0x0e, 0xb6, 0xfc, 0x39, 0xec, 0x6c, 0x35, 0x42, 0x1a, 0x52, 0x69, 0x6c,
+	0x8b, 0x27, 0xe5, 0xb7, 0xa5, 0x0b, 0x3f, 0xca, 0xda, 0x7d, 0xcc, 0x48, 0xfb, 0xb0, 0xd3, 0x27,
+	0x1c, 0x77, 0xda, 0x3e, 0x8d, 0xe2, 0xcc, 0x7e, 0xfb, 0x99, 0x42, 0xfc, 0x64, 0x4c, 0x98, 0xb2,
+	0x9a, 0x0f, 0xf3, 0xf0, 0xad, 0x7d, 0x4e, 0x13, 0xd2, 0xa3, 0x01, 0xd9, 0xcb, 0x10, 0xa0, 0x06,
+	0x2c, 0xf1, 0x88, 0x0f, 0x49, 0x13, 0xb4, 0x80, 0x55, 0x75, 0xd5, 0x02, 0xb5, 0xe0, 0x5a, 0x40,
+	0x98, 0x9f, 0x44, 0x63, 0x1e, 0xd1, 0xb8, 0x99, 0x97, 0xb6, 0xc5, 0x57, 0x68, 0x1d, 0x6a, 0xc9,
+	0x24, 0xf6, 0x30, 0x6b, 0x16, 0x54, 0x60, 0x32, 0x89, 0xbb, 0x0c, 0x7d, 0x04, 0xdf, 0x10, 0xb5,
+	0xbd, 0xfe, 0x09, 0x27, 0x9e, 0x4f, 0x03, 0xd2, 0x2c, 0xb6, 0x80, 0x55, 0x73, 0xea, 0xd3, 0xd4,
+	0xa8, 0xdd, 0xef, 0xee, 0xef, 0x3a, 0x27, 0x5c, 0x02, 0x70, 0x6b, 0xc2, 0x6f, 0xb6, 0x42, 0x07,
+	0x70, 0x23, 0x8a, 0x19, 0xc7, 0x31, 0x8f, 0x30, 0x27, 0xde, 0x98, 0x24, 0xa3, 0x88, 0x31, 0x51,
+	0xbb, 0xdc, 0x02, 0xd6, 0xda, 0xb6, 0x6e, 0x5f, 0xe6, 0xc8, 0xee, 0xfa, 0x3e, 0x61, 0xac, 0x47,
+	0xe3, 0x41, 0x14, 0xba, 0xeb, 0x0b, 0xd1, 0x7b, 0xf3, 0x60, 0xf4, 0x2e, 0x84, 0x93, 0x78, 0x1c,
+	0xc5, 0x0a, 0x4a, 0xa5, 0x05, 0xac, 0x8a, 0x5b, 0x95, 0x6f, 0x44, 0xd5, 0x7b, 0xc5, 0x4a, 0xa9,
+	0xae, 0xdd, 0x2b, 0x56, 0xb4, 0x7a, 0xd9, 0xfc, 0x2d, 0x0f, 0xdf, 0xd9, 0x79, 0x9a, 0xa4, 0x47,
+	0x63, 0x9e, 0x60, 0x9f, 0xaf, 0x8a, 0xa8, 0x06, 0x2c, 0xe1, 0x60, 0x14, 0xc5, 0x92, 0x9f, 0xaa,
+	0xab, 0x16, 0xe8, 0x0e, 0x2c, 0x0b, 0xa4, 0x5e, 0x14, 0x34, 0x4b, 0x2d, 0x60, 0x15, 0x1d, 0x38,
+	0x4d, 0x0d, 0x4d, 0x60, 0xdd, 0xf9, 0xcc, 0xd5, 0x84, 0x69, 0x27, 0x10, 0xa1, 0x43, 0xdc, 0x27,
+	0xc3, 0xa6, 0xa6, 0x42, 0xe5, 0x02, 0x59, 0xb0, 0x30, 0x62, 0xa1, 0xa4, 0xab, 0xe6, 0x6c, 0xfc,
+	0x9d, 0x1a, 0xc8, 0xc5, 0x47, 0xb3, 0x5d, 0xec, 0x12, 0xc6, 0x70, 0x48, 0x5c, 0xe1, 0x82, 0x30,
+	0x2c, 0x0d, 0x26, 0x71, 0xc0, 0x9a, 0x95, 0x56, 0xc1, 0x5a, 0xdb, 0x7e, 0xdb, 0x56, 0x6d, 0x65,
+	0x8b, 0xb6, 0xb2, 0xb3, 0xb6, 0xb2, 0x7b, 0x34, 0x8a, 0x9d, 0x0f, 0x4e, 0x53, 0x23, 0xf7, 0xd3,
+	0x1f, 0x86, 0x15, 0x46, 0xfc, 0xc1, 0xa4, 0x6f, 0xfb, 0x74, 0xd4, 0xce, 0x7a, 0x50, 0xfd, 0xbd,
+	0xcf, 0x82, 0x6f, 0xb2, 0x26, 0x13, 0x01, 0xcc, 0x55, 0x99, 0xcd, 0xbf, 0xf2, 0xf0, 0xf6, 0x15,
+	0x64, 0x6e, 0xbf, 0x66, 0xf3, 0x5f, 0xb0, 0x89, 0x10, 0x2c, 0x32, 0x3c, 0xe4, 0xcd, 0xaa, 0x40,
+	0xe3, 0xca, 0x67, 0xb4, 0x09, 0xcb, 0x83, 0xe8, 0xd8, 0x13, 0x20, 0xa1, 0x6c, 0x6b, 0x6d, 0x10,
+	0x1d, 0xef, 0xb2, 0xd0, 0xfc, 0x15, 0xc0, 0xcd, 0xdd, 0x28, 0x4c, 0x96, 0xd9, 0xc3, 0x5b, 0xb0,
+	0xe2, 0x67, 0xb9, 0x32, 0x86, 0xe7, 0xeb, 0x17, 0x23, 0x39, 0xa3, 0x53, 0x7b, 0x2e, 0x9d, 0xe6,
+	0xf7, 0x00, 0x36, 0xf6, 0x27, 0x01, 0x5d, 0x09, 0xf6, 0xc2, 0x25, 0xec, 0x19, 0xac, 0xe2, 0xf3,
+	0x61, 0x7d, 0x97, 0x87, 0x9b, 0x9f, 0x1f, 0x13, 0x7f, 0xb2, 0xfa, 0x93, 0xe1, 0x26, 0xb2, 0x33,
+	0xc0, 0xa5, 0x97, 0x68, 0x4b, 0x6d, 0x65, 0x43, 0xfe, 0x10, 0xc0, 0x5b, 0x07, 0xe3, 0x00, 0x73,
+	0xd2, 0x15, 0xe3, 0xf6, 0x9f, 0xf9, 0xe8, 0xc0, 0x6a, 0x4c, 0x8e, 0x3c, 0x35, 0xc8, 0x92, 0x12,
+	0xa7, 0x71, 0x9e, 0x1a, 0xf5, 0x13, 0x3c, 0x1a, 0x7e, 0x6a, 0xce, 0x4d, 0xa6, 0x5b, 0x89, 0xc9,
+	0x91, 0x2c, 0x79, 0x13, 0x57, 0xe6, 0x03, 0x88, 0x7a, 0x43, 0x82, 0x93, 0xe5, 0x80, 0xbb, 0xa1,
+	0x8d, 0xcc, 0x9f, 0x01, 0xac, 0xef, 0xa9, 0x2b, 0x85, 0xcd, 0x0b, 0xdd, 0xbd, 0x50, 0xc8, 0xa9,
+	0x9f, 0xa7, 0x46, 0x4d, 0xed, 0x44, 0xbe, 0x36, 0x67, 0xa5, 0x3f, 0xbe, 0xa2, 0xb4, 0xb3, 0x71,
+	0x9e, 0x1a, 0x48, 0x79, 0x2f, 0x18, 0xcd, 0x8b, 0x90, 0x3e, 0x11, 0x90, 0xe4, 0xe4, 0x89, 0x0e,
+	0x2a, 0x58, 0x45, 0x47, 0x9f, 0xa6, 0x46, 0x59, 0x8d, 0x1e, 0x3b, 0x4f, 0x8d, 0x37, 0x55, 0x86,
+	0x99, 0x93, 0xe9, 0x96, 0xd5, 0x38, 0x32, 0xf3, 0x17, 0x00, 0xd1, 0xc1, 0xec, 0x1a, 0xfc, 0x9f,
+	0x60, 0xfe, 0x01, 0x40, 0xb4, 0x78, 0xe7, 0xab, 0xd6, 0x5b, 0x3c, 0x7f, 0xc0, 0xb5, 0xe7, 0xcf,
+	0x57, 0xd7, 0xca, 0x8b, 0xfc, 0x8b, 0xc8, 0x0b, 0xa7, 0x28, 0x66, 0xe4, 0x1a, 0x91, 0x61, 0x9e,
+	0x01, 0x68, 0x28, 0x30, 0x17, 0xaf, 0xbc, 0x41, 0x14, 0xbe, 0x42, 0x66, 0xbf, 0x86, 0xeb, 0x58,
+	0x42, 0xf6, 0x7c, 0x59, 0xda, 0x9b, 0x48, 0x48, 0x8a, 0xe6, 0xb5, 0xed, 0xf7, 0x6e, 0xde, 0xa1,
+	0xc2, 0x9f, 0xed, 0xf3, 0x16, 0x7e, 0xc6, 0xc2, 0xcc, 0xdf, 0x0b, 0xf0, 0x8e, 0x94, 0x8f, 0xdd,
+	0x38, 0x78, 0x85, 0x3a, 0x69, 0xf9, 0x82, 0xb2, 0xb4, 0x3c, 0x41, 0xa9, 0x5d, 0x12, 0x94, 0x4f,
+	0x75, 0x48, 0x79, 0x51, 0x87, 0xcc, 0x25, 0x46, 0xe5, 0x0a, 0x89, 0x51, 0x7d, 0x89, 0xb3, 0x1c,
+	0xae, 0xea, 0x2c, 0x77, 0xbe, 0x38, 0x7d, 0xa2, 0xe7, 0x1e, 0x3f, 0xd1, 0x73, 0x3f, 0x4e, 0x75,
+	0x70, 0x3a, 0xd5, 0xc1, 0xa3, 0xa9, 0x0e, 0xfe, 0x9c, 0xea, 0xe0, 0xdb, 0x33, 0x3d, 0xf7, 0xe8,
+	0x4c, 0xcf, 0x3d, 0x3e, 0xd3, 0x73, 0x5f, 0xde, 0x5d, 0x48, 0xdb, 0xa3, 0x6c, 0x74, 0x7f, 0xf6,
+	0xad, 0x11, 0xb4, 0x8f, 0xd5, 0x37, 0x87, 0x4c, 0xdd, 0xd7, 0xe4, 0x17, 0xc7, 0x87, 0xff, 0x04,
+	0x00, 0x00, 0xff, 0xff, 0xba, 0x2d, 0x1b, 0x26, 0xfa, 0x0c, 0x00, 0x00,
 }
 
 func (this *StoreCodeProposal) Equal(that interface{}) bool {
@@ -760,7 +757,6 @@ func (this *StoreCodeProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *InstantiateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -811,7 +807,62 @@ func (this *InstantiateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *InstantiateContract2Proposal) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
 
+	that1, ok := that.(*InstantiateContract2Proposal)
+	if !ok {
+		that2, ok := that.(InstantiateContract2Proposal)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Title != that1.Title {
+		return false
+	}
+	if this.Description != that1.Description {
+		return false
+	}
+	if this.RunAs != that1.RunAs {
+		return false
+	}
+	if this.Admin != that1.Admin {
+		return false
+	}
+	if this.CodeID != that1.CodeID {
+		return false
+	}
+	if this.Label != that1.Label {
+		return false
+	}
+	if !bytes.Equal(this.Msg, that1.Msg) {
+		return false
+	}
+	if len(this.Funds) != len(that1.Funds) {
+		return false
+	}
+	for i := range this.Funds {
+		if !this.Funds[i].Equal(&that1.Funds[i]) {
+			return false
+		}
+	}
+	if !bytes.Equal(this.Salt, that1.Salt) {
+		return false
+	}
+	if this.FixMsg != that1.FixMsg {
+		return false
+	}
+	return true
+}
 func (this *MigrateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -848,7 +899,6 @@ func (this *MigrateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *SudoContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -882,7 +932,6 @@ func (this *SudoContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *ExecuteContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -927,7 +976,6 @@ func (this *ExecuteContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *UpdateAdminProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -961,7 +1009,6 @@ func (this *UpdateAdminProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *ClearAdminProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -992,7 +1039,6 @@ func (this *ClearAdminProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *PinCodesProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1028,7 +1074,6 @@ func (this *PinCodesProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *UnpinCodesProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1064,7 +1109,6 @@ func (this *UnpinCodesProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *AccessConfigUpdate) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1092,7 +1136,6 @@ func (this *AccessConfigUpdate) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *UpdateInstantiateConfigProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1128,7 +1171,6 @@ func (this *UpdateInstantiateConfigProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (this *StoreAndInstantiateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1185,7 +1227,6 @@ func (this *StoreAndInstantiateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
-
 func (m *StoreCodeProposal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1279,6 +1320,107 @@ func (m *InstantiateContractProposal) MarshalToSizedBuffer(dAtA []byte) (int, er
 	_ = i
 	var l int
 	_ = l
+	if len(m.Funds) > 0 {
+		for iNdEx := len(m.Funds) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Funds[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintProposal(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x42
+		}
+	}
+	if len(m.Msg) > 0 {
+		i -= len(m.Msg)
+		copy(dAtA[i:], m.Msg)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Msg)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Label) > 0 {
+		i -= len(m.Label)
+		copy(dAtA[i:], m.Label)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Label)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.CodeID != 0 {
+		i = encodeVarintProposal(dAtA, i, uint64(m.CodeID))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.RunAs) > 0 {
+		i -= len(m.RunAs)
+		copy(dAtA[i:], m.RunAs)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.RunAs)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Description) > 0 {
+		i -= len(m.Description)
+		copy(dAtA[i:], m.Description)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Description)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Title) > 0 {
+		i -= len(m.Title)
+		copy(dAtA[i:], m.Title)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Title)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InstantiateContract2Proposal) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InstantiateContract2Proposal) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *InstantiateContract2Proposal) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.FixMsg {
+		i--
+		if m.FixMsg {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x50
+	}
+	if len(m.Salt) > 0 {
+		i -= len(m.Salt)
+		copy(dAtA[i:], m.Salt)
+		i = encodeVarintProposal(dAtA, i, uint64(len(m.Salt)))
+		i--
+		dAtA[i] = 0x4a
+	}
 	if len(m.Funds) > 0 {
 		for iNdEx := len(m.Funds) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1935,7 +2077,6 @@ func encodeVarintProposal(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *StoreCodeProposal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -2006,6 +2147,55 @@ func (m *InstantiateContractProposal) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovProposal(uint64(l))
 		}
+	}
+	return n
+}
+
+func (m *InstantiateContract2Proposal) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Title)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	l = len(m.Description)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	l = len(m.RunAs)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	if m.CodeID != 0 {
+		n += 1 + sovProposal(uint64(m.CodeID))
+	}
+	l = len(m.Label)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	l = len(m.Msg)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	if len(m.Funds) > 0 {
+		for _, e := range m.Funds {
+			l = e.Size()
+			n += 1 + l + sovProposal(uint64(l))
+		}
+	}
+	l = len(m.Salt)
+	if l > 0 {
+		n += 1 + l + sovProposal(uint64(l))
+	}
+	if m.FixMsg {
+		n += 2
 	}
 	return n
 }
@@ -2282,11 +2472,9 @@ func (m *StoreAndInstantiateContractProposal) Size() (n int) {
 func sovProposal(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
-
 func sozProposal(x uint64) (n int) {
 	return sovProposal(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *StoreCodeProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2523,7 +2711,6 @@ func (m *StoreCodeProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *InstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2821,7 +3008,357 @@ func (m *InstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *InstantiateContract2Proposal) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowProposal
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InstantiateContract2Proposal: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InstantiateContract2Proposal: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Title", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Title = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Description", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Description = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RunAs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RunAs = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CodeID", wireType)
+			}
+			m.CodeID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CodeID |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Label", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Label = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Msg = append(m.Msg[:0], dAtA[iNdEx:postIndex]...)
+			if m.Msg == nil {
+				m.Msg = []byte{}
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Funds", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Funds = append(m.Funds, types.Coin{})
+			if err := m.Funds[len(m.Funds)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Salt", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthProposal
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Salt = append(m.Salt[:0], dAtA[iNdEx:postIndex]...)
+			if m.Salt == nil {
+				m.Salt = []byte{}
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FixMsg", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowProposal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.FixMsg = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipProposal(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthProposal
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
 
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *MigrateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3021,7 +3558,6 @@ func (m *MigrateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *SudoContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3202,7 +3738,6 @@ func (m *SudoContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ExecuteContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3449,7 +3984,6 @@ func (m *ExecuteContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *UpdateAdminProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3628,7 +4162,6 @@ func (m *UpdateAdminProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ClearAdminProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3775,7 +4308,6 @@ func (m *ClearAdminProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *PinCodesProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3966,7 +4498,6 @@ func (m *PinCodesProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *UnpinCodesProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4157,7 +4688,6 @@ func (m *UnpinCodesProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *AccessConfigUpdate) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4260,7 +4790,6 @@ func (m *AccessConfigUpdate) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *UpdateInstantiateConfigProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4409,7 +4938,6 @@ func (m *UpdateInstantiateConfigProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *StoreAndInstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4778,7 +5306,6 @@ func (m *StoreAndInstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func skipProposal(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

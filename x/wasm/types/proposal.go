@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -15,6 +16,7 @@ type ProposalType string
 const (
 	ProposalTypeStoreCode                           ProposalType = "StoreCode"
 	ProposalTypeInstantiateContract                 ProposalType = "InstantiateContract"
+	ProposalTypeInstantiateContract2                ProposalType = "InstantiateContract2"
 	ProposalTypeMigrateContract                     ProposalType = "MigrateContract"
 	ProposalTypeSudoContract                        ProposalType = "SudoContract"
 	ProposalTypeExecuteContract                     ProposalType = "ExecuteContract"
@@ -33,6 +35,7 @@ var DisableAllProposals []ProposalType
 var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
 	ProposalTypeInstantiateContract,
+	ProposalTypeInstantiateContract2,
 	ProposalTypeMigrateContract,
 	ProposalTypeSudoContract,
 	ProposalTypeExecuteContract,
@@ -65,6 +68,7 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
 	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
+	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract2))
 	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
 	govtypes.RegisterProposalType(string(ProposalTypeSudoContract))
 	govtypes.RegisterProposalType(string(ProposalTypeExecuteContract))
@@ -76,6 +80,7 @@ func init() { // register new content types with the sdk
 	govtypes.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
 	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
 	govtypes.RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
+	govtypes.RegisterProposalTypeCodec(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal")
 	govtypes.RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
 	govtypes.RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
 	govtypes.RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
@@ -251,6 +256,114 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Label:       p.Label,
 		Msg:         string(p.Msg),
 		Funds:       p.Funds,
+	}, nil
+}
+
+func NewInstantiateContract2Proposal(
+	title string,
+	description string,
+	runAs string,
+	admin string,
+	codeID uint64,
+	label string,
+	msg RawContractMessage,
+	funds sdk.Coins,
+	salt []byte,
+	fixMsg bool,
+) *InstantiateContract2Proposal {
+	return &InstantiateContract2Proposal{title, description, runAs, admin, codeID, label, msg, funds, salt, fixMsg}
+}
+
+// ProposalRoute returns the routing key of a parameter change proposal.
+func (p InstantiateContract2Proposal) ProposalRoute() string { return RouterKey }
+
+// GetTitle returns the title of the proposal
+func (p *InstantiateContract2Proposal) GetTitle() string { return p.Title }
+
+// GetDescription returns the human readable description of the proposal
+func (p InstantiateContract2Proposal) GetDescription() string { return p.Description }
+
+// ProposalType returns the type
+func (p InstantiateContract2Proposal) ProposalType() string {
+	return string(ProposalTypeInstantiateContract)
+}
+
+// ValidateBasic validates the proposal
+func (p InstantiateContract2Proposal) ValidateBasic() error {
+	// Validate title and description
+	if err := validateProposalCommons(p.Title, p.Description); err != nil {
+		return err
+	}
+	// Validate run as
+	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "run as")
+	}
+	// Validate admin
+	if len(p.Admin) != 0 {
+		if _, err := sdk.AccAddressFromBech32(p.Admin); err != nil {
+			return err
+		}
+	}
+	// Validate codeid
+	if p.CodeID == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+	}
+	// Validate label
+	if err := ValidateLabel(p.Label); err != nil {
+		return err
+	}
+	// Validate msg
+	if err := p.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
+	}
+	// Validate funds
+	if !p.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
+	// Validate salt
+	if len(p.Salt) == 0 {
+		return errors.Wrap(errors.ErrInvalidRequest, "salt is required")
+	}
+	return nil
+}
+
+// String implements the Stringer interface.
+func (p InstantiateContract2Proposal) String() string {
+	return fmt.Sprintf(`Instantiate Code Proposal:
+  Title:       %s
+  Description: %s
+  Run as:      %s
+  Admin:       %s
+  Code id:     %d
+  Label:       %s
+  Msg:         %q
+  Funds:       %s
+  Salt:        %X
+`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.Msg, p.Funds, p.Salt)
+}
+
+// MarshalYAML pretty prints the init message
+func (p InstantiateContract2Proposal) MarshalYAML() (interface{}, error) {
+	return struct {
+		Title       string    `yaml:"title"`
+		Description string    `yaml:"description"`
+		RunAs       string    `yaml:"run_as"`
+		Admin       string    `yaml:"admin"`
+		CodeID      uint64    `yaml:"code_id"`
+		Label       string    `yaml:"label"`
+		Msg         string    `yaml:"msg"`
+		Funds       sdk.Coins `yaml:"funds"`
+		Salt        string    `yaml:"salt"`
+	}{
+		Title:       p.Title,
+		Description: p.Description,
+		RunAs:       p.RunAs,
+		Admin:       p.Admin,
+		CodeID:      p.CodeID,
+		Label:       p.Label,
+		Msg:         string(p.Msg),
+		Funds:       p.Funds,
+		Salt:        base64.StdEncoding.EncodeToString(p.Salt),
 	}, nil
 }
 
