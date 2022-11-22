@@ -6,19 +6,22 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -55,9 +58,11 @@ func (*StoreCodeProposal) ProtoMessage() {}
 func (*StoreCodeProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{0}
 }
+
 func (m *StoreCodeProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *StoreCodeProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreCodeProposal.Marshal(b, m, deterministic)
@@ -70,12 +75,15 @@ func (m *StoreCodeProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, e
 		return b[:n], nil
 	}
 }
+
 func (m *StoreCodeProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreCodeProposal.Merge(m, src)
 }
+
 func (m *StoreCodeProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *StoreCodeProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreCodeProposal.DiscardUnknown(m)
 }
@@ -108,9 +116,11 @@ func (*InstantiateContractProposal) ProtoMessage() {}
 func (*InstantiateContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{1}
 }
+
 func (m *InstantiateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *InstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_InstantiateContractProposal.Marshal(b, m, deterministic)
@@ -123,12 +133,15 @@ func (m *InstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
+
 func (m *InstantiateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_InstantiateContractProposal.Merge(m, src)
 }
+
 func (m *InstantiateContractProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *InstantiateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_InstantiateContractProposal.DiscardUnknown(m)
 }
@@ -154,9 +167,11 @@ func (*MigrateContractProposal) ProtoMessage() {}
 func (*MigrateContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{2}
 }
+
 func (m *MigrateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *MigrateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MigrateContractProposal.Marshal(b, m, deterministic)
@@ -169,12 +184,15 @@ func (m *MigrateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
+
 func (m *MigrateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MigrateContractProposal.Merge(m, src)
 }
+
 func (m *MigrateContractProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *MigrateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_MigrateContractProposal.DiscardUnknown(m)
 }
@@ -198,9 +216,11 @@ func (*SudoContractProposal) ProtoMessage() {}
 func (*SudoContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{3}
 }
+
 func (m *SudoContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *SudoContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_SudoContractProposal.Marshal(b, m, deterministic)
@@ -213,12 +233,15 @@ func (m *SudoContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
+
 func (m *SudoContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_SudoContractProposal.Merge(m, src)
 }
+
 func (m *SudoContractProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *SudoContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_SudoContractProposal.DiscardUnknown(m)
 }
@@ -247,9 +270,11 @@ func (*ExecuteContractProposal) ProtoMessage() {}
 func (*ExecuteContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{4}
 }
+
 func (m *ExecuteContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ExecuteContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ExecuteContractProposal.Marshal(b, m, deterministic)
@@ -262,12 +287,15 @@ func (m *ExecuteContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
+
 func (m *ExecuteContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ExecuteContractProposal.Merge(m, src)
 }
+
 func (m *ExecuteContractProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ExecuteContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_ExecuteContractProposal.DiscardUnknown(m)
 }
@@ -291,9 +319,11 @@ func (*UpdateAdminProposal) ProtoMessage() {}
 func (*UpdateAdminProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{5}
 }
+
 func (m *UpdateAdminProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *UpdateAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UpdateAdminProposal.Marshal(b, m, deterministic)
@@ -306,12 +336,15 @@ func (m *UpdateAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
+
 func (m *UpdateAdminProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UpdateAdminProposal.Merge(m, src)
 }
+
 func (m *UpdateAdminProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *UpdateAdminProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpdateAdminProposal.DiscardUnknown(m)
 }
@@ -334,9 +367,11 @@ func (*ClearAdminProposal) ProtoMessage() {}
 func (*ClearAdminProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{6}
 }
+
 func (m *ClearAdminProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *ClearAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_ClearAdminProposal.Marshal(b, m, deterministic)
@@ -349,12 +384,15 @@ func (m *ClearAdminProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *ClearAdminProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_ClearAdminProposal.Merge(m, src)
 }
+
 func (m *ClearAdminProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *ClearAdminProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_ClearAdminProposal.DiscardUnknown(m)
 }
@@ -377,9 +415,11 @@ func (*PinCodesProposal) ProtoMessage() {}
 func (*PinCodesProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{7}
 }
+
 func (m *PinCodesProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *PinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_PinCodesProposal.Marshal(b, m, deterministic)
@@ -392,12 +432,15 @@ func (m *PinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
+
 func (m *PinCodesProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_PinCodesProposal.Merge(m, src)
 }
+
 func (m *PinCodesProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *PinCodesProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_PinCodesProposal.DiscardUnknown(m)
 }
@@ -420,9 +463,11 @@ func (*UnpinCodesProposal) ProtoMessage() {}
 func (*UnpinCodesProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{8}
 }
+
 func (m *UnpinCodesProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *UnpinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UnpinCodesProposal.Marshal(b, m, deterministic)
@@ -435,12 +480,15 @@ func (m *UnpinCodesProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *UnpinCodesProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UnpinCodesProposal.Merge(m, src)
 }
+
 func (m *UnpinCodesProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *UnpinCodesProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UnpinCodesProposal.DiscardUnknown(m)
 }
@@ -461,9 +509,11 @@ func (*AccessConfigUpdate) ProtoMessage() {}
 func (*AccessConfigUpdate) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{9}
 }
+
 func (m *AccessConfigUpdate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *AccessConfigUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_AccessConfigUpdate.Marshal(b, m, deterministic)
@@ -476,12 +526,15 @@ func (m *AccessConfigUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
+
 func (m *AccessConfigUpdate) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_AccessConfigUpdate.Merge(m, src)
 }
+
 func (m *AccessConfigUpdate) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *AccessConfigUpdate) XXX_DiscardUnknown() {
 	xxx_messageInfo_AccessConfigUpdate.DiscardUnknown(m)
 }
@@ -505,9 +558,11 @@ func (*UpdateInstantiateConfigProposal) ProtoMessage() {}
 func (*UpdateInstantiateConfigProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{10}
 }
+
 func (m *UpdateInstantiateConfigProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *UpdateInstantiateConfigProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_UpdateInstantiateConfigProposal.Marshal(b, m, deterministic)
@@ -520,12 +575,15 @@ func (m *UpdateInstantiateConfigProposal) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
+
 func (m *UpdateInstantiateConfigProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_UpdateInstantiateConfigProposal.Merge(m, src)
 }
+
 func (m *UpdateInstantiateConfigProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *UpdateInstantiateConfigProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_UpdateInstantiateConfigProposal.DiscardUnknown(m)
 }
@@ -570,9 +628,11 @@ func (*StoreAndInstantiateContractProposal) ProtoMessage() {}
 func (*StoreAndInstantiateContractProposal) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be6422d717c730cb, []int{11}
 }
+
 func (m *StoreAndInstantiateContractProposal) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *StoreAndInstantiateContractProposal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreAndInstantiateContractProposal.Marshal(b, m, deterministic)
@@ -585,12 +645,15 @@ func (m *StoreAndInstantiateContractProposal) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
+
 func (m *StoreAndInstantiateContractProposal) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreAndInstantiateContractProposal.Merge(m, src)
 }
+
 func (m *StoreAndInstantiateContractProposal) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *StoreAndInstantiateContractProposal) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreAndInstantiateContractProposal.DiscardUnknown(m)
 }
@@ -725,6 +788,7 @@ func (this *StoreCodeProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *InstantiateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -775,6 +839,7 @@ func (this *InstantiateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *MigrateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -811,6 +876,7 @@ func (this *MigrateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *SudoContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -844,6 +910,7 @@ func (this *SudoContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *ExecuteContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -888,6 +955,7 @@ func (this *ExecuteContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *UpdateAdminProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -921,6 +989,7 @@ func (this *UpdateAdminProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *ClearAdminProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -951,6 +1020,7 @@ func (this *ClearAdminProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *PinCodesProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -986,6 +1056,7 @@ func (this *PinCodesProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *UnpinCodesProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1021,6 +1092,7 @@ func (this *UnpinCodesProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *AccessConfigUpdate) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1048,6 +1120,7 @@ func (this *AccessConfigUpdate) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *UpdateInstantiateConfigProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1083,6 +1156,7 @@ func (this *UpdateInstantiateConfigProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (this *StoreAndInstantiateContractProposal) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1148,6 +1222,7 @@ func (this *StoreAndInstantiateContractProposal) Equal(that interface{}) bool {
 	}
 	return true
 }
+
 func (m *StoreCodeProposal) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1939,6 +2014,7 @@ func encodeVarintProposal(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *StoreCodeProposal) Size() (n int) {
 	if m == nil {
 		return 0
@@ -2309,9 +2385,11 @@ func (m *StoreAndInstantiateContractProposal) Size() (n int) {
 func sovProposal(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozProposal(x uint64) (n int) {
 	return sovProposal(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *StoreCodeProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2646,6 +2724,7 @@ func (m *StoreCodeProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *InstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2943,6 +3022,7 @@ func (m *InstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *MigrateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3142,6 +3222,7 @@ func (m *MigrateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *SudoContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3322,6 +3403,7 @@ func (m *SudoContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ExecuteContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3568,6 +3650,7 @@ func (m *ExecuteContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *UpdateAdminProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3746,6 +3829,7 @@ func (m *UpdateAdminProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *ClearAdminProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -3892,6 +3976,7 @@ func (m *ClearAdminProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *PinCodesProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4082,6 +4167,7 @@ func (m *PinCodesProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *UnpinCodesProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4272,6 +4358,7 @@ func (m *UnpinCodesProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *AccessConfigUpdate) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4374,6 +4461,7 @@ func (m *AccessConfigUpdate) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *UpdateInstantiateConfigProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4522,6 +4610,7 @@ func (m *UpdateInstantiateConfigProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func (m *StoreAndInstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4988,6 +5077,7 @@ func (m *StoreAndInstantiateContractProposal) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipProposal(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

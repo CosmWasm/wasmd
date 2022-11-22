@@ -97,7 +97,6 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 	}
 }
 
-// TODO: move tests
 func TestParseCodeInfoFlags(t *testing.T) {
 	correctSource := "https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/testdata/hackatom.wasm"
 	correctBuilderRef := "cosmwasm/workspace-optimizer:0.12.9"
