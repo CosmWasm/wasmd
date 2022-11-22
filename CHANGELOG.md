@@ -7,6 +7,7 @@
 ## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-11-xx)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
+* Provide source, builder and codehash information in store code proposal message[\#1072](https://github.com/CosmWasm/wasmd/pull/1072)
 - Upgrade to Go v1.19 [\#1044](https://github.com/CosmWasm/wasmd/pull/1044)
 - Upgrade to Cosmos-sdk to v0.45.11 [/#1096](https://github.com/CosmWasm/wasmd/pull/1096/)
 - Upgrade to IBC v4.2.0 with interchain-accounts v0.2.4 [\#1088](https://github.com/CosmWasm/wasmd/pull/1088)
@@ -19,6 +20,7 @@
 - IBC fee middleware is setup in `app.go`. Please note that it can be enabled with new channels only. A nice read is this [article](https://medium.com/the-interchain-foundation/ibc-relaying-as-a-service-the-in-protocol-incentivization-story-2c008861a957).
 - Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command  
 - Go v1.19 required to prevent a mixed chain setup with older versions. Just to be on the safe side.
+- Store code proposal types have new metadata fields added that can help to build client side tooling to verify the wasm contract in the proposal 
 
 ### Migration notes:
 - See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v4.2.0/docs/migrations)
