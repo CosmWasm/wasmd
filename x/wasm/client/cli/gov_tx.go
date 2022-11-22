@@ -212,7 +212,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress, cmd.Flags())
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.FromAddress, cmd.Flags())
 			if err != nil {
 				return err
 			}
