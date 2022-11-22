@@ -64,21 +64,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 	if seqVal <= uint64(maxContractID) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
-
-	if len(data.GenMsgs) == 0 {
-		return nil, nil
-	}
-	for _, genTx := range data.GenMsgs {
-		msg := genTx.AsMsg()
-		if msg == nil {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
-		}
-		_, err := msgHandler(ctx, msg)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "genesis")
-		}
-	}
-	return stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	return nil, nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
