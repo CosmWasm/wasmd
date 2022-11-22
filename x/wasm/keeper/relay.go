@@ -24,8 +24,6 @@ func (k Keeper) OnOpenChannel(
 	msg wasmvmtypes.IBCChannelOpenMsg,
 ) (string, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-open-channel")
-	version := ""
-
 	_, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
 		return "", err
@@ -40,12 +38,10 @@ func (k Keeper) OnOpenChannel(
 	if execErr != nil {
 		return "", sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-
 	if res != nil {
-		version = res.Version
+		return res.Version, nil
 	}
-
-	return version, nil
+	return "", nil
 }
 
 // OnConnectChannel calls the contract to let it know the IBC channel was established.
