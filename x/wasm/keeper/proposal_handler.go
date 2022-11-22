@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -66,9 +68,13 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	codeID, _, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
+	codeID, checksum, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
 	if err != nil {
 		return err
+	}
+
+	if len(p.CodeHash) != 0 && !bytes.Equal(checksum, p.CodeHash) {
+		return fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum)
 	}
 
 	// if code should not be pinned return earlier
@@ -120,9 +126,13 @@ func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.Contract
 		}
 	}
 
-	codeID, _, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
+	codeID, checksum, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
 	if err != nil {
 		return err
+	}
+
+	if p.CodeHash != nil && !bytes.Equal(checksum, p.CodeHash) {
+		return sdkerrors.Wrap(fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum), "code-hash mismatch")
 	}
 
 	if !p.UnpinCode {
