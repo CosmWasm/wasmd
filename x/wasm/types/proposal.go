@@ -285,7 +285,7 @@ func (p InstantiateContract2Proposal) GetDescription() string { return p.Descrip
 
 // ProposalType returns the type
 func (p InstantiateContract2Proposal) ProposalType() string {
-	return string(ProposalTypeInstantiateContract)
+	return string(ProposalTypeInstantiateContract2)
 }
 
 // ValidateBasic validates the proposal

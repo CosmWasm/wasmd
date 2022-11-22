@@ -254,6 +254,34 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 	}
 }
 
+func TestValidateInstantiateContract2Proposal(t *testing.T) {
+	// invalidAddress := "invalid address"
+
+	specs := map[string]struct {
+		src    *InstantiateContract2Proposal
+		expErr bool
+	}{
+		"all good": {
+			src: InstantiateContract2ProposalFixture(),
+		},
+		"without admin": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Admin = ""
+			}),
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
