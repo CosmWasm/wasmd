@@ -29,6 +29,8 @@ func TestStoreCodeProposal(t *testing.T) {
 	})
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
+	checksum, err := hex.DecodeString("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
+	require.NoError(t, err)
 
 	specs := map[string]struct {
 		codeID    int64
@@ -51,6 +53,7 @@ func TestStoreCodeProposal(t *testing.T) {
 				p.RunAs = myActorAddress
 				p.WASMByteCode = wasmCode
 				p.UnpinCode = spec.unpinCode
+				p.CodeHash = checksum
 			})
 
 			// when stored
@@ -221,6 +224,9 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
+	checksum, err := hex.DecodeString("13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5")
+	require.NoError(t, err)
+
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
@@ -231,6 +237,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
 		p.Label = "testing"
+		p.CodeHash = checksum
 	})
 	em := sdk.NewEventManager()
 

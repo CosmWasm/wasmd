@@ -1,7 +1,11 @@
 package types
 
 import (
+	"fmt"
+	"net/url"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/docker/distribution/reference"
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract
@@ -46,6 +50,30 @@ func ValidateSalt(salt []byte) error {
 		return sdkerrors.Wrap(ErrEmpty, "is required")
 	case n > MaxSaltSize:
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxSaltSize)
+	}
+	return nil
+}
+
+// ValidateVerificationInfo ensure source, builder and checksum constraints
+func ValidateVerificationInfo(source, builder string, codeHash []byte) error {
+	// if any set require others to be set
+	if len(source) != 0 || len(builder) != 0 || codeHash != nil {
+		if source == "" {
+			return fmt.Errorf("source is required")
+		}
+		if _, err := url.ParseRequestURI(source); err != nil {
+			return fmt.Errorf("source: %s", err)
+		}
+		if builder == "" {
+			return fmt.Errorf("builder is required")
+		}
+		if _, err := reference.ParseDockerRef(builder); err != nil {
+			return fmt.Errorf("builder: %s", err)
+		}
+		if codeHash == nil {
+			return fmt.Errorf("code hash is required")
+		}
+		// code hash checksum match validation is done in the keeper, ungzipping consumes gas
 	}
 	return nil
 }

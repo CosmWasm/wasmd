@@ -1,9 +1,14 @@
 package cli
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/docker/distribution/reference"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -13,13 +18,14 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func ProposalStoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "wasm-store [wasm file] --title [text] --description [text] --run-as [address]",
+		Use:   "wasm-store [wasm file] --title [text] --description [text] --run-as [address] --unpin-code [unpin_code] --source [source] --builder [builder] --code-hash [code_hash]",
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -45,6 +51,10 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				return err
 			}
 
+			source, builder, codeHash, err := parseVerificationFlags(src.WASMByteCode, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			content := types.StoreCodeProposal{
 				Title:                 proposalTitle,
 				Description:           proposalDescr,
@@ -52,6 +62,9 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
 				UnpinCode:             unpinCode,
+				Source:                source,
+				Builder:               builder,
+				CodeHash:              codeHash,
 			}
 
 			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
@@ -73,12 +86,57 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
+	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
+	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	return cmd
+}
+
+func parseVerificationFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
+	source, err := flags.GetString(flagSource)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("source: %s", err)
+	}
+	builder, err := flags.GetString(flagBuilder)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("builder: %s", err)
+	}
+	codeHash, err := flags.GetBytesHex(flagCodeHash)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("codeHash: %s", err)
+	}
+
+	// if any set require others to be set
+	if len(source) != 0 || len(builder) != 0 || len(codeHash) != 0 {
+		if source == "" {
+			return "", "", nil, fmt.Errorf("source is required")
+		}
+		if _, err = url.ParseRequestURI(source); err != nil {
+			return "", "", nil, fmt.Errorf("source: %s", err)
+		}
+		if builder == "" {
+			return "", "", nil, fmt.Errorf("builder is required")
+		}
+		if _, err := reference.ParseDockerRef(builder); err != nil {
+			return "", "", nil, fmt.Errorf("builder: %s", err)
+		}
+		if len(codeHash) == 0 {
+			return "", "", nil, fmt.Errorf("code hash is required")
+		}
+		// wasm is unzipped in parseStoreCodeArgs
+		// checksum generation will be decoupled here
+		// reference https://github.com/CosmWasm/wasmvm/issues/359
+		checksum := sha256.Sum256(wasm)
+		if !bytes.Equal(checksum[:], codeHash) {
+			return "", "", nil, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
+		}
+	}
+	return source, builder, codeHash, nil
 }
 
 func ProposalInstantiateContractCmd() *cobra.Command {
@@ -143,7 +201,8 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 
 func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "store-instantiate [wasm file] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
+		Use: "store-instantiate [wasm file] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address]" +
+			"--unpin-code [unpin_code,optional] --source [source,optional] --builder [builder,optional] --code-hash [code_hash,optional] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit and instantiate a wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -165,6 +224,11 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 			}
 
 			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
+			if err != nil {
+				return err
+			}
+
+			source, builder, codeHash, err := parseVerificationFlags(src.WASMByteCode, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -208,6 +272,9 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
 				UnpinCode:             unpinCode,
+				Source:                source,
+				Builder:               builder,
+				CodeHash:              codeHash,
 				Admin:                 adminStr,
 				Label:                 label,
 				Msg:                   []byte(args[1]),
@@ -232,6 +299,9 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
+	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
+	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
+	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
