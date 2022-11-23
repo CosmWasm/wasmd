@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -339,7 +338,7 @@ func (p InstantiateContract2Proposal) ValidateBasic() error {
 	}
 	// Validate salt
 	if len(p.Salt) == 0 {
-		return errors.Wrap(errors.ErrInvalidRequest, "salt is required")
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "salt is required")
 	}
 	return nil
 }
