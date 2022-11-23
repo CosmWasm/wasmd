@@ -272,7 +272,7 @@ func InstantiateContract2ProposalFixture(mutators ...func(p *InstantiateContract
 	)
 	const (
 		anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
-		mySalt     = "my salt"
+		mySalt     = "myDefaultSalt"
 	)
 
 	initMsgBz, err := json.Marshal(initMsg)

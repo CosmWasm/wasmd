@@ -141,6 +141,70 @@ func TestInstantiateProposal(t *testing.T) {
 	require.NotEmpty(t, em.Events()[2].Attributes[0])
 }
 
+func TestInstantiate2Proposal(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, "staking")
+	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
+	wasmKeeper.SetParams(ctx, types.Params{
+		CodeUploadAccess:             types.AllowNobody,
+		InstantiateDefaultPermission: types.AccessTypeNobody,
+	})
+
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
+	err = wasmKeeper.importCode(ctx, 1, codeInfo, wasmCode)
+	require.NoError(t, err)
+
+	var (
+		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
+		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
+		label        string         = "label"
+		salt         []byte         = []byte("mySalt")
+	)
+	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
+		p.CodeID = firstCodeID
+		p.RunAs = oneAddress.String()
+		p.Admin = otherAddress.String()
+		p.Label = label
+		p.Salt = salt
+	})
+	contractAddress := BuildContractAddressPredictable(codeInfo.CodeHash, oneAddress, salt, []byte{})
+
+	em := sdk.NewEventManager()
+
+	// when stored
+	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	require.NoError(t, err)
+
+	// and proposal execute
+	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
+	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
+	require.NoError(t, err)
+
+	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddress)
+	require.NotNil(t, cInfo)
+
+	assert.Equal(t, uint64(1), cInfo.CodeID)
+	assert.Equal(t, oneAddress.String(), cInfo.Creator)
+	assert.Equal(t, otherAddress.String(), cInfo.Admin)
+	assert.Equal(t, "label", cInfo.Label)
+	expHistory := []types.ContractCodeHistoryEntry{{
+		Operation: types.ContractCodeHistoryOperationTypeInit,
+		CodeID:    src.CodeID,
+		Updated:   types.NewAbsoluteTxPosition(ctx),
+		Msg:       src.Msg,
+	}}
+	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddress))
+	// and event
+	require.Len(t, em.Events(), 3, "%#v", em.Events())
+	require.Equal(t, types.EventTypeInstantiate, em.Events()[0].Type)
+	require.Equal(t, types.WasmModuleEventType, em.Events()[1].Type)
+	require.Equal(t, types.EventTypeGovContractResult, em.Events()[2].Type)
+	require.Len(t, em.Events()[2].Attributes, 1)
+	require.NotEmpty(t, em.Events()[2].Attributes[0])
+}
+
 func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	govKeeper, wasmKeeper := keepers.GovKeeper, keepers.WasmKeeper
