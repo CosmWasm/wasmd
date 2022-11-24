@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"math/rand"
 
@@ -200,11 +201,21 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 
 func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+	wasm := []byte{0x0}
+	// got the value from shell sha256sum
+	codeHash, err := hex.DecodeString("6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D")
+	if err != nil {
+		panic(err)
+	}
+
 	p := &StoreCodeProposal{
 		Title:        "Foo",
 		Description:  "Bar",
 		RunAs:        anyAddress,
-		WASMByteCode: []byte{0x0},
+		WASMByteCode: wasm,
+		Source:       "https://example.com/",
+		Builder:      "cosmwasm/workspace-optimizer:v0.12.8",
+		CodeHash:     codeHash,
 	}
 	for _, m := range mutators {
 		m(p)
@@ -260,6 +271,12 @@ func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInst
 		}
 	)
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+	wasm := []byte{0x0}
+	// got the value from shell sha256sum
+	codeHash, err := hex.DecodeString("6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D")
+	if err != nil {
+		panic(err)
+	}
 
 	initMsgBz, err := json.Marshal(initMsg)
 	if err != nil {
@@ -269,7 +286,10 @@ func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInst
 		Title:        "Foo",
 		Description:  "Bar",
 		RunAs:        anyAddress,
-		WASMByteCode: []byte{0x0},
+		WASMByteCode: wasm,
+		Source:       "https://example.com/",
+		Builder:      "cosmwasm/workspace-optimizer:v0.12.9",
+		CodeHash:     codeHash,
 		Admin:        anyAddress,
 		Label:        "testing",
 		Msg:          initMsgBz,

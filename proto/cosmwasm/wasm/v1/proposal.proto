@@ -26,6 +26,14 @@ message StoreCodeProposal {
   AccessConfig instantiate_permission = 7;
   // UnpinCode code on upload, optional
   bool unpin_code = 8;
+  // Source is the URL where the code is hosted
+  string source = 9;
+  // Builder is the docker image used to build the code deterministically, used
+  // for smart contract verification
+  string builder = 10;
+  // CodeHash is the SHA256 sum of the code outputted by builder, used for smart
+  // contract verification
+  bytes code_hash = 11;
 }
 
 // InstantiateContractProposal gov proposal content type to instantiate a
@@ -199,4 +207,12 @@ message StoreAndInstantiateContractProposal {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+  // Source is the URL where the code is hosted
+  string source = 11;
+  // Builder is the docker image used to build the code deterministically, used
+  // for smart contract verification
+  string builder = 12;
+  // CodeHash is the SHA256 sum of the code outputted by builder, used for smart
+  // contract verification
+  bytes code_hash = 13;
 }

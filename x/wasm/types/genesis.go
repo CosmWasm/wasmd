@@ -47,7 +47,7 @@ func (c Code) ValidateBasic() error {
 	if err := c.CodeInfo.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "code info")
 	}
-	if err := validateWasmCode(c.CodeBytes); err != nil {
+	if err := validateWasmCode(c.CodeBytes, MaxProposalWasmSize); err != nil {
 		return sdkerrors.Wrap(err, "code bytes")
 	}
 	return nil
