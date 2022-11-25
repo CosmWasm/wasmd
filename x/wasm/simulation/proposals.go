@@ -102,6 +102,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
+		simulation.NewWeightedProposalContent(
+			WeightUpdateInstantiateConfigProposal,
+			params.DefaultWeightUpdateInstantiateConfigProposal,
+			SimulateUpdateInstantiateConfigProposal(
+				wasmKeeper,
+				DefaultSimulationCodeIDSelector,
+			),
+		),
 	}
 }
 
@@ -335,6 +343,31 @@ func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSel
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			[]uint64{codeID},
+		)
+	}
+}
+
+// Simulate update instantiate config proposal
+func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		codeID := codeSelector(ctx, wasmKeeper)
+		if codeID == 0 {
+			return nil
+		}
+
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		permission := wasmKeeper.GetParams(ctx).InstantiateDefaultPermission
+		config := permission.With(simAccount.Address)
+
+		configUpdate := types.AccessConfigUpdate{
+			CodeID:                codeID,
+			InstantiatePermission: config,
+		}
+
+		return types.NewUpdateInstantiateConfigProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			[]types.AccessConfigUpdate{configUpdate},
 		)
 	}
 }
