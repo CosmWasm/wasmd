@@ -86,6 +86,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulateContractSelector,
 			),
 		),
+		simulation.NewWeightedProposalContent(
+			WeightPinCodesProposal,
+			params.DefaultWeightPinCodesProposal,
+			SimulatePinContractProposal(
+				wasmKeeper,
+				DefaultSimulationCodeIDSelector,
+			),
+		),
 	}
 }
 
@@ -287,6 +295,22 @@ func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoCo
 			simtypes.RandStringOfLength(r, 10),
 			ctAddress.String(),
 			[]byte(`{}`),
+		)
+	}
+}
+
+// Simulate pin contract proposal
+func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		codeID := codeSelector(ctx, wasmKeeper)
+		if codeID == 0 {
+			return nil
+		}
+
+		return types.NewPinCodesProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			[]uint64{codeID},
 		)
 	}
 }
