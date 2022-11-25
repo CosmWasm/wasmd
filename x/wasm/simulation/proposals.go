@@ -13,11 +13,17 @@ import (
 )
 
 const (
-	WeightStoreCodeProposal           = "weight_store_code_proposal"
-	WeightInstantiateContractProposal = "weight_instantiate_contract_proposal"
-	WeightUpdateAdminProposal         = "weight_update_admin_proposal"
-	WeightExeContractProposal         = "weight_execute_contract_proposal"
-	WeightClearAdminProposal          = "weight_clear_admin_proposal"
+	WeightStoreCodeProposal                   = "weight_store_code_proposal"
+	WeightInstantiateContractProposal         = "weight_instantiate_contract_proposal"
+	WeightUpdateAdminProposal                 = "weight_update_admin_proposal"
+	WeightExeContractProposal                 = "weight_execute_contract_proposal"
+	WeightClearAdminProposal                  = "weight_clear_admin_proposal"
+	WeightMigrateContractProposal             = "weight_migrate_contract_proposal"
+	WeightSudoContractProposal                = "weight_sudo_contract_proposal"
+	WeightPinCodesProposal                    = "weight_pin_codes_proposal"
+	WeightUnpinCodesProposal                  = "weight_unpin_codes_proposal"
+	WeightUpdateInstantiateConfigProposal     = "weight_update_instantiate_config_proposal"
+	WeightStoreAndInstantiateContractProposal = "weight_store_and_instantiate_contract_proposal"
 )
 
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
@@ -61,6 +67,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 			SimulateClearAdminProposal(
 				wasmKeeper,
 				DefaultSimulateClearAdminProposalContractSelector,
+			),
+		),
+		simulation.NewWeightedProposalContent(
+			WeightMigrateContractProposal,
+			params.DefaultWeightMigrateContractProposal,
+			SimulateMigrateContractProposal(
+				wasmKeeper,
+				DefaultSimulateMigrateContractProposalContractSelector,
 			),
 		),
 	}
@@ -220,6 +234,43 @@ func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdm
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			ctAddress.String(),
+		)
+	}
+}
+
+type MigrateContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccAddress
+
+func DefaultSimulateMigrateContractProposalContractSelector(
+	ctx sdk.Context,
+	wasmKeeper WasmKeeper,
+) sdk.AccAddress {
+	var contractAddr sdk.AccAddress
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		contractAddr = address
+		return true
+	})
+	return contractAddr
+}
+
+// Simulate migrate contract proposal
+func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector MigrateContractProposalContractSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		ctAddress := contractSelector(ctx, wasmKeeper)
+		if ctAddress == nil {
+			return nil
+		}
+
+		codeID, err := simtypes.RandPositiveInt(r, sdk.NewInt(1000))
+		if err != nil {
+			return nil
+		}
+
+		return types.NewMigrateContractProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			ctAddress.String(),
+			codeID.Uint64(),
+			[]byte(`{}`),
 		)
 	}
 }
