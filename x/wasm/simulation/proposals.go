@@ -94,6 +94,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
+		simulation.NewWeightedProposalContent(
+			WeightUnpinCodesProposal,
+			params.DefaultWeightUnpinCodesProposal,
+			SimulateUnpinContractProposal(
+				wasmKeeper,
+				DefaultSimulationCodeIDSelector,
+			),
+		),
 	}
 }
 
@@ -308,6 +316,22 @@ func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelec
 		}
 
 		return types.NewPinCodesProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			[]uint64{codeID},
+		)
+	}
+}
+
+// Simulate unpin contract proposal
+func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		codeID := codeSelector(ctx, wasmKeeper)
+		if codeID == 0 {
+			return nil
+		}
+
+		return types.NewUnpinCodesProposal(
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			[]uint64{codeID},
