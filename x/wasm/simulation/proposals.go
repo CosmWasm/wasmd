@@ -110,6 +110,13 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
+		simulation.NewWeightedProposalContent(
+			WeightStoreAndInstantiateContractProposal,
+			params.DefaultWeightStoreAndInstantiateContractProposal,
+			SimulateStoreAndInstantiateContractProposal(
+				wasmKeeper,
+			),
+		),
 	}
 }
 
@@ -368,6 +375,32 @@ func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
 			[]types.AccessConfigUpdate{configUpdate},
+		)
+	}
+}
+
+func SimulateStoreAndInstantiateContractProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorFn {
+	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		adminAccount, _ := simtypes.RandomAcc(r, accs)
+
+		wasmBz := testdata.ReflectContractWasm()
+		permission := wasmKeeper.GetParams(ctx).InstantiateDefaultPermission.With(simAccount.Address)
+
+		return types.NewStoreAndInstantiateContractProposal(
+			simtypes.RandStringOfLength(r, 10),
+			simtypes.RandStringOfLength(r, 10),
+			simAccount.Address.String(),
+			wasmBz,
+			"",
+			"",
+			[]byte{},
+			&permission,
+			false,
+			adminAccount.Address.String(),
+			simtypes.RandStringOfLength(r, 10),
+			[]byte(`{}`),
+			sdk.Coins{},
 		)
 	}
 }
