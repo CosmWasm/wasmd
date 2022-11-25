@@ -203,7 +203,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 func ProposalInstantiateContract2Cmd() *cobra.Command {
 	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] [salt] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional] --fix-msg [bool,optional]",
+		Use:   "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] [salt] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional] --fix-msg [bool,optional]",
 		Short: "Submit an instantiate wasm contract proposal with predictable address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -235,20 +235,9 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				return fmt.Errorf("fix msg: %w", err)
 			}
 
-			content := types.InstantiateContract2Proposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				RunAs:       runAs,
-				Admin:       src.Admin,
-				CodeID:      src.CodeID,
-				Label:       src.Label,
-				Msg:         src.Msg,
-				Funds:       src.Funds,
-				Salt:        salt,
-				FixMsg:      fixMsg,
-			}
+			content := types.NewInstantiateContract2Proposal(proposalTitle, proposalDescr, runAs, src.Admin, src.CodeID, src.Label, src.Msg, src.Funds, salt, fixMsg)
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
