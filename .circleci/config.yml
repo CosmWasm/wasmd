@@ -107,8 +107,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install make
-          command: choco install make
+          name: Install make and mingw
+          # See https://github.com/docker/containerd-packaging/pull/294 for discussion around mingw version
+          command: |
+            set -o errexit
+            choco install -y make
+            choco install -y mingw --version 10.2.0 --allow-downgrade
       - run:
           name: Show Go version information
           command: |
