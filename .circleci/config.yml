@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  win: circleci/windows@5.0
+
 executors:
   golang:
     docker:
@@ -95,6 +98,25 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
+
+  test-windows:
+    executor:
+      name: win/default
+      shell: bash.exe
+    steps:
+      - checkout
+      - run:
+          name: Install make
+          command: choco install make
+      - run:
+          name: Show Go version information
+          command: |
+            go version
+            make --version
+      - run:
+          name: Build
+          command: |
+            make build
 
   benchmark:
     executor: golang
@@ -241,3 +263,4 @@ workflows:
       - simulations:
           requires:
             - setup-dependencies
+      - test-windows
