@@ -121,7 +121,19 @@ jobs:
       - run:
           name: Build
           command: |
+            set -o errexit
             LEDGER_ENABLED=false make build
+      - run:
+          name: Check libwasmvm-version
+          command: |
+            set -o errexit
+            ./build/wasmd version
+            ./build/wasmd query wasm libwasmvm-version
+      - run:
+          name: Test
+          command: |
+            set -o errexit
+            make test
 
   benchmark:
     executor: golang
