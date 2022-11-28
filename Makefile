@@ -80,7 +80,7 @@ all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	exit 1
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
 endif
