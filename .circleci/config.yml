@@ -37,6 +37,7 @@ jobs:
   setup-dependencies:
     executor: golang
     steps:
+      - run: exit 1 # Disable this job and all its dependents
       - checkout
       - restore_cache:
           name: "Restore go modules cache"
