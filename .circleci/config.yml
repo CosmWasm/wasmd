@@ -116,7 +116,7 @@ jobs:
       - run:
           name: Build
           command: |
-            make build
+            LEDGER_ENABLED=false make build
 
   benchmark:
     executor: golang
