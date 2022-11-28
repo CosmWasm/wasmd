@@ -37,7 +37,6 @@ jobs:
   setup-dependencies:
     executor: golang
     steps:
-      - run: exit 1 # Disable this job and all its dependents
       - checkout
       - restore_cache:
           name: "Restore go modules cache"
@@ -134,12 +133,6 @@ jobs:
             set -o errexit
             ./build/wasmd.exe version
             ./build/wasmd.exe query wasm libwasmvm-version
-      # Fails with 'exit status 0xc0000135', i.e. the .dll is not found
-      # - run:
-      #     name: Test
-      #     command: |
-      #       set -o errexit
-      #       make test
 
   benchmark:
     executor: golang
