@@ -133,6 +133,13 @@ jobs:
             set -o errexit
             ./build/wasmd.exe version
             ./build/wasmd.exe query wasm libwasmvm-version
+      - run:
+          name: Test
+          # Copy wasmvm.dll to system dir because we don't know the full path of the test binary
+          command: |
+            set -o errexit
+            /usr/bin/find $HOME/go/pkg/mod/github.com/ -name wasmvm.dll -exec cp "{}" /c/Windows/System32 \;
+            make test
 
   benchmark:
     executor: golang
