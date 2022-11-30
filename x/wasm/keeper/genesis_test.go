@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
@@ -121,7 +120,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
+	InitGenesis(dstCtx, dstKeeper, importState, TestHandler(contractKeeper))
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -466,14 +465,7 @@ func TestGenesisInit(t *testing.T) {
 				},
 				Params: types.DefaultParams(),
 			},
-			stakingMock: StakingKeeperMock{expCalls: 1, validatorUpdate: []abci.ValidatorUpdate{
-				{
-					PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
-						Ed25519: []byte("a valid key"),
-					}},
-					Power: 100,
-				},
-			}},
+			stakingMock:    StakingKeeperMock{expCalls: 0, validatorUpdate: []abci.ValidatorUpdate{}},
 			msgHandlerMock: MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
 			expSuccess:     true,
 		},
@@ -495,7 +487,7 @@ func TestGenesisInit(t *testing.T) {
 			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, &spec.stakingMock, spec.msgHandlerMock.Handle)
+			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, spec.msgHandlerMock.Handle)
 			if !spec.expSuccess {
 				require.Error(t, gotErr)
 				return
@@ -592,7 +584,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
+	_, err = InitGenesis(ctx, keeper, importState, TestHandler(contractKeeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -707,7 +699,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, sdk.NewInt(100)))
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keepers.ContractKeeper))
+	_, err = InitGenesis(ctx, keeper, importState, TestHandler(keepers.ContractKeeper))
 	require.NoError(t, err)
 
 	// verify code stored
