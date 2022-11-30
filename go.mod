@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.19
 
 require (
-	github.com/CosmWasm/wasmvm v1.1.2-0.20221127235710-6dd44ce800a6
+	github.com/CosmWasm/wasmvm v1.1.2-0.20221130134100-af1e10ee7bb3
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
 	github.com/cosmos/cosmos-sdk v0.45.11
 	github.com/cosmos/gogoproto v1.4.3
