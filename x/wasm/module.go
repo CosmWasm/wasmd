@@ -104,11 +104,10 @@ func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 // AppModule implements an application module for the wasm module.
 type AppModule struct {
 	AppModuleBasic
-	cdc                codec.Codec
-	keeper             *Keeper
-	validatorSetSource keeper.ValidatorSetSource
-	accountKeeper      types.AccountKeeper // for simulation
-	bankKeeper         simulation.BankKeeper
+	cdc           codec.Codec
+	keeper        *Keeper
+	accountKeeper types.AccountKeeper // for simulation
+	bankKeeper    simulation.BankKeeper
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the
@@ -121,17 +120,15 @@ func (AppModule) ConsensusVersion() uint64 { return 2 }
 func NewAppModule(
 	cdc codec.Codec,
 	keeper *Keeper,
-	validatorSetSource keeper.ValidatorSetSource,
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic:     AppModuleBasic{},
-		cdc:                cdc,
-		keeper:             keeper,
-		validatorSetSource: validatorSetSource,
-		accountKeeper:      ak,
-		bankKeeper:         bk,
+		AppModuleBasic: AppModuleBasic{},
+		cdc:            cdc,
+		keeper:         keeper,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
 	}
 }
 
@@ -168,7 +165,7 @@ func (AppModule) QuerierRoute() string {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-	validators, err := InitGenesis(ctx, am.keeper, genesisState, am.validatorSetSource, am.Route().Handler())
+	validators, err := InitGenesis(ctx, am.keeper, genesisState, am.Route().Handler())
 	if err != nil {
 		panic(err)
 	}
