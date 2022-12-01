@@ -299,6 +299,7 @@ AccessConfig access control type.
 | `permission` | [AccessType](#cosmwasm.wasm.v1.AccessType) |  |  |
 | `address` | [string](#string) |  | Address Deprecated: replaced by addresses |
 | `addresses` | [string](#string) | repeated |  |
+| `code_ids` | [uint64](#uint64) | repeated | List of code ID that have permission to instantiate to this sepecific code |
 
 
 
@@ -422,6 +423,7 @@ AccessType permission types
 | ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to a single address Deprecated: use AccessTypeAnyOfAddresses instead |
 | ACCESS_TYPE_EVERYBODY | 3 | AccessTypeEverybody unrestricted |
 | ACCESS_TYPE_ANY_OF_ADDRESSES | 4 | AccessTypeAnyOfAddresses allow any of the addresses |
+| ACCESS_TYPE_ONLY_CODE_IDS | 5 | AccessTypeOnlyCodeIDs allow for only this kind of contract |
 
 
 
