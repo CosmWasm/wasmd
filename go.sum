@@ -632,6 +632,8 @@ github.com/oraichain/wasmvm v1.1.2-0.20221122041437-fb0aac30f476 h1:DbJ5LaR5bNjF
 github.com/oraichain/wasmvm v1.1.2-0.20221122041437-fb0aac30f476/go.mod h1:ei0xpvomwSdONsxDuONzV7bL1jSET1M8brEx0FCXc+A=
 github.com/oraichain/wasmvm v1.1.2-0.20221124043228-91094546e3a5 h1:HmVlwE3IdNKO4VQu8wfPZjQt+/D7GMHANr3PsUmd3H0=
 github.com/oraichain/wasmvm v1.1.2-0.20221124043228-91094546e3a5/go.mod h1:ei0xpvomwSdONsxDuONzV7bL1jSET1M8brEx0FCXc+A=
+github.com/oraichain/wasmvm v1.1.2-0.20221201135115-94d4be7bc202 h1:tgDkCXLikY63ag9HL2NtSfjGm4CFN/tweYbVo3Cz2T0=
+github.com/oraichain/wasmvm v1.1.2-0.20221201135115-94d4be7bc202/go.mod h1:OIhXFPi9BbcEL1USBj4OIrBTtSSds+9eEql56fsdyfE=
 github.com/ory/dockertest v3.3.5+incompatible h1:iLLK6SQwIhcbrG783Dghaaa3WPzGc+4Emza6EbVUUGA=
 github.com/otiai10/copy v1.6.0 h1:IinKAryFFuPONZ7cm6T6E2QX/vcJwSnlaA5lfoaXIiQ=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
