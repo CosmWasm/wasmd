@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...HEAD)
 
-## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-11-xx)
+## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-12-02)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
 * Provide source, builder and codehash information in store code proposal message[\#1072](https://github.com/CosmWasm/wasmd/pull/1072)
