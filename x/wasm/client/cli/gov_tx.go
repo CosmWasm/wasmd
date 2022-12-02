@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -191,6 +192,71 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+
+	// proposal flags
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	return cmd
+}
+
+func ProposalInstantiateContract2Cmd() *cobra.Command {
+	decoder := newArgDecoder(hex.DecodeString)
+	cmd := &cobra.Command{
+		Use:   "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] [salt] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional] --fix-msg [bool,optional]",
+		Short: "Submit an instantiate wasm contract proposal with predictable address",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			runAs, err := cmd.Flags().GetString(flagRunAs)
+			if err != nil {
+				return fmt.Errorf("run-as: %s", err)
+			}
+			if len(runAs) == 0 {
+				return errors.New("run-as address is required")
+			}
+
+			salt, err := decoder.DecodeString(args[2])
+			if err != nil {
+				return fmt.Errorf("salt: %w", err)
+			}
+
+			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
+			if err != nil {
+				return fmt.Errorf("fix msg: %w", err)
+			}
+
+			content := types.NewInstantiateContract2Proposal(proposalTitle, proposalDescr, runAs, src.Admin, src.CodeID, src.Label, src.Msg, src.Funds, salt, fixMsg)
+
+			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+		SilenceUsage: true,
+	}
+
+	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
+	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
+	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
+	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
+	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")

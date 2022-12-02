@@ -61,6 +61,7 @@
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
     - [ClearAdminProposal](#cosmwasm.wasm.v1.ClearAdminProposal)
     - [ExecuteContractProposal](#cosmwasm.wasm.v1.ExecuteContractProposal)
+    - [InstantiateContract2Proposal](#cosmwasm.wasm.v1.InstantiateContract2Proposal)
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
     - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
@@ -917,6 +918,30 @@ contract.
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as execute |
 | `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.InstantiateContract2Proposal"></a>
+
+### InstantiateContract2Proposal
+InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's enviroment as sender |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encode message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
+| `fix_msg` | [bool](#bool) |  | FixMsg include the msg value into the hash for the predictable address. Default is false |
 
 
 
