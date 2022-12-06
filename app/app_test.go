@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
-
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
@@ -19,9 +19,9 @@ var emptyWasmOpts []wasm.Option = nil
 
 func TestWasmdExport(t *testing.T) {
 	db := db.NewMemDB()
-	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
+	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
 
-	genesisState := NewDefaultGenesisState()
+	genesisState := NewDefaultGenesisState(gapp.appCodec)
 	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
 	require.NoError(t, err)
 
@@ -35,15 +35,15 @@ func TestWasmdExport(t *testing.T) {
 	gapp.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newGapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
-	_, err = newGapp.ExportAppStateAndValidators(false, []string{})
+	newGapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
+	_, err = newGapp.ExportAppStateAndValidators(false, []string{}, nil)
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
 // ensure that blocked addresses are properly set in bank keeper
 func TestBlockedAddrs(t *testing.T) {
 	db := db.NewMemDB()
-	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, MakeEncodingConfig(), wasm.EnableAllProposals, EmptyBaseAppOptions{}, emptyWasmOpts)
+	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
 
 	for acc := range maccPerms {
 		t.Run(acc, func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestGetEnabledProposals(t *testing.T) {
 }
 
 func setGenesis(gapp *WasmApp) error {
-	genesisState := NewDefaultGenesisState()
+	genesisState := NewDefaultGenesisState(gapp.appCodec)
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	if err != nil {
 		return err
