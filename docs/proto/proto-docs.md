@@ -927,7 +927,8 @@ contract.
 <a name="cosmwasm.wasm.v1.InstantiateContract2Proposal"></a>
 
 ### InstantiateContract2Proposal
-InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+InstantiateContract2Proposal gov proposal content type to instantiate
+contract 2
 
 
 | Field | Type | Label | Description |

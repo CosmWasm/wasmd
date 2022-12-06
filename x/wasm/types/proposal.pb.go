@@ -13,7 +13,7 @@ import (
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -148,7 +148,8 @@ func (m *InstantiateContractProposal) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_InstantiateContractProposal proto.InternalMessageInfo
 
-// InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+// InstantiateContract2Proposal gov proposal content type to instantiate
+// contract 2
 type InstantiateContract2Proposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`

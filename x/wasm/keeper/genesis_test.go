@@ -11,12 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -72,9 +75,9 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 		if contractExtension {
 			anyTime := time.Now().UTC()
-			var nestedType govtypes.TextProposal
+			var nestedType v1beta1.TextProposal
 			f.NilChance(0).Fuzz(&nestedType)
-			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime)
+			myExtension, err := v1beta1.NewProposal(&nestedType, 1, anyTime, anyTime)
 			require.NoError(t, err)
 			contract.SetExtension(&myExtension)
 		}
@@ -151,7 +154,7 @@ func TestGenesisInit(t *testing.T) {
 	specs := map[string]struct {
 		src            types.GenesisState
 		stakingMock    StakingKeeperMock
-		msgHandlerMock MockMsgHandler
+		msgHandlerMock *MockMsgHandler
 		expSuccess     bool
 	}{
 		"happy path: code info correct": {
@@ -474,7 +477,7 @@ func TestGenesisInit(t *testing.T) {
 					Power: 100,
 				},
 			}},
-			msgHandlerMock: MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
+			msgHandlerMock: &MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
 			expSuccess:     true,
 		},
 		"validator set update not called on genesis msg handler errors": {
@@ -486,7 +489,7 @@ func TestGenesisInit(t *testing.T) {
 				},
 				Params: types.DefaultParams(),
 			},
-			msgHandlerMock: MockMsgHandler{expCalls: 1, err: errors.New("test error response")},
+			msgHandlerMock: &MockMsgHandler{expCalls: 1, err: errors.New("test error response")},
 			stakingMock:    StakingKeeperMock{expCalls: 0},
 		},
 	}
@@ -495,7 +498,7 @@ func TestGenesisInit(t *testing.T) {
 			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, &spec.stakingMock, spec.msgHandlerMock.Handle)
+			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, &spec.stakingMock, spec.msgHandlerMock)
 			if !spec.expSuccess {
 				require.Error(t, gotErr)
 				return
@@ -726,7 +729,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	assert.Equal(t, sdk.NewCoin(denom, sdk.NewInt(10)), gotBalance)
 }
 
-func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	t.Helper()
 	tempDir, err := os.MkdirTemp("", "wasm")
 	require.NoError(t, err)
@@ -739,9 +742,9 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
+	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyParams, storetypes.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tkeyParams, storetypes.StoreTypeTransient, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, tmproto.Header{
@@ -753,10 +756,10 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	// register an example extension. must be protobuf
 	encodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*types.ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
+		&v1beta1.Proposal{},
 	)
 	// also registering gov interfaces for nested Any type
-	govtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	v1beta1.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
@@ -779,7 +782,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 		wasmConfig,
 		AvailableCapabilities,
 	)
-	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
+	return &srcKeeper, ctx, []storetypes.StoreKey{keyWasm, keyParams}
 }
 
 type StakingKeeperMock struct {
@@ -798,6 +801,8 @@ func (s *StakingKeeperMock) verifyCalls(t *testing.T) {
 	assert.Equal(t, s.expCalls, s.gotCalls, "number calls")
 }
 
+var _ MessageRouter = &MockMsgHandler{}
+
 type MockMsgHandler struct {
 	result   *sdk.Result
 	err      error
@@ -805,6 +810,10 @@ type MockMsgHandler struct {
 	gotCalls int
 	expMsg   sdk.Msg
 	gotMsg   sdk.Msg
+}
+
+func (m *MockMsgHandler) Handler(msg sdk.Msg) baseapp.MsgServiceHandler {
+	return m.Handle
 }
 
 func (m *MockMsgHandler) Handle(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
