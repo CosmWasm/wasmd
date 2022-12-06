@@ -16,7 +16,6 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -450,6 +449,9 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	if !found {
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
 	}
+	valRewards := distKeeper.GetValidatorCurrentRewards(ctx, val.GetOperator())
+	delRewards := distKeeper.CalculateDelegationRewards(ctx, val, delegation, valRewards.Period)
+
 	bondDenom := keeper.BondDenom(ctx)
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
 
@@ -457,6 +459,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 
 	// FIXME: this is very rough but better than nothing...
 	// https://github.com/CosmWasm/wasmd/issues/282
+
 	// if this (val, delegate) pair is receiving a redelegation, it cannot redelegate more
 	// otherwise, it can redelegate the full amount
 	// (there are cases of partial funds redelegated, but this is a start)
@@ -465,47 +468,14 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 		redelegateCoins = delegationCoins
 	}
 
-	// FIXME: make a cleaner way to do this (modify the sdk)
-	// we need the info from `distKeeper.calculateDelegationRewards()`, but it is not public
-	// neither is `queryDelegationRewards(ctx sdk.Context, _ []string, req abci.RequestQuery, k Keeper)`
-	// so we go through the front door of the querier....
-	accRewards, err := getAccumulatedRewards(ctx, distKeeper, delegation)
-	if err != nil {
-		return nil, err
-	}
-
+	accRewards, _ := delRewards.TruncateDecimal()
 	return &wasmvmtypes.FullDelegation{
 		Delegator:          delAddr.String(),
 		Validator:          valAddr.String(),
 		Amount:             delegationCoins,
-		AccumulatedRewards: accRewards,
+		AccumulatedRewards: ConvertSdkCoinsToWasmCoins(accRewards),
 		CanRedelegate:      redelegateCoins,
 	}, nil
-}
-
-// FIXME: simplify this enormously when
-// https://github.com/cosmos/cosmos-sdk/issues/7466 is merged
-func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper, delegation stakingtypes.Delegation) ([]wasmvmtypes.Coin, error) {
-	// Try to get *delegator* reward info!
-	params := distributiontypes.QueryDelegationRewardsRequest{
-		DelegatorAddress: delegation.DelegatorAddress,
-		ValidatorAddress: delegation.ValidatorAddress,
-	}
-	cache, _ := ctx.CacheContext()
-	qres, err := distKeeper.DelegationRewards(sdk.WrapSDKContext(cache), &params)
-	if err != nil {
-		return nil, err
-	}
-
-	// now we have it, convert it into wasmvm types
-	rewards := make([]wasmvmtypes.Coin, len(qres.Rewards))
-	for i, r := range qres.Rewards {
-		rewards[i] = wasmvmtypes.Coin{
-			Denom:  r.Denom,
-			Amount: r.Amount.TruncateInt().String(),
-		}
-	}
-	return rewards, nil
 }
 
 func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error) {

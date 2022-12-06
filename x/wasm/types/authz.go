@@ -3,7 +3,7 @@ package types
 import (
 	"strings"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
