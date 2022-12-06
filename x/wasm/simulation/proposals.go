@@ -78,14 +78,14 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
-		simulation.NewWeightedProposalContent(
-			WeightSudoContractProposal,
-			params.DefaultWeightSudoContractProposal,
-			SimulateSudoContractProposal(
-				wasmKeeper,
-				DefaultSimulateContractSelector,
-			),
-		),
+		// simulation.NewWeightedProposalContent(
+		//	WeightSudoContractProposal,
+		//	params.DefaultWeightSudoContractProposal,
+		//	SimulateSudoContractProposal(
+		//		wasmKeeper,
+		//		DefaultSimulateContractSelector,
+		//	),
+		// ),
 		simulation.NewWeightedProposalContent(
 			WeightPinCodesProposal,
 			params.DefaultWeightPinCodesProposal,
@@ -110,13 +110,13 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 				DefaultSimulationCodeIDSelector,
 			),
 		),
-		simulation.NewWeightedProposalContent(
-			WeightStoreAndInstantiateContractProposal,
-			params.DefaultWeightStoreAndInstantiateContractProposal,
-			SimulateStoreAndInstantiateContractProposal(
-				wasmKeeper,
-			),
-		),
+		// simulation.NewWeightedProposalContent(
+		//	WeightStoreAndInstantiateContractProposal,
+		//	params.DefaultWeightStoreAndInstantiateContractProposal,
+		//	SimulateStoreAndInstantiateContractProposal(
+		//		wasmKeeper,
+		//	),
+		// ),
 	}
 }
 
