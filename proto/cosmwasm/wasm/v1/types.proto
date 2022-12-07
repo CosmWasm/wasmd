@@ -29,6 +29,9 @@ enum AccessType {
   // AccessTypeAnyOfAddresses allow any of the addresses
   ACCESS_TYPE_ANY_OF_ADDRESSES = 4
       [ (gogoproto.enumvalue_customname) = "AccessTypeAnyOfAddresses" ];
+  // AccessTypeAnyOfCodeIds allow any of the code ids
+  ACCESS_TYPE_ANY_OF_CODE_IDS = 5
+      [ (gogoproto.enumvalue_customname) = "AccessTypeAnyOfCodeIds" ];
 }
 
 // AccessTypeParam

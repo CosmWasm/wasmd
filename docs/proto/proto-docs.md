@@ -423,6 +423,7 @@ AccessType permission types
 | ACCESS_TYPE_ONLY_ADDRESS | 2 | AccessTypeOnlyAddress restricted to a single address Deprecated: use AccessTypeAnyOfAddresses instead |
 | ACCESS_TYPE_EVERYBODY | 3 | AccessTypeEverybody unrestricted |
 | ACCESS_TYPE_ANY_OF_ADDRESSES | 4 | AccessTypeAnyOfAddresses allow any of the addresses |
+| ACCESS_TYPE_ANY_OF_CODE_IDS | 5 | AccessTypeAnyOfCodeIds allow any of the code ids |
 
 
 
@@ -927,7 +928,8 @@ contract.
 <a name="cosmwasm.wasm.v1.InstantiateContract2Proposal"></a>
 
 ### InstantiateContract2Proposal
-InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+InstantiateContract2Proposal gov proposal content type to instantiate
+contract 2
 
 
 | Field | Type | Label | Description |
