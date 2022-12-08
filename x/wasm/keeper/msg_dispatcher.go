@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
+	"strings"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -115,7 +115,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 				for _, e := range filteredEvents {
 					attributes := e.Attributes
 					sort.SliceStable(attributes, func(i, j int) bool {
-						return bytes.Compare(attributes[i].Key, attributes[j].Key) < 0
+						return strings.Compare(attributes[i].Key, attributes[j].Key) < 0
 					})
 				}
 			}
