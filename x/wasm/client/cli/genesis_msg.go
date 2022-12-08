@@ -90,12 +90,17 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			senderAddr, err := getActorAddress(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg, err := parseInstantiateArgs(args[0], args[1], senderAddr, cmd.Flags())
+			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, senderAddr, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -141,7 +146,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract.")
 

@@ -35,6 +35,8 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return handleStoreCodeProposal(ctx, k, *c)
 		case *types.InstantiateContractProposal:
 			return handleInstantiateProposal(ctx, k, *c)
+		case *types.InstantiateContract2Proposal:
+			return handleInstantiate2Proposal(ctx, k, *c)
 		case *types.MigrateContractProposal:
 			return handleMigrateProposal(ctx, k, *c)
 		case *types.SudoContractProposal:
@@ -100,6 +102,38 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 	}
 
 	_, data, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
+}
+
+func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContract2Proposal) error {
+	// Validatebasic with proposal
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+
+	// Get runAsAddr as AccAddress
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+
+	// Get admin address
+	var adminAddr sdk.AccAddress
+	if p.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(p.Admin); err != nil {
+			return sdkerrors.Wrap(err, "admin")
+		}
+	}
+
+	_, data, err := k.Instantiate2(ctx, p.CodeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds, p.Salt, p.FixMsg)
 	if err != nil {
 		return err
 	}

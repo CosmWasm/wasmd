@@ -258,6 +258,46 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 	return p
 }
 
+func InstantiateContract2ProposalFixture(mutators ...func(p *InstantiateContract2Proposal)) *InstantiateContract2Proposal {
+	var (
+		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
+
+		initMsg = struct {
+			Verifier    sdk.AccAddress `json:"verifier"`
+			Beneficiary sdk.AccAddress `json:"beneficiary"`
+		}{
+			Verifier:    anyValidAddress,
+			Beneficiary: anyValidAddress,
+		}
+	)
+	const (
+		anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
+		mySalt     = "myDefaultSalt"
+	)
+
+	initMsgBz, err := json.Marshal(initMsg)
+	if err != nil {
+		panic(err)
+	}
+	p := &InstantiateContract2Proposal{
+		Title:       "Foo",
+		Description: "Bar",
+		RunAs:       anyAddress,
+		Admin:       anyAddress,
+		CodeID:      1,
+		Label:       "testing",
+		Msg:         initMsgBz,
+		Funds:       nil,
+		Salt:        []byte(mySalt),
+		FixMsg:      false,
+	}
+
+	for _, m := range mutators {
+		m(p)
+	}
+	return p
+}
+
 func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInstantiateContractProposal)) *StoreAndInstantiateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
