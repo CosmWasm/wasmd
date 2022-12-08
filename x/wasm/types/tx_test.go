@@ -14,7 +14,7 @@ import (
 const firstCodeID = 1
 
 func TestStoreCodeValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -78,7 +78,7 @@ func TestStoreCodeValidation(t *testing.T) {
 }
 
 func TestInstantiateContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -186,7 +186,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 }
 
 func TestInstantiateContract2Validation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -322,7 +322,7 @@ func TestInstantiateContract2Validation(t *testing.T) {
 }
 
 func TestExecuteContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -431,7 +431,7 @@ func TestExecuteContractValidation(t *testing.T) {
 }
 
 func TestMsgUpdateAdministrator(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -503,7 +503,7 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 }
 
 func TestMsgClearAdministrator(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size
@@ -554,7 +554,7 @@ func TestMsgClearAdministrator(t *testing.T) {
 }
 
 func TestMsgMigrateContract(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size

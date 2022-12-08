@@ -3,50 +3,62 @@ package wasm
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 
+	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type testData struct {
-	module        module.AppModule
-	ctx           sdk.Context
-	acctKeeper    authkeeper.AccountKeeper
-	keeper        Keeper
-	bankKeeper    bankkeeper.Keeper
-	stakingKeeper stakingkeeper.Keeper
-	faucet        *keeper.TestFaucet
+	module           AppModule
+	ctx              sdk.Context
+	acctKeeper       authkeeper.AccountKeeper
+	keeper           Keeper
+	bankKeeper       bankkeeper.Keeper
+	stakingKeeper    *stakingkeeper.Keeper
+	faucet           *keeper.TestFaucet
+	grpcQueryRouter  *baseapp.GRPCQueryRouter
+	msgServiceRouter *baseapp.MsgServiceRouter
+	encConf          params.EncodingConfig
 }
 
 func setupTest(t *testing.T) testData {
 	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1")
-	cdc := keeper.MakeTestCodec(t)
+	encConf := keeper.MakeEncodingConfig(t)
+	queryRouter := baseapp.NewGRPCQueryRouter()
+	serviceRouter := baseapp.NewMsgServiceRouter()
+	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
+	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:        NewAppModule(cdc, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil),
-		ctx:           ctx,
-		acctKeeper:    keepers.AccountKeeper,
-		keeper:        *keepers.WasmKeeper,
-		bankKeeper:    keepers.BankKeeper,
-		stakingKeeper: keepers.StakingKeeper,
-		faucet:        keepers.Faucet,
+		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil),
+		ctx:              ctx,
+		acctKeeper:       keepers.AccountKeeper,
+		keeper:           *keepers.WasmKeeper,
+		bankKeeper:       keepers.BankKeeper,
+		stakingKeeper:    keepers.StakingKeeper,
+		faucet:           keepers.Faucet,
+		grpcQueryRouter:  queryRouter,
+		msgServiceRouter: serviceRouter,
+		encConf:          encConf,
 	}
+	data.module.RegisterServices(module.NewConfigurator(encConf.Marshaler, serviceRouter, queryRouter))
 	return data
 }
 
@@ -117,18 +129,19 @@ func TestHandleCreate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			data := setupTest(t)
 
-			h := data.module.Route().Handler()
-			q := data.module.LegacyQuerierHandler(nil)
+			h := data.msgServiceRouter.Handler(tc.msg)
+			// q := data.grpcQueryRouter.Route(sdk.MsgTypeURL(tc.msg))
+			q := data.grpcQueryRouter
 
 			res, err := h(data.ctx, tc.msg)
 			if !tc.isValid {
 				require.Error(t, err, "%#v", res)
-				assertCodeList(t, q, data.ctx, 0)
-				assertCodeBytes(t, q, data.ctx, 1, nil)
+				assertCodeList(t, q, data.ctx, 0, data.encConf.Marshaler)
+				assertCodeBytes(t, q, data.ctx, 1, nil, data.encConf.Marshaler)
 				return
 			}
 			require.NoError(t, err)
-			assertCodeList(t, q, data.ctx, 1)
+			assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
 		})
 	}
 }
@@ -148,13 +161,14 @@ func TestHandleInstantiate(t *testing.T) {
 	data := setupTest(t)
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
 
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
-
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
+
+	h := data.msgServiceRouter.Handler(msg)
+	q := data.grpcQueryRouter
+
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
 	assertStoreCodeResponse(t, res.Data, 1)
@@ -162,22 +176,23 @@ func TestHandleInstantiate(t *testing.T) {
 	_, _, bob := keyPubAddr()
 	_, _, fred := keyPubAddr()
 
-	initMsg := initMsg{
+	initPayload := initMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
 	}
-	initMsgBz, err := json.Marshal(initMsg)
+	initMsgBz, err := json.Marshal(initPayload)
 	require.NoError(t, err)
 
 	// create with no balance is also legal
-	initCmd := MsgInstantiateContract{
+	initMsg := &MsgInstantiateContract{
 		Sender: creator.String(),
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  nil,
 		Label:  "testing",
 	}
-	res, err = h(data.ctx, &initCmd)
+	h = data.msgServiceRouter.Handler(initMsg)
+	res, err = h(data.ctx, initMsg)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
@@ -190,16 +205,16 @@ func TestHandleInstantiate(t *testing.T) {
 	require.Equal(t, "wasm", res.Events[2].Type)
 	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[2].Attributes[0])
 
-	assertCodeList(t, q, data.ctx, 1)
-	assertCodeBytes(t, q, data.ctx, 1, testContract)
+	assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
+	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Marshaler)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	})
+	}, data.encConf.Marshaler)
 }
 
 func TestHandleExecute(t *testing.T) {
@@ -211,13 +226,12 @@ func TestHandleExecute(t *testing.T) {
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
-
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
+	h := data.msgServiceRouter.Handler(msg)
+	q := data.grpcQueryRouter
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
 	assertStoreCodeResponse(t, res.Data, 1)
@@ -230,14 +244,15 @@ func TestHandleExecute(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	initCmd := MsgInstantiateContract{
+	initCmd := &MsgInstantiateContract{
 		Sender: creator.String(),
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
 		Label:  "testing",
 	}
-	res, err = h(data.ctx, &initCmd)
+	h = data.msgServiceRouter.Handler(initCmd)
+	res, err = h(data.ctx, initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
@@ -269,13 +284,14 @@ func TestHandleExecute(t *testing.T) {
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, deposit, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
 
-	execCmd := MsgExecuteContract{
+	execCmd := &MsgExecuteContract{
 		Sender:   fred.String(),
 		Contract: contractBech32Addr,
 		Msg:      []byte(`{"release":{}}`),
 		Funds:    topUp,
 	}
-	res, err = h(data.ctx, &execCmd)
+	h = data.msgServiceRouter.Handler(execCmd)
+	res, err = h(data.ctx, execCmd)
 	require.NoError(t, err)
 	// from https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/src/contract.rs#L167
 	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
@@ -327,16 +343,16 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
 
 	// ensure all contract state is as after init
-	assertCodeList(t, q, data.ctx, 1)
-	assertCodeBytes(t, q, data.ctx, 1, testContract)
+	assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
+	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Marshaler)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	})
+	}, data.encConf.Marshaler)
 }
 
 func TestHandleExecuteEscrow(t *testing.T) {
@@ -348,12 +364,12 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000))
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	h := data.module.Route().Handler()
-
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
+
+	h := data.msgServiceRouter.Handler(msg)
 	res, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
@@ -372,6 +388,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Funds:  deposit,
 		Label:  "testing",
 	}
+	h = data.msgServiceRouter.Handler(&initCmd)
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
@@ -389,6 +406,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Msg:      handleMsgBz,
 		Funds:    topUp,
 	}
+	h = data.msgServiceRouter.Handler(&execCmd)
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
 	// from https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/src/contract.rs#L167
@@ -498,90 +516,102 @@ func assertAttribute(t *testing.T, key string, value string, attr abci.EventAttr
 	assert.Equal(t, value, string(attr.Value), prettyAttr(attr))
 }
 
-func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum int) {
-	bz, sdkerr := q(ctx, []string{QueryListCode}, abci.RequestQuery{})
+func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, expectedNum int, marshaler codec.Codec) {
+	t.Helper()
+	path := "/cosmwasm.wasm.v1.Query/Codes"
+	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path})
 	require.NoError(t, sdkerr)
+	require.True(t, resp.IsOK())
 
+	bz := resp.Value
 	if len(bz) == 0 {
 		require.Equal(t, expectedNum, 0)
 		return
 	}
 
-	var res []CodeInfo
-	err := json.Unmarshal(bz, &res)
-	require.NoError(t, err)
-
-	assert.Equal(t, expectedNum, len(res))
+	var res types.QueryCodesResponse
+	require.NoError(t, marshaler.Unmarshal(bz, &res))
+	assert.Equal(t, expectedNum, len(res.CodeInfos))
 }
 
-func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expectedBytes []byte) {
-	path := []string{QueryGetCode, fmt.Sprintf("%d", codeID)}
-	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
-	require.NoError(t, sdkerr)
+func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) {
+	t.Helper()
+	bz, err := marshaler.Marshal(&types.QueryCodeRequest{CodeId: codeID})
+	require.NoError(t, err)
+
+	path := "/cosmwasm.wasm.v1.Query/Code"
+	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	require.NoError(t, err)
+	require.True(t, resp.IsOK())
+	bz = resp.Value
 
 	if len(expectedBytes) == 0 {
 		require.Equal(t, len(bz), 0, "%q", string(bz))
 		return
 	}
-	var res map[string]interface{}
-	err := json.Unmarshal(bz, &res)
-	require.NoError(t, err)
-
-	require.Contains(t, res, "data")
-	b, err := base64url.Decode(res["data"].(string))
-	require.NoError(t, err)
-	assert.Equal(t, expectedBytes, b)
-	assert.EqualValues(t, codeID, res["id"])
+	var rsp types.QueryCodeResponse
+	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
+	assert.Equal(t, expectedBytes, rsp.Data)
 }
 
-func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expContractAddrs []string) {
-	bz, sdkerr := q(ctx, []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}, abci.RequestQuery{})
+func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) {
+	t.Helper()
+	bz, err := marshaler.Marshal(&types.QueryContractsByCodeRequest{CodeId: codeID})
+	require.NoError(t, err)
+
+	path := "/cosmwasm.wasm.v1.Query/ContractsByCode"
+	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
 	require.NoError(t, sdkerr)
+	require.True(t, resp.IsOK())
+	bz = resp.Value
 
 	if len(bz) == 0 {
 		require.Equal(t, len(expContractAddrs), 0)
 		return
 	}
 
-	var res []string
-	err := json.Unmarshal(bz, &res)
-	require.NoError(t, err)
+	var rsp types.QueryContractsByCodeResponse
+	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
 
-	hasAddrs := make([]string, len(res))
-	for i, r := range res {
+	hasAddrs := make([]string, len(rsp.Contracts))
+	for i, r := range rsp.Contracts {
 		hasAddrs[i] = r
 	}
-
 	assert.Equal(t, expContractAddrs, hasAddrs)
 }
 
-func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBech32Addr string, expected state) {
+func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, expected state, marshaler codec.Codec) {
 	t.Helper()
-	path := []string{QueryGetContractState, contractBech32Addr, keeper.QueryMethodContractStateAll}
-	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
-	require.NoError(t, sdkerr)
-
-	var res []Model
-	err := json.Unmarshal(bz, &res)
+	bz, err := marshaler.Marshal(&types.QueryRawContractStateRequest{Address: contractBech32Addr, QueryData: []byte("config")})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(res), "#v", res)
-	require.Equal(t, []byte("config"), []byte(res[0].Key))
 
+	path := "/cosmwasm.wasm.v1.Query/RawContractState"
+	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	require.NoError(t, sdkerr)
+	require.True(t, resp.IsOK())
+	bz = resp.Value
+
+	var rsp types.QueryRawContractStateResponse
+	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
 	expectedBz, err := json.Marshal(expected)
 	require.NoError(t, err)
-	assert.Equal(t, expectedBz, res[0].Value)
+	assert.Equal(t, expectedBz, rsp.Data)
 }
 
-func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress) {
+func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) {
 	t.Helper()
-	path := []string{QueryGetContract, contractBech32Addr}
-	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
-	require.NoError(t, sdkerr)
-
-	var res ContractInfo
-	err := json.Unmarshal(bz, &res)
+	bz, err := marshaler.Marshal(&types.QueryContractInfoRequest{Address: contractBech32Addr})
 	require.NoError(t, err)
 
-	assert.Equal(t, codeID, res.CodeID)
-	assert.Equal(t, creator.String(), res.Creator)
+	path := "/cosmwasm.wasm.v1.Query/ContractInfo"
+	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	require.NoError(t, sdkerr)
+	require.True(t, resp.IsOK())
+	bz = resp.Value
+
+	var rsp types.QueryContractInfoResponse
+	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
+
+	assert.Equal(t, codeID, rsp.CodeID)
+	assert.Equal(t, creator.String(), rsp.Creator)
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -11,9 +13,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -223,14 +224,18 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 
 func TestIBCRawPacketHandler(t *testing.T) {
 	ibcPort := "contractsIBCPort"
-	var ctx sdk.Context
+	ctx := sdk.Context{}.WithLogger(log.TestingLogger())
 
-	var capturedPacket ibcexported.PacketI
+	type CapturedPacket struct {
+		sourcePort       string
+		sourceChannel    string
+		timeoutHeight    clienttypes.Height
+		timeoutTimestamp uint64
+		data             []byte
+	}
+	var capturedPacket *CapturedPacket
 
 	chanKeeper := &wasmtesting.MockChannelKeeper{
-		GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
-			return 1, true
-		},
 		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
 			return channeltypes.Channel{
 				Counterparty: channeltypes.NewCounterparty(
@@ -239,9 +244,15 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				),
 			}, true
 		},
-		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-			capturedPacket = packet
-			return nil
+		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+			capturedPacket = &CapturedPacket{
+				sourcePort:       sourcePort,
+				sourceChannel:    sourceChannel,
+				timeoutHeight:    timeoutHeight,
+				timeoutTimestamp: timeoutTimestamp,
+				data:             data,
+			}
+			return 1, nil
 		},
 	}
 	capKeeper := &wasmtesting.MockCapabilityKeeper{
@@ -254,7 +265,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		srcMsg        wasmvmtypes.SendPacketMsg
 		chanKeeper    types.ChannelKeeper
 		capKeeper     types.CapabilityKeeper
-		expPacketSent channeltypes.Packet
+		expPacketSent *CapturedPacket
 		expErr        *sdkerrors.Error
 	}{
 		"all good": {
@@ -265,28 +276,12 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			},
 			chanKeeper: chanKeeper,
 			capKeeper:  capKeeper,
-			expPacketSent: channeltypes.Packet{
-				Sequence:           1,
-				SourcePort:         ibcPort,
-				SourceChannel:      "channel-1",
-				DestinationPort:    "other-port",
-				DestinationChannel: "other-channel-1",
-				Data:               []byte("myData"),
-				TimeoutHeight:      clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
+			expPacketSent: &CapturedPacket{
+				sourcePort:    ibcPort,
+				sourceChannel: "channel-1",
+				timeoutHeight: clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
+				data:          []byte("myData"),
 			},
-		},
-		"sequence not found returns error": {
-			srcMsg: wasmvmtypes.SendPacketMsg{
-				ChannelID: "channel-1",
-				Data:      []byte("myData"),
-				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
-			},
-			chanKeeper: &wasmtesting.MockChannelKeeper{
-				GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
-					return 0, false
-				},
-			},
-			expErr: channeltypes.ErrSequenceSendNotFound,
 		},
 		"capability not found returns error": {
 			srcMsg: wasmvmtypes.SendPacketMsg{
@@ -400,7 +395,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			// and total supply reduced by burned amount
 			after, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 			require.NoError(t, err)
-			diff := before.Supply.Sub(after.Supply)
+			diff := before.Supply.Sub(after.Supply...)
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
 		})
 	}

@@ -823,6 +823,9 @@ func (m *MockMsgHandler) Handle(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, erro
 }
 
 func (m *MockMsgHandler) verifyCalls(t *testing.T) {
+	if m == nil {
+		return
+	}
 	assert.Equal(t, m.expMsg, m.gotMsg, "message param")
 	assert.Equal(t, m.expCalls, m.gotCalls, "number calls")
 }

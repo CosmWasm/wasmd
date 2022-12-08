@@ -39,7 +39,7 @@ func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option
 func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	appCodec := app.NewTestSupport(b, wasmApp).AppCodec()
+	appCodec := wasmApp.AppCodec()
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 

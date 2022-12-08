@@ -10,9 +10,11 @@ import (
 	"testing"
 	"time"
 
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/ibc-go/v4/testing/simapp"
+	"github.com/cosmos/ibc-go/v6/testing/simapp"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 
@@ -37,7 +39,6 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"

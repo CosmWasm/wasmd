@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -48,7 +50,11 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 		Short: "Upload a wasm binary",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			senderAddr, err := getActorAddress(cmd, clientCtx.Codec)
 			if err != nil {
 				return err
 			}
@@ -90,7 +96,11 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			senderAddr, err := getActorAddress(cmd, clientCtx.Codec)
 			if err != nil {
 				return err
 			}
@@ -159,7 +169,11 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 		Short: "Execute a command on a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			senderAddr, err := getActorAddress(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			senderAddr, err := getActorAddress(cmd, clientCtx.Codec)
 			if err != nil {
 				return err
 			}
@@ -492,7 +506,7 @@ func codeSeqValue(state *types.GenesisState) uint64 {
 // getActorAddress returns the account address for the `--run-as` flag.
 // The flag value can either be an address already or a key name where the
 // address is read from the keyring instead.
-func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
+func getActorAddress(cmd *cobra.Command, cdc codec.Codec) (sdk.AccAddress, error) {
 	actorArg, err := cmd.Flags().GetString(flagRunAs)
 	if err != nil {
 		return nil, fmt.Errorf("run-as: %s", err.Error())
@@ -513,7 +527,7 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 
 	homeDir := client.GetClientContextFromCmd(cmd).HomeDir
 	// attempt to lookup address from Keybase if no address was provided
-	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf)
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf, cdc)
 	if err != nil {
 		return nil, err
 	}
@@ -522,5 +536,5 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get address from Keybase: %w", err)
 	}
-	return info.GetAddress(), nil
+	return info.GetAddress()
 }

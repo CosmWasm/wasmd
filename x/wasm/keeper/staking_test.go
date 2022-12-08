@@ -159,7 +159,7 @@ type initInfo struct {
 
 	ctx            sdk.Context
 	accKeeper      authkeeper.AccountKeeper
-	stakingKeeper  stakingkeeper.Keeper
+	stakingKeeper  *stakingkeeper.Keeper
 	distKeeper     distributionkeeper.Keeper
 	wasmKeeper     Keeper
 	contractKeeper wasmtypes.ContractOpsKeeper
@@ -651,7 +651,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 }
 
 // adds a few validators and returns a list of validators that are registered
-func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
 	owner := faucet.NewFundedRandomAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
@@ -660,7 +660,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
-	msg := stakingtypes.MsgCreateValidator{
+	msg := &stakingtypes.MsgCreateValidator{
 		Description: types.Description{
 			Moniker: "Validator power",
 		},
@@ -675,23 +675,21 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 		Pubkey:            pkAny,
 		Value:             value,
 	}
-
-	h := staking.NewHandler(stakingKeeper)
-	_, err = h(ctx, &msg)
+	_, err = stakingkeeper.NewMsgServerImpl(stakingKeeper).CreateValidator(sdk.WrapSDKContext(ctx), msg)
 	require.NoError(t, err)
 	return addr
 }
 
 // this will commit the current set, update the block height and set historic info
 // basically, letting two blocks pass
-func nextBlock(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper) sdk.Context {
+func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context {
 	staking.EndBlocker(ctx, stakingKeeper)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
 	staking.BeginBlocker(ctx, stakingKeeper)
 	return ctx
 }
 
-func setValidatorRewards(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
+func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
 	// allocate some rewards
 	vali := stakingKeeper.Validator(ctx, valAddr)
 	amount, err := sdk.NewDecFromStr(reward)
