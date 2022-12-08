@@ -43,13 +43,11 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			addr, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				inBuf := bufio.NewReader(cmd.InOrStdin())
-				keyringBackend, err := cmd.Flags().GetString(flags.FlagKeyringBackend)
-				if err != nil {
-					return fmt.Errorf("failed to parse keyring backend: %w", err)
-				}
+				keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
+
 				if keyringBackend != "" && clientCtx.Keyring == nil {
 					var err error
-					kr, err = keyring.New(sdk.KeyringServiceName(), keyringBackend, clientCtx.HomeDir, inBuf)
+					kr, err = keyring.New(sdk.KeyringServiceName(), keyringBackend, clientCtx.HomeDir, inBuf, clientCtx.Codec)
 					if err != nil {
 						return err
 					}
@@ -57,7 +55,7 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 					kr = clientCtx.Keyring
 				}
 
-				info, err := kr.Key(args[0])
+				k, err := kr.Key(args[0])
 				if err != nil {
 					return fmt.Errorf("failed to get address from Keyring: %w", err)
 				}

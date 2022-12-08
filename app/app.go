@@ -11,34 +11,20 @@ import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store/streaming"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata_pulsar"
-	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
-	"github.com/cosmos/cosmos-sdk/x/consensus"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
-
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
-	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -46,6 +32,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -60,6 +47,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	"github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -79,6 +67,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
@@ -87,6 +77,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/nft"
 	nftkeeper "github.com/cosmos/cosmos-sdk/x/nft/keeper"
+	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -102,37 +93,43 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ica "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
-	transfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v4/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+	ica "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	ibcfee "github.com/cosmos/ibc-go/v6/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/types"
+	transfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v6/modules/core"
+	ibcclient "github.com/cosmos/ibc-go/v6/modules/core/02-client"
+	ibcclientclient "github.com/cosmos/ibc-go/v6/modules/core/02-client/client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v6/modules/light-clients/07-tendermint"
+	"github.com/spf13/cast"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. It has no known issues, but do your own research before using it.
-	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
-	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
-	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+	// intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
+	// intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
+	// intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -225,11 +222,15 @@ var (
 		authzmodule.AppModuleBasic{},
 		groupmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		nftmodule.AppModuleBasic{},
+		consensus.AppModuleBasic{},
+		// non sdk modules
 		wasm.AppModuleBasic{},
 		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		intertx.AppModuleBasic{},
+		// intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 	)
 
@@ -290,17 +291,17 @@ type WasmApp struct {
 	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
-	InterTxKeeper       intertxkeeper.Keeper
-	TransferKeeper      ibctransferkeeper.Keeper
-	WasmKeeper          wasm.Keeper
+	// InterTxKeeper       intertxkeeper.Keeper
+	TransferKeeper ibctransferkeeper.Keeper
+	WasmKeeper     wasm.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
+	// ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
+	ScopedIBCFeeKeeper   capabilitykeeper.ScopedKeeper
+	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	ModuleManager *module.Manager
@@ -344,7 +345,8 @@ func NewWasmApp(
 		// non sdk store keys
 		ibchost.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasm.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey, intertxtypes.StoreKey,
+		icacontrollertypes.StoreKey,
+		// intertxtypes.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -388,7 +390,7 @@ func NewWasmApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	scopedInterTxKeeper := app.CapabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
+	// scopedInterTxKeeper := app.CapabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.CapabilityKeeper.Seal()
@@ -409,7 +411,7 @@ func NewWasmApp(
 		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	stakingKeeper := stakingkeeper.NewKeeper(
+	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.AccountKeeper,
@@ -420,7 +422,7 @@ func NewWasmApp(
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
 		keys[minttypes.StoreKey],
-		stakingKeeper,
+		app.StakingKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.FeeCollectorName,
@@ -521,7 +523,6 @@ func NewWasmApp(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	govKeeper.SetLegacyRouter(govRouter)
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
@@ -551,7 +552,7 @@ func NewWasmApp(
 
 	// IBC Fee Module keeper
 	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
-		appCodec, keys[ibcfeetypes.StoreKey], app.GetSubspace(ibcfeetypes.ModuleName),
+		appCodec, keys[ibcfeetypes.StoreKey],
 		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
@@ -574,6 +575,7 @@ func NewWasmApp(
 		appCodec,
 		keys[icahosttypes.StoreKey],
 		app.GetSubspace(icahosttypes.SubModuleName),
+		app.IBCFeeKeeper, // use ics29 fee as ics4Wrapper in middleware stack
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
@@ -592,12 +594,12 @@ func NewWasmApp(
 	)
 
 	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
-	app.InterTxKeeper = intertxkeeper.NewKeeper(
-		appCodec,
-		keys[intertxtypes.StoreKey],
-		app.ICAControllerKeeper,
-		scopedInterTxKeeper,
-	)
+	//app.InterTxKeeper = intertxkeeper.NewKeeper(
+	//	appCodec,
+	//	keys[intertxtypes.StoreKey],
+	//	app.ICAControllerKeeper,
+	//	scopedInterTxKeeper,
+	//)
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
@@ -632,6 +634,7 @@ func NewWasmApp(
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
 	}
+	govKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Stack
 	var transferStack porttypes.IBCModule
@@ -646,7 +649,7 @@ func NewWasmApp(
 	// supported IBC team implementation. Do your own research before using it.
 	var icaControllerStack porttypes.IBCModule
 	// You will likely want to use your own reviewed and maintained ica auth module
-	icaControllerStack = intertx.NewIBCModule(app.InterTxKeeper)
+	// icaControllerStack = intertx.NewIBCModule(app.InterTxKeeper)  // TODO: enable again
 	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, app.ICAControllerKeeper)
 	icaControllerStack = ibcfee.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper)
 
@@ -665,7 +668,7 @@ func NewWasmApp(
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasm.ModuleName, wasmStack).
-		AddRoute(intertxtypes.ModuleName, icaControllerStack).
+		// AddRoute(intertxtypes.ModuleName, icaControllerStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -707,7 +710,7 @@ func NewWasmApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
-		intertx.NewAppModule(appCodec, app.InterTxKeeper),
+		//intertx.NewAppModule(appCodec, app.InterTxKeeper),
 		//
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -728,7 +731,7 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -744,7 +747,7 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -767,7 +770,7 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
 	}
@@ -790,7 +793,7 @@ func NewWasmApp(
 	reflectionv1.RegisterReflectionServiceServer(app.GRPCQueryRouter(), reflectionSvc)
 
 	// add test gRPC service for testing gRPC queries in isolation
-	testdata_pulsar.RegisterQueryServer(app.GRPCQueryRouter(), testdata_pulsar.QueryImpl{})
+	// testdata_pulsar.RegisterQueryServer(app.GRPCQueryRouter(), testdata_pulsar.QueryImpl{})
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -831,7 +834,7 @@ func NewWasmApp(
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
-	app.ScopedInterTxKeeper = scopedInterTxKeeper
+	// app.ScopedInterTxKeeper = scopedInterTxKeeper
 
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
 	// antehandlers, but are run _after_ the `runMsgs` execution. They are also
