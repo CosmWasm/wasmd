@@ -52,7 +52,7 @@ func TestValidateParams(t *testing.T) {
 		},
 		"all good with anyOf addresses": {
 			src: Params{
-				CodeUploadAccess:             AccessTypeAnyOfAddresses.With(anyAddress, otherAddress),
+				CodeUploadAccess:             AccessTypeAnyOfAddresses.With([]sdk.AccAddress{anyAddress, otherAddress}),
 				InstantiateDefaultPermission: AccessTypeAnyOfAddresses,
 			},
 		},
@@ -294,12 +294,12 @@ func TestAccessTypeWith(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			if !spec.expPanic {
-				got := spec.src.With(spec.addrs...)
+				got := spec.src.With(spec.addrs)
 				assert.Equal(t, spec.exp, got)
 				return
 			}
 			assert.Panics(t, func() {
-				spec.src.With(spec.addrs...)
+				spec.src.With(spec.addrs)
 			})
 		})
 	}

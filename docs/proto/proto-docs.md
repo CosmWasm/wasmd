@@ -300,6 +300,7 @@ AccessConfig access control type.
 | `permission` | [AccessType](#cosmwasm.wasm.v1.AccessType) |  |  |
 | `address` | [string](#string) |  | Address Deprecated: replaced by addresses |
 | `addresses` | [string](#string) | repeated |  |
+| `code_ids` | [uint64](#uint64) | repeated |  |
 
 
 

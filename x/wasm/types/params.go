@@ -24,21 +24,26 @@ var AllAccessTypes = []AccessType{
 	AccessTypeEverybody,
 }
 
-func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
+func (a AccessType) With(accessValue interface{}) AccessConfig {
 	switch a {
 	case AccessTypeNobody:
 		return AllowNobody
 	case AccessTypeOnlyAddress:
-		if n := len(addrs); n != 1 {
-			panic(fmt.Sprintf("expected exactly 1 address but got %d", n))
+		addr, ok := accessValue.(sdk.AccAddress)
+		if !ok {
+			panic(fmt.Sprintf("expected address but got %v", accessValue))
 		}
-		if err := sdk.VerifyAddressFormat(addrs[0]); err != nil {
+		if err := sdk.VerifyAddressFormat(addr); err != nil {
 			panic(err)
 		}
-		return AccessConfig{Permission: AccessTypeOnlyAddress, Address: addrs[0].String()}
+		return AccessConfig{Permission: AccessTypeOnlyAddress, Address: addr.String()}
 	case AccessTypeEverybody:
 		return AllowEverybody
 	case AccessTypeAnyOfAddresses:
+		addrs, ok := accessValue.([]sdk.AccAddress)
+		if !ok {
+			panic(fmt.Sprintf("expected addresses but got %v", accessValue))
+		}
 		bech32Addrs := make([]string, len(addrs))
 		for i, v := range addrs {
 			bech32Addrs[i] = v.String()
@@ -47,6 +52,12 @@ func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
 			panic(sdkerrors.Wrap(err, "addresses"))
 		}
 		return AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: bech32Addrs}
+	case AccessTypeAnyOfCodeIds:
+		codeIds, ok := accessValue.([]uint64)
+		if !ok {
+			panic(fmt.Sprintf("expected codeIds but got %v", accessValue))
+		}
+		return AccessConfig{Permission: AccessTypeAnyOfAddresses, CodeIds: codeIds}
 	}
 	panic("unsupported access type")
 }
@@ -61,6 +72,8 @@ func (a AccessType) String() string {
 		return "Everybody"
 	case AccessTypeAnyOfAddresses:
 		return "AnyOfAddresses"
+	case AccessTypeAnyOfCodeIds:
+		return "AnyOfCodeIds"
 	}
 	return "Unspecified"
 }
@@ -176,13 +189,27 @@ func (a AccessConfig) ValidateBasic() error {
 		if len(a.Addresses) != 0 {
 			return ErrInvalid.Wrap("addresses field set")
 		}
+		if len(a.CodeIds) != 0 {
+			return ErrInvalid.Wrap("codeIds field set")
+		}
 		_, err := sdk.AccAddressFromBech32(a.Address)
 		return err
 	case AccessTypeAnyOfAddresses:
 		if a.Address != "" {
 			return ErrInvalid.Wrap("address field set")
 		}
+		if len(a.CodeIds) != 0 {
+			return ErrInvalid.Wrap("codeIds field set")
+		}
 		return sdkerrors.Wrap(assertValidAddresses(a.Addresses), "addresses")
+	case AccessTypeAnyOfCodeIds:
+		if a.Address != "" {
+			return ErrInvalid.Wrap("address field set")
+		}
+		if len(a.Addresses) != 0 {
+			return ErrInvalid.Wrap("addresses field set")
+		}
+		return nil
 	}
 	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
 }
@@ -206,7 +233,7 @@ func assertValidAddresses(addrs []string) error {
 
 // Allowed returns if permission includes the actor.
 // Actor address must be valid and not nil
-func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
+func (a AccessConfig) Allowed(actor sdk.AccAddress, codeId uint64) bool {
 	switch a.Permission {
 	case AccessTypeNobody:
 		return false
@@ -217,6 +244,13 @@ func (a AccessConfig) Allowed(actor sdk.AccAddress) bool {
 	case AccessTypeAnyOfAddresses:
 		for _, v := range a.Addresses {
 			if v == actor.String() {
+				return true
+			}
+		}
+		return false
+	case AccessTypeAnyOfCodeIds:
+		for _, v := range a.CodeIds {
+			if v == codeId {
 				return true
 			}
 		}

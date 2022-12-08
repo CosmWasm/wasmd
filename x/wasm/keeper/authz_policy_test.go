@@ -40,7 +40,7 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 			exp:              false,
 		},
 		"upload any address - included": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With([]sdk.AccAddress{otherAddress, myActorAddress}), types.AllowEverybody),
 			contractInstConf: types.AllowEverybody,
 			exp:              true,
 		},
@@ -106,7 +106,7 @@ func TestDefaultAuthzPolicyCanInstantiateContract(t *testing.T) {
 			exp:    false,
 		},
 		"any address - included": {
-			config: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
+			config: types.AccessTypeAnyOfAddresses.With([]sdk.AccAddress{otherAddress, myActorAddress}),
 			exp:    true,
 		},
 		"any address - not included": {
@@ -223,7 +223,7 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 			contractInstConf: types.AllowEverybody,
 		},
 		"upload any address - included": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
+			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With([]sdk.AccAddress{otherAddress, myActorAddress}), types.AllowEverybody),
 			contractInstConf: types.AllowEverybody,
 		},
 		"upload any address - not included": {
@@ -272,7 +272,7 @@ func TestGovAuthzPolicyCanInstantiateContract(t *testing.T) {
 			config: types.AccessTypeOnlyAddress.With(otherAddress),
 		},
 		"any address - included": {
-			config: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
+			config: types.AccessTypeAnyOfAddresses.With([]sdk.AccAddress{otherAddress, myActorAddress}),
 		},
 		"any address - not included": {
 			config: types.AccessTypeAnyOfAddresses.With(otherAddress),

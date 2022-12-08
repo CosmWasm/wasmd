@@ -37,6 +37,7 @@ const (
 	flagInstantiateNobody         = "instantiate-nobody"
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
+	flagInstantiateByAnyOfCodeIds = "instantiate-anyof-codeids"
 	flagUnpinCode                 = "unpin-code"
 	flagAllowedMsgKeys            = "allow-msg-keys"
 	flagAllowedRawMsgs            = "allow-raw-msgs"
@@ -98,6 +99,7 @@ func StoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Deprecated: Only this address can instantiate a contract from the code, optional")
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfCodeIds, []string{}, "Any of the code-ids can instantiate a contract from the code, optional")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
@@ -145,7 +147,23 @@ func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
 				return nil, fmt.Errorf("parse %q: %w", v, err)
 			}
 		}
-		x := types.AccessTypeAnyOfAddresses.With(acceptedAddrs...)
+		x := types.AccessTypeAnyOfAddresses.With(acceptedAddrs)
+		return &x, nil
+	}
+
+	codeIds, err := flags.GetStringSlice(flagInstantiateByAnyOfCodeIds)
+	if err != nil {
+		return nil, fmt.Errorf("flag any of codeIds: %s", err)
+	}
+	if len(codeIds) != 0 {
+		acceptedCodeIds := make([]uint64, len(codeIds))
+		for i, v := range codeIds {
+			acceptedCodeIds[i], err = strconv.ParseUint(v, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse %q: %w", v, err)
+			}
+		}
+		x := types.AccessTypeAnyOfCodeIds.With(acceptedCodeIds)
 		return &x, nil
 	}
 
