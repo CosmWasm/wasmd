@@ -236,7 +236,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(95000, 96000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(102000, 103000)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
@@ -256,7 +256,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(95000, 96000)},
+			resultAssertions: []assertion{assertReturnedEvents(0), assertGasUsed(102000, 103000)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -264,7 +264,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(77800, 77900), assertErrorString("codespace: sdk, code: 5")},
+			resultAssertions: []assertion{assertGasUsed(77700, 77800), assertErrorString("codespace: sdk, code: 5")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,

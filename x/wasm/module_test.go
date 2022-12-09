@@ -541,14 +541,14 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 
 	path := "/cosmwasm.wasm.v1.Query/Code"
 	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	if len(expectedBytes) == 0 {
+		assert.ErrorIs(t, err, types.ErrNotFound)
+		return
+	}
 	require.NoError(t, err)
 	require.True(t, resp.IsOK())
 	bz = resp.Value
 
-	if len(expectedBytes) == 0 {
-		require.Equal(t, len(bz), 0, "%q", string(bz))
-		return
-	}
 	var rsp types.QueryCodeResponse
 	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
 	assert.Equal(t, expectedBytes, rsp.Data)
@@ -561,14 +561,13 @@ func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 
 	path := "/cosmwasm.wasm.v1.Query/ContractsByCode"
 	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
+	if len(expContractAddrs) == 0 {
+		assert.ErrorIs(t, err, types.ErrNotFound)
+		return
+	}
 	require.NoError(t, sdkerr)
 	require.True(t, resp.IsOK())
 	bz = resp.Value
-
-	if len(bz) == 0 {
-		require.Equal(t, len(expContractAddrs), 0)
-		return
-	}
 
 	var rsp types.QueryContractsByCodeResponse
 	require.NoError(t, marshaler.Unmarshal(bz, &rsp))

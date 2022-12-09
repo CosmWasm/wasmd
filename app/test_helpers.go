@@ -159,11 +159,13 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	require.NoError(t, err)
 
 	// init chain will set the validator set and initialize the genesis accounts
+	consensusParams := simtestutil.DefaultConsensusParams
+	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
 	app.InitChain(
 		abci.RequestInitChain{
 			ChainId:         chainID,
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: simtestutil.DefaultConsensusParams,
+			ConsensusParams: consensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
