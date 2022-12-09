@@ -126,6 +126,7 @@ var TestingStakeParams = stakingtypes.Params{
 	MaxEntries:        10,
 	HistoricalEntries: 10,
 	BondDenom:         "stake",
+	MinCommissionRate: stakingtypes.DefaultMinCommissionRate,
 }
 
 type TestFaucet struct {
@@ -313,6 +314,7 @@ func createTestInput(
 		bankKeeper,
 		authtypes.NewModuleAddress(stakingtypes.ModuleName).String(),
 	)
+	stakingtypes.DefaultParams()
 	stakingKeeper.SetParams(ctx, TestingStakeParams)
 
 	distKeeper := distributionkeeper.NewKeeper(
@@ -326,6 +328,7 @@ func createTestInput(
 	)
 	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
+
 
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distributiontypes.InitialFeePool())
