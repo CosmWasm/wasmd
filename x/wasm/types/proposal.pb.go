@@ -148,7 +148,8 @@ func (m *InstantiateContractProposal) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_InstantiateContractProposal proto.InternalMessageInfo
 
-// InstantiateContract2Proposal gov proposal content type to instantiate contract 2
+// InstantiateContract2Proposal gov proposal content type to instantiate
+// contract 2
 type InstantiateContract2Proposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`

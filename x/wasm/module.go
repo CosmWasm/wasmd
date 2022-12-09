@@ -168,7 +168,7 @@ func (AppModule) QuerierRoute() string {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-	validators, err := InitGenesis(ctx, am.keeper, genesisState, am.validatorSetSource, am.Route().Handler())
+	validators, err := InitGenesis(ctx, am.keeper, genesisState)
 	if err != nil {
 		panic(err)
 	}
