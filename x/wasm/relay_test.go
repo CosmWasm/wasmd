@@ -177,6 +177,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 			ReceiverAddr: receiverAddress.String(),
 		}.GetBytes(),
 	}
+	// trigger contract to start the transfer
 	_, err := chainA.SendMsgs(startMsg)
 	require.NoError(t, err)
 
@@ -555,7 +556,7 @@ func (s *sendViaIBCTransferContract) Execute(code wasmvm.Checksum, env wasmvmtyp
 			Amount:    wasmvmtypes.NewCoin(in.CoinsToSend.Amount.Uint64(), in.CoinsToSend.Denom),
 			ChannelID: in.ChannelID,
 			Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
-				Revision: 0,
+				Revision: 1,
 				Height:   110,
 			}},
 		},

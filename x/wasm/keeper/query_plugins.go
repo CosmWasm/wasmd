@@ -450,10 +450,13 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 		return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
 	}
 	valRewards := distKeeper.GetValidatorCurrentRewards(ctx, val.GetOperator())
+	fmt.Printf("%#v\n", valRewards)
 	delRewards := distKeeper.CalculateDelegationRewards(ctx, val, delegation, valRewards.Period)
+	fmt.Printf("%#v\n", delRewards)
 
 	bondDenom := keeper.BondDenom(ctx)
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
+	fmt.Printf("%#v\n", amount)
 
 	delegationCoins := ConvertSdkCoinToWasmCoin(amount)
 

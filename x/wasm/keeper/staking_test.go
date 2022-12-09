@@ -12,7 +12,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -173,12 +172,6 @@ func initializeStaking(t *testing.T) initInfo {
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
 	ctx = nextBlock(ctx, stakingKeeper)
-
-	// set some baseline - this seems to be needed
-	k.DistKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distributiontypes.ValidatorHistoricalRewards{
-		CumulativeRewardRatio: sdk.DecCoins{},
-		ReferenceCount:        1,
-	})
 
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
@@ -482,7 +475,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	mustParse(t, res, &reflectRes)
 	var allValidatorsRes wasmvmtypes.AllValidatorsResponse
 	mustParse(t, reflectRes.Data, &allValidatorsRes)
-	require.Len(t, allValidatorsRes.Validators, 1)
+	require.Len(t, allValidatorsRes.Validators, 1, string(res))
 	valInfo := allValidatorsRes.Validators[0]
 	// Note: this ValAddress not AccAddress, may change with #264
 	require.Equal(t, valAddr.String(), valInfo.Address)
@@ -550,7 +543,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Denom, delInfo.Amount.Denom)
 	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
 
-	// test to get one delegations
+	// test to get one delegation
 	reflectDelegationQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		Delegation: &wasmvmtypes.DelegationQuery{
 			Validator: valAddr.String(),
@@ -562,6 +555,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	mustParse(t, res, &reflectRes)
+
 	var delegationRes wasmvmtypes.DelegationResponse
 	mustParse(t, reflectRes.Data, &delegationRes)
 	assert.NotEmpty(t, delegationRes.Delegation)
