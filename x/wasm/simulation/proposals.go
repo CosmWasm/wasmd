@@ -374,7 +374,7 @@ func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector
 		return types.NewUpdateInstantiateConfigProposal(
 			simtypes.RandStringOfLength(r, 10),
 			simtypes.RandStringOfLength(r, 10),
-			[]types.AccessConfigUpdate{configUpdate},
+			configUpdate,
 		)
 	}
 }

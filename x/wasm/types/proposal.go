@@ -821,7 +821,7 @@ func validateProposalCommons(title, description string) error {
 func NewUpdateInstantiateConfigProposal(
 	title string,
 	description string,
-	accessConfigUpdates []AccessConfigUpdate,
+	accessConfigUpdates ...AccessConfigUpdate,
 ) *UpdateInstantiateConfigProposal {
 	return &UpdateInstantiateConfigProposal{
 		Title:               title,
