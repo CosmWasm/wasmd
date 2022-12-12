@@ -95,6 +95,8 @@
     - [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse)
     - [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin)
     - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse)
+    - [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig)
+    - [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse)
   
     - [Msg](#cosmwasm.wasm.v1.Msg)
   
@@ -1506,6 +1508,33 @@ MsgUpdateAdminResponse returns empty data
 
 
 
+
+<a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfig"></a>
+
+### MsgUpdateInstantiateConfig
+MsgUpdateInstantiateConfig updates instantiate config for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
+| `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission access control to apply on contract creation |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse"></a>
+
+### MsgUpdateInstantiateConfigResponse
+MsgUpdateInstantiateConfigResponse returns empty data
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1527,6 +1556,7 @@ Msg defines the wasm Msg service.
 | `MigrateContract` | [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract) | [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
 | `UpdateAdmin` | [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract | |
 | `ClearAdmin` | [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin) | [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse) | ClearAdmin removes any admin stored for a smart contract | |
+| `UpdateInstantiateConfig` | [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig) | [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse) | UpdateInstantiateConfig updates instantiate config for a smart contract | |
 
  <!-- end services -->
 
