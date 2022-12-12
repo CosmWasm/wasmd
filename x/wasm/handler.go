@@ -39,6 +39,8 @@ func NewHandler(k types.ContractOpsKeeper) sdk.Handler {
 			res, err = msgServer.UpdateAdmin(sdk.WrapSDKContext(ctx), msg)
 		case *MsgClearAdmin:
 			res, err = msgServer.ClearAdmin(sdk.WrapSDKContext(ctx), msg)
+		case *types.MsgUpdateInstantiateConfig:
+			res, err = msgServer.UpdateInstantiateConfig(sdk.WrapSDKContext(ctx), msg)
 		default:
 			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
