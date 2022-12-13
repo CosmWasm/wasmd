@@ -401,6 +401,8 @@ func TestReinvest(t *testing.T) {
 }
 
 func TestQueryStakingInfo(t *testing.T) {
+	wasmtypes.SDK47TODOs(t)
+
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
@@ -579,6 +581,7 @@ func TestQueryStakingInfo(t *testing.T) {
 }
 
 func TestQueryStakingPlugin(t *testing.T) {
+	wasmtypes.SDK47TODOs(t)
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
