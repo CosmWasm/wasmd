@@ -57,6 +57,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
+			cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 			if err != nil {
 				return err
 			}
