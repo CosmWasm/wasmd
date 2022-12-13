@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
@@ -191,7 +191,6 @@ func GetChainID(index int) string {
 // CONTRACT: the passed in list of indexes must not contain duplicates
 func (coord *Coordinator) CommitBlock(chains ...*TestChain) {
 	for _, chain := range chains {
-		chain.App.Commit()
 		chain.NextBlock()
 	}
 	coord.IncrementTime()
@@ -201,7 +200,6 @@ func (coord *Coordinator) CommitBlock(chains ...*TestChain) {
 func (coord *Coordinator) CommitNBlocks(chain *TestChain, n uint64) {
 	for i := uint64(0); i < n; i++ {
 		chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
-		chain.App.Commit()
 		chain.NextBlock()
 		coord.IncrementTime()
 	}
@@ -254,48 +252,27 @@ func (coord *Coordinator) ChanOpenInitOnBothChains(path *Path) error {
 	return nil
 }
 
-// from A to B
+// RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks
 func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
-	dest := path.EndpointB
-	toSend := src.Chain.PendingSendPackets
-	coord.t.Logf("Relay %d Packets A->B\n", len(toSend))
-
-	// send this to the other side
-	coord.IncrementTime()
-	coord.CommitBlock(src.Chain)
-	err := dest.UpdateClient()
-	if err != nil {
-		return err
-	}
-	for _, packet := range toSend {
-		err = dest.RecvPacket(packet)
+	coord.t.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(src.Chain.PendingSendPackets), len(path.EndpointB.Chain.PendingSendPackets))
+	for i, v := range src.Chain.PendingSendPackets {
+		err := path.RelayPacket(v, nil)
 		if err != nil {
 			return err
 		}
+		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
 	}
-	src.Chain.PendingSendPackets = nil
 
-	// get all the acks to relay dest->src
-	toAck := dest.Chain.PendingAckPackets
-	// TODO: assert >= len(toSend)?
-	coord.t.Logf("Ack %d Packets B->A\n", len(toAck))
-
-	// send the ack back from dest -> src
-	coord.IncrementTime()
-	coord.CommitBlock(dest.Chain)
-	err = src.UpdateClient()
-	if err != nil {
-		return err
-	}
-	for _, ack := range toAck {
-		err = src.AcknowledgePacket(ack.Packet, ack.Ack)
+	src = path.EndpointB
+	for i, v := range src.Chain.PendingSendPackets {
+		err := path.RelayPacket(v, nil)
 		if err != nil {
 			return err
 		}
+		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
 	}
-	dest.Chain.PendingAckPackets = nil
 	return nil
 }
 
@@ -325,7 +302,6 @@ func (coord *Coordinator) TimeoutPendingPackets(path *Path) error {
 		}
 	}
 	src.Chain.PendingSendPackets = nil
-	dest.Chain.PendingAckPackets = nil
 	return nil
 }
 

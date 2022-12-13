@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"testing"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -107,11 +107,6 @@ func TestPinPong(t *testing.T) {
 
 		require.Len(t, chainA.PendingSendPackets, 1)
 		err := coordinator.RelayAndAckPendingPackets(path)
-		require.NoError(t, err)
-
-		// switch side
-		require.Len(t, chainB.PendingSendPackets, 1)
-		err = coordinator.RelayAndAckPendingPackets(path.Invert())
 		require.NoError(t, err)
 	}
 

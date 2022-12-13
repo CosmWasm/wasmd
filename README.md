@@ -1,9 +1,9 @@
 # Wasm Zone
 
-[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/master)
-[![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
+[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/main)
+[![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
 [![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
-[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/main/LICENSE)
 [![LoC](https://tokei.rs/b1/github/CosmWasm/wasmd)](https://github.com/CosmWasm/wasmd)
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.18+](https://golang.org/dl/)
+**Note**: Requires [Go 1.19+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 ## Compatibility with CosmWasm contracts
@@ -26,6 +26,7 @@ compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
 |-------|--------------|-------------|--------------|
+| 0.30  | v1.1.0       |             | 1.0-1.1      |
 | 0.29  | v1.1.0       |             | 1.0-1.1      |
 | 0.28  | v1.0.0       |             | 1.0-1.1      |
 | 0.27  | v1.0.0       |             | 1.0          |
@@ -115,7 +116,8 @@ The protobuf files for this project are published automatically to the [buf repo
 
 | wasmd version | buf tag                                                                                                                                     |
 |---------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| 0.26.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
+| 0.30.x        | [6508ee062011440c907de6f5c40398ea](https://buf.build/cosmwasm/wasmd/tree/6508ee062011440c907de6f5c40398ea:cosmwasm/wasm/v1) | 
+| 0.29.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
 
 Generate protobuf
 ```shell script
@@ -209,6 +211,7 @@ file of your custom chain.
 
 * `wasmtypes.MaxLabelSize = 64` to set the maximum label size on instantiation (default 128)
 * `wasmtypes.MaxWasmSize=777000` to set the max size of compiled wasm to be accepted (default 819200)
+* `wasmtypes.MaxProposalWasmSize=888000` to set the max size of gov proposal compiled wasm to be accepted (default 3145728)
 
 ## Genesis Configuration
 We strongly suggest **to limit the max block gas in the genesis** and not use the default value (`-1` for infinite).

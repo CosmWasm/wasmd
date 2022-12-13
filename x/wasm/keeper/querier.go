@@ -69,7 +69,6 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 			if err := q.cdc.Unmarshal(value, &e); err != nil {
 				return false, err
 			}
-			e.Updated = nil // redact
 			r = append(r, e)
 		}
 		return true, nil
@@ -258,8 +257,6 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	if info == nil {
 		return nil, types.ErrNotFound
 	}
-	// redact the Created field (just used for sorting, not part of public API)
-	info.Created = nil
 	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),
 		ContractInfo: *info,

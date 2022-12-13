@@ -7,6 +7,7 @@ import (
 )
 
 // ProposalHandlers define the wasm cli proposal types and rest handler.
+// Deprecated: the rest package will be removed. You can use the GRPC gateway instead
 var ProposalHandlers = []govclient.ProposalHandler{
 	govclient.NewProposalHandler(cli.ProposalStoreCodeCmd),
 	govclient.NewProposalHandler(cli.ProposalInstantiateContractCmd),
@@ -18,4 +19,5 @@ var ProposalHandlers = []govclient.ProposalHandler{
 	govclient.NewProposalHandler(cli.ProposalPinCodesCmd),
 	govclient.NewProposalHandler(cli.ProposalUnpinCodesCmd),
 	govclient.NewProposalHandler(cli.ProposalUpdateInstantiateConfigCmd),
+	govclient.NewProposalHandler(cli.ProposalStoreAndInstantiateContractCmd),
 }

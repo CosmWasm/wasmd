@@ -117,7 +117,7 @@ func TestCodeValidateBasic(t *testing.T) {
 		},
 		"codeBytes greater limit": {
 			srcMutator: func(c *Code) {
-				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxWasmSize+1)
+				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxProposalWasmSize+1)
 			},
 			expError: true,
 		},
@@ -157,11 +157,17 @@ func TestContractValidateBasic(t *testing.T) {
 			srcMutator: func(c *Contract) {
 				c.ContractInfo.Created = &AbsoluteTxPosition{}
 			},
-			expError: true,
+			expError: false,
 		},
 		"contract state invalid": {
 			srcMutator: func(c *Contract) {
 				c.ContractState = append(c.ContractState, Model{})
+			},
+			expError: true,
+		},
+		"contract history invalid": {
+			srcMutator: func(c *Contract) {
+				c.ContractCodeHistory = []ContractCodeHistoryEntry{{}}
 			},
 			expError: true,
 		},

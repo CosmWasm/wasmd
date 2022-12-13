@@ -26,6 +26,14 @@ message StoreCodeProposal {
   AccessConfig instantiate_permission = 7;
   // UnpinCode code on upload, optional
   bool unpin_code = 8;
+  // Source is the URL where the code is hosted
+  string source = 9;
+  // Builder is the docker image used to build the code deterministically, used
+  // for smart contract verification
+  string builder = 10;
+  // CodeHash is the SHA256 sum of the code outputted by builder, used for smart
+  // contract verification
+  bytes code_hash = 11;
 }
 
 // InstantiateContractProposal gov proposal content type to instantiate a
@@ -171,4 +179,40 @@ message UpdateInstantiateConfigProposal {
   // to be applied.
   repeated AccessConfigUpdate access_config_updates = 3
       [ (gogoproto.nullable) = false ];
+}
+
+// StoreAndInstantiateContractProposal gov proposal content type to store
+// and instantiate the contract.
+message StoreAndInstantiateContractProposal {
+  // Title is a short summary
+  string title = 1;
+  // Description is a human readable text
+  string description = 2;
+  // RunAs is the address that is passed to the contract's environment as sender
+  string run_as = 3;
+  // WASMByteCode can be raw or gzip compressed
+  bytes wasm_byte_code = 4 [ (gogoproto.customname) = "WASMByteCode" ];
+  // InstantiatePermission to apply on contract creation, optional
+  AccessConfig instantiate_permission = 5;
+  // UnpinCode code on upload, optional
+  bool unpin_code = 6;
+  // Admin is an optional address that can execute migrations
+  string admin = 7;
+  // Label is optional metadata to be stored with a constract instance.
+  string label = 8;
+  // Msg json encoded message to be passed to the contract on instantiation
+  bytes msg = 9 [ (gogoproto.casttype) = "RawContractMessage" ];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 10 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Source is the URL where the code is hosted
+  string source = 11;
+  // Builder is the docker image used to build the code deterministically, used
+  // for smart contract verification
+  string builder = 12;
+  // CodeHash is the SHA256 sum of the code outputted by builder, used for smart
+  // contract verification
+  bytes code_hash = 13;
 }

@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 )
 
 // Path contains two endpoints representing two chains connected over IBC
@@ -48,15 +49,21 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, ack []byte) error {
 			return err
 		}
 
-		if err := path.EndpointB.RecvPacket(packet); err != nil {
+		res, err := path.EndpointB.RecvPacketWithResult(packet)
+		if err != nil {
+			return err
+		}
+
+		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		if err != nil {
 			return err
 		}
 
 		if err := path.EndpointA.AcknowledgePacket(packet, ack); err != nil {
 			return err
 		}
-		return nil
 
+		return nil
 	}
 
 	pc = path.EndpointB.Chain.App.IBCKeeper.ChannelKeeper.GetPacketCommitment(path.EndpointB.Chain.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
@@ -67,9 +74,16 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, ack []byte) error {
 			return err
 		}
 
-		if err := path.EndpointA.RecvPacket(packet); err != nil {
+		res, err := path.EndpointA.RecvPacketWithResult(packet)
+		if err != nil {
 			return err
 		}
+
+		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		if err != nil {
+			return err
+		}
+
 		if err := path.EndpointB.AcknowledgePacket(packet, ack); err != nil {
 			return err
 		}

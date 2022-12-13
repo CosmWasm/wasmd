@@ -8,9 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -32,8 +29,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -197,37 +194,6 @@ func TestAppImportExport(t *testing.T) {
 	// delete persistent tx counter value
 	ctxA.KVStore(app.keys[wasm.StoreKey]).Delete(wasmtypes.TXCounterPrefix)
 
-	// reset contract code index in source DB for comparison with dest DB
-	dropContractHistory := func(s store.KVStore, keys ...[]byte) {
-		for _, key := range keys {
-			prefixStore := prefix.NewStore(s, key)
-			iter := prefixStore.Iterator(nil, nil)
-			for ; iter.Valid(); iter.Next() {
-				prefixStore.Delete(iter.Key())
-			}
-			iter.Close()
-		}
-	}
-	prefixes := [][]byte{wasmtypes.ContractCodeHistoryElementPrefix, wasmtypes.ContractByCodeIDAndCreatedSecondaryIndexPrefix}
-	dropContractHistory(ctxA.KVStore(app.keys[wasm.StoreKey]), prefixes...)
-	dropContractHistory(ctxB.KVStore(newApp.keys[wasm.StoreKey]), prefixes...)
-
-	normalizeContractInfo := func(ctx sdk.Context, app *WasmApp) {
-		var index uint64
-		app.WasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info wasmtypes.ContractInfo) bool {
-			created := &wasmtypes.AbsoluteTxPosition{
-				BlockHeight: uint64(0),
-				TxIndex:     index,
-			}
-			info.Created = created
-			store := ctx.KVStore(app.keys[wasm.StoreKey])
-			store.Set(wasmtypes.GetContractAddressKey(address), app.appCodec.MustMarshal(&info))
-			index++
-			return false
-		})
-	}
-	normalizeContractInfo(ctxA, app)
-	normalizeContractInfo(ctxB, newApp)
 	// diff both stores
 	for _, skp := range storeKeysPrefixes {
 		storeA := ctxA.KVStore(skp.A)

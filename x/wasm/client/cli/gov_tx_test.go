@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,6 +93,66 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
+
+func TestParseCodeInfoFlags(t *testing.T) {
+	correctSource := "https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/testdata/hackatom.wasm"
+	correctBuilderRef := "cosmwasm/workspace-optimizer:0.12.9"
+
+	wasmBin, err := os.ReadFile("../../keeper/testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	checksumStr := "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5"
+
+	specs := map[string]struct {
+		args   []string
+		expErr bool
+	}{
+		"source missing": {
+			args:   []string{"--builder=" + correctBuilderRef, "--code-hash=" + checksumStr},
+			expErr: true,
+		},
+		"builder missing": {
+			args:   []string{"--code-source-url=" + correctSource, "--code-hash=" + checksumStr},
+			expErr: true,
+		},
+		"code hash missing": {
+			args:   []string{"--code-source-url=" + correctSource, "--builder=" + correctBuilderRef},
+			expErr: true,
+		},
+		"source format wrong": {
+			args:   []string{"--code-source-url=" + "format_wrong", "--builder=" + correctBuilderRef, "--code-hash=" + checksumStr},
+			expErr: true,
+		},
+		"builder format wrong": {
+			args:   []string{"--code-source-url=" + correctSource, "--builder=" + "format//", "--code-hash=" + checksumStr},
+			expErr: true,
+		},
+		"code hash wrong": {
+			args:   []string{"--code-source-url=" + correctSource, "--builder=" + correctBuilderRef, "--code-hash=" + "AA"},
+			expErr: true,
+		},
+		"happy path, none set": {
+			args:   []string{},
+			expErr: false,
+		},
+		"happy path all set": {
+			args:   []string{"--code-source-url=" + correctSource, "--builder=" + correctBuilderRef, "--code-hash=" + checksumStr},
+			expErr: false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			flags := ProposalStoreCodeCmd().Flags()
+			require.NoError(t, flags.Parse(spec.args))
+			_, _, _, gotErr := parseVerificationFlags(wasmBin, flags)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
 		})
 	}
 }

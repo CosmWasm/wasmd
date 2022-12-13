@@ -106,6 +106,31 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		"all good": {
 			src: StoreCodeProposalFixture(),
 		},
+		"all good no code verification info": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Source = ""
+				p.Builder = ""
+				p.CodeHash = nil
+			}),
+		},
+		"source missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Source = ""
+			}),
+			expErr: true,
+		},
+		"builder missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.Builder = ""
+			}),
+			expErr: true,
+		},
+		"code hash missing": {
+			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
+				p.CodeHash = nil
+			}),
+			expErr: true,
+		},
 		"with instantiate permission": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
 				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
@@ -138,7 +163,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"wasm code invalid": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxWasmSize+1)
+				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxProposalWasmSize+1)
 			}),
 			expErr: true,
 		},
@@ -237,6 +262,145 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"init funds with duplicates": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+			}),
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
+	var (
+		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
+		invalidAddress                = "invalid address"
+	)
+
+	specs := map[string]struct {
+		src    *StoreAndInstantiateContractProposal
+		expErr bool
+	}{
+		"all good": {
+			src: StoreAndInstantiateContractProposalFixture(),
+		},
+		"all good no code verification info": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Source = ""
+				p.Builder = ""
+				p.CodeHash = nil
+			}),
+		},
+		"source missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Source = ""
+			}),
+			expErr: true,
+		},
+		"builder missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Builder = ""
+			}),
+			expErr: true,
+		},
+		"code hash missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.CodeHash = nil
+			}),
+			expErr: true,
+		},
+		"with instantiate permission": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				p.InstantiatePermission = &accessConfig
+			}),
+		},
+		"base data missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Title = ""
+			}),
+			expErr: true,
+		},
+		"run_as missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.RunAs = ""
+			}),
+			expErr: true,
+		},
+		"run_as invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.RunAs = invalidAddress
+			}),
+			expErr: true,
+		},
+		"wasm code missing": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.WASMByteCode = nil
+			}),
+			expErr: true,
+		},
+		"wasm code invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.WASMByteCode = bytes.Repeat([]byte{0x0}, MaxProposalWasmSize+1)
+			}),
+			expErr: true,
+		},
+		"with invalid instantiate permission": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.InstantiatePermission = &AccessConfig{}
+			}),
+			expErr: true,
+		},
+		"without admin": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Admin = ""
+			}),
+		},
+		"without init msg": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Msg = nil
+			}),
+			expErr: true,
+		},
+		"with invalid init msg": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Msg = []byte("not a json string")
+			}),
+			expErr: true,
+		},
+		"without init funds": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Funds = nil
+			}),
+		},
+		"admin invalid": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Admin = invalidAddress
+			}),
+			expErr: true,
+		},
+		"label empty": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Label = ""
+			}),
+			expErr: true,
+		},
+		"init funds negative": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+			}),
+			expErr: true,
+		},
+		"init funds with duplicates": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
 				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
 			}),
 			expErr: true,
@@ -533,6 +697,9 @@ func TestProposalStrings(t *testing.T) {
   Description: Bar
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   WasmCode:    0102030405060708090A
+  Source:      https://example.com/
+  Builder:     cosmwasm/workspace-optimizer:v0.12.8
+  Code Hash:   6E340B9CFFB37A989CA544E6BB780A2C78901D3FB33738768511A30617AFA01D
 `,
 		},
 		"instantiate contract": {
@@ -649,6 +816,9 @@ description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 wasm_byte_code: AQIDBAUGBwgJCg==
 instantiate_permission: null
+source: https://example.com/
+builder: cosmwasm/workspace-optimizer:v0.12.8
+code_hash: 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
 `,
 		},
 		"instantiate contract": {

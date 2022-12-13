@@ -41,7 +41,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		if err != nil {
 			return nil, sdkerrors.Wrapf(err, "address in contract number %d", i)
 		}
-		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState)
+		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState, contract.ContractCodeHistory)
 		if err != nil {
 			return nil, sdkerrors.Wrapf(err, "contract number %d", i)
 		}
@@ -107,12 +107,14 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			state = append(state, types.Model{Key: key, Value: value})
 			return false
 		})
-		// redact contract info
-		contract.Created = nil
+
+		contractCodeHistory := keeper.GetContractHistory(ctx, addr)
+
 		genState.Contracts = append(genState.Contracts, types.Contract{
-			ContractAddress: addr.String(),
-			ContractInfo:    contract,
-			ContractState:   state,
+			ContractAddress:     addr.String(),
+			ContractInfo:        contract,
+			ContractState:       state,
+			ContractCodeHistory: contractCodeHistory,
 		})
 		return false
 	})

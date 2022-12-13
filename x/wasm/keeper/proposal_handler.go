@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -49,6 +51,8 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 			return handleUnpinCodesProposal(ctx, k, *c)
 		case *types.UpdateInstantiateConfigProposal:
 			return handleUpdateInstantiateConfigProposal(ctx, k, *c)
+		case *types.StoreAndInstantiateContractProposal:
+			return handleStoreAndInstantiateContractProposal(ctx, k, *c)
 		default:
 			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
@@ -64,9 +68,13 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 	if err != nil {
 		return sdkerrors.Wrap(err, "run as address")
 	}
-	codeID, _, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
+	codeID, checksum, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
 	if err != nil {
 		return err
+	}
+
+	if len(p.CodeHash) != 0 && !bytes.Equal(checksum, p.CodeHash) {
+		return fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum)
 	}
 
 	// if code should not be pinned return earlier
@@ -92,6 +100,48 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 	}
 
 	_, data, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds)
+	if err != nil {
+		return err
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeGovContractResult,
+		sdk.NewAttribute(types.AttributeKeyResultDataHex, hex.EncodeToString(data)),
+	))
+	return nil
+}
+
+func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreAndInstantiateContractProposal) error {
+	if err := p.ValidateBasic(); err != nil {
+		return err
+	}
+	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
+	if err != nil {
+		return sdkerrors.Wrap(err, "run as address")
+	}
+	var adminAddr sdk.AccAddress
+	if p.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(p.Admin); err != nil {
+			return sdkerrors.Wrap(err, "admin")
+		}
+	}
+
+	codeID, checksum, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
+	if err != nil {
+		return err
+	}
+
+	if p.CodeHash != nil && !bytes.Equal(checksum, p.CodeHash) {
+		return sdkerrors.Wrap(fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum), "code-hash mismatch")
+	}
+
+	if !p.UnpinCode {
+		if err := k.PinCode(ctx, codeID); err != nil {
+			return err
+		}
+	}
+
+	_, data, err := k.Instantiate(ctx, codeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds)
 	if err != nil {
 		return err
 	}

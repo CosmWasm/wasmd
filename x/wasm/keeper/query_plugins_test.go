@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/store"
+
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	dbm "github.com/tendermint/tm-db"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
