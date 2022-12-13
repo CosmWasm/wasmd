@@ -120,7 +120,12 @@ func SetupWasmAppWithValSet(t *testing.T) *WasmApp {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
-	wasmApp := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, nil, balance)
+
+	baseAppOpts := []func(*bam.BaseApp){
+		bam.SetSnapshot(snapshotStore, snapshottypes.NewSnapshotOptions(50000, 2)),
+	}
+
+	wasmApp := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, "notional", baseAppOpts, balance)
 	return wasmApp
 }
 

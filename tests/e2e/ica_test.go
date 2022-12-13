@@ -48,7 +48,7 @@ func TestICA(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  icatypes.PortID,
+		PortID:  icatypes.HostPortID,
 		Version: icatypes.Version,
 		Order:   channeltypes.ORDERED,
 	}

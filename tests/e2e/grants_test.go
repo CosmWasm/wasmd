@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -84,7 +83,7 @@ func TestGrants(t *testing.T) {
 			grant, err := types.NewContractGrant(contractAddr, spec.limit, spec.filter)
 			require.NoError(t, err)
 			authorization := types.NewContractExecutionAuthorization(*grant)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, time.Now().Add(time.Hour))
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, nil) // TODO: add expiration
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)

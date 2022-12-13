@@ -256,13 +256,16 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	})
 	em := sdk.NewEventManager()
 
+	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
+	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
+
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	storedProposal, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
+	handler := govKeeper.LegacyRouter().GetRoute(src.ProposalRoute())
+	err = handler(ctx.WithEventManager(em), storedProposal)
 	require.NoError(t, err)
 
 	// then

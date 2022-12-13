@@ -392,7 +392,7 @@ func (endpoint *Endpoint) SendPacket(packet exported.PacketI) error {
 	channelCap := endpoint.Chain.GetChannelCapability(packet.GetSourcePort(), packet.GetSourceChannel())
 
 	// no need to send message, acting as a module
-	err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet)
+	_, err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet)
 	if err != nil {
 		return err
 	}
