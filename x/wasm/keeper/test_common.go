@@ -329,7 +329,6 @@ func createTestInput(
 	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
-
 	// set genesis items required for distribution
 	distKeeper.SetFeePool(ctx, distributiontypes.InitialFeePool())
 

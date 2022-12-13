@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,7 @@ import (
 var emptyWasmOpts []wasm.Option = nil
 
 func TestWasmdExport(t *testing.T) {
+	types.SDK47TODOs(t)
 	db := db.NewMemDB()
 	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
 
@@ -42,6 +45,8 @@ func TestWasmdExport(t *testing.T) {
 
 // ensure that blocked addresses are properly set in bank keeper
 func TestBlockedAddrs(t *testing.T) {
+	types.SDK47TODOs(t)
+
 	db := db.NewMemDB()
 	gapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
 
