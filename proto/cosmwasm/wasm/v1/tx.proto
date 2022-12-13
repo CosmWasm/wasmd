@@ -169,7 +169,7 @@ message MsgUpdateAdminResponse {}
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
-  // Sender is the that actor that signed the messages
+  // Sender is the actor that signed the messages
   string sender = 1;
   // Contract is the address of the smart contract
   string contract = 3;
@@ -184,7 +184,7 @@ message MsgUpdateInstantiateConfig {
   string sender = 1;
   // CodeID references the new WASM code
   uint64 code_id = 2 [ (gogoproto.customname) = "CodeID" ];
-  // NewInstantiatePermission access control to apply on contract creation
+  // NewInstantiatePermission is the new access control
   AccessConfig new_instantiate_permission = 3;
 }
 

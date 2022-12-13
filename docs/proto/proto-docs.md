@@ -1289,7 +1289,7 @@ MsgClearAdmin removes any admin stored for a smart contract
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 
 
@@ -1519,7 +1519,7 @@ MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
 | `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
-| `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission access control to apply on contract creation |
+| `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission is the new access control |
 
 
 

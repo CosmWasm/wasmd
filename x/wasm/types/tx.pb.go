@@ -615,7 +615,7 @@ var xxx_messageInfo_MsgUpdateAdminResponse proto.InternalMessageInfo
 
 // MsgClearAdmin removes any admin stored for a smart contract
 type MsgClearAdmin struct {
-	// Sender is the that actor that signed the messages
+	// Sender is the actor that signed the messages
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Contract is the address of the smart contract
 	Contract string `protobuf:"bytes,3,opt,name=contract,proto3" json:"contract,omitempty"`
@@ -706,7 +706,7 @@ type MsgUpdateInstantiateConfig struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// CodeID references the new WASM code
 	CodeID uint64 `protobuf:"varint,2,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
-	// NewInstantiatePermission access control to apply on contract creation
+	// NewInstantiatePermission is the new access control
 	NewInstantiatePermission *AccessConfig `protobuf:"bytes,3,opt,name=new_instantiate_permission,json=newInstantiatePermission,proto3" json:"new_instantiate_permission,omitempty"`
 }
 
