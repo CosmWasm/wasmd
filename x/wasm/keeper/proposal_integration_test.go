@@ -241,14 +241,14 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 
 	specs := map[string]struct {
 		srcAdmin string
-		expErr bool
+		expErr   bool
 	}{
 		"empty admin": {
 			srcAdmin: "",
 		},
 		"invalid admin": {
 			srcAdmin: "invalid",
-			expErr: true,
+			expErr:   true,
 		},
 	}
 	for name, spec := range specs {
