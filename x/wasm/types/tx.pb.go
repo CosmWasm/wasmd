@@ -704,7 +704,7 @@ var xxx_messageInfo_MsgClearAdminResponse proto.InternalMessageInfo
 type MsgUpdateInstantiateConfig struct {
 	// Sender is the that actor that signed the messages
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	// CodeID references the new WASM code
+	// CodeID references the stored WASM code
 	CodeID uint64 `protobuf:"varint,2,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 	// NewInstantiatePermission is the new access control
 	NewInstantiatePermission *AccessConfig `protobuf:"bytes,3,opt,name=new_instantiate_permission,json=newInstantiatePermission,proto3" json:"new_instantiate_permission,omitempty"`

@@ -406,7 +406,15 @@ func (msg MsgUpdateInstantiateConfig) Type() string {
 
 func (msg MsgUpdateInstantiateConfig) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return err
+		return sdkerrors.Wrap(err, "sender")
+	}
+
+	if msg.CodeID == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+	}
+
+	if msg.NewInstantiatePermission == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "instantiate permission is required")
 	}
 
 	if err := msg.NewInstantiatePermission.ValidateBasic(); err != nil {

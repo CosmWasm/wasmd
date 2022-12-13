@@ -1518,7 +1518,7 @@ MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
+| `code_id` | [uint64](#uint64) |  | CodeID references the stored WASM code |
 | `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission is the new access control |
 
 

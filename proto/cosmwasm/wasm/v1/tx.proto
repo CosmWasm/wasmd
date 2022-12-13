@@ -182,7 +182,7 @@ message MsgClearAdminResponse {}
 message MsgUpdateInstantiateConfig {
   // Sender is the that actor that signed the messages
   string sender = 1;
-  // CodeID references the new WASM code
+  // CodeID references the stored WASM code
   uint64 code_id = 2 [ (gogoproto.customname) = "CodeID" ];
   // NewInstantiatePermission is the new access control
   AccessConfig new_instantiate_permission = 3;
