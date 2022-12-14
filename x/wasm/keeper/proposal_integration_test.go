@@ -257,10 +257,10 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	em := sdk.NewEventManager()
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
-	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
+	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
 
 	// when stored
-	storedProposal, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
+	storedProposal, err := govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 	require.NoError(t, err)
 
 	// and proposal execute

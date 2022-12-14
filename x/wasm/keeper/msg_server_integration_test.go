@@ -41,7 +41,7 @@ func TestStoreCode(t *testing.T) {
 	validator := tmtypes.NewValidator(pubKey, 1)
 	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 
-	wasmApp := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, nil, balance)
+	wasmApp := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, "test-1", nil, balance)
 
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 	_, _, sender := testdata.KeyTestPubAddr()

@@ -391,8 +391,13 @@ func (endpoint *Endpoint) ChanCloseConfirm() error {
 func (endpoint *Endpoint) SendPacket(packet exported.PacketI) error {
 	channelCap := endpoint.Chain.GetChannelCapability(packet.GetSourcePort(), packet.GetSourceChannel())
 
+	timeoutHeight := clienttypes.Height{
+		RevisionNumber: packet.GetTimeoutHeight().GetRevisionNumber(),
+		RevisionHeight: packet.GetTimeoutHeight().GetRevisionHeight(),
+	}
+
 	// no need to send message, acting as a module
-	_, err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet)
+	_, err := endpoint.Chain.App.IBCKeeper.ChannelKeeper.SendPacket(endpoint.Chain.GetContext(), channelCap, packet.GetSourcePort(), packet.GetSourceChannel(), timeoutHeight, packet.GetTimeoutTimestamp(), packet.GetData())
 	if err != nil {
 		return err
 	}
