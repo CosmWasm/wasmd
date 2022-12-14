@@ -183,7 +183,7 @@ type TestKeepers struct {
 	ContractKeeper   types.ContractOpsKeeper
 	WasmKeeper       *Keeper
 	IBCKeeper        *ibckeeper.Keeper
-	Router           *baseapp.Router
+	Router           *baseapp.MsgServiceRouter
 	EncodingConfig   wasmappparams.EncodingConfig
 	Faucet           *TestFaucet
 	MultiStore       sdk.CommitMultiStore

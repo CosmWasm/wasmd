@@ -239,11 +239,19 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				),
 			}, true
 		},
-		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-			capturedPacket = packet
-			return nil
+
+		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+			capturedPacket = channeltypes.Packet{
+				Sequence:         1,
+				SourcePort:       sourceChannel,
+				SourceChannel:    sourceChannel,
+				TimeoutHeight:    timeoutHeight,
+				TimeoutTimestamp: timeoutTimestamp,
+			}
+			return 1, nil
 		},
 	}
+
 	capKeeper := &wasmtesting.MockCapabilityKeeper{
 		GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
 			return &capabilitytypes.Capability{}, true
@@ -266,13 +274,11 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			chanKeeper: chanKeeper,
 			capKeeper:  capKeeper,
 			expPacketSent: channeltypes.Packet{
-				Sequence:           1,
-				SourcePort:         ibcPort,
-				SourceChannel:      "channel-1",
-				DestinationPort:    "other-port",
-				DestinationChannel: "other-channel-1",
-				Data:               []byte("myData"),
-				TimeoutHeight:      clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
+				Sequence:      1,
+				SourcePort:    ibcPort,
+				SourceChannel: "channel-1",
+				Data:          []byte("myData"),
+				TimeoutHeight: clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2},
 			},
 		},
 		"sequence not found returns error": {
