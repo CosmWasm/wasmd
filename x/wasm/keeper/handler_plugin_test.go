@@ -243,7 +243,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 			capturedPacket = channeltypes.Packet{
 				Sequence:         1,
-				SourcePort:       sourceChannel,
+				SourcePort:       sourcePort,
 				SourceChannel:    sourceChannel,
 				TimeoutHeight:    timeoutHeight,
 				TimeoutTimestamp: timeoutTimestamp,
