@@ -29,7 +29,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/ibc-go/v5/testing/mock"
+	"github.com/cosmos/ibc-go/v6/testing/mock"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -121,11 +121,7 @@ func SetupWasmAppWithValSet(t *testing.T) *WasmApp {
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
-	baseAppOpts := []func(*bam.BaseApp){
-		bam.SetSnapshot(snapshotStore, snapshottypes.NewSnapshotOptions(50000, 2)),
-	}
-
-	wasmApp := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, "notional", baseAppOpts, balance)
+	wasmApp := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, "notional", nil, balance)
 	return wasmApp
 }
 

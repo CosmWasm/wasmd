@@ -10,7 +10,6 @@ require (
 	github.com/cosmos/cosmos-sdk v0.46.7
 	github.com/cosmos/gogoproto v1.4.2
 	github.com/cosmos/iavl v0.19.4
-	github.com/cosmos/ibc-go/v5 v5.1.0
 	github.com/cosmos/ibc-go/v6 v6.0.0
 	github.com/cosmos/interchain-accounts v0.4.2
 	github.com/docker/distribution v2.8.1+incompatible
