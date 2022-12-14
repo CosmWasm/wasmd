@@ -45,11 +45,11 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -57,7 +57,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -367,11 +367,11 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -379,7 +379,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -443,11 +443,11 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -455,7 +455,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -507,11 +507,11 @@ func ProposalSudoContractCmd() *cobra.Command {
 			contract := args[0]
 			sudoMsg := []byte(args[1])
 
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -519,7 +519,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -569,11 +569,11 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -581,7 +581,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -680,11 +680,11 @@ func ProposalPinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -692,7 +692,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -751,11 +751,11 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -763,7 +763,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			deposit, err = sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
