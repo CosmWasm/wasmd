@@ -163,6 +163,13 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		return nil, nil, sdkerrors.Wrapf(types.ErrEmpty, "ibc channel")
 	}
 
+	_, found := h.channelKeeper.GetNextSequenceSend(ctx, contractIBCPortID, contractIBCChannelID)
+	if !found {
+		return nil, nil, sdkerrors.Wrapf(channeltypes.ErrSequenceSendNotFound,
+			"source port: %s, source channel: %s", contractIBCPortID, contractIBCChannelID,
+		)
+	}
+
 	channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")

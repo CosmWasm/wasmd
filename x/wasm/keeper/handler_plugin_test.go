@@ -247,6 +247,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				SourceChannel:    sourceChannel,
 				TimeoutHeight:    timeoutHeight,
 				TimeoutTimestamp: timeoutTimestamp,
+				Data:             data,
 			}
 			return 1, nil
 		},
@@ -292,6 +293,13 @@ func TestIBCRawPacketHandler(t *testing.T) {
 					return 0, false
 				},
 			},
+
+			capKeeper: wasmtesting.MockCapabilityKeeper{
+				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
+					return nil, false
+				},
+			},
+
 			expErr: channeltypes.ErrSequenceSendNotFound,
 		},
 		"capability not found returns error": {

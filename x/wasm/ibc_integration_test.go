@@ -17,7 +17,7 @@ import (
 )
 
 func TestOnChanOpenInitVersion(t *testing.T) {
-	const startVersion = "v1"
+	const startVersion = "v2"
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
 		expVersion  string
