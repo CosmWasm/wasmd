@@ -7,6 +7,7 @@ LEDGER_ENABLED ?= true
 SDK_PACK := $(shell go list -m github.com/cosmos/cosmos-sdk | sed  's/ /\@/g')
 BINDIR ?= $(GOPATH)/bin
 SIMAPP = ./app
+BUILDDIR ?= $(CURDIR)/build
 
 # for dockerized protobuf tools
 DOCKER := $(shell which docker)
@@ -72,6 +73,23 @@ ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags_comma_sep)" -ldflags '$(ldflags)' -trimpath
+
+build-reproducible-amd64: go.sum $(BUILDDIR)/
+	$(DOCKER) buildx create --name wasmbuilder || true
+	$(DOCKER) buildx use wasmbuilder
+	$(DOCKER) buildx build \
+		--build-arg GO_VERSION=$(GO_VERSION) \
+		--build-arg GIT_VERSION=$(VERSION) \
+		--build-arg GIT_COMMIT=$(COMMIT) \
+		--build-arg RUNNER_IMAGE=alpine:3.16 \
+		--platform linux/amd64 \
+		-t wasmd:local-amd64 \
+		--load \
+		-f Dockerfile .
+	$(DOCKER) rm -f temp || true
+	$(DOCKER) create -ti --name temp wasmd:local-amd64
+	$(DOCKER) cp temp:/usr/bin/wasmd $(BUILDDIR)/wasmd-linux-amd64
+	$(DOCKER) rm -f temp
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
