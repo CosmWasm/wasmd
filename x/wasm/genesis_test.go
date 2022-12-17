@@ -16,8 +16,8 @@ func TestInitGenesis(t *testing.T) {
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
+	h := data.module.Route().Handler()         //nolint:staticcheck // SA1019: data.module.Route is deprecated: use LegacyQuerierHandler instead. (staticcheck)
+	q := data.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead. (staticcheck)
 
 	msg := MsgStoreCode{
 		Sender:       creator.String(),
@@ -77,10 +77,10 @@ func TestInitGenesis(t *testing.T) {
 
 	// create new app to import genstate into
 	newData := setupTest(t)
-	q2 := newData.module.LegacyQuerierHandler(nil)
+	q2 := newData.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead. (staticcheck)
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, &newData.keeper, *genState)
+	InitGenesis(newData.ctx, &newData.keeper, *genState) //nolint:staticcheck // SA1019: data.module.Route is deprecated: use LegacyQuerierHandler instead. (staticcheck)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
 	assertCodeList(t, q2, newData.ctx, 1)

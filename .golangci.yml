@@ -22,7 +22,6 @@ linters:
     - prealloc
     - exportloopref
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert

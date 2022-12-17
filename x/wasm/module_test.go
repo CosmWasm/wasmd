@@ -117,8 +117,8 @@ func TestHandleCreate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			data := setupTest(t)
 
-			h := data.module.Route().Handler()
-			q := data.module.LegacyQuerierHandler(nil)
+			h := data.module.Route().Handler()         //nolint:staticcheck // SA1019: data.module.Route().Handler is deprecated: use LegacyHandler instead
+			q := data.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead
 
 			res, err := h(data.ctx, tc.msg)
 			if !tc.isValid {
@@ -148,8 +148,8 @@ func TestHandleInstantiate(t *testing.T) {
 	data := setupTest(t)
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
 
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
+	h := data.module.Route().Handler()         //nolint:staticcheck // SA1019: data.module.Route().Handler is deprecated: use LegacyHandler instead
+	q := data.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead
 
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
@@ -211,8 +211,8 @@ func TestHandleExecute(t *testing.T) {
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
+	h := data.module.Route().Handler()         //nolint:staticcheck // SA1019: data.module.Route().Handler is deprecated: use LegacyHandler instead
+	q := data.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead
 
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
@@ -348,7 +348,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000))
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	h := data.module.Route().Handler()
+	h := data.module.Route().Handler() //nolint:staticcheck // SA1019: data.module.Route is deprecated: use data.module.Routes instead
 
 	msg := &MsgStoreCode{
 		Sender:       creator.String(),
