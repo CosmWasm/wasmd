@@ -354,7 +354,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
-	res, err := h(data.ctx, msg)
+	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -372,7 +372,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Funds:  deposit,
 		Label:  "testing",
 	}
-	res, err = h(data.ctx, &initCmd)
+	res, err := h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)

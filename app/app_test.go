@@ -89,22 +89,3 @@ func TestGetEnabledProposals(t *testing.T) {
 		})
 	}
 }
-
-func setGenesis(gapp *WasmApp) error {
-	genesisState := NewDefaultGenesisState()
-	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	if err != nil {
-		return err
-	}
-
-	// Initialize the chain
-	gapp.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
-
-	gapp.Commit()
-	return nil
-}
