@@ -29,7 +29,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -45,11 +45,11 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -57,7 +57,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -163,7 +163,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -180,11 +180,11 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -192,7 +192,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -345,8 +345,8 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck // SA1019: cli.FlagTitle is deprecated: use FlagTitle
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck // SA1019: cli.FlagDescription is deprecated: use FlagDescription
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 	return cmd
 }
@@ -357,7 +357,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 		Short: "Submit a migrate wasm contract to a new code version proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -367,11 +367,11 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -379,7 +379,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -420,7 +420,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 		Short: "Submit a execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -443,11 +443,11 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			if len(runAs) == 0 {
 				return errors.New("run-as address is required")
 			}
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -455,7 +455,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -499,7 +499,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 		Short: "Submit a sudo wasm contract proposal (to call privileged commands)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -507,11 +507,11 @@ func ProposalSudoContractCmd() *cobra.Command {
 			contract := args[0]
 			sudoMsg := []byte(args[1])
 
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -519,7 +519,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -559,7 +559,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 		Short: "Submit a new admin for a contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
@@ -569,11 +569,11 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -581,7 +581,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -675,16 +675,16 @@ func ProposalPinCodesCmd() *cobra.Command {
 		Short: "Submit a pin code proposal for pinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -692,7 +692,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -746,16 +746,16 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 		Short: "Submit a unpin code proposal for unpinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, _, _, _, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			proposalTitle, err = cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal title: %s", err)
 			}
-			proposalDescr, err = cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 			if err != nil {
 				return fmt.Errorf("proposal description: %s", err)
 			}
@@ -763,7 +763,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("deposit: %s", err)
 			}
-			deposit, err = sdk.ParseCoinsNormalized(depositArg)
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
 			if err != nil {
 				return err
 			}
@@ -923,12 +923,12 @@ func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Co
 		return client.Context{}, "", "", nil, err
 	}
 
-	proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+	proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck // SA1019: cli.FlagTitle is deprecated: use FlagTitle instead. (staticcheck)
 	if err != nil {
 		return clientCtx, proposalTitle, "", nil, err
 	}
 
-	proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+	proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck // SA1019: cli.FlagDescription is deprecated: use FlagDescription instead. (staticcheck)
 	if err != nil {
 		return client.Context{}, proposalTitle, proposalDescr, nil, err
 	}
