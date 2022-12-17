@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const invalidAddress = "invalid address"
+
 func TestValidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
@@ -96,7 +98,7 @@ func TestValidateProposalCommons(t *testing.T) {
 func TestValidateStoreCodeProposal(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
+		invalidAddress                = invalidAddress
 	)
 
 	specs := map[string]struct {
@@ -187,7 +189,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	invalidAddress := invalidAddress
 
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
@@ -280,8 +282,6 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContract2Proposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContract2Proposal
 		expErr bool
@@ -381,7 +381,7 @@ func TestValidateInstantiateContract2Proposal(t *testing.T) {
 func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
+		invalidAddress                = invalidAddress
 	)
 
 	specs := map[string]struct {
@@ -577,7 +577,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	invalidAddress := invalidAddress
 
 	specs := map[string]struct {
 		src    *SudoContractProposal
@@ -630,7 +630,7 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	invalidAddress := invalidAddress
 
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
@@ -689,7 +689,7 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	invalidAddress := invalidAddress
 
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
@@ -742,7 +742,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	invalidAddress := invalidAddress
 
 	specs := map[string]struct {
 		src    *ClearAdminProposal

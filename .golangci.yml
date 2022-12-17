@@ -19,7 +19,6 @@ linters:
     - ineffassign
     - misspell
     - nakedret
-    - prealloc
     - exportloopref
     - staticcheck
     - stylecheck

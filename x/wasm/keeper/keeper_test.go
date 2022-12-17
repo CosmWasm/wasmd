@@ -1050,6 +1050,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 

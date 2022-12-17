@@ -15,7 +15,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
-var emptyWasmOpts []wasm.Option = nil
+var emptyWasmOpts []wasm.Option
 
 func TestWasmdExport(t *testing.T) {
 	db := db.NewMemDB()

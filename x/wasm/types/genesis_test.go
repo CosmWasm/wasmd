@@ -37,7 +37,7 @@ func TestValidateGenesisState(t *testing.T) {
 		},
 		"contract invalid": {
 			srcMutator: func(s *GenesisState) {
-				s.Contracts[0].ContractAddress = "invalid"
+				s.Contracts[0].ContractAddress = "invalid" //nolint:goconst
 			},
 			expError: true,
 		},
