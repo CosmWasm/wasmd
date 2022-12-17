@@ -1,11 +1,10 @@
 run:
-  tests: false
+  tests: true
 
 linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - errcheck
@@ -28,7 +27,6 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck
 
 issues:
   exclude-rules:
