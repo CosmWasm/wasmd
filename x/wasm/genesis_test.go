@@ -80,7 +80,7 @@ func TestInitGenesis(t *testing.T) {
 	q2 := newData.module.LegacyQuerierHandler(nil) //nolint:staticcheck // SA1019: data.module.LegacyQuerierHandler is deprecated: use LegacyQuerierHandler instead. (staticcheck)
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, &newData.keeper, *genState) //nolint:staticcheck // SA1019: data.module.Route is deprecated: use LegacyQuerierHandler instead. (staticcheck)
+	InitGenesis(newData.ctx, &newData.keeper, *genState) //nolint:staticcheck,errcheck // SA1019: data.module.Route is deprecated: use LegacyQuerierHandler instead. (staticcheck)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
 	assertCodeList(t, q2, newData.ctx, 1)

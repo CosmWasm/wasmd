@@ -264,7 +264,8 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, deposit, data.bankKeeper.GetAllBalances(data.ctx, creatorAcct.GetAddress()))
 
 	// ensure contract has updated balance
-	contractAddr, _ := sdk.AccAddressFromBech32(contractBech32Addr)
+	contractAddr, err := sdk.AccAddressFromBech32(contractBech32Addr)
+	require.NoError(t, err)
 	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, deposit, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
@@ -401,7 +402,8 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	assert.Equal(t, deposit.Add(topUp...), balance)
 
 	// ensure contract has updated balance
-	contractAddr, _ := sdk.AccAddressFromBech32(contractBech32Addr)
+	contractAddr, err := sdk.AccAddressFromBech32(contractBech32Addr)
+	require.NoError(t, err)
 	contractAcct := data.acctKeeper.GetAccount(data.ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
