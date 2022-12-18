@@ -594,7 +594,7 @@ func NewWasmApp(
 	)
 
 	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
-	//app.InterTxKeeper = intertxkeeper.NewKeeper(
+	// app.InterTxKeeper = intertxkeeper.NewKeeper(
 	//	appCodec,
 	//	keys[intertxtypes.StoreKey],
 	//	app.ICAControllerKeeper,
@@ -710,7 +710,7 @@ func NewWasmApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
-		//intertx.NewAppModule(appCodec, app.InterTxKeeper),
+		// intertx.NewAppModule(appCodec, app.InterTxKeeper),
 		//
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -916,8 +916,8 @@ func (app *WasmApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.R
 	return app.ModuleManager.EndBlock(ctx, req)
 }
 
-func (a *WasmApp) Configurator() module.Configurator {
-	return a.configurator
+func (app *WasmApp) Configurator() module.Configurator {
+	return app.configurator
 }
 
 // InitChainer application update at chain initialization

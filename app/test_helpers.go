@@ -256,7 +256,7 @@ func ModuleAccountAddrs() map[string]bool {
 	return BlockedAddresses()
 }
 
-var emptyWasmOptions []wasm.Option = nil
+var emptyWasmOptions []wasm.Option
 
 // NewTestNetworkFixture returns a new WasmApp AppConstructor for network simulation tests
 func NewTestNetworkFixture() network.TestFixture {
