@@ -550,7 +550,7 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uin
 	require.NoError(t, err)
 
 	hasAddrs := make([]string, len(res))
-	for i, r := range res {
+	for i, r := range res { //nolint:gosimple
 		hasAddrs[i] = r
 	}
 

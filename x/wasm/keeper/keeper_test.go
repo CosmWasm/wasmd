@@ -2231,6 +2231,8 @@ func TestIteratorContractByCreator(t *testing.T) {
 	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 
 	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	require.NoError(t, err)
+
 	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 
 	require.NoError(t, err)

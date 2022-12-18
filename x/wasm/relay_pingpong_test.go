@@ -199,7 +199,7 @@ var ( // store keys
 	maxValueKey     = []byte("max-value")
 )
 
-func (p player) loadEndpoints(store prefix.Store, channelID string) *connectedChannelsModel {
+func (p player) loadEndpoints(store prefix.Store, channelID string) *connectedChannelsModel { //nolint:unused // used in tests
 	var counterparties []connectedChannelsModel
 	if bz := store.Get(ibcEndpointsKey); bz != nil {
 		require.NoError(p.t, json.Unmarshal(bz, &counterparties))
