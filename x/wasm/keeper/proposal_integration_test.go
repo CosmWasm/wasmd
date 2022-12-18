@@ -159,8 +159,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label        string         = "label"
-		salt         []byte         = []byte("mySalt")
+		label                       = "label"
+		salt                        = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
@@ -452,10 +452,8 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.BeneficiaryAddr.String(),
 	}
 
-	em := sdk.NewEventManager()
-
 	// fails on store - this doesn't have permission
-	storedProposal, err := govKeeper.SubmitProposal(ctx, &badSrc)
+	_, err = govKeeper.SubmitProposal(ctx, &badSrc)
 	require.Error(t, err)
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
@@ -470,10 +468,10 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.VerifierAddr.String(),
 	}
 
-	em = sdk.NewEventManager()
+	em := sdk.NewEventManager()
 
 	// when stored
-	storedProposal, err = govKeeper.SubmitProposal(ctx, &src)
+	storedProposal, err := govKeeper.SubmitProposal(ctx, &src)
 	require.NoError(t, err)
 
 	// and proposal execute
