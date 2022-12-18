@@ -1092,7 +1092,8 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	}()
 
 	// this should throw out of gas exception (panic)
-	_, _ = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 

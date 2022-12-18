@@ -441,7 +441,8 @@ func TestQueryContractHistory(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 
-			cAddr, _ := sdk.AccAddressFromBech32(myContractBech32Addr)
+			cAddr, err := sdk.AccAddressFromBech32(myContractBech32Addr)
+			require.NoError(t, err)
 			keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...)
 
 			// when

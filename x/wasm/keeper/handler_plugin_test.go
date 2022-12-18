@@ -64,7 +64,8 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 			handlers: []Messenger{
 				&wasmtesting.MockMessageHandler{
 					DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-						_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
+						_, data, err = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
+						require.NoError(t, err)
 						return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
 					},
 				},
