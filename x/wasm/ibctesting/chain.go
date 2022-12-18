@@ -497,8 +497,8 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	// MakeCommit expects a signer array in the same order as the validator array.
 	// Thus we iterate over the ordered validator set and construct a signer array
 	// from the signer map in the same order.
-	signerArr := make([]tmtypes.PrivValidator, len(tmValSet.Validators))
-	for i, v := range tmValSet.Validators {
+	signerArr := make([]tmtypes.PrivValidator, len(tmValSet.Validators)) //nolint:staticcheck // TODO: determine if there's really a possible nil pointer dereference
+	for i, v := range tmValSet.Validators {                              //nolint:staticcheck // TODO: determine if there's really a possible nil pointer dereference
 		signerArr[i] = signers[v.Address.String()]
 	}
 
