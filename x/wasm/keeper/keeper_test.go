@@ -846,7 +846,7 @@ func TestExecute(t *testing.T) {
 	em := sdk.NewEventManager()
 	// when
 	res, err := keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, fred, []byte(`{"release":{}}`), topUp)
-	diff := time.Now().Sub(start)
+	diff := time.Since(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
@@ -2245,15 +2245,20 @@ func TestIteratorContractByCreator(t *testing.T) {
 
 	depositContract := sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000)))
 
-	gotAddr1, _, _ := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	gotAddr1, _, err := keepers.ContractKeeper.Instantiate(parentCtx, contract1ID, mockAddress1, nil, initMsgBz, "label", depositContract)
+	require.NoError(t, err)
 	ctx := parentCtx.WithBlockHeight(parentCtx.BlockHeight() + 1)
-	gotAddr2, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr2, _, err := keepers.ContractKeeper.Instantiate(ctx, contract1ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	require.NoError(t, err)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	gotAddr3, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	gotAddr3, _, err := keepers.ContractKeeper.Instantiate(ctx, contract1ID, gotAddr1, nil, initMsgBz, "label", depositContract)
+	require.NoError(t, err)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	gotAddr4, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr4, _, err := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	require.NoError(t, err)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	gotAddr5, _, _ := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	gotAddr5, _, err := keepers.ContractKeeper.Instantiate(ctx, contract2ID, mockAddress2, nil, initMsgBz, "label", depositContract)
+	require.NoError(t, err)
 
 	specs := map[string]struct {
 		creatorAddr   sdk.AccAddress

@@ -45,7 +45,8 @@ func TestLegacyQueryContractState(t *testing.T) {
 		{Key: []byte("foo"), Value: []byte(`"bar"`)},
 		{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
 	}
-	keeper.importContractState(ctx, addr, contractModel)
+	err = keeper.importContractState(ctx, addr, contractModel)
+	require.NoError(t, err)
 
 	// this gets us full error, not redacted sdk.Error
 	var defaultQueryGasLimit sdk.Gas = 3000000

@@ -80,7 +80,7 @@ func TestGenesisExportImport(t *testing.T) {
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
-		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels) //nolint:errcheck // we might actually want to check this error?
 	}
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
@@ -118,7 +118,8 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	_, err = InitGenesis(dstCtx, dstKeeper, importState)
+	require.NoError(t, err)
 
 	// compare whole DB
 	for j := range srcStoreKeys {

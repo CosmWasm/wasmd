@@ -102,7 +102,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = "testing" //nolint:goconst
 	})
 	em := sdk.NewEventManager()
 

@@ -244,7 +244,7 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, ms
 	if err := json.Unmarshal(packet.Data, &receivedBall); err != nil {
 		return &wasmvmtypes.IBCReceiveResult{
 			Ok: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: hitAcknowledgement{Error: err.Error()}.GetBytes(),
+				Acknowledgement: HitAcknowledgement{Error: err.Error()}.GetBytes(),
 			},
 			// no hit msg, we stop the game
 		}, 0, nil
@@ -290,7 +290,7 @@ func (p player) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wa
 		return nil, 0, err
 	}
 
-	var ack hitAcknowledgement
+	var ack HitAcknowledgement
 	if err := json.Unmarshal(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
@@ -357,21 +357,21 @@ func (h Hit) String() string {
 	return fmt.Sprintf("Ball %s", string(h.GetBytes()))
 }
 
-func (h Hit) BuildAck() hitAcknowledgement {
-	return hitAcknowledgement{Success: &h}
+func (h Hit) BuildAck() HitAcknowledgement {
+	return HitAcknowledgement{Success: &h}
 }
 
-func (h Hit) BuildError(errMsg string) hitAcknowledgement {
-	return hitAcknowledgement{Error: errMsg}
+func (h Hit) BuildError(errMsg string) HitAcknowledgement {
+	return HitAcknowledgement{Error: errMsg}
 }
 
 // hitAcknowledgement is ibc acknowledgment payload
-type hitAcknowledgement struct {
+type HitAcknowledgement struct {
 	Error   string `json:"error,omitempty"`
 	Success *Hit   `json:"success,omitempty"`
 }
 
-func (a hitAcknowledgement) GetBytes() []byte {
+func (a HitAcknowledgement) GetBytes() []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
 		panic(err)
