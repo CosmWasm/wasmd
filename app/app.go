@@ -127,9 +127,9 @@ import (
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. It has no known issues, but do your own research before using it.
-	// intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
-	// intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
-	// intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
+	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
+	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -230,7 +230,7 @@ var (
 		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		// intertx.AppModuleBasic{},
+		intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 	)
 
@@ -278,7 +278,7 @@ type WasmApp struct {
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	CrisisKeeper          *crisiskeeper.Keeper
-	UpgradeKeeper         upgradekeeper.Keeper
+	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
@@ -291,9 +291,9 @@ type WasmApp struct {
 	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
-	// InterTxKeeper       intertxkeeper.Keeper
-	TransferKeeper ibctransferkeeper.Keeper
-	WasmKeeper     wasm.Keeper
+	InterTxKeeper       intertxkeeper.Keeper
+	TransferKeeper      ibctransferkeeper.Keeper
+	WasmKeeper          wasm.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -346,7 +346,7 @@ func NewWasmApp(
 		ibchost.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasm.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		// intertxtypes.StoreKey,
+		intertxtypes.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)

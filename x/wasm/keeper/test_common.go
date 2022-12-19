@@ -453,7 +453,7 @@ func createTestInput(
 func TestHandler(k types.ContractOpsKeeper) MessageRouter {
 	return MessageRouterFunc(func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
-		switch msg := msg.(type) {
+		switch msg := msg.(type) { //nolint:typecheck
 		case *types.MsgStoreCode:
 			return handleStoreCode(ctx, k, msg)
 		case *types.MsgInstantiateContract:

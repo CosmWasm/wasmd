@@ -5,14 +5,12 @@ go 1.19
 require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.47.0-alpha2
+	github.com/cosmos/cosmos-sdk v0.47.0-alpha2.0.20221216140705-ee8890cf30e7
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
-	github.com/cosmos/ibc-go/v6 v6.0.0-20221207130030-e86ca8ba4091
+	github.com/cosmos/ibc-go/v6 v6.0.0-20221215180413-3226aeb0207c
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
-
-	//github.com/cosmos/interchain-accounts v0.2.4
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/golang/protobuf v1.5.2
@@ -37,10 +35,11 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.2.5
+	cosmossdk.io/api v0.2.6
 	cosmossdk.io/core v0.3.2
 	cosmossdk.io/math v1.0.0-beta.4
-	cosmossdk.io/tools/rosetta v0.1.0
+	cosmossdk.io/tools/rosetta v0.2.0
+	github.com/cosmos/interchain-accounts v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -66,12 +65,12 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/coinbase/rosetta-sdk-go v0.8.2 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
-	github.com/cosmos/btcutil v1.0.4 // indirect
+	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.12.0 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
+	github.com/cosmos/rosetta-sdk-go v0.9.0 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -123,6 +122,7 @@ require (
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/manifoldco/promptui v0.9.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
@@ -141,6 +141,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rs/cors v1.8.2 // indirect
+	github.com/rs/zerolog v1.28.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -148,6 +149,7 @@ require (
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
+	github.com/tidwall/btree v1.5.2 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
 	github.com/zondax/hid v0.9.1 // indirect
 	github.com/zondax/ledger-go v0.14.0 // indirect
@@ -175,7 +177,8 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Update to rosetta-sdk-go temporarly to have `check:spec` passing. See https://github.com/coinbase/rosetta-sdk-go/issues/449
 	github.com/coinbase/rosetta-sdk-go => github.com/coinbase/rosetta-sdk-go v0.8.2-0.20221007214527-e03849ba430a
-	//github.com/confio/ics23/go => github.com/cosmos/ics23/go v0.9.1-0.20221207110826-9919ce9aecd1
+	github.com/cosmos/ibc-go/v6 => github.com/notional-labs/ibc-go/v6 v6.0.0-20221218165119-c6d4224d1dac
+	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20221219113107-f3037dc7defb
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0

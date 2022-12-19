@@ -262,7 +262,7 @@ var emptyWasmOptions []wasm.Option
 func NewTestNetworkFixture() network.TestFixture {
 	app := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.EmptyAppOptions{}, emptyWasmOptions)
 
-	appCtr := func(val testutil.Validator) servertypes.Application {
+	appCtr := func(val network.ValidatorI) servertypes.Application {
 		return NewWasmApp(
 			val.GetCtx().Logger, dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals,
 			simtestutil.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir),
