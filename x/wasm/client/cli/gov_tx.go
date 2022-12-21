@@ -150,7 +150,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress, cmd.Flags())
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.FromAddress, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -188,7 +188,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
@@ -211,7 +211,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.FromAddress, cmd.Flags())
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.FromAddress, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -330,6 +330,23 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				return fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
 			}
 
+			if adminStr != "" {
+				addr, err := sdk.AccAddressFromBech32(adminStr)
+				if err != nil {
+					info, err := clientCtx.Keyring.Key(adminStr)
+					if err != nil {
+						return fmt.Errorf("admin %s", err)
+					}
+					admin, err := info.GetAddress()
+					if err != nil {
+						return fmt.Errorf("admin %s", err)
+					}
+					adminStr = admin.String()
+				} else {
+					adminStr = addr.String()
+				}
+			}
+
 			content := types.StoreAndInstantiateContractProposal{
 				Title:                 proposalTitle,
 				Description:           proposalDescr,
@@ -370,7 +387,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
