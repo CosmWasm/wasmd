@@ -71,7 +71,7 @@ func (i IBCHandler) OnChanOpenInit(
 	if err != nil {
 		return "", err
 	}
-	if acceptedVersion == "" {
+	if acceptedVersion == "" { // accept incoming version when nothing returned by contract
 		acceptedVersion = version
 	}
 
