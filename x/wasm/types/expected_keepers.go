@@ -1,6 +1,8 @@
 package types
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -46,8 +48,7 @@ type AccountKeeper interface {
 
 // DistributionKeeper defines a subset of methods implemented by the cosmos-sdk distribution keeper
 type DistributionKeeper interface {
-	CalculateDelegationRewards(ctx sdk.Context, val stakingtypes.ValidatorI, del stakingtypes.DelegationI, endingPeriod uint64) (rewards sdk.DecCoins)
-	GetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress) (rewards distrtypes.ValidatorCurrentRewards)
+	DelegationRewards(c context.Context, req *distrtypes.QueryDelegationRewardsRequest) (*distrtypes.QueryDelegationRewardsResponse, error)
 }
 
 // StakingKeeper defines a subset of methods implemented by the cosmos-sdk staking keeper
