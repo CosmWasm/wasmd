@@ -401,8 +401,6 @@ func TestReinvest(t *testing.T) {
 }
 
 func TestQueryStakingInfo(t *testing.T) {
-	wasmtypes.SDK47TODOs(t)
-
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
@@ -581,7 +579,6 @@ func TestQueryStakingInfo(t *testing.T) {
 }
 
 func TestQueryStakingPlugin(t *testing.T) {
-	wasmtypes.SDK47TODOs(t)
 	// STEP 1: take a lot of setup from TestReinvest so we have non-zero info
 	initInfo := initializeStaking(t)
 	ctx, valAddr, contractAddr := initInfo.ctx, initInfo.valAddr, initInfo.contractAddr
@@ -623,7 +620,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 			Validator: valAddr.String(),
 		},
 	}
-	raw, err := StakingQuerier(stakingKeeper, distKeeper)(ctx, &query)
+	raw, err := StakingQuerier(stakingKeeper, distributionkeeper.NewQuerier(distKeeper))(ctx, &query)
 	require.NoError(t, err)
 	var res wasmvmtypes.DelegationResponse
 	mustParse(t, raw, &res)

@@ -381,7 +381,7 @@ func createTestInput(
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
-		distKeeper,
+		distributionkeeper.NewQuerier(distKeeper),
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,
