@@ -40,6 +40,7 @@ require (
 	cosmossdk.io/math v1.0.0-beta.4
 	cosmossdk.io/tools/rosetta v0.2.0
 	github.com/cosmos/interchain-accounts v0.0.0-00010101000000-000000000000
+
 )
 
 require (
@@ -177,7 +178,6 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// Update to rosetta-sdk-go temporarly to have `check:spec` passing. See https://github.com/coinbase/rosetta-sdk-go/issues/449
 	github.com/coinbase/rosetta-sdk-go => github.com/coinbase/rosetta-sdk-go v0.8.2-0.20221007214527-e03849ba430a
-	github.com/cosmos/ibc-go/v6 => github.com/notional-labs/ibc-go/v6 v6.0.0-20221218165119-c6d4224d1dac
 	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20221219113107-f3037dc7defb
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
