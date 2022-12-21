@@ -278,7 +278,7 @@ type WasmApp struct {
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	CrisisKeeper          *crisiskeeper.Keeper
-	UpgradeKeeper         upgradekeeper.Keeper
+	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
@@ -354,7 +354,7 @@ func NewWasmApp(
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(bApp, appOpts, appCodec, logger, keys); err != nil {
-		fmt.Printf("failed to load state streaming: %s", err)
+		logger.Error("failed to load state streaming", "err", err)
 		os.Exit(1)
 	}
 
@@ -858,7 +858,8 @@ func NewWasmApp(
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
-			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))
+			logger.Error("error on loading last version", "err", err)
+			os.Exit(1)
 		}
 		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
