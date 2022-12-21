@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -616,7 +618,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
 }
 
-func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	t.Helper()
 	tempDir, err := os.MkdirTemp("", "wasm")
 	require.NoError(t, err)

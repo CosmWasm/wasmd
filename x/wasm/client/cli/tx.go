@@ -339,7 +339,11 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 			if err != nil {
 				return nil, fmt.Errorf("admin %s", err)
 			}
-			adminStr = info.GetAddress().String()
+			admin, err := info.GetAddress()
+			if err != nil {
+				return nil, err
+			}
+			adminStr = admin.String()
 		} else {
 			adminStr = addr.String()
 		}
@@ -453,6 +457,14 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 			maxCalls, err := cmd.Flags().GetUint64(flagMaxCalls)
 			if err != nil {
 				return err
+			}
+
+			exp, err := cmd.Flags().GetInt64(flagExpiration)
+			if err != nil {
+				return err
+			}
+			if exp == 0 {
+				return errors.New("expiration must be set")
 			}
 
 			allowAllMsgs, err := cmd.Flags().GetBool(flagAllowAllMsgs)
