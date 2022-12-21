@@ -338,6 +338,9 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 						return fmt.Errorf("admin %s", err)
 					}
 					admin, err := info.GetAddress()
+					if err != nil {
+						return fmt.Errorf("admin %s", err)
+					}
 					adminStr = admin.String()
 				} else {
 					adminStr = addr.String()
