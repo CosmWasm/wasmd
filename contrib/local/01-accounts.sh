@@ -12,7 +12,7 @@ NEW_ACCOUNT=$(wasmd keys show fred -a)
 wasmd q bank balances "$NEW_ACCOUNT" -o json || true
 
 echo "## Transfer tokens"
-wasmd tx bank send validator "$NEW_ACCOUNT" 1ustake --gas 1000000 -y --chain-id=testing --node=http://localhost:26657 -b block -o json | jq
+wasmd tx bank send validator "$NEW_ACCOUNT" 1ustake --gas 1000000 -y --chain-id=testing --node=http://localhost:26657 -b sync -o json | jq
 
 echo "## Check balance again"
 wasmd q bank balances "$NEW_ACCOUNT" -o json | jq
