@@ -36,7 +36,11 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 			Value: uint64(i),
 		}
 	}
-
+	fixture.GenMsgs = []GenesisState_GenMsgs{
+		{Sum: &GenesisState_GenMsgs_StoreCode{StoreCode: MsgStoreCodeFixture()}},
+		{Sum: &GenesisState_GenMsgs_InstantiateContract{InstantiateContract: MsgInstantiateContractFixture()}},
+		{Sum: &GenesisState_GenMsgs_ExecuteContract{ExecuteContract: MsgExecuteContractFixture()}},
+	}
 	for _, m := range mutators {
 		m(&fixture)
 	}

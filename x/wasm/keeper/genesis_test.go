@@ -1,15 +1,16 @@
 package keeper
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-	"cosmossdk.io/api/tendermint/abci"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -25,7 +26,9 @@ import (
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
@@ -121,7 +124,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -149,8 +152,10 @@ func TestGenesisInit(t *testing.T) {
 
 	myCodeInfo := wasmTypes.CodeInfoFixture(wasmTypes.WithSHA256CodeHash(wasmCode))
 	specs := map[string]struct {
-		src        types.GenesisState
-		expSuccess bool
+		src            types.GenesisState
+		stakingMock    StakingKeeperMock
+		msgHandlerMock *MockMsgHandler
+		expSuccess     bool
 	}{
 		"happy path: code info correct": {
 			src: types.GenesisState{
@@ -455,19 +460,53 @@ func TestGenesisInit(t *testing.T) {
 				Params: types.DefaultParams(),
 			},
 		},
+		"validator set update called for any genesis messages": {
+			src: wasmTypes.GenesisState{
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_StoreCode{
+						StoreCode: types.MsgStoreCodeFixture(),
+					}},
+				},
+				Params: types.DefaultParams(),
+			},
+			stakingMock: StakingKeeperMock{expCalls: 1, validatorUpdate: []abci.ValidatorUpdate{
+				{
+					PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
+						Ed25519: []byte("a valid key"),
+					}},
+					Power: 100,
+				},
+			}},
+			msgHandlerMock: &MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
+			expSuccess:     true,
+		},
+		"validator set update not called on genesis msg handler errors": {
+			src: wasmTypes.GenesisState{
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_StoreCode{
+						StoreCode: types.MsgStoreCodeFixture(),
+					}},
+				},
+				Params: types.DefaultParams(),
+			},
+			msgHandlerMock: &MockMsgHandler{expCalls: 1, err: errors.New("test error response")},
+			stakingMock:    StakingKeeperMock{expCalls: 0},
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			keeper, ctx, _ := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
-			_, gotErr := InitGenesis(ctx, keeper, spec.src)
+			gotValidatorSet, gotErr := InitGenesis(ctx, keeper, spec.src, &spec.stakingMock, spec.msgHandlerMock)
 			if !spec.expSuccess {
 				require.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
-
+			spec.msgHandlerMock.verifyCalls(t)
+			spec.stakingMock.verifyCalls(t)
+			assert.Equal(t, spec.stakingMock.validatorUpdate, gotValidatorSet)
 			for _, c := range spec.src.Codes {
 				assert.Equal(t, c.Pinned, keeper.IsPinnedCode(ctx, c.CodeID))
 			}
@@ -539,6 +578,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
   ]
 }`
 	keeper, ctx, _ := setupKeeper(t)
+	contractKeeper := NewGovPermissionKeeper(keeper)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -555,7 +595,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
 
 	// when
-	_, err = InitGenesis(ctx, keeper, importState)
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
 	require.NoError(t, err)
 
 	// verify wasm code
@@ -616,6 +656,77 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
 	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))
 	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
+}
+
+func TestSupportedGenMsgTypes(t *testing.T) {
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+	var (
+		myAddress          sdk.AccAddress = bytes.Repeat([]byte{1}, types.ContractAddrLen)
+		verifierAddress    sdk.AccAddress = bytes.Repeat([]byte{2}, types.ContractAddrLen)
+		beneficiaryAddress sdk.AccAddress = bytes.Repeat([]byte{3}, types.ContractAddrLen)
+	)
+	const denom = "stake"
+	importState := types.GenesisState{
+		Params: types.DefaultParams(),
+		GenMsgs: []types.GenesisState_GenMsgs{
+			{
+				Sum: &types.GenesisState_GenMsgs_StoreCode{
+					StoreCode: &types.MsgStoreCode{
+						Sender:       myAddress.String(),
+						WASMByteCode: wasmCode,
+					},
+				},
+			},
+			{
+				Sum: &types.GenesisState_GenMsgs_InstantiateContract{
+					InstantiateContract: &types.MsgInstantiateContract{
+						Sender: myAddress.String(),
+						CodeID: 1,
+						Label:  "testing",
+						Msg: HackatomExampleInitMsg{
+							Verifier:    verifierAddress,
+							Beneficiary: beneficiaryAddress,
+						}.GetBytes(t),
+						Funds: sdk.NewCoins(sdk.NewCoin(denom, sdk.NewInt(10))),
+					},
+				},
+			},
+			{
+				Sum: &types.GenesisState_GenMsgs_ExecuteContract{
+					ExecuteContract: &types.MsgExecuteContract{
+						Sender:   verifierAddress.String(),
+						Contract: BuildContractAddressClassic(1, 1).String(),
+						Msg:      []byte(`{"release":{}}`),
+					},
+				},
+			},
+		},
+	}
+	require.NoError(t, importState.ValidateBasic())
+	ctx, keepers := CreateDefaultTestInput(t)
+	keeper := keepers.WasmKeeper
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+	keepers.Faucet.Fund(ctx, myAddress, sdk.NewCoin(denom, sdk.NewInt(100)))
+
+	// when
+	_, err = InitGenesis(ctx, keeper, importState, &StakingKeeperMock{}, TestHandler(keepers.ContractKeeper))
+	require.NoError(t, err)
+
+	// verify code stored
+	gotWasmCode, err := keeper.GetByteCode(ctx, 1)
+	require.NoError(t, err)
+	assert.Equal(t, wasmCode, gotWasmCode)
+	codeInfo := keeper.GetCodeInfo(ctx, 1)
+	require.NotNil(t, codeInfo)
+
+	// verify contract instantiated
+	cInfo := keeper.GetContractInfo(ctx, BuildContractAddressClassic(1, 1))
+	require.NotNil(t, cInfo)
+
+	// verify contract executed
+	gotBalance := keepers.BankKeeper.GetBalance(ctx, beneficiaryAddress, denom)
+	assert.Equal(t, sdk.NewCoin(denom, sdk.NewInt(10)), gotBalance)
 }
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {

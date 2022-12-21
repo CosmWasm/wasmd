@@ -512,22 +512,6 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 	}, nil
 }
 
-func NewMigrateContractProposal(
-	title string,
-	description string,
-	contract string,
-	codeID uint64,
-	msg RawContractMessage,
-) *MigrateContractProposal {
-	return &MigrateContractProposal{
-		Title:       title,
-		Description: description,
-		Contract:    contract,
-		CodeID:      codeID,
-		Msg:         msg,
-	}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p MigrateContractProposal) ProposalRoute() string { return RouterKey }
 
@@ -583,20 +567,6 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 		CodeID:      p.CodeID,
 		Msg:         string(p.Msg),
 	}, nil
-}
-
-func NewSudoContractProposal(
-	title string,
-	description string,
-	contract string,
-	msg RawContractMessage,
-) *SudoContractProposal {
-	return &SudoContractProposal{
-		Title:       title,
-		Description: description,
-		Contract:    contract,
-		Msg:         msg,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -809,18 +779,6 @@ func (p ClearAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract)
 }
 
-func NewPinCodesProposal(
-	title string,
-	description string,
-	codeIDs []uint64,
-) *PinCodesProposal {
-	return &PinCodesProposal{
-		Title:       title,
-		Description: description,
-		CodeIDs:     codeIDs,
-	}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p PinCodesProposal) ProposalRoute() string { return RouterKey }
 
@@ -851,18 +809,6 @@ func (p PinCodesProposal) String() string {
   Description: %s
   Codes:       %v
 `, p.Title, p.Description, p.CodeIDs)
-}
-
-func NewUnpinCodesProposal(
-	title string,
-	description string,
-	codeIDs []uint64,
-) *UnpinCodesProposal {
-	return &UnpinCodesProposal{
-		Title:       title,
-		Description: description,
-		CodeIDs:     codeIDs,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -917,18 +863,6 @@ func validateProposalCommons(title, description string) error {
 		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", v1beta1.MaxDescriptionLength)
 	}
 	return nil
-}
-
-func NewUpdateInstantiateConfigProposal(
-	title string,
-	description string,
-	accessConfigUpdates ...AccessConfigUpdate,
-) *UpdateInstantiateConfigProposal {
-	return &UpdateInstantiateConfigProposal{
-		Title:               title,
-		Description:         description,
-		AccessConfigUpdates: accessConfigUpdates,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
