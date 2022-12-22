@@ -91,9 +91,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -193,9 +191,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -258,9 +254,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -391,9 +385,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -435,9 +427,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 	}
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -496,9 +486,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -537,9 +525,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 	}
 
 	// proposal flagsExecute
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -579,9 +565,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -615,9 +599,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -656,9 +638,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -709,9 +689,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -808,10 +786,14 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 		SilenceUsage: true,
 	}
 	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func addCommonProposalFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	return cmd
 }
 
 func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, error) {
