@@ -493,12 +493,11 @@ func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, 
 	hhash := tmHeader.Hash()
 	blockID := MakeBlockID(hhash, 3, tmhash.Sum([]byte("part_set")))
 	voteSet := tmtypes.NewVoteSet(chainID, blockHeight, 1, tmproto.PrecommitType, tmValSet)
-
 	// MakeCommit expects a signer array in the same order as the validator array.
 	// Thus we iterate over the ordered validator set and construct a signer array
 	// from the signer map in the same order.
-	signerArr := make([]tmtypes.PrivValidator, len(tmValSet.Validators))
-	for i, v := range tmValSet.Validators {
+	signerArr := make([]tmtypes.PrivValidator, len(tmValSet.Validators)) //nolint:staticcheck
+	for i, v := range tmValSet.Validators {                              //nolint:staticcheck
 		signerArr[i] = signers[v.Address.String()]
 	}
 

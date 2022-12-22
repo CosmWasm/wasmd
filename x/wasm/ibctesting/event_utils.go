@@ -60,8 +60,8 @@ func getHexField(evt abci.Event, key string) []byte {
 // return the value for the attribute with the given name
 func getField(evt abci.Event, key string) string {
 	for _, attr := range evt.Attributes {
-		if string(attr.Key) == key {
-			return string(attr.Value)
+		if attr.Key == key {
+			return attr.Value
 		}
 	}
 	return ""
@@ -95,8 +95,8 @@ func ParsePortIDFromEvents(events sdk.Events) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {
-				if string(attr.Key) == channeltypes.AttributeKeyPortID {
-					return string(attr.Value), nil
+				if attr.Key == channeltypes.AttributeKeyPortID {
+					return attr.Value, nil
 				}
 			}
 		}
@@ -108,8 +108,8 @@ func ParseChannelVersionFromEvents(events sdk.Events) (string, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeChannelOpenInit || ev.Type == channeltypes.EventTypeChannelOpenTry {
 			for _, attr := range ev.Attributes {
-				if string(attr.Key) == channeltypes.AttributeVersion {
-					return string(attr.Value), nil
+				if attr.Key == channeltypes.AttributeVersion {
+					return attr.Value, nil
 				}
 			}
 		}
