@@ -132,11 +132,11 @@ func NewAppModule(
 }
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {
+func (am AppModule) IsOnePerModuleType() { // marker
 }
 
 // IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {
+func (am AppModule) IsAppModule() { // marker
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the
