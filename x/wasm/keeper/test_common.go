@@ -296,7 +296,7 @@ func createTestInput(
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
-	accountKeeper.SetParams(ctx, authtypes.DefaultParams())
+	require.NoError(t, accountKeeper.SetParams(ctx, authtypes.DefaultParams()))
 
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -305,7 +305,7 @@ func createTestInput(
 		blockedAddrs,
 		authtypes.NewModuleAddress(banktypes.ModuleName).String(),
 	)
-	bankKeeper.SetParams(ctx, banktypes.DefaultParams())
+	require.NoError(t, bankKeeper.SetParams(ctx, banktypes.DefaultParams()))
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -315,7 +315,7 @@ func createTestInput(
 		authtypes.NewModuleAddress(stakingtypes.ModuleName).String(),
 	)
 	stakingtypes.DefaultParams()
-	stakingKeeper.SetParams(ctx, TestingStakeParams)
+	require.NoError(t, stakingKeeper.SetParams(ctx, TestingStakeParams))
 
 	distKeeper := distributionkeeper.NewKeeper(
 		appCodec,
@@ -326,7 +326,7 @@ func createTestInput(
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(distributiontypes.ModuleName).String(),
 	)
-	distKeeper.SetParams(ctx, distributiontypes.DefaultParams())
+	require.NoError(t, distKeeper.SetParams(ctx, distributiontypes.DefaultParams()))
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
 	// set genesis items required for distribution
@@ -412,7 +412,7 @@ func createTestInput(
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	govKeeper.SetParams(ctx, govv1.DefaultParams())
+	require.NoError(t, govKeeper.SetParams(ctx, govv1.DefaultParams()))
 	govKeeper.SetLegacyRouter(govRouter)
 	govKeeper.SetProposalID(ctx, 1)
 
