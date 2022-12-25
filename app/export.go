@@ -86,8 +86,7 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 
 		delAddr := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
-		_, err = app.DistrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr)
-		if err != nil {
+		if _, err = app.DistrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr); err != nil {
 			panic(err)
 		}
 	}

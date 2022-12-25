@@ -5,12 +5,14 @@ go 1.19
 require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.47.0-alpha2.0.20221219231612-5ed4075ba219
+	github.com/cosmos/cosmos-sdk v0.47.0-alpha2.0.20221220173637-7e7e7f7e437e
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
 	github.com/cosmos/ibc-go/v6 v6.0.0-20221220115712-10d17379d669
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
+
+	//github.com/cosmos/interchain-accounts v0.2.4
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/golang/protobuf v1.5.2
@@ -35,12 +37,9 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.2.6
 	cosmossdk.io/core v0.3.2
 	cosmossdk.io/math v1.0.0-beta.4
 	cosmossdk.io/tools/rosetta v0.2.0
-	github.com/cosmos/interchain-accounts v0.0.0-00010101000000-000000000000
-
 )
 
 require (
@@ -49,6 +48,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	cloud.google.com/go/iam v0.7.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
+	cosmossdk.io/api v0.2.6 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	cosmossdk.io/errors v1.0.0-beta.7 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
@@ -176,9 +176,7 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
-	// Update to rosetta-sdk-go temporarly to have `check:spec` passing. See https://github.com/coinbase/rosetta-sdk-go/issues/449
-	github.com/coinbase/rosetta-sdk-go => github.com/coinbase/rosetta-sdk-go v0.8.2-0.20221007214527-e03849ba430a
-	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20221219113107-f3037dc7defb
+	//github.com/confio/ics23/go => github.com/cosmos/ics23/go v0.9.1-0.20221207110826-9919ce9aecd1
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0

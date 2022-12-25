@@ -266,7 +266,6 @@ func NewTestNetworkFixture() network.TestFixture {
 	}
 	defer os.RemoveAll(dir)
 
-
 	app := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(dir), emptyWasmOptions)
 	appCtr := func(val network.ValidatorI) servertypes.Application {
 		return NewWasmApp(

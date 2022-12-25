@@ -73,7 +73,6 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			if err != nil {
 				return err
 			}
-
 			vestingStart, err := cmd.Flags().GetInt64(flagVestingStart)
 			if err != nil {
 				return err
@@ -88,7 +87,6 @@ contain valid denominations. Accounts may optionally be supplied with vesting pa
 			if err != nil {
 				return err
 			}
-
 			return auth.AddGenesisAccount(clientCtx.Codec, addr, appendflag, config.GenesisFile(), args[1], vestingAmtStr, vestingStart, vestingEnd)
 		},
 	}

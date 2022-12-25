@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/api/tendermint/abci"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
