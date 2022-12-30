@@ -331,6 +331,7 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 		}
 		toSend = append(toSend, c)
 	}
+	toSend.Sort()
 	return toSend, nil
 }
 
