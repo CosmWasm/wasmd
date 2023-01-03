@@ -98,6 +98,8 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 		sdk.Coins{},
 		myActorAddress,
 		"",
+		"my title",
+		"my description",
 	)
 	require.NoError(t, err)
 
