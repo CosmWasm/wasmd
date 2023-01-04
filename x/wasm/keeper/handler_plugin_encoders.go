@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
@@ -294,18 +295,18 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 }
 
 func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error) {
-	var option v1beta1.VoteOption
+	var option v1.VoteOption
 	switch msg.Vote.Vote {
 	case wasmvmtypes.Yes:
-		option = v1beta1.OptionYes
+		option = v1.OptionYes
 	case wasmvmtypes.No:
-		option = v1beta1.OptionNo
+		option = v1.OptionNo
 	case wasmvmtypes.NoWithVeto:
-		option = v1beta1.OptionNoWithVeto
+		option = v1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
-		option = v1beta1.OptionAbstain
+		option = v1.OptionAbstain
 	}
-	vote := &v1beta1.MsgVote{
+	vote := &v1.MsgVote{
 		ProposalId: msg.Vote.ProposalId,
 		Voter:      sender.String(),
 		Option:     option,
