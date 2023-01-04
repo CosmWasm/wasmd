@@ -360,7 +360,6 @@ func GenesisStateWithValSet(
 		}
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
-		println("delegation: ", genAccs[0].String())
 	}
 
 	// set validators and delegations

@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
@@ -508,10 +509,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&v1beta1.MsgVote{
+				&v1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     v1beta1.OptionYes,
+					Option:     v1.OptionYes,
 				},
 			},
 		},
@@ -524,10 +525,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&v1beta1.MsgVote{
+				&v1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     v1beta1.OptionNo,
+					Option:     v1.OptionNo,
 				},
 			},
 		},
@@ -540,10 +541,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&v1beta1.MsgVote{
+				&v1.MsgVote{
 					ProposalId: 10,
 					Voter:      addr1.String(),
-					Option:     v1beta1.OptionAbstain,
+					Option:     v1.OptionAbstain,
 				},
 			},
 		},
@@ -556,10 +557,10 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&v1beta1.MsgVote{
+				&v1.MsgVote{
 					ProposalId: 1,
 					Voter:      addr1.String(),
-					Option:     v1beta1.OptionNoWithVeto,
+					Option:     v1.OptionNoWithVeto,
 				},
 			},
 		},
