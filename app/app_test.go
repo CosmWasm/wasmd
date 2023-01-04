@@ -19,7 +19,6 @@ import (
 var emptyWasmOpts []wasm.Option = nil
 
 func TestWasmdExport(t *testing.T) {
-	t.Skip("Deactivated until https://github.com/cosmos/cosmos-sdk/pull/14332 is fixed")
 	db := dbm.NewMemDB()
 	gapp := NewWasmAppWithCustomOptions(t, false, SetupOptions{
 		Logger:  log.NewTMLogger(log.NewSyncWriter(os.Stdout)),
