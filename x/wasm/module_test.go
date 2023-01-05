@@ -23,6 +23,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 )
 
 type testData struct {
@@ -175,6 +176,7 @@ func TestHandleInstantiate(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  nil,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -234,6 +236,7 @@ func TestHandleExecute(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -368,6 +371,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -581,4 +585,30 @@ func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBe
 
 	assert.Equal(t, codeID, res.CodeID)
 	assert.Equal(t, creator.String(), res.Creator)
+}
+
+func TestOldVersion(t *testing.T) {
+	data := setupTest(t)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+
+	data.module.RegisterInterfaces(interfaceRegistry)
+
+	msg, err := interfaceRegistry.Resolve("/cosmwasm.wasm.v1beta1.MsgExecuteContract")
+
+	require.NoError(t, err)
+
+	t.Logf("MsgExecuteContract %v", msg)
+}
+
+func TestProposalOldVersion(t *testing.T) {
+	data := setupTest(t)
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+
+	data.module.RegisterInterfaces(interfaceRegistry)
+
+	msg, err := interfaceRegistry.Resolve("/cosmwasm.wasm.v1beta1.UpdateAdminProposal")
+
+	require.NoError(t, err)
+
+	t.Logf("UpdateAdminProposal %v", msg)
 }

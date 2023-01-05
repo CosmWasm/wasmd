@@ -4,6 +4,17 @@
 
 ## Table of Contents
 
+- [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
+    - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
+    - [AcceptedMessagesFilter](#cosmwasm.wasm.v1.AcceptedMessagesFilter)
+    - [AllowAllMessagesFilter](#cosmwasm.wasm.v1.AllowAllMessagesFilter)
+    - [CombinedLimit](#cosmwasm.wasm.v1.CombinedLimit)
+    - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
+    - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
+    - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
+    - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
+  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -17,29 +28,10 @@
     - [AccessType](#cosmwasm.wasm.v1.AccessType)
     - [ContractCodeHistoryOperationType](#cosmwasm.wasm.v1.ContractCodeHistoryOperationType)
   
-- [cosmwasm/wasm/v1/tx.proto](#cosmwasm/wasm/v1/tx.proto)
-    - [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin)
-    - [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse)
-    - [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract)
-    - [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse)
-    - [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract)
-    - [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2)
-    - [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response)
-    - [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse)
-    - [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract)
-    - [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse)
-    - [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode)
-    - [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse)
-    - [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin)
-    - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse)
-  
-    - [Msg](#cosmwasm.wasm.v1.Msg)
-  
 - [cosmwasm/wasm/v1/genesis.proto](#cosmwasm/wasm/v1/genesis.proto)
     - [Code](#cosmwasm.wasm.v1.Code)
     - [Contract](#cosmwasm.wasm.v1.Contract)
     - [GenesisState](#cosmwasm.wasm.v1.GenesisState)
-    - [GenesisState.GenMsgs](#cosmwasm.wasm.v1.GenesisState.GenMsgs)
     - [Sequence](#cosmwasm.wasm.v1.Sequence)
   
 - [cosmwasm/wasm/v1/ibc.proto](#cosmwasm/wasm/v1/ibc.proto)
@@ -50,9 +42,11 @@
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
     - [ClearAdminProposal](#cosmwasm.wasm.v1.ClearAdminProposal)
     - [ExecuteContractProposal](#cosmwasm.wasm.v1.ExecuteContractProposal)
+    - [InstantiateContract2Proposal](#cosmwasm.wasm.v1.InstantiateContract2Proposal)
     - [InstantiateContractProposal](#cosmwasm.wasm.v1.InstantiateContractProposal)
     - [MigrateContractProposal](#cosmwasm.wasm.v1.MigrateContractProposal)
     - [PinCodesProposal](#cosmwasm.wasm.v1.PinCodesProposal)
+    - [StoreAndInstantiateContractProposal](#cosmwasm.wasm.v1.StoreAndInstantiateContractProposal)
     - [StoreCodeProposal](#cosmwasm.wasm.v1.StoreCodeProposal)
     - [SudoContractProposal](#cosmwasm.wasm.v1.SudoContractProposal)
     - [UnpinCodesProposal](#cosmwasm.wasm.v1.UnpinCodesProposal)
@@ -73,6 +67,8 @@
     - [QueryContractInfoResponse](#cosmwasm.wasm.v1.QueryContractInfoResponse)
     - [QueryContractsByCodeRequest](#cosmwasm.wasm.v1.QueryContractsByCodeRequest)
     - [QueryContractsByCodeResponse](#cosmwasm.wasm.v1.QueryContractsByCodeResponse)
+    - [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest)
+    - [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse)
     - [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest)
     - [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse)
     - [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest)
@@ -84,7 +80,189 @@
   
     - [Query](#cosmwasm.wasm.v1.Query)
   
+- [cosmwasm/wasm/v1/tx.proto](#cosmwasm/wasm/v1/tx.proto)
+    - [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin)
+    - [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse)
+    - [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract)
+    - [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse)
+    - [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract)
+    - [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2)
+    - [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response)
+    - [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse)
+    - [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract)
+    - [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse)
+    - [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode)
+    - [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse)
+    - [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin)
+    - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse)
+    - [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig)
+    - [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse)
+  
+    - [Msg](#cosmwasm.wasm.v1.Msg)
+  
 - [Scalar Value Types](#scalar-value-types)
+
+
+
+<a name="cosmwasm/wasm/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/wasm/v1/authz.proto
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
+
+### AcceptedMessageKeysFilter
+AcceptedMessageKeysFilter accept only the specific contract message keys in
+the json object to be executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `keys` | [string](#string) | repeated | Messages is the list of unique keys |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessagesFilter"></a>
+
+### AcceptedMessagesFilter
+AcceptedMessagesFilter accept only the specific raw contract messages to be
+executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `messages` | [bytes](#bytes) | repeated | Messages is the list of raw contract messages |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AllowAllMessagesFilter"></a>
+
+### AllowAllMessagesFilter
+AllowAllMessagesFilter is a wildcard to allow any type of contract payload
+message.
+Since: wasmd 0.30
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.CombinedLimit"></a>
+
+### CombinedLimit
+CombinedLimit defines the maximal amounts that can be sent to a contract and
+the maximal number of calls executable. Both need to remain >0 to be valid.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `calls_remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
+
+### ContractExecutionAuthorization
+ContractExecutionAuthorization defines authorization for wasm execute.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract executions |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractGrant"></a>
+
+### ContractGrant
+ContractGrant a granted permission for a single contract
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract` | [string](#string) |  | Contract is the bech32 address of the smart contract |
+| `limit` | [google.protobuf.Any](#google.protobuf.Any) |  | Limit defines execution limits that are enforced and updated when the grant is applied. When the limit lapsed the grant is removed. |
+| `filter` | [google.protobuf.Any](#google.protobuf.Any) |  | Filter define more fine-grained control on the message payload passed to the contract in the operation. When no filter applies on execution, the operation is prohibited. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
+
+### ContractMigrationAuthorization
+ContractMigrationAuthorization defines authorization for wasm contract
+migration. Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxCallsLimit"></a>
+
+### MaxCallsLimit
+MaxCallsLimit limited number of calls to the contract. No funds transferable.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxFundsLimit"></a>
+
+### MaxFundsLimit
+MaxFundsLimit defines the maximal amounts that can be sent to the contract.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
 
 
 
@@ -191,7 +369,7 @@ ContractInfo stores a WASM contract instance
 | `creator` | [string](#string) |  | Creator address who initially instantiated the contract |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
-| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. This data should kept internal and not be exposed via query results. Just use for sorting |
+| `created` | [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition) |  | Created Tx position when the contract was instantiated. |
 | `ibc_port_id` | [string](#string) |  |  |
 | `extension` | [google.protobuf.Any](#google.protobuf.Any) |  | Extension is an extension point to store custom metadata within the persistence model. |
 
@@ -270,266 +448,6 @@ ContractCodeHistoryOperationType actions that caused a code change
 
 
 
-<a name="cosmwasm/wasm/v1/tx.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmwasm/wasm/v1/tx.proto
-
-
-
-<a name="cosmwasm.wasm.v1.MsgClearAdmin"></a>
-
-### MsgClearAdmin
-MsgClearAdmin removes any admin stored for a smart contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `contract` | [string](#string) |  | Contract is the address of the smart contract |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgClearAdminResponse"></a>
-
-### MsgClearAdminResponse
-MsgClearAdminResponse returns empty data
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgExecuteContract"></a>
-
-### MsgExecuteContract
-MsgExecuteContract submits the given message data to a smart contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on execution |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgExecuteContractResponse"></a>
-
-### MsgExecuteContractResponse
-MsgExecuteContractResponse returns execution result data.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgInstantiateContract"></a>
-
-### MsgInstantiateContract
-MsgInstantiateContract create a new smart contract instance for the given
-code id.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgInstantiateContract2"></a>
-
-### MsgInstantiateContract2
-MsgInstantiateContract2 create a new smart contract instance for the given
-code id with a predicable address.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
-| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
-| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
-| `fix_msg` | [bool](#bool) |  | FixMsg include the msg value into the hash for the predictable address. Default is false |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgInstantiateContract2Response"></a>
-
-### MsgInstantiateContract2Response
-MsgInstantiateContract2Response return instantiation result data
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
-| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgInstantiateContractResponse"></a>
-
-### MsgInstantiateContractResponse
-MsgInstantiateContractResponse return instantiation result data
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
-| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgMigrateContract"></a>
-
-### MsgMigrateContract
-MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `contract` | [string](#string) |  | Contract is the address of the smart contract |
-| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
-| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgMigrateContractResponse"></a>
-
-### MsgMigrateContractResponse
-MsgMigrateContractResponse returns contract migration result data.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `data` | [bytes](#bytes) |  | Data contains same raw bytes returned as data from the wasm contract. (May be empty) |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgStoreCode"></a>
-
-### MsgStoreCode
-MsgStoreCode submit Wasm code to the system
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
-| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgStoreCodeResponse"></a>
-
-### MsgStoreCodeResponse
-MsgStoreCodeResponse returns store result data.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
-| `checksum` | [bytes](#bytes) |  | Checksum is the sha256 hash of the stored code |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgUpdateAdmin"></a>
-
-### MsgUpdateAdmin
-MsgUpdateAdmin sets a new admin for a smart contract
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
-| `new_admin` | [string](#string) |  | NewAdmin address to be set |
-| `contract` | [string](#string) |  | Contract is the address of the smart contract |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MsgUpdateAdminResponse"></a>
-
-### MsgUpdateAdminResponse
-MsgUpdateAdminResponse returns empty data
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
-
-<a name="cosmwasm.wasm.v1.Msg"></a>
-
-### Msg
-Msg defines the wasm Msg service.
-
-| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
-| ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `StoreCode` | [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode) | [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system | |
-| `InstantiateContract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse) | InstantiateContract creates a new smart contract instance for the given code id. | |
-| `InstantiateContract2` | [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2) | [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response) | InstantiateContract2 creates a new smart contract instance for the given code id with a predictable address | |
-| `ExecuteContract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) | [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
-| `MigrateContract` | [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract) | [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
-| `UpdateAdmin` | [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract | |
-| `ClearAdmin` | [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin) | [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse) | ClearAdmin removes any admin stored for a smart contract | |
-
- <!-- end services -->
-
-
-
 <a name="cosmwasm/wasm/v1/genesis.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -566,6 +484,7 @@ Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 | `contract_address` | [string](#string) |  |  |
 | `contract_info` | [ContractInfo](#cosmwasm.wasm.v1.ContractInfo) |  |  |
 | `contract_state` | [Model](#cosmwasm.wasm.v1.Model) | repeated |  |
+| `contract_code_history` | [ContractCodeHistoryEntry](#cosmwasm.wasm.v1.ContractCodeHistoryEntry) | repeated |  |
 
 
 
@@ -584,25 +503,6 @@ GenesisState - genesis state of x/wasm
 | `codes` | [Code](#cosmwasm.wasm.v1.Code) | repeated |  |
 | `contracts` | [Contract](#cosmwasm.wasm.v1.Contract) | repeated |  |
 | `sequences` | [Sequence](#cosmwasm.wasm.v1.Sequence) | repeated |  |
-| `gen_msgs` | [GenesisState.GenMsgs](#cosmwasm.wasm.v1.GenesisState.GenMsgs) | repeated |  |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.GenesisState.GenMsgs"></a>
-
-### GenesisState.GenMsgs
-GenMsgs define the messages that can be executed during genesis phase in
-order. The intention is to have more human readable data that is auditable.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `store_code` | [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode) |  |  |
-| `instantiate_contract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) |  |  |
-| `execute_contract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) |  | MsgInstantiateContract2 intentionally not supported see https://github.com/CosmWasm/wasmd/issues/987 |
 
 
 
@@ -746,6 +646,31 @@ contract.
 
 
 
+<a name="cosmwasm.wasm.v1.InstantiateContract2Proposal"></a>
+
+### InstantiateContract2Proposal
+InstantiateContract2Proposal gov proposal content type to instantiate
+contract 2
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's enviroment as sender |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encode message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
+| `fix_msg` | [bool](#bool) |  | FixMsg include the msg value into the hash for the predictable address. Default is false |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.InstantiateContractProposal"></a>
 
 ### InstantiateContractProposal
@@ -808,6 +733,34 @@ wasmvm cache.
 
 
 
+<a name="cosmwasm.wasm.v1.StoreAndInstantiateContractProposal"></a>
+
+### StoreAndInstantiateContractProposal
+StoreAndInstantiateContractProposal gov proposal content type to store
+and instantiate the contract.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `title` | [string](#string) |  | Title is a short summary |
+| `description` | [string](#string) |  | Description is a human readable text |
+| `run_as` | [string](#string) |  | RunAs is the address that is passed to the contract's environment as sender |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `source` | [string](#string) |  | Source is the URL where the code is hosted |
+| `builder` | [string](#string) |  | Builder is the docker image used to build the code deterministically, used for smart contract verification |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the SHA256 sum of the code outputted by builder, used for smart contract verification |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.StoreCodeProposal"></a>
 
 ### StoreCodeProposal
@@ -822,6 +775,9 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
 | `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `source` | [string](#string) |  | Source is the URL where the code is hosted |
+| `builder` | [string](#string) |  | Builder is the docker image used to build the code deterministically, used for smart contract verification |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the SHA256 sum of the code outputted by builder, used for smart contract verification |
 
 
 
@@ -1131,6 +1087,40 @@ Query/ContractsByCode RPC method
 
 
 
+<a name="cosmwasm.wasm.v1.QueryContractsByCreatorRequest"></a>
+
+### QueryContractsByCreatorRequest
+QueryContractsByCreatorRequest is the request type for the
+Query/ContractsByCreator RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `creator_address` | [string](#string) |  | CreatorAddress is the address of contract creator |
+| `pagination` | [cosmos.base.query.v1beta1.PageRequest](#cosmos.base.query.v1beta1.PageRequest) |  | Pagination defines an optional pagination for the request. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryContractsByCreatorResponse"></a>
+
+### QueryContractsByCreatorResponse
+QueryContractsByCreatorResponse is the response type for the
+Query/ContractsByCreator RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract_addresses` | [string](#string) | repeated | ContractAddresses result set |
+| `pagination` | [cosmos.base.query.v1beta1.PageResponse](#cosmos.base.query.v1beta1.PageResponse) |  | Pagination defines the pagination in the response. |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
@@ -1278,6 +1268,295 @@ Query provides defines the gRPC querier service
 | `Codes` | [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest) | [QueryCodesResponse](#cosmwasm.wasm.v1.QueryCodesResponse) | Codes gets the metadata for all stored wasm codes | GET|/cosmwasm/wasm/v1/code|
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
+| `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/wasm/v1/tx.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/wasm/v1/tx.proto
+
+
+
+<a name="cosmwasm.wasm.v1.MsgClearAdmin"></a>
+
+### MsgClearAdmin
+MsgClearAdmin removes any admin stored for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgClearAdminResponse"></a>
+
+### MsgClearAdminResponse
+MsgClearAdminResponse returns empty data
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgExecuteContract"></a>
+
+### MsgExecuteContract
+MsgExecuteContract submits the given message data to a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgExecuteContractResponse"></a>
+
+### MsgExecuteContractResponse
+MsgExecuteContractResponse returns execution result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgInstantiateContract"></a>
+
+### MsgInstantiateContract
+MsgInstantiateContract create a new smart contract instance for the given
+code id.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgInstantiateContract2"></a>
+
+### MsgInstantiateContract2
+MsgInstantiateContract2 create a new smart contract instance for the given
+code id with a predicable address.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `label` | [string](#string) |  | Label is optional metadata to be stored with a contract instance. |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `salt` | [bytes](#bytes) |  | Salt is an arbitrary value provided by the sender. Size can be 1 to 64. |
+| `fix_msg` | [bool](#bool) |  | FixMsg include the msg value into the hash for the predictable address. Default is false |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgInstantiateContract2Response"></a>
+
+### MsgInstantiateContract2Response
+MsgInstantiateContract2Response return instantiation result data
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgInstantiateContractResponse"></a>
+
+### MsgInstantiateContractResponse
+MsgInstantiateContractResponse return instantiation result data
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgMigrateContract"></a>
+
+### MsgMigrateContract
+MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `code_id` | [uint64](#uint64) |  | CodeID references the new WASM code |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgMigrateContractResponse"></a>
+
+### MsgMigrateContractResponse
+MsgMigrateContractResponse returns contract migration result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains same raw bytes returned as data from the wasm contract. (May be empty) |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgStoreCode"></a>
+
+### MsgStoreCode
+MsgStoreCode submit Wasm code to the system
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgStoreCodeResponse"></a>
+
+### MsgStoreCodeResponse
+MsgStoreCodeResponse returns store result data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `checksum` | [bytes](#bytes) |  | Checksum is the sha256 hash of the stored code |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateAdmin"></a>
+
+### MsgUpdateAdmin
+MsgUpdateAdmin sets a new admin for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `new_admin` | [string](#string) |  | NewAdmin address to be set |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateAdminResponse"></a>
+
+### MsgUpdateAdminResponse
+MsgUpdateAdminResponse returns empty data
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfig"></a>
+
+### MsgUpdateInstantiateConfig
+MsgUpdateInstantiateConfig updates instantiate config for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `code_id` | [uint64](#uint64) |  | CodeID references the stored WASM code |
+| `new_instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | NewInstantiatePermission is the new access control |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse"></a>
+
+### MsgUpdateInstantiateConfigResponse
+MsgUpdateInstantiateConfigResponse returns empty data
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="cosmwasm.wasm.v1.Msg"></a>
+
+### Msg
+Msg defines the wasm Msg service.
+
+| Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
+| ----------- | ------------ | ------------- | ------------| ------- | -------- |
+| `StoreCode` | [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode) | [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse) | StoreCode to submit Wasm code to the system | |
+| `InstantiateContract` | [MsgInstantiateContract](#cosmwasm.wasm.v1.MsgInstantiateContract) | [MsgInstantiateContractResponse](#cosmwasm.wasm.v1.MsgInstantiateContractResponse) | InstantiateContract creates a new smart contract instance for the given code id. | |
+| `InstantiateContract2` | [MsgInstantiateContract2](#cosmwasm.wasm.v1.MsgInstantiateContract2) | [MsgInstantiateContract2Response](#cosmwasm.wasm.v1.MsgInstantiateContract2Response) | InstantiateContract2 creates a new smart contract instance for the given code id with a predictable address | |
+| `ExecuteContract` | [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract) | [MsgExecuteContractResponse](#cosmwasm.wasm.v1.MsgExecuteContractResponse) | Execute submits the given message data to a smart contract | |
+| `MigrateContract` | [MsgMigrateContract](#cosmwasm.wasm.v1.MsgMigrateContract) | [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse) | Migrate runs a code upgrade/ downgrade for a smart contract | |
+| `UpdateAdmin` | [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract | |
+| `ClearAdmin` | [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin) | [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse) | ClearAdmin removes any admin stored for a smart contract | |
+| `UpdateInstantiateConfig` | [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig) | [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse) | UpdateInstantiateConfig updates instantiate config for a smart contract | |
 
  <!-- end services -->
 

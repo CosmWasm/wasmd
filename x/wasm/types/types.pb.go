@@ -10,17 +10,16 @@ import (
 	math "math"
 	math_bits "math/bits"
 
+	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
-	_ "github.com/gogo/protobuf/gogoproto"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	_ "github.com/regen-network/cosmos-proto"
 	github_com_tendermint_tendermint_libs_bytes "github.com/tendermint/tendermint/libs/bytes"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-
 var (
+	_ = proto.Marshal
 	_ = fmt.Errorf
 	_ = math.Inf
 )
@@ -296,8 +295,6 @@ type ContractInfo struct {
 	// Label is optional metadata to be stored with a contract instance.
 	Label string `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
 	// Created Tx position when the contract was instantiated.
-	// This data should kept internal and not be exposed via query results. Just
-	// use for sorting
 	Created   *AbsoluteTxPosition `protobuf:"bytes,5,opt,name=created,proto3" json:"created,omitempty"`
 	IBCPortID string              `protobuf:"bytes,6,opt,name=ibc_port_id,json=ibcPortId,proto3" json:"ibc_port_id,omitempty"`
 	// Extension is an extension point to store custom metadata within the

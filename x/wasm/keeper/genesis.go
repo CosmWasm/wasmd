@@ -16,7 +16,7 @@ type ValidatorSetSource interface {
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, stakingKeeper ValidatorSetSource, msgHandler sdk.Handler) ([]abci.ValidatorUpdate, error) {
+func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]abci.ValidatorUpdate, error) {
 	contractKeeper := NewGovPermissionKeeper(keeper)
 	keeper.SetParams(ctx, data.Params)
 	var maxCodeID uint64
@@ -41,7 +41,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		if err != nil {
 			return nil, sdkerrors.Wrapf(err, "address in contract number %d", i)
 		}
-		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState)
+		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState, contract.ContractCodeHistory)
 		if err != nil {
 			return nil, sdkerrors.Wrapf(err, "contract number %d", i)
 		}
@@ -64,21 +64,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 	if seqVal <= uint64(maxContractID) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
-
-	if len(data.GenMsgs) == 0 {
-		return nil, nil
-	}
-	for _, genTx := range data.GenMsgs {
-		msg := genTx.AsMsg()
-		if msg == nil {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
-		}
-		_, err := msgHandler(ctx, msg)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "genesis")
-		}
-	}
-	return stakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	return nil, nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
@@ -107,12 +93,14 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			state = append(state, types.Model{Key: key, Value: value})
 			return false
 		})
-		// redact contract info
-		contract.Created = nil
+
+		contractCodeHistory := keeper.GetContractHistory(ctx, addr)
+
 		genState.Contracts = append(genState.Contracts, types.Contract{
-			ContractAddress: addr.String(),
-			ContractInfo:    contract,
-			ContractState:   state,
+			ContractAddress:     addr.String(),
+			ContractInfo:        contract,
+			ContractState:       state,
+			ContractCodeHistory: contractCodeHistory,
 		})
 		return false
 	})

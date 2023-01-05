@@ -47,30 +47,6 @@ func TestValidateGenesisState(t *testing.T) {
 			},
 			expError: true,
 		},
-		"genesis store code message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[0].GetStoreCode().WASMByteCode = nil
-			},
-			expError: true,
-		},
-		"genesis instantiate contract message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[1].GetInstantiateContract().CodeID = 0
-			},
-			expError: true,
-		},
-		"genesis execute contract message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[2].GetExecuteContract().Sender = "invalid"
-			},
-			expError: true,
-		},
-		"genesis invalid message type": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[0].Sum = nil
-			},
-			expError: true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -117,7 +93,7 @@ func TestCodeValidateBasic(t *testing.T) {
 		},
 		"codeBytes greater limit": {
 			srcMutator: func(c *Code) {
-				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxWasmSize+1)
+				c.CodeBytes = bytes.Repeat([]byte{0x1}, MaxProposalWasmSize+1)
 			},
 			expError: true,
 		},
@@ -157,11 +133,17 @@ func TestContractValidateBasic(t *testing.T) {
 			srcMutator: func(c *Contract) {
 				c.ContractInfo.Created = &AbsoluteTxPosition{}
 			},
-			expError: true,
+			expError: false,
 		},
 		"contract state invalid": {
 			srcMutator: func(c *Contract) {
 				c.ContractState = append(c.ContractState, Model{})
+			},
+			expError: true,
+		},
+		"contract history invalid": {
+			srcMutator: func(c *Contract) {
+				c.ContractCodeHistory = []ContractCodeHistoryEntry{{}}
 			},
 			expError: true,
 		},

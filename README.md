@@ -1,9 +1,9 @@
 # Wasm Zone
 
-[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/master)
-[![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
+[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/main)
+[![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
 [![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
-[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/main/LICENSE)
 [![LoC](https://tokei.rs/b1/github/CosmWasm/wasmd)](https://github.com/CosmWasm/wasmd)
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
@@ -13,7 +13,7 @@ This code was forked from the `cosmos/gaia` repository as a basis and then we ad
 many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.18+](https://golang.org/dl/)
+**Note**: Requires [Go 1.19+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 ## Compatibility with CosmWasm contracts
@@ -26,6 +26,7 @@ compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
 |-------|--------------|-------------|--------------|
+| 0.30  | v1.1.0       |             | 1.0-1.1      |
 | 0.29  | v1.1.0       |             | 1.0-1.1      |
 | 0.28  | v1.0.0       |             | 1.0-1.1      |
 | 0.27  | v1.0.0       |             | 1.0          |
@@ -54,7 +55,7 @@ It will also run contracts compiled with 1.x assuming they don't opt into any ne
 The 1.x cosmwasm_vm will support all contracts with 1.0 <= version <= 1.x. 
 
 Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
-have been compiled with one of the supported `cosmwasm-std` versions, or will be rejeted upon upload (with some error
+have been compiled with one of the supported `cosmwasm-std` versions, or will be rejected upon upload (with some error
 message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
 breaking change to switch runtimes (you will need to organize a chain upgrade). As of `cosmwasm-vm 0.13` we are
 using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly more performant than the older versions.
@@ -97,9 +98,9 @@ The used cosmos-sdk version is in transition migrating from amino encoding to pr
 
 We use standard cosmos-sdk encoding (amino) for all sdk Messages. However, the message body sent to all contracts, 
 as well as the internal state is encoded using JSON. Cosmwasm allows arbitrary bytes with the contract itself 
-responsible for decodng. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
+responsible for decoding. For better UX, we often use `json.RawMessage` to contain these bytes, which enforces that it is
 valid json, but also give a much more readable interface.  If you want to use another encoding in the contracts, that is
-a relatively minor change to wasmd but would currently require a fork. Please open in issue if this is important for 
+a relatively minor change to wasmd but would currently require a fork. Please open an issue if this is important for 
 your use case.
 
 ## Quick Start
@@ -111,6 +112,13 @@ make test
 if you are using a linux without X or headless linux, look at [this article](https://ahelpme.com/linux/dbusexception-could-not-get-owner-of-name-org-freedesktop-secrets-no-such-name) or [#31](https://github.com/CosmWasm/wasmd/issues/31#issuecomment-577058321).
 
 ## Protobuf
+The protobuf files for this project are published automatically to the [buf repository](https://buf.build/) to make integration easier:
+
+| wasmd version | buf tag                                                                                                                                     |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 0.30.x        | [6508ee062011440c907de6f5c40398ea](https://buf.build/cosmwasm/wasmd/tree/6508ee062011440c907de6f5c40398ea:cosmwasm/wasm/v1) | 
+| 0.29.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
+
 Generate protobuf
 ```shell script
 make proto-gen
@@ -203,6 +211,7 @@ file of your custom chain.
 
 * `wasmtypes.MaxLabelSize = 64` to set the maximum label size on instantiation (default 128)
 * `wasmtypes.MaxWasmSize=777000` to set the max size of compiled wasm to be accepted (default 819200)
+* `wasmtypes.MaxProposalWasmSize=888000` to set the max size of gov proposal compiled wasm to be accepted (default 3145728)
 
 ## Genesis Configuration
 We strongly suggest **to limit the max block gas in the genesis** and not use the default value (`-1` for infinite).

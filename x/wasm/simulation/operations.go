@@ -27,6 +27,9 @@ const (
 	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
 	OpWeightMsgExecuteContract     = "op_weight_msg_execute_contract"
+	OpWeightMsgUpdateAdmin         = "op_weight_msg_update_admin"
+	OpWeightMsgClearAdmin          = "op_weight_msg_clear_admin"
+	OpWeightMsgMigrateContract     = "op_weight_msg_migrate_contract"
 	OpReflectContractPath          = "op_reflect_contract_path"
 )
 
@@ -54,6 +57,9 @@ func WeightedOperations(
 		weightMsgStoreCode           int
 		weightMsgInstantiateContract int
 		weightMsgExecuteContract     int
+		weightMsgUpdateAdmin         int
+		weightMsgClearAdmin          int
+		weightMsgMigrateContract     int
 		wasmContractPath             string
 	)
 
@@ -62,7 +68,6 @@ func WeightedOperations(
 			weightMsgStoreCode = params.DefaultWeightMsgStoreCode
 		},
 	)
-
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil,
 		func(_ *rand.Rand) {
 			weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
@@ -73,6 +78,21 @@ func WeightedOperations(
 			weightMsgExecuteContract = params.DefaultWeightMsgExecuteContract
 		},
 	)
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil,
+		func(_ *rand.Rand) {
+			weightMsgUpdateAdmin = params.DefaultWeightMsgUpdateAdmin
+		},
+	)
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil,
+		func(_ *rand.Rand) {
+			weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
+		},
+	)
+	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil,
+		func(_ *rand.Rand) {
+			weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
+		},
+	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
 		func(_ *rand.Rand) {
 			wasmContractPath = ""
@@ -81,7 +101,7 @@ func WeightedOperations(
 
 	var wasmBz []byte
 	if wasmContractPath == "" {
-		wasmBz = testdata.ReflectContractWasm()
+		wasmBz = testdata.MigrateReflectContractWasm()
 	} else {
 		var err error
 		wasmBz, err = os.ReadFile(wasmContractPath)
@@ -110,6 +130,194 @@ func WeightedOperations(
 				DefaultSimulationExecutePayloader,
 			),
 		),
+		simulation.NewWeightedOperation(
+			weightMsgUpdateAdmin,
+			SimulateMsgUpdateAmin(
+				ak,
+				bk,
+				wasmKeeper,
+				DefaultSimulationUpdateAdminContractSelector,
+			),
+		),
+		simulation.NewWeightedOperation(
+			weightMsgClearAdmin,
+			SimulateMsgClearAdmin(
+				ak,
+				bk,
+				wasmKeeper,
+				DefaultSimulationClearAdminContractSelector,
+			),
+		),
+		simulation.NewWeightedOperation(
+			weightMsgMigrateContract,
+			SimulateMsgMigrateContract(
+				ak,
+				bk,
+				wasmKeeper,
+				DefaultSimulationMigrateContractSelector,
+				DefaultSimulationMigrateCodeIDSelector,
+			),
+		),
+	}
+}
+
+type (
+	MsgMigrateContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+	MsgMigrateCodeIDSelector   func(sdk.Context, WasmKeeper, uint64) uint64
+)
+
+func DefaultSimulationMigrateContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
+	var contractAddress sdk.AccAddress
+	var contractInfo types.ContractInfo
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin != adminAddress {
+			return false
+		}
+		contractAddress = address
+		contractInfo = info
+		return true
+	})
+	return contractAddress, contractInfo
+}
+
+func DefaultSimulationMigrateCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper, currentCodeID uint64) uint64 {
+	var codeID uint64
+	wasmKeeper.IterateCodeInfos(ctx, func(u uint64, info types.CodeInfo) bool {
+		if (info.InstantiateConfig.Permission != types.AccessTypeEverybody) || (u == currentCodeID) {
+			return false
+		}
+		codeID = u
+		return true
+	})
+	return codeID
+}
+
+func SimulateMsgMigrateContract(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	contractSelector MsgMigrateContractSelector,
+	codeIDSelector MsgMigrateCodeIDSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress, info := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		if ctAddress == nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no contract instance available"), nil, nil
+		}
+
+		codeID := codeIDSelector(ctx, wasmKeeper, info.CodeID)
+		if codeID == 0 {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgMigrateContract{}.Type(), "no target contract available"), nil, nil
+		}
+		migrateMsg := types.MsgMigrateContract{
+			Sender:   simAccount.Address.String(),
+			Contract: ctAddress.String(),
+			CodeID:   codeID,
+			Msg:      []byte(`{}`),
+		}
+
+		txCtx := BuildOperationInput(r, app, ctx, &migrateMsg, simAccount, ak, bk, nil)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+	}
+}
+
+type MsgClearAdminContractSelector func(sdk.Context, WasmKeeper, string) sdk.AccAddress
+
+func DefaultSimulationClearAdminContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) sdk.AccAddress {
+	var ctAddress sdk.AccAddress
+	wasmKeeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin != adminAddress {
+			return false
+		}
+		ctAddress = addr
+		return true
+	})
+	return ctAddress
+}
+
+func SimulateMsgClearAdmin(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	contractSelector MsgClearAdminContractSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accounts []simtypes.Account,
+		chainID string,
+	) (OperationMsg simtypes.OperationMsg, futureOps []simtypes.FutureOperation, err error) {
+		simAccount, _ := simtypes.RandomAcc(r, accounts)
+		ctAddress := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		if ctAddress == nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgClearAdmin{}.Type(), "no contract instance available"), nil, nil
+		}
+
+		msg := types.MsgClearAdmin{
+			Sender:   simAccount.Address.String(),
+			Contract: ctAddress.String(),
+		}
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
+	}
+}
+
+type MsgUpdateAdminContractSelector func(sdk.Context, WasmKeeper, string) (sdk.AccAddress, types.ContractInfo)
+
+// DefaultSimulationUpdateAdminContractSelector picks the first contract which Admin != ""
+func DefaultSimulationUpdateAdminContractSelector(ctx sdk.Context, wasmKeeper WasmKeeper, adminAddress string) (sdk.AccAddress, types.ContractInfo) {
+	var contractAddress sdk.AccAddress
+	var contractInfo types.ContractInfo
+	wasmKeeper.IterateContractInfo(ctx, func(address sdk.AccAddress, info types.ContractInfo) bool {
+		if info.Admin != adminAddress {
+			return false
+		}
+		contractAddress = address
+		contractInfo = info
+		return true
+	})
+	return contractAddress, contractInfo
+}
+
+func SimulateMsgUpdateAmin(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	contractSelector MsgUpdateAdminContractSelector,
+) simtypes.Operation {
+	return func(
+		r *rand.Rand,
+		app *baseapp.BaseApp,
+		ctx sdk.Context,
+		accs []simtypes.Account,
+		chainID string,
+	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+		simAccount, _ := simtypes.RandomAcc(r, accs)
+		ctAddress, _ := contractSelector(ctx, wasmKeeper, simAccount.Address.String())
+		if ctAddress == nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgUpdateAdmin{}.Type(), "no contract instance available"), nil, nil
+		}
+
+		newAdmin, _ := simtypes.RandomAcc(r, accs)
+		if newAdmin.Address.String() == simAccount.Address.String() {
+			return simtypes.NoOpMsg(types.ModuleName, types.MsgUpdateAdmin{}.Type(), "new admin cannot be the same as current admin"), nil, nil
+		}
+
+		msg := types.MsgUpdateAdmin{
+			Sender:   simAccount.Address.String(),
+			NewAdmin: newAdmin.Address.String(),
+			Contract: ctAddress.String(),
+		}
+		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -180,9 +388,11 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmK
 			}
 		}
 
+		adminAccount, _ := simtypes.RandomAcc(r, accs)
+
 		msg := types.MsgInstantiateContract{
 			Sender: simAccount.Address.String(),
-			Admin:  simtypes.RandomAccounts(r, 1)[0].Address.String(),
+			Admin:  adminAccount.Address.String(),
 			CodeID: codeID,
 			Label:  simtypes.RandStringOfLength(r, 10),
 			Msg:    []byte(`{}`),

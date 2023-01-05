@@ -32,11 +32,7 @@ func (s GenesisState) ValidateBasic() error {
 			return sdkerrors.Wrapf(err, "sequence: %d", i)
 		}
 	}
-	for i := range s.GenMsgs {
-		if err := s.GenMsgs[i].ValidateBasic(); err != nil {
-			return sdkerrors.Wrapf(err, "gen message: %d", i)
-		}
-	}
+
 	return nil
 }
 
@@ -47,7 +43,7 @@ func (c Code) ValidateBasic() error {
 	if err := c.CodeInfo.ValidateBasic(); err != nil {
 		return sdkerrors.Wrap(err, "code info")
 	}
-	if err := validateWasmCode(c.CodeBytes); err != nil {
+	if err := validateWasmCode(c.CodeBytes, MaxProposalWasmSize); err != nil {
 		return sdkerrors.Wrap(err, "code bytes")
 	}
 	return nil
@@ -61,37 +57,23 @@ func (c Contract) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "contract info")
 	}
 
-	if c.ContractInfo.Created != nil {
-		return sdkerrors.Wrap(ErrInvalid, "created must be empty")
+	if c.ContractInfo.Created == nil {
+		return sdkerrors.Wrap(ErrInvalid, "created must not be empty")
 	}
 	for i := range c.ContractState {
 		if err := c.ContractState[i].ValidateBasic(); err != nil {
 			return sdkerrors.Wrapf(err, "contract state %d", i)
 		}
 	}
-	return nil
-}
-
-// AsMsg returns the underlying cosmos-sdk message instance. Null when can not be mapped to a known type.
-func (m GenesisState_GenMsgs) AsMsg() sdk.Msg {
-	if msg := m.GetStoreCode(); msg != nil {
-		return msg
+	if len(c.ContractCodeHistory) == 0 {
+		return ErrEmpty.Wrap("code history")
 	}
-	if msg := m.GetInstantiateContract(); msg != nil {
-		return msg
-	}
-	if msg := m.GetExecuteContract(); msg != nil {
-		return msg
+	for i, v := range c.ContractCodeHistory {
+		if err := v.ValidateBasic(); err != nil {
+			return sdkerrors.Wrapf(err, "code history element %d", i)
+		}
 	}
 	return nil
-}
-
-func (m GenesisState_GenMsgs) ValidateBasic() error {
-	msg := m.AsMsg()
-	if msg == nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
-	}
-	return msg.ValidateBasic()
 }
 
 // ValidateGenesis performs basic validation of supply genesis data returning an

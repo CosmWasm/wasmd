@@ -3,10 +3,13 @@ package keeper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	abci "github.com/tendermint/tendermint/abci/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
@@ -99,7 +102,6 @@ func DefaultQueryPlugins(
 	staking types.StakingKeeper,
 	distKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
-	queryRouter GRPCQueryRouter,
 	wasm wasmQueryKeeper,
 ) QueryPlugins {
 	return QueryPlugins{
@@ -107,7 +109,7 @@ func DefaultQueryPlugins(
 		Custom:   NoCustomQuerier,
 		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
-		Stargate: StargateQuerier(queryRouter),
+		Stargate: RejectStargateQuerier(),
 		Wasm:     WasmQuerier(wasm),
 	}
 }
@@ -278,9 +280,47 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 	}
 }
 
-func StargateQuerier(queryRouter GRPCQueryRouter) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return func(ctx sdk.Context, msg *wasmvmtypes.StargateQuery) ([]byte, error) {
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled."}
+// RejectStargateQuerier rejects all stargate queries
+func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Stargate queries are disabled"}
+	}
+}
+
+// AcceptedStargateQueries define accepted Stargate queries as a map with path as key and response type as value.
+// For example:
+// acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
+type AcceptedStargateQueries map[string]codec.ProtoMarshaler
+
+// AcceptListStargateQuerier supports a preconfigured set of stargate queries only.
+// All arguments must be non nil.
+//
+// Warning: Chains need to test and maintain their accept list carefully.
+// There were critical consensus breaking issues in the past with non-deterministic behaviour in the SDK.
+//
+// This queries can be set via WithQueryPlugins option in the wasm keeper constructor:
+// WithQueryPlugins(&QueryPlugins{Stargate: AcceptListStargateQuerier(acceptList, queryRouter, codec)})
+func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+		protoResponse, accepted := acceptList[request.Path]
+		if !accepted {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
+		}
+
+		route := queryRouter.Route(request.Path)
+		if route == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
+		}
+
+		res, err := route(ctx, abci.RequestQuery{
+			Data: request.Data,
+			Path: request.Path,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return ConvertProtoToJSONMarshal(codec, protoResponse, res.Value)
 	}
 }
 
@@ -525,6 +565,24 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 		Denom:  coin.Denom,
 		Amount: coin.Amount.String(),
 	}
+}
+
+// ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
+// This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
+// being able to use response directly by json marshalling, which is supported in cosmwasm.
+func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshaler, bz []byte) ([]byte, error) {
+	// unmarshal binary into stargate response data structure
+	err := cdc.Unmarshal(bz, protoResponse)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "to proto")
+	}
+
+	bz, err = cdc.MarshalJSON(protoResponse)
+	if err != nil {
+		return nil, sdkerrors.Wrap(err, "to json")
+	}
+
+	return bz, nil
 }
 
 var _ WasmVMQueryHandler = WasmVMQueryHandlerFn(nil)

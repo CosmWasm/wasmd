@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -11,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type Recurse struct {
@@ -146,7 +147,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 	cases := map[string]struct {
 		gasLimit    uint64
 		msg         Recurse
-		expectPanic bool
+		expOutOfGas bool
 	}{
 		"no recursion, plenty gas": {
 			gasLimit: 400_000,
@@ -167,7 +168,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 			msg: Recurse{
 				Work: 50,
 			},
-			expectPanic: true,
+			expOutOfGas: true,
 		},
 		"recursion 4, external gas limit": {
 			// this uses 244708 gas but give less
@@ -176,7 +177,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 				Depth: 4,
 				Work:  50,
 			},
-			expectPanic: true,
+			expOutOfGas: true,
 		},
 	}
 
@@ -188,20 +189,14 @@ func TestGasOnExternalQuery(t *testing.T) {
 			recurse.Contract = contractAddr
 			msg := buildRecurseQuery(t, recurse)
 
-			// do the query
-			path := []string{QueryGetContractState, contractAddr.String(), QueryMethodContractStateSmart}
-			req := abci.RequestQuery{Data: msg}
-			if tc.expectPanic {
-				require.Panics(t, func() {
-					// this should run out of gas
-					_, err := NewLegacyQuerier(keeper, tc.gasLimit)(ctx, path, req)
-					t.Logf("%v", err)
-				})
-			} else {
-				// otherwise, make sure we get a good success
-				_, err := NewLegacyQuerier(keeper, tc.gasLimit)(ctx, path, req)
-				require.NoError(t, err)
+			querier := NewGrpcQuerier(keeper.cdc, keeper.storeKey, keeper, tc.gasLimit)
+			req := &types.QuerySmartContractStateRequest{Address: contractAddr.String(), QueryData: msg}
+			_, gotErr := querier.SmartContractState(sdk.WrapSDKContext(ctx), req)
+			if tc.expOutOfGas {
+				require.Error(t, gotErr, sdkerrors.ErrOutOfGas)
+				return
 			}
+			require.NoError(t, gotErr)
 		})
 	}
 }

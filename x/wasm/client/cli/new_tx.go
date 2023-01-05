@@ -34,6 +34,7 @@ func MigrateContractCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -79,6 +80,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -115,7 +117,50 @@ func ClearContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
+		SilenceUsage: true,
 	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// UpdateInstantiateConfigCmd updates instantiate config for a smart contract.
+func UpdateInstantiateConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "update-instantiate-config [code_id_int64]",
+		Short:   "Update instantiate config for a codeID",
+		Aliases: []string{"update-instantiate-config"},
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			codeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			perm, err := parseAccessConfigFlags(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgUpdateInstantiateConfig{
+				Sender:                   string(clientCtx.GetFromAddress()),
+				CodeID:                   codeID,
+				NewInstantiatePermission: perm,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+		SilenceUsage: true,
+	}
+
+	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagInstantiateByAddress, "", "Deprecated: Only this address can instantiate a contract from the code, optional")
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

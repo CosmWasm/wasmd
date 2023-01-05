@@ -17,7 +17,8 @@ We have added 9 new wasm specific proposal types that cover the contract's live 
 * `ClearAdminProposal` - clear admin for a contract to prevent further migrations
 * `PinCodes` - pin the given code ids in cache. This trades memory for reduced startup time and lowers gas cost
 * `UnpinCodes` - unpin the given code ids from the cache. This frees up memory and returns to standard speed and gas cost
-* `UpdateInstantiateConfigProposal` - update instantiate permissions to a list of given code ids. 
+* `UpdateInstantiateConfigProposal` - update instantiate permissions to a list of given code ids.
+* `StoreAndInstantiateContractProposal` - upload and instantiate a wasm contract.
 
 For details see the proposal type [implementation](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/proposal.go)
 
