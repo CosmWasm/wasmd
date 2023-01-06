@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -28,8 +29,7 @@ func TestGrants(t *testing.T) {
 
 	coord := ibctesting.NewCoordinator(t, 1)
 	chain := coord.GetChain(ibctesting.GetChainID(1))
-	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm").CodeID
-	contractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	require.NotEmpty(t, contractAddr)
 
 	granterAddr := chain.SenderAccount.GetAddress()
