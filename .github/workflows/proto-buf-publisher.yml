@@ -16,8 +16,13 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v3.2.0
       - uses: bufbuild/buf-setup-action@v1.10.0
+=======
+      - uses: actions/checkout@v3.3.0
+      - uses: bufbuild/buf-setup-action@v1.11.0
+>>>>>>> b1b21d9 (Bump actions/checkout from 3.2.0 to 3.3.0)
 
       # lint checks
       - uses: bufbuild/buf-lint-action@v1
