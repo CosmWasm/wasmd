@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"github.com/CosmWasm/wasmd/tests/e2e"
 	"testing"
 	"time"
 
@@ -13,20 +12,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 )
 
 func TestGovVoteByContract(t *testing.T) {
 	// Given a contract with delegation
 	// And   a gov proposal
-	// When  the contract sends a vote the proposal
+	// When  the contract sends a vote for the proposal
 	// Then	 the vote is taken into account
 
 	coord := ibctesting.NewCoordinator(t, 1)
 	chain := coord.GetChain(ibctesting.GetChainID(1))
-	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm").CodeID
-	contractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
-	require.NotEmpty(t, contractAddr)
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	chain.Fund(contractAddr, sdk.NewIntFromUint64(1_000_000_000))
 	// a contract with a high delegation amount
 	delegateMsg := wasmvmtypes.CosmosMsg{
