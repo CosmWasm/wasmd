@@ -55,7 +55,7 @@ func TestGroupWithContract(t *testing.T) {
 	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
 
 	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())))}
-	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY)
+	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
 	rsp = e2e.MustExecViaStargateReflectContract(t, chain, contractAddr, propMsg)
