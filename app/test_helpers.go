@@ -67,7 +67,7 @@ func setup(t testing.TB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Opt
 	t.Cleanup(func() { db.Close() })
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = DefaultNodeHome
+	appOptions[flags.FlagHome] = nodeHome // ensure unique folder
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 
 	app := NewWasmApp(log.NewNopLogger(), db, nil, true, wasmtypes.EnableAllProposals, appOptions, opts, baseAppOpts...)

@@ -89,7 +89,7 @@ func TestFullAppSimulation(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir() // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
@@ -134,7 +134,7 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = DefaultNodeHome
+	appOptions[flags.FlagHome] = dir // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
@@ -250,7 +250,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = DefaultNodeHome
+	appOptions[flags.FlagHome] = dir // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
@@ -338,7 +338,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
 
 	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = DefaultNodeHome
+	appOptions[flags.FlagHome] = t.TempDir() // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	for i := 0; i < numSeeds; i++ {
