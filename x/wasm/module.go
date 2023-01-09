@@ -247,7 +247,7 @@ func ReadWasmConfig(opts servertypes.AppOptions) (types.WasmConfig, error) {
 		}
 	}
 	if v := opts.Get(flagWasmSimulationGasLimit); v != nil {
-		if raw, ok := v.(string); ok && raw != "" {
+		if raw, ok := v.(string); !ok || raw != "" {
 			limit, err := cast.ToUint64E(v) // non empty string set
 			if err != nil {
 				return cfg, err

@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
+
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -426,9 +430,17 @@ func TestHandleExecuteEscrow(t *testing.T) {
 }
 
 func TestReadWasmConfig(t *testing.T) {
+	withViper := func(s string) *viper.Viper {
+		v := viper.New()
+		v.SetConfigType("toml")
+		require.NoError(t, v.ReadConfig(strings.NewReader(s)))
+		return v
+	}
+	var one uint64 = 1
 	defaults := DefaultWasmConfig()
+
 	specs := map[string]struct {
-		src AppOptionsMock
+		src servertypes.AppOptions
 		exp types.WasmConfig
 	}{
 		"set query gas limit via opts": {
@@ -460,7 +472,25 @@ func TestReadWasmConfig(t *testing.T) {
 			},
 		},
 		"all defaults when no options set": {
+			src: AppOptionsMock{},
 			exp: defaults,
+		},
+		"default config template values": {
+			src: withViper(types.DefaultConfigTemplate()),
+			exp: defaults,
+		},
+		"custom config template values": {
+			src: withViper(types.ConfigTemplate(types.WasmConfig{
+				SimulationGasLimit: &one,
+				SmartQueryGasLimit: 2,
+				MemoryCacheSize:    3,
+			})),
+			exp: types.WasmConfig{
+				SimulationGasLimit: &one,
+				SmartQueryGasLimit: 2,
+				MemoryCacheSize:    3,
+				ContractDebugMode:  false,
+			},
 		},
 	}
 	for msg, spec := range specs {
