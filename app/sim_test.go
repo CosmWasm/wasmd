@@ -74,27 +74,7 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 }
 
 func TestFullAppSimulation(t *testing.T) {
-	config := simcli.NewConfigFromFlags()
-	config.ChainID = SimAppChainID
-
-	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "leveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
-	if skip {
-		t.Skip("skipping application simulation")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		require.NoError(t, db.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = t.TempDir() // ensure a unique folder
-	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-
-	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
-	require.Equal(t, appName, app.Name())
-
+	config, db, _, app := setupSimulationApp(t, "skipping application simulation")
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
 		t,
@@ -109,7 +89,7 @@ func TestFullAppSimulation(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simtestutil.CheckExportSimulation(app, config, simParams)
+	err := simtestutil.CheckExportSimulation(app, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -119,26 +99,7 @@ func TestFullAppSimulation(t *testing.T) {
 }
 
 func TestAppImportExport(t *testing.T) {
-	config := simcli.NewConfigFromFlags()
-	config.ChainID = SimAppChainID
-
-	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "leveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
-	if skip {
-		t.Skip("skipping application import/export simulation")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		require.NoError(t, db.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = dir // ensure a unique folder
-	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-
-	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
-	require.Equal(t, "SimApp", app.Name())
+	config, db, appOptions, app := setupSimulationApp(t, "skipping application import/export simulation")
 
 	// Run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -154,7 +115,7 @@ func TestAppImportExport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simtestutil.CheckExportSimulation(app, config, simParams)
+	err := simtestutil.CheckExportSimulation(app, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -178,7 +139,7 @@ func TestAppImportExport(t *testing.T) {
 	}()
 
 	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
-	require.Equal(t, "SimApp", newApp.Name())
+	require.Equal(t, "WasmApp", newApp.Name())
 
 	var genesisState GenesisState
 	err = json.Unmarshal(exported.AppState, &genesisState)
@@ -190,8 +151,8 @@ func TestAppImportExport(t *testing.T) {
 			if !strings.Contains(err, "validator set is empty after InitGenesis") {
 				panic(r)
 			}
-			logger.Info("Skipping simulation as all validators have been unbonded")
-			logger.Info("err", err, "stacktrace", string(debug.Stack()))
+			app.Logger().Info("Skipping simulation as all validators have been unbonded")
+			app.Logger().Info("err", err, "stacktrace", string(debug.Stack()))
 		}
 	}()
 
@@ -235,26 +196,7 @@ func TestAppImportExport(t *testing.T) {
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
-	config := simcli.NewConfigFromFlags()
-	config.ChainID = SimAppChainID
-
-	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "leveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
-	if skip {
-		t.Skip("skipping application simulation after import")
-	}
-	require.NoError(t, err, "simulation setup failed")
-
-	defer func() {
-		require.NoError(t, db.Close())
-		require.NoError(t, os.RemoveAll(dir))
-	}()
-
-	appOptions := make(simtestutil.AppOptionsMap, 0)
-	appOptions[flags.FlagHome] = dir // ensure a unique folder
-	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
-
-	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
-	require.Equal(t, "SimApp", app.Name())
+	config, db, appOptions, app := setupSimulationApp(t, "skipping application simulation after import")
 
 	// Run randomized simulation
 	stopEarly, simParams, simErr := simulation.SimulateFromSeed(
@@ -270,7 +212,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = simtestutil.CheckExportSimulation(app, config, simParams)
+	err := simtestutil.CheckExportSimulation(app, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
@@ -299,7 +241,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
-	require.Equal(t, "SimApp", newApp.Name())
+	require.Equal(t, "WasmApp", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: exported.AppState,
@@ -317,6 +259,30 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		app.AppCodec(),
 	)
 	require.NoError(t, err)
+}
+
+func setupSimulationApp(t *testing.T, msg string) (simtypes.Config, dbm.DB, simtestutil.AppOptionsMap, *WasmApp) {
+	config := simcli.NewConfigFromFlags()
+	config.ChainID = SimAppChainID
+
+	db, dir, logger, skip, err := simtestutil.SetupSimulation(config, "leveldb-app-sim", "Simulation", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
+	if skip {
+		t.Skip(msg)
+	}
+	require.NoError(t, err, "simulation setup failed")
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+		require.NoError(t, os.RemoveAll(dir))
+	})
+
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = dir // ensure a unique folder
+	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+
+	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
+	require.Equal(t, "WasmApp", app.Name())
+	return config, db, appOptions, app
 }
 
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
