@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/line/lbm-sdk/codec"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
 )
 
 func TestValidateParams(t *testing.T) {
@@ -28,23 +29,35 @@ func TestValidateParams(t *testing.T) {
 			src: Params{
 				CodeUploadAccess:             AllowNobody,
 				InstantiateDefaultPermission: AccessTypeNobody,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 		},
 		"all good with everybody": {
 			src: Params{
 				CodeUploadAccess:             AllowEverybody,
 				InstantiateDefaultPermission: AccessTypeEverybody,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 		},
 		"all good with only address": {
 			src: Params{
 				CodeUploadAccess:             AccessTypeOnlyAddress.With(anyAddress),
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 		},
 		"reject empty type in instantiate permission": {
 			src: Params{
 				CodeUploadAccess: AllowNobody,
+				GasMultiplier:    DefaultGasMultiplier,
+				InstanceCost:     DefaultInstanceCost,
+				CompileCost:      DefaultCompileCost,
 			},
 			expErr: true,
 		},
@@ -52,13 +65,19 @@ func TestValidateParams(t *testing.T) {
 			src: Params{
 				CodeUploadAccess:             AllowNobody,
 				InstantiateDefaultPermission: 1111,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
-		"reject invalid address in only address": {
+		"reject CodeUploadAccess invalid address in only address": {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeOnlyAddress, Address: invalidAddress},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
@@ -66,6 +85,9 @@ func TestValidateParams(t *testing.T) {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeEverybody, Address: anyAddress.String()},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
@@ -73,12 +95,18 @@ func TestValidateParams(t *testing.T) {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeNobody, Address: anyAddress.String()},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
 		"reject empty CodeUploadAccess": {
 			src: Params{
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
@@ -86,6 +114,9 @@ func TestValidateParams(t *testing.T) {
 			src: Params{
 				CodeUploadAccess:             AccessConfig{Permission: AccessTypeUnspecified},
 				InstantiateDefaultPermission: AccessTypeOnlyAddress,
+				GasMultiplier:                DefaultGasMultiplier,
+				InstanceCost:                 DefaultInstanceCost,
+				CompileCost:                  DefaultCompileCost,
 			},
 			expErr: true,
 		},
@@ -150,7 +181,10 @@ func TestParamsUnmarshalJson(t *testing.T) {
 	}{
 		"defaults": {
 			src: `{"code_upload_access": {"permission": "Everybody"},
-				"instantiate_default_permission": "Everybody"}`,
+				"instantiate_default_permission": "Everybody",
+				"gas_multiplier": 140000000,
+				"instance_cost": 60000,
+				"compile_cost": 3}`,
 			exp: DefaultParams(),
 		},
 	}

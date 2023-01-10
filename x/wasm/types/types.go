@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"reflect"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/gogo/protobuf/proto"
+
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	wasmvmtypes "github.com/line/wasmvm/types"
 )
 
 const (
@@ -128,10 +129,11 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 
 // ReadExtension copies the extension value to the pointer passed as argument so that there is no need to cast
 // For example with a custom extension of type `MyContractDetails` it will look as following:
-// 		var d MyContractDetails
-//		if err := info.ReadExtension(&d); err != nil {
-//			return nil, sdkerrors.Wrap(err, "extension")
-//		}
+//
+//	var d MyContractDetails
+//	if err := info.ReadExtension(&d); err != nil {
+//		return nil, sdkerrors.Wrap(err, "extension")
+//	}
 func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 	rv := reflect.ValueOf(e)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {

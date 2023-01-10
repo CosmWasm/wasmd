@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/line/lbm-sdk/types"
 )
 
 func TestDontBindPortNonIBCContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // ensure we bound the port
 	_, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.Error(t, err)
 }
 
 func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	example := InstantiateIBCReflectContract(t, ctx, keepers) // ensure we bound the port
 	owner, _, err := keepers.IBCKeeper.PortKeeper.LookupModuleByPort(ctx, keepers.WasmKeeper.GetContractInfo(ctx, example.Contract).IBCPortID)
 	require.NoError(t, err)

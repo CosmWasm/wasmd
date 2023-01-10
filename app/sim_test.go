@@ -7,33 +7,34 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/kv"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cosmos/cosmos-sdk/x/simulation"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/simapp"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/kv"
+	simtypes "github.com/line/lbm-sdk/types/simulation"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	authzkeeper "github.com/line/lbm-sdk/x/authz/keeper"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	distrtypes "github.com/line/lbm-sdk/x/distribution/types"
+	evidencetypes "github.com/line/lbm-sdk/x/evidence/types"
+	"github.com/line/lbm-sdk/x/feegrant"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	ibchost "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	minttypes "github.com/line/lbm-sdk/x/mint/types"
+	paramstypes "github.com/line/lbm-sdk/x/params/types"
+	"github.com/line/lbm-sdk/x/simulation"
+	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	"github.com/line/ostracon/libs/log"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
+
+	"github.com/line/wasmd/x/wasm"
+	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 // Get flags every time the simulator is run
@@ -156,8 +157,8 @@ func TestAppImportExport(t *testing.T) {
 	err = json.Unmarshal(exported.AppState, &genesisState)
 	require.NoError(t, err)
 
-	ctxA := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
-	ctxB := newApp.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
+	ctxA := app.NewContext(true, ocproto.Header{Height: app.LastBlockHeight()})
+	ctxB := newApp.NewContext(true, ocproto.Header{Height: app.LastBlockHeight()})
 	newApp.mm.InitGenesis(ctxB, app.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
 

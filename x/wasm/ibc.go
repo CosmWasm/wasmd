@@ -3,27 +3,26 @@ package wasm
 import (
 	"math"
 
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	porttypes "github.com/line/lbm-sdk/x/ibc/core/05-port/types"
+	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-
-	types "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmTypes "github.com/line/wasmd/x/wasm/types"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
 
 type IBCHandler struct {
-	keeper        types.IBCContractKeeper
-	channelKeeper types.ChannelKeeper
+	keeper        wasmTypes.IBCContractKeeper
+	channelKeeper wasmTypes.ChannelKeeper
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper) IBCHandler {
+func NewIBCHandler(k wasmTypes.IBCContractKeeper, ck wasmTypes.ChannelKeeper) IBCHandler {
 	return IBCHandler{keeper: k, channelKeeper: ck}
 }
 
@@ -338,7 +337,7 @@ func ValidateChannelParams(channelID string) error {
 		return err
 	}
 	if channelSequence > math.MaxUint32 {
-		return sdkerrors.Wrapf(types.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
+		return sdkerrors.Wrapf(wasmTypes.ErrMaxIBCChannels, "channel sequence %d is greater than max allowed transfer channels %d", channelSequence, math.MaxUint32)
 	}
 	return nil
 }

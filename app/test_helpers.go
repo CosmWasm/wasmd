@@ -10,29 +10,30 @@ import (
 	"testing"
 	"time"
 
-	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	bam "github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/client"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	cryptocodec "github.com/line/lbm-sdk/crypto/codec"
+	"github.com/line/lbm-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/line/lbm-sdk/crypto/types"
+	"github.com/line/lbm-sdk/simapp/helpers"
+	"github.com/line/lbm-sdk/snapshots"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/errors"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	minttypes "github.com/line/lbm-sdk/x/mint/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	abci "github.com/line/ostracon/abci/types"
+	"github.com/line/ostracon/libs/log"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
+	tmtypes "github.com/line/ostracon/types"
+
+	"github.com/line/wasmd/x/wasm"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -42,12 +43,12 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 		MaxBytes: 8000000,
 		MaxGas:   1234000000,
 	},
-	Evidence: &tmproto.EvidenceParams{
+	Evidence: &ocproto.EvidenceParams{
 		MaxAgeNumBlocks: 302400,
 		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
 		MaxBytes:        10000,
 	},
-	Validator: &tmproto.ValidatorParams{
+	Validator: &ocproto.ValidatorParams{
 		PubKeyTypes: []string{
 			tmtypes.ABCIPubKeyTypeEd25519,
 		},
@@ -86,7 +87,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	bondAmt := sdk.NewInt(1000000)
 
 	for _, val := range valSet.Validators {
-		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pk, err := cryptocodec.FromOcPubKeyInterface(val.PubKey)
 		require.NoError(t, err)
 		pkAny, err := codectypes.NewAnyWithValue(pk)
 		require.NoError(t, err)
@@ -142,7 +143,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 
 	// commit genesis changes
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+	app.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{
 		Height:             app.LastBlockHeight() + 1,
 		AppHash:            app.LastCommitID().Hash,
 		ValidatorsHash:     valSet.Hash(),
@@ -279,7 +280,7 @@ func TestAddr(addr string, bech string) (sdk.AccAddress, error) {
 
 // CheckBalance checks the balance of an account.
 func CheckBalance(t *testing.T, app *WasmApp, addr sdk.AccAddress, balances sdk.Coins) {
-	ctxCheck := app.BaseApp.NewContext(true, tmproto.Header{})
+	ctxCheck := app.BaseApp.NewContext(true, ocproto.Header{})
 	require.True(t, balances.IsEqual(app.bankKeeper.GetAllBalances(ctxCheck, addr)))
 }
 
@@ -290,7 +291,7 @@ const DefaultGas = 1200000
 // the parameter 'expPass' against the result. A corresponding result is
 // returned.
 func SignCheckDeliver(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
+	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header ocproto.Header, msgs []sdk.Msg,
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := helpers.GenTx(
@@ -339,7 +340,7 @@ func SignCheckDeliver(
 // SignAndDeliver signs and delivers a transaction. No simulation occurs as the
 // ibc testing package causes checkState and deliverState to diverge in block time.
 func SignAndDeliver(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
+	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header ocproto.Header, msgs []sdk.Msg,
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := helpers.GenTx(

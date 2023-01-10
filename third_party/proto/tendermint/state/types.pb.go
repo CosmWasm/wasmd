@@ -14,9 +14,10 @@ import (
 	proto "github.com/gogo/protobuf/proto"
 	_ "github.com/gogo/protobuf/types"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
-	types "github.com/tendermint/tendermint/abci/types"
-	types1 "github.com/tendermint/tendermint/proto/tendermint/types"
-	version "github.com/tendermint/tendermint/proto/tendermint/version"
+
+	types "github.com/line/ostracon/abci/types"
+	types1 "github.com/line/ostracon/proto/ostracon/types"
+	version "github.com/line/ostracon/proto/ostracon/version"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

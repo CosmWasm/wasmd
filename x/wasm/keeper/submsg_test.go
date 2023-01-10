@@ -3,24 +3,24 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"github.com/stretchr/testify/assert"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/line/lbm-sdk/types"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // test handing of submessages, very closely related to the reflect_test
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -31,7 +31,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	subGasLimit := uint64(300_000)
 
 	// prep - create one chain and upload the code
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 	keeper := keepers.WasmKeeper
@@ -122,13 +122,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	uploader := keepers.Faucet.NewFundedAccount(ctx, contractStart.Add(contractStart...)...)
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	reflectID, err := keepers.ContractKeeper.Create(ctx, uploader, reflectCode, nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
-	hackatomCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	hackatomCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	hackatomID, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)
@@ -247,14 +247,14 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		"send tokens": {
 			submsgID:         5,
 			msg:              validBankSend,
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(112000, 112900)},
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(111000, 113100)},
 		},
 		"not enough tokens": {
 			submsgID:    6,
 			msg:         invalidBankSend,
 			subMsgError: true,
 			// uses less gas than the send tokens (cost of bank transfer)
-			resultAssertions: []assertion{assertGasUsed(76000, 79000), assertErrorString("codespace: sdk, code: 5")},
+			resultAssertions: []assertion{assertGasUsed(76000, 77000), assertErrorString("codespace: sdk, code: 5")},
 		},
 		"out of gas panic with no gas limit": {
 			submsgID:        7,
@@ -267,7 +267,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg:      validBankSend,
 			gasLimit: &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(112000, 113000)},
+			resultAssertions: []assertion{assertReturnedEvents(3), assertGasUsed(111400, 111500)},
 		},
 		"not enough tokens with limit": {
 			submsgID:    16,
@@ -275,7 +275,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses same gas as call without limit (note we do not charge the 40k on reply)
-			resultAssertions: []assertion{assertGasUsed(77800, 77900), assertErrorString("codespace: sdk, code: 5")},
+			resultAssertions: []assertion{assertGasUsed(76000, 77000), assertErrorString("codespace: sdk, code: 5")},
 		},
 		"out of gas caught with gas limit": {
 			submsgID:    17,
@@ -283,7 +283,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			subMsgError: true,
 			gasLimit:    &subGasLimit,
 			// uses all the subGasLimit, plus the 52k or so for the main contract
-			resultAssertions: []assertion{assertGasUsed(subGasLimit+73000, subGasLimit+74000), assertErrorString("codespace: sdk, code: 11")},
+			resultAssertions: []assertion{assertGasUsed(subGasLimit+74000, subGasLimit+75000), assertErrorString("codespace: sdk, code: 11")},
 		},
 		"instantiate contract gets address in data and events": {
 			submsgID:         21,
@@ -371,7 +371,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -381,7 +381,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)
@@ -439,7 +439,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -449,7 +449,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	_, _, fred := keyPubAddr()
 
 	// upload code
-	reflectCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	reflectCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	codeID, err := keepers.ContractKeeper.Create(ctx, creator, reflectCode, nil)
 	require.NoError(t, err)

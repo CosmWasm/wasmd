@@ -3,23 +3,23 @@ package keeper
 import (
 	"testing"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func TestEncoding(t *testing.T) {
@@ -374,7 +374,7 @@ func TestEncoding(t *testing.T) {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.bank.v2.MsgSend",
+					TypeURL: "/lbm.bank.invalidversion.MsgSend",
 					Value:   bankMsgBin,
 				},
 			},
@@ -634,4 +634,5 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 			assert.Equal(t, spec.expVal, gotVal)
 		})
 	}
+
 }

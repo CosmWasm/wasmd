@@ -4,15 +4,15 @@ import (
 	"errors"
 	"fmt"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	"github.com/line/lbm-sdk/baseapp"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // msgEncoder is an extension point to customize encodings

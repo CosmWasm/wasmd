@@ -1,9 +1,9 @@
 package types
 
 import (
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
 )
 
 func (s Sequence) ValidateBasic() error {
@@ -35,6 +35,11 @@ func (s GenesisState) ValidateBasic() error {
 	for i := range s.GenMsgs {
 		if err := s.GenMsgs[i].ValidateBasic(); err != nil {
 			return sdkerrors.Wrapf(err, "gen message: %d", i)
+		}
+	}
+	for i, addr := range s.InactiveContractAddresses {
+		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+			return sdkerrors.Wrapf(err, "inactive contract address: %d", i)
 		}
 	}
 	return nil

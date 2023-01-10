@@ -6,36 +6,38 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/config"
-	"github.com/cosmos/cosmos-sdk/client/debug"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/spf13/viper"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/app/params"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/config"
+	"github.com/line/lbm-sdk/client/debug"
+	"github.com/line/lbm-sdk/client/flags"
+	"github.com/line/lbm-sdk/client/keys"
+	"github.com/line/lbm-sdk/client/rpc"
+	"github.com/line/lbm-sdk/server"
+	servertypes "github.com/line/lbm-sdk/server/types"
+	"github.com/line/lbm-sdk/snapshots"
+	"github.com/line/lbm-sdk/store"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/version"
+	authcmd "github.com/line/lbm-sdk/x/auth/client/cli"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/crisis"
+	genutilcli "github.com/line/lbm-sdk/x/genutil/client/cli"
+	tmcli "github.com/line/ostracon/libs/cli"
+	"github.com/line/ostracon/libs/log"
+
+	"github.com/line/wasmd/app"
+	"github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm"
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 // NewRootCmd creates a new root command for wasmd. It is called once in the
@@ -188,8 +190,10 @@ func (ac appCreator) newApp(
 ) servertypes.Application {
 	var cache sdk.MultiStorePersistentCache
 
+	ibCacheMetricsProvider := baseapp.MetricsProvider(cast.ToBool(viper.GetBool(server.FlagPrometheus)))
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
-		cache = store.NewCommitKVStoreCacheManager()
+		cache = store.NewCommitKVStoreCacheManager(
+			cast.ToInt(appOpts.Get(server.FlagInterBlockCacheSize)), ibCacheMetricsProvider)
 	}
 
 	skipUpgradeHeights := make(map[int64]bool)

@@ -15,7 +15,8 @@ import (
 	_ "github.com/gogo/protobuf/types"
 	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
 	_ "github.com/golang/protobuf/ptypes/duration"
-	types "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	types "github.com/line/ostracon/proto/ostracon/types"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

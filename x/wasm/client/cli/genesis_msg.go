@@ -8,21 +8,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/flags"
+	"github.com/line/lbm-sdk/crypto/keyring"
+	"github.com/line/lbm-sdk/server"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/genutil"
+	genutiltypes "github.com/line/lbm-sdk/x/genutil/types"
+	octypes "github.com/line/ostracon/types"
+
+	"github.com/line/wasmd/x/wasm/keeper"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // GenesisReader reads genesis data. Extension point for custom genesis state readers.
@@ -111,7 +111,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				}
 
 				//  does code id exists?
-				codeInfos, err := GetAllCodes(state)
+				codeInfos, err := getAllCodes(state)
 				if err != nil {
 					return err
 				}
@@ -127,7 +127,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				}
 				// permissions correct?
 				if !codeInfo.Info.InstantiateConfig.Allowed(senderAddr) {
-					return fmt.Errorf("permissions were not granted for %state", senderAddr)
+					return fmt.Errorf("permissions were not granted for %s", senderAddr)
 				}
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &msg},
@@ -180,7 +180,7 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 
 				// - does contract address exists?
 				if !hasContract(state, msg.Contract) {
-					return fmt.Errorf("unknown contract: %state", msg.Contract)
+					return fmt.Errorf("unknown contract: %s", msg.Contract)
 				}
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_ExecuteContract{ExecuteContract: &msg},
@@ -210,7 +210,7 @@ func GenesisListCodesCmd(defaultNodeHome string, genReader GenesisReader) *cobra
 			if err != nil {
 				return err
 			}
-			all, err := GetAllCodes(g.WasmModuleState)
+			all, err := getAllCodes(g.WasmModuleState)
 			if err != nil {
 				return err
 			}
@@ -235,7 +235,7 @@ func GenesisListContractsCmd(defaultNodeHome string, genReader GenesisReader) *c
 				return err
 			}
 			state := g.WasmModuleState
-			all := GetAllContracts(state)
+			all := getAllContracts(state)
 			return printJSONOutput(cmd, all)
 		},
 	}
@@ -259,7 +259,7 @@ type CodeMeta struct {
 	Info   types.CodeInfo `json:"info"`
 }
 
-func GetAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
+func getAllCodes(state *types.GenesisState) ([]CodeMeta, error) {
 	all := make([]CodeMeta, len(state.Codes))
 	for i, c := range state.Codes {
 		all[i] = CodeMeta{
@@ -302,7 +302,7 @@ type ContractMeta struct {
 	Info            types.ContractInfo `json:"info"`
 }
 
-func GetAllContracts(state *types.GenesisState) []ContractMeta {
+func getAllContracts(state *types.GenesisState) []ContractMeta {
 	all := make([]ContractMeta, len(state.Contracts))
 	for i, c := range state.Contracts {
 		all[i] = ContractMeta{
@@ -368,12 +368,12 @@ func hasContract(state *types.GenesisState, contractAddr string) bool {
 // GenesisData contains raw and unmarshalled data from the genesis file
 type GenesisData struct {
 	GenesisFile     string
-	GenDoc          *tmtypes.GenesisDoc
+	GenDoc          *octypes.GenesisDoc
 	AppState        map[string]json.RawMessage
 	WasmModuleState *types.GenesisState
 }
 
-func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, wasmModuleState *types.GenesisState) *GenesisData {
+func NewGenesisData(genesisFile string, genDoc *octypes.GenesisDoc, appState map[string]json.RawMessage, wasmModuleState *types.GenesisState) *GenesisData {
 	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, WasmModuleState: wasmModuleState}
 }
 
@@ -404,10 +404,8 @@ func (d DefaultGenesisReader) ReadWasmGenesis(cmd *cobra.Command) (*GenesisData,
 	), nil
 }
 
-var (
-	_ GenesisReader  = DefaultGenesisIO{}
-	_ GenesisMutator = DefaultGenesisIO{}
-)
+var _ GenesisReader = DefaultGenesisIO{}
+var _ GenesisMutator = DefaultGenesisIO{}
 
 // DefaultGenesisIO implements both interfaces to read and modify the genesis state for this module.
 // This implementation uses the default data structure that is used by the module.go genesis import/ export.

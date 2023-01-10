@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/rand"
+
+	"github.com/line/lbm-sdk/codec"
+	"github.com/line/lbm-sdk/codec/types"
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	"github.com/line/ostracon/libs/rand"
+	wasmvmtypes "github.com/line/wasmvm/types"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {

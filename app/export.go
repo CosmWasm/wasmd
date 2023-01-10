@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"log"
 
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	servertypes "github.com/line/lbm-sdk/server/types"
+	sdk "github.com/line/lbm-sdk/types"
+	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
+	"github.com/line/lbm-sdk/x/staking"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis
@@ -19,7 +18,7 @@ func (app *WasmApp) ExportAppStateAndValidators(
 	forZeroHeight bool, jailAllowedAddrs []string,
 ) (servertypes.ExportedApp, error) {
 	// as if they could withdraw from the start of the next block
-	ctx := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
+	ctx := app.NewContext(true, ocproto.Header{Height: app.LastBlockHeight()})
 
 	// We export at last height + 1, because that's the height at which
 	// Tendermint will start InitChain.
@@ -46,7 +45,7 @@ func (app *WasmApp) ExportAppStateAndValidators(
 
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
-//      in favour of export at a block height
+// in favour of export at a block height
 func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
 	applyAllowedAddrs := false
 

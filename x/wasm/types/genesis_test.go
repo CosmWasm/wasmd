@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/rand"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/line/lbm-sdk/codec"
+	"github.com/line/lbm-sdk/codec/types"
+	sdk "github.com/line/lbm-sdk/types"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	"github.com/line/ostracon/libs/rand"
 )
 
 func TestValidateGenesisState(t *testing.T) {

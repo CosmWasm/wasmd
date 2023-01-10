@@ -3,10 +3,11 @@ package wasm
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
+
+	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	wasmvmtypes "github.com/line/wasmvm/types"
 )
 
 func TestMapToWasmVMIBCPacket(t *testing.T) {

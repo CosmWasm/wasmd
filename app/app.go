@@ -8,113 +8,111 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/server/api"
-	"github.com/cosmos/cosmos-sdk/server/config"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authrest "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/authz"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/types"
-	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-
-	// Note: please do your research before using this in production app, this is a demo and not an officially
-	// supported IBC team implementation. It has no known issues, but do your own research before using it.
-	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
-	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
 	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	wasmappparams "github.com/CosmWasm/wasmd/app/params"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/client"
+	nodeservice "github.com/line/lbm-sdk/client/grpc/node"
+	"github.com/line/lbm-sdk/client/grpc/tmservice"
+	"github.com/line/lbm-sdk/codec"
+	"github.com/line/lbm-sdk/codec/types"
+	"github.com/line/lbm-sdk/server/api"
+	"github.com/line/lbm-sdk/server/config"
+	servertypes "github.com/line/lbm-sdk/server/types"
+	"github.com/line/lbm-sdk/simapp"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/module"
+	"github.com/line/lbm-sdk/x/auth"
+	"github.com/line/lbm-sdk/x/auth/ante"
+	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
+	authsims "github.com/line/lbm-sdk/x/auth/simulation"
+	authtx "github.com/line/lbm-sdk/x/auth/tx"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	"github.com/line/lbm-sdk/x/auth/vesting"
+	vestingtypes "github.com/line/lbm-sdk/x/auth/vesting/types"
+	"github.com/line/lbm-sdk/x/authz"
+	authzkeeper "github.com/line/lbm-sdk/x/authz/keeper"
+	authzmodule "github.com/line/lbm-sdk/x/authz/module"
+	"github.com/line/lbm-sdk/x/bank"
+	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/bankplus"
+	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
+	"github.com/line/lbm-sdk/x/capability"
+	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	"github.com/line/lbm-sdk/x/crisis"
+	crisiskeeper "github.com/line/lbm-sdk/x/crisis/keeper"
+	crisistypes "github.com/line/lbm-sdk/x/crisis/types"
+	distr "github.com/line/lbm-sdk/x/distribution"
+	distrclient "github.com/line/lbm-sdk/x/distribution/client"
+	distrkeeper "github.com/line/lbm-sdk/x/distribution/keeper"
+	distrtypes "github.com/line/lbm-sdk/x/distribution/types"
+	"github.com/line/lbm-sdk/x/evidence"
+	evidencekeeper "github.com/line/lbm-sdk/x/evidence/keeper"
+	evidencetypes "github.com/line/lbm-sdk/x/evidence/types"
+	"github.com/line/lbm-sdk/x/feegrant"
+	feegrantkeeper "github.com/line/lbm-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/line/lbm-sdk/x/feegrant/module"
+	"github.com/line/lbm-sdk/x/genutil"
+	genutiltypes "github.com/line/lbm-sdk/x/genutil/types"
+	"github.com/line/lbm-sdk/x/gov"
+	govkeeper "github.com/line/lbm-sdk/x/gov/keeper"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	ica "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts"
+	icacontroller "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/controller/types"
+	icahost "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host"
+	icahostkeeper "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host/types"
+	icatypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/types"
+	transfer "github.com/line/lbm-sdk/x/ibc/applications/transfer"
+	ibctransferkeeper "github.com/line/lbm-sdk/x/ibc/applications/transfer/keeper"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	ibc "github.com/line/lbm-sdk/x/ibc/core"
+	ibcclient "github.com/line/lbm-sdk/x/ibc/core/02-client"
+	ibcclientclient "github.com/line/lbm-sdk/x/ibc/core/02-client/client"
+	ibcclienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	porttypes "github.com/line/lbm-sdk/x/ibc/core/05-port/types"
+	ibchost "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
+	ibcmock "github.com/line/lbm-sdk/x/ibc/testing/mock"
+	"github.com/line/lbm-sdk/x/mint"
+	mintkeeper "github.com/line/lbm-sdk/x/mint/keeper"
+	minttypes "github.com/line/lbm-sdk/x/mint/types"
+	"github.com/line/lbm-sdk/x/params"
+	paramsclient "github.com/line/lbm-sdk/x/params/client"
+	paramskeeper "github.com/line/lbm-sdk/x/params/keeper"
+	paramstypes "github.com/line/lbm-sdk/x/params/types"
+	paramproposal "github.com/line/lbm-sdk/x/params/types/proposal"
+	"github.com/line/lbm-sdk/x/slashing"
+	slashingkeeper "github.com/line/lbm-sdk/x/slashing/keeper"
+	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
+	"github.com/line/lbm-sdk/x/staking"
+	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	"github.com/line/lbm-sdk/x/upgrade"
+	upgradeclient "github.com/line/lbm-sdk/x/upgrade/client"
+	upgradekeeper "github.com/line/lbm-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/line/lbm-sdk/x/upgrade/types"
+	abci "github.com/line/ostracon/abci/types"
+	tmjson "github.com/line/ostracon/libs/json"
+	"github.com/line/ostracon/libs/log"
+	tmos "github.com/line/ostracon/libs/os"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
+
+	wasmappparams "github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm"
+	wasmclient "github.com/line/wasmd/x/wasm/client"
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	_ "github.com/line/lbm-sdk/client/docs/statik"
 )
 
 const appName = "WasmApp"
@@ -206,7 +204,7 @@ var (
 		vesting.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		intertx.AppModuleBasic{},
+		// intertx.AppModuleBasic{},	// TODO support later
 	)
 
 	// module account permissions
@@ -227,6 +225,13 @@ var (
 	_ simapp.App              = (*WasmApp)(nil)
 	_ servertypes.Application = (*WasmApp)(nil)
 )
+
+// allowedReceivingModAcc define module accounts that are allowed to receive tokens
+func allowedReceivingModAcc() map[string]bool {
+	return map[string]bool{
+		distrtypes.ModuleName: true,
+	}
+}
 
 // WasmApp extended ABCI application
 type WasmApp struct {
@@ -258,11 +263,11 @@ type WasmApp struct {
 	ibcKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	icaControllerKeeper icacontrollerkeeper.Keeper
 	icaHostKeeper       icahostkeeper.Keeper
-	interTxKeeper       intertxkeeper.Keeper
-	transferKeeper      ibctransferkeeper.Keeper
-	feeGrantKeeper      feegrantkeeper.Keeper
-	authzKeeper         authzkeeper.Keeper
-	wasmKeeper          wasm.Keeper
+	// interTxKeeper       intertxkeeper.Keeper	// TODO support later
+	transferKeeper ibctransferkeeper.Keeper
+	feeGrantKeeper feegrantkeeper.Keeper
+	authzKeeper    authzkeeper.Keeper
+	wasmKeeper     wasm.Keeper
 
 	scopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	scopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -270,6 +275,10 @@ type WasmApp struct {
 	scopedInterTxKeeper       capabilitykeeper.ScopedKeeper
 	scopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	scopedWasmKeeper          capabilitykeeper.ScopedKeeper
+
+	// make IBC modules public for test purposes
+	// these modules are never directly routed to by the IBC Router
+	ICAAuthModule ibcmock.IBCModule
 
 	// the module manager
 	mm *module.Manager
@@ -346,6 +355,10 @@ func NewWasmApp(
 	scopedInterTxKeeper := app.capabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
 	scopedTransferKeeper := app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.capabilityKeeper.ScopeToModule(wasm.ModuleName)
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// note replicate if you do not need to test core IBC or light clients.
+	scopedIBCMockKeeper := app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName)
+	scopedICAMockKeeper := app.capabilityKeeper.ScopeToModule(ibcmock.ModuleName + icacontrollertypes.SubModuleName)
 	app.capabilityKeeper.Seal()
 
 	// add keepers
@@ -356,12 +369,12 @@ func NewWasmApp(
 		authtypes.ProtoBaseAccount,
 		maccPerms,
 	)
-	app.bankKeeper = bankkeeper.NewBaseKeeper(
+	app.bankKeeper = bankpluskeeper.NewBaseKeeper(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.accountKeeper,
 		app.getSubspace(banktypes.ModuleName),
-		app.ModuleAccountAddrs(),
+		app.BlockedAddrs(),
 	)
 	app.authzKeeper = authzkeeper.NewKeeper(
 		keys[authzkeeper.StoreKey],
@@ -482,14 +495,25 @@ func NewWasmApp(
 	icaModule := ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper)
 	icaHostIBCModule := icahost.NewIBCModule(app.icaHostKeeper)
 
-	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
-	app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
+	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
+	// note replicate if you do not need to test core IBC or light clients.
+	mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
+	mockIBCModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(ibcmock.ModuleName, scopedIBCMockKeeper))
+	// initialize ICA module with mock module as the authentication module on the controller side
+	icaAuthModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp("", scopedICAMockKeeper))
+	app.ICAAuthModule = icaAuthModule
+
+	// TODO support later
+	//// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
+	// app.interTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.icaControllerKeeper, scopedInterTxKeeper)
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. Do your own research before using it.
-	interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
-	interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
+	// interTxModule := intertx.NewAppModule(appCodec, app.interTxKeeper)
+	// interTxIBCModule := intertx.NewIBCModule(app.interTxKeeper)
 	// You will likely want to swap out the second argument with your own reviewed and maintained ica auth module
-	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
+	// icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, interTxIBCModule)
+
+	icaControllerIBCModule := icacontroller.NewIBCModule(app.icaControllerKeeper, icaAuthModule)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -526,6 +550,8 @@ func NewWasmApp(
 		wasmDir,
 		wasmConfig,
 		supportedFeatures,
+		nil,
+		nil,
 		wasmOpts...,
 	)
 
@@ -541,7 +567,8 @@ func NewWasmApp(
 		AddRoute(ibctransfertypes.ModuleName, transferIBCModule).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerIBCModule).
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(intertxtypes.ModuleName, icaControllerIBCModule)
+		// AddRoute(intertxtypes.ModuleName, icaControllerIBCModule).
+		AddRoute(ibcmock.ModuleName, mockIBCModule)
 	app.ibcKeeper.SetRouter(ibcRouter)
 
 	app.govKeeper = govkeeper.NewKeeper(
@@ -570,7 +597,7 @@ func NewWasmApp(
 		),
 		auth.NewAppModule(appCodec, app.accountKeeper, nil),
 		vesting.NewAppModule(app.accountKeeper, app.bankKeeper),
-		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
+		bankplus.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		gov.NewAppModule(appCodec, app.govKeeper, app.accountKeeper, app.bankKeeper),
 		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper),
@@ -586,7 +613,6 @@ func NewWasmApp(
 		params.NewAppModule(app.paramsKeeper),
 		transferModule,
 		icaModule,
-		interTxModule,
 		crisis.NewAppModule(&app.crisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -615,7 +641,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -640,7 +666,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -672,7 +698,7 @@ func NewWasmApp(
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
 		icatypes.ModuleName,
-		intertxtypes.ModuleName,
+		// intertxtypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
 	)
@@ -692,7 +718,7 @@ func NewWasmApp(
 	// transactions
 	app.sm = module.NewSimulationManager(
 		auth.NewAppModule(appCodec, app.accountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
+		bankplus.NewAppModule(appCodec, app.bankKeeper, app.accountKeeper),
 		capability.NewAppModule(appCodec, *app.capabilityKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.accountKeeper, app.bankKeeper, app.feeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
@@ -711,7 +737,6 @@ func NewWasmApp(
 	app.sm.RegisterStoreDecoders()
 	// initialize stores
 	app.MountKVStores(keys)
-	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
 	anteHandler, err := NewAnteHandler(
@@ -760,12 +785,14 @@ func NewWasmApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, ocproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.wasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			tmos.Exit(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
+		// Initialize the keeper of bankkeeper
+		app.bankKeeper.(bankpluskeeper.Keeper).InitializeBankPlus(ctx)
 	}
 
 	return app
@@ -811,6 +838,17 @@ func (app *WasmApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
+// BlockedAddrs returns all the app's module account addresses that are not
+// allowed to receive external tokens.
+func (app *WasmApp) BlockedAddrs() map[string]bool {
+	blockedAddrs := make(map[string]bool)
+	for acc := range maccPerms {
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc()[acc]
+	}
+
+	return blockedAddrs
+}
+
 // LegacyAmino returns legacy amino codec.
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
@@ -836,16 +874,16 @@ func (app *WasmApp) SimulationManager() *module.SimulationManager {
 // API server.
 func (app *WasmApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
 	clientCtx := apiSvr.ClientCtx
-	rpc.RegisterRoutes(clientCtx, apiSvr.Router)
-	// Register legacy tx routes.
-	authrest.RegisterTxRoutes(clientCtx, apiSvr.Router)
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
 	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
+	// Register node gRPC service for grpc-gateway.
+	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+
 	// Register legacy and grpc-gateway routes for all modules.
-	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
+	// ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	// register swagger API from root so that other applications can override easily
@@ -866,6 +904,10 @@ func (app *WasmApp) RegisterTendermintService(clientCtx client.Context) {
 
 func (app *WasmApp) AppCodec() codec.Codec {
 	return app.appCodec
+}
+
+func (app *WasmApp) RegisterNodeService(clientCtx client.Context) {
+	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server

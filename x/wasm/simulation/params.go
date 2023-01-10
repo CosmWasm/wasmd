@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/simulation"
+	"github.com/line/lbm-sdk/codec"
+	simtypes "github.com/line/lbm-sdk/types/simulation"
+	"github.com/line/lbm-sdk/x/simulation"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func ParamChanges(r *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {
@@ -38,5 +38,8 @@ func RandomParams(r *rand.Rand) types.Params {
 	return types.Params{
 		CodeUploadAccess:             accessConfig,
 		InstantiateDefaultPermission: accessConfig.Permission,
+		GasMultiplier:                types.DefaultGasMultiplier,
+		InstanceCost:                 types.DefaultInstanceCost,
+		CompileCost:                  types.DefaultCompileCost,
 	}
 }

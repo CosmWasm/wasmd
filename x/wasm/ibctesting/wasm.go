@@ -5,20 +5,19 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
-	wasmd "github.com/CosmWasm/wasmd/app"
-
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/rand"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/line/lbm-sdk/types"
+	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	abci "github.com/line/ostracon/abci/types"
+	"github.com/line/ostracon/libs/rand"
+
+	wasmd "github.com/line/wasmd/app"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")
@@ -37,7 +36,7 @@ func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
 }
 
 func (chain *TestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
-	wasmCode, err := ioutil.ReadFile(filename)
+	wasmCode, err := os.ReadFile(filename)
 	require.NoError(chain.t, err)
 	if strings.HasSuffix(filename, "wasm") { // compress for gas limit
 		var buf bytes.Buffer

@@ -1,12 +1,12 @@
 package wasmtesting
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	sdk "github.com/line/lbm-sdk/types"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 type MockChannelKeeper struct {

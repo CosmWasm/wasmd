@@ -6,21 +6,22 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	wasmvm "github.com/line/wasmvm"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	wasmibctesting "github.com/line/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmtesting "github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
@@ -146,6 +147,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(0))
 		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(1))
 	)
+
 	myContractAddr := chainA.SeedNewContractInstance()
 	coordinator.CommitBlock(chainA, chainB)
 
@@ -160,6 +162,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 		Version: ibctransfertypes.Version,
 		Order:   channeltypes.UNORDERED,
 	}
+
 	coordinator.SetupConnections(path)
 	coordinator.CreateChannels(path)
 

@@ -1,6 +1,6 @@
-# docker build . -t cosmwasm/wasmd:latest
-# docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.17-alpine3.15 AS go-builder
+# docker build . -t line/wasmd:latest
+# docker run --rm -it line/wasmd:latest /bin/sh
+FROM golang:1.18-alpine3.15 AS go-builder
 ARG arch=x86_64
 
 # this comes from standard alpine nightly file
@@ -15,14 +15,14 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/CosmWasm/wasmvm/releases
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
-ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.0.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
-RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 7d2239e9f25e96d0d4daba982ce92367aacf0cbd95d2facb8442268f2b1cc1fc
-RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep f6282df732a13dec836cda1f399dd874b1e3163504dbd9607c6af915b2740479
+# See https://github.com/line/wasmvm/releases
+ADD https://github.com/line/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.x86_64.a /lib/libwasmvm_static.x86_64.a
+ADD https://github.com/line/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.aarch64.a /lib/libwasmvm_static.aarch64.a
+RUN sha256sum /lib/libwasmvm_static.aarch64.a | grep bc3db72ba32f34ad88ceb1d20479411bd7f50ccd6a5ca50cc8ca462a561e6189
+RUN sha256sum /lib/libwasmvm_static.x86_64.a | grep 352fa5de5f9dba66f0a38082541d3e63e21394fee3e577ea35e0906294c61276
 
 # Copy the library you want to the final location that will be found by the linker flag `-lwasmvm_muslc`
-RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
+RUN cp /lib/libwasmvm_static.${arch}.a /lib/libwasmvm_static.a
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build

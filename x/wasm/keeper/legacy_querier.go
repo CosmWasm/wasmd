@@ -5,11 +5,11 @@ import (
 	"reflect"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	abci "github.com/line/ostracon/abci/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 const (
@@ -19,6 +19,8 @@ const (
 	QueryGetCode            = "code"
 	QueryListCode           = "list-code"
 	QueryContractHistory    = "contract-history"
+	QueryInactiveContracts  = "inactive-contracts"
+	QueryIsInactiveContract = "inactive-contract"
 )
 
 const (
@@ -40,12 +42,14 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if addrErr != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
 			}
+			//nolint:staticcheck
 			rsp, err = queryContractInfo(ctx, addr, keeper)
 		case QueryListContractByCode:
 			codeID, parseErr := strconv.ParseUint(path[1], 10, 64)
 			if parseErr != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", parseErr.Error())
 			}
+			//nolint:staticcheck
 			rsp = queryContractListByCode(ctx, codeID, keeper)
 		case QueryGetContractState:
 			if len(path) < 3 {
@@ -57,15 +61,28 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			if parseErr != nil {
 				return nil, sdkerrors.Wrapf(types.ErrInvalid, "code id: %s", parseErr.Error())
 			}
+			//nolint:staticcheck
 			rsp, err = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
+			//nolint:staticcheck
 			rsp, err = queryCodeList(ctx, keeper)
 		case QueryContractHistory:
 			contractAddr, addrErr := sdk.AccAddressFromBech32(path[1])
 			if addrErr != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
 			}
+			//nolint:staticcheck
 			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
+		case QueryInactiveContracts:
+			//nolint:staticcheck
+			rsp = queryInactiveContracts(ctx, keeper)
+		case QueryIsInactiveContract:
+			contractAddr, addrErr := sdk.AccAddressFromBech32(path[1])
+			if addrErr != nil {
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
+			}
+			//nolint:staticcheck
+			rsp = keeper.IsInactiveContract(ctx, contractAddr)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
@@ -120,6 +137,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	}
 }
 
+//nolint:unparam
 func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoResponse, error) {
 	var info []types.CodeInfoResponse
 	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
@@ -134,6 +152,7 @@ func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoRe
 	return info, nil
 }
 
+//nolint:unparam
 func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) ([]types.ContractCodeHistoryEntry, error) {
 	history := keeper.GetContractHistory(ctx, contractAddr)
 	// redact response
@@ -143,10 +162,20 @@ func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper t
 	return history, nil
 }
 
+//nolint:unparam
 func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) []string {
 	var contracts []string
 	keeper.IterateContractsByCode(ctx, codeID, func(addr sdk.AccAddress) bool {
 		contracts = append(contracts, addr.String())
+		return false
+	})
+	return contracts
+}
+
+func queryInactiveContracts(ctx sdk.Context, keeper types.ViewKeeper) []string {
+	var contracts []string
+	keeper.IterateInactiveContracts(ctx, func(contractAddress sdk.AccAddress) bool {
+		contracts = append(contracts, contractAddress.String())
 		return false
 	})
 	return contracts

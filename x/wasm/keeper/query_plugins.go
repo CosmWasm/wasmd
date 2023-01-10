@@ -4,32 +4,31 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
+	baseapp "github.com/line/lbm-sdk/baseapp"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	abci "github.com/line/ostracon/abci/types"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {
-	Ctx         sdk.Context
-	Plugins     WasmVMQueryHandler
-	Caller      sdk.AccAddress
-	gasRegister GasRegister
+	Ctx           sdk.Context
+	Plugins       WasmVMQueryHandler
+	Caller        sdk.AccAddress
+	GasMultiplier GasMultiplier
 }
 
-func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller sdk.AccAddress, gasRegister GasRegister) QueryHandler {
+func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller sdk.AccAddress, gasMultiplier GasMultiplier) QueryHandler {
 	return QueryHandler{
-		Ctx:         ctx,
-		Plugins:     vmQueryHandler,
-		Caller:      caller,
-		gasRegister: gasRegister,
+		Ctx:           ctx,
+		Plugins:       vmQueryHandler,
+		Caller:        caller,
+		GasMultiplier: gasMultiplier,
 	}
 }
 
@@ -43,7 +42,7 @@ var _ wasmvmtypes.Querier = QueryHandler{}
 
 func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byte, error) {
 	// set a limit for a subCtx
-	sdkGas := q.gasRegister.FromWasmVMGas(gasLimit)
+	sdkGas := q.GasMultiplier.FromWasmVMGas(gasLimit)
 	// discard all changes/ events in subCtx by not committing the cached context
 	subCtx, _ := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas)).CacheContext()
 
@@ -104,7 +103,7 @@ func DefaultQueryPlugins(
 ) QueryPlugins {
 	return QueryPlugins{
 		Bank:     BankQuerier(bank),
-		Custom:   NoCustomQuerier,
+		Custom:   CustomQuerierImpl(queryRouter),
 		IBC:      IBCQuerier(wasm, channelKeeper),
 		Staking:  StakingQuerier(staking, distKeeper),
 		Stargate: StargateQuerier(queryRouter),
@@ -192,9 +191,28 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
 }
+func CustomQuerierImpl(queryRouter GRPCQueryRouter) func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
+	return func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
+		var linkQueryWrapper types.LinkQueryWrapper
+		err := json.Unmarshal(querierJson, &linkQueryWrapper)
+		if err != nil {
+			return nil, err
+		}
+		route := queryRouter.Route(linkQueryWrapper.Path)
+		if route == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: "Unknown encode module"}
+		}
+		req := abci.RequestQuery{
+			Data: linkQueryWrapper.Data,
+			Path: linkQueryWrapper.Path,
+		}
+		res, err := route(ctx, req)
+		if err != nil {
+			return nil, err
+		}
 
-func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
-	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+		return res.Value, nil
+	}
 }
 
 func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error) {
@@ -371,7 +389,8 @@ func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations [
 		}
 
 		// shares to amount logic comes from here:
-		// https://github.com/cosmos/cosmos-sdk/blob/v0.38.3/x/staking/keeper/querier.go#L404
+		// x/staking/keeper/querier.go DelegationToDelegationResponse
+		/// https://github.com/cosmos/cosmos-sdk/blob/3ccf3913f53e2a9ccb4be8429bee32e67669e89a/x/staking/keeper/querier.go#L450
 		val, found := keeper.GetValidator(ctx, valAddr)
 		if !found {
 			return nil, sdkerrors.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
@@ -406,7 +425,7 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	delegationCoins := ConvertSdkCoinToWasmCoin(amount)
 
 	// FIXME: this is very rough but better than nothing...
-	// https://github.com/CosmWasm/wasmd/issues/282
+	// https://github.com/line/lbm-sdk/issues/225
 	// if this (val, delegate) pair is receiving a redelegation, it cannot redelegate more
 	// otherwise, it can redelegate the full amount
 	// (there are cases of partial funds redelegated, but this is a start)

@@ -3,12 +3,12 @@ package keeper
 import (
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // bindIbcPort will reserve the port.

@@ -5,16 +5,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/tx"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/version"
+	"github.com/line/lbm-sdk/x/gov/client/cli"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+
+	"github.com/line/wasmd/x/wasm/lbmtypes"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func ProposalStoreCodeCmd() *cobra.Command {
@@ -721,5 +723,111 @@ $ %s tx gov submit-proposal update-instantiate-config 1,nobody 2,everybody 3,%s1
 	cmd.Flags().String(cli.FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	// type values must match the "ProposalHandler" "routes" in cli
 	cmd.Flags().String(flagProposalType, "", "Permission of proposal, types: store-code/instantiate/migrate/update-admin/clear-admin/text/parameter_change/software_upgrade")
+	return cmd
+}
+
+func ProposalDeactivateContractCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deactivate-contract [contract_addr_bech32]",
+		Short: "Deactivate the contract. This contract will not be executed after that.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return fmt.Errorf("deposit: %s", err)
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			if err != nil {
+				return err
+			}
+
+			content := lbmtypes.DeactivateContractProposal{
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				Contract:    args[0],
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+
+	return cmd
+}
+
+func ProposalActivateContractCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "activate-contract [contract_addr_bech32]",
+		Short: "Activate the inactive contract. This contract will be executed after that.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+			if err != nil {
+				return fmt.Errorf("proposal title: %s", err)
+			}
+			proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+			if err != nil {
+				return fmt.Errorf("proposal description: %s", err)
+			}
+			depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
+			if err != nil {
+				return fmt.Errorf("deposit: %s", err)
+			}
+			deposit, err := sdk.ParseCoinsNormalized(depositArg)
+			if err != nil {
+				return err
+			}
+
+			content := lbmtypes.ActivateContractProposal{
+				Title:       proposalTitle,
+				Description: proposalDescr,
+				Contract:    args[0],
+			}
+
+			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if err != nil {
+				return err
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+
 	return cmd
 }

@@ -8,16 +8,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/flags"
+	"github.com/line/lbm-sdk/crypto/keyring"
+	"github.com/line/lbm-sdk/server"
+	sdk "github.com/line/lbm-sdk/types"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	authvesting "github.com/line/lbm-sdk/x/auth/vesting/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/genutil"
+	genutiltypes "github.com/line/lbm-sdk/x/genutil/types"
 )
 
 const (

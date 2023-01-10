@@ -1,26 +1,24 @@
 package simulation
 
 import (
-	"io/ioutil"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/simulation"
+	"github.com/line/lbm-sdk/baseapp"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/module"
+	simtypes "github.com/line/lbm-sdk/types/simulation"
+	"github.com/line/lbm-sdk/x/simulation"
 
-	"github.com/CosmWasm/wasmd/app/params"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmappparams "github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm/keeper/testdata"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // Simulation operation weights constants
-//nolint:gosec
 const (
-	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
-	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"
-	OpReflectContractPath          = "op_reflect_contract_path"
+	OpWeightMsgStoreCode           = "op_weight_msg_store_code"           //nolint:gosec
+	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract" //nolint:gosec
+	OpReflectContractPath          = "op_reflect_contract_path"           //nolint:gosec
 )
 
 // WasmKeeper is a subset of the wasm keeper used by simulations
@@ -39,31 +37,21 @@ func WeightedOperations(
 	var (
 		weightMsgStoreCode           int
 		weightMsgInstantiateContract int
-		wasmContractPath             string
 	)
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgStoreCode, &weightMsgStoreCode, nil,
 		func(_ *rand.Rand) {
-			weightMsgStoreCode = params.DefaultWeightMsgStoreCode
+			weightMsgStoreCode = wasmappparams.DefaultWeightMsgStoreCode
 		},
 	)
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil,
 		func(_ *rand.Rand) {
-			weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
-		func(_ *rand.Rand) {
-			// simulations are run from the `app` folder
-			wasmContractPath = "../x/wasm/keeper/testdata/reflect.wasm"
+			weightMsgInstantiateContract = wasmappparams.DefaultWeightMsgInstantiateContract
 		},
 	)
 
-	wasmBz, err := ioutil.ReadFile(wasmContractPath)
-	if err != nil {
-		panic(err)
-	}
+	wasmBz := testdata.ReflectContractWasm()
 
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
@@ -104,7 +92,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk simulation.BankKeeper, wasm
 		txCtx := simulation.OperationInput{
 			R:             r,
 			App:           app,
-			TxGen:         simappparams.MakeTestEncodingConfig().TxConfig,
+			TxGen:         wasmappparams.MakeEncodingConfig().TxConfig,
 			Cdc:           nil,
 			Msg:           &msg,
 			MsgType:       msg.Type(),
@@ -157,7 +145,7 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk simulation.BankKe
 		txCtx := simulation.OperationInput{
 			R:             r,
 			App:           app,
-			TxGen:         simappparams.MakeTestEncodingConfig().TxConfig,
+			TxGen:         wasmappparams.MakeEncodingConfig().TxConfig,
 			Cdc:           nil,
 			Msg:           &msg,
 			MsgType:       msg.Type(),

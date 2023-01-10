@@ -1,8 +1,8 @@
 package wasmtesting
 
 import (
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/line/lbm-sdk/baseapp"
+	sdk "github.com/line/lbm-sdk/types"
 )
 
 // MockMessageRouter mock for testing

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // newWasmModuleEvent creates with wasm module event for interacting with the given contract. Adds custom attributes

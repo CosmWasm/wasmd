@@ -3,19 +3,17 @@ package app
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/codec"
+	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
+	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
+	ibctransferkeeper "github.com/line/lbm-sdk/x/ibc/applications/transfer/keeper"
+	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
+	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
 
-	"github.com/CosmWasm/wasmd/app/params"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm"
 )
 
 type TestSupport struct {

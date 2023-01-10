@@ -3,9 +3,9 @@ package keeper
 import (
 	"encoding/binary"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/line/lbm-sdk/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // CountTXDecorator ante handler to count the tx position in a block.
@@ -77,7 +77,7 @@ func NewLimitSimulationGasDecorator(gasLimit *sdk.Gas) *LimitSimulationGasDecora
 func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	if !simulate {
 		// Wasm code is not executed in checkTX so that we don't need to limit it further.
-		// Tendermint rejects the TX afterwards when the tx.gas > max block gas.
+		// Ostracon rejects the TX afterwards when the tx.gas > max block gas.
 		// On deliverTX we rely on the tendermint/sdk mechanics that ensure
 		// tx has gas set and gas < max block gas
 		return next(ctx, tx, simulate)

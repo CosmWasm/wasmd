@@ -11,7 +11,8 @@ import (
 
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+
+	crypto "github.com/line/ostracon/proto/ostracon/crypto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

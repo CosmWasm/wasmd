@@ -10,6 +10,8 @@ const (
 	EventTypeInstantiate       = "instantiate"
 	EventTypeExecute           = "execute"
 	EventTypeMigrate           = "migrate"
+	EventTypeUpdateAdmin       = "update_admin"
+	EventTypeClearAdmin        = "clear_admin"
 	EventTypePinCode           = "pin_code"
 	EventTypeUnpinCode         = "unpin_code"
 	EventTypeSudo              = "sudo"
@@ -23,6 +25,7 @@ const (
 
 	AttributeKeyContractAddr  = "_contract_address"
 	AttributeKeyCodeID        = "code_id"
+	AttributeKeyCodeIDs       = "code_ids"
 	AttributeKeyResultDataHex = "result"
 	AttributeKeyFeature       = "feature"
 )

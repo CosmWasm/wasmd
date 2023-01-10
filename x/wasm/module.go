@@ -5,26 +5,26 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	simKeeper "github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/simulation"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/codec"
+	cdctypes "github.com/line/lbm-sdk/codec/types"
+	"github.com/line/lbm-sdk/server"
+	servertypes "github.com/line/lbm-sdk/server/types"
+	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/module"
+	simtypes "github.com/line/lbm-sdk/types/simulation"
+	simKeeper "github.com/line/lbm-sdk/x/simulation"
+	abci "github.com/line/ostracon/abci/types"
+
+	"github.com/line/wasmd/x/wasm/client/cli"
+	"github.com/line/wasmd/x/wasm/keeper"
+	"github.com/line/wasmd/x/wasm/lbmtypes"
+	"github.com/line/wasmd/x/wasm/simulation"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 var (
@@ -76,11 +76,6 @@ func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, config client
 	return ValidateGenesis(data)
 }
 
-// RegisterRESTRoutes registers the REST routes for the wasm module.
-func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(cliCtx, rtr)
-}
-
 // GetTxCmd returns the root tx command for the wasm module.
 func (b AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
@@ -93,7 +88,7 @@ func (b AppModuleBasic) GetQueryCmd() *cobra.Command {
 
 // RegisterInterfaces implements InterfaceModule
 func (b AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	types.RegisterInterfaces(registry)
+	lbmtypes.RegisterInterfaces(registry)
 }
 
 // ____________________________________________________________________________
@@ -135,6 +130,12 @@ func NewAppModule(
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper)))
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
+	lbmtypes.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
+
+	// m := keeper.NewMigrator(*am.keeper)
+	// if err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2); err != nil {
+	// 	panic(fmt.Sprintf("failed to migrate x/distribution from version 1 to 2: %v", err))
+	// }
 }
 
 func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { //nolint:staticcheck
@@ -157,7 +158,7 @@ func (AppModule) QuerierRoute() string {
 // InitGenesis performs genesis initialization for the wasm module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState GenesisState
+	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
 	validators, err := InitGenesis(ctx, am.keeper, genesisState, am.validatorSetSource, am.Route().Handler())
 	if err != nil {

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/tendermint/tendermint/libs/log"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	sdk "github.com/line/lbm-sdk/types"
+	abci "github.com/line/ostracon/abci/types"
+	"github.com/line/ostracon/libs/log"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
 )
 
 func TestDispatchSubmessages(t *testing.T) {
@@ -101,11 +101,10 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			expData:    []byte("myReplyData"),
 			expCommits: []bool{true},
-			expEvents: []sdk.Event{
-				{
-					Type:       "myEvent",
-					Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
-				},
+			expEvents: []sdk.Event{{
+				Type:       "myEvent",
+				Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
+			},
 				sdk.NewEvent("wasm-reply"),
 			},
 		},

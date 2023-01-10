@@ -5,7 +5,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 type optsFn func(*Keeper)
@@ -96,24 +96,22 @@ func WithCoinTransferrer(x CoinTransferrer) Option {
 
 func WithVMCacheMetrics(r prometheus.Registerer) Option {
 	return optsFn(func(k *Keeper) {
-		NewWasmVMMetricsCollector(k.wasmVM).Register(r)
+		NewWasmVMCacheMetricsCollector(k.wasmVM).Register(r)
+	})
+}
+
+func WithVMMetrics(provider MetricsProvider) Option {
+	return optsFn(func(k *Keeper) {
+		k.metrics = provider()
 	})
 }
 
 // WithGasRegister set a new gas register to implement custom gas costs.
 // When the "gas multiplier" for wasmvm gas conversion is modified inside the new register,
 // make sure to also use `WithApiCosts` option for non default values
-func WithGasRegister(x GasRegister) Option {
+func WithGasRegister(x WasmGasRegister) Option {
 	return optsFn(func(k *Keeper) {
 		k.gasRegister = x
-	})
-}
-
-// WithAPICosts sets custom api costs. Amounts are in cosmwasm gas Not SDK gas.
-func WithAPICosts(human, canonical uint64) Option {
-	return optsFn(func(_ *Keeper) {
-		costHumanize = human
-		costCanonical = canonical
 	})
 }
 

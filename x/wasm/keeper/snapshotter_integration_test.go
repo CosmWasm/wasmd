@@ -2,25 +2,24 @@ package keeper_test
 
 import (
 	"crypto/sha256"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"github.com/stretchr/testify/assert"
-
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	cryptocodec "github.com/line/lbm-sdk/crypto/codec"
+	"github.com/line/lbm-sdk/crypto/keys/ed25519"
+	sdk "github.com/line/lbm-sdk/types"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
+	octypes "github.com/line/ostracon/types"
+
+	"github.com/line/wasmd/app"
+	"github.com/line/wasmd/x/wasm/keeper"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func TestSnapshotter(t *testing.T) {
@@ -43,7 +42,7 @@ func TestSnapshotter(t *testing.T) {
 			srcWasmApp, genesisAddr := newWasmExampleApp(t)
 
 			// store wasm codes on chain
-			ctx := srcWasmApp.NewUncachedContext(false, tmproto.Header{
+			ctx := srcWasmApp.NewUncachedContext(false, ocproto.Header{
 				ChainID: "foo",
 				Height:  srcWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
@@ -53,7 +52,7 @@ func TestSnapshotter(t *testing.T) {
 
 			srcCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			for i, v := range spec.wasmFiles {
-				wasmCode, err := ioutil.ReadFile(v)
+				wasmCode, err := os.ReadFile(v)
 				require.NoError(t, err)
 				codeID, err := contractKeeper.Create(ctx, genesisAddr, wasmCode, nil)
 				require.NoError(t, err)
@@ -83,7 +82,7 @@ func TestSnapshotter(t *testing.T) {
 
 			// then all wasm contracts are imported
 			wasmKeeper = app.NewTestSupport(t, destWasmApp).WasmKeeper()
-			ctx = destWasmApp.NewUncachedContext(false, tmproto.Header{
+			ctx = destWasmApp.NewUncachedContext(false, ocproto.Header{
 				ChainID: "foo",
 				Height:  destWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
@@ -105,7 +104,7 @@ func TestSnapshotter(t *testing.T) {
 
 func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
 	senderPrivKey := ed25519.GenPrivKey()
-	pubKey, err := cryptocodec.ToTmPubKeyInterface(senderPrivKey.PubKey())
+	pubKey, err := cryptocodec.ToOcPubKeyInterface(senderPrivKey.PubKey())
 	require.NoError(t, err)
 
 	senderAddr := senderPrivKey.PubKey().Address().Bytes()
@@ -117,8 +116,8 @@ func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := octypes.NewValidator(pubKey, 1)
+	valSet := octypes.NewValidatorSet([]*octypes.Validator{validator})
 	wasmApp := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, nil, balance)
 
 	return wasmApp, senderAddr

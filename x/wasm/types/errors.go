@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkErrors "github.com/line/lbm-sdk/types/errors"
 )
 
 // Codes for wasm contract errors
@@ -87,6 +87,9 @@ var (
 
 	// ErrExceedMaxQueryStackSize error if max query stack size is exceeded
 	ErrExceedMaxQueryStackSize = sdkErrors.Register(DefaultCodespace, 27, "max query stack size exceeded")
+
+	// ErrInactiveContract error if the contract set inactive
+	ErrInactiveContract = sdkErrors.Register(DefaultCodespace, 101, "inactive contract")
 )
 
 type ErrNoSuchContract struct {

@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	abci "github.com/line/ostracon/abci/types"
+
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
 )
 
 const ChainIDPrefix = "testchain"
@@ -80,7 +81,7 @@ func (coord *Coordinator) UpdateTimeForChain(chain *TestChain) {
 	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
 }
 
-// Setup constructs a TM client, connection, and channel on both chains provided. It will
+// Setup constructs a OC client, connection, and channel on both chains provided. It will
 // fail if any error occurs. The clientID's, TestConnections, and TestChannels are returned
 // for both chains. The channels created are connected to the ibc-transfer application.
 func (coord *Coordinator) Setup(path *Path) {
@@ -191,7 +192,7 @@ func GetChainID(index int) string {
 // CONTRACT: the passed in list of indexes must not contain duplicates
 func (coord *Coordinator) CommitBlock(chains ...*TestChain) {
 	for _, chain := range chains {
-		chain.App.Commit()
+		chain.CommitBlock()
 		chain.NextBlock()
 	}
 	coord.IncrementTime()
@@ -201,7 +202,7 @@ func (coord *Coordinator) CommitBlock(chains ...*TestChain) {
 func (coord *Coordinator) CommitNBlocks(chain *TestChain, n uint64) {
 	for i := uint64(0); i < n; i++ {
 		chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
-		chain.App.Commit()
+		chain.CommitBlock()
 		chain.NextBlock()
 		coord.IncrementTime()
 	}

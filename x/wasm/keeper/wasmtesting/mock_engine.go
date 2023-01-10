@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"crypto/sha256"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/tendermint/tendermint/libs/rand"
+	"github.com/line/ostracon/libs/rand"
+	wasmvm "github.com/line/wasmvm"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 var _ types.WasmerEngine = &MockWasmer{}
@@ -127,6 +127,7 @@ func (m *MockWasmer) Sudo(codeID wasmvm.Checksum, env wasmvmtypes.Env, sudoMsg [
 		panic("not supposed to be called!")
 	}
 	return m.SudoFn(codeID, env, sudoMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
+
 }
 
 func (m *MockWasmer) Reply(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
@@ -176,6 +177,7 @@ var AlwaysPanicMockWasmer = &MockWasmer{}
 // SelfCallingInstMockWasmer prepares a Wasmer mock that calls itself on instantiation.
 func SelfCallingInstMockWasmer(executeCalled *bool) *MockWasmer {
 	return &MockWasmer{
+
 		CreateFn: func(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
 			anyCodeID := bytes.Repeat([]byte{0x1}, 32)
 			return anyCodeID, nil

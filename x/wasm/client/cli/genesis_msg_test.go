@@ -3,33 +3,34 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/flags"
+	"github.com/line/lbm-sdk/crypto/hd"
+	"github.com/line/lbm-sdk/crypto/keyring"
+	"github.com/line/lbm-sdk/server"
+	"github.com/line/lbm-sdk/testutil"
+	"github.com/line/lbm-sdk/testutil/testdata"
+	sdk "github.com/line/lbm-sdk/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/genutil"
+	genutiltypes "github.com/line/lbm-sdk/x/genutil/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	ostcfg "github.com/line/ostracon/config"
+	"github.com/line/ostracon/libs/log"
+	octypes "github.com/line/ostracon/types"
+
+	"github.com/line/wasmd/x/wasm/keeper"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")
@@ -42,7 +43,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -109,7 +110,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -364,11 +365,11 @@ func TestInstantiateContractCmd(t *testing.T) {
 }
 
 func TestExecuteContractCmd(t *testing.T) {
-	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
+	const firstContractAddress = "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8"
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
-	anyValidWasmFile, err := ioutil.TempFile(t.TempDir(), "wasm")
+	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
 	require.NoError(t, anyValidWasmFile.Close())
@@ -446,7 +447,7 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			mutator: func(cmd *cobra.Command) {
 				// See TestBuildContractAddress in keeper_test.go
-				cmd.SetArgs([]string{"cosmos1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9stu5qm8", `{}`})
+				cmd.SetArgs([]string{"link1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9skz93hr", `{}`})
 				flagSet := cmd.Flags()
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
@@ -564,7 +565,6 @@ func TestExecuteContractCmd(t *testing.T) {
 		})
 	}
 }
-
 func TestGetAllContracts(t *testing.T) {
 	specs := map[string]struct {
 		src types.GenesisState
@@ -657,17 +657,18 @@ func TestGetAllContracts(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got := GetAllContracts(&spec.src)
+			got := getAllContracts(&spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
+
 }
 
 func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	homeDir := t.TempDir()
 
-	require.NoError(t, os.Mkdir(path.Join(homeDir, "config"), 0o700))
+	require.NoError(t, os.Mkdir(path.Join(homeDir, "config"), 0700))
 	genFilename := path.Join(homeDir, "config", "genesis.json")
 	appState := make(map[string]json.RawMessage)
 	appState[types.ModuleName] = appCodec.MustMarshalJSON(&wasmGenesis)
@@ -683,7 +684,7 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 
 	appStateBz, err := json.Marshal(appState)
 	require.NoError(t, err)
-	genDoc := tmtypes.GenesisDoc{
+	genDoc := octypes.GenesisDoc{
 		ChainID:  "testing",
 		AppState: appStateBz,
 	}
@@ -693,13 +694,25 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	return homeDir
 }
 
+func createDefaultOstraconConfig(rootDir string) (*ostcfg.Config, error) {
+	conf := ostcfg.DefaultConfig()
+	conf.SetRoot(rootDir)
+	ostcfg.EnsureRoot(rootDir)
+
+	if err := conf.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("error in config file: %v", err)
+	}
+
+	return conf, nil
+}
+
 func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) error {
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(homeDir)
+	cfg, err := createDefaultOstraconConfig(homeDir)
 	require.NoError(t, err)
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
-	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(homeDir)
+	clientCtx := client.Context{}.WithJSONCodec(appCodec).WithHomeDir(homeDir)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)

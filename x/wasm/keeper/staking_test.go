@@ -2,25 +2,26 @@ package keeper
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	codectypes "github.com/line/lbm-sdk/codec/types"
+	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
+	sdk "github.com/line/lbm-sdk/types"
+	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
+	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
+	distributionkeeper "github.com/line/lbm-sdk/x/distribution/keeper"
+	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
+	"github.com/line/lbm-sdk/x/staking"
+	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
+	"github.com/line/lbm-sdk/x/staking/types"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 type StakingInitMsg struct {
@@ -92,7 +93,7 @@ type InvestmentResponse struct {
 }
 
 func TestInitializeStaking(t *testing.T) {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
@@ -105,7 +106,7 @@ func TestInitializeStaking(t *testing.T) {
 	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := keeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
@@ -167,7 +168,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures)
+	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
@@ -188,7 +189,7 @@ func initializeStaking(t *testing.T) initInfo {
 	creator := k.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := ioutil.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
@@ -446,7 +447,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	creator := initInfo.faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload mask code
-	maskCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	maskCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, nil)
 	require.NoError(t, err)

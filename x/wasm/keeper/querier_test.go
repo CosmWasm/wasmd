@@ -5,29 +5,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkErrors "github.com/line/lbm-sdk/types/errors"
+	"github.com/line/lbm-sdk/types/query"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	"github.com/line/ostracon/libs/log"
+	wasmvm "github.com/line/wasmvm"
+	wasmvmtypes "github.com/line/wasmvm/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/line/wasmd/x/wasm/lbmtypes"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 func TestQueryAllContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -114,7 +115,7 @@ func TestQueryAllContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -157,14 +158,14 @@ func TestQuerySmartContractState(t *testing.T) {
 }
 
 func TestQuerySmartContractPanics(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	contractAddr := BuildContractAddress(1, 1)
 	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
 	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(DefaultInstanceCost)).WithLogger(log.TestingLogger())
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.TestingLogger())
 
 	specs := map[string]struct {
 		doInContract func()
@@ -202,7 +203,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 }
 
 func TestQueryRawContractState(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -257,7 +258,7 @@ func TestQueryRawContractState(t *testing.T) {
 }
 
 func TestQueryContractListByCodeOrdering(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000000))
@@ -265,7 +266,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 	anyAddr := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
@@ -313,7 +314,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 }
 
 func TestQueryContractHistory(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	var (
@@ -453,11 +454,64 @@ func TestQueryContractHistory(t *testing.T) {
 	}
 }
 
-func TestQueryCodeList(t *testing.T) {
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+func TestQueryCode(t *testing.T) {
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	codeID := uint64(1)
+	require.NoError(t, keeper.importCode(ctx, codeID,
+		types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode)), wasmCode))
+
+	specs := map[string]struct {
+		req    *types.QueryCodeRequest
+		expErr error
+	}{
+		"req nil": {
+			req:    nil,
+			expErr: status.Error(codes.InvalidArgument, "empty request"),
+		},
+		"req.CodeId=0": {
+			req:    &types.QueryCodeRequest{CodeId: 0},
+			expErr: sdkErrors.Wrap(types.ErrInvalid, "code id"),
+		},
+		"not exist codeID": {
+			req:    &types.QueryCodeRequest{CodeId: 2},
+			expErr: types.ErrNotFound,
+		},
+		"code codeID": {
+			req:    &types.QueryCodeRequest{CodeId: 1},
+			expErr: nil,
+		},
+	}
+
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			xCtx, _ := ctx.CacheContext()
+
+			q := Querier(keeper)
+			got, err := q.Code(sdk.WrapSDKContext(xCtx), spec.req)
+			if spec.expErr != nil {
+				assert.Nil(t, got)
+				assert.NotNil(t, err)
+				assert.EqualError(t, err, spec.expErr.Error())
+			} else {
+				assert.Nil(t, err)
+				assert.NotNil(t, got)
+				assert.EqualValues(t, got.CodeID, codeID)
+				assert.NotNil(t, got.InstantiatePermission)
+			}
+		})
+	}
+}
+
+func TestQueryCodeList(t *testing.T) {
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	specs := map[string]struct {
@@ -533,7 +587,7 @@ func TestQueryContractInfo(t *testing.T) {
 		contractAddr = RandomAccountAddress(t)
 		anyDate      = time.Now().UTC()
 	)
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	// register an example extension. must be protobuf
 	keepers.EncodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*types.ContractInfoExtension)(nil),
@@ -599,7 +653,7 @@ func TestQueryContractInfo(t *testing.T) {
 }
 
 func TestQueryPinnedCodes(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
 	exampleContract1 := InstantiateHackatomExampleContract(t, ctx, keepers)
@@ -611,8 +665,12 @@ func TestQueryPinnedCodes(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery   *types.QueryPinnedCodesRequest
 		expCodeIDs []uint64
-		expErr     *sdkErrors.Error
+		expErr     bool
 	}{
+		"req nil": {
+			srcQuery: nil,
+			expErr:   true,
+		},
 		"query all": {
 			srcQuery:   &types.QueryPinnedCodesRequest{},
 			expCodeIDs: []uint64{exampleContract1.CodeID, exampleContract2.CodeID},
@@ -624,6 +682,15 @@ func TestQueryPinnedCodes(t *testing.T) {
 				},
 			},
 			expCodeIDs: []uint64{exampleContract2.CodeID},
+		},
+		"with invalid pagination key": {
+			srcQuery: &types.QueryPinnedCodesRequest{
+				Pagination: &query.PageRequest{
+					Offset: 1,
+					Key:    []byte("test"),
+				},
+			},
+			expErr: true,
 		},
 		"with pagination limit": {
 			srcQuery: &types.QueryPinnedCodesRequest{
@@ -645,8 +712,10 @@ func TestQueryPinnedCodes(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.PinnedCodes(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
-			if spec.expErr != nil {
+			if spec.expErr {
+				assert.Nil(t, got)
+				assert.NotNil(t, err)
+
 				return
 			}
 			require.NotNil(t, got)
@@ -656,13 +725,13 @@ func TestQueryPinnedCodes(t *testing.T) {
 }
 
 func TestQueryCodeInfo(t *testing.T) {
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
-	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	anyAddress, err := sdk.AccAddressFromBech32("link1qyqszqgpqyqszqgpqyqszqgpqyqszqgp8apuk5")
 	require.NoError(t, err)
 	specs := map[string]struct {
 		codeId       uint64
@@ -711,13 +780,14 @@ func TestQueryCodeInfo(t *testing.T) {
 }
 
 func TestQueryCodeInfoList(t *testing.T) {
-	wasmCode, err := ioutil.ReadFile("./testdata/hackatom.wasm")
+
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures)
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
 	keeper := keepers.WasmKeeper
 
-	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	anyAddress, err := sdk.AccAddressFromBech32("link1qyqszqgpqyqszqgpqyqszqgpqyqszqgp8apuk5")
 	require.NoError(t, err)
 	codeInfoWithConfig := func(accessConfig types.AccessConfig) types.CodeInfo {
 		codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
@@ -780,4 +850,55 @@ func fromBase64(s string) []byte {
 		panic(err)
 	}
 	return r
+}
+
+func TestQueryInactiveContracts(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	var mock wasmtesting.MockWasmer
+	wasmtesting.MakeInstantiable(&mock)
+	example1 := SeedNewContractInstance(t, ctx, keepers, &mock)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	example2 := SeedNewContractInstance(t, ctx, keepers, &mock)
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+
+	// set inactive
+	err := keeper.deactivateContract(ctx, example1.Contract)
+	require.NoError(t, err)
+	err = keeper.deactivateContract(ctx, example2.Contract)
+	require.NoError(t, err)
+
+	q := Querier(keeper)
+	rq := lbmtypes.QueryInactiveContractsRequest{}
+	res, err := q.InactiveContracts(sdk.WrapSDKContext(ctx), &rq)
+	require.NoError(t, err)
+	expect := []string{example1.Contract.String(), example2.Contract.String()}
+	for _, exp := range expect {
+		assert.Contains(t, res.Addresses, exp)
+	}
+}
+
+func TestQueryIsInactiveContract(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	var mock wasmtesting.MockWasmer
+	wasmtesting.MakeInstantiable(&mock)
+	example := SeedNewContractInstance(t, ctx, keepers, &mock)
+
+	q := Querier(keeper)
+	rq := lbmtypes.QueryInactiveContractRequest{Address: example.Contract.String()}
+	res, err := q.InactiveContract(sdk.WrapSDKContext(ctx), &rq)
+	require.NoError(t, err)
+	require.False(t, res.Inactivated)
+
+	// set inactive
+	err = keeper.deactivateContract(ctx, example.Contract)
+	require.NoError(t, err)
+
+	rq = lbmtypes.QueryInactiveContractRequest{Address: example.Contract.String()}
+	res, err = q.InactiveContract(sdk.WrapSDKContext(ctx), &rq)
+	require.NoError(t, err)
+	require.True(t, res.Inactivated)
 }

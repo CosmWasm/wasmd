@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/line/lbm-sdk/types"
 )
 
 func TestInitGenesis(t *testing.T) {
@@ -56,7 +57,7 @@ func TestInitGenesis(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
-	// from https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/src/contract.rs#L167
+	// executing https://github.com/line/cosmwasm/blob/main/contracts/hackatom/src/contract.rs do_release
 	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
 
 	// ensure all contract state is as after init

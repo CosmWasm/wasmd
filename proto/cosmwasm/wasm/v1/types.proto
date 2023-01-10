@@ -5,7 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
+option go_package = "github.com/line/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all) = true;
 
@@ -49,6 +49,9 @@ message Params {
   ];
   AccessType instantiate_default_permission = 2
       [ (gogoproto.moretags) = "yaml:\"instantiate_default_permission\"" ];
+  uint64     gas_multiplier                 = 3 [(gogoproto.moretags) = "yaml:\"gas_multiplier\""];
+  uint64     instance_cost                  = 4 [(gogoproto.moretags) = "yaml:\"instance_cost\""];
+  uint64     compile_cost                   = 5 [(gogoproto.moretags) = "yaml:\"compile_cost\""];
 }
 
 // CodeInfo is data for the uploaded contract WASM code
@@ -132,7 +135,7 @@ message AbsoluteTxPosition {
 message Model {
   // hex-encode key to read it better (this is often ascii)
   bytes key = 1 [ (gogoproto.casttype) =
-                      "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+                      "github.com/line/ostracon/libs/bytes.HexBytes" ];
   // base64-encode raw value
   bytes value = 2;
 }

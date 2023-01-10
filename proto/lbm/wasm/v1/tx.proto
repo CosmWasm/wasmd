@@ -1,0 +1,46 @@
+syntax = "proto3";
+package lbm.wasm.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmwasm/wasm/v1/types.proto";
+
+option go_package                      = "github.com/line/wasmd/x/wasm/lbmtypes";
+option (gogoproto.goproto_getters_all) = false;
+
+// Msg defines the wasm Msg service for lbm-sdk.
+service Msg {
+  // StoreCodeAndInstantiateContract upload code and instantiate a contract using it
+  rpc StoreCodeAndInstantiateContract(MsgStoreCodeAndInstantiateContract)
+      returns (MsgStoreCodeAndInstantiateContractResponse);
+}
+
+// MsgStoreCodeAndInstantiateContract submit Wasm code to the system and instantiate a contract using it.
+message MsgStoreCodeAndInstantiateContract {
+  // Sender is the that actor that signed the messages
+  string sender = 1;
+  // WASMByteCode can be raw or gzip compressed
+  bytes wasm_byte_code = 2 [(gogoproto.customname) = "WASMByteCode"];
+  // Used in v1beta1
+  reserved 3, 4;
+  cosmwasm.wasm.v1.AccessConfig instantiate_permission = 5;
+  // Admin is an optional address that can execute migrations
+  string admin = 6;
+  // Label is optional metadata to be stored with a contract instance.
+  string label = 7;
+  // Msg json encoded message to be passed to the contract on instantiation
+  bytes msg = 8 [(gogoproto.casttype) = "github.com/line/wasmd/x/wasm/types.RawContractMessage"];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 9
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"];
+}
+
+// MsgStoreCodeAndInstantiateContractResponse returns store and instantiate result data.
+message MsgStoreCodeAndInstantiateContractResponse {
+  // CodeID is the reference to the stored WASM code
+  uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+  // Address is the bech32 address of the new contract instance
+  string address = 2;
+  // Data contains base64-encoded bytes to returned from the contract
+  bytes data = 3;
+}

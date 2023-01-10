@@ -4,72 +4,75 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/store"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/mint"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	"github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/libs/rand"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	wasmappparams "github.com/CosmWasm/wasmd/app/params"
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/codec"
+	"github.com/line/lbm-sdk/std"
+	"github.com/line/lbm-sdk/store"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	"github.com/line/lbm-sdk/types/module"
+	"github.com/line/lbm-sdk/x/auth"
+	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	authzkeeper "github.com/line/lbm-sdk/x/authz/keeper"
+	"github.com/line/lbm-sdk/x/bank"
+	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/x/bankplus"
+	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
+	"github.com/line/lbm-sdk/x/capability"
+	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	"github.com/line/lbm-sdk/x/crisis"
+	crisistypes "github.com/line/lbm-sdk/x/crisis/types"
+	"github.com/line/lbm-sdk/x/distribution"
+	distrclient "github.com/line/lbm-sdk/x/distribution/client"
+	distributionkeeper "github.com/line/lbm-sdk/x/distribution/keeper"
+	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
+	"github.com/line/lbm-sdk/x/evidence"
+	evidencetypes "github.com/line/lbm-sdk/x/evidence/types"
+	"github.com/line/lbm-sdk/x/feegrant"
+	"github.com/line/lbm-sdk/x/gov"
+	govkeeper "github.com/line/lbm-sdk/x/gov/keeper"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	"github.com/line/lbm-sdk/x/ibc/applications/transfer"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	ibc "github.com/line/lbm-sdk/x/ibc/core"
+	ibchost "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
+	"github.com/line/lbm-sdk/x/mint"
+	minttypes "github.com/line/lbm-sdk/x/mint/types"
+	"github.com/line/lbm-sdk/x/params"
+	paramsclient "github.com/line/lbm-sdk/x/params/client"
+	paramskeeper "github.com/line/lbm-sdk/x/params/keeper"
+	paramstypes "github.com/line/lbm-sdk/x/params/types"
+	paramproposal "github.com/line/lbm-sdk/x/params/types/proposal"
+	"github.com/line/lbm-sdk/x/slashing"
+	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
+	"github.com/line/lbm-sdk/x/staking"
+	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	"github.com/line/lbm-sdk/x/upgrade"
+	upgradeclient "github.com/line/lbm-sdk/x/upgrade/client"
+	upgradekeeper "github.com/line/lbm-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/line/lbm-sdk/x/upgrade/types"
+	"github.com/line/ostracon/crypto"
+	"github.com/line/ostracon/crypto/ed25519"
+	"github.com/line/ostracon/libs/log"
+	"github.com/line/ostracon/libs/rand"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmappparams "github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/line/wasmd/x/wasm/lbmtypes"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 var ModuleBasics = module.NewBasicManager(
@@ -106,8 +109,8 @@ func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	ModuleBasics.RegisterLegacyAminoCodec(amino)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
 	// add wasmd types
-	types.RegisterInterfaces(interfaceRegistry)
-	types.RegisterLegacyAminoCodec(amino)
+	lbmtypes.RegisterInterfaces(interfaceRegistry)
+	lbmtypes.RegisterLegacyAminoCodec(amino)
 
 	return encodingConfig
 }
@@ -183,13 +186,13 @@ type TestKeepers struct {
 
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t testing.TB) (sdk.Context, TestKeepers) {
-	return CreateTestInput(t, false, "staking")
+	return CreateTestInput(t, false, "staking", nil, nil)
 }
 
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t testing.TB, isCheckTx bool, supportedFeatures string, opts ...Option) (sdk.Context, TestKeepers) {
+func CreateTestInput(t testing.TB, isCheckTx bool, supportedFeatures string, encoders *MessageEncoders, queriers *QueryPlugins, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
-	return createTestInput(t, isCheckTx, supportedFeatures, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
+	return createTestInput(t, isCheckTx, supportedFeatures, encoders, queriers, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -197,6 +200,8 @@ func createTestInput(
 	t testing.TB,
 	isCheckTx bool,
 	supportedFeatures string,
+	encoders *MessageEncoders,
+	queriers *QueryPlugins,
 	wasmConfig types.WasmConfig,
 	db dbm.DB,
 	opts ...Option,
@@ -227,7 +232,7 @@ func createTestInput(
 
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, tmproto.Header{
+	ctx := sdk.NewContext(ms, ocproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
@@ -285,7 +290,7 @@ func createTestInput(
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
-	bankKeeper := bankkeeper.NewBaseKeeper(
+	bankKeeper := bankpluskeeper.NewBaseKeeper(
 		appCodec,
 		keys[banktypes.StoreKey],
 		accountKeeper,
@@ -330,7 +335,7 @@ func createTestInput(
 	faucet := NewTestFaucet(t, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
 
 	// set some funds ot pay out validatores, based on code from:
-	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
+	// https://github.com/line/lbm-sdk/blob/95b22d3a685f7eb531198e0023ef06873835e632/x/distribution/keeper/keeper_test.go#L49-L56
 	distrAcc := distKeeper.GetDistributionAccount(ctx)
 	faucet.Fund(ctx, distrAcc.GetAddress(), sdk.NewCoin("stake", sdk.NewInt(2000000)))
 	accountKeeper.SetModuleAccount(ctx, distrAcc)
@@ -385,6 +390,8 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		supportedFeatures,
+		encoders,
+		queriers,
 		opts...,
 	)
 	keeper.SetParams(ctx, types.DefaultParams())
@@ -393,7 +400,7 @@ func createTestInput(
 	router.AddRoute(sdk.NewRoute(types.RouterKey, TestHandler(contractKeeper)))
 
 	am := module.NewManager( // minimal module set that we use for message/ query tests
-		bank.NewAppModule(appCodec, bankKeeper, accountKeeper),
+		bankplus.NewAppModule(appCodec, bankKeeper, accountKeeper),
 		staking.NewAppModule(appCodec, stakingKeeper, accountKeeper, bankKeeper),
 		distribution.NewAppModule(appCodec, distKeeper, accountKeeper, bankKeeper, stakingKeeper),
 	)
@@ -405,7 +412,7 @@ func createTestInput(
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
-		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
+		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, lbmtypes.EnableAllProposals))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
@@ -545,7 +552,7 @@ func StoreIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers)
 }
 
 func StoreReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) uint64 {
-	wasmCode, err := ioutil.ReadFile("./testdata/reflect.wasm")
+	wasmCode, err := os.ReadFile("./testdata/reflect.wasm")
 	require.NoError(t, err)
 
 	_, _, creatorAddr := keyPubAddr()
@@ -559,7 +566,7 @@ func StoreExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, wa
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 
-	wasmCode, err := ioutil.ReadFile(wasmFile)
+	wasmCode, err := os.ReadFile(wasmFile)
 	require.NoError(t, err)
 
 	codeID, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
@@ -713,6 +720,8 @@ var keyCounter uint64
 
 // we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
 // depends on the actual bytes (due to ugly CanonicalAddress encoding)
+//
+//nolint:unparam
 func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	keyCounter++
 	seed := make([]byte, 8)

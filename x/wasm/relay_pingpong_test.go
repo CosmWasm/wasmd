@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"testing"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/store/prefix"
+	sdk "github.com/line/lbm-sdk/types"
+	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
+	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	wasmvm "github.com/line/wasmvm"
+	wasmvmtypes "github.com/line/wasmvm/types"
+
+	wasmibctesting "github.com/line/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 const (

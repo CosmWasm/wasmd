@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // Uncompress returns gzip uncompressed content if input was gzip, or original src otherwise
@@ -26,7 +25,7 @@ func Uncompress(src []byte, limit uint64) ([]byte, error) {
 	}
 	zr.Multistream(false)
 	defer zr.Close()
-	return ioutil.ReadAll(LimitReader(zr, int64(limit)))
+	return io.ReadAll(LimitReader(zr, int64(limit)))
 }
 
 // LimitReader returns a Reader that reads from r

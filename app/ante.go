@@ -1,14 +1,14 @@
 package app
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	ibcante "github.com/cosmos/ibc-go/v3/modules/core/ante"
-	"github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	"github.com/line/lbm-sdk/x/auth/ante"
+	ibcante "github.com/line/lbm-sdk/x/ibc/core/ante"
+	"github.com/line/lbm-sdk/x/ibc/core/keeper"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmTypes "github.com/line/wasmd/x/wasm/types"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC

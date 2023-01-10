@@ -1,19 +1,19 @@
 # Wasm Zone
 
-[![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/master)
-[![codecov](https://codecov.io/gh/cosmwasm/wasmd/branch/master/graph/badge.svg)](https://codecov.io/gh/cosmwasm/wasmd)
-[![Go Report Card](https://goreportcard.com/badge/github.com/CosmWasm/wasmd)](https://goreportcard.com/report/github.com/CosmWasm/wasmd)
-[![license](https://img.shields.io/github/license/CosmWasm/wasmd.svg)](https://github.com/CosmWasm/wasmd/blob/master/LICENSE)
-[![LoC](https://tokei.rs/b1/github/CosmWasm/wasmd)](https://github.com/CosmWasm/wasmd)
+[![codecov](https://codecov.io/gh/line/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/line/wasmd)
+[![Go Report Card](https://goreportcard.com/badge/github.com/line/wasmd)](https://goreportcard.com/report/github.com/line/wasmd)
+[![license](https://img.shields.io/github/license/line/wasmd.svg)](https://github.com/line/wasmd/blob/main/LICENSE)
+[![LoC](https://tokei.rs/b1/github/line/wasmd)](https://github.com/line/wasmd)
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
 
-This code was forked from the `cosmos/gaia` repository as a basis and then we added `x/wasm` and cleaned up 
-many gaia-specific files. However, the `wasmd` binary should function just like `gaiad` except for the
+This code was forked from the `cosmwasm/wasmd` repository as a basis and `cosmwasm/wasmd` was forked 
+from the `cosmos/gaia` repository, and then we change `x/wasm`. 
+However, the `wasmd` binary should function just like `gaiad` except for the
 addition of the `x/wasm` module.
 
-**Note**: Requires [Go 1.17+](https://golang.org/dl/)
+**Note**: Requires [Go 1.18+](https://golang.org/dl/)
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 ## Compatibility with CosmWasm contracts
@@ -24,28 +24,28 @@ A VM can support one or more contract-VM interface versions. The interface
 version is communicated by the contract via a Wasm export. This is the current
 compatibility list:
 
-| wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
-| ----- | ------------ | ----------- | ------------ |
-| 0.27  | v1.0.0       |             | 1.0          |
-| 0.26  | 1.0.0-beta10 |             | 1.0          |
-| 0.25  | 1.0.0-beta10 |             | 1.0          |
-| 0.24  | 1.0.0-beta7  | 1.0.0-beta6 | 1.0          |
-| 0.23  |              | 1.0.0-beta5 | 1.0          |
-| 0.22  |              | 1.0.0-beta5 | 1.0          |
-| 0.21  |              | 1.0.0-beta2 | 1.0          |
-| 0.20  |              | 1.0.0-beta  | 1.0          |
-| 0.19  |              | 0.16        | 0.16         |
-| 0.18  |              | 0.16        | 0.16         |
-| 0.17  |              | 0.14        | 0.14         |
-| 0.16  |              | 0.14        | 0.14         |
-| 0.15  |              | 0.13        | 0.11-0.13    |
-| 0.14  |              | 0.13        | 0.11-0.13    |
-| 0.13  |              | 0.12        | 0.11-0.13    |
-| 0.12  |              | 0.12        | 0.11-0.13    |
-| 0.11  |              | 0.11        | 0.11-0.13    |
-| 0.10  |              | 0.10        | 0.10         |
-| 0.9   |              | 0.9         | 0.9          |
-| 0.8   |              | 0.8         | 0.8          |
+| line/wasmd | cosmwasm/wasmd | line/wasmvm   | cosmwasm/wasmvm | cosmwasm-vm | cosmwasm-std |
+|------------|----------------|:--------------|-----------------|-------------|--------------|
+| 0.1        | 0.27           | v1.0.0-0.10.0 | v1.0.0          |             | 1.0          |
+|            | 0.26           |               | 1.0.0-beta10    |             | 1.0          |
+|            | 0.25           |               | 1.0.0-beta10    |             | 1.0          |
+|            | 0.24           |               | 1.0.0-beta7     | 1.0.0-beta6 | 1.0          |
+|            | 0.23           |               |                 | 1.0.0-beta5 | 1.0          |
+|            | 0.22           |               |                 | 1.0.0-beta5 | 1.0          |
+|            | 0.21           |               |                 | 1.0.0-beta2 | 1.0          |
+|            | 0.20           |               |                 | 1.0.0-beta  | 1.0          |
+|            | 0.19           |               |                 | 0.16        | 0.16         |
+|            | 0.18           |               |                 | 0.16        | 0.16         |
+|            | 0.17           |               |                 | 0.14        | 0.14         |
+|            | 0.16           |               |                 | 0.14        | 0.14         |
+|            | 0.15           |               |                 | 0.13        | 0.11-0.13    |
+|            | 0.14           |               |                 | 0.13        | 0.11-0.13    |
+|            | 0.13           |               |                 | 0.12        | 0.11-0.13    |
+|            | 0.12           |               |                 | 0.12        | 0.11-0.13    |
+|            | 0.11           |               |                 | 0.11        | 0.11-0.13    |
+|            | 0.10           |               |                 | 0.10        | 0.10         |
+|            | 0.9            |               |                 | 0.9         | 0.9          |
+|            | 0.8            |               |                 | 0.8         | 0.8          |
 
 Note: `cosmwasm_std v1.0` means it supports contracts compiled by any `v1.0.0-betaX` or `1.0.x`.
 It will also run contracts compiled with 1.x assuming they don't opt into any newer features.
@@ -115,64 +115,6 @@ make proto-gen
 ```
 The generators are executed within a Docker [container](./contrib/prototools-docker), now.
 
-## Dockerized
-
-We provide a docker image to help with test setups. There are two modes to use it
-
-Build: `docker build -t cosmwasm/wasmd:latest .`  or pull from dockerhub
-
-### Dev server
-
-Bring up a local node with a test account containing tokens
-
-This is just designed for local testing/CI - do not use these scripts in production.
-Very likely you will assign tokens to accounts whose mnemonics are public on github.
-
-```sh
-docker volume rm -f wasmd_data
-
-# pass password (one time) as env variable for setup, so we don't need to keep typing it
-# add some addresses that you have private keys for (locally) to give them genesis funds
-docker run --rm -it \
-    -e PASSWORD=xxxxxxxxx \
-    --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest /opt/setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
-
-# This will start both wasmd and rest-server, both are logged
-docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
-    --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest /opt/run_wasmd.sh
-```
-
-### CI
-
-For CI, we want to generate a template one time and save to disk/repo. Then we can start a chain copying the initial state, but not modifying it. This lets us get the same, fresh start every time.
-
-```sh
-# Init chain and pass addresses so they are non-empty accounts
-rm -rf ./template && mkdir ./template
-docker run --rm -it \
-    -e PASSWORD=xxxxxxxxx \
-    --mount type=bind,source=$(pwd)/template,target=/root \
-    cosmwasm/wasmd:latest /opt/setup_wasmd.sh cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6
-
-sudo chown -R $(id -u):$(id -g) ./template
-
-# FIRST TIME
-# bind to non-/root and pass an argument to run.sh to copy the template into /root
-# we need wasmd_data volume mount not just for restart, but also to view logs
-docker volume rm -f wasmd_data
-docker run --rm -it -p 26657:26657 -p 26656:26656 -p 9090:9090 \
-    --mount type=bind,source=$(pwd)/template,target=/template \
-    --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest /opt/run_wasmd.sh /template
-
-# RESTART CHAIN with existing state
-docker run --rm -it -p 26657:26657 -p 26656:26656 -p 1317:1317 \
-    --mount type=volume,source=wasmd_data,target=/root \
-    cosmwasm/wasmd:latest /opt/run_wasmd.sh
-```
-
 ## Runtime flags
 
 We provide a number of variables in `app/app.go` that are intended to be set via `-ldflags -X ...`
@@ -181,10 +123,10 @@ to the configuration.
 
 Available flags:
  
-* `-X github.com/CosmWasm/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
-* `-X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
-* `-X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
-* `-X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
+* `-X github.com/line/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
+* `-X github.com/line/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
+* `-X github.com/line/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
+* `-X github.com/line/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
     enable a subset of the x/wasm governance proposal types (overrides `ProposalsEnabled`)
 
 Examples:

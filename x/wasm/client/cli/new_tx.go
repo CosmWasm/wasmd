@@ -3,13 +3,14 @@ package cli
 import (
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/client/flags"
+	"github.com/line/lbm-sdk/client/tx"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
+
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // MigrateContractCmd will migrate a contract to a new code version
@@ -20,10 +21,8 @@ func MigrateContractCmd() *cobra.Command {
 		Aliases: []string{"update", "mig", "m"},
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
+			//nolint:errcheck
+			clientCtx, _ := client.GetClientTxContext(cmd)
 
 			msg, err := parseMigrateContractArgs(args, clientCtx)
 			if err != nil {
@@ -84,6 +83,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
+//nolint:unparam
 func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
 	msg := types.MsgUpdateAdmin{
 		Sender:   cliCtx.GetFromAddress().String(),

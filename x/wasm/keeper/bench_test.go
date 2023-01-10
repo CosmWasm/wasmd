@@ -1,14 +1,16 @@
 package keeper
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
+
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 // BenchmarkVerification benchmarks secp256k1 verification which is 1000 gas based on cpu time.
@@ -47,11 +49,26 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 			db:     func() dbm.DB { return dbm.NewMemDB() },
 			pinned: true,
 		},
+		"unpinned, level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+		},
+		"pinned, level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+			pinned: true,
+		},
 	}
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
 			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			ctx, keepers := createTestInput(b, false, SupportedFeatures, wasmConfig, spec.db())
+			ctx, keepers := createTestInput(b, false, SupportedFeatures, nil, nil, wasmConfig, spec.db())
 			example := InstantiateHackatomExampleContract(b, ctx, keepers)
 			if spec.pinned {
 				require.NoError(b, keepers.ContractKeeper.PinCode(ctx, example.CodeID))
@@ -70,14 +87,18 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 func BenchmarkCompilation(b *testing.B) {
 	specs := map[string]struct {
 		wasmFile string
+		db       func() dbm.DB
 	}{
 		"hackatom": {
+			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/hackatom.wasm",
 		},
 		"burner": {
+			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/burner.wasm",
 		},
 		"ibc_reflect": {
+			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/ibc_reflect.wasm",
 		},
 	}
@@ -85,11 +106,10 @@ func BenchmarkCompilation(b *testing.B) {
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
 			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			db := dbm.NewMemDB()
-			ctx, keepers := createTestInput(b, false, SupportedFeatures, wasmConfig, db)
+			ctx, keepers := createTestInput(b, false, SupportedFeatures, nil, nil, wasmConfig, spec.db())
 
 			// print out code size for comparisons
-			code, err := ioutil.ReadFile(spec.wasmFile)
+			code, err := os.ReadFile(spec.wasmFile)
 			require.NoError(b, err)
 			b.Logf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b(size: %d)  ", len(code))
 

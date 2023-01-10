@@ -11,8 +11,9 @@ import (
 
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	bits "github.com/tendermint/tendermint/proto/tendermint/libs/bits"
-	types "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	bits "github.com/line/ostracon/proto/ostracon/libs/bits"
+	types "github.com/line/ostracon/proto/ostracon/types"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

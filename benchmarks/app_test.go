@@ -7,23 +7,22 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/line/lbm-sdk/client"
+	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
+	"github.com/line/lbm-sdk/simapp/helpers"
+	sdk "github.com/line/lbm-sdk/types"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	banktypes "github.com/line/lbm-sdk/x/bank/types"
+	abci "github.com/line/ostracon/abci/types"
+	"github.com/line/ostracon/libs/log"
+	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/line/wasmd/app"
+	wasmappparams "github.com/line/wasmd/app/params"
+	"github.com/line/wasmd/x/wasm"
+	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
@@ -66,7 +65,7 @@ func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.Genes
 	)
 
 	wasmApp.Commit()
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
+	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
 
 	return wasmApp
 }
@@ -115,8 +114,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 
 	// add wasm contract
 	height := int64(2)
-	txGen := simappparams.MakeTestEncodingConfig().TxConfig
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
+	txGen := wasmappparams.MakeEncodingConfig().TxConfig
+	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
 	cw20Code, err := ioutil.ReadFile("./testdata/cw20_base.wasm")
@@ -180,7 +179,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Denom:        denom,
 		AccNum:       0,
 		SeqNum:       2,
-		TxConfig:     simappparams.MakeTestEncodingConfig().TxConfig,
+		TxConfig:     wasmappparams.MakeEncodingConfig().TxConfig,
 	}
 }
 

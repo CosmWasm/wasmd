@@ -3,14 +3,14 @@ package types
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	connectiontypes "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v3/modules/core/exported"
+	sdk "github.com/line/lbm-sdk/types"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
+	"github.com/line/lbm-sdk/x/distribution/types"
+	connectiontypes "github.com/line/lbm-sdk/x/ibc/core/03-connection/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
+	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 )
 
 // BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper

@@ -3,18 +3,16 @@ package ibctesting
 import (
 	"fmt"
 
-	ibctesting "github.com/cosmos/ibc-go/v3/testing"
-
-	//	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	clienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v3/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v3/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v3/modules/core/exported"
-	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
+	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
+	connectiontypes "github.com/line/lbm-sdk/x/ibc/core/03-connection/types"
+	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	commitmenttypes "github.com/line/lbm-sdk/x/ibc/core/23-commitment/types"
+	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
+	"github.com/line/lbm-sdk/x/ibc/core/exported"
+	ibcoctypes "github.com/line/lbm-sdk/x/ibc/light-clients/99-ostracon/types"
+	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
 )
 
 // Endpoint is a which represents a channel endpoint and its associated
@@ -52,7 +50,7 @@ func NewEndpoint(
 func NewDefaultEndpoint(chain *TestChain) *Endpoint {
 	return &Endpoint{
 		Chain:            chain,
-		ClientConfig:     ibctesting.NewTendermintConfig(),
+		ClientConfig:     ibctesting.NewOstraconConfig(),
 		ConnectionConfig: ibctesting.NewConnectionConfig(),
 		ChannelConfig:    ibctesting.NewChannelConfig(),
 	}
@@ -88,12 +86,12 @@ func (endpoint *Endpoint) CreateClient() (err error) {
 	)
 
 	switch endpoint.ClientConfig.GetClientType() {
-	case exported.Tendermint:
-		tmConfig, ok := endpoint.ClientConfig.(*ibctesting.TendermintConfig)
+	case exported.Ostracon:
+		tmConfig, ok := endpoint.ClientConfig.(*ibctesting.OstraconConfig)
 		require.True(endpoint.Chain.t, ok)
 
 		height := endpoint.Counterparty.Chain.LastHeader.GetHeight().(clienttypes.Height)
-		clientState = ibctmtypes.NewClientState(
+		clientState = ibcoctypes.NewClientState(
 			endpoint.Counterparty.Chain.ChainID, tmConfig.TrustLevel, tmConfig.TrustingPeriod, tmConfig.UnbondingPeriod, tmConfig.MaxClockDrift,
 			height, commitmenttypes.GetSDKSpecs(), ibctesting.UpgradePath, tmConfig.AllowUpdateAfterExpiry, tmConfig.AllowUpdateAfterMisbehaviour,
 		)
@@ -136,8 +134,8 @@ func (endpoint *Endpoint) UpdateClient() (err error) {
 	var header exported.Header
 
 	switch endpoint.ClientConfig.GetClientType() {
-	case exported.Tendermint:
-		header, err = endpoint.Chain.ConstructUpdateTMClientHeader(endpoint.Counterparty.Chain, endpoint.ClientID)
+	case exported.Ostracon:
+		header, err = endpoint.Chain.ConstructUpdateOCClientHeader(endpoint.Counterparty.Chain, endpoint.ClientID)
 
 	default:
 		err = fmt.Errorf("client type %s is not supported", endpoint.ClientConfig.GetClientType())

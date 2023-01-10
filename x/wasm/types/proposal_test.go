@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	sdk "github.com/line/lbm-sdk/types"
+	govtypes "github.com/line/lbm-sdk/x/gov/types"
 )
 
 func TestValidateProposalCommons(t *testing.T) {
@@ -162,7 +163,9 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	var (
+		invalidAddress = "invalid address"
+	)
 
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
@@ -255,7 +258,9 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateMigrateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address2"
+	var (
+		invalidAddress = "invalid address2"
+	)
 
 	specs := map[string]struct {
 		src    *MigrateContractProposal
@@ -314,7 +319,9 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	var (
+		invalidAddress = "invalid address"
+	)
 
 	specs := map[string]struct {
 		src    *SudoContractProposal
@@ -367,7 +374,9 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	var (
+		invalidAddress = "invalid address"
+	)
 
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
@@ -426,7 +435,9 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	var (
+		invalidAddress = "invalid address"
+	)
 
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
@@ -479,7 +490,9 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
+	var (
+		invalidAddress = "invalid address"
+	)
 
 	specs := map[string]struct {
 		src    *ClearAdminProposal
@@ -526,12 +539,12 @@ func TestProposalStrings(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
 			}),
 			exp: `Store Code Proposal:
   Title:       Foo
   Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+  Run as:      link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
   WasmCode:    0102030405060708090A
 `,
 		},
@@ -542,11 +555,11 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+  Run as:      link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
+  Admin:       link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
   Code id:     1
   Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
+  Msg:         "{\"verifier\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\",\"beneficiary\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\"}"
   Funds:       1foo,2bar
 `,
 		},
@@ -555,11 +568,11 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-  Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+  Run as:      link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
+  Admin:       link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
   Code id:     1
   Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
+  Msg:         "{\"verifier\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\",\"beneficiary\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\"}"
   Funds:       
 `,
 		},
@@ -568,11 +581,11 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Instantiate Code Proposal:
   Title:       Foo
   Description: Bar
-  Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+  Run as:      link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
   Admin:       
   Code id:     1
   Label:       testing
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
+  Msg:         "{\"verifier\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\",\"beneficiary\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\"}"
   Funds:       
 `,
 		},
@@ -581,9 +594,9 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Migrate Contract Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
+  Contract:    link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
   Code id:     1
-  Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
+  Msg:         "{\"verifier\":\"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23\"}"
 `,
 		},
 		"update admin": {
@@ -591,8 +604,8 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Update Contract Admin Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
-  New Admin:   cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+  Contract:    link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
+  New Admin:   link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
 `,
 		},
 		"clear admin": {
@@ -600,7 +613,7 @@ func TestProposalStrings(t *testing.T) {
 			exp: `Clear Contract Admin Proposal:
   Title:       Foo
   Description: Bar
-  Contract:    cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
+  Contract:    link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
 `,
 		},
 		"pin codes": {
@@ -642,11 +655,11 @@ func TestProposalYaml(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
 			}),
 			exp: `title: Foo
 description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+run_as: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
 wasm_byte_code: AQIDBAUGBwgJCg==
 instantiate_permission: null
 `,
@@ -657,11 +670,11 @@ instantiate_permission: null
 			}),
 			exp: `title: Foo
 description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+run_as: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
+admin: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
 code_id: 1
 label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
+msg: '{"verifier":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23","beneficiary":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23"}'
 funds:
 - denom: foo
   amount: "1"
@@ -673,11 +686,11 @@ funds:
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Funds = nil }),
 			exp: `title: Foo
 description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+run_as: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
+admin: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
 code_id: 1
 label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
+msg: '{"verifier":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23","beneficiary":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23"}'
 funds: []
 `,
 		},
@@ -685,11 +698,11 @@ funds: []
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) { p.Admin = "" }),
 			exp: `title: Foo
 description: Bar
-run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
+run_as: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
 admin: ""
 code_id: 1
 label: testing
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
+msg: '{"verifier":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23","beneficiary":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23"}'
 funds: []
 `,
 		},
@@ -697,24 +710,24 @@ funds: []
 			src: MigrateContractProposalFixture(),
 			exp: `title: Foo
 description: Bar
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
+contract: link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
 code_id: 1
-msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
+msg: '{"verifier":"link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23"}'
 `,
 		},
 		"update admin": {
 			src: UpdateAdminProposalFixture(),
 			exp: `title: Foo
 description: Bar
-new_admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
+new_admin: link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23
+contract: link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
 `,
 		},
 		"clear admin": {
 			src: ClearAdminProposalFixture(),
 			exp: `title: Foo
 description: Bar
-contract: cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr
+contract: link1hcttwju93d5m39467gjcq63p5kc4fdcn30dgd8
 `,
 		},
 		"pin codes": {
@@ -846,18 +859,18 @@ func TestProposalJsonSignBytes(t *testing.T) {
 		"instantiate contract": {
 			src: &InstantiateContractProposal{Msg: RawContractMessage(myInnerMsg)},
 			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/InstantiateContractProposal","value":{"funds":[],"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
+ {
+ 	"type":"cosmos-sdk/MsgSubmitProposal",
+ 	"value":{"content":{"type":"wasm/InstantiateContractProposal","value":{"funds":[],"msg":{"foo":"bar"}}},"initial_deposit":[]}
+ }`,
 		},
 		"migrate contract": {
 			src: &MigrateContractProposal{Msg: RawContractMessage(myInnerMsg)},
 			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/MigrateContractProposal","value":{"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
+ {
+ 	"type":"cosmos-sdk/MsgSubmitProposal",
+ 	"value":{"content":{"type":"wasm/MigrateContractProposal","value":{"msg":{"foo":"bar"}}},"initial_deposit":[]}
+ }`,
 		},
 	}
 	for name, spec := range specs {

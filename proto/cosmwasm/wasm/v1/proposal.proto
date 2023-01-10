@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmwasm/wasm/v1/types.proto";
 
-option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
+option go_package = "github.com/line/wasmd/x/wasm/types";
 option (gogoproto.goproto_stringer_all) = false;
 option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all) = true;
@@ -46,7 +46,7 @@ message InstantiateContractProposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"
   ];
 }
 
@@ -94,7 +94,7 @@ message ExecuteContractProposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"
   ];
 }
 

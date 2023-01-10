@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/line/lbm-sdk/types"
 )
 
 const (
@@ -32,6 +32,8 @@ var (
 	PinnedCodeIndexPrefix                          = []byte{0x07}
 	TXCounterPrefix                                = []byte{0x08}
 
+	InactiveContractPrefix = []byte{0x90}
+
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
 )
@@ -61,7 +63,7 @@ func GetContractByCreatedSecondaryIndexKey(contractAddr sdk.AccAddress, c Contra
 	r := make([]byte, prefixLen+AbsoluteTxPositionLen+contractAddrLen)
 	copy(r[0:], prefix)
 	copy(r[prefixLen:], c.Updated.Bytes())
-	copy(r[prefixLen+AbsoluteTxPositionLen:], contractAddr)
+	copy(r[prefixLen+AbsoluteTxPositionLen:], contractAddr.Bytes())
 	return r
 }
 
@@ -87,11 +89,8 @@ func GetContractCodeHistoryElementKey(contractAddr sdk.AccAddress, pos uint64) [
 
 // GetContractCodeHistoryElementPrefix returns the key prefix for a contract code history entry: `<prefix><contractAddr>`
 func GetContractCodeHistoryElementPrefix(contractAddr sdk.AccAddress) []byte {
-	prefixLen := len(ContractCodeHistoryElementPrefix)
-	contractAddrLen := len(contractAddr)
-	r := make([]byte, prefixLen+contractAddrLen)
-	copy(r[0:], ContractCodeHistoryElementPrefix)
-	copy(r[prefixLen:], contractAddr)
+	r := sdk.CopyBytes(ContractCodeHistoryElementPrefix)
+	r = append(r, contractAddr.Bytes()...)
 	return r
 }
 
@@ -107,4 +106,11 @@ func GetPinnedCodeIndexPrefix(codeID uint64) []byte {
 // ParsePinnedCodeIndex converts the serialized code ID back.
 func ParsePinnedCodeIndex(s []byte) uint64 {
 	return sdk.BigEndianToUint64(s)
+}
+
+func GetInactiveContractKey(contractAddress sdk.AccAddress) []byte {
+	key := make([]byte, len(InactiveContractPrefix)+len(contractAddress))
+	copy(key, InactiveContractPrefix)
+	copy(key[len(InactiveContractPrefix):], contractAddress)
+	return key
 }
