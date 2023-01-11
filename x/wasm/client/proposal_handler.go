@@ -4,7 +4,6 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	//nolint:staticcheck
 )
 
 // ProposalHandlers define the wasm cli proposal types and rest handler.
