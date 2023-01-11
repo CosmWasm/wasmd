@@ -57,7 +57,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
-			cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+		
 			if err != nil {
 				return err
 			}
@@ -88,7 +88,8 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
-
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	
 	// proposal flags
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
 	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
