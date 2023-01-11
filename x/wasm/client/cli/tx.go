@@ -339,7 +339,11 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 			if err != nil {
 				return nil, fmt.Errorf("admin %s", err)
 			}
-			adminStr = info.GetAddress().String()
+			admin, err := info.GetAddress()
+			if err != nil {
+				return nil, err
+			}
+			adminStr = admin.String()
 		} else {
 			adminStr = addr.String()
 		}
@@ -526,7 +530,12 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 				return fmt.Errorf("%s authorization type not supported", args[1])
 			}
 
-			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(0, exp))
+			expire, err := getExpireTime(cmd)
+			if err != nil {
+				return err
+			}
+
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, expire)
 			if err != nil {
 				return err
 			}
@@ -542,4 +551,16 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 	cmd.Flags().Bool(flagAllowAllMsgs, false, "Allow all messages")
 	cmd.Flags().Bool(flagNoTokenTransfer, false, "Don't allow token transfer")
 	return cmd
+}
+
+func getExpireTime(cmd *cobra.Command) (*time.Time, error) {
+	exp, err := cmd.Flags().GetInt64(flagExpiration)
+	if err != nil {
+		return nil, err
+	}
+	if exp == 0 {
+		return nil, nil
+	}
+	e := time.Unix(exp, 0)
+	return &e, nil
 }

@@ -3,7 +3,7 @@ package types
 import (
 	"strings"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 
@@ -472,7 +472,7 @@ func (m MaxFundsLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAut
 	if !msg.GetFunds().IsAllLTE(m.Amounts) {
 		return &ContractAuthzLimitAcceptResult{Accepted: false}, nil
 	}
-	newAmounts := m.Amounts.Sub(msg.GetFunds())
+	newAmounts := m.Amounts.Sub(msg.GetFunds()...)
 	if newAmounts.IsZero() {
 		return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
 	}
@@ -508,7 +508,7 @@ func (l CombinedLimit) Accept(_ sdk.Context, msg AuthzableWasmMsg) (*ContractAut
 	case 1:
 		return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
 	default:
-		remainingAmounts := l.Amounts.Sub(transferFunds)
+		remainingAmounts := l.Amounts.Sub(transferFunds...)
 		if remainingAmounts.IsZero() {
 			return &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true}, nil
 		}

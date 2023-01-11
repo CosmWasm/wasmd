@@ -2,6 +2,7 @@ syntax = "proto3";
 package cosmwasm.wasm.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 import "cosmwasm/wasm/v1/types.proto";
 
@@ -35,6 +36,8 @@ service Msg {
 
 // MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
@@ -56,6 +59,8 @@ message MsgStoreCodeResponse {
 // MsgInstantiateContract create a new smart contract instance for the given
 // code id.
 message MsgInstantiateContract {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // Admin is an optional address that can execute migrations
@@ -76,6 +81,8 @@ message MsgInstantiateContract {
 // MsgInstantiateContract2 create a new smart contract instance for the given
 // code id with a predicable address.
 message MsgInstantiateContract2 {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // Admin is an optional address that can execute migrations
@@ -116,6 +123,8 @@ message MsgInstantiateContract2Response {
 
 // MsgExecuteContract submits the given message data to a smart contract
 message MsgExecuteContract {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // Contract is the address of the smart contract
@@ -137,6 +146,8 @@ message MsgExecuteContractResponse {
 
 // MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 message MsgMigrateContract {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // Contract is the address of the smart contract
@@ -156,6 +167,8 @@ message MsgMigrateContractResponse {
 
 // MsgUpdateAdmin sets a new admin for a smart contract
 message MsgUpdateAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // NewAdmin address to be set
@@ -169,6 +182,8 @@ message MsgUpdateAdminResponse {}
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the actor that signed the messages
   string sender = 1;
   // Contract is the address of the smart contract
@@ -180,6 +195,8 @@ message MsgClearAdminResponse {}
 
 // MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 message MsgUpdateInstantiateConfig {
+  option (cosmos.msg.v1.signer) = "sender";
+
   // Sender is the that actor that signed the messages
   string sender = 1;
   // CodeID references the stored WASM code

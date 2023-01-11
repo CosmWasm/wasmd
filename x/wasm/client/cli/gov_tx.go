@@ -9,14 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/distribution/reference"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
@@ -68,7 +67,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 				CodeHash:              codeHash,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -92,9 +91,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -175,7 +172,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				Funds:       src.Funds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -194,9 +191,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -237,7 +232,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 
 			content := types.NewInstantiateContract2Proposal(proposalTitle, proposalDescr, runAs, src.Admin, src.CodeID, src.Label, src.Msg, src.Funds, salt, fixMsg)
 
-			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -259,9 +254,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -338,7 +331,11 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("admin %s", err)
 					}
-					adminStr = info.GetAddress().String()
+					admin, err := info.GetAddress()
+					if err != nil {
+						return err
+					}
+					adminStr = admin.String()
 				} else {
 					adminStr = addr.String()
 				}
@@ -360,7 +357,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				Funds:                 amount,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -388,9 +385,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -418,7 +413,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 				Msg:         src.Msg,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -432,9 +427,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 	}
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -477,7 +470,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 				Funds:       funds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -493,9 +486,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -520,7 +511,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 				Msg:         sudoMsg,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -534,9 +525,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 	}
 
 	// proposal flagsExecute
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -563,7 +552,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				NewAdmin:    src.NewAdmin,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -576,9 +565,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -599,7 +586,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 				Contract:    args[0],
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -612,9 +599,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -640,7 +625,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 				CodeIDs:     codeIds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -653,9 +638,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -693,7 +676,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				CodeIDs:     codeIds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -706,9 +689,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -792,7 +773,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 				Description:         proposalDescr,
 				AccessConfigUpdates: updates,
 			}
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			msg, err := v1beta1.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
 			if err != nil {
 				return err
 			}
@@ -805,10 +786,14 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
+}
+
+func addCommonProposalFlags(cmd *cobra.Command) {
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")             //nolint:staticcheck
+	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal") //nolint:staticcheck
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
 }
 
 func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, error) {
@@ -817,12 +802,12 @@ func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Co
 		return client.Context{}, "", "", nil, err
 	}
 
-	proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle)
+	proposalTitle, err := cmd.Flags().GetString(cli.FlagTitle) //nolint:staticcheck
 	if err != nil {
 		return clientCtx, proposalTitle, "", nil, err
 	}
 
-	proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+	proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription) //nolint:staticcheck
 	if err != nil {
 		return client.Context{}, proposalTitle, proposalDescr, nil, err
 	}

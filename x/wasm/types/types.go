@@ -8,7 +8,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 const (
@@ -315,11 +315,11 @@ func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
 type WasmConfig struct {
 	// SimulationGasLimit is the max gas to be used in a tx simulation call.
 	// When not set the consensus max block gas is used instead
-	SimulationGasLimit *uint64
-	// SimulationGasLimit is the max gas to be used in a smart query contract call
-	SmartQueryGasLimit uint64
+	SimulationGasLimit *uint64 `mapstructure:"simulation_gas_limit"`
+	// SmartQueryGasLimit is the max gas to be used in a smart query contract call
+	SmartQueryGasLimit uint64 `mapstructure:"query_gas_limit"`
 	// MemoryCacheSize in MiB not bytes
-	MemoryCacheSize uint32
+	MemoryCacheSize uint32 `mapstructure:"memory_cache_size"`
 	// ContractDebugMode log what contract print
 	ContractDebugMode bool
 }
@@ -331,6 +331,33 @@ func DefaultWasmConfig() WasmConfig {
 		MemoryCacheSize:    defaultMemoryCacheSize,
 		ContractDebugMode:  defaultContractDebugMode,
 	}
+}
+
+// DefaultConfigTemplate toml snippet with default values for app.toml
+func DefaultConfigTemplate() string {
+	return ConfigTemplate(DefaultWasmConfig())
+}
+
+// ConfigTemplate toml snippet for app.toml
+func ConfigTemplate(c WasmConfig) string {
+	simGasLimit := `# simulation_gas_limit =`
+	if c.SimulationGasLimit != nil {
+		simGasLimit = fmt.Sprintf(`simulation_gas_limit = %d`, *c.SimulationGasLimit)
+	}
+
+	return fmt.Sprintf(`
+[wasm]
+# Smart query gas limit is the max gas to be used in a smart query contract call
+query_gas_limit = %d
+
+# in-memory cache for Wasm contracts. Set to 0 to disable.
+# The value is in MiB not bytes
+memory_cache_size = %d
+
+# Simulation gas limit is the max gas to be used in a tx simulation call.
+# When not set the consensus max block gas is used instead
+%s
+`, c.SmartQueryGasLimit, c.MemoryCacheSize, simGasLimit)
 }
 
 // VerifyAddressLen ensures that the address matches the expected length

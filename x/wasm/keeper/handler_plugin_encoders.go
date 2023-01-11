@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -294,18 +295,18 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 }
 
 func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error) {
-	var option govtypes.VoteOption
+	var option v1.VoteOption
 	switch msg.Vote.Vote {
 	case wasmvmtypes.Yes:
-		option = govtypes.OptionYes
+		option = v1.OptionYes
 	case wasmvmtypes.No:
-		option = govtypes.OptionNo
+		option = v1.OptionNo
 	case wasmvmtypes.NoWithVeto:
-		option = govtypes.OptionNoWithVeto
+		option = v1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
-		option = govtypes.OptionAbstain
+		option = v1.OptionAbstain
 	}
-	vote := &govtypes.MsgVote{
+	vote := &v1.MsgVote{
 		ProposalId: msg.Vote.ProposalId,
 		Voter:      sender.String(),
 		Option:     option,

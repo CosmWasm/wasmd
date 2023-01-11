@@ -24,14 +24,6 @@ const (
 	ProposalTypeMigrateContract     = types.ProposalTypeMigrateContract
 	ProposalTypeUpdateAdmin         = types.ProposalTypeUpdateAdmin
 	ProposalTypeClearAdmin          = types.ProposalTypeClearAdmin
-	QueryListContractByCode         = keeper.QueryListContractByCode
-	QueryGetContract                = keeper.QueryGetContract
-	QueryGetContractState           = keeper.QueryGetContractState
-	QueryGetCode                    = keeper.QueryGetCode
-	QueryListCode                   = keeper.QueryListCode
-	QueryMethodContractStateSmart   = keeper.QueryMethodContractStateSmart
-	QueryMethodContractStateAll     = keeper.QueryMethodContractStateAll
-	QueryMethodContractStateRaw     = keeper.QueryMethodContractStateRaw
 )
 
 var (

@@ -48,7 +48,7 @@ func TestSnapshotter(t *testing.T) {
 				Height:  srcWasmApp.LastBlockHeight() + 1,
 				Time:    time.Now(),
 			})
-			wasmKeeper := app.NewTestSupport(t, srcWasmApp).WasmKeeper()
+			wasmKeeper := srcWasmApp.WasmKeeper
 			contractKeeper := keeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
 			srcCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
@@ -81,7 +81,7 @@ func TestSnapshotter(t *testing.T) {
 			}
 
 			// then all wasm contracts are imported
-			wasmKeeper = app.NewTestSupport(t, destWasmApp).WasmKeeper()
+			wasmKeeper = destWasmApp.WasmKeeper
 			ctx = destWasmApp.NewUncachedContext(false, tmproto.Header{
 				ChainID: "foo",
 				Height:  destWasmApp.LastBlockHeight() + 1,
