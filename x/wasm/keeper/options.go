@@ -2,8 +2,11 @@ package keeper
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
 
 	"github.com/line/wasmd/x/wasm/types"
 )
@@ -89,8 +92,22 @@ func WithMessageEncoders(x *MessageEncoders) Option {
 
 // WithCoinTransferrer is an optional constructor parameter to set a custom coin transferrer
 func WithCoinTransferrer(x CoinTransferrer) Option {
+	if x == nil {
+		panic("must not be nil")
+	}
 	return optsFn(func(k *Keeper) {
 		k.bank = x
+	})
+}
+
+// WithAccountPruner is an optional constructor parameter to set a custom type that handles balances and data cleanup
+// for accounts pruned on contract instantiate
+func WithAccountPruner(x AccountPruner) Option {
+	if x == nil {
+		panic("must not be nil")
+	}
+	return optsFn(func(k *Keeper) {
+		k.accountPruner = x
 	})
 }
 
@@ -120,4 +137,30 @@ func WithMaxQueryStackSize(m uint32) Option {
 	return optsFn(func(k *Keeper) {
 		k.maxQueryStackSize = m
 	})
+}
+
+// WithAcceptedAccountTypesOnContractInstantiation sets the accepted account types. Account types of this list won't be overwritten or cause a failure
+// when they exist for an address on contract instantiation.
+//
+// Values should be references and contain the `*authtypes.BaseAccount` as default bank account type.
+func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
+	m := asTypeMap(accts)
+	return optsFn(func(k *Keeper) {
+		k.acceptedAccountTypes = m
+	})
+}
+
+func asTypeMap(accts []authtypes.AccountI) map[reflect.Type]struct{} {
+	m := make(map[reflect.Type]struct{}, len(accts))
+	for _, a := range accts {
+		if a == nil {
+			panic(types.ErrEmpty.Wrap("address"))
+		}
+		at := reflect.TypeOf(a)
+		if _, exists := m[at]; exists {
+			panic(types.ErrDuplicate.Wrapf("%T", a))
+		}
+		m[at] = struct{}{}
+	}
+	return m
 }

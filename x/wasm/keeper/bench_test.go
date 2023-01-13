@@ -68,7 +68,7 @@ func BenchmarkInstantiationOverhead(b *testing.B) {
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
 			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			ctx, keepers := createTestInput(b, false, SupportedFeatures, nil, nil, wasmConfig, spec.db())
+			ctx, keepers := createTestInput(b, false, AvailableCapabilities, nil, nil, wasmConfig, spec.db())
 			example := InstantiateHackatomExampleContract(b, ctx, keepers)
 			if spec.pinned {
 				require.NoError(b, keepers.ContractKeeper.PinCode(ctx, example.CodeID))
@@ -90,15 +90,12 @@ func BenchmarkCompilation(b *testing.B) {
 		db       func() dbm.DB
 	}{
 		"hackatom": {
-			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/hackatom.wasm",
 		},
 		"burner": {
-			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/burner.wasm",
 		},
 		"ibc_reflect": {
-			db:       func() dbm.DB { return dbm.NewMemDB() },
 			wasmFile: "./testdata/ibc_reflect.wasm",
 		},
 	}
@@ -106,7 +103,8 @@ func BenchmarkCompilation(b *testing.B) {
 	for name, spec := range specs {
 		b.Run(name, func(b *testing.B) {
 			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
-			ctx, keepers := createTestInput(b, false, SupportedFeatures, nil, nil, wasmConfig, spec.db())
+			db := dbm.NewMemDB()
+			ctx, keepers := createTestInput(b, false, AvailableCapabilities, nil, nil, wasmConfig, db)
 
 			// print out code size for comparisons
 			code, err := os.ReadFile(spec.wasmFile)

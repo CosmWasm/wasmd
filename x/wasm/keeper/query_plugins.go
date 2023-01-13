@@ -188,9 +188,24 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			}
 			return json.Marshal(res)
 		}
+		if request.Supply != nil {
+			coin := bankKeeper.GetSupply(ctx, request.Supply.Denom)
+			res := wasmvmtypes.SupplyResponse{
+				Amount: wasmvmtypes.Coin{
+					Denom:  coin.Denom,
+					Amount: coin.Amount.String(),
+				},
+			}
+			return json.Marshal(res)
+		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
 }
+
+func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+}
+
 func CustomQuerierImpl(queryRouter GRPCQueryRouter) func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
 		var linkQueryWrapper types.LinkQueryWrapper

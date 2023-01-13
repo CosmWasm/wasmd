@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -15,9 +17,10 @@ import (
 	"github.com/line/lbm-sdk/store/prefix"
 	storetypes "github.com/line/lbm-sdk/store/types"
 	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/address"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
+	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	vestingexported "github.com/line/lbm-sdk/x/auth/vesting/exported"
 	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
 	paramtypes "github.com/line/lbm-sdk/x/params/types"
 	"github.com/line/ostracon/libs/log"
@@ -57,6 +60,15 @@ type CoinTransferrer interface {
 	DeleteFromInactiveAddr(ctx sdk.Context, address sdk.AccAddress)
 }
 
+// AccountPruner handles the balances and data cleanup for accounts that are pruned on contract instantiate.
+// This is an extension point to attach custom logic
+type AccountPruner interface {
+	// CleanupExistingAccount handles the cleanup process for balances and data of the given account. The persisted account
+	// type is already reset to base account at this stage.
+	// The method returns true when the account address can be reused. Unsupported account types are rejected by returning false
+	CleanupExistingAccount(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
+}
+
 // WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
 type WasmVMResponseHandler interface {
 	// Handle processes the data returned by a contract invocation.
@@ -67,6 +79,12 @@ type WasmVMResponseHandler interface {
 		messages []wasmvmtypes.SubMsg,
 		origRspData []byte,
 	) ([]byte, error)
+}
+
+// list of account types that are accepted for wasm contracts. Chains importing wasmd
+// can overwrite this list with the WithAcceptedAccountTypesOnContractInstantiation option.
+var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
+	reflect.TypeOf(&authtypes.BaseAccount{}): {},
 }
 
 // Keeper will have a reference to Wasmer with it's own data directory.
@@ -83,10 +101,12 @@ type Keeper struct {
 	messenger             Messenger
 	metrics               *Metrics
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
-	queryGasLimit     uint64
-	paramSpace        paramtypes.Subspace
-	gasRegister       WasmGasRegister
-	maxQueryStackSize uint32
+	queryGasLimit        uint64
+	paramSpace           paramtypes.Subspace
+	gasRegister          WasmGasRegister
+	maxQueryStackSize    uint32
+	acceptedAccountTypes map[reflect.Type]struct{}
+	accountPruner        AccountPruner
 }
 
 // NewKeeper creates a new contract Keeper instance
@@ -107,12 +127,12 @@ func NewKeeper(
 	queryRouter GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
-	supportedFeatures string,
+	availableCapabilities string,
 	customEncoders *MessageEncoders,
 	customPlugins *QueryPlugins,
 	opts ...Option,
 ) Keeper {
-	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), supportedFeatures, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -122,19 +142,21 @@ func NewKeeper(
 	}
 
 	keeper := &Keeper{
-		storeKey:          storeKey,
-		cdc:               cdc,
-		wasmVM:            wasmer,
-		accountKeeper:     accountKeeper,
-		bank:              NewBankCoinTransferrer(bankKeeper),
-		portKeeper:        portKeeper,
-		capabilityKeeper:  capabilityKeeper,
-		messenger:         NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource, customEncoders),
-		queryGasLimit:     wasmConfig.SmartQueryGasLimit,
-		paramSpace:        paramSpace,
-		metrics:           NopMetrics(),
-		gasRegister:       NewDefaultWasmGasRegister(),
-		maxQueryStackSize: types.DefaultMaxQueryStackSize,
+		storeKey:             storeKey,
+		cdc:                  cdc,
+		wasmVM:               wasmer,
+		accountKeeper:        accountKeeper,
+		bank:                 NewBankCoinTransferrer(bankKeeper),
+		accountPruner:        NewVestingCoinBurner(bankKeeper),
+		portKeeper:           portKeeper,
+		capabilityKeeper:     capabilityKeeper,
+		messenger:            NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
+		paramSpace:           paramSpace,
+		metrics:              NopMetrics(),
+		gasRegister:          NewDefaultWasmGasRegister(),
+		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
+		acceptedAccountTypes: defaultAcceptedAccountTypes,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper).Merge(customPlugins)
 	for _, o := range opts {
@@ -228,13 +250,13 @@ func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) {
 	k.paramSpace.SetParamSet(ctx, &ps)
 }
 
-func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, err error) {
+func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
-		return 0, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be empty")
+		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
 	}
 
 	if !authZ.CanCreateCode(k.getUploadAccessConfig(ctx), creator) {
-		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
+		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not create code")
 	}
 	// figure out proper instantiate access
 	defaultAccessConfig := k.getInstantiateAccessConfig(ctx).With(creator)
@@ -242,38 +264,44 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		instantiateAccess = &defaultAccessConfig
 	} else if !instantiateAccess.IsSubset(defaultAccessConfig) {
 		// we enforce this must be subset of default upload access
-		return 0, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "instantiate access must be subset of default upload access")
+		return 0, checksum, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "instantiate access must be subset of default upload access")
 	}
 
-	wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
-	if err != nil {
-		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	if ioutils.IsGzip(wasmCode) {
+		ctx.GasMeter().ConsumeGas(k.gasRegister.UncompressCosts(len(wasmCode)), "Uncompress gzip bytecode")
+		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
+		if err != nil {
+			return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		}
 	}
 	ctx.GasMeter().ConsumeGas(k.compileCosts(ctx, len(wasmCode)), "Compiling WASM Bytecode")
 
-	checksum, err := k.wasmVM.Create(wasmCode)
+	//ctx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
+	//checksum, err = k.wasmVM.Create(wasmCode)
+	checksum, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
-		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	report, err := k.wasmVM.AnalyzeCode(checksum)
 	if err != nil {
-		return 0, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
-	k.Logger(ctx).Debug("storing new contract", "features", report.RequiredFeatures, "code_id", codeID)
+	k.Logger(ctx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
 
 	evt := sdk.NewEvent(
 		types.EventTypeStoreCode,
-		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+		sdk.NewAttribute(types.AttributeKeyChecksum, hex.EncodeToString(checksum)),
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)), // last element to be compatible with scripts
 	)
-	for _, f := range strings.Split(report.RequiredFeatures, ",") {
-		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyFeature, strings.TrimSpace(f)))
+	for _, f := range strings.Split(report.RequiredCapabilities, ",") {
+		evt.AppendAttributes(sdk.NewAttribute(types.AttributeKeyRequiredCapability, strings.TrimSpace(f)))
 	}
 	ctx.EventManager().EmitEvent(evt)
 
-	return codeID, nil
+	return codeID, checksum, nil
 }
 
 func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
@@ -283,9 +311,12 @@ func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.Cod
 }
 
 func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
-	wasmCode, err := ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
-	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	if ioutils.IsGzip(wasmCode) {
+		var err error
+		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
+		if err != nil {
+			return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		}
 	}
 	newCodeHash, err := k.wasmVM.Create(wasmCode)
 	if err != nil {
@@ -305,42 +336,75 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 	return nil
 }
 
-func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, initMsg []byte, label string, deposit sdk.Coins, authZ AuthorizationPolicy) (sdk.AccAddress, []byte, error) {
+func (k Keeper) instantiate(
+	ctx sdk.Context,
+	codeID uint64,
+	creator, admin sdk.AccAddress,
+	initMsg []byte,
+	label string,
+	deposit sdk.Coins,
+	addressGenerator AddressGenerator,
+	authPolicy AuthorizationPolicy,
+) (sdk.AccAddress, []byte, error) {
 	defer func(begin time.Time) { k.metrics.InstantiateElapsedTimes.Observe(time.Since(begin).Seconds()) }(time.Now())
 
+	if creator == nil {
+		return nil, nil, types.ErrEmpty.Wrap("creator")
+	}
 	instanceCosts := k.newContractInstanceCosts(k.gasRegister, ctx, k.IsPinnedCode(ctx, codeID), len(initMsg))
 	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
 
-	// create contract address
-	contractAddress := k.generateContractAddress(ctx, codeID)
-	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
-	if existingAcct != nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrAccountExists, existingAcct.GetAddress().String())
+	// get contact info
+	codeInfo := k.GetCodeInfo(ctx, codeID)
+	if codeInfo == nil {
+		return nil, nil, sdkerrors.Wrap(types.ErrNotFound, "code")
+	}
+	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
+		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
+	contractAddress := addressGenerator(ctx, codeID, codeInfo.CodeHash)
+	if k.HasContractInfo(ctx, contractAddress) {
+		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
+	}
+
+	// check account
+	// every cosmos module can define custom account types when needed. The cosmos-sdk comes with extension points
+	// to support this and a set of base and vesting account types that we integrated in our default lists.
+	// But not all account types of other modules are known or may make sense for contracts, therefore we kept this
+	// decision logic also very flexible and extendable. We provide new options to overwrite the default settings via WithAcceptedAccountTypesOnContractInstantiation and
+	// WithPruneAccountTypesOnContractInstantiation as constructor arguments
+	existingAcct := k.accountKeeper.GetAccount(ctx, contractAddress)
+	if existingAcct != nil {
+		if existingAcct.GetSequence() != 0 || existingAcct.GetPubKey() != nil {
+			return nil, nil, types.ErrAccountExists.Wrap("address is claimed by external account")
+		}
+		if _, accept := k.acceptedAccountTypes[reflect.TypeOf(existingAcct)]; accept {
+			// keep account and balance as it is
+			k.Logger(ctx).Info("instantiate contract with existing account", "address", contractAddress.String())
+		} else {
+			// consider an account in the wasmd namespace spam and overwrite it.
+			k.Logger(ctx).Info("pruning existing account for contract instantiation", "address", contractAddress.String())
+			contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
+			k.accountKeeper.SetAccount(ctx, contractAccount)
+			// also handle balance to not open cases where these accounts are abused and become liquid
+			switch handled, err := k.accountPruner.CleanupExistingAccount(ctx, existingAcct); {
+			case err != nil:
+				return nil, nil, sdkerrors.Wrap(err, "prune balance")
+			case !handled:
+				return nil, nil, types.ErrAccountExists.Wrap("address is claimed by external account")
+			}
+		}
+	} else {
+		// create an empty account (so we don't have issues later)
+		contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
+		k.accountKeeper.SetAccount(ctx, contractAccount)
+	}
 	// deposit initial contract funds
 	if !deposit.IsZero() {
 		if err := k.bank.TransferCoins(ctx, creator, contractAddress, deposit); err != nil {
 			return nil, nil, err
 		}
-	} else {
-		// create an empty account (so we don't have issues later)
-		// TODO: can we remove this?
-		contractAccount := k.accountKeeper.NewAccountWithAddress(ctx, contractAddress)
-		k.accountKeeper.SetAccount(ctx, contractAccount)
-	}
-
-	// get contact info
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetCodeKey(codeID))
-	if bz == nil {
-		return nil, nil, sdkerrors.Wrap(types.ErrNotFound, "code")
-	}
-	var codeInfo types.CodeInfo
-	k.cdc.MustUnmarshal(bz, &codeInfo)
-
-	if !authZ.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
-		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
 	}
 
 	// prepare params for contract instantiate call
@@ -348,17 +412,16 @@ func (k Keeper) instantiate(ctx sdk.Context, codeID uint64, creator, admin sdk.A
 	info := types.NewInfo(creator, deposit)
 
 	// create prefixed data store
-	// 0x03 | BuildContractAddress (sdk.AccAddress)
+	// 0x03 | BuildContractAddressClassic (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	wasmStore := types.NewWasmStore(prefixStore)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 
 	// instantiate wasm contract
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, wasmStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, prefixStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrInstantiateFailed, err.Error())
@@ -429,8 +492,7 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
-	wasmStore := types.NewWasmStore(prefixStore)
-	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, wasmStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -470,6 +532,10 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "unknown code")
 	}
 
+	if !authZ.CanInstantiateContract(newCodeInfo.InstantiateConfig, caller) {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "to use new code")
+	}
+
 	// check for IBC flag
 	switch report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash); {
 	case err != nil:
@@ -494,8 +560,7 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
 	gas := k.runtimeGasForContract(ctx)
-	wasmStore := types.NewWasmStore(prefixStore)
-	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, &wasmStore, k.cosmwasmAPI(ctx), &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, &prefixStore, k.cosmwasmAPI(ctx), &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, sdkerrors.Wrap(types.ErrMigrationFailed, err.Error())
@@ -540,9 +605,8 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
-	wasmStore := types.NewWasmStore(prefixStore)
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, wasmStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -577,8 +641,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
-	wasmStore := types.NewWasmStore(prefixStore)
-	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, wasmStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
@@ -647,7 +710,7 @@ func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAdd
 	defer iter.Close()
 
 	if iter.Valid() {
-		pos = sdk.BigEndianToUint64(iter.Value())
+		pos = sdk.BigEndianToUint64(iter.Key())
 	}
 	// then store with incrementing position
 	for i := range newEntries {
@@ -708,8 +771,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	env := types.NewEnv(ctx, contractAddr)
-	wasmStore := types.NewWasmStore(prefixStore)
-	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, wasmStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
+	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, k.cosmwasmAPI(ctx), querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if qErr != nil {
 		return nil, sdkerrors.Wrap(types.ErrQueryFailed, qErr.Error())
@@ -961,12 +1023,17 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 }
 
 // setAccessConfig updates the access config of a code id.
-func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, config types.AccessConfig) error {
+func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, authz AuthorizationPolicy) error {
 	info := k.GetCodeInfo(ctx, codeID)
 	if info == nil {
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
 	}
-	info.InstantiateConfig = config
+	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
+	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
+		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify code access config")
+	}
+
+	info.InstantiateConfig = newConfig
 	k.storeCodeInfo(ctx, codeID, *info)
 	return nil
 }
@@ -1006,7 +1073,6 @@ func (k Keeper) runtimeGasForContract(ctx sdk.Context) uint64 {
 	if meter.IsOutOfGas() {
 		return 0
 	}
-
 	if meter.Limit() == 0 { // infinite gas meter with limit=0 and not out of gas
 		return math.MaxUint64
 	}
@@ -1021,20 +1087,6 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	if ctx.GasMeter().IsOutOfGas() {
 		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
 	}
-}
-
-// generates a contract address from codeID + instanceID
-func (k Keeper) generateContractAddress(ctx sdk.Context, codeID uint64) sdk.AccAddress {
-	instanceID := k.autoIncrementID(ctx, types.KeyLastInstanceID)
-	return BuildContractAddress(codeID, instanceID)
-}
-
-// BuildContractAddress builds an sdk account address for a contract.
-func BuildContractAddress(codeID, instanceID uint64) sdk.AccAddress {
-	contractID := make([]byte, 16)
-	binary.BigEndian.PutUint64(contractID[:8], codeID)
-	binary.BigEndian.PutUint64(contractID[8:], instanceID)
-	return address.Module(types.ModuleName, contractID)[:types.ContractAddrLen]
 }
 
 func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
@@ -1199,6 +1251,43 @@ func (c BankCoinTransferrer) AddToInactiveAddr(ctx sdk.Context, address sdk.AccA
 
 func (c BankCoinTransferrer) DeleteFromInactiveAddr(ctx sdk.Context, address sdk.AccAddress) {
 	c.keeper.DeleteFromInactiveAddr(ctx, address)
+}
+
+var _ AccountPruner = VestingCoinBurner{}
+
+// VestingCoinBurner default implementation for AccountPruner to burn the coins
+type VestingCoinBurner struct {
+	bank types.BankKeeper
+}
+
+// NewVestingCoinBurner constructor
+func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
+	if bank == nil {
+		panic("bank keeper must not be nil")
+	}
+	return VestingCoinBurner{bank: bank}
+}
+
+// CleanupExistingAccount accepts only vesting account types to burns all their original vesting coin balances.
+// Other account types will be rejected and returned as unhandled.
+func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
+	v, ok := existingAcc.(vestingexported.VestingAccount)
+	if !ok {
+		return false, nil
+	}
+
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	coinsToBurn := sdk.NewCoins()
+	for _, orig := range v.GetOriginalVesting() { // focus on the coin denoms that were setup originally; getAllBalances has some issues
+		coinsToBurn = append(coinsToBurn, b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))
+	}
+	if err := b.bank.SendCoinsFromAccountToModule(ctx, existingAcc.GetAddress(), types.ModuleName, coinsToBurn); err != nil {
+		return false, sdkerrors.Wrap(err, "prune account balance")
+	}
+	if err := b.bank.BurnCoins(ctx, types.ModuleName, coinsToBurn); err != nil {
+		return false, sdkerrors.Wrap(err, "burn account balance")
+	}
+	return true, nil
 }
 
 type msgDispatcher interface {

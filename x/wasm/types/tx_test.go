@@ -84,6 +84,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
 
 	cases := map[string]struct {
 		msg   MsgInstantiateContract
@@ -173,6 +174,142 @@ func TestInstantiateContractValidation(t *testing.T) {
 		},
 	}
 
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestInstantiateContract2Validation(t *testing.T) {
+	bad, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	badAddress := bad.String()
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
+
+	cases := map[string]struct {
+		msg   MsgInstantiateContract2
+		valid bool
+	}{
+		"empty": {
+			msg:   MsgInstantiateContract2{},
+			valid: false,
+		},
+		"correct minimal": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("{}"),
+				Salt:   []byte{0},
+			},
+			valid: true,
+		},
+		"missing code": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				Label:  "foo",
+				Msg:    []byte("{}"),
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"missing label": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				Msg:    []byte("{}"),
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"label too long": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				Label:  strings.Repeat("food", 33),
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"bad sender minimal": {
+			msg: MsgInstantiateContract2{
+				Sender: badAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("{}"),
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"correct maximal": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  strings.Repeat("a", MaxLabelSize),
+				Msg:    []byte(`{"some": "data"}`),
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Salt:   bytes.Repeat([]byte{0}, MaxSaltSize),
+				FixMsg: true,
+			},
+			valid: true,
+		},
+		"negative funds": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte(`{"some": "data"}`),
+				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Salt:  []byte{0},
+			},
+			valid: false,
+		},
+		"non json init msg": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte("invalid-json"),
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"empty init msg": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Salt:   []byte{0},
+			},
+			valid: false,
+		},
+		"empty salt": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte(`{"some": "data"}`),
+			},
+			valid: false,
+		},
+		"salt too long": {
+			msg: MsgInstantiateContract2{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo",
+				Msg:    []byte(`{"some": "data"}`),
+				Salt:   bytes.Repeat([]byte{0}, 65),
+			},
+			valid: false,
+		},
+	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			err := tc.msg.ValidateBasic()

@@ -10,10 +10,10 @@ type AuthorizationPolicy interface {
 	CanCreateCode(c types.AccessConfig, creator sdk.AccAddress) bool
 	CanInstantiateContract(c types.AccessConfig, actor sdk.AccAddress) bool
 	CanModifyContract(admin, actor sdk.AccAddress) bool
+	CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool
 }
 
-type DefaultAuthorizationPolicy struct {
-}
+type DefaultAuthorizationPolicy struct{}
 
 func (p DefaultAuthorizationPolicy) CanCreateCode(config types.AccessConfig, actor sdk.AccAddress) bool {
 	return config.Allowed(actor)
@@ -27,21 +27,24 @@ func (p DefaultAuthorizationPolicy) CanModifyContract(admin, actor sdk.AccAddres
 	return admin != nil && admin.Equals(actor)
 }
 
-// GovAuthorizationPolicy is for the gov handler(proposal_handler.go) authorities
-type GovAuthorizationPolicy struct {
+func (p DefaultAuthorizationPolicy) CanModifyCodeAccessConfig(creator, actor sdk.AccAddress, isSubset bool) bool {
+	return creator != nil && creator.Equals(actor) && isSubset
 }
 
+type GovAuthorizationPolicy struct{}
+
 func (p GovAuthorizationPolicy) CanCreateCode(types.AccessConfig, sdk.AccAddress) bool {
-	// The gov handler can create code regardless of the current access config
 	return true
 }
 
 func (p GovAuthorizationPolicy) CanInstantiateContract(types.AccessConfig, sdk.AccAddress) bool {
-	// The gov handler can instantiate contract regardless of the code access config
 	return true
 }
 
 func (p GovAuthorizationPolicy) CanModifyContract(sdk.AccAddress, sdk.AccAddress) bool {
-	// The gov handler can migrate contract regardless of the contract admin
+	return true
+}
+
+func (p GovAuthorizationPolicy) CanModifyCodeAccessConfig(sdk.AccAddress, sdk.AccAddress, bool) bool {
 	return true
 }

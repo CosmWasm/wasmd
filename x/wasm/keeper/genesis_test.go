@@ -67,7 +67,7 @@ func TestGenesisExportImport(t *testing.T) {
 
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
-		codeID, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
+		codeID, _, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
 			contractKeeper.PinCode(srcCtx, codeID)
@@ -82,7 +82,7 @@ func TestGenesisExportImport(t *testing.T) {
 		}
 
 		contract.CodeID = codeID
-		contractAddr := wasmKeeper.generateContractAddress(srcCtx, codeID)
+		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
 		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
@@ -128,7 +128,7 @@ func TestGenesisExportImport(t *testing.T) {
 	})
 
 	// re-import
-	var importState types.GenesisState
+	var importState wasmTypes.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
 	InitGenesis(dstCtx, dstKeeper, importState, &StakingKeeperMock{}, TestHandler(contractKeeper))
@@ -269,7 +269,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
@@ -290,10 +290,10 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
-						ContractAddress: BuildContractAddress(1, 2).String(),
+						ContractAddress: BuildContractAddressClassic(1, 2).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
@@ -309,7 +309,7 @@ func TestGenesisInit(t *testing.T) {
 			src: types.GenesisState{
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
@@ -325,10 +325,10 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					}, {
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
@@ -344,7 +344,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 						ContractState: []types.Model{
 							{
@@ -392,7 +392,7 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: []types.Contract{
 					{
-						ContractAddress: BuildContractAddress(1, 1).String(),
+						ContractAddress: BuildContractAddressClassic(1, 1).String(),
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.OnlyGenesisFields),
 					},
 				},
@@ -404,7 +404,7 @@ func TestGenesisInit(t *testing.T) {
 			},
 		},
 		"validator set update called for any genesis messages": {
-			src: types.GenesisState{
+			src: wasmTypes.GenesisState{
 				GenMsgs: []types.GenesisState_GenMsgs{
 					{Sum: &types.GenesisState_GenMsgs_StoreCode{
 						StoreCode: types.MsgStoreCodeFixture(),
@@ -413,8 +413,10 @@ func TestGenesisInit(t *testing.T) {
 				Params: types.DefaultParams(),
 			},
 			stakingMock: StakingKeeperMock{expCalls: 1, validatorUpdate: []abci.ValidatorUpdate{
-				{PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
-					Ed25519: []byte("a valid key")}},
+				{
+					PubKey: crypto.PublicKey{Sum: &crypto.PublicKey_Ed25519{
+						Ed25519: []byte("a valid key"),
+					}},
 					Power: 100,
 				},
 			}},
@@ -422,7 +424,7 @@ func TestGenesisInit(t *testing.T) {
 			expSuccess:     true,
 		},
 		"validator set update not called on genesis msg handler errors": {
-			src: types.GenesisState{
+			src: wasmTypes.GenesisState{
 				GenMsgs: []types.GenesisState_GenMsgs{
 					{Sum: &types.GenesisState_GenMsgs_StoreCode{
 						StoreCode: types.MsgStoreCodeFixture(),
@@ -507,7 +509,7 @@ func TestImportContractWithCodeHistoryReset(t *testing.T) {
 	enc64 := base64.StdEncoding.EncodeToString
 	genesisStr := fmt.Sprintf(genesisTemplate, enc64(wasmCodeHash[:]), enc64(wasmCode))
 
-	var importState types.GenesisState
+	var importState wasmTypes.GenesisState
 	err = keeper.cdc.UnmarshalJSON([]byte(genesisStr), &importState)
 	require.NoError(t, err)
 	require.NoError(t, importState.ValidateBasic(), genesisStr)
@@ -603,7 +605,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 				Sum: &types.GenesisState_GenMsgs_ExecuteContract{
 					ExecuteContract: &types.MsgExecuteContract{
 						Sender:   verifierAddress.String(),
-						Contract: BuildContractAddress(1, 1).String(),
+						Contract: BuildContractAddressClassic(1, 1).String(),
 						Msg:      []byte(`{"release":{}}`),
 					},
 				},
@@ -628,7 +630,7 @@ func TestSupportedGenMsgTypes(t *testing.T) {
 	require.NotNil(t, codeInfo)
 
 	// verify contract instantiated
-	cInfo := keeper.GetContractInfo(ctx, BuildContractAddress(1, 1))
+	cInfo := keeper.GetContractInfo(ctx, BuildContractAddressClassic(1, 1))
 	require.NotNil(t, cInfo)
 
 	// verify contract executed
@@ -643,7 +645,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	var (
 		keyParams  = sdk.NewKVStoreKey(paramtypes.StoreKey)
-		tkeyParams = sdk.NewKVStoreKey(paramtypes.TStoreKey)
+		tkeyParams = sdk.NewTransientStoreKey(paramtypes.TStoreKey)
 		keyWasm    = sdk.NewKVStoreKey(wasmTypes.StoreKey)
 	)
 
@@ -651,6 +653,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
 	ms.MountStoreWithDB(keyParams, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, ocproto.Header{
@@ -670,7 +673,26 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	wasmConfig := wasmTypes.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
-	srcKeeper := NewKeeper(encodingConfig.Marshaler, keyWasm, pk.Subspace(wasmTypes.ModuleName), authkeeper.AccountKeeper{}, bankpluskeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, tempDir, wasmConfig, SupportedFeatures, nil, nil)
+	srcKeeper := NewKeeper(
+		encodingConfig.Marshaler,
+		keyWasm,
+		pk.Subspace(wasmTypes.ModuleName),
+		authkeeper.AccountKeeper{},
+		&bankpluskeeper.BaseKeeper{},
+		stakingkeeper.Keeper{},
+		distributionkeeper.Keeper{},
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		tempDir,
+		wasmConfig,
+		AvailableCapabilities,
+		nil,
+		nil,
+	)
 	return &srcKeeper, ctx, []sdk.StoreKey{keyWasm, keyParams}
 }
 

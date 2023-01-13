@@ -9,7 +9,6 @@ import (
 
 func GetTestData() ([]byte, []byte, []byte, error) {
 	wasmCode, err := os.ReadFile("../keeper/testdata/hackatom.wasm")
-
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -42,13 +41,17 @@ func TestIsGzip(t *testing.T) {
 
 	require.False(t, IsGzip(wasmCode))
 	require.False(t, IsGzip(someRandomStr))
+	require.False(t, IsGzip(nil))
+	require.True(t, IsGzip(gzipData[0:3]))
 	require.True(t, IsGzip(gzipData))
 }
 
 func TestGzipIt(t *testing.T) {
 	wasmCode, someRandomStr, _, err := GetTestData()
-	originalGzipData := []byte{31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 202, 72, 205, 201, 201, 87, 40, 207, 47, 202, 73, 1,
-		4, 0, 0, 255, 255, 133, 17, 74, 13, 11, 0, 0, 0}
+	originalGzipData := []byte{
+		31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 202, 72, 205, 201, 201, 87, 40, 207, 47, 202, 73, 1,
+		4, 0, 0, 255, 255, 133, 17, 74, 13, 11, 0, 0, 0,
+	}
 
 	require.NoError(t, err)
 

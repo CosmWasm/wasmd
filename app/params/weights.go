@@ -20,6 +20,7 @@ const (
 	DefaultWeightCommunitySpendProposal int = 5
 	DefaultWeightTextProposal           int = 5
 	DefaultWeightParamChangeProposal    int = 5
-	DefaultWeightMsgStoreCode           int = 100
+	DefaultWeightMsgStoreCode           int = 50
 	DefaultWeightMsgInstantiateContract int = 100
+	DefaultWeightMsgExecuteContract     int = 100
 )

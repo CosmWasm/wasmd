@@ -12,7 +12,7 @@ import (
 )
 
 func ParamChanges(r *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {
-	params := RandomParams(r)
+	params := types.DefaultParams()
 	return []simtypes.ParamChange{
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyUploadAccess),
 			func(r *rand.Rand) string {

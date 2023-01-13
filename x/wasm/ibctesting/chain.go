@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
 	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
@@ -24,12 +23,9 @@ import (
 	commitmenttypes "github.com/line/lbm-sdk/x/ibc/core/23-commitment/types"
 	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
 	"github.com/line/lbm-sdk/x/ibc/core/exported"
-	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
 	"github.com/line/lbm-sdk/x/ibc/core/types"
 	ibcoctypes "github.com/line/lbm-sdk/x/ibc/light-clients/99-ostracon/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
 	"github.com/line/lbm-sdk/x/ibc/testing/mock"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
 	"github.com/line/lbm-sdk/x/staking/teststaking"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	abci "github.com/line/ostracon/abci/types"
@@ -39,7 +35,8 @@ import (
 	octypes "github.com/line/ostracon/types"
 	ocversion "github.com/line/ostracon/version"
 
-	wasmd "github.com/line/wasmd/app"
+	"github.com/line/wasmd/app"
+	"github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm"
 )
 
@@ -52,7 +49,7 @@ type TestChain struct {
 	t *testing.T
 
 	Coordinator   *Coordinator
-	App           ibctesting.TestingApp
+	App           *app.WasmApp
 	ChainID       string
 	LastHeader    *ibcoctypes.Header // header for last block height committed
 	CurrentHeader ocproto.Header     // header for current block height
@@ -64,7 +61,7 @@ type TestChain struct {
 	Voters  *octypes.VoterSet
 	Signers []octypes.PrivValidator
 
-	senderPrivKey cryptotypes.PrivKey
+	SenderPrivKey cryptotypes.PrivKey
 	SenderAccount authtypes.AccountI
 
 	PendingSendPackets []channeltypes.Packet
@@ -91,7 +88,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 	require.NoError(t, err)
 
 	// create validator set with single validator
-	validator := ibctesting.NewTestValidator(pubKey, 1)
+	validator := octypes.NewValidator(pubKey, 1)
 	valSet := octypes.NewValidatorSet([]*octypes.Validator{validator})
 	voterSet := octypes.WrapValidatorsToVoterSet(valSet.Validators)
 	signers := []octypes.PrivValidator{privVal}
@@ -107,7 +104,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
-	app := NewTestingAppDecorator(t, wasmd.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, opts, balance))
+	wasmApp := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, opts, balance)
 
 	// create current header and call begin block
 	header := ocproto.Header{
@@ -116,22 +113,22 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		Time:    coord.CurrentTime.UTC(),
 	}
 
-	txConfig := app.GetTxConfig()
+	txConfig := params.MakeEncodingConfig().TxConfig
 
 	// create an account to send transactions from
 	chain := &TestChain{
 		t:             t,
 		Coordinator:   coord,
 		ChainID:       chainID,
-		App:           app,
+		App:           wasmApp,
 		CurrentHeader: header,
-		QueryServer:   app.GetIBCKeeper(),
+		QueryServer:   wasmApp.IBCKeeper,
 		TxConfig:      txConfig,
-		Codec:         app.AppCodec(),
+		Codec:         wasmApp.AppCodec(),
 		Vals:          valSet,
 		Voters:        voterSet,
 		Signers:       signers,
-		senderPrivKey: senderPrivKey,
+		SenderPrivKey: senderPrivKey,
 		SenderAccount: acc,
 	}
 
@@ -142,7 +139,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 
 // GetContext returns the current context for the application.
 func (chain *TestChain) GetContext() sdk.Context {
-	return chain.App.GetBaseApp().NewContext(false, chain.CurrentHeader)
+	return chain.App.BaseApp.NewContext(false, chain.CurrentHeader)
 }
 
 // QueryProof performs an abci query with the given key and returns the proto encoded merkle proof
@@ -235,14 +232,6 @@ func (chain *TestChain) NextBlock() {
 	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
 }
 
-func (chain *TestChain) CommitBlock() {
-	chain.App.EndBlock(abci.RequestEndBlock{Height: chain.CurrentHeader.Height})
-	chain.App.Commit()
-
-	chain.App.BeginRecheckTx(abci.RequestBeginRecheckTx{Header: chain.CurrentHeader})
-	chain.App.EndRecheckTx(abci.RequestEndRecheckTx{Height: chain.CurrentHeader.Height})
-}
-
 // sendMsgs delivers a transaction through the application without returning the result.
 func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 	_, err := chain.SendMsgs(msgs...)
@@ -256,16 +245,16 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, r, err := wasmd.SignAndDeliver(
+	_, r, err := app.SignAndDeliver(
 		chain.t,
 		chain.TxConfig,
-		chain.App.GetBaseApp(),
+		chain.App.BaseApp,
 		chain.GetContext().BlockHeader(),
 		msgs,
 		chain.ChainID,
 		[]uint64{chain.SenderAccount.GetAccountNumber()},
 		[]uint64{chain.SenderAccount.GetSequence()},
-		true, true, chain.senderPrivKey,
+		true, true, chain.SenderPrivKey,
 	)
 	if err != nil {
 		return nil, err
@@ -303,7 +292,7 @@ func (chain *TestChain) captureIBCEvents(r *sdk.Result) {
 // GetClientState retrieves the client state for the provided clientID. The client is
 // expected to exist otherwise testing will fail.
 func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
-	clientState, found := chain.App.GetIBCKeeper().ClientKeeper.GetClientState(chain.GetContext(), clientID)
+	clientState, found := chain.App.IBCKeeper.ClientKeeper.GetClientState(chain.GetContext(), clientID)
 	require.True(chain.t, found)
 
 	return clientState
@@ -312,13 +301,13 @@ func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
 // GetConsensusState retrieves the consensus state for the provided clientID and height.
 // It will return a success boolean depending on if consensus state exists or not.
 func (chain *TestChain) GetConsensusState(clientID string, height exported.Height) (exported.ConsensusState, bool) {
-	return chain.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(chain.GetContext(), clientID, height)
+	return chain.App.IBCKeeper.ClientKeeper.GetClientConsensusState(chain.GetContext(), clientID, height)
 }
 
 // GetValsAtHeight will return the validator set of the chain at a given height. It will return
 // a success boolean depending on if the validator set exists or not at that height.
 func (chain *TestChain) GetValsAtHeight(height int64) (*octypes.ValidatorSet, bool) {
-	histInfo, ok := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
+	histInfo, ok := chain.App.StakingKeeper.GetHistoricalInfo(chain.GetContext(), height)
 	if !ok {
 		return nil, false
 	}
@@ -333,7 +322,7 @@ func (chain *TestChain) GetValsAtHeight(height int64) (*octypes.ValidatorSet, bo
 }
 
 func (chain *TestChain) GetVotersAtHeight(height int64) (*octypes.VoterSet, bool) {
-	histInfo, ok := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
+	histInfo, ok := chain.App.StakingKeeper.GetHistoricalInfo(chain.GetContext(), height)
 	if !ok {
 		return nil, false
 	}
@@ -355,7 +344,7 @@ func (chain *TestChain) GetVotersAtHeight(height int64) (*octypes.VoterSet, bool
 // GetAcknowledgement retrieves an acknowledgement for the provided packet. If the
 // acknowledgement does not exist then testing will fail.
 func (chain *TestChain) GetAcknowledgement(packet exported.PacketI) []byte {
-	ack, found := chain.App.GetIBCKeeper().ChannelKeeper.GetPacketAcknowledgement(chain.GetContext(), packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
+	ack, found := chain.App.IBCKeeper.ChannelKeeper.GetPacketAcknowledgement(chain.GetContext(), packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 	require.True(chain.t, found)
 
 	return ack
@@ -363,7 +352,7 @@ func (chain *TestChain) GetAcknowledgement(packet exported.PacketI) []byte {
 
 // GetPrefix returns the prefix for used by a chain in connection creation
 func (chain *TestChain) GetPrefix() commitmenttypes.MerklePrefix {
-	return commitmenttypes.NewMerklePrefix(chain.App.GetIBCKeeper().ConnectionKeeper.GetCommitmentPrefix().Bytes())
+	return commitmenttypes.NewMerklePrefix(chain.App.IBCKeeper.ConnectionKeeper.GetCommitmentPrefix().Bytes())
 }
 
 // ConstructUpdateOCClientHeader will construct a valid 99-ostracon Header to update the
@@ -467,7 +456,6 @@ func (chain *TestChain) CreateOCClientHeader(chainID string, blockHeight int64, 
 		EvidenceHash:       tmhash.Sum([]byte("evidence_hash")),
 		ProposerAddress:    tmValSet.SelectProposer([]byte{}, blockHeight, 0).Address, //nolint:staticcheck
 	}
-
 	hhash := tmHeader.Hash()
 	blockID := MakeBlockID(hhash, 3, tmhash.Sum([]byte("part_set")))
 	voteSet := octypes.NewVoteSet(chainID, blockHeight, 1, ocproto.PrecommitType, tmVoterSet)
@@ -549,10 +537,10 @@ func CreateSortedSignerArray(altPrivVal, suitePrivVal octypes.PrivValidator,
 // Other applications must bind to the port in InitGenesis or modify this code.
 func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID string) {
 	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
+	_, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.PortPath(portID))
 	if !ok {
 		// create capability using the IBC capability keeper
-		cap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), host.PortPath(portID))
+		cap, err := chain.App.ScopedIBCKeeper.NewCapability(chain.GetContext(), host.PortPath(portID))
 		require.NoError(chain.t, err)
 
 		// claim capability using the scopedKeeper
@@ -560,7 +548,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.Scope
 		require.NoError(chain.t, err)
 	}
 
-	chain.CommitBlock()
+	chain.App.Commit()
 
 	chain.NextBlock()
 }
@@ -568,7 +556,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.Scope
 // GetPortCapability returns the port capability for the given portID. The capability must
 // exist, otherwise testing will fail.
 func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capability {
-	cap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
+	cap, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.PortPath(portID))
 	require.True(chain.t, ok)
 
 	return cap
@@ -580,15 +568,15 @@ func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capabi
 func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID, channelID string) {
 	capName := host.ChannelCapabilityPath(portID, channelID)
 	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), capName)
+	_, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), capName)
 	if !ok {
-		cap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), capName)
+		cap, err := chain.App.ScopedIBCKeeper.NewCapability(chain.GetContext(), capName)
 		require.NoError(chain.t, err)
 		err = scopedKeeper.ClaimCapability(chain.GetContext(), cap, capName)
 		require.NoError(chain.t, err)
 	}
 
-	chain.CommitBlock()
+	chain.App.Commit()
 
 	chain.NextBlock()
 }
@@ -596,55 +584,55 @@ func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.Sc
 // GetChannelCapability returns the channel capability for the given portID and channelID.
 // The capability must exist, otherwise testing will fail.
 func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilitytypes.Capability {
-	cap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
+	cap, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
 	require.True(chain.t, ok)
 
 	return cap
 }
 
 func (chain *TestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
-	return chain.GetTestSupport().BankKeeper().GetBalance(chain.GetContext(), acc, denom)
+	return chain.App.BankKeeper.GetBalance(chain.GetContext(), acc, denom)
 }
 
 func (chain *TestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
-	return chain.GetTestSupport().BankKeeper().GetAllBalances(chain.GetContext(), acc)
+	return chain.App.BankKeeper.GetAllBalances(chain.GetContext(), acc)
 }
 
-func (chain TestChain) GetTestSupport() *wasmd.TestSupport {
-	return chain.App.(*TestingAppDecorator).TestSupport()
-}
+//func (chain TestChain) GetTestSupport() *app.TestSupport {
+//	return chain.App.(*TestingAppDecorator).TestSupport()
+//}
 
-var _ ibctesting.TestingApp = TestingAppDecorator{}
-
-type TestingAppDecorator struct {
-	*wasmd.WasmApp
-	t *testing.T
-}
-
-func NewTestingAppDecorator(t *testing.T, simApp *wasmd.WasmApp) *TestingAppDecorator {
-	return &TestingAppDecorator{WasmApp: simApp, t: t}
-}
-
-func (a TestingAppDecorator) GetBaseApp() *baseapp.BaseApp {
-	return a.TestSupport().GetBaseApp()
-}
-
-func (a TestingAppDecorator) GetStakingKeeper() stakingkeeper.Keeper {
-	return a.TestSupport().StakingKeeper()
-}
-
-func (a TestingAppDecorator) GetIBCKeeper() *ibckeeper.Keeper {
-	return a.TestSupport().IBCKeeper()
-}
-
-func (a TestingAppDecorator) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return a.TestSupport().ScopeIBCKeeper()
-}
-
-func (a TestingAppDecorator) GetTxConfig() client.TxConfig {
-	return a.TestSupport().GetTxConfig()
-}
-
-func (a TestingAppDecorator) TestSupport() *wasmd.TestSupport {
-	return wasmd.NewTestSupport(a.t, a.WasmApp)
-}
+//var _ ibctesting.TestingApp = TestingAppDecorator{}
+//
+//type TestingAppDecorator struct {
+//	*app.WasmApp
+//	t *testing.T
+//}
+//
+//func NewTestingAppDecorator(t *testing.T, simApp *app.WasmApp) *TestingAppDecorator {
+//	return &TestingAppDecorator{WasmApp: simApp, t: t}
+//}
+//
+//func (a TestingAppDecorator) GetBaseApp() *baseapp.BaseApp {
+//	return a.TestSupport().GetBaseApp()
+//}
+//
+//func (a TestingAppDecorator) GetStakingKeeper() stakingkeeper.Keeper {
+//	return a.TestSupport().StakingKeeper()
+//}
+//
+//func (a TestingAppDecorator) GetIBCKeeper() *ibckeeper.Keeper {
+//	return a.TestSupport().IBCKeeper()
+//}
+//
+//func (a TestingAppDecorator) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
+//	return a.TestSupport().ScopeIBCKeeper()
+//}
+//
+//func (a TestingAppDecorator) GetTxConfig() client.TxConfig {
+//	return a.TestSupport().GetTxConfig()
+//}
+//
+//func (a TestingAppDecorator) TestSupport() *app.TestSupport {
+//	return app.NewTestSupport(a.t, a.WasmApp)
+//}

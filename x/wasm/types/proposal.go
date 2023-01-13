@@ -160,7 +160,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
-	if err := validateLabel(p.Label); err != nil {
+	if err := ValidateLabel(p.Label); err != nil {
 		return err
 	}
 

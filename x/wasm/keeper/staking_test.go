@@ -21,6 +21,7 @@ import (
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
+	"github.com/line/wasmd/x/wasm/keeper/testdata"
 	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
@@ -36,12 +37,12 @@ type StakingInitMsg struct {
 
 // StakingHandleMsg is used to encode handle messages
 type StakingHandleMsg struct {
-	Transfer *transferPayload `json:"transfer,omitempty"`
-	Bond     *struct{}        `json:"bond,omitempty"`
-	Unbond   *unbondPayload   `json:"unbond,omitempty"`
-	Claim    *struct{}        `json:"claim,omitempty"`
-	Reinvest *struct{}        `json:"reinvest,omitempty"`
-	Change   *ownerPayload    `json:"change_owner,omitempty"`
+	Transfer *transferPayload       `json:"transfer,omitempty"`
+	Bond     *struct{}              `json:"bond,omitempty"`
+	Unbond   *unbondPayload         `json:"unbond,omitempty"`
+	Claim    *struct{}              `json:"claim,omitempty"`
+	Reinvest *struct{}              `json:"reinvest,omitempty"`
+	Change   *testdata.OwnerPayload `json:"change_owner,omitempty"`
 }
 
 type transferPayload struct {
@@ -93,7 +94,7 @@ type InvestmentResponse struct {
 }
 
 func TestInitializeStaking(t *testing.T) {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.ContractKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
@@ -108,7 +109,7 @@ func TestInitializeStaking(t *testing.T) {
 	// upload staking derivates code
 	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := keeper.Create(ctx, creator, stakingCode, nil)
+	stakingID, _, err := keeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
@@ -168,7 +169,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
-	ctx, k := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, k := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
@@ -191,7 +192,7 @@ func initializeStaking(t *testing.T) initInfo {
 	// upload staking derivates code
 	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
 	require.NoError(t, err)
-	stakingID, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
+	stakingID, _, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), stakingID)
 
@@ -447,9 +448,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	creator := initInfo.faucet.NewFundedAccount(ctx, deposit...)
 
 	// upload mask code
-	maskCode, err := os.ReadFile("./testdata/reflect.wasm")
-	require.NoError(t, err)
-	maskID, err := initInfo.contractKeeper.Create(ctx, creator, maskCode, nil)
+	maskID, _, err := initInfo.contractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), maskID)
 
@@ -460,21 +459,21 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// STEP 3: now, let's reflect some queries.
 	// let's get the bonded denom
-	reflectBondedQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectBondedQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		BondedDenom: &struct{}{},
 	}}}}
 	reflectBondedBin := buildReflectQuery(t, &reflectBondedQuery)
 	res, err := keeper.QuerySmart(ctx, maskAddr, reflectBondedBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	var reflectRes ChainResponse
+	var reflectRes testdata.ChainResponse
 	mustParse(t, res, &reflectRes)
 	var bondedRes wasmvmtypes.BondedDenomResponse
 	mustParse(t, reflectRes.Data, &bondedRes)
 	assert.Equal(t, "stake", bondedRes.Denom)
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
-	reflectAllValidatorsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectAllValidatorsQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		AllValidators: &wasmvmtypes.AllValidatorsQuery{},
 	}}}}
 	reflectAllValidatorsBin := buildReflectQuery(t, &reflectAllValidatorsQuery)
@@ -493,7 +492,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Contains(t, valInfo.MaxChangeRate, "0.010")
 
 	// find a validator
-	reflectValidatorQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectValidatorQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		Validator: &wasmvmtypes.ValidatorQuery{
 			Address: valAddr.String(),
 		},
@@ -515,7 +514,7 @@ func TestQueryStakingInfo(t *testing.T) {
 
 	// missing validator
 	noVal := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
-	reflectNoValidatorQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectNoValidatorQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		Validator: &wasmvmtypes.ValidatorQuery{
 			Address: noVal.String(),
 		},
@@ -530,7 +529,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Nil(t, noValidatorRes.Validator)
 
 	// test to get all my delegations
-	reflectAllDelegationsQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectAllDelegationsQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		AllDelegations: &wasmvmtypes.AllDelegationsQuery{
 			Delegator: contractAddr.String(),
 		},
@@ -553,7 +552,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, funds[0].Amount.String(), delInfo.Amount.Amount)
 
 	// test to get one delegations
-	reflectDelegationQuery := ReflectQueryMsg{Chain: &ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
+	reflectDelegationQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Staking: &wasmvmtypes.StakingQuery{
 		Delegation: &wasmvmtypes.DelegationQuery{
 			Validator: valAddr.String(),
 			Delegator: contractAddr.String(),

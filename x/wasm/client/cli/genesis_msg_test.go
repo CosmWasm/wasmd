@@ -46,7 +46,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, anyValidWasmFile.Close())
+	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
 
 	specs := map[string]struct {
 		srcGenesis types.GenesisState
@@ -113,7 +113,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, anyValidWasmFile.Close())
+	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
 
 	specs := map[string]struct {
 		srcGenesis  types.GenesisState
@@ -372,7 +372,7 @@ func TestExecuteContractCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, anyValidWasmFile.Close())
+	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
 
 	specs := map[string]struct {
 		srcGenesis  types.GenesisState
@@ -565,6 +565,7 @@ func TestExecuteContractCmd(t *testing.T) {
 		})
 	}
 }
+
 func TestGetAllContracts(t *testing.T) {
 	specs := map[string]struct {
 		src types.GenesisState
@@ -603,11 +604,11 @@ func TestGetAllContracts(t *testing.T) {
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 1).String(),
+					ContractAddress: keeper.BuildContractAddressClassic(0, 1).String(),
 					Info:            types.ContractInfo{Label: "first"},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 2).String(),
+					ContractAddress: keeper.BuildContractAddressClassic(0, 2).String(),
 					Info:            types.ContractInfo{Label: "second"},
 				},
 			},
@@ -623,7 +624,7 @@ func TestGetAllContracts(t *testing.T) {
 			},
 			exp: []ContractMeta{
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
+					ContractAddress: keeper.BuildContractAddressClassic(0, 100).String(),
 					Info:            types.ContractInfo{Label: "hundred"},
 				},
 			},
@@ -649,7 +650,7 @@ func TestGetAllContracts(t *testing.T) {
 					Info:            types.ContractInfo{Label: "first"},
 				},
 				{
-					ContractAddress: keeper.BuildContractAddress(0, 100).String(),
+					ContractAddress: keeper.BuildContractAddressClassic(0, 100).String(),
 					Info:            types.ContractInfo{Label: "hundred"},
 				},
 			},
@@ -657,18 +658,17 @@ func TestGetAllContracts(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got := getAllContracts(&spec.src)
+			got := GetAllContracts(&spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
-
 }
 
 func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	homeDir := t.TempDir()
 
-	require.NoError(t, os.Mkdir(path.Join(homeDir, "config"), 0700))
+	require.NoError(t, os.Mkdir(path.Join(homeDir, "config"), 0o700))
 	genFilename := path.Join(homeDir, "config", "genesis.json")
 	appState := make(map[string]json.RawMessage)
 	appState[types.ModuleName] = appCodec.MustMarshalJSON(&wasmGenesis)
@@ -712,7 +712,7 @@ func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) err
 	require.NoError(t, err)
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
-	clientCtx := client.Context{}.WithJSONCodec(appCodec).WithHomeDir(homeDir)
+	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(homeDir)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
