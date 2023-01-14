@@ -239,7 +239,7 @@ func TestHandleStoreAndInstantiate(t *testing.T) {
 	// this should be standard x/wasm init event, nothing from contract
 	require.Equal(t, 4, len(res.Events), prettyEvents(res.Events))
 	assert.Equal(t, "store_code", res.Events[0].Type)
-	assertAttribute(t, "code_id", "1", res.Events[0].Attributes[0])
+	assertAttribute(t, "code_id", "1", res.Events[0].Attributes[1])
 	assert.Equal(t, "message", res.Events[1].Type)
 	assertAttribute(t, "module", "wasm", res.Events[1].Attributes[0])
 	assert.Equal(t, "instantiate", res.Events[2].Type)

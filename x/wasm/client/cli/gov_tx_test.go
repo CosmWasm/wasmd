@@ -30,37 +30,37 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 			}},
 		},
 		"any of addresses - single": {
-			src: []string{"1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			src: []string{"1:link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395"},
 			exp: []types.AccessConfigUpdate{
 				{
 					CodeID: 1,
 					InstantiatePermission: types.AccessConfig{
 						Permission: types.AccessTypeAnyOfAddresses,
-						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+						Addresses:  []string{"link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395"},
 					},
 				},
 			},
 		},
 		"any of addresses - multiple": {
-			src: []string{"1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+			src: []string{"1:link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395,link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm"},
 			exp: []types.AccessConfigUpdate{
 				{
 					CodeID: 1,
 					InstantiatePermission: types.AccessConfig{
 						Permission: types.AccessTypeAnyOfAddresses,
-						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+						Addresses:  []string{"link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395", "link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm"},
 					},
 				},
 			},
 		},
 		"multiple code ids with different permissions": {
-			src: []string{"1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", "2:nobody"},
+			src: []string{"1:link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395,link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm", "2:nobody"},
 			exp: []types.AccessConfigUpdate{
 				{
 					CodeID: 1,
 					InstantiatePermission: types.AccessConfig{
 						Permission: types.AccessTypeAnyOfAddresses,
-						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+						Addresses:  []string{"link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395", "link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm"},
 					},
 				}, {
 					CodeID: 2,
@@ -79,7 +79,7 @@ func TestParseAccessConfigUpdates(t *testing.T) {
 			expErr: true,
 		},
 		"any of addresses - duplicate address": {
-			src:    []string{"1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			src:    []string{"1:link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395,link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395"},
 			expErr: true,
 		},
 	}

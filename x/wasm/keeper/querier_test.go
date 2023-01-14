@@ -665,11 +665,11 @@ func TestQueryPinnedCodes(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery   *types.QueryPinnedCodesRequest
 		expCodeIDs []uint64
-		expErr     *sdkErrors.Error
+		expErr     error
 	}{
 		"req nil": {
 			srcQuery: nil,
-			expErr:   nil, // todo check error and change
+			expErr:   status.Error(codes.InvalidArgument, "empty request"),
 		},
 		"query all": {
 			srcQuery:   &types.QueryPinnedCodesRequest{},
@@ -690,7 +690,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 					Key:    []byte("test"),
 				},
 			},
-			expErr: nil, // todo check error and change
+			expErr: fmt.Errorf("invalid request, either offset or key is expected, got both"),
 		},
 		"with pagination limit": {
 			srcQuery: &types.QueryPinnedCodesRequest{
@@ -742,6 +742,9 @@ func TestQueryParams(t *testing.T) {
 	keeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
+		GasMultiplier:                types.DefaultGasMultiplier,
+		InstanceCost:                 types.DefaultInstanceCost,
+		CompileCost:                  types.DefaultCompileCost,
 	})
 
 	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})

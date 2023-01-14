@@ -69,7 +69,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	codeHash := "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5"
+	codeHash := "470c5b703a682f778b8b088d48169b8d6e43f7f44ac70316692cdbe69e6605e3"
 	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
@@ -413,7 +413,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1964f), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x19497), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -857,7 +857,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x17d87), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x17050), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)

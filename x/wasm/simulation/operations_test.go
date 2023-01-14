@@ -18,7 +18,7 @@ func TestWeightedOperations(t *testing.T) {
 	type args struct {
 		simstate   *module.SimulationState
 		ak         types.AccountKeeper
-		bk         simulation.BankKeeper
+		bk         BankKeeper
 		wasmKeeper WasmKeeper
 		wasmBz     []byte
 	}
@@ -41,10 +41,15 @@ func TestWeightedOperations(t *testing.T) {
 			want: simulation.WeightedOperations{
 				simulation.NewWeightedOperation(
 					wasmappparams.DefaultWeightMsgStoreCode,
-					SimulateMsgStoreCode(params.ak, params.bk, params.wasmKeeper, params.wasmBz)),
+					SimulateMsgStoreCode(params.ak, params.bk, params.wasmKeeper, params.wasmBz, 5_000_000)),
 				simulation.NewWeightedOperation(
 					wasmappparams.DefaultWeightMsgInstantiateContract,
-					SimulateMsgInstantiateContract(params.ak, params.bk, params.wasmKeeper)),
+					SimulateMsgInstantiateContract(params.ak, params.bk, params.wasmKeeper, DefaultSimulationCodeIDSelector)),
+				simulation.NewWeightedOperation(
+					wasmappparams.DefaultWeightMsgExecuteContract,
+					SimulateMsgExecuteContract(params.ak, params.bk, params.wasmKeeper,
+						DefaultSimulationExecuteContractSelector, DefaultSimulationExecuteSenderSelector,
+						DefaultSimulationExecutePayloader)),
 			},
 		},
 	}

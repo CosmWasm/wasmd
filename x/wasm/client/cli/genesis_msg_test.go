@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -23,9 +22,9 @@ import (
 	sdk "github.com/line/lbm-sdk/types"
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
 	"github.com/line/lbm-sdk/x/genutil"
+	genutiltest "github.com/line/lbm-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/line/lbm-sdk/x/genutil/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
-	ostcfg "github.com/line/ostracon/config"
 	"github.com/line/ostracon/libs/log"
 	octypes "github.com/line/ostracon/types"
 
@@ -46,7 +45,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
+	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
 		srcGenesis types.GenesisState
@@ -113,7 +112,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
+	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
 		srcGenesis  types.GenesisState
@@ -372,7 +371,7 @@ func TestExecuteContractCmd(t *testing.T) {
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
-	require.NoError(t, os.RemoveAll(anyValidWasmFile.Name()))
+	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
 		srcGenesis  types.GenesisState
@@ -694,21 +693,9 @@ func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
 	return homeDir
 }
 
-func createDefaultOstraconConfig(rootDir string) (*ostcfg.Config, error) {
-	conf := ostcfg.DefaultConfig()
-	conf.SetRoot(rootDir)
-	ostcfg.EnsureRoot(rootDir)
-
-	if err := conf.ValidateBasic(); err != nil {
-		return nil, fmt.Errorf("error in config file: %v", err)
-	}
-
-	return conf, nil
-}
-
 func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) error {
 	logger := log.NewNopLogger()
-	cfg, err := createDefaultOstraconConfig(homeDir)
+	cfg, err := genutiltest.CreateDefaultTendermintConfig(homeDir)
 	require.NoError(t, err)
 	appCodec := keeper.MakeEncodingConfig(t).Marshaler
 	serverCtx := server.NewContext(viper.New(), cfg, logger)

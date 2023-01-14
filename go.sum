@@ -829,8 +829,8 @@ github.com/line/lbm-sdk v0.46.1-0.20230106043757-1ece23d83a0b h1:1+GG69CVRO1tXey
 github.com/line/lbm-sdk v0.46.1-0.20230106043757-1ece23d83a0b/go.mod h1:rSDmksVcmPZfREb7+fPjxsMYF3WN1PQgSU/ZLbN8szE=
 github.com/line/ostracon v1.0.7 h1:8vh/gsM6Sf6z2s38og8YufIhrWN2TwXpm4I3DqKEVyI=
 github.com/line/ostracon v1.0.7/go.mod h1:gmEKYdaMaDAl5xJ8sJJo0s6OvzBSZwM01nWRCGA5oDY=
-github.com/line/wasmvm v1.1.1-0.11.0 h1:vWyJh1AdUmKa7FDBpsJKrToxXVFrDswG/xD6ZfPMszk=
-github.com/line/wasmvm v1.1.1-0.11.0/go.mod h1:Lq3FVvi/rb+OOlTxqtcqcao2GGESQ4hUpuXMcjdJbco=
+github.com/line/wasmvm v1.1.1-0.11.0.0.20230113085344-89650a7edd05 h1:Gtz45izC5JFrS+H35rEJ/TEgdXJr+3WSpkynRk52M5U=
+github.com/line/wasmvm v1.1.1-0.11.0.0.20230113085344-89650a7edd05/go.mod h1:Lq3FVvi/rb+OOlTxqtcqcao2GGESQ4hUpuXMcjdJbco=
 github.com/lucasjones/reggen v0.0.0-20180717132126-cdb49ff09d77/go.mod h1:5ELEyG+X8f+meRWHuqUOewBOhvHkl7M76pdGEansxW4=
 github.com/lufeee/execinquery v1.2.1/go.mod h1:EC7DrEKView09ocscGHC+apXMIaorh4xqSxS/dy8SbM=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0/go.mod h1:zJYVVT2jmtg6P3p1VtQj7WsuWi/y4VnjVBn7F8KPB3I=

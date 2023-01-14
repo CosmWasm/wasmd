@@ -24,19 +24,19 @@ func TestParseAccessConfigFlags(t *testing.T) {
 			expCfg: &types.AccessConfig{Permission: types.AccessTypeEverybody},
 		},
 		"only address": {
-			args:   []string{"--instantiate-only-address=cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
-			expCfg: &types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			args:   []string{"--instantiate-only-address=link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395"},
+			expCfg: &types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: "link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395"},
 		},
 		"only address - invalid": {
 			args:   []string{"--instantiate-only-address=foo"},
 			expErr: true,
 		},
 		"any of address": {
-			args:   []string{"--instantiate-anyof-addresses=cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
-			expCfg: &types.AccessConfig{Permission: types.AccessTypeAnyOfAddresses, Addresses: []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"}},
+			args:   []string{"--instantiate-anyof-addresses=link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395,link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm"},
+			expCfg: &types.AccessConfig{Permission: types.AccessTypeAnyOfAddresses, Addresses: []string{"link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395", "link1hmayw7vv0p3gzeh3jzwmw9xj8fy8a3kmpqgjrysljdnecqkps02qrq5rvm"}},
 		},
 		"any of address - invalid": {
-			args:   []string{"--instantiate-anyof-addresses=cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,foo"},
+			args:   []string{"--instantiate-anyof-addresses=link12kr02kew9fl73rqekalavuu0xaxcgwr6nkk395,foo"},
 			expErr: true,
 		},
 		"not set": {

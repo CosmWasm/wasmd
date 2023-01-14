@@ -232,6 +232,14 @@ func (chain *TestChain) NextBlock() {
 	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
 }
 
+func (chain *TestChain) CommitBlock() {
+	chain.App.EndBlock(abci.RequestEndBlock{Height: chain.CurrentHeader.Height})
+	chain.App.Commit()
+
+	chain.App.BeginRecheckTx(abci.RequestBeginRecheckTx{Header: chain.CurrentHeader})
+	chain.App.EndRecheckTx(abci.RequestEndRecheckTx{Height: chain.CurrentHeader.Height})
+}
+
 // sendMsgs delivers a transaction through the application without returning the result.
 func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 	_, err := chain.SendMsgs(msgs...)
