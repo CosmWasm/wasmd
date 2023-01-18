@@ -1,3 +1,4 @@
+
 # Wasm Zone
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/wasmd/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/wasmd/tree/main)
@@ -26,13 +27,14 @@ compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
 |-------|--------------|-------------|--------------|
+| 0.31  | v1.2.0       |             | 1.0-1.2      |
 | 0.30  | v1.1.0       |             | 1.0-1.1      |
 | 0.29  | v1.1.0       |             | 1.0-1.1      |
 | 0.28  | v1.0.0       |             | 1.0-1.1      |
 | 0.27  | v1.0.0       |             | 1.0          |
 | 0.26  | 1.0.0-beta10 |             | 1.0          |
 | 0.25  | 1.0.0-beta10 |             | 1.0          |
-| 0.24  | 1.0.0-beta7  | 1.0.0-beta6 | 1.0          |
+| 0.24  | 1.0.0-beta7  | 1.0.0-beta6 | 1.0          |[go.mod](go.mod)
 | 0.23  |              | 1.0.0-beta5 | 1.0          |
 | 0.22  |              | 1.0.0-beta5 | 1.0          |
 | 0.21  |              | 1.0.0-beta2 | 1.0          |
