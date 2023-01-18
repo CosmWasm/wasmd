@@ -288,14 +288,36 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			return []sdk.Msg{msg}, nil
 		default:
-			return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "Unknown variant of IBC")
+			return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
 		}
 	}
 }
 
 func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error) {
+	switch {
+	case msg.Vote != nil:
+		m := govtypes.NewMsgVote(sender, msg.Vote.ProposalId, convertVoteOption(msg.Vote.Vote))
+		return []sdk.Msg{m}, nil
+	case msg.VoteWeighted != nil:
+		opts := make([]govtypes.WeightedVoteOption, len(msg.VoteWeighted.Options))
+		for i, v := range msg.VoteWeighted.Options {
+			weight, err := sdk.NewDecFromStr(v.Weight)
+			if err != nil {
+				return nil, sdkerrors.Wrapf(err, "weight for vote %d", i+1)
+			}
+			opts[i] = govtypes.WeightedVoteOption{Option: convertVoteOption(v.Option), Weight: weight}
+		}
+		m := govtypes.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
+		return []sdk.Msg{m}, nil
+
+	default:
+		return nil, types.ErrUnknownMsg.Wrap("unknown variant of gov")
+	}
+}
+
+func convertVoteOption(s interface{}) govtypes.VoteOption {
 	var option govtypes.VoteOption
-	switch msg.Vote.Vote {
+	switch s {
 	case wasmvmtypes.Yes:
 		option = govtypes.OptionYes
 	case wasmvmtypes.No:
@@ -304,13 +326,10 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 		option = govtypes.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
 		option = govtypes.OptionAbstain
+	default:
+		option = govtypes.OptionEmpty
 	}
-	vote := &govtypes.MsgVote{
-		ProposalId: msg.Vote.ProposalId,
-		Voter:      sender.String(),
-		Option:     option,
-	}
-	return []sdk.Msg{vote}, nil
+	return option
 }
 
 // ConvertWasmIBCTimeoutHeightToCosmosHeight converts a wasmvm type ibc timeout height to ibc module type height

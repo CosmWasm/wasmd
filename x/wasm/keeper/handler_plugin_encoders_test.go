@@ -65,8 +65,10 @@ func TestEncoding(t *testing.T) {
 		transferPortSource types.ICS20TransferPortSource
 		// set if valid
 		output []sdk.Msg
-		// set if invalid
-		isError bool
+		// set if expect mapping fails
+		expError bool
+		// set if sdk validate basic should fail
+		expInvalid bool
 	}{
 		"simple send": {
 			sender: addr1,
@@ -113,7 +115,7 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			isError: true,
+			expError: true,
 		},
 		"invalid address": {
 			sender: addr1,
@@ -130,7 +132,8 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			isError: false, // addresses are checked in the handler
+			expError:   false, // addresses are checked in the handler
+			expInvalid: true,
 			output: []sdk.Msg{
 				&banktypes.MsgSend{
 					FromAddress: addr1.String(),
@@ -271,7 +274,7 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			isError: false, // fails in the handler
+			expError: false, // fails in the handler
 			output: []sdk.Msg{
 				&stakingtypes.MsgDelegate{
 					DelegatorAddress: addr1.String(),
@@ -378,7 +381,7 @@ func TestEncoding(t *testing.T) {
 					Value:   bankMsgBin,
 				},
 			},
-			isError: true,
+			expError: true,
 		},
 		"IBC transfer with block timeout": {
 			sender:             addr1,
@@ -500,9 +503,49 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+	}
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var ctx sdk.Context
+			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.output, res)
+			}
+			// and valid sdk message
+			for _, v := range res {
+				gotErr := v.ValidateBasic()
+				if tc.expInvalid {
+					assert.Error(t, gotErr)
+				} else {
+					assert.NoError(t, gotErr)
+				}
+			}
+		})
+	}
+}
+
+func TestEncodeGovMsg(t *testing.T) {
+	myAddr := RandomAccountAddress(t)
+
+	cases := map[string]struct {
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		transferPortSource types.ICS20TransferPortSource
+		// set if valid
+		output []sdk.Msg
+		// set if expect mapping fails
+		expError bool
+		// set if sdk validate basic should fail
+		expInvalid bool
+	}{
 		"Gov vote: yes": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
+			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
 					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.Yes},
@@ -511,14 +554,13 @@ func TestEncoding(t *testing.T) {
 			output: []sdk.Msg{
 				&govtypes.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govtypes.OptionYes,
 				},
 			},
 		},
 		"Gov vote: No": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
+			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
 					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.No},
@@ -527,14 +569,13 @@ func TestEncoding(t *testing.T) {
 			output: []sdk.Msg{
 				&govtypes.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govtypes.OptionNo,
 				},
 			},
 		},
 		"Gov vote: Abstain": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
+			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
 					Vote: &wasmvmtypes.VoteMsg{ProposalId: 10, Vote: wasmvmtypes.Abstain},
@@ -543,14 +584,13 @@ func TestEncoding(t *testing.T) {
 			output: []sdk.Msg{
 				&govtypes.MsgVote{
 					ProposalId: 10,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govtypes.OptionAbstain,
 				},
 			},
 		},
 		"Gov vote: No with veto": {
-			sender:             addr1,
-			srcContractIBCPort: "myIBCPort",
+			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
 					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.NoWithVeto},
@@ -559,10 +599,150 @@ func TestEncoding(t *testing.T) {
 			output: []sdk.Msg{
 				&govtypes.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govtypes.OptionNoWithVeto,
 				},
 			},
+		},
+		"Gov vote: unset option": { // regression test, unset = yes
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVote{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Option:     govtypes.OptionYes,
+				},
+			},
+		},
+		"Gov weighted vote: single vote": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+						ProposalId: 1,
+						Options: []wasmvmtypes.WeightedVoteOption{
+							{Option: wasmvmtypes.Yes, Weight: "1"},
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVoteWeighted{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Options: []govtypes.WeightedVoteOption{
+						{Option: govtypes.OptionYes, Weight: sdk.NewDec(1)},
+					},
+				},
+			},
+		},
+		"Gov weighted vote: splitted": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+						ProposalId: 1,
+						Options: []wasmvmtypes.WeightedVoteOption{
+							{Option: wasmvmtypes.Yes, Weight: "0.23"},
+							{Option: wasmvmtypes.No, Weight: "0.24"},
+							{Option: wasmvmtypes.Abstain, Weight: "0.26"},
+							{Option: wasmvmtypes.NoWithVeto, Weight: "0.27"},
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVoteWeighted{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Options: []govtypes.WeightedVoteOption{
+						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(23, 2)},
+						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(24, 2)},
+						{Option: govtypes.OptionAbstain, Weight: sdk.NewDecWithPrec(26, 2)},
+						{Option: govtypes.OptionNoWithVeto, Weight: sdk.NewDecWithPrec(27, 2)},
+					},
+				},
+			},
+		},
+		"Gov weighted vote: duplicate option": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+						ProposalId: 1,
+						Options: []wasmvmtypes.WeightedVoteOption{
+							{Option: wasmvmtypes.Yes, Weight: "0.5"},
+							{Option: wasmvmtypes.Yes, Weight: "0.5"},
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVoteWeighted{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Options: []govtypes.WeightedVoteOption{
+						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(5, 1)},
+						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(5, 1)},
+					},
+				},
+			},
+			expInvalid: true,
+		},
+		"Gov weighted vote: weight sum exceeds 1": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+						ProposalId: 1,
+						Options: []wasmvmtypes.WeightedVoteOption{
+							{Option: wasmvmtypes.Yes, Weight: "0.51"},
+							{Option: wasmvmtypes.No, Weight: "0.5"},
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVoteWeighted{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Options: []govtypes.WeightedVoteOption{
+						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(51, 2)},
+						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(5, 1)},
+					},
+				},
+			},
+			expInvalid: true,
+		},
+		"Gov weighted vote: weight sum less than 1": {
+			sender: myAddr,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Gov: &wasmvmtypes.GovMsg{
+					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+						ProposalId: 1,
+						Options: []wasmvmtypes.WeightedVoteOption{
+							{Option: wasmvmtypes.Yes, Weight: "0.49"},
+							{Option: wasmvmtypes.No, Weight: "0.5"},
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&govtypes.MsgVoteWeighted{
+					ProposalId: 1,
+					Voter:      myAddr.String(),
+					Options: []govtypes.WeightedVoteOption{
+						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(49, 2)},
+						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(5, 1)},
+					},
+				},
+			},
+			expInvalid: true,
 		},
 	}
 	encodingConfig := MakeEncodingConfig(t)
@@ -570,12 +750,22 @@ func TestEncoding(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
 			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
-			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
-			if tc.isError {
-				require.Error(t, err)
+			res, gotEncErr := encoder.Encode(ctx, tc.sender, "myIBCPort", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, gotEncErr)
+				return
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, gotEncErr)
 				assert.Equal(t, tc.output, res)
+			}
+			// and valid sdk message
+			for _, v := range res {
+				gotErr := v.ValidateBasic()
+				if tc.expInvalid {
+					assert.Error(t, gotErr)
+				} else {
+					assert.NoError(t, gotErr)
+				}
 			}
 		})
 	}
