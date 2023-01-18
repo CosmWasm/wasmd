@@ -192,6 +192,35 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"wasm instantiate2": {
+			sender: addr1,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Wasm: &wasmvmtypes.WasmMsg{
+					Instantiate2: &wasmvmtypes.Instantiate2Msg{
+						CodeID: 7,
+						Msg:    jsonMsg,
+						Funds: []wasmvmtypes.Coin{
+							wasmvmtypes.NewCoin(123, "eth"),
+						},
+						Label: "myLabel",
+						Admin: addr2.String(),
+						Salt:  []byte("mySalt"),
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&types.MsgInstantiateContract2{
+					Sender: addr1.String(),
+					Admin:  addr2.String(),
+					CodeID: 7,
+					Label:  "myLabel",
+					Msg:    jsonMsg,
+					Funds:  sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
+					Salt:   []byte("mySalt"),
+					FixMsg: false,
+				},
+			},
+		},
 		"wasm migrate": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{

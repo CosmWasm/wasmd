@@ -237,6 +237,24 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 			Funds:  coins,
 		}
 		return []sdk.Msg{&sdkMsg}, nil
+	case msg.Instantiate2 != nil:
+		coins, err := ConvertWasmCoinsToSdkCoins(msg.Instantiate2.Funds)
+		if err != nil {
+			return nil, err
+		}
+
+		sdkMsg := types.MsgInstantiateContract2{
+			Sender: sender.String(),
+			Admin:  msg.Instantiate2.Admin,
+			CodeID: msg.Instantiate2.CodeID,
+			Label:  msg.Instantiate2.Label,
+			Msg:    msg.Instantiate2.Msg,
+			Funds:  coins,
+			Salt:   msg.Instantiate2.Salt,
+			// FixMsg is discouraged, see: https://medium.com/cosmwasm/dev-note-3-limitations-of-instantiate2-and-how-to-deal-with-them-a3f946874230
+			FixMsg: false,
+		}
+		return []sdk.Msg{&sdkMsg}, nil
 	case msg.Migrate != nil:
 		sdkMsg := types.MsgMigrateContract{
 			Sender:   sender.String(),
