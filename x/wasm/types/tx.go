@@ -68,6 +68,9 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
 			return sdkerrors.Wrap(err, "instantiate permission")
 		}
+		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
+			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
+		}
 	}
 	return nil
 }
