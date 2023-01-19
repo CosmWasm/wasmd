@@ -117,16 +117,16 @@ func WasmVMFlavouredErrorFactory[T any](sdkErr *sdkErrors.Error, wasmVMErrBuilde
 }
 
 // ToWasmVMError implements WasmVMError-able
-func (m WasmVMFlavouredError) ToWasmVMError() error {
-	if m.wasmVMErr != nil {
-		return m.wasmVMErr
+func (e WasmVMFlavouredError) ToWasmVMError() error {
+	if e.wasmVMErr != nil {
+		return e.wasmVMErr
 	}
-	return m.sdkErr
+	return e.sdkErr
 }
 
 // implements stdlib error
-func (m WasmVMFlavouredError) Error() string {
-	return m.sdkErr.Error()
+func (e WasmVMFlavouredError) Error() string {
+	return e.sdkErr.Error()
 }
 
 // Unwrap implements the built-in errors.Unwrap
