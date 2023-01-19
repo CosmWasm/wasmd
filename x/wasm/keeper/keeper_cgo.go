@@ -5,11 +5,12 @@ package keeper
 import (
 	"path/filepath"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewKeeper creates a new contract Keeper instance
@@ -58,7 +59,7 @@ func NewKeeper(
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, queryRouter, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}

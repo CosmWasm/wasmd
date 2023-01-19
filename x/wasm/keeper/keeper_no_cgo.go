@@ -3,10 +3,11 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewKeeper creates a new contract Keeper instance

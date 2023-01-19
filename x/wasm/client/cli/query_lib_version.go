@@ -25,6 +25,7 @@ func GetCmdLibVersion() *cobra.Command {
 			fmt.Println(version)
 			return nil
 		},
+		SilenceUsage: true,
 	}
 	return cmd
 }

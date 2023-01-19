@@ -19,6 +19,7 @@ func GetCmdLibVersion() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("not implemented, please build with cgo enabled")
 		},
+		SilenceUsage: true,
 	}
 	return cmd
 }
