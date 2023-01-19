@@ -209,6 +209,9 @@ func NewBurnCoinMessageHandler(burner types.Burner) MessageHandlerFunc {
 			if err != nil {
 				return nil, nil, err
 			}
+			if coins.IsZero() {
+				return nil, nil, types.ErrEmpty.Wrap("amount")
+			}
 			if err := burner.SendCoinsFromAccountToModule(ctx, contractAddr, types.ModuleName, coins); err != nil {
 				return nil, nil, sdkerrors.Wrap(err, "transfer to module")
 			}

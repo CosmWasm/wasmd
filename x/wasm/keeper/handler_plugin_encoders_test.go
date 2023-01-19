@@ -635,3 +635,78 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
+	specs := map[string]struct {
+		src    []wasmvmtypes.Coin
+		exp    sdk.Coins
+		expErr bool
+	}{
+		"empty": {
+			src: []wasmvmtypes.Coin{},
+			exp: nil,
+		},
+		"single coin": {
+			src: []wasmvmtypes.Coin{{Denom: "foo", Amount: "1"}},
+			exp: sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1))),
+		},
+		"multiple coins": {
+			src: []wasmvmtypes.Coin{
+				{Denom: "foo", Amount: "1"},
+				{Denom: "bar", Amount: "2"},
+			},
+			exp: sdk.NewCoins(
+				sdk.NewCoin("bar", sdk.NewInt(2)),
+				sdk.NewCoin("foo", sdk.NewInt(1)),
+			),
+		},
+		"sorted": {
+			src: []wasmvmtypes.Coin{
+				{Denom: "foo", Amount: "1"},
+				{Denom: "other", Amount: "1"},
+				{Denom: "bar", Amount: "1"},
+			},
+			exp: []sdk.Coin{
+				sdk.NewCoin("bar", sdk.NewInt(1)),
+				sdk.NewCoin("foo", sdk.NewInt(1)),
+				sdk.NewCoin("other", sdk.NewInt(1)),
+			},
+		},
+		"zero amounts dropped": {
+			src: []wasmvmtypes.Coin{
+				{Denom: "foo", Amount: "1"},
+				{Denom: "bar", Amount: "0"},
+			},
+			exp: sdk.NewCoins(
+				sdk.NewCoin("foo", sdk.NewInt(1)),
+			),
+		},
+		"duplicate denoms merged": {
+			src: []wasmvmtypes.Coin{
+				{Denom: "foo", Amount: "1"},
+				{Denom: "foo", Amount: "1"},
+			},
+			exp: []sdk.Coin{sdk.NewCoin("foo", sdk.NewInt(2))},
+		},
+		"empty denom rejected": {
+			src:    []wasmvmtypes.Coin{{Denom: "", Amount: "1"}},
+			expErr: true,
+		},
+		"invalid denom rejected": {
+			src:    []wasmvmtypes.Coin{{Denom: "!%&", Amount: "1"}},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotCoins, gotErr := ConvertWasmCoinsToSdkCoins(spec.src)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.exp, gotCoins)
+			assert.NoError(t, gotCoins.Validate())
+		})
+	}
+}
