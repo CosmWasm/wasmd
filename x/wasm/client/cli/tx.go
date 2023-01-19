@@ -65,6 +65,7 @@ func GetTxCmd() *cobra.Command {
 		UpdateContractAdminCmd(),
 		ClearContractAdminCmd(),
 		GrantAuthorizationCmd(),
+		UpdateInstantiateConfigCmd(),
 	)
 	return txCmd
 }
