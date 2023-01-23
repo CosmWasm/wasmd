@@ -688,6 +688,13 @@ func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 			},
 			exp: []sdk.Coin{sdk.NewCoin("foo", sdk.NewInt(2))},
 		},
+		"duplicate denoms with one 0 amount does not fail": {
+			src: []wasmvmtypes.Coin{
+				{Denom: "foo", Amount: "0"},
+				{Denom: "foo", Amount: "1"},
+			},
+			exp: []sdk.Coin{sdk.NewCoin("foo", sdk.NewInt(1))},
+		},
 		"empty denom rejected": {
 			src:    []wasmvmtypes.Coin{{Denom: "", Amount: "1"}},
 			expErr: true,
