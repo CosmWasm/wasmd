@@ -1,26 +1,26 @@
 package e2e
 
 import (
-	//"bytes"
+	"bytes"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	//"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/gogoproto/proto"
+	icacontrollertypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/controller/types"
 	hosttypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/types"
-
-	// icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
-	// channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v6/testing"
-	//intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
-	//"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 )
 
 func TestICA(t *testing.T) {
-	t.Skip("deactivated due to sdk verion incompatibility")
 	// scenario:
 	// given a host and controller chain
 	// when an ica is registered on the controller chain
@@ -32,53 +32,61 @@ func TestICA(t *testing.T) {
 	hostParams := hosttypes.NewParams(true, []string{sdk.MsgTypeURL(&banktypes.MsgSend{})})
 	hostChain.App.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
 
-	// controllerChain := coord.GetChain(ibctesting.GetChainID(2))
+	controllerChain := coord.GetChain(ibctesting.GetChainID(2))
 
-	//path := wasmibctesting.NewPath(controllerChain, hostChain)
-	//coord.SetupConnections(path)
-	//
-	//ownerAddr := sdk.AccAddress(controllerChain.SenderPrivKey.PubKey().Address())
-	//msg := intertxtypes.NewMsgRegisterAccount(ownerAddr.String(), path.EndpointA.ConnectionID, "")
-	//res, err := controllerChain.SendMsgs(msg)
-	//chanID, portID, version := parseIBCChannelEvents(t, res)
-	//
-	//// next open channels on both sides
-	//path.EndpointA.ChannelID = chanID
-	//path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
-	//	PortID:  portID,
-	//	Version: version,
-	//	Order:   channeltypes.ORDERED,
-	//}
-	//path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-	//	PortID:  icatypes.PortID,
-	//	Version: icatypes.Version,
-	//	Order:   channeltypes.ORDERED,
-	//}
-	//coord.CreateChannels(path)
-	//
-	//// assert ICA exists on controller
-	//icaRsp, err := controllerChain.App.InterTxKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &intertxtypes.QueryInterchainAccountRequest{
-	//	Owner:        ownerAddr.String(),
-	//	ConnectionId: path.EndpointA.ConnectionID,
-	//})
-	//require.NoError(t, err)
-	//icaAddr := sdk.MustAccAddressFromBech32(icaRsp.InterchainAccountAddress)
-	//hostChain.Fund(icaAddr, sdk.NewInt(1_000))
-	//
-	//// submit a tx
-	//targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	//sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
-	//payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
-	//msg2, err := intertxtypes.NewMsgSubmitTx(payloadMsg, path.EndpointA.ConnectionID, ownerAddr.String())
-	//require.NoError(t, err)
-	//res, err = controllerChain.SendMsgs(msg2)
-	//require.NoError(t, err)
-	//
-	//assert.Equal(t, 1, len(controllerChain.PendingSendPackets))
-	//require.NoError(t, coord.RelayAndAckPendingPackets(path))
-	//
-	//gotBalance := hostChain.Balance(targetAddr, sdk.DefaultBondDenom)
-	//assert.Equal(t, sendCoin.String(), gotBalance.String())
+	path := wasmibctesting.NewPath(controllerChain, hostChain)
+	coord.SetupConnections(path)
+
+	ownerAddr := sdk.AccAddress(controllerChain.SenderPrivKey.PubKey().Address())
+	msg := icacontrollertypes.NewMsgRegisterInterchainAccount(path.EndpointA.ConnectionID, ownerAddr.String(), "")
+	res, err := controllerChain.SendMsgs(msg)
+	require.NoError(t, err)
+	chanID, portID, version := parseIBCChannelEvents(t, res)
+
+	// next open channels on both sides
+	path.EndpointA.ChannelID = chanID
+	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  portID,
+		Version: version,
+		Order:   channeltypes.ORDERED,
+	}
+	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
+		PortID:  icatypes.HostPortID,
+		Version: icatypes.Version,
+		Order:   channeltypes.ORDERED,
+	}
+	coord.CreateChannels(path)
+
+	// assert ICA exists on controller
+	icaRsp, err := controllerChain.App.ICAControllerKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &icacontrollertypes.QueryInterchainAccountRequest{
+		Owner:        ownerAddr.String(),
+		ConnectionId: path.EndpointA.ConnectionID,
+	})
+	require.NoError(t, err)
+	icaAddr := sdk.MustAccAddressFromBech32(icaRsp.GetAddress())
+	hostChain.Fund(icaAddr, sdk.NewInt(1_000))
+
+	// submit a tx
+	targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
+	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg})
+	require.NoError(t, err)
+	payloadPacket := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: rawPayloadData,
+		Memo: "testing",
+	}
+	relativeTimeout := uint64(time.Minute.Nanoseconds()) // note this is in nanoseconds
+	msgSendTx := icacontrollertypes.NewMsgSendTx(ownerAddr.String(), path.EndpointA.ConnectionID, relativeTimeout, payloadPacket)
+	res, err = controllerChain.SendMsgs(msgSendTx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(controllerChain.PendingSendPackets))
+	require.NoError(t, coord.RelayAndAckPendingPackets(path))
+
+	gotBalance := hostChain.Balance(targetAddr, sdk.DefaultBondDenom)
+	assert.Equal(t, sendCoin.String(), gotBalance.String())
 }
 
 func parseIBCChannelEvents(t *testing.T, res *sdk.Result) (string, string, string) {

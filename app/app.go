@@ -118,20 +118,14 @@ import (
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
-	// Note: please do your research before using this in production app, this is a demo and not an officially
-	// supported IBC team implementation. It has no known issues, but do your own research before using it.
-	// intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
-	// intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
-	// intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -230,7 +224,6 @@ var (
 		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
-		// intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 	)
 
@@ -291,17 +284,15 @@ type WasmApp struct {
 	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
-	// InterTxKeeper       intertxkeeper.Keeper
-	TransferKeeper ibctransferkeeper.Keeper
-	WasmKeeper     wasm.Keeper
+	TransferKeeper      ibctransferkeeper.Keeper
+	WasmKeeper          wasm.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	// ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
-	ScopedIBCFeeKeeper   capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
+	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
+	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	ModuleManager *module.Manager
@@ -346,7 +337,6 @@ func NewWasmApp(
 		ibchost.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasm.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		// intertxtypes.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -390,7 +380,6 @@ func NewWasmApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	// scopedInterTxKeeper := app.CapabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.CapabilityKeeper.Seal()
@@ -593,14 +582,6 @@ func NewWasmApp(
 		app.MsgServiceRouter(),
 	)
 
-	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
-	// app.InterTxKeeper = intertxkeeper.NewKeeper(
-	//	appCodec,
-	//	keys[intertxtypes.StoreKey],
-	//	app.ICAControllerKeeper,
-	//	scopedInterTxKeeper,
-	// )
-
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -644,13 +625,11 @@ func NewWasmApp(
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
 	// icaAuthModuleKeeper.SendTx -> icaController.SendPacket -> fee.SendPacket -> channel.SendPacket
-
-	// Note: please do your research before using this in production app, this is a demo and not an officially
-	// supported IBC team implementation. Do your own research before using it.
 	var icaControllerStack porttypes.IBCModule
-	// You will likely want to use your own reviewed and maintained ica auth module
-	// icaControllerStack = intertx.NewIBCModule(app.InterTxKeeper)  // TODO: enable again
-	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, app.ICAControllerKeeper)
+	// integration point for custom authentication modules
+	// see https://medium.com/the-interchain-foundation/ibc-go-v6-changes-to-interchain-accounts-and-how-it-impacts-your-chain-806c185300d7
+	var noAuthzModule porttypes.IBCModule
+	icaControllerStack = icacontroller.NewIBCMiddleware(noAuthzModule, app.ICAControllerKeeper)
 	icaControllerStack = ibcfee.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper)
 
 	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
@@ -668,7 +647,6 @@ func NewWasmApp(
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasm.ModuleName, wasmStack).
-		// AddRoute(intertxtypes.ModuleName, icaControllerStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -710,8 +688,6 @@ func NewWasmApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
-		// intertx.NewAppModule(appCodec, app.InterTxKeeper),
-		//
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -731,7 +707,6 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -747,7 +722,6 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		// intertxtypes.ModuleName,
 		wasm.ModuleName,
 	)
 
@@ -770,7 +744,6 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		// intertxtypes.ModuleName,
 		// wasm after ibc transfer
 		wasm.ModuleName,
 	}
@@ -834,7 +807,6 @@ func NewWasmApp(
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
-	// app.ScopedInterTxKeeper = scopedInterTxKeeper
 
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
 	// antehandlers, but are run _after_ the `runMsgs` execution. They are also
