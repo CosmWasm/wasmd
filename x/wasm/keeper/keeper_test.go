@@ -60,7 +60,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	codeHash := strings.ToLower("3A8C25F7C4E6CFCA07C388FADCFBE4646C8FF1D04715D05ED8B25253DB3865A1")
+	codeHash := strings.ToLower("3a8c25f7c4e6cfca07c388fadcfbe4646c8ff1d04715d05ed8b25253db3865a1")
 	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
