@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/CosmWasm/wasmvm v1.2.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230116204658-efb7acbf244f
+	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230119225816-30bd414d8353
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
@@ -145,8 +145,6 @@ require (
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/tendermint/btcd v0.1.1 // indirect
-	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.5.2 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
@@ -174,8 +172,13 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
-	//github.com/confio/ics23/go => github.com/cosmos/ics23/go v0.9.1-0.20221207110826-9919ce9aecd1
+	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
+	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
-	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
-	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
+	// See: https://github.com/cosmos/cosmos-sdk/issues/10409
+	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.8.1
+	// use informal systems fork of tendermint
+	// See: https://twitter.com/informalinc/status/1613580954383040512
+	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.37.0-rc2
 )
