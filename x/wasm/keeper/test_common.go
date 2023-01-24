@@ -62,7 +62,7 @@ import (
 	"github.com/cosmos/ibc-go/v6/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v6/modules/core"
-	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v6/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"
@@ -216,7 +216,7 @@ func createTestInput(
 	keys := sdk.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distributiontypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
+		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey,
 		capabilitytypes.StoreKey, feegrant.StoreKey, authzkeeper.StoreKey,
 		types.StoreKey,
@@ -262,7 +262,7 @@ func createTestInput(
 		crisistypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		capabilitytypes.ModuleName,
-		ibchost.ModuleName,
+		ibcexported.ModuleName,
 		govtypes.ModuleName,
 		types.ModuleName,
 	} {
@@ -354,13 +354,13 @@ func createTestInput(
 		keys[capabilitytypes.StoreKey],
 		memKeys[capabilitytypes.MemStoreKey],
 	)
-	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibchost.StoreKey],
-		subspace(ibchost.ModuleName),
+		keys[ibcexported.StoreKey],
+		subspace(ibcexported.ModuleName),
 		stakingKeeper,
 		upgradeKeeper,
 		scopedIBCKeeper,

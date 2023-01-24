@@ -9,7 +9,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
-	github.com/cosmos/ibc-go/v6 v6.0.0-20221220115712-10d17379d669
+	github.com/cosmos/ibc-go/v6 v6.0.0-20230124092939-cfcdec0b33a2
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
@@ -29,7 +29,7 @@ require (
 	github.com/tendermint/tendermint v0.37.0-rc2
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
-	google.golang.org/grpc v1.51.0
+	google.golang.org/grpc v1.52.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -154,7 +154,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20221019170559-20944726eadf // indirect
-	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
