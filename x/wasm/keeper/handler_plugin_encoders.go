@@ -330,10 +330,9 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 		if err != nil {
 			return nil, err
 		}
-		toSend = append(toSend, c)
+		toSend = toSend.Add(c)
 	}
-	toSend.Sort()
-	return toSend, nil
+	return toSend.Sort(), nil
 }
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin
