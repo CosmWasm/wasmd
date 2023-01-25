@@ -313,20 +313,16 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 }
 
 func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error) {
-<<<<<<< HEAD
-	var option v1.VoteOption
-	switch msg.Vote.Vote {
-=======
 	switch {
 	case msg.Vote != nil:
 		voteOption, err := convertVoteOption(msg.Vote.Vote)
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "vote option")
 		}
-		m := govtypes.NewMsgVote(sender, msg.Vote.ProposalId, voteOption)
+		m := v1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption, "")
 		return []sdk.Msg{m}, nil
 	case msg.VoteWeighted != nil:
-		opts := make([]govtypes.WeightedVoteOption, len(msg.VoteWeighted.Options))
+		opts := make([]*v1.WeightedVoteOption, len(msg.VoteWeighted.Options))
 		for i, v := range msg.VoteWeighted.Options {
 			weight, err := sdk.NewDecFromStr(v.Weight)
 			if err != nil {
@@ -336,9 +332,9 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "vote option")
 			}
-			opts[i] = govtypes.WeightedVoteOption{Option: voteOption, Weight: weight}
+			opts[i] = &v1.WeightedVoteOption{Option: voteOption, Weight: weight.String()}
 		}
-		m := govtypes.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
+		m := v1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts, "")
 		return []sdk.Msg{m}, nil
 
 	default:
@@ -346,10 +342,9 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 	}
 }
 
-func convertVoteOption(s interface{}) (govtypes.VoteOption, error) {
-	var option govtypes.VoteOption
+func convertVoteOption(s interface{}) (v1.VoteOption, error) {
+	var option v1.VoteOption
 	switch s {
->>>>>>> 957b38e (Integrate wasmvm v1.2.0 (#1161))
 	case wasmvmtypes.Yes:
 		option = v1.OptionYes
 	case wasmvmtypes.No:
@@ -357,22 +352,11 @@ func convertVoteOption(s interface{}) (govtypes.VoteOption, error) {
 	case wasmvmtypes.NoWithVeto:
 		option = v1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
-<<<<<<< HEAD
 		option = v1.OptionAbstain
-	}
-	vote := &v1.MsgVote{
-		ProposalId: msg.Vote.ProposalId,
-		Voter:      sender.String(),
-		Option:     option,
-	}
-	return []sdk.Msg{vote}, nil
-=======
-		option = govtypes.OptionAbstain
 	default:
-		return govtypes.OptionEmpty, types.ErrInvalid
+		return v1.OptionEmpty, types.ErrInvalid
 	}
 	return option, nil
->>>>>>> 957b38e (Integrate wasmvm v1.2.0 (#1161))
 }
 
 // ConvertWasmIBCTimeoutHeightToCosmosHeight converts a wasmvm type ibc timeout height to ibc module type height
