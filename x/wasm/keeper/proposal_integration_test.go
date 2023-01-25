@@ -916,7 +916,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
 	require.NoError(t, err)
 
-	withAddressAccessConfig := types.AccessTypeOnlyAddress.With(anyAddress)
+	withAddressAccessConfig := types.AccessTypeAnyOfAddresses.With(anyAddress)
 	var (
 		nobody      = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &types.AllowNobody)
 		everybody   = StoreRandomContractWithAccessConfig(t, ctx, keepers, &mock, &types.AllowEverybody)

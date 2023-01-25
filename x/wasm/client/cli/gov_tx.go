@@ -81,14 +81,11 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
-	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
-	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
 	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
 	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
+	addInstantiatePermissionFlags(cmd)
 
 	// proposal flags
 	addCommonProposalFlags(cmd)
@@ -371,19 +368,15 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	}
 
 	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator. It is the creator of the contract and passed to the contract as sender on proposal execution")
-	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateByAddress, "", "Only this address can instantiate a contract instance from the code, optional")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
 	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
 	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
-	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
-
+	addInstantiatePermissionFlags(cmd)
 	// proposal flags
 	addCommonProposalFlags(cmd)
 	return cmd
