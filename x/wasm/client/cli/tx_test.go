@@ -25,7 +25,7 @@ func TestParseAccessConfigFlags(t *testing.T) {
 		},
 		"only address": {
 			args:   []string{"--instantiate-only-address=cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
-			expCfg: &types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			expErr: true,
 		},
 		"only address - invalid": {
 			args:   []string{"--instantiate-only-address=foo"},

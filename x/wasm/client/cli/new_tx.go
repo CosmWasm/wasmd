@@ -157,10 +157,7 @@ func UpdateInstantiateConfigCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateByAddress, "", "Deprecated: Only this address can instantiate a contract from the code, optional")
-	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	addInstantiatePermissionFlags(cmd)
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
