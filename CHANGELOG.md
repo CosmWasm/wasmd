@@ -12,6 +12,7 @@
 ### Build, CI
 
 ### Document Updates
+* [\#2](https://github.com/line/wasmd/pull/2) add wasm events description
 
 
 ## [cosmwasm/wasmd v0.27.0](https://github.com/CosmWasm/wasmd/blob/v0.27.0/CHANGELOG.md) (2022-05-19)
