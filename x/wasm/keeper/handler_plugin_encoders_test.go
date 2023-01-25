@@ -633,20 +633,14 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 		},
-		"Gov vote: unset option": { // regression test, unset = yes
+		"Gov vote: unset option": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
 					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1},
 				},
 			},
-			output: []sdk.Msg{
-				&govtypes.MsgVote{
-					ProposalId: 1,
-					Voter:      myAddr.String(),
-					Option:     govtypes.OptionYes,
-				},
-			},
+			expError: true,
 		},
 		"Gov weighted vote: single vote": {
 			sender: myAddr,

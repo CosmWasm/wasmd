@@ -29,7 +29,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	})
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
-	checksum, err := hex.DecodeString("3a8c25f7c4e6cfca07c388fadcfbe4646c8ff1d04715d05ed8b25253db3865a1")
+	checksum, err := hex.DecodeString("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -288,7 +288,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	checksum, err := hex.DecodeString("3a8c25f7c4e6cfca07c388fadcfbe4646c8ff1d04715d05ed8b25253db3865a1")
+	checksum, err := hex.DecodeString("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
 	require.NoError(t, err)
 
 	var (
