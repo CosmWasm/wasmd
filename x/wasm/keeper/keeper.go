@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -106,6 +105,7 @@ type Keeper struct {
 	accountPruner        AccountPruner
 }
 
+<<<<<<< HEAD
 // NewKeeper creates a new contract Keeper instance
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(
@@ -161,6 +161,8 @@ func NewKeeper(
 	return *keeper
 }
 
+=======
+>>>>>>> 957b38e (Integrate wasmvm v1.2.0 (#1161))
 func (k Keeper) getUploadAccessConfig(ctx sdk.Context) types.AccessConfig {
 	var a types.AccessConfig
 	k.paramSpace.Get(ctx, types.ParamStoreKeyUploadAccess, &a)
