@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	baseapp "github.com/line/lbm-sdk/baseapp"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	abci "github.com/line/ostracon/abci/types"
 	wasmvmtypes "github.com/line/wasmvm/types"

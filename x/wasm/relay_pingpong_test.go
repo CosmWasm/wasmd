@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	ibctesting "github.com/line/ibc-go/v3/testing"
 	"github.com/line/lbm-sdk/store/prefix"
 	sdk "github.com/line/lbm-sdk/types"
-	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
-	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
 	wasmvm "github.com/line/wasmvm"
 	wasmvmtypes "github.com/line/wasmvm/types"
 

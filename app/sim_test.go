@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
+	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
+	ibchost "github.com/line/ibc-go/v3/modules/core/24-host"
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/codec"
 	"github.com/line/lbm-sdk/simapp"
@@ -29,8 +31,6 @@ import (
 	evidencetypes "github.com/line/lbm-sdk/x/evidence/types"
 	"github.com/line/lbm-sdk/x/feegrant"
 	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
-	ibchost "github.com/line/lbm-sdk/x/ibc/core/24-host"
 	minttypes "github.com/line/lbm-sdk/x/mint/types"
 	paramstypes "github.com/line/lbm-sdk/x/params/types"
 	"github.com/line/lbm-sdk/x/simulation"

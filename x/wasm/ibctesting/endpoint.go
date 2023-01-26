@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
-	connectiontypes "github.com/line/lbm-sdk/x/ibc/core/03-connection/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	commitmenttypes "github.com/line/lbm-sdk/x/ibc/core/23-commitment/types"
-	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
-	"github.com/line/lbm-sdk/x/ibc/core/exported"
-	ibcoctypes "github.com/line/lbm-sdk/x/ibc/light-clients/99-ostracon/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	clienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
+	connectiontypes "github.com/line/ibc-go/v3/modules/core/03-connection/types"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	commitmenttypes "github.com/line/ibc-go/v3/modules/core/23-commitment/types"
+	host "github.com/line/ibc-go/v3/modules/core/24-host"
+	"github.com/line/ibc-go/v3/modules/core/exported"
+	ibcoctypes "github.com/line/ibc-go/v3/modules/light-clients/99-ostracon/types"
+	ibctesting "github.com/line/ibc-go/v3/testing"
 )
 
 // Endpoint is a which represents a channel endpoint and its associated

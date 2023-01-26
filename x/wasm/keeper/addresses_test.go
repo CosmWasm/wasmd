@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	tmbytes "github.com/line/ostracon/libs/bytes"
 	"github.com/stretchr/testify/require"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 
 	sdk "github.com/line/lbm-sdk/types"
 )

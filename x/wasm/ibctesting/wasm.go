@@ -11,8 +11,8 @@ import (
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
 
+	ibctesting "github.com/line/ibc-go/v3/testing"
 	sdk "github.com/line/lbm-sdk/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
 	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/rand"
 

@@ -1,10 +1,10 @@
 package wasmtesting
 
 import (
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
 	sdk "github.com/line/lbm-sdk/types"
 	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
 
 	"github.com/line/wasmd/x/wasm/types"
 )

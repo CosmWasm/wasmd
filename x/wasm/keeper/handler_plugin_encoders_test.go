@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	codectypes "github.com/line/lbm-sdk/codec/types"
 	sdk "github.com/line/lbm-sdk/types"
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
 	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
-	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 

@@ -3,10 +3,10 @@ package keeper
 import (
 	"strings"
 
+	host "github.com/line/ibc-go/v3/modules/core/24-host"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
 
 	"github.com/line/wasmd/x/wasm/types"
 )

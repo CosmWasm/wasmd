@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/line/ibc-go/v3/modules/core/24-host"
+	ibctesting "github.com/line/ibc-go/v3/testing"
 	abci "github.com/line/ostracon/abci/types"
 
 	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"

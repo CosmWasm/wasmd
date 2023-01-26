@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	ibctesting "github.com/line/ibc-go/v3/testing"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	wasmibctesting "github.com/line/wasmd/x/wasm/ibctesting"

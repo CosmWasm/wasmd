@@ -14,6 +14,24 @@ import (
 	"github.com/spf13/cast"
 	dbm "github.com/tendermint/tm-db"
 
+	ica "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts"
+	icacontrollerkeeper "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts/types"
+	transfer "github.com/line/ibc-go/v3/modules/apps/transfer"
+	ibctransferkeeper "github.com/line/ibc-go/v3/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
+	ibc "github.com/line/ibc-go/v3/modules/core"
+	ibcclient "github.com/line/ibc-go/v3/modules/core/02-client"
+	ibcclientclient "github.com/line/ibc-go/v3/modules/core/02-client/client"
+	ibcclienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
+	porttypes "github.com/line/ibc-go/v3/modules/core/05-port/types"
+	ibchost "github.com/line/ibc-go/v3/modules/core/24-host"
+	ibckeeper "github.com/line/ibc-go/v3/modules/core/keeper"
+
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/client"
 	nodeservice "github.com/line/lbm-sdk/client/grpc/node"
@@ -63,24 +81,6 @@ import (
 	"github.com/line/lbm-sdk/x/gov"
 	govkeeper "github.com/line/lbm-sdk/x/gov/keeper"
 	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	ica "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts"
-	icacontrollerkeeper "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/controller/types"
-	icahost "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host"
-	icahostkeeper "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/host/types"
-	icatypes "github.com/line/lbm-sdk/x/ibc/applications/27-interchain-accounts/types"
-	transfer "github.com/line/lbm-sdk/x/ibc/applications/transfer"
-	ibctransferkeeper "github.com/line/lbm-sdk/x/ibc/applications/transfer/keeper"
-	ibctransfertypes "github.com/line/lbm-sdk/x/ibc/applications/transfer/types"
-	ibc "github.com/line/lbm-sdk/x/ibc/core"
-	ibcclient "github.com/line/lbm-sdk/x/ibc/core/02-client"
-	ibcclientclient "github.com/line/lbm-sdk/x/ibc/core/02-client/client"
-	ibcclienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
-	porttypes "github.com/line/lbm-sdk/x/ibc/core/05-port/types"
-	ibchost "github.com/line/lbm-sdk/x/ibc/core/24-host"
-	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
-	ibcmock "github.com/line/lbm-sdk/x/ibc/testing/mock"
 	"github.com/line/lbm-sdk/x/mint"
 	mintkeeper "github.com/line/lbm-sdk/x/mint/keeper"
 	minttypes "github.com/line/lbm-sdk/x/mint/types"
@@ -277,7 +277,7 @@ type WasmApp struct {
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router
-	ICAAuthModule ibcmock.IBCModule
+	//ICAAuthModule ibcmock.IBCModule
 
 	// the module manager
 	mm *module.Manager

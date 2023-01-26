@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	clienttypes "github.com/line/lbm-sdk/x/ibc/core/02-client/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
+	clienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 )
 

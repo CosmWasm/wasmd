@@ -3,13 +3,13 @@ package app
 import (
 	"testing"
 
+	ibctransferkeeper "github.com/line/ibc-go/v3/modules/apps/transfer/keeper"
+	ibckeeper "github.com/line/ibc-go/v3/modules/core/keeper"
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
 	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
-	ibctransferkeeper "github.com/line/lbm-sdk/x/ibc/applications/transfer/keeper"
-	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
 	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
 
 	"github.com/line/wasmd/app/params"
