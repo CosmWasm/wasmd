@@ -639,6 +639,20 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 	}
 	contractInfo.Admin = newAdmin.String()
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
+
+	if newAdmin != nil {
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeUpdateContractAdmin,
+			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyAdmin, newAdmin.String()),
+		))
+	} else {
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeClearContractAdmin,
+			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		))
+	}
+
 	return nil
 }
 

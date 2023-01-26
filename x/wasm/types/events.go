@@ -6,15 +6,17 @@ const (
 	// CustomContractEventPrefix contracts can create custom events. To not mix them with other system events they got the `wasm-` prefix.
 	CustomContractEventPrefix = "wasm-"
 
-	EventTypeStoreCode         = "store_code"
-	EventTypeInstantiate       = "instantiate"
-	EventTypeExecute           = "execute"
-	EventTypeMigrate           = "migrate"
-	EventTypePinCode           = "pin_code"
-	EventTypeUnpinCode         = "unpin_code"
-	EventTypeSudo              = "sudo"
-	EventTypeReply             = "reply"
-	EventTypeGovContractResult = "gov_contract_result"
+	EventTypeStoreCode           = "store_code"
+	EventTypeInstantiate         = "instantiate"
+	EventTypeExecute             = "execute"
+	EventTypeMigrate             = "migrate"
+	EventTypePinCode             = "pin_code"
+	EventTypeUnpinCode           = "unpin_code"
+	EventTypeSudo                = "sudo"
+	EventTypeReply               = "reply"
+	EventTypeGovContractResult   = "gov_contract_result"
+	EventTypeUpdateContractAdmin = "update_contract_admin"
+	EventTypeClearContractAdmin  = "clear_contract_admin"
 )
 
 // event attributes returned from contract execution
@@ -26,4 +28,5 @@ const (
 	AttributeKeyChecksum           = "code_checksum"
 	AttributeKeyResultDataHex      = "result"
 	AttributeKeyRequiredCapability = "required_capability"
+	AttributeKeyAdmin              = "admin"
 )
