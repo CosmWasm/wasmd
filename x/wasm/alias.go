@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	firstCodeID                     = 1 //nolint:deadcode,varcheck
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	TStoreKey                       = types.TStoreKey
@@ -124,6 +125,7 @@ type (
 	BankEncoder                    = keeper.BankEncoder
 	CustomEncoder                  = keeper.CustomEncoder
 	StakingEncoder                 = keeper.StakingEncoder
+	WasmEncoder                    = keeper.WasmEncoder //nolint:revive
 	MessageEncoders                = keeper.MessageEncoders
 	Keeper                         = keeper.Keeper
 	QueryHandler                   = keeper.QueryHandler
