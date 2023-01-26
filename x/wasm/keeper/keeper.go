@@ -990,6 +990,14 @@ func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAd
 
 	info.InstantiateConfig = newConfig
 	k.storeCodeInfo(ctx, codeID, *info)
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeSetAccessConfig,
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+		sdk.NewAttribute(types.AttributeKeyCodePermission, newConfig.Permission.String()),
+		sdk.NewAttribute(types.AttributeKeyAuthorizedAddresses, strings.Join(newConfig.Addresses, ", ")),
+	))
+
 	return nil
 }
 
