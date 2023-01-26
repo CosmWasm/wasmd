@@ -104,7 +104,7 @@ func TestParseCodeInfoFlags(t *testing.T) {
 	wasmBin, err := os.ReadFile("../../keeper/testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	checksumStr := "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5"
+	checksumStr := "beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b"
 
 	specs := map[string]struct {
 		args   []string
