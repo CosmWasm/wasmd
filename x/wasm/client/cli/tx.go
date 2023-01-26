@@ -34,7 +34,6 @@ const (
 	flagInstantiateByAddress      = "instantiate-only-address"
 	flagInstantiateByAnyOfAddress = "instantiate-anyof-addresses"
 	flagUnpinCode                 = "unpin-code"
-	flagProposalType              = "type"
 )
 
 // GetTxCmd returns the transaction commands for this module

@@ -277,7 +277,7 @@ type WasmApp struct {
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router
-	//ICAAuthModule ibcmock.IBCModule
+	// ICAAuthModule ibcmock.IBCModule
 
 	// the module manager
 	mm *module.Manager

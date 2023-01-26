@@ -10,10 +10,6 @@ import (
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	//channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	//porttypes "github.com/line/ibc-go/v3/modules/core/05-port/types"
-	//host "github.com/line/ibc-go/v3/modules/core/24-host"
-	//ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	wasmTypes "github.com/line/wasmd/x/wasm/types"

@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	firstCodeID                     = 1
 	ModuleName                      = types.ModuleName
 	StoreKey                        = types.StoreKey
 	TStoreKey                       = types.TStoreKey
@@ -125,7 +124,6 @@ type (
 	BankEncoder                    = keeper.BankEncoder
 	CustomEncoder                  = keeper.CustomEncoder
 	StakingEncoder                 = keeper.StakingEncoder
-	WasmEncoder                    = keeper.WasmEncoder
 	MessageEncoders                = keeper.MessageEncoders
 	Keeper                         = keeper.Keeper
 	QueryHandler                   = keeper.QueryHandler
