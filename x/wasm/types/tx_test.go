@@ -695,14 +695,22 @@ func TestMsgUpdateInstantiateConfig(t *testing.T) {
 			src: MsgUpdateInstantiateConfig{
 				Sender:                   goodAddress,
 				CodeID:                   1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
+			},
+		},
+		"retained AccessTypeOnlyAddress": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   goodAddress,
+				CodeID:                   1,
 				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
 			},
+			expErr: true,
 		},
 		"bad sender": {
 			src: MsgUpdateInstantiateConfig{
 				Sender:                   badAddress,
 				CodeID:                   1,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
 			},
 			expErr: true,
 		},
@@ -710,14 +718,14 @@ func TestMsgUpdateInstantiateConfig(t *testing.T) {
 			src: MsgUpdateInstantiateConfig{
 				Sender:                   goodAddress,
 				CodeID:                   1,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
 			},
 			expErr: true,
 		},
 		"missing code id": {
 			src: MsgUpdateInstantiateConfig{
 				Sender:                   goodAddress,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
 			},
 			expErr: true,
 		},
