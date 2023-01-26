@@ -668,7 +668,7 @@ func InstantiateReflectExampleContract(t testing.TB, ctx sdk.Context, keepers Te
 	example := StoreReflectContract(t, ctx, keepers)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	label := "demo contract to query"
-	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, []byte("{}"), label, initialAmount)
+	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, example.CreatorAddr, []byte("{}"), label, initialAmount)
 
 	require.NoError(t, err)
 	return ExampleInstance{
