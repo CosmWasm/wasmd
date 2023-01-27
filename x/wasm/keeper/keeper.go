@@ -581,8 +581,15 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
 		return sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
-	contractInfo.Admin = newAdmin.String()
+	newAdminStr := newAdmin.String()
+	contractInfo.Admin = newAdminStr
 	k.storeContractInfo(ctx, contractAddress, contractInfo)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeUpdateContractAdmin,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyNewAdmin, newAdminStr),
+	))
+
 	return nil
 }
 
@@ -920,6 +927,16 @@ func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAd
 
 	info.InstantiateConfig = newConfig
 	k.storeCodeInfo(ctx, codeID, *info)
+	evt := sdk.NewEvent(
+		types.EventTypeUpdateCodeAccessConfig,
+		sdk.NewAttribute(types.AttributeKeyCodePermission, newConfig.Permission.String()),
+		sdk.NewAttribute(types.AttributeKeyCodeID, strconv.FormatUint(codeID, 10)),
+	)
+	if addrs := newConfig.AllAuthorizedAddresses(); len(addrs) != 0 {
+		attr := sdk.NewAttribute(types.AttributeKeyAuthorizedAddresses, strings.Join(addrs, ","))
+		evt.Attributes = append(evt.Attributes, attr.ToKVPair())
+	}
+	ctx.EventManager().EmitEvent(evt)
 	return nil
 }
 
