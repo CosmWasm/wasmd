@@ -5,11 +5,11 @@ go 1.19
 require (
 	github.com/CosmWasm/wasmvm v1.2.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230116204658-efb7acbf244f
+	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230119225816-30bd414d8353
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/iavl v0.19.4
-	github.com/cosmos/ibc-go/v6 v6.0.0-20221220115712-10d17379d669
+	github.com/cosmos/ibc-go/v6 v6.0.0-20230124092939-cfcdec0b33a2
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
@@ -29,7 +29,7 @@ require (
 	github.com/tendermint/tendermint v0.37.0-rc2
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
-	google.golang.org/grpc v1.51.0
+	google.golang.org/grpc v1.52.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -145,8 +145,6 @@ require (
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/tendermint/btcd v0.1.1 // indirect
-	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.5.2 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
@@ -156,7 +154,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20221019170559-20944726eadf // indirect
-	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/term v0.3.0 // indirect
@@ -174,8 +172,13 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
-	//github.com/confio/ics23/go => github.com/cosmos/ics23/go v0.9.1-0.20221207110826-9919ce9aecd1
+	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
+	// See: https://github.com/cosmos/cosmos-sdk/issues/13134
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
-	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
-	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
+	// See: https://github.com/cosmos/cosmos-sdk/issues/10409
+	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.8.1
+	// use informal systems fork of tendermint
+	// See: https://twitter.com/informalinc/status/1613580954383040512
+	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.37.0-rc2
 )
