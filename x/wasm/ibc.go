@@ -47,7 +47,7 @@ func (i IBCHandler) OnChanOpenInit(
 ) (string, error) {
 	// ensure port, version, capability
 	if err := ValidateChannelParams(channelID); err != nil {
-		return version, err
+		return "", err
 	}
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
@@ -80,7 +80,7 @@ func (i IBCHandler) OnChanOpenInit(
 	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return version, sdkerrors.Wrap(err, "claim capability")
 	}
-	return version, nil
+	return acceptedVersion, nil
 }
 
 // OnChanOpenTry implements the IBCModule interface
