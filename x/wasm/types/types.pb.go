@@ -1569,17 +1569,6 @@ func (m *AccessConfig) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-// si
-func (a AccessConfig) AllAuthorizedAddresses() []string {
-	switch a.Permission {
-	case AccessTypeAnyOfAddresses:
-		return a.Addresses
-	case AccessTypeOnlyAddress:
-		return []string{a.Address}
-	}
-	return []string{}
-}
-
 func (m *Params) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
