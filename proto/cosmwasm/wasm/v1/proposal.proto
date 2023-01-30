@@ -237,7 +237,7 @@ message UpdateInstantiateConfigProposal {
 // and instantiate the contract.
 message StoreAndInstantiateContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
-  
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
