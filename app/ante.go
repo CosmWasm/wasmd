@@ -1,11 +1,11 @@
 package app
 
 import (
+	ibcante "github.com/line/ibc-go/v3/modules/core/ante"
+	"github.com/line/ibc-go/v3/modules/core/keeper"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	"github.com/line/lbm-sdk/x/auth/ante"
-	ibcante "github.com/line/lbm-sdk/x/ibc/core/ante"
-	"github.com/line/lbm-sdk/x/ibc/core/keeper"
 
 	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
 	wasmTypes "github.com/line/wasmd/x/wasm/types"

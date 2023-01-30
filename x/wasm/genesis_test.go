@@ -44,6 +44,7 @@ func TestInitGenesis(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)

@@ -16,6 +16,7 @@ import (
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { //nolint:staticcheck
 	legacy.RegisterAminoMsg(cdc, &MsgStoreCode{}, "wasm/MsgStoreCode")
 	legacy.RegisterAminoMsg(cdc, &MsgInstantiateContract{}, "wasm/MsgInstantiateContract")
+	legacy.RegisterAminoMsg(cdc, &MsgInstantiateContract2{}, "wasm/MsgInstantiateContract2")
 	legacy.RegisterAminoMsg(cdc, &MsgExecuteContract{}, "wasm/MsgExecuteContract")
 	legacy.RegisterAminoMsg(cdc, &MsgMigrateContract{}, "wasm/MsgMigrateContract")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateAdmin{}, "wasm/MsgUpdateAdmin")
@@ -40,6 +41,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		(*sdk.Msg)(nil),
 		&MsgStoreCode{},
 		&MsgInstantiateContract{},
+		&MsgInstantiateContract2{},
 		&MsgExecuteContract{},
 		&MsgMigrateContract{},
 		&MsgUpdateAdmin{},
@@ -67,7 +69,10 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 }
 
 var (
-	amino     = codec.NewLegacyAmino()
+	amino = codec.NewLegacyAmino()
+
+	// ModuleCdc references the global x/wasm module codec.
+
 	ModuleCdc = codec.NewAminoCodec(amino)
 )
 

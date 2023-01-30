@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
+	fuzz "github.com/google/gofuzz"
 	"os"
 	"testing"
 	"time"
@@ -13,12 +14,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/line/lbm-sdk/baseapp"
+	"github.com/line/lbm-sdk/crypto/keys/ed25519"
 	stypes "github.com/line/lbm-sdk/store/types"
 	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/types/address"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	"github.com/line/lbm-sdk/x/auth/vesting"
+	vestingtypes "github.com/line/lbm-sdk/x/auth/vesting/types"
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
+	"github.com/line/ostracon/libs/rand"
 	ocproto "github.com/line/ostracon/proto/ostracon/types"
 	wasmvm "github.com/line/wasmvm"
 	wasmvmtypes "github.com/line/wasmvm/types"
@@ -36,24 +43,25 @@ func init() {
 	hackatomWasm = b
 }
 
+//go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
-const SupportedFeatures = "iterator,staking,stargate"
+const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1"
 
 func TestNewKeeper(t *testing.T) {
-	_, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	_, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	require.NotNil(t, keepers.ContractKeeper)
 }
 
 func TestCreateSuccess(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	em := sdk.NewEventManager()
-	contractID, err := keeper.Create(ctx.WithEventManager(em), creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx.WithEventManager(em), creator, hackatomWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -61,32 +69,33 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_id", "1"))}
+	codeHash := "470c5b703a682f778b8b088d48169b8d6e43f7f44ac70316692cdbe69e6605e3"
+	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
 
 func TestCreateNilCreatorAddress(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
-	_, err := keepers.ContractKeeper.Create(ctx, nil, hackatomWasm, nil)
+	_, _, err := keepers.ContractKeeper.Create(ctx, nil, hackatomWasm, nil)
 	require.Error(t, err, "nil creator is not allowed")
 }
 
 func TestCreateNilWasmCode(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
-	_, err := keepers.ContractKeeper.Create(ctx, creator, nil, nil)
+	_, _, err := keepers.ContractKeeper.Create(ctx, creator, nil, nil)
 	require.Error(t, err, "nil WASM code is not allowed")
 }
 
 func TestCreateInvalidWasmCode(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
-	_, err := keepers.ContractKeeper.Create(ctx, creator, []byte("potatoes"), nil)
+	_, _, err := keepers.ContractKeeper.Create(ctx, creator, []byte("potatoes"), nil)
 	require.Error(t, err, "potatoes are not valid WASM code")
 }
 
@@ -119,7 +128,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 			accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 			keepers.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowEverybody,
@@ -130,7 +139,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 			})
 			fundAccounts(t, ctx, accKeeper, bankKeeper, myAddr, deposit)
 
-			codeID, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
+			codeID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
 			require.NoError(t, err)
 
 			codeInfo := keepers.WasmKeeper.GetCodeInfo(ctx, codeID)
@@ -141,7 +150,7 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 }
 
 func TestCreateWithParamPermissions(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -175,7 +184,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 			params := types.DefaultParams()
 			params.CodeUploadAccess = spec.srcPermission
 			keepers.WasmKeeper.SetParams(ctx, params)
-			_, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
 				return
@@ -187,7 +196,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 // ensure that the user cannot set the code instantiate permission to something more permissive
 // than the default
 func TestEnforceValidPermissionsOnCreate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.WasmKeeper
 	contractKeeper := keepers.ContractKeeper
 
@@ -252,7 +261,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 			params := types.DefaultParams()
 			params.InstantiateDefaultPermission = spec.defaultPermssion
 			keeper.SetParams(ctx, params)
-			codeID, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
+			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError == nil {
 				codeInfo := keeper.GetCodeInfo(ctx, codeID)
@@ -263,19 +272,19 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 }
 
 func TestCreateDuplicate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// create one copy
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// create second copy
-	duplicateID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	duplicateID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), duplicateID)
 
@@ -289,7 +298,7 @@ func TestCreateDuplicate(t *testing.T) {
 }
 
 func TestCreateWithSimulation(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
 	ctx = ctx.WithBlockHeader(ocproto.Header{Height: 1}).
 		WithGasMeter(stypes.NewInfiniteGasMeter())
@@ -298,15 +307,15 @@ func TestCreateWithSimulation(t *testing.T) {
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	// create this once in simulation mode
-	contractID, err := keepers.ContractKeeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keepers.ContractKeeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 
 	// then try to create it in non-simulation mode (should not fail)
-	ctx, keepers = CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers = CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	ctx = ctx.WithGasMeter(sdk.NewGasMeter(10_000_000))
 	creator = keepers.Faucet.NewFundedAccount(ctx, deposit...)
-	contractID, err = keepers.ContractKeeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err = keepers.ContractKeeper.Create(ctx, creator, hackatomWasm, nil)
 
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
@@ -343,7 +352,7 @@ func TestIsSimulationMode(t *testing.T) {
 }
 
 func TestCreateWithGzippedPayload(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -352,7 +361,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err, "reading gzipped WASM code")
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, nil)
+	contractID, _, err := keeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), contractID)
 	// and verify content
@@ -361,22 +370,35 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	require.Equal(t, hackatomWasm, storedCode)
 }
 
-func TestInstantiate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+func TestCreateWithBrokenGzippedPayload(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
-	codeID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
-	require.NoError(t, err)
+	wasmCode, err := os.ReadFile("./testdata/broken_crc.gzip")
+	require.NoError(t, err, "reading gzipped WASM code")
 
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
+	gm := sdk.NewInfiniteGasMeter()
+	codeID, checksum, err := keeper.Create(ctx.WithGasMeter(gm), creator, wasmCode, nil)
+	require.Error(t, err)
+	assert.Empty(t, codeID)
+	assert.Empty(t, checksum)
+	assert.GreaterOrEqual(t, gm.GasConsumed(), sdk.Gas(121384)) // 809232 * 0.15 (default uncompress costs) = 121384
+}
+
+func TestInstantiate(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+
+	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
+	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	keepers.Faucet.Fund(ctx, creator, deposit...)
+	example := StoreHackatomExampleContract(t, ctx, keepers)
 
 	initMsg := HackatomExampleInitMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
+		Verifier:    RandomAccountAddress(t),
+		Beneficiary: RandomAccountAddress(t),
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -385,25 +407,25 @@ func TestInstantiate(t *testing.T) {
 
 	em := sdk.NewEventManager()
 	// create with no balance is also legal
-	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), codeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	gotContractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
 	require.NoError(t, err)
 	require.Equal(t, "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x18bfc), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x19497), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
 	info := keepers.WasmKeeper.GetContractInfo(ctx, gotContractAddr)
 	require.NotNil(t, info)
 	assert.Equal(t, creator.String(), info.Creator)
-	assert.Equal(t, codeID, info.CodeID)
+	assert.Equal(t, example.CodeID, info.CodeID)
 	assert.Equal(t, "demo contract 1", info.Label)
 
 	exp := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    codeID,
+		CodeID:    example.CodeID,
 		Updated:   types.NewAbsoluteTxPosition(ctx),
 		Msg:       initMsgBz,
 	}}
@@ -425,11 +447,8 @@ func TestInstantiateWithDeposit(t *testing.T) {
 		fred = bytes.Repeat([]byte{2}, types.SDKAddrLen)
 
 		deposit = sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
-		initMsg = HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob}
+		initMsg = mustMarshal(t, HackatomExampleInitMsg{Verifier: fred, Beneficiary: bob})
 	)
-
-	initMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
 
 	specs := map[string]struct {
 		srcActor sdk.AccAddress
@@ -452,17 +471,17 @@ func TestInstantiateWithDeposit(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
 
 			if spec.fundAddr {
 				fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
 			}
-			contractID, err := keeper.Create(ctx, spec.srcActor, hackatomWasm, nil)
+			contractID, _, err := keeper.Create(ctx, spec.srcActor, hackatomWasm, nil)
 			require.NoError(t, err)
 
 			// when
-			addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsgBz, "my label", deposit)
+			addr, _, err := keepers.ContractKeeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsg, "my label", deposit)
 			// then
 			if spec.expError {
 				require.Error(t, err)
@@ -520,11 +539,11 @@ func TestInstantiateWithPermissions(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
 			fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, deposit)
 
-			contractID, err := keeper.Create(ctx, myAddr, hackatomWasm, &spec.srcPermission)
+			contractID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, &spec.srcPermission)
 			require.NoError(t, err)
 
 			_, _, err = keepers.ContractKeeper.Instantiate(ctx, contractID, spec.srcActor, nil, initMsgBz, "demo contract 1", nil)
@@ -533,8 +552,144 @@ func TestInstantiateWithPermissions(t *testing.T) {
 	}
 }
 
+func TestInstantiateWithAccounts(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	example := StoreHackatomExampleContract(t, parentCtx, keepers)
+	require.Equal(t, uint64(1), example.CodeID)
+	initMsg := mustMarshal(t, HackatomExampleInitMsg{Verifier: RandomAccountAddress(t), Beneficiary: RandomAccountAddress(t)})
+
+	senderAddr := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, senderAddr, sdk.NewInt64Coin("denom", 100000000))
+	const myLabel = "testing"
+	mySalt := []byte(`my salt`)
+	contractAddr := BuildContractAddressPredictable(example.Checksum, senderAddr, mySalt, []byte{})
+
+	lastAccountNumber := keepers.AccountKeeper.GetAccount(parentCtx, senderAddr).GetAccountNumber()
+
+	specs := map[string]struct {
+		option      Option
+		account     authtypes.AccountI
+		initBalance sdk.Coin
+		deposit     sdk.Coins
+		expErr      error
+		expAccount  authtypes.AccountI
+		expBalance  sdk.Coins
+	}{
+		"unused BaseAccount exists": {
+			account:     authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+			initBalance: sdk.NewInt64Coin("denom", 100000000),
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq
+			expBalance:  sdk.NewCoins(sdk.NewInt64Coin("denom", 100000000)),
+		},
+		"BaseAccount with sequence exists": {
+			account: authtypes.NewBaseAccount(contractAddr, nil, 0, 1),
+			expErr:  types.ErrAccountExists,
+		},
+		"BaseAccount with pubkey exists": {
+			account: authtypes.NewBaseAccount(contractAddr, &ed25519.PubKey{}, 0, 0),
+			expErr:  types.ErrAccountExists,
+		},
+		"no account existed": {
+			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq,
+			expBalance: sdk.NewCoins(),
+		},
+		"no account existed before create with deposit": {
+			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0), // +1 for next seq
+			deposit:    sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
+			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))),
+		},
+		"prunable DelayedVestingAccount gets overwritten": {
+			account: vestingtypes.NewDelayedVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
+			initBalance: sdk.NewCoin("denom", sdk.NewInt(1_000)),
+			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
+			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
+		},
+		"prunable ContinuousVestingAccount gets overwritten": {
+			account: vestingtypes.NewContinuousVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
+			initBalance: sdk.NewCoin("denom", sdk.NewInt(1_000)),
+			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
+			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
+			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
+		},
+		"prunable account without balance gets overwritten": {
+			account: vestingtypes.NewContinuousVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(0))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix()),
+			expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
+			expBalance: sdk.NewCoins(),
+		},
+		"unknown account type is rejected with error": {
+			account: authtypes.NewModuleAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				"testing",
+			),
+			initBalance: sdk.NewCoin("denom", sdk.NewInt(1_000)),
+			expErr:      types.ErrAccountExists,
+		},
+		"with option used to set non default type to accept list": {
+			option: WithAcceptedAccountTypesOnContractInstantiation(&vestingtypes.DelayedVestingAccount{}),
+			account: vestingtypes.NewDelayedVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
+			initBalance: sdk.NewCoin("denom", sdk.NewInt(1_000)),
+			deposit:     sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1))),
+			expAccount: vestingtypes.NewDelayedVestingAccount(authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+1, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
+			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_001))),
+		},
+		"pruning account fails": {
+			option: WithAccountPruner(wasmtesting.AccountPrunerMock{CleanupExistingAccountFn: func(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error) {
+				return false, types.ErrUnsupportedForContract.Wrap("testing")
+			}}),
+			account: vestingtypes.NewDelayedVestingAccount(
+				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
+				sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_000))), time.Now().Add(30*time.Hour).Unix()),
+			expErr: types.ErrUnsupportedForContract,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			if spec.account != nil {
+				keepers.AccountKeeper.SetAccount(ctx, keepers.AccountKeeper.NewAccount(ctx, spec.account))
+			}
+			if !spec.initBalance.IsNil() {
+				keepers.Faucet.Fund(ctx, spec.account.GetAddress(), spec.initBalance)
+			}
+			if spec.option != nil {
+				spec.option.apply(keepers.WasmKeeper)
+			}
+			defer func() {
+				if spec.option != nil { // reset
+					WithAcceptedAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}).apply(keepers.WasmKeeper)
+					WithAccountPruner(NewVestingCoinBurner(keepers.BankKeeper)).apply(keepers.WasmKeeper)
+				}
+			}()
+			// when
+			gotAddr, _, gotErr := keepers.ContractKeeper.Instantiate2(ctx, 1, senderAddr, nil, initMsg, myLabel, spec.deposit, mySalt, false)
+			if spec.expErr != nil {
+				assert.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, contractAddr, gotAddr)
+			// and
+			gotAcc := keepers.AccountKeeper.GetAccount(ctx, contractAddr)
+			assert.Equal(t, spec.expAccount, gotAcc)
+			// and
+			gotBalance := keepers.BankKeeper.GetAllBalances(ctx, contractAddr)
+			assert.Equal(t, spec.expBalance, gotBalance)
+		})
+	}
+}
+
 func TestInstantiateWithNonExistingCodeID(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
@@ -550,7 +705,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 }
 
 func TestInstantiateWithContractDataResponse(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
 	wasmerMock := &wasmtesting.MockWasmer{
 		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
@@ -566,19 +721,96 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 	assert.Equal(t, []byte("my-response-data"), data)
 }
 
+func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
+	// Scenario:
+	// 	given a factory contract stored
+	// 	when instantiated, the contract creates a new child contract instance
+	// 	     and the child contracts queries the senders ContractInfo on instantiation
+	//	then the factory contract's ContractInfo should be returned to the child contract
+	//
+	// see also: https://github.com/CosmWasm/wasmd/issues/896
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	keeper := keepers.WasmKeeper
+
+	var instantiationCount int
+	callbacks := make([]func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error), 2)
+	wasmerMock := &wasmtesting.MockWasmer{
+		// dispatch instantiation calls to callbacks
+		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+			require.Greater(t, len(callbacks), instantiationCount, "unexpected call to instantiation")
+			do := callbacks[instantiationCount]
+			instantiationCount++
+			return do(codeID, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
+		},
+		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
+		CreateFn:      wasmtesting.NoOpCreateFn,
+	}
+
+	// overwrite wasmvm in router
+	router := baseapp.NewMsgServiceRouter()
+	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
+	types.RegisterMsgServer(router, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
+	// overwrite wasmvm in response handler
+	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
+
+	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
+	// factory contract
+	callbacks[0] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		t.Log("called factory")
+		return &wasmvmtypes.Response{Data: []byte("parent"), Messages: []wasmvmtypes.SubMsg{
+			{
+				ID: 1, ReplyOn: wasmvmtypes.ReplyNever,
+				Msg: wasmvmtypes.CosmosMsg{
+					Wasm: &wasmvmtypes.WasmMsg{
+						Instantiate: &wasmvmtypes.InstantiateMsg{CodeID: example.CodeID, Msg: []byte(`{}`), Label: "child"},
+					},
+				},
+			},
+		}}, 0, nil
+	}
+
+	// child contract
+	var capturedSenderAddr string
+	var capturedCodeInfo []byte
+	callbacks[1] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		t.Log("called child")
+		capturedSenderAddr = info.Sender
+		var err error
+		capturedCodeInfo, err = querier.Query(wasmvmtypes.QueryRequest{
+			Wasm: &wasmvmtypes.WasmQuery{
+				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: info.Sender},
+			},
+		}, gasLimit)
+		require.NoError(t, err)
+		return &wasmvmtypes.Response{Data: []byte("child")}, 0, nil
+	}
+
+	// when
+	parentAddr, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
+
+	// then
+	require.NoError(t, err)
+	assert.Equal(t, []byte("parent"), data)
+	require.Equal(t, parentAddr.String(), capturedSenderAddr)
+	expCodeInfo := fmt.Sprintf(`{"code_id":%d,"creator":%q,"pinned":false}`, example.CodeID, example.CreatorAddr.String())
+	assert.JSONEq(t, expCodeInfo, string(capturedCodeInfo))
+}
+
 func TestExecute(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
+	bob := RandomAccountAddress(t)
 
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -625,7 +857,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x16f9c), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x17050), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -704,7 +936,7 @@ func TestExecuteWithDeposit(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
 			if spec.newBankParams != nil {
 				bankKeeper.SetParams(ctx, *spec.newBankParams)
@@ -712,7 +944,7 @@ func TestExecuteWithDeposit(t *testing.T) {
 			if spec.fundAddr {
 				fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
 			}
-			codeID, err := keeper.Create(ctx, spec.srcActor, hackatomWasm, nil)
+			codeID, _, err := keeper.Create(ctx, spec.srcActor, hackatomWasm, nil)
 			require.NoError(t, err)
 
 			initMsg := HackatomExampleInitMsg{Verifier: spec.srcActor, Beneficiary: spec.beneficiary}
@@ -738,11 +970,12 @@ func TestExecuteWithDeposit(t *testing.T) {
 }
 
 func TestExecuteWithNonExistingAddress(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := RandomAccountAddress(t)
@@ -751,15 +984,16 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 }
 
 func TestExecuteWithPanic(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -782,15 +1016,16 @@ func TestExecuteWithPanic(t *testing.T) {
 }
 
 func TestExecuteWithCpuLoop(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -823,15 +1058,16 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 }
 
 func TestExecuteWithStorageLoop(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
 
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -864,18 +1100,24 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 }
 
 func TestMigrate(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
-	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, creator, deposit.Add(deposit...)...)
+	fred := DeterministicAccountAddress(t, 2)
+	keepers.Faucet.Fund(parentCtx, fred, topUp...)
 
-	originalCodeID := StoreHackatomExampleContract(t, ctx, keepers).CodeID
-	newCodeID := StoreHackatomExampleContract(t, ctx, keepers).CodeID
-	ibcCodeID := StoreIBCReflectContract(t, ctx, keepers).CodeID
+	originalCodeID := StoreHackatomExampleContract(t, parentCtx, keepers).CodeID
+	newCodeID := StoreHackatomExampleContract(t, parentCtx, keepers).CodeID
+	ibcCodeID := StoreIBCReflectContract(t, parentCtx, keepers).CodeID
 	require.NotEqual(t, originalCodeID, newCodeID)
+
+	restrictedCodeExample := StoreHackatomExampleContract(t, parentCtx, keepers)
+	require.NoError(t, keeper.SetAccessConfig(parentCtx, restrictedCodeExample.CodeID, restrictedCodeExample.CreatorAddr, types.AllowNobody))
+	require.NotEqual(t, originalCodeID, restrictedCodeExample.CodeID)
 
 	anyAddr := RandomAccountAddress(t)
 	newVerifierAddr := RandomAccountAddress(t)
@@ -954,6 +1196,15 @@ func TestMigrate(t *testing.T) {
 			toCodeID:   originalCodeID,
 			expErr:     sdkerrors.ErrUnauthorized,
 		},
+		"prevent migration when new code is restricted": {
+			admin:      creator,
+			caller:     creator,
+			initMsg:    initMsgBz,
+			fromCodeID: originalCodeID,
+			toCodeID:   restrictedCodeExample.CodeID,
+			migrateMsg: migMsgBz,
+			expErr:     sdkerrors.ErrUnauthorized,
+		},
 		"fail with non existing code id": {
 			admin:      creator,
 			caller:     creator,
@@ -991,7 +1242,7 @@ func TestMigrate(t *testing.T) {
 		"fail when no IBC callbacks": {
 			admin:      fred,
 			caller:     fred,
-			initMsg:    IBCReflectInitMsg{ReflectCodeID: StoreReflectContract(t, ctx, keepers)}.GetBytes(t),
+			initMsg:    IBCReflectInitMsg{ReflectCodeID: StoreReflectContract(t, parentCtx, keepers).CodeID}.GetBytes(t),
 			fromCodeID: ibcCodeID,
 			toCodeID:   newCodeID,
 			migrateMsg: migMsgBz,
@@ -999,10 +1250,13 @@ func TestMigrate(t *testing.T) {
 		},
 	}
 
+	blockHeight := parentCtx.BlockHeight()
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			// given a contract instance
-			ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+			ctx, _ := parentCtx.WithBlockHeight(blockHeight + 1).CacheContext()
+			blockHeight++
+
 			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, spec.fromCodeID, creator, spec.admin, spec.initMsg, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
@@ -1045,7 +1299,7 @@ func TestMigrate(t *testing.T) {
 }
 
 func TestMigrateReplacesTheSecondIndex(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	example := InstantiateHackatomExampleContract(t, ctx, keepers)
 
 	// then assert a second index exists
@@ -1079,19 +1333,20 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 }
 
 func TestMigrateWithDispatchedMessage(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedAccount(ctx, sdk.NewInt64Coin("denom", 5000))
 
 	burnerCode, err := os.ReadFile("./testdata/burner.wasm")
 	require.NoError(t, err)
 
-	originalContractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	originalContractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
-	burnerContractID, err := keeper.Create(ctx, creator, burnerCode, nil)
+	burnerContractID, _, err := keeper.Create(ctx, creator, burnerCode, nil)
 	require.NoError(t, err)
 	require.NotEqual(t, originalContractID, burnerContractID)
 
@@ -1164,7 +1419,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 }
 
 func TestIterateContractsByCode(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
 	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
@@ -1210,7 +1465,7 @@ func TestIterateContractsByCodeWithMigration(t *testing.T) {
 		return &wasmvmtypes.Response{}, 1, nil
 	}}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil, WithWasmEngine(&mockWasmVM))
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil, WithWasmEngine(&mockWasmVM))
 	k, c := keepers.WasmKeeper, keepers.ContractKeeper
 	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
@@ -1249,13 +1504,14 @@ type stealFundsMsg struct {
 }
 
 func TestSudo(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 
-	contractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -1332,15 +1588,16 @@ func mustMarshal(t *testing.T, r interface{}) []byte {
 }
 
 func TestUpdateContractAdmin(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
-	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, creator, deposit.Add(deposit...)...)
+	fred := keepers.Faucet.NewFundedAccount(parentCtx, topUp...)
 
-	originalContractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
@@ -1383,6 +1640,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
 			addr, _, err := keepers.ContractKeeper.Instantiate(ctx, originalContractID, creator, spec.instAdmin, initMsgBz, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
@@ -1400,15 +1658,16 @@ func TestUpdateContractAdmin(t *testing.T) {
 }
 
 func TestClearContractAdmin(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
-	creator := keepers.Faucet.NewFundedAccount(ctx, deposit.Add(deposit...)...)
-	fred := keepers.Faucet.NewFundedAccount(ctx, topUp...)
+	creator := DeterministicAccountAddress(t, 1)
+	keepers.Faucet.Fund(parentCtx, creator, deposit.Add(deposit...)...)
+	fred := keepers.Faucet.NewFundedAccount(parentCtx, topUp...)
 
-	originalContractID, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	_, _, anyAddr := keyPubAddr()
@@ -1446,6 +1705,7 @@ func TestClearContractAdmin(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
 			addr, _, err := keepers.ContractKeeper.Instantiate(ctx, originalContractID, creator, spec.instAdmin, initMsgBz, "demo contract", nil)
 			require.NoError(t, err)
 			if spec.overrideContractAddr != nil {
@@ -1463,7 +1723,7 @@ func TestClearContractAdmin(t *testing.T) {
 }
 
 func TestExecuteManualInactiveContractFailure(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -1474,7 +1734,7 @@ func TestExecuteManualInactiveContractFailure(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	contractID, err := keeper.Create(ctx, creator, wasmCode, nil)
+	contractID, _, err := keeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -1491,7 +1751,7 @@ func TestExecuteManualInactiveContractFailure(t *testing.T) {
 }
 
 func TestPinCode(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
@@ -1518,7 +1778,7 @@ func TestPinCode(t *testing.T) {
 }
 
 func TestUnpinCode(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
@@ -1552,7 +1812,7 @@ func TestUnpinCode(t *testing.T) {
 }
 
 func TestInitializePinnedCodes(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
@@ -1592,7 +1852,7 @@ func TestPinnedContractLoops(t *testing.T) {
 
 	// a pinned contract that calls itself via submessages should terminate with an
 	// error at some point
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil, WithWasmEngine(&mock))
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil, WithWasmEngine(&mock))
 	k := keepers.WasmKeeper
 
 	example := SeedNewContractInstance(t, ctx, keepers, &mock)
@@ -1688,9 +1948,7 @@ func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			var (
-				msgs []wasmvmtypes.SubMsg
-			)
+			var msgs []wasmvmtypes.SubMsg
 			var mock wasmtesting.MockMsgDispatcher
 			spec.setup(&mock)
 			d := NewDefaultWasmVMContractResponseHandler(&mock)
@@ -1710,7 +1968,7 @@ func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 }
 
 func TestReply(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 	var mock wasmtesting.MockWasmer
 	wasmtesting.MakeInstantiable(&mock)
@@ -1779,7 +2037,7 @@ func TestReply(t *testing.T) {
 }
 
 func TestQueryIsolation(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 	var mock wasmtesting.MockWasmer
 	wasmtesting.MakeInstantiable(&mock)
@@ -1809,55 +2067,171 @@ func TestQueryIsolation(t *testing.T) {
 	assert.Nil(t, ctx.KVStore(k.storeKey).Get([]byte(`set_in_query`)))
 }
 
-func TestBuildContractAddress(t *testing.T) {
+func TestSetAccessConfig(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	k := keepers.WasmKeeper
+	creatorAddr := RandomAccountAddress(t)
+	nonCreatorAddr := RandomAccountAddress(t)
+
 	specs := map[string]struct {
-		srcCodeID     uint64
-		srcInstanceID uint64
-		expectedAddr  string
+		authz           AuthorizationPolicy
+		chainPermission types.AccessType
+		newConfig       types.AccessConfig
+		caller          sdk.AccAddress
+		expErr          bool
 	}{
-		"initial contract": {
-			srcCodeID:     1,
-			srcInstanceID: 1,
-			expectedAddr:  "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8",
+		"user with new permissions == chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
 		},
-		"demo value": {
-			srcCodeID:     1,
-			srcInstanceID: 100,
-			expectedAddr:  "link1mujpjkwhut9yjw4xueyugc02evfv46y0dtmnz4lh8xxkkdapym9skz93hr",
+		"user with new permissions < chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
 		},
-		"both below max": {
-			srcCodeID:     math.MaxUint32 - 1,
-			srcInstanceID: math.MaxUint32 - 1,
+		"user with new permissions > chain permissions": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
+			expErr:          true,
 		},
-		"both at max": {
-			srcCodeID:     math.MaxUint32,
-			srcInstanceID: math.MaxUint32,
+		"different actor": {
+			authz:           DefaultAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          nonCreatorAddr,
+			expErr:          true,
 		},
-		"codeID > max u32": {
-			srcCodeID:     math.MaxUint32 + 1,
-			srcInstanceID: 17,
-			expectedAddr:  "link1673hrexz4h6s0ft04l96ygq667djzh2nsr335kstjp49x5dk6rps5267na",
+		"gov with new permissions == chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+			caller:          creatorAddr,
 		},
-		"instanceID > max u32": {
-			srcCodeID:     22,
-			srcInstanceID: math.MaxUint32 + 1,
-			expectedAddr:  "link10q3pgfvmeyy0veekgtqhxujxkhz0vm9zmalqgc7evrhj68q3l62q7nceel",
+		"gov with new permissions < chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowNobody,
+			caller:          creatorAddr,
+		},
+		"gov with new permissions > chain permissions": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeNobody,
+			newConfig:       types.AccessTypeOnlyAddress.With(creatorAddr),
+			caller:          creatorAddr,
+		},
+		"gov without actor": {
+			authz:           GovAuthorizationPolicy{},
+			chainPermission: types.AccessTypeEverybody,
+			newConfig:       types.AllowEverybody,
+		},
+	}
+	const codeID = 1
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			newParams := types.DefaultParams()
+			newParams.InstantiateDefaultPermission = spec.chainPermission
+			k.SetParams(ctx, newParams)
+
+			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
+			// when
+			gotErr := k.setAccessConfig(ctx, codeID, spec.caller, spec.newConfig, spec.authz)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestAppendToContractHistory(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	var contractAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	var orderedEntries []types.ContractCodeHistoryEntry
+
+	f := fuzz.New().Funcs(ModelFuzzers...)
+	for i := 0; i < 10; i++ {
+		var entry types.ContractCodeHistoryEntry
+		f.Fuzz(&entry)
+		keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry)
+		orderedEntries = append(orderedEntries, entry)
+	}
+	// when
+	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
+	assert.Equal(t, orderedEntries, gotHistory)
+}
+
+func TestCoinBurnerPruneBalances(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	amts := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
+	senderAddr := keepers.Faucet.NewFundedAccount(parentCtx, amts...)
+
+	// create vesting account
+	var vestingAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
+	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(sdk.WrapSDKContext(parentCtx), msgCreateVestingAccount)
+	require.NoError(t, err)
+	myVestingAccount := keepers.AccountKeeper.GetAccount(parentCtx, vestingAddr)
+	require.NotNil(t, myVestingAccount)
+
+	specs := map[string]struct {
+		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
+		expBalances sdk.Coins
+		expHandled  bool
+		expErr      *sdkerrors.Error
+	}{
+		"vesting account - all removed": {
+			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
+			expBalances: sdk.NewCoins(),
+			expHandled:  true,
+		},
+		"vesting account with other tokens - only original denoms removed": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
+				return myVestingAccount
+			},
+			expBalances: sdk.NewCoins(sdk.NewCoin("other", sdk.NewInt(2))),
+			expHandled:  true,
+		},
+		"non vesting account - not handled": {
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
+			},
+			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),
+			expHandled:  false,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotAddr := BuildContractAddress(spec.srcCodeID, spec.srcInstanceID)
-			require.NotNil(t, gotAddr)
-			assert.Nil(t, sdk.VerifyAddressFormat(gotAddr))
-			if len(spec.expectedAddr) > 0 {
-				require.Equal(t, spec.expectedAddr, gotAddr.String())
+			ctx, _ := parentCtx.CacheContext()
+			existingAccount := spec.setupAcc(t, ctx)
+			// overwrite account in store as in keeper before calling prune
+			keepers.AccountKeeper.SetAccount(ctx, keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr))
+
+			// when
+			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
+			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).CleanupExistingAccount(noGasCtx, existingAccount)
+			// then
+			if spec.expErr != nil {
+				require.ErrorIs(t, gotErr, spec.expErr)
+				return
 			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expBalances, keepers.BankKeeper.GetAllBalances(ctx, vestingAddr))
+			assert.Equal(t, spec.expHandled, gotHandled)
+			// and no out of gas panic
 		})
 	}
 }
 
 func TestActivateContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
 	k := keepers.WasmKeeper
 	var mock wasmtesting.MockWasmer
@@ -1883,7 +2257,7 @@ func TestActivateContract(t *testing.T) {
 }
 
 func TestDeactivateContract(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 
 	k := keepers.WasmKeeper
 	var mock wasmtesting.MockWasmer
@@ -1905,7 +2279,7 @@ func TestDeactivateContract(t *testing.T) {
 }
 
 func TestIterateInactiveContracts(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	k := keepers.WasmKeeper
 
 	var mock wasmtesting.MockWasmer
@@ -1932,14 +2306,14 @@ func TestIterateInactiveContracts(t *testing.T) {
 
 func TestKeeper_GetByteCode(t *testing.T) {
 
-	ctx, keepers := CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedAccount(ctx, deposit...)
 
 	em := sdk.NewEventManager()
-	_, err := keeper.Create(ctx.WithEventManager(em), creator, hackatomWasm, nil)
+	_, _, err := keeper.Create(ctx.WithEventManager(em), creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	tests := []struct {

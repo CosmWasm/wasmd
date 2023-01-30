@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o errexit -o nounset -o pipefail
+set -o errexit -o nounset -o pipefail -x
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
@@ -9,7 +9,10 @@ RESP=$(wasmd tx wasm store "$DIR/../../x/wasm/keeper/testdata/hackatom.wasm" \
   --from validator --gas 1500000 -y --chain-id=testing --node=http://localhost:26657 -b block -o json)
 
 CODE_ID=$(echo "$RESP" | jq -r '.logs[0].events[1].attributes[-1].value')
+CODE_HASH=$(echo "$RESP" | jq -r '.logs[0].events[1].attributes[-2].value')
 echo "* Code id: $CODE_ID"
+echo "* Code checksum: $CODE_HASH"
+
 echo "* Download code"
 TMPDIR=$(mktemp -t wasmdXXXXXX)
 wasmd q wasm code "$CODE_ID" "$TMPDIR"
@@ -27,6 +30,17 @@ wasmd tx wasm instantiate "$CODE_ID" "$INIT" --admin="$(wasmd keys show validato
 
 CONTRACT=$(wasmd query wasm list-contract-by-code "$CODE_ID" -o json | jq -r '.contracts[-1]')
 echo "* Contract address: $CONTRACT"
+
+echo "## Create new contract instance with predictable address"
+wasmd tx wasm instantiate2 "$CODE_ID" "$INIT" $(echo -n "testing" | xxd -ps) \
+  --admin="$(wasmd keys show validator -a)" \
+  --from validator --amount="100ustake" --label "local0.1.0" \
+  --fix-msg \
+  --gas 1000000 -y --chain-id=testing -b block -o json | jq
+
+predictedAdress=$(wasmd q wasm build-address "$CODE_HASH" $(wasmd keys show validator -a) $(echo -n "testing" | xxd -ps) "$INIT")
+wasmd q wasm contract "$predictedAdress" -o json | jq
+
 echo "### Query all"
 RESP=$(wasmd query wasm contract-state all "$CONTRACT" -o json)
 echo "$RESP" | jq

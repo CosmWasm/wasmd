@@ -3,13 +3,13 @@ package wasm
 import (
 	"math"
 
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/line/ibc-go/v3/modules/core/05-port/types"
+	host "github.com/line/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	porttypes "github.com/line/lbm-sdk/x/ibc/core/05-port/types"
-	host "github.com/line/lbm-sdk/x/ibc/core/24-host"
-	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	wasmTypes "github.com/line/wasmd/x/wasm/types"
@@ -296,17 +296,6 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 		return sdkerrors.Wrap(err, "on timeout")
 	}
 	return nil
-}
-
-func (i IBCHandler) NegotiateAppVersion(
-	ctx sdk.Context,
-	order channeltypes.Order,
-	connectionID string,
-	portID string,
-	counterparty channeltypes.Counterparty,
-	proposedVersion string,
-) (version string, err error) {
-	return proposedVersion, nil // accept all
 }
 
 func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {

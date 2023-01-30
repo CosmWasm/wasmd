@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	baseapp "github.com/line/lbm-sdk/baseapp"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	abci "github.com/line/ostracon/abci/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
@@ -188,9 +188,24 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			}
 			return json.Marshal(res)
 		}
+		if request.Supply != nil {
+			coin := bankKeeper.GetSupply(ctx, request.Supply.Denom)
+			res := wasmvmtypes.SupplyResponse{
+				Amount: wasmvmtypes.Coin{
+					Denom:  coin.Denom,
+					Amount: coin.Amount.String(),
+				},
+			}
+			return json.Marshal(res)
+		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
 }
+
+func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
+	return nil, wasmvmtypes.UnsupportedRequest{Kind: "custom"}
+}
+
 func CustomQuerierImpl(queryRouter GRPCQueryRouter) func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, querierJson json.RawMessage) ([]byte, error) {
 		var linkQueryWrapper types.LinkQueryWrapper

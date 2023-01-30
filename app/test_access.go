@@ -3,19 +3,20 @@ package app
 import (
 	"testing"
 
+	ibctransferkeeper "github.com/line/ibc-go/v3/modules/apps/transfer/keeper"
+	ibckeeper "github.com/line/ibc-go/v3/modules/core/keeper"
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
 	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
-	ibctransferkeeper "github.com/line/lbm-sdk/x/ibc/applications/transfer/keeper"
-	ibckeeper "github.com/line/lbm-sdk/x/ibc/core/keeper"
 	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
 
 	"github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm"
 )
 
+// Deprecated: use public app attributes directly
 type TestSupport struct {
 	t   testing.TB
 	app *WasmApp
@@ -26,11 +27,11 @@ func NewTestSupport(t testing.TB, app *WasmApp) *TestSupport {
 }
 
 func (s TestSupport) IBCKeeper() *ibckeeper.Keeper {
-	return s.app.ibcKeeper
+	return s.app.IBCKeeper
 }
 
 func (s TestSupport) WasmKeeper() wasm.Keeper {
-	return s.app.wasmKeeper
+	return s.app.WasmKeeper
 }
 
 func (s TestSupport) AppCodec() codec.Codec {
@@ -38,27 +39,27 @@ func (s TestSupport) AppCodec() codec.Codec {
 }
 
 func (s TestSupport) ScopedWasmIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedWasmKeeper
+	return s.app.ScopedWasmKeeper
 }
 
 func (s TestSupport) ScopeIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedIBCKeeper
+	return s.app.ScopedIBCKeeper
 }
 
 func (s TestSupport) ScopedTransferKeeper() capabilitykeeper.ScopedKeeper {
-	return s.app.scopedTransferKeeper
+	return s.app.ScopedTransferKeeper
 }
 
 func (s TestSupport) StakingKeeper() stakingkeeper.Keeper {
-	return s.app.stakingKeeper
+	return s.app.StakingKeeper
 }
 
 func (s TestSupport) BankKeeper() bankkeeper.Keeper {
-	return s.app.bankKeeper
+	return s.app.BankKeeper
 }
 
 func (s TestSupport) TransferKeeper() ibctransferkeeper.Keeper {
-	return s.app.transferKeeper
+	return s.app.TransferKeeper
 }
 
 func (s TestSupport) GetBaseApp() *baseapp.BaseApp {

@@ -23,9 +23,11 @@ const (
 const (
 	AttributeReservedPrefix = "_"
 
-	AttributeKeyContractAddr  = "_contract_address"
-	AttributeKeyCodeID        = "code_id"
-	AttributeKeyCodeIDs       = "code_ids"
-	AttributeKeyResultDataHex = "result"
-	AttributeKeyFeature       = "feature"
+	AttributeKeyContractAddr       = "_contract_address"
+	AttributeKeyCodeID             = "code_id"
+	AttributeKeyCodeIDs            = "code_ids"
+	AttributeKeyChecksum           = "code_checksum"
+	AttributeKeyResultDataHex      = "result"
+	AttributeKeyFeature            = "feature"
+	AttributeKeyRequiredCapability = "required_capability"
 )

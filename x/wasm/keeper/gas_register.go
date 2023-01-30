@@ -2,7 +2,10 @@ package keeper
 
 import (
 	sdk "github.com/line/lbm-sdk/types"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	wasmvmtypes "github.com/line/wasmvm/types"
+
+	"github.com/line/wasmd/x/wasm/types"
 )
 
 const (
@@ -23,15 +26,30 @@ const (
 	DefaultEventAttributeDataFreeTier = 100
 )
 
+// default: 0.15 gas.
+// see https://github.com/CosmWasm/wasmd/pull/898#discussion_r937727200
+var defaultPerByteUncompressCost = wasmvmtypes.UFraction{
+	Numerator:   15,
+	Denominator: 100,
+}
+
+// DefaultPerByteUncompressCost is how much SDK gas we charge per source byte to unpack
+func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
+	return defaultPerByteUncompressCost
+}
+
 // GasRegister abstract source for gas costs
 type GasRegister interface {
-	// NewContractInstanceCosts costs to crate a new contract instance from code
+	// UncompressCosts costs to unpack a new wasm contract
+	UncompressCosts(byteLength int) sdk.Gas
 	// EventCosts costs to persist an event
 	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) sdk.Gas
 }
 
 // WasmGasRegisterConfig config type
 type WasmGasRegisterConfig struct {
+	// UncompressCost costs per byte to unpack a contract
+	UncompressCost wasmvmtypes.UFraction
 	// EventPerAttributeCost is how much SDK gas is charged *per byte* for attribute data in events.
 	// This is used with len(key) + len(value)
 	EventPerAttributeCost sdk.Gas
@@ -55,6 +73,7 @@ func DefaultGasRegisterConfig() WasmGasRegisterConfig {
 		EventAttributeDataCost:     DefaultEventAttributeDataCost,
 		EventAttributeDataFreeTier: DefaultEventAttributeDataFreeTier,
 		ContractMessageDataCost:    DefaultContractMessageDataCost,
+		UncompressCost:             DefaultPerByteUncompressCost(),
 	}
 }
 
@@ -73,6 +92,14 @@ func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	return WasmGasRegister{
 		c: c,
 	}
+}
+
+// UncompressCosts costs to unpack a new wasm contract
+func (g WasmGasRegister) UncompressCosts(byteLength int) sdk.Gas {
+	if byteLength < 0 {
+		panic(sdkerrors.Wrap(types.ErrInvalid, "negative length"))
+	}
+	return g.c.UncompressCost.Mul(uint64(byteLength)).Floor()
 }
 
 // EventCosts costs to persist an event

@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	"github.com/line/lbm-sdk/store"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
@@ -509,8 +509,16 @@ func (m mockWasmQueryKeeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 }
 
 type bankKeeperMock struct {
+	GetSupplyFn      func(ctx sdk.Context, denom string) sdk.Coin
 	GetBalanceFn     func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetAllBalancesFn func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+}
+
+func (m bankKeeperMock) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
+	if m.GetSupplyFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetSupplyFn(ctx, denom)
 }
 
 func (m bankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {

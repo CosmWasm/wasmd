@@ -3,13 +3,13 @@ package types
 import (
 	"context"
 
+	connectiontypes "github.com/line/ibc-go/v3/modules/core/03-connection/types"
+	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
+	ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
 	sdk "github.com/line/lbm-sdk/types"
 	authtypes "github.com/line/lbm-sdk/x/auth/types"
 	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
 	"github.com/line/lbm-sdk/x/distribution/types"
-	connectiontypes "github.com/line/lbm-sdk/x/ibc/core/03-connection/types"
-	channeltypes "github.com/line/lbm-sdk/x/ibc/core/04-channel/types"
-	ibcexported "github.com/line/lbm-sdk/x/ibc/core/exported"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 )
 
@@ -17,6 +17,7 @@ import (
 type BankViewKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 }
 
 // Burner is a subset of the sdk bank keeper methods

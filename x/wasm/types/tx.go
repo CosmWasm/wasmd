@@ -95,7 +95,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
-	if err := validateLabel(msg.Label); err != nil {
+	if err := ValidateLabel(msg.Label); err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
 	}
 
@@ -305,4 +305,57 @@ func (msg MsgIBCCloseChannel) GetSignBytes() []byte {
 
 func (msg MsgIBCCloseChannel) GetSigners() []sdk.AccAddress {
 	return nil
+}
+
+var _ sdk.Msg = &MsgInstantiateContract2{}
+
+func (msg MsgInstantiateContract2) Route() string {
+	return RouterKey
+}
+
+func (msg MsgInstantiateContract2) Type() string {
+	return "instantiate2"
+}
+
+func (msg MsgInstantiateContract2) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+
+	if msg.CodeID == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+	}
+
+	if err := ValidateLabel(msg.Label); err != nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+	}
+
+	if !msg.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
+
+	if len(msg.Admin) != 0 {
+		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return sdkerrors.Wrap(err, "admin")
+		}
+	}
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "payload msg")
+	}
+	if err := ValidateSalt(msg.Salt); err != nil {
+		return sdkerrors.Wrap(err, "salt")
+	}
+	return nil
+}
+
+func (msg MsgInstantiateContract2) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgInstantiateContract2) GetSigners() []sdk.AccAddress {
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{senderAddr}
 }

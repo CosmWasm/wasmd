@@ -3,7 +3,10 @@
 # Integration
 
 If you want to use Wasm in your own app, here is how you can get this working
-quickly and easily. First, check to make sure you fit the pre-requisites,
+quickly and easily. 
+First start with This [article](https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc) 
+in the "CosmWasm for CTOs" series that gives you a high level view. 
+Then check to make sure you fit the pre-requisites,
 then integrate the `x/wasm` module as described below, and finally, you
 can add custom messages and queries to your custom Go/SDK modules, exposing
 them to any chain-specific contract.
@@ -14,26 +17,18 @@ The pre-requisites of integrating `x/wasm` into your custom app is to be using
 a compatible version of the Cosmos SDK, and to accept some limits to the
 hardware it runs on.
 
-| wasmd  | Cosmos SDK  |
-|:------:|:-----------:|
-| v0.24  |   v0.45.0   |
-| v0.23  |   v0.45.0   |
-| v0.22  |   v0.45.0   |
-| v0.21  |   v0.42.x   |
-| v0.20  |   v0.42.x   |
-| v0.19  |   v0.42.x   |
-| v0.18  |   v0.42.x   |
-| v0.17  |   v0.42.x   |
-| v0.16  |   v0.42.x   |
-| v0.15  |   v0.41.x   |
-| v0.14  |   v0.40.x   |
-| v0.13  | v0.40.0-rc3 |
-| v0.12  | v0.40.0-rc3 |
-| v0.11  |   v0.39.1   |
-| v0.10  |   v0.39.1   |
-|  v0.9  |   v0.38.3   |
-|  v0.8  |   v0.38.3   |
-|  v0.7  |   v0.38.3   |
+| wasmd | Cosmos SDK |
+|:-----:|:----------:|
+| v0.29 |  v0.45.8   |
+| v0.28 |  v0.45.5   |
+| v0.27 |  v0.45.4   |
+| v0.26 |  v0.45.1   |
+| v0.25 |  v0.45.1   |
+| v0.24 |  v0.45.0   |
+| v0.23 |  v0.45.0   |
+| v0.22 |  v0.45.0   |
+| v0.21 |  v0.42.x   |
+
 
 We currently only support Intel/AMD64 CPUs and OSX or Linux. For Linux, the standard build
 commands work for `glibc` systems (Ubuntu, Debian, CentOS, etc). If you wish to compile
@@ -72,9 +67,12 @@ from the Cosmos SDK, and enabled them in `app.go`. If so, you can just look
 at [`wasmd/app/app.go`](https://github.com/CosmWasm/wasmd/blob/master/app/app.go#)
 for how to do so (just search there for lines with `wasm`).
 
-`wasmd` also comes with a custom `ante handler` that adds the TX position in the block into the context
-and passes it to the contracts. In order to support this feature you would need to add our custom
-ante handler into the `ante handler chain` as in: [`app/ante.go`](https://github.com/CosmWasm/wasmd/blob/master/app/ante.go)
+`wasmd` also comes with 2 custom `ante handlers`: 
+* `CountTXDecorator` adds the TX position in the block into the context and passes it to the contracts
+* `LimitSimulationGasDecorator` prevents an "infinite gas" query
+
+In order to support these features you would need to add our custom
+ante handlers into the `ante handler chain` as in: [`app/ante.go`](https://github.com/CosmWasm/wasmd/blob/master/app/ante.go)
 
 ### Copied into your app
 
@@ -202,5 +200,5 @@ the SDK is implemented properly.
 
 Once you have tested this and are happy with the results, you can wire it up in `app.go`.
 Just edit [the default `NewKeeper` constructor](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/app/app.go#L257-L258)
-to have the proper `supportedFeatures` and pass in the `CustomEncoder` and `CustomQuerier` as the last two arguments to `NewKeeper`.
+to have the proper `availableCapabilities` and pass in the `CustomEncoder` and `CustomQuerier` as the last two arguments to `NewKeeper`.
 Now you can compile your chain and upload your custom contracts on it.

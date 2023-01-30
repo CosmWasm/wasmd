@@ -11,12 +11,11 @@ import (
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
 
+	ibctesting "github.com/line/ibc-go/v3/testing"
 	sdk "github.com/line/lbm-sdk/types"
-	ibctesting "github.com/line/lbm-sdk/x/ibc/testing"
 	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/rand"
 
-	wasmd "github.com/line/wasmd/app"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -63,6 +62,7 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	var pInstResp types.MsgStoreCodeResponse
 	require.NoError(chain.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
 	require.NotEmpty(chain.t, pInstResp.CodeID)
+	require.NotEmpty(chain.t, pInstResp.Checksum)
 	return pInstResp
 }
 
@@ -134,8 +134,5 @@ func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	type testSupporter interface {
-		TestSupport() *wasmd.TestSupport
-	}
-	return chain.App.(testSupporter).TestSupport().WasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
 }

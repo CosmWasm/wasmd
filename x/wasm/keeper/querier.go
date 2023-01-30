@@ -313,6 +313,13 @@ func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 	}, nil
 }
 
+// Params returns params of the module.
+func (q GrpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	params := q.keeper.GetParams(ctx)
+	return &types.QueryParamsResponse{Params: params}, nil
+}
+
 func (q GrpcQuerier) InactiveContracts(c context.Context, req *lbmtypes.QueryInactiveContractsRequest) (*lbmtypes.QueryInactiveContractsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
