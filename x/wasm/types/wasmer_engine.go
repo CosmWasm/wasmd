@@ -140,7 +140,7 @@ type WasmerEngine interface {
 	Cleanup()
 
 	// IBCChannelOpen is available on IBC-enabled contracts and is a hook to call into
-	// during the handshake pahse
+	// during the handshake phase
 	IBCChannelOpen(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
@@ -154,7 +154,7 @@ type WasmerEngine interface {
 	) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error)
 
 	// IBCChannelConnect is available on IBC-enabled contracts and is a hook to call into
-	// during the handshake pahse
+	// during the handshake phase
 	IBCChannelConnect(
 		checksum wasmvm.Checksum,
 		env wasmvmtypes.Env,
@@ -211,7 +211,7 @@ type WasmerEngine interface {
 	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
 
 	// IBCPacketTimeout is available on IBC-enabled contracts and is called when an
-	// outgoing packet (previously sent by this contract) will provably never be executed.
+	// outgoing packet (previously sent by this contract) will probably never be executed.
 	// Usually handled like ack returning an error
 	IBCPacketTimeout(
 		checksum wasmvm.Checksum,
