@@ -232,7 +232,6 @@ func (k Keeper) instantiate(
 	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(ctx, codeID), len(initMsg))
 	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
 
-	// get contact info
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
 		return nil, nil, sdkerrors.Wrap(types.ErrNotFound, "code")

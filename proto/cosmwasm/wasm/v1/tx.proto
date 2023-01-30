@@ -38,7 +38,7 @@ service Msg {
 message MsgStoreCode {
   option (cosmos.msg.v1.signer) = "sender";
 
-  // Sender is the that actor that signed the messages
+  // Sender is the actor that signed the messages
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 2 [ (gogoproto.customname) = "WASMByteCode" ];
