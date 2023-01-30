@@ -23,6 +23,7 @@
 - Upgrade IBC-go
   to [v4.3.0](https://github.com/cosmos/ibc-go/releases/tag/v4.3.0) [\#1180](https://github.com/CosmWasm/wasmd/pull/1180)
 - Upgrade Cosmos-SDK to [v0.45.12](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.12)
+- Upgrade ICA to [v0.2.6](https://github.com/cosmos/interchain-accounts-demo/releases/tag/v0.2.6) [\#1192](https://github.com/CosmWasm/wasmd/pull/1192)
 
 ### Notable changes:
 - Genesis messages were deprecated before and are removed with this release
