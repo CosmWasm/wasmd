@@ -4,46 +4,40 @@ import (
 	sdk "github.com/line/lbm-sdk/types"
 	wasmvm "github.com/line/wasmvm"
 	wasmvmtypes "github.com/line/wasmvm/types"
-
-	types "github.com/line/wasmd/x/wasm/types"
 )
 
-type cosmwasmAPIImpl struct {
-	gasMultiplier GasMultiplier
-}
-
 const (
+	// DefaultGasCostHumanAddress is how moch SDK gas we charge to convert to a human address format
+	DefaultGasCostHumanAddress = 5
+	// DefaultGasCostCanonicalAddress is how moch SDK gas we charge to convert to a canonical address format
+	DefaultGasCostCanonicalAddress = 4
+
 	// DefaultDeserializationCostPerByte The formular should be `len(data) * deserializationCostPerByte`
 	DefaultDeserializationCostPerByte = 1
 )
 
 var (
+	costHumanize            = DefaultGasCostHumanAddress * DefaultGasMultiplier
+	costCanonical           = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
 	costJSONDeserialization = wasmvmtypes.UFraction{
-		Numerator:   DefaultDeserializationCostPerByte * types.DefaultGasMultiplier,
+		Numerator:   DefaultDeserializationCostPerByte * DefaultGasMultiplier,
 		Denominator: 1,
 	}
 )
 
-func (a cosmwasmAPIImpl) humanAddress(canon []byte) (string, uint64, error) {
-	gas := a.gasMultiplier.FromWasmVMGas(5)
+func humanAddress(canon []byte) (string, uint64, error) {
 	if err := sdk.VerifyAddressFormat(canon); err != nil {
-		return "", gas, err
+		return "", costHumanize, err
 	}
-
-	return sdk.AccAddress(canon).String(), gas, nil
+	return sdk.AccAddress(canon).String(), costHumanize, nil
 }
 
-func (a cosmwasmAPIImpl) canonicalAddress(human string) ([]byte, uint64, error) {
+func canonicalAddress(human string) ([]byte, uint64, error) {
 	bz, err := sdk.AccAddressFromBech32(human)
-	return bz, a.gasMultiplier.ToWasmVMGas(4), err
+	return bz, costCanonical, err
 }
 
-func (k Keeper) cosmwasmAPI(ctx sdk.Context) wasmvm.GoAPI {
-	x := cosmwasmAPIImpl{
-		gasMultiplier: k.getGasMultiplier(ctx),
-	}
-	return wasmvm.GoAPI{
-		HumanAddress:     x.humanAddress,
-		CanonicalAddress: x.canonicalAddress,
-	}
+var cosmwasmAPI = wasmvm.GoAPI{
+	HumanAddress:     humanAddress,
+	CanonicalAddress: canonicalAddress,
 }

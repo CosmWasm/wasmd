@@ -1,7 +1,7 @@
 syntax = "proto3";
 package lbm.wasm.v1;
 
-option go_package = "github.com/line/wasmd/x/wasm/lbmtypes";
+option go_package = "github.com/line/wasmd/x/wasmplus/types";
 
 // EventDeactivateContractProposal is the event that is emitted when the contract is deactivate.
 message EventDeactivateContractProposal {

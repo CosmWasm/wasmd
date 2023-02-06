@@ -88,6 +88,9 @@
     - [EventActivateContractProposal](#lbm.wasm.v1.EventActivateContractProposal)
     - [EventDeactivateContractProposal](#lbm.wasm.v1.EventDeactivateContractProposal)
   
+- [lbm/wasm/v1/genesis.proto](#lbm/wasm/v1/genesis.proto)
+    - [GenesisState](#lbm.wasm.v1.GenesisState)
+  
 - [lbm/wasm/v1/proposal.proto](#lbm/wasm/v1/proposal.proto)
     - [ActivateContractProposal](#lbm.wasm.v1.ActivateContractProposal)
     - [DeactivateContractProposal](#lbm.wasm.v1.DeactivateContractProposal)
@@ -248,9 +251,6 @@ Params defines the set of wasm parameters.
 | ----- | ---- | ----- | ----------- |
 | `code_upload_access` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  |  |
 | `instantiate_default_permission` | [AccessType](#cosmwasm.wasm.v1.AccessType) |  |  |
-| `gas_multiplier` | [uint64](#uint64) |  |  |
-| `instance_cost` | [uint64](#uint64) |  |  |
-| `compile_cost` | [uint64](#uint64) |  |  |
 
 
 
@@ -610,7 +610,6 @@ GenesisState - genesis state of x/wasm
 | `contracts` | [Contract](#cosmwasm.wasm.v1.Contract) | repeated |  |
 | `sequences` | [Sequence](#cosmwasm.wasm.v1.Sequence) | repeated |  |
 | `gen_msgs` | [GenesisState.GenMsgs](#cosmwasm.wasm.v1.GenesisState.GenMsgs) | repeated |  |
-| `inactive_contract_addresses` | [string](#string) | repeated | InactiveContractAddresses is a list of contract address that set inactive |
 
 
 
@@ -1355,6 +1354,42 @@ EventDeactivateContractProposal is the event that is emitted when the contract i
 
 
 
+<a name="lbm/wasm/v1/genesis.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## lbm/wasm/v1/genesis.proto
+
+
+
+<a name="lbm.wasm.v1.GenesisState"></a>
+
+### GenesisState
+GenesisState - genesis state of x/wasm
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `params` | [cosmwasm.wasm.v1.Params](#cosmwasm.wasm.v1.Params) |  |  |
+| `codes` | [cosmwasm.wasm.v1.Code](#cosmwasm.wasm.v1.Code) | repeated |  |
+| `contracts` | [cosmwasm.wasm.v1.Contract](#cosmwasm.wasm.v1.Contract) | repeated |  |
+| `sequences` | [cosmwasm.wasm.v1.Sequence](#cosmwasm.wasm.v1.Sequence) | repeated |  |
+| `gen_msgs` | [cosmwasm.wasm.v1.GenesisState.GenMsgs](#cosmwasm.wasm.v1.GenesisState.GenMsgs) | repeated |  |
+| `inactive_contract_addresses` | [string](#string) | repeated | InactiveContractAddresses is a list of contract address that set inactive |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="lbm/wasm/v1/proposal.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -1487,7 +1522,7 @@ Query defines the gRPC querier service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `InactiveContracts` | [QueryInactiveContractsRequest](#lbm.wasm.v1.QueryInactiveContractsRequest) | [QueryInactiveContractsResponse](#lbm.wasm.v1.QueryInactiveContractsResponse) | InactiveContracts queries all inactive contracts | GET|/lbm/wasm/v1/inactive_contracts|
-| `InactiveContract` | [QueryInactiveContractRequest](#lbm.wasm.v1.QueryInactiveContractRequest) | [QueryInactiveContractResponse](#lbm.wasm.v1.QueryInactiveContractResponse) |  | GET|/lbm/wasm/v1/inactive_contracts/{address}|
+| `InactiveContract` | [QueryInactiveContractRequest](#lbm.wasm.v1.QueryInactiveContractRequest) | [QueryInactiveContractResponse](#lbm.wasm.v1.QueryInactiveContractResponse) | InactiveContract check it the contract is inactive state or not | GET|/lbm/wasm/v1/inactive_contracts/{address}|
 
  <!-- end services -->
 

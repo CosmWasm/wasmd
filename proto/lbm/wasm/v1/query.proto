@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
-option go_package                      = "github.com/line/wasmd/x/wasm/lbmtypes";
+option go_package                      = "github.com/line/wasmd/x/wasmplus/types";
 option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all)           = false;
 
@@ -16,6 +16,7 @@ service Query {
     option (google.api.http).get = "/lbm/wasm/v1/inactive_contracts";
   };
 
+  // InactiveContract check it the contract is inactive state or not
   rpc InactiveContract(QueryInactiveContractRequest) returns (QueryInactiveContractResponse) {
     option (google.api.http).get = "/lbm/wasm/v1/inactive_contracts/{address}";
   }

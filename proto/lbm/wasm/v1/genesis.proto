@@ -1,0 +1,30 @@
+syntax = "proto3";
+package lbm.wasm.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmwasm/wasm/v1/types.proto";
+import "cosmwasm/wasm/v1/genesis.proto";
+
+option go_package = "github.com/line/wasmd/x/wasmplus/types";
+
+// GenesisState - genesis state of x/wasm
+message GenesisState {
+  cosmwasm.wasm.v1.Params params = 1 [ (gogoproto.nullable) = false ];
+  repeated cosmwasm.wasm.v1.Code codes = 2
+  [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "codes,omitempty" ];
+  repeated cosmwasm.wasm.v1.Contract contracts = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "contracts,omitempty"
+  ];
+  repeated cosmwasm.wasm.v1.Sequence sequences = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "sequences,omitempty"
+  ];
+  repeated cosmwasm.wasm.v1.GenesisState.GenMsgs gen_msgs = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "gen_msgs,omitempty"
+  ];
+
+  // InactiveContractAddresses is a list of contract address that set inactive
+  repeated string inactive_contract_addresses = 6 [(gogoproto.jsontag) = "inactive_contract_address,omitempty"];
+}

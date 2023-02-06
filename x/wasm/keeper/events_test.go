@@ -72,8 +72,10 @@ func TestNewCustomEvents(t *testing.T) {
 		"multiple attributes": {
 			src: wasmvmtypes.Events{{
 				Type: "foo",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"},
-					{Key: "myOtherKey", Value: "myOtherVal"}},
+				Attributes: []wasmvmtypes.EventAttribute{
+					{Key: "myKey", Value: "myVal"},
+					{Key: "myOtherKey", Value: "myOtherVal"},
+				},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()),
@@ -122,7 +124,8 @@ func TestNewCustomEvents(t *testing.T) {
 				Type: "wasm",
 				Attributes: []wasmvmtypes.EventAttribute{
 					{Key: "_reserved", Value: "is skipped"},
-					{Key: "normal", Value: "is used"}},
+					{Key: "normal", Value: "is used"},
+				},
 			}},
 			isError: true,
 		},
@@ -219,8 +222,10 @@ func TestNewWasmModuleEvent(t *testing.T) {
 				sdk.NewAttribute("myKey", "myVal"))},
 		},
 		"multiple attributes": {
-			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"},
-				{Key: "myOtherKey", Value: "myOtherVal"}},
+			src: []wasmvmtypes.EventAttribute{
+				{Key: "myKey", Value: "myVal"},
+				{Key: "myOtherKey", Value: "myOtherVal"},
+			},
 			exp: sdk.Events{sdk.NewEvent("wasm",
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"),

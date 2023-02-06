@@ -316,7 +316,6 @@ func TestIBCQuerier(t *testing.T) {
 			assert.JSONEq(t, spec.expJsonResult, string(gotResult), string(gotResult))
 		})
 	}
-
 }
 
 func TestBankQuerierBalance(t *testing.T) {
@@ -466,7 +465,7 @@ func TestQueryErrors(t *testing.T) {
 				return nil, spec.src
 			})
 			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB()))
-			q := NewQueryHandler(ctx, mock, sdk.AccAddress{}, NewGasMultiplier(types.DefaultGasMultiplier))
+			q := NewQueryHandler(ctx, mock, sdk.AccAddress{}, NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
 		})

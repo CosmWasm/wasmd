@@ -37,7 +37,7 @@ type testData struct {
 }
 
 func setupTest(t *testing.T) testData {
-	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1", nil, nil)
+	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1")
 	cdc := keeper.MakeTestCodec(t)
 	data := testData{
 		module:        NewAppModule(cdc, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper),
@@ -139,8 +139,6 @@ type initMsg struct {
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
 
-type emptyMsg struct{}
-
 type state struct {
 	Verifier    string `json:"verifier"`
 	Beneficiary string `json:"beneficiary"`
@@ -149,7 +147,7 @@ type state struct {
 
 func TestHandleInstantiate(t *testing.T) {
 	data := setupTest(t)
-	creator := data.faucet.NewFundedAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
 
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
@@ -205,187 +203,14 @@ func TestHandleInstantiate(t *testing.T) {
 	})
 }
 
-func TestHandleStoreAndInstantiate(t *testing.T) {
-	data := setupTest(t)
-	creator := data.faucet.NewFundedAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
-
-	h := data.module.Route().Handler()
-	q := data.module.LegacyQuerierHandler(nil)
-
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
-
-	initMsg := initMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	msgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	// create with no balance is legal
-	msg := &MsgStoreCodeAndInstantiateContract{
-		Sender:       creator.String(),
-		WASMByteCode: testContract,
-		Msg:          msgBz,
-		Label:        "contract for test",
-		Funds:        nil,
-	}
-	res, err := h(data.ctx, msg)
-	require.NoError(t, err)
-	codeID, contractBech32Addr := parseStoreAndInitResponse(t, res.Data)
-
-	require.Equal(t, uint64(1), codeID)
-	require.Equal(t, "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8", contractBech32Addr)
-	// this should be standard x/wasm init event, nothing from contract
-	require.Equal(t, 4, len(res.Events), prettyEvents(res.Events))
-	assert.Equal(t, "store_code", res.Events[0].Type)
-	assertAttribute(t, "code_id", "1", res.Events[0].Attributes[1])
-	assert.Equal(t, "message", res.Events[1].Type)
-	assertAttribute(t, "module", "wasm", res.Events[1].Attributes[0])
-	assert.Equal(t, "instantiate", res.Events[2].Type)
-	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[2].Attributes[0])
-	assertAttribute(t, "code_id", "1", res.Events[2].Attributes[1])
-	assert.Equal(t, "wasm", res.Events[3].Type)
-	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[3].Attributes[0])
-
-	assertCodeList(t, q, data.ctx, 1)
-	assertCodeBytes(t, q, data.ctx, 1, testContract)
-
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr})
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator)
-	assertContractState(t, q, data.ctx, contractBech32Addr, state{
-		Verifier:    fred.String(),
-		Beneficiary: bob.String(),
-		Funder:      creator.String(),
-	})
-}
-
-func TestErrorsCreateAndInstantiate(t *testing.T) {
-	// init messages
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
-	initMsg := initMsg{
-		Verifier:    fred,
-		Beneficiary: bob,
-	}
-	validInitMsgBz, err := json.Marshal(initMsg)
-	require.NoError(t, err)
-
-	invalidInitMsgBz, err := json.Marshal(emptyMsg{})
-
-	expectedContractBech32Addr := "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8"
-
-	// test cases
-	cases := map[string]struct {
-		msg           sdk.Msg
-		isValid       bool
-		expectedCodes int
-		expectedBytes []byte
-	}{
-		"empty": {
-			msg:           &MsgStoreCodeAndInstantiateContract{},
-			isValid:       false,
-			expectedCodes: 0,
-			expectedBytes: nil,
-		},
-		"valid one": {
-			msg: &MsgStoreCodeAndInstantiateContract{
-				Sender:       addr1,
-				WASMByteCode: testContract,
-				Msg:          validInitMsgBz,
-				Label:        "foo",
-				Funds:        nil,
-			},
-			isValid:       true,
-			expectedCodes: 1,
-			expectedBytes: testContract,
-		},
-		"invalid wasm": {
-			msg: &MsgStoreCodeAndInstantiateContract{
-				Sender:       addr1,
-				WASMByteCode: []byte("foobar"),
-				Msg:          validInitMsgBz,
-				Label:        "foo",
-				Funds:        nil,
-			},
-			isValid:       false,
-			expectedCodes: 0,
-			expectedBytes: nil,
-		},
-		"old wasm (0.7)": {
-			msg: &MsgStoreCodeAndInstantiateContract{
-				Sender:       addr1,
-				WASMByteCode: oldContract,
-				Msg:          validInitMsgBz,
-				Label:        "foo",
-				Funds:        nil,
-			},
-			isValid:       false,
-			expectedCodes: 0,
-			expectedBytes: nil,
-		},
-		"invalid init message": {
-			msg: &MsgStoreCodeAndInstantiateContract{
-				Sender:       addr1,
-				WASMByteCode: testContract,
-				Msg:          invalidInitMsgBz,
-				Label:        "foo",
-				Funds:        nil,
-			},
-			isValid:       false,
-			expectedCodes: 1,
-			expectedBytes: testContract,
-		},
-	}
-
-	for name, tc := range cases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			data := setupTest(t)
-
-			h := data.module.Route().Handler()
-			q := data.module.LegacyQuerierHandler(nil)
-
-			// asserting response
-			res, err := h(data.ctx, tc.msg)
-			if tc.isValid {
-				require.NoError(t, err)
-				codeID, contractBech32Addr := parseStoreAndInitResponse(t, res.Data)
-				require.Equal(t, uint64(1), codeID)
-				require.Equal(t, expectedContractBech32Addr, contractBech32Addr)
-
-			} else {
-				require.Error(t, err, "%#v", res)
-			}
-
-			// asserting code state
-			assertCodeList(t, q, data.ctx, tc.expectedCodes)
-			assertCodeBytes(t, q, data.ctx, 1, tc.expectedBytes)
-
-			// asserting contract state
-			if tc.isValid {
-				assertContractList(t, q, data.ctx, 1, []string{expectedContractBech32Addr})
-				assertContractInfo(t, q, data.ctx, expectedContractBech32Addr, 1, addrAcc1)
-				assertContractState(t, q, data.ctx, expectedContractBech32Addr, state{
-					Verifier:    fred.String(),
-					Beneficiary: bob.String(),
-					Funder:      addrAcc1.String(),
-				})
-			} else {
-				assertContractList(t, q, data.ctx, 0, []string{})
-			}
-		})
-	}
-}
-
 func TestHandleExecute(t *testing.T) {
 	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
 
-	creator := data.faucet.NewFundedAccount(data.ctx, deposit.Add(deposit...)...)
-	fred := data.faucet.NewFundedAccount(data.ctx, topUp...)
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
+	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
 	h := data.module.Route().Handler()
 	q := data.module.LegacyQuerierHandler(nil)
@@ -528,7 +353,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	topUp := sdk.NewCoins(sdk.NewInt64Coin("denom", 5000))
 	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	data.faucet.Fund(data.ctx, creator, sdk.NewInt64Coin("denom", 100000))
-	fred := data.faucet.NewFundedAccount(data.ctx, topUp...)
+	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
 	h := data.module.Route().Handler()
 

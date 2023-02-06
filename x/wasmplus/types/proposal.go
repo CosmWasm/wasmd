@@ -1,4 +1,4 @@
-package lbmtypes
+package types
 
 import (
 	"fmt"
@@ -57,7 +57,9 @@ func (p ActivateContractProposal) GetDescription() string { return p.Description
 
 func (p ActivateContractProposal) ProposalRoute() string { return wasmtypes.RouterKey }
 
-func (p ActivateContractProposal) ProposalType() string { return string(ProposalTypeActivateContract) }
+func (p ActivateContractProposal) ProposalType() string {
+	return string(ProposalTypeActivateContract)
+}
 
 func (p ActivateContractProposal) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {

@@ -66,6 +66,20 @@ func TestConstructorOptions(t *testing.T) {
 				assert.IsType(t, &wasmtesting.MockCoinTransferrer{}, k.bank)
 			},
 		},
+		"costs": {
+			srcOpt: WithGasRegister(&wasmtesting.MockGasRegister{}),
+			verify: func(t *testing.T, k Keeper) {
+				assert.IsType(t, &wasmtesting.MockGasRegister{}, k.gasRegister)
+			},
+		},
+		"api costs": {
+			srcOpt: WithAPICosts(1, 2),
+			verify: func(t *testing.T, k Keeper) {
+				t.Cleanup(setApiDefaults)
+				assert.Equal(t, uint64(1), costHumanize)
+				assert.Equal(t, uint64(2), costCanonical)
+			},
+		},
 		"max recursion query limit": {
 			srcOpt: WithMaxQueryStackSize(1),
 			verify: func(t *testing.T, k Keeper) {
@@ -91,8 +105,13 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, bankpluskeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, nil, nil, spec.srcOpt)
+			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, bankpluskeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}
+}
+
+func setApiDefaults() {
+	costHumanize = DefaultGasCostHumanAddress * DefaultGasMultiplier
+	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
 }

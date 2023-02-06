@@ -65,17 +65,6 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, staki
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
 
-	for i, contractAddr := range data.InactiveContractAddresses {
-		inactiveContractAddr, err := sdk.AccAddressFromBech32(contractAddr)
-		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "wrong contract address %s", contractAddr)
-		}
-		err = keeper.deactivateContract(ctx, inactiveContractAddr)
-		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "contract number %d", i)
-		}
-	}
-
 	if len(data.GenMsgs) == 0 {
 		return nil, nil
 	}
@@ -134,11 +123,6 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 			Value: keeper.PeekAutoIncrementID(ctx, k),
 		})
 	}
-
-	keeper.IterateInactiveContracts(ctx, func(contractAddr sdk.AccAddress) (stop bool) {
-		genState.InactiveContractAddresses = append(genState.InactiveContractAddresses, contractAddr.String())
-		return false
-	})
 
 	return &genState
 }

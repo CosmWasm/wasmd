@@ -17,7 +17,7 @@ import (
 )
 
 func TestInstantiate2(t *testing.T) {
-	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, nil, nil)
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	otherExample := StoreReflectContract(t, parentCtx, keepers)
 	mock := &wasmtesting.MockWasmer{}
@@ -28,7 +28,7 @@ func TestInstantiate2(t *testing.T) {
 	beneficiaryAddr := RandomAccountAddress(t)
 	initMsg := mustMarshal(t, HackatomExampleInitMsg{Verifier: verifierAddr, Beneficiary: beneficiaryAddr})
 
-	otherAddr := keepers.Faucet.NewFundedAccount(parentCtx, sdk.NewInt64Coin("denom", 1_000_000_000))
+	otherAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, sdk.NewInt64Coin("denom", 1_000_000_000))
 
 	const (
 		mySalt  = "my salt"

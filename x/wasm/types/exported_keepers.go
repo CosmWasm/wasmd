@@ -21,8 +21,6 @@ type ViewKeeper interface {
 	GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error)
 	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
 	GetParams(ctx sdk.Context) Params
-	IterateInactiveContracts(ctx sdk.Context, fn func(contractAddress sdk.AccAddress) bool)
-	IsInactiveContract(ctx sdk.Context, contractAddress sdk.AccAddress) bool
 }
 
 // ContractOpsKeeper contains mutable operations on a contract.
@@ -78,12 +76,6 @@ type ContractOpsKeeper interface {
 
 	// SetAccessConfig updates the access config of a code id.
 	SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig AccessConfig) error
-
-	// DeactivateContract add the contract address to inactive contract list.
-	DeactivateContract(ctx sdk.Context, contractAddress sdk.AccAddress) error
-
-	// ActivateContract remove the contract address from inactive contract list.
-	ActivateContract(ctx sdk.Context, contractAddress sdk.AccAddress) error
 }
 
 // IBCContractKeeper IBC lifecycle event handler

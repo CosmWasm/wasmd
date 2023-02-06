@@ -74,7 +74,6 @@ import (
 
 	wasmappparams "github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/lbmtypes"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -113,8 +112,8 @@ func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
 	moduleBasics.RegisterLegacyAminoCodec(amino)
 	moduleBasics.RegisterInterfaces(interfaceRegistry)
 	// add wasmd types
-	lbmtypes.RegisterInterfaces(interfaceRegistry)
-	lbmtypes.RegisterLegacyAminoCodec(amino)
+	types.RegisterInterfaces(interfaceRegistry)
+	types.RegisterLegacyAminoCodec(amino)
 
 	return encodingConfig
 }
@@ -167,7 +166,7 @@ func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amount
 	f.balance = f.balance.Sub(amounts)
 }
 
-func (f *TestFaucet) NewFundedAccount(ctx sdk.Context, amounts ...sdk.Coin) sdk.AccAddress {
+func (f *TestFaucet) NewFundedRandomAccount(ctx sdk.Context, amounts ...sdk.Coin) sdk.AccAddress {
 	_, _, addr := keyPubAddr()
 	f.Fund(ctx, addr, amounts...)
 	return addr
@@ -190,13 +189,13 @@ type TestKeepers struct {
 
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t testing.TB) (sdk.Context, TestKeepers) {
-	return CreateTestInput(t, false, "staking", nil, nil)
+	return CreateTestInput(t, false, "staking")
 }
 
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities string, encoders *MessageEncoders, queriers *QueryPlugins, opts ...Option) (sdk.Context, TestKeepers) {
+func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities string, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
-	return createTestInput(t, isCheckTx, availableCapabilities, encoders, queriers, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
+	return createTestInput(t, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
@@ -204,8 +203,6 @@ func createTestInput(
 	t testing.TB,
 	isCheckTx bool,
 	availableCapabilities string,
-	encoders *MessageEncoders,
-	queriers *QueryPlugins,
 	wasmConfig types.WasmConfig,
 	db dbm.DB,
 	opts ...Option,
@@ -394,8 +391,6 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		availableCapabilities,
-		encoders,
-		queriers,
 		opts...,
 	)
 	keeper.SetParams(ctx, types.DefaultParams())
@@ -416,7 +411,7 @@ func createTestInput(
 		AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(paramsKeeper)).
 		AddRoute(distributiontypes.RouterKey, distribution.NewCommunityPoolSpendProposalHandler(distKeeper)).
-		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, lbmtypes.EnableAllProposals))
+		AddRoute(types.RouterKey, NewWasmProposalHandler(&keeper, types.EnableAllProposals))
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,

@@ -25,9 +25,6 @@ message GenesisState {
     (gogoproto.jsontag) = "gen_msgs,omitempty"
   ];
 
-  // InactiveContractAddresses is a list of contract address that set inactive
-  repeated string inactive_contract_addresses = 6 [(gogoproto.jsontag) = "inactive_contract_address, omitempty"];
-
   // GenMsgs define the messages that can be executed during genesis phase in
   // order. The intention is to have more human readable data that is auditable.
   message GenMsgs {

@@ -42,8 +42,6 @@
   ],
   "gen_msgs":
   [],
-  "inactive_contract_addresses":
-  ["link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8"],
   "params":
   {
     "code_upload_access":
@@ -51,9 +49,6 @@
       "address": "",
       "permission": "Everybody"
     },
-    "compile_cost": "3",
-    "gas_multiplier": "140000000",
-    "instance_cost": "60000",
     "instantiate_default_permission": "Everybody"
   },
   "sequences":

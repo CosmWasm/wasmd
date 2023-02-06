@@ -9,7 +9,7 @@ import (
 	govcli "github.com/line/lbm-sdk/x/gov/client/cli"
 	"github.com/line/lbm-sdk/x/gov/types"
 
-	"github.com/line/wasmd/x/wasm/client/cli"
+	"github.com/line/wasmd/x/wasmplus/client/cli"
 )
 
 func (s *IntegrationTestSuite) TestProposalDeactivateContractCmd() {

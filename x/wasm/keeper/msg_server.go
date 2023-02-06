@@ -6,7 +6,6 @@ import (
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 
-	"github.com/line/wasmd/x/wasm/lbmtypes"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -111,45 +110,6 @@ func (m msgServer) InstantiateContract2(goCtx context.Context, msg *types.MsgIns
 	}
 
 	return &types.MsgInstantiateContract2Response{
-		Address: contractAddr.String(),
-		Data:    data,
-	}, nil
-}
-
-func (m msgServer) StoreCodeAndInstantiateContract(goCtx context.Context,
-	msg *lbmtypes.MsgStoreCodeAndInstantiateContract) (*lbmtypes.MsgStoreCodeAndInstantiateContractResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, sdkerrors.Wrap(err, "sender")
-	}
-	codeID, _, err := m.keeper.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		sdk.EventTypeMessage,
-		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-		sdk.NewAttribute(sdk.AttributeKeySender, msg.Sender),
-	))
-
-	var adminAddr sdk.AccAddress
-	if msg.Admin != "" {
-		adminAddr, err = sdk.AccAddressFromBech32(msg.Admin)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "admin")
-		}
-	}
-
-	contractAddr, data, err := m.keeper.Instantiate(ctx, codeID, senderAddr, adminAddr, msg.Msg,
-		msg.Label, msg.Funds)
-	if err != nil {
-		return nil, err
-	}
-
-	return &lbmtypes.MsgStoreCodeAndInstantiateContractResponse{
-		CodeID:  codeID,
 		Address: contractAddr.String(),
 		Data:    data,
 	}, nil

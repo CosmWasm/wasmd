@@ -38,8 +38,5 @@ func RandomParams(r *rand.Rand) types.Params {
 	return types.Params{
 		CodeUploadAccess:             accessConfig,
 		InstantiateDefaultPermission: accessConfig.Permission,
-		GasMultiplier:                types.DefaultGasMultiplier,
-		InstanceCost:                 types.DefaultInstanceCost,
-		CompileCost:                  types.DefaultCompileCost,
 	}
 }

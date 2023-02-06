@@ -374,7 +374,7 @@ func TestEncoding(t *testing.T) {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/lbm.bank.invalidversion.MsgSend",
+					TypeURL: "/cosmos.bank.v2.MsgSend",
 					Value:   bankMsgBin,
 				},
 			},
@@ -634,5 +634,4 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 			assert.Equal(t, spec.expVal, gotVal)
 		})
 	}
-
 }

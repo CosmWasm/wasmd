@@ -25,10 +25,9 @@ type IntegrationTestSuite struct {
 
 	setupHeight int64
 
-	codeID                  string
-	contractAddress         string
-	nonExistValidAddress    string
-	inactiveContractAddress string
+	codeID               string
+	contractAddress      string
+	nonExistValidAddress string
 
 	// for hackatom contract
 	verifier    string
@@ -51,8 +50,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	if testing.Short() {
 		s.T().Skip("skipping test in unit-tests mode.")
 	}
-
-	s.inactiveContractAddress = "link14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sgf2vn8"
 
 	// add inactive contract to genesis
 	var wasmData types.GenesisState
@@ -119,7 +116,11 @@ func (s *IntegrationTestSuite) deployContract() string {
 	// parse codeID
 	for _, v := range res.Events {
 		if v.Type == types.EventTypeStoreCode {
-			return string(v.Attributes[0].Value)
+			for _, attr := range v.Attributes {
+				if string(attr.Key) == types.AttributeKeyCodeID {
+					return string(attr.Value)
+				}
+			}
 		}
 	}
 

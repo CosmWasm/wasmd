@@ -87,9 +87,6 @@ var (
 
 	// ErrExceedMaxQueryStackSize error if max query stack size is exceeded
 	ErrExceedMaxQueryStackSize = sdkErrors.Register(DefaultCodespace, 27, "max query stack size exceeded")
-
-	// ErrInactiveContract error if the contract set inactive
-	ErrInactiveContract = sdkErrors.Register(DefaultCodespace, 101, "inactive contract")
 )
 
 type ErrNoSuchContract struct {

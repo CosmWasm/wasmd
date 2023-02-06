@@ -57,9 +57,6 @@ message Params {
   ];
   AccessType instantiate_default_permission = 2
       [ (gogoproto.moretags) = "yaml:\"instantiate_default_permission\"" ];
-  uint64     gas_multiplier                 = 3 [(gogoproto.moretags) = "yaml:\"gas_multiplier\""];
-  uint64     instance_cost                  = 4 [(gogoproto.moretags) = "yaml:\"instance_cost\""];
-  uint64     compile_cost                   = 5 [(gogoproto.moretags) = "yaml:\"compile_cost\""];
 }
 
 // CodeInfo is data for the uploaded contract WASM code

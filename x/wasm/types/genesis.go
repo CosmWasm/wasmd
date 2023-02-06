@@ -37,11 +37,6 @@ func (s GenesisState) ValidateBasic() error {
 			return sdkerrors.Wrapf(err, "gen message: %d", i)
 		}
 	}
-	for i, addr := range s.InactiveContractAddresses {
-		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
-			return sdkerrors.Wrapf(err, "inactive contract address: %d", i)
-		}
-	}
 	return nil
 }
 

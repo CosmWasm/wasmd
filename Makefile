@@ -82,7 +82,7 @@ build: go.sum
 ifeq ($(OS),Windows_NT)
 	exit 1
 else
-	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
+	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmplusd
 endif
 
 build-contract-tests-hooks:
@@ -93,7 +93,8 @@ else
 endif
 
 install: go.sum
-	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmd
+	go install -mod=readonly $(BUILD_FLAGS) ./cmd/wasmplusd
+	mv $(BINDIR)/wasmplusd $(BINDIR)/wasmd
 
 ########################################
 ### Tools & dependencies

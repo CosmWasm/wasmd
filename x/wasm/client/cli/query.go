@@ -19,7 +19,6 @@ import (
 	wasmvm "github.com/line/wasmvm"
 
 	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/lbmtypes"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -43,8 +42,6 @@ func GetQueryCmd() *cobra.Command {
 		GetCmdLibVersion(),
 		GetCmdQueryParams(),
 		GetCmdBuildAddress(),
-		GetCmdListInactiveContracts(),
-		GetCmdIsInactiveContract(),
 	)
 	return queryCmd
 }
@@ -591,67 +588,6 @@ func withPageKeyDecoded(flagSet *flag.FlagSet) *flag.FlagSet {
 		panic(err.Error())
 	}
 	return flagSet
-}
-
-func GetCmdListInactiveContracts() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:  "inactive-contracts",
-		Long: "List all inactive contracts",
-		Args: cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			pageReq, err := client.ReadPageRequest(withPageKeyDecoded(cmd.Flags()))
-			if err != nil {
-				return err
-			}
-			queryClient := lbmtypes.NewQueryClient(clientCtx)
-			res, err := queryClient.InactiveContracts(
-				context.Background(),
-				&lbmtypes.QueryInactiveContractsRequest{
-					Pagination: pageReq,
-				},
-			)
-			if err != nil {
-				return err
-			}
-			return clientCtx.PrintProto(res)
-		},
-	}
-	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "list of inactive contracts")
-	return cmd
-}
-
-func GetCmdIsInactiveContract() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:  "is-inactive [bech32_address]",
-		Long: "Check if inactive contract or not",
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			queryClient := lbmtypes.NewQueryClient(clientCtx)
-			res, err := queryClient.InactiveContract(
-				context.Background(),
-				&lbmtypes.QueryInactiveContractRequest{
-					Address: args[0],
-				},
-			)
-			if err != nil {
-				return err
-			}
-			return clientCtx.PrintProto(res)
-		},
-	}
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
 }
 
 // GetCmdQueryParams implements a command to return the current wasm

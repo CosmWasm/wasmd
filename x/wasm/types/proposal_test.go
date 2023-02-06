@@ -163,9 +163,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
@@ -258,9 +256,7 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateMigrateContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address2"
-	)
+	invalidAddress := "invalid address2"
 
 	specs := map[string]struct {
 		src    *MigrateContractProposal
@@ -319,9 +315,7 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *SudoContractProposal
@@ -374,9 +368,7 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
@@ -435,9 +427,7 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
@@ -490,9 +480,7 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	var (
-		invalidAddress = "invalid address"
-	)
+	invalidAddress := "invalid address"
 
 	specs := map[string]struct {
 		src    *ClearAdminProposal

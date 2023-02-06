@@ -74,6 +74,6 @@ const SupportedFeatures = "iterator,staking,stargate"
 
 // Copy from keeper_test.go
 func makeKeeper(t *testing.T) keeper.TestKeepers {
-	_, keepers := keeper.CreateTestInput(t, false, SupportedFeatures, nil, nil)
+	_, keepers := keeper.CreateTestInput(t, false, SupportedFeatures)
 	return keepers
 }

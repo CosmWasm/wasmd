@@ -33,17 +33,3 @@ func parseInitResponse(t *testing.T, data []byte) string {
 	require.NoError(t, err)
 	return addr
 }
-
-// ensures this returns a valid codeID and bech32 address and returns it
-func parseStoreAndInitResponse(t *testing.T, data []byte) (uint64, string) {
-	var res MsgStoreCodeAndInstantiateContractResponse
-	require.NoError(t, res.Unmarshal(data))
-	require.NotEmpty(t, res.CodeID)
-	require.NotEmpty(t, res.Address)
-	addr := res.Address
-	codeID := res.CodeID
-	// ensure this is a valid sdk address
-	_, err := sdk.AccAddressFromBech32(addr)
-	require.NoError(t, err)
-	return codeID, addr
-}

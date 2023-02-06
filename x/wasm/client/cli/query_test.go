@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"net/url"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
+	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	ocabcitypes "github.com/line/ostracon/abci/types"
 	ocrpcmocks "github.com/line/ostracon/rpc/client/mocks"
 	ocrpctypes "github.com/line/ostracon/rpc/core/types"
@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/line/wasmd/x/wasm/lbmtypes"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -376,58 +375,6 @@ func TestGetCmdListPinnedCode(t *testing.T) {
 	}
 }
 
-func TestGetCmdListInactiveContracts(t *testing.T) {
-	res := lbmtypes.QueryInactiveContractsResponse{}
-	bz, err := res.Marshal()
-	require.NoError(t, err)
-	ctx := makeContext(bz)
-	tests := testcase{
-		{"execute success", nil, ctx, nil, nil},
-		{"bad status", badStatusError, ctx, nil, nil},
-		{"invalid request", invalidRequestError, ctx, invalidRequestFlags, nil},
-		{"invalid url", invalidControlChar, context.Background(), invalidNodeFlags, nil},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd := GetCmdListInactiveContracts()
-			err := cmd.ParseFlags(tt.flags)
-			require.NoError(t, err)
-			cmd.SetContext(tt.ctx)
-			actual := cmd.RunE(cmd, tt.args)
-			if tt.want == nil {
-				assert.Nilf(t, actual, "GetCmdListInactiveContracts()")
-			} else {
-				assert.Equalf(t, tt.want.Error(), actual.Error(), "GetCmdListInactiveContracts()")
-			}
-		})
-	}
-}
-
-func TestGetCmdIsInactiveContract(t *testing.T) {
-	res := lbmtypes.QueryInactiveContractResponse{}
-	bz, err := res.Marshal()
-	require.NoError(t, err)
-	ctx := makeContext(bz)
-	tests := testcase{
-		{"execute success", nil, ctx, nil, argsWithAddr},
-		{"bad status", badStatusError, ctx, nil, argsWithAddr},
-		{"invalid url", invalidControlChar, context.Background(), invalidNodeFlags, argsWithAddr},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd := GetCmdIsInactiveContract()
-			err := cmd.ParseFlags(tt.flags)
-			require.NoError(t, err)
-			cmd.SetContext(tt.ctx)
-			actual := cmd.RunE(cmd, tt.args)
-			if tt.want == nil {
-				assert.Nilf(t, actual, "GetCmdIsInactiveContract()")
-			} else {
-				assert.Equalf(t, tt.want.Error(), actual.Error(), "GetCmdIsInactiveContract()")
-			}
-		})
-	}
-}
 func makeContext(bz []byte) context.Context {
 	result := ocrpctypes.ResultABCIQuery{Response: ocabcitypes.ResponseQuery{Value: bz}}
 	mockClient := ocrpcmocks.RemoteClient{}

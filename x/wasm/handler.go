@@ -10,7 +10,6 @@ import (
 	abci "github.com/line/ostracon/abci/types"
 
 	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/lbmtypes"
 	"github.com/line/wasmd/x/wasm/types"
 )
 
@@ -32,13 +31,6 @@ func NewHandler(k types.ContractOpsKeeper) sdk.Handler {
 			res, err = msgServer.InstantiateContract(sdk.WrapSDKContext(ctx), msg)
 		case *MsgInstantiateContract2:
 			res, err = msgServer.InstantiateContract2(sdk.WrapSDKContext(ctx), msg)
-		case *MsgStoreCodeAndInstantiateContract:
-			lbmMsgServer, ok := msgServer.(lbmtypes.MsgServer)
-			if !ok {
-				errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
-				return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-			}
-			res, err = lbmMsgServer.StoreCodeAndInstantiateContract(sdk.WrapSDKContext(ctx), msg)
 		case *MsgExecuteContract:
 			res, err = msgServer.ExecuteContract(sdk.WrapSDKContext(ctx), msg)
 		case *MsgMigrateContract:

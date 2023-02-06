@@ -32,8 +32,6 @@ var (
 	PinnedCodeIndexPrefix                          = []byte{0x07}
 	TXCounterPrefix                                = []byte{0x08}
 
-	InactiveContractPrefix = []byte{0x90}
-
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
 )
@@ -106,11 +104,4 @@ func GetPinnedCodeIndexPrefix(codeID uint64) []byte {
 // ParsePinnedCodeIndex converts the serialized code ID back.
 func ParsePinnedCodeIndex(s []byte) uint64 {
 	return sdk.BigEndianToUint64(s)
-}
-
-func GetInactiveContractKey(contractAddress sdk.AccAddress) []byte {
-	key := make([]byte, len(InactiveContractPrefix)+len(contractAddress))
-	copy(key, InactiveContractPrefix)
-	copy(key[len(InactiveContractPrefix):], contractAddress)
-	return key
 }
