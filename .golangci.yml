@@ -32,6 +32,9 @@ linters:
 
 issues:
   exclude-rules:
+    - text: "Error return value of `flagSet.Set` is not checked"
+      linters:
+        - errcheck
     - text: "SA1019: sdkerrors.Wrapf is deprecated: functionality of this package has been moved to it's own module"
       linters:
         - staticcheck

@@ -43,7 +43,8 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	}
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
-	anyValidWasmFile.Write(wasmIdent)
+	_, err = anyValidWasmFile.Write(wasmIdent)
+	require.NoError(t, err)
 	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
@@ -110,7 +111,8 @@ func TestInstantiateContractCmd(t *testing.T) {
 	}
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
-	anyValidWasmFile.Write(wasmIdent)
+	_, err = anyValidWasmFile.Write(wasmIdent)
+	require.NoError(t, err)
 	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
@@ -369,7 +371,8 @@ func TestExecuteContractCmd(t *testing.T) {
 	}
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
-	anyValidWasmFile.Write(wasmIdent)
+	_, err = anyValidWasmFile.Write(wasmIdent)
+	require.NoError(t, err)
 	require.NoError(t, anyValidWasmFile.Close())
 
 	specs := map[string]struct {
