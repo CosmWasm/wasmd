@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const invalidAddress = "invalid address"
+
 func TestValidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
@@ -94,10 +96,7 @@ func TestValidateProposalCommons(t *testing.T) {
 }
 
 func TestValidateStoreCodeProposal(t *testing.T) {
-	var (
-		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
-	)
+	var anyAddress sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
 
 	specs := map[string]struct {
 		src    *StoreCodeProposal
@@ -187,8 +186,6 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
 		expErr bool

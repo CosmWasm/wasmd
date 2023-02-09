@@ -131,7 +131,7 @@ func TestContractInstanceCosts(t *testing.T) {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(DefaultContractMessageDataCost * math.MaxUint32),
+			exp:       DefaultContractMessageDataCost * math.MaxUint32,
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
@@ -210,7 +210,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo")
+			exp:       3*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo")
 		},
 		"subcall response with events exceeds free tier- pinned": {
 			src: wasmvmtypes.Reply{
