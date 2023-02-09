@@ -8,7 +8,7 @@ require (
 	github.com/CosmWasm/wasmvm v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
 	github.com/cosmos/cosmos-sdk v0.46.9
-	github.com/cosmos/gogoproto v1.4.2
+	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/iavl v0.19.5
 	github.com/cosmos/ibc-go/v6 v6.1.0
 	github.com/cosmos/interchain-accounts v0.4.2
@@ -31,17 +31,17 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/tendermint/tendermint v0.34.26
 	github.com/tendermint/tm-db v0.6.7
-	google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
-	google.golang.org/grpc v1.50.1
+	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
+	google.golang.org/grpc v1.52.3
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	cloud.google.com/go v0.104.0 // indirect
+	cloud.google.com/go v0.105.0 // indirect
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
-	cloud.google.com/go/iam v0.4.0 // indirect
-	cloud.google.com/go/storage v1.23.0 // indirect
+	cloud.google.com/go/iam v0.7.0 // indirect
+	cloud.google.com/go/storage v1.27.0 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -89,7 +89,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.6.0 // indirect
-	github.com/googleapis/go-type-adapters v1.0.0 // indirect
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
