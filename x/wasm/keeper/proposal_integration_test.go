@@ -259,6 +259,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
+	require.NoError(t, err)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -348,6 +349,7 @@ func TestMigrateProposal(t *testing.T) {
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
+	require.NoError(t, err)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -412,6 +414,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err := govv1.NewLegacyContent(&badSrc, myActorAddress)
+	require.NoError(t, err)
 
 	// fails on store - this doesn't have permission
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -431,6 +434,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	myActorAddress = govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err = govv1.NewLegacyContent(&src, myActorAddress)
+	require.NoError(t, err)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -581,6 +585,7 @@ func TestAdminProposals(t *testing.T) {
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := govv1.NewLegacyContent(spec.srcProposal, myActorAddress)
+			require.NoError(t, err)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
@@ -681,6 +686,7 @@ func TestUpdateParamsProposal(t *testing.T) {
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
+			require.NoError(t, err)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			require.NoError(t, err)
@@ -767,6 +773,7 @@ func TestPinCodesProposal(t *testing.T) {
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
+			require.NoError(t, err)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {

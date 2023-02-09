@@ -1095,6 +1095,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -2233,6 +2234,8 @@ func TestIteratorContractByCreator(t *testing.T) {
 	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 
 	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	require.NoError(t, err)
+
 	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 
 	require.NoError(t, err)
