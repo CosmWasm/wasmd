@@ -17,12 +17,13 @@ import (
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.SetupWasmAppWithValSet(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager().RunMigrations(ctx, wasmApp.ModuleConfigurator(), fromVM)
 	}
 	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
 	fromVM[wasm.ModuleName] = 1 // start with initial version
-	upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+	_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+	require.NoError(t, err)
 	// when
 	gotVM, err := wasmApp.ModuleManager().RunMigrations(ctx, wasmApp.ModuleConfigurator(), fromVM)
 	// then

@@ -84,7 +84,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
+func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) { //nolint:unparam
 	msg := types.MsgUpdateAdmin{
 		Sender:   cliCtx.GetFromAddress().String(),
 		Contract: args[0],
