@@ -114,6 +114,7 @@ func TestInstantiateProposal(t *testing.T) {
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err := govv1.NewLegacyContent(src, myActorAddress)
+	require.NoError(t, err)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -482,6 +483,7 @@ func TestSudoProposal(t *testing.T) {
 
 	myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 	msgContent, err := govv1.NewLegacyContent(&src, myActorAddress)
+	require.NoError(t, err)
 
 	// when stored
 	_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
@@ -855,6 +857,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			// when stored
 			myActorAddress := govKeeper.GetGovernanceAccount(ctx).GetAddress().String()
 			msgContent, err := govv1.NewLegacyContent(&prop, myActorAddress)
+			require.NoError(t, err)
 
 			_, err = govKeeper.SubmitProposal(ctx, []sdk.Msg{msgContent}, "testing 123")
 			if spec.expErr {

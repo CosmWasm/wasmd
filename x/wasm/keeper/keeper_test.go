@@ -848,7 +848,7 @@ func TestExecute(t *testing.T) {
 	em := sdk.NewEventManager()
 	// when
 	res, err := keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, fred, []byte(`{"release":{}}`), topUp)
-	diff := time.Now().Sub(start)
+	diff := time.Since(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
@@ -1052,6 +1052,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 

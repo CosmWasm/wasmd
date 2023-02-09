@@ -400,10 +400,10 @@ func TestDispatchSubmessages(t *testing.T) {
 				require.Error(t, gotErr)
 				assert.Empty(t, em.Events())
 				return
-			} else {
-				require.NoError(t, gotErr)
-				assert.Equal(t, spec.expData, gotData)
 			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expData, gotData)
+
 			assert.Equal(t, spec.expCommits, mockStore.Committed)
 			if len(spec.expEvents) == 0 {
 				assert.Empty(t, em.Events())

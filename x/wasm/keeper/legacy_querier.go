@@ -121,7 +121,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	}
 }
 
-func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoResponse, error) {
+func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoResponse, error) { //nolint:unparam
 	var info []types.CodeInfoResponse
 	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
 		info = append(info, types.CodeInfoResponse{
@@ -135,7 +135,7 @@ func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoRe
 	return info, nil
 }
 
-func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) ([]types.ContractCodeHistoryEntry, error) {
+func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) ([]types.ContractCodeHistoryEntry, error) { //nolint:unparam
 	history := keeper.GetContractHistory(ctx, contractAddr)
 	// redact response
 	for i := range history {

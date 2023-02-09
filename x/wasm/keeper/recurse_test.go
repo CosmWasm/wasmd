@@ -39,7 +39,7 @@ type recurseResponse struct {
 // number os wasm queries called from a contract
 var totalWasmQueryCounter int
 
-func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
+func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) { //nolint:unparam
 	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
 		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++

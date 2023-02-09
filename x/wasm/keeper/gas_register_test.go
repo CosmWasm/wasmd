@@ -224,7 +224,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas((3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo"), 6 == len("myData")
+			exp:       (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - pinned": {
 			src: wasmvmtypes.Reply{

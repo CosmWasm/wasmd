@@ -475,8 +475,6 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *SudoContractProposal
 		expErr bool
@@ -528,8 +526,6 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
 		expErr bool

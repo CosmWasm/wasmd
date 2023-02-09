@@ -14,7 +14,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // this is the correct import for protobuf
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -373,6 +373,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 		Address: creator.String(),
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
+	require.NoError(t, err)
+
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",

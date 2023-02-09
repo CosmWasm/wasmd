@@ -225,7 +225,7 @@ var ( // store keys
 func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	// parse received data and store
 	packet := msg.Packet
-	var receivedBall hit
+	var receivedBall Hit
 	if err := json.Unmarshal(packet.Data, &receivedBall); err != nil {
 		return &wasmvmtypes.IBCReceiveResult{
 			Ok: &wasmvmtypes.IBCReceiveResponse{
@@ -270,7 +270,7 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, ms
 // OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	// parse received data and store
-	var sentBall hit
+	var sentBall Hit
 	if err := json.Unmarshal(msg.OriginalPacket.Data, &sentBall); err != nil {
 		return nil, 0, err
 	}
@@ -322,15 +322,15 @@ func counterParty(s string) string {
 }
 
 // hit is ibc packet payload
-type hit map[string]uint64
+type Hit map[string]uint64
 
-func NewHit(player string, count uint64) hit {
+func NewHit(player string, count uint64) Hit {
 	return map[string]uint64{
 		player: count,
 	}
 }
 
-func (h hit) GetBytes() []byte {
+func (h Hit) GetBytes() []byte {
 	b, err := json.Marshal(h)
 	if err != nil {
 		panic(err)
@@ -338,22 +338,22 @@ func (h hit) GetBytes() []byte {
 	return b
 }
 
-func (h hit) String() string {
+func (h Hit) String() string {
 	return fmt.Sprintf("Ball %s", string(h.GetBytes()))
 }
 
-func (h hit) BuildAck() hitAcknowledgement {
+func (h Hit) BuildAck() hitAcknowledgement {
 	return hitAcknowledgement{Success: &h}
 }
 
-func (h hit) BuildError(errMsg string) hitAcknowledgement {
+func (h Hit) BuildError(errMsg string) hitAcknowledgement {
 	return hitAcknowledgement{Error: errMsg}
 }
 
 // hitAcknowledgement is ibc acknowledgment payload
 type hitAcknowledgement struct {
 	Error   string `json:"error,omitempty"`
-	Success *hit   `json:"success,omitempty"`
+	Success *Hit   `json:"success,omitempty"`
 }
 
 func (a hitAcknowledgement) GetBytes() []byte {
