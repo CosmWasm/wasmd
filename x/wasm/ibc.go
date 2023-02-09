@@ -73,7 +73,7 @@ func (i IBCHandler) OnChanOpenInit(
 		return version, err
 	}
 	if acceptedVersion == "" {
-		acceptedVersion = version //nolint:ineffassign // this is a bit confusing, but we want to return the version we accepted
+		acceptedVersion = version
 	}
 
 	// Claim channel capability passed back by IBC module

@@ -17,7 +17,7 @@ import (
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.SetupWasmAppWithValSet(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager().RunMigrations(ctx, wasmApp.ModuleConfigurator(), fromVM)
 	}
 	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
