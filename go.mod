@@ -11,7 +11,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/iavl v0.19.5
 	github.com/cosmos/ibc-go/v6 v6.1.0
-	github.com/cosmos/interchain-accounts v0.4.2
+	github.com/cosmos/interchain-accounts v0.4.3
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
