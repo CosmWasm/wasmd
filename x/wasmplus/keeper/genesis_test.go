@@ -570,6 +570,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 		accountKeeper,
 		subspace(banktypes.ModuleName),
 		map[string]bool{},
+		false,
 	)
 
 	srcKeeper := NewKeeper(

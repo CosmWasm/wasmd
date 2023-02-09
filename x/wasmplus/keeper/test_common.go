@@ -257,6 +257,7 @@ func createTestInput(
 		accountKeeper,
 		subspace(banktypes.ModuleName),
 		blockedAddrs,
+		false,
 	)
 	bankKeeper.SetParams(ctx, banktypes.DefaultParams())
 

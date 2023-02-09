@@ -365,6 +365,7 @@ func NewWasmApp(
 		app.AccountKeeper,
 		app.getSubspace(banktypes.ModuleName),
 		app.BlockedAddrs(),
+		false,
 	)
 	app.AuthzKeeper = authzkeeper.NewKeeper(
 		keys[authzkeeper.StoreKey],
