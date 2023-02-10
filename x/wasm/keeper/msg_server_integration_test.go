@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/line/lbm-sdk/testutil/testdata"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/app"
 	"github.com/line/wasmd/x/wasm/types"
@@ -20,7 +20,7 @@ var wasmContract []byte
 
 func TestStoreCode(t *testing.T) {
 	wasmApp := app.Setup(false)
-	ctx := wasmApp.BaseApp.NewContext(false, ocproto.Header{})
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
 		m.WASMByteCode = wasmContract

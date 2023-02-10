@@ -10,10 +10,10 @@ import (
 
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	ibctesting "github.com/line/ibc-go/v3/testing"
 	sdk "github.com/line/lbm-sdk/types"
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/rand"
 
 	"github.com/line/wasmd/x/wasm/types"

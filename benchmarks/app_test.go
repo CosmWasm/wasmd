@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/line/lbm-sdk/client"
@@ -15,9 +17,8 @@ import (
 	sdk "github.com/line/lbm-sdk/types"
 	authtypes "github.com/line/lbm-sdk/x/auth/types"
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
-	abci "github.com/line/ostracon/abci/types"
+	ocabci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/log"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/app"
 	wasmappparams "github.com/line/wasmd/app/params"
@@ -65,7 +66,7 @@ func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.Genes
 	)
 
 	wasmApp.Commit()
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
+	wasmApp.BeginBlock(ocabci.RequestBeginBlock{Header: tmproto.Header{Height: wasmApp.LastBlockHeight() + 1}})
 
 	return wasmApp
 }
@@ -115,7 +116,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	// add wasm contract
 	height := int64(2)
 	txGen := wasmappparams.MakeEncodingConfig().TxConfig
-	wasmApp.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: height, Time: time.Now()}})
+	wasmApp.BeginBlock(ocabci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 	// upload the code
 	cw20Code, err := os.ReadFile("./testdata/cw20_base.wasm")

@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/line/lbm-sdk/types"
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/log"
 	wasmvmtypes "github.com/line/wasmvm/types"
 

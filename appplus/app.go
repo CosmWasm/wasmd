@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	ica "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts"
@@ -98,15 +100,12 @@ import (
 	upgradeclient "github.com/line/lbm-sdk/x/upgrade/client"
 	upgradekeeper "github.com/line/lbm-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/line/lbm-sdk/x/upgrade/types"
-	abci "github.com/line/ostracon/abci/types"
+	ocabci "github.com/line/ostracon/abci/types"
 	tmjson "github.com/line/ostracon/libs/json"
 	"github.com/line/ostracon/libs/log"
 	tmos "github.com/line/ostracon/libs/os"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
-	// unnamed import of statik for swagger UI support
 	wasmapp "github.com/line/wasmd/app"
-
 	wasmappparams "github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm"
 	wasmclient "github.com/line/wasmd/x/wasm/client"
@@ -747,7 +746,7 @@ func NewWasmApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, ocproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
@@ -774,7 +773,7 @@ func (app *WasmPlusApp) ModuleConfigurator() module.Configurator {
 }
 
 // BeginBlocker application updates every begin block
-func (app *WasmPlusApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *WasmPlusApp) BeginBlocker(ctx sdk.Context, req ocabci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 

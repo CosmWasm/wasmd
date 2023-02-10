@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
 	baseapp "github.com/line/lbm-sdk/baseapp"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
-	abci "github.com/line/ostracon/abci/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	"github.com/line/wasmd/x/wasm/types"

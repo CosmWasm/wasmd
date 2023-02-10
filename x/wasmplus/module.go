@@ -7,6 +7,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
@@ -15,7 +16,6 @@ import (
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	"github.com/line/lbm-sdk/types/module"
 	simtypes "github.com/line/lbm-sdk/types/simulation"
-	abci "github.com/line/ostracon/abci/types"
 
 	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
 	"github.com/line/wasmd/x/wasm/simulation"

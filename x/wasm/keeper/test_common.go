@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/line/ibc-go/v3/modules/apps/transfer"
@@ -70,7 +71,6 @@ import (
 	"github.com/line/ostracon/crypto/ed25519"
 	"github.com/line/ostracon/libs/log"
 	"github.com/line/ostracon/libs/rand"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	wasmappparams "github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
@@ -233,7 +233,7 @@ func createTestInput(
 
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, ocproto.Header{
+	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())

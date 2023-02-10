@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/line/lbm-sdk/store"
 	sdk "github.com/line/lbm-sdk/types"
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/log"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/x/wasm/keeper"
 	"github.com/line/wasmd/x/wasm/types"
@@ -91,7 +91,7 @@ func TestCountTxDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.CacheMultiStore(), ocproto.Header{
+			ctx := sdk.NewContext(ms.CacheMultiStore(), tmproto.Header{
 				Height: myCurrentBlockHeight,
 				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
 			}, false, log.NewNopLogger())

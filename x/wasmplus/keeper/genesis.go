@@ -1,9 +1,10 @@
 package keeper
 
 import (
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	abci "github.com/line/ostracon/abci/types"
 
 	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
 	"github.com/line/wasmd/x/wasmplus/types"

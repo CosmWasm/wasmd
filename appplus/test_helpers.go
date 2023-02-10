@@ -3,12 +3,13 @@ package appplus
 import (
 	"encoding/json"
 
-	wasmapp "github.com/line/wasmd/app"
-
-	abci "github.com/line/ostracon/abci/types"
-	"github.com/line/ostracon/libs/log"
-	"github.com/line/wasmd/x/wasm"
+	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
+
+	"github.com/line/ostracon/libs/log"
+
+	wasmapp "github.com/line/wasmd/app"
+	"github.com/line/wasmd/x/wasm"
 )
 
 // Setup initializes a new WasmApp with DefaultNodeHome for integration tests

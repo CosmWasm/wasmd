@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	ica "github.com/line/ibc-go/v3/modules/apps/27-interchain-accounts"
@@ -30,6 +32,7 @@ import (
 	porttypes "github.com/line/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/line/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/line/ibc-go/v3/modules/core/keeper"
+	ocabci "github.com/line/ostracon/abci/types"
 
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/client"
@@ -98,12 +101,9 @@ import (
 	upgradeclient "github.com/line/lbm-sdk/x/upgrade/client"
 	upgradekeeper "github.com/line/lbm-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/line/lbm-sdk/x/upgrade/types"
-	abci "github.com/line/ostracon/abci/types"
 	tmjson "github.com/line/ostracon/libs/json"
 	"github.com/line/ostracon/libs/log"
 	tmos "github.com/line/ostracon/libs/os"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
-
 	wasmappparams "github.com/line/wasmd/app/params"
 	"github.com/line/wasmd/x/wasm"
 	wasmclient "github.com/line/wasmd/x/wasm/client"
@@ -751,7 +751,7 @@ func NewWasmApp(
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))
 		}
-		ctx := app.BaseApp.NewUncachedContext(true, ocproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
@@ -778,7 +778,7 @@ func (app *WasmApp) ModuleConfigurator() module.Configurator {
 }
 
 // BeginBlocker application updates every begin block
-func (app *WasmApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *WasmApp) BeginBlocker(ctx sdk.Context, req ocabci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 

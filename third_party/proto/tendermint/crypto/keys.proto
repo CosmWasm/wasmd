@@ -1,11 +1,11 @@
 syntax = "proto3";
-package ostracon.crypto;
+package tendermint.crypto;
 
-option go_package = "github.com/line/ostracon/proto/ostracon/crypto";
+option go_package = "github.com/tendermint/tendermint/proto/tendermint/crypto";
 
 import "gogoproto/gogo.proto";
 
-// PublicKey defines the keys available for use with Ostracon Validators
+// PublicKey defines the keys available for use with Tendermint Validators
 message PublicKey {
   option (gogoproto.compare) = true;
   option (gogoproto.equal)   = true;

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sort"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	abci "github.com/line/ostracon/abci/types"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
 	"github.com/line/wasmd/x/wasm/types"

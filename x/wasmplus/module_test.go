@@ -9,13 +9,13 @@ import (
 	"github.com/dvsekhvalnov/jose2go/base64url"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/line/lbm-sdk/types"
 	"github.com/line/lbm-sdk/types/module"
 	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
 	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
 	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/crypto"
 	"github.com/line/ostracon/crypto/ed25519"
 

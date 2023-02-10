@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	fuzz "github.com/google/gofuzz"
 	"os"
 	"testing"
 	"time"
 
+	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/crypto/keys/ed25519"
@@ -26,7 +27,6 @@ import (
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
 	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
 	"github.com/line/ostracon/libs/rand"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 	wasmvm "github.com/line/wasmvm"
 	wasmvmtypes "github.com/line/wasmvm/types"
 
@@ -297,7 +297,7 @@ func TestCreateDuplicate(t *testing.T) {
 func TestCreateWithSimulation(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
-	ctx = ctx.WithBlockHeader(ocproto.Header{Height: 1}).
+	ctx = ctx.WithBlockHeader(tmproto.Header{Height: 1}).
 		WithGasMeter(stypes.NewInfiniteGasMeter())
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -329,15 +329,15 @@ func TestIsSimulationMode(t *testing.T) {
 		exp bool
 	}{
 		"genesis block": {
-			ctx: sdk.Context{}.WithBlockHeader(ocproto.Header{}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(stypes.NewInfiniteGasMeter()),
 			exp: false,
 		},
 		"any regular block": {
-			ctx: sdk.Context{}.WithBlockHeader(ocproto.Header{Height: 1}).WithGasMeter(stypes.NewGasMeter(10000000)),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(stypes.NewGasMeter(10000000)),
 			exp: false,
 		},
 		"simulation": {
-			ctx: sdk.Context{}.WithBlockHeader(ocproto.Header{Height: 1}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(stypes.NewInfiniteGasMeter()),
 			exp: true,
 		},
 	}

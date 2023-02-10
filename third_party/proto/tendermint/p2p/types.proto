@@ -1,7 +1,7 @@
 syntax = "proto3";
-package ostracon.p2p;
+package tendermint.p2p;
 
-option go_package = "github.com/line/ostracon/proto/ostracon/p2p";
+option go_package = "github.com/tendermint/tendermint/proto/tendermint/p2p";
 
 import "gogoproto/gogo.proto";
 

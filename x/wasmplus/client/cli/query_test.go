@@ -6,20 +6,20 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	ocabcitypes "github.com/line/ostracon/abci/types"
 	ocrpcmocks "github.com/line/ostracon/rpc/client/mocks"
 	ocrpctypes "github.com/line/ostracon/rpc/core/types"
 
 	"github.com/line/wasmd/x/wasmplus/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -119,7 +119,7 @@ func TestGetCmdIsInactiveContract(t *testing.T) {
 }
 
 func makeContext(bz []byte) context.Context {
-	result := ocrpctypes.ResultABCIQuery{Response: ocabcitypes.ResponseQuery{Value: bz}}
+	result := ocrpctypes.ResultABCIQuery{Response: abci.ResponseQuery{Value: bz}}
 	mockClient := ocrpcmocks.RemoteClient{}
 	{
 		// #1

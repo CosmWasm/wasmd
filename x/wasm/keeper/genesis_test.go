@@ -14,6 +14,9 @@ import (
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/proto/tendermint/crypto"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/line/lbm-sdk/store"
@@ -26,10 +29,7 @@ import (
 	paramskeeper "github.com/line/lbm-sdk/x/params/keeper"
 	paramtypes "github.com/line/lbm-sdk/x/params/types"
 	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/log"
-	"github.com/line/ostracon/proto/ostracon/crypto"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/x/wasm/types"
 )
@@ -652,7 +652,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	ms.MountStoreWithDB(tkeyParams, sdk.StoreTypeTransient, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
-	ctx := sdk.NewContext(ms, ocproto.Header{
+	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, false, log.NewNopLogger())

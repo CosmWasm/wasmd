@@ -8,10 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/line/lbm-sdk/store"
-	"github.com/line/lbm-sdk/store/prefix"
-
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
@@ -19,6 +17,8 @@ import (
 	"github.com/line/lbm-sdk/baseapp"
 	"github.com/line/lbm-sdk/codec"
 	"github.com/line/lbm-sdk/simapp"
+	"github.com/line/lbm-sdk/store"
+	"github.com/line/lbm-sdk/store/prefix"
 	sdk "github.com/line/lbm-sdk/types"
 	"github.com/line/lbm-sdk/types/kv"
 	"github.com/line/lbm-sdk/types/module"
@@ -37,7 +37,6 @@ import (
 	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
 	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
 	"github.com/line/ostracon/libs/log"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/x/wasm"
 	wasmtypes "github.com/line/wasmd/x/wasm/types"
@@ -163,8 +162,8 @@ func TestAppImportExport(t *testing.T) {
 	err = json.Unmarshal(exported.AppState, &genesisState)
 	require.NoError(t, err)
 
-	ctxA := app.NewContext(true, ocproto.Header{Height: app.LastBlockHeight()})
-	ctxB := newApp.NewContext(true, ocproto.Header{Height: app.LastBlockHeight()})
+	ctxA := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
+	ctxB := newApp.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
 	newApp.mm.InitGenesis(ctxB, app.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
 

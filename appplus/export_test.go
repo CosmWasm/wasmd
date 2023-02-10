@@ -2,11 +2,11 @@ package appplus
 
 import (
 	"encoding/json"
-	abci "github.com/line/ostracon/abci/types"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
 	"github.com/line/ostracon/libs/log"

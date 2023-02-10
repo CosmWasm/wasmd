@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
-	abci "github.com/line/ostracon/abci/types"
 	"github.com/line/ostracon/libs/log"
 
 	"github.com/line/wasmd/x/wasm"

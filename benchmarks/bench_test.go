@@ -7,13 +7,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
 	sdk "github.com/line/lbm-sdk/types"
 	banktypes "github.com/line/lbm-sdk/x/bank/types"
-	abci "github.com/line/ostracon/abci/types"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
+	ocabci "github.com/line/ostracon/abci/types"
 
 	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
@@ -102,7 +103,7 @@ func BenchmarkTxSending(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N/blockSize; i++ {
-				appInfo.App.BeginBlock(abci.RequestBeginBlock{Header: ocproto.Header{Height: height, Time: time.Now()}})
+				appInfo.App.BeginBlock(ocabci.RequestBeginBlock{Header: tmproto.Header{Height: height, Time: time.Now()}})
 
 				for j := 0; j < blockSize; j++ {
 					idx := i*blockSize + j

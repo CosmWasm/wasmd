@@ -5,12 +5,12 @@ import (
 	"io"
 
 	protoio "github.com/gogo/protobuf/io"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	snapshot "github.com/line/lbm-sdk/snapshots/types"
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
 	"github.com/line/ostracon/libs/log"
-	ocproto "github.com/line/ostracon/proto/ostracon/types"
 
 	"github.com/line/wasmd/x/wasm/ioutils"
 	"github.com/line/wasmd/x/wasm/types"
@@ -52,7 +52,7 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 		return err
 	}
 
-	ctx := sdk.NewContext(cacheMS, ocproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(cacheMS, tmproto.Header{}, false, log.NewNopLogger())
 	seenBefore := make(map[string]bool)
 	var rerr error
 
@@ -127,7 +127,7 @@ func (ws *WasmSnapshotter) processAllItems(
 	cb func(sdk.Context, *Keeper, []byte) error,
 	finalize func(sdk.Context, *Keeper) error,
 ) (snapshot.SnapshotItem, error) {
-	ctx := sdk.NewContext(ws.cms, ocproto.Header{Height: int64(height)}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(ws.cms, tmproto.Header{Height: int64(height)}, false, log.NewNopLogger())
 
 	// keep the last item here... if we break, it will either be empty (if we hit io.EOF)
 	// or contain the last item (if we hit payload == nil)
