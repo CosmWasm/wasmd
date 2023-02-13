@@ -580,6 +580,7 @@ func GetCmdListContractsByCreator() *cobra.Command {
 		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list contracts by creator")
 	return cmd
 }
 
