@@ -190,6 +190,7 @@ replace (
 	// See: https://twitter.com/informalinc/status/1613580954383040512
 	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.37.0-rc2
 
+	// use tm-db with native pebble support
 	github.com/tendermint/tm-db => github.com/notional-labs/tm-db v0.6.8-0.20230214123107-77c191d0f7ee
 
 )
