@@ -132,7 +132,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = "testing" //nolint:goconst
 	})
 	em := sdk.NewEventManager()
 
@@ -183,8 +183,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label        string         = "label"
-		salt         []byte         = []byte("mySalt")
+		label                       = "label"
+		salt                        = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
@@ -437,7 +437,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, types.EventTypeMigrate, em.Events()[0].Type)
 	require.Equal(t, types.EventTypeGovContractResult, em.Events()[1].Type)
 	require.Len(t, em.Events()[1].Attributes, 1)
-	assert.Equal(t, types.AttributeKeyResultDataHex, string(em.Events()[1].Attributes[0].Key))
+	assert.Equal(t, types.AttributeKeyResultDataHex, em.Events()[1].Attributes[0].Key)
 }
 
 func TestExecuteProposal(t *testing.T) {
@@ -466,8 +466,6 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.BeneficiaryAddr.String(),
 	}
 
-	em := sdk.NewEventManager()
-
 	// fails on store - this doesn't have permission
 	govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -486,7 +484,7 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.VerifierAddr.String(),
 	}
 
-	em = sdk.NewEventManager()
+	em := sdk.NewEventManager()
 
 	// when
 	mustSubmitAndExecuteLegacyProposal(t, ctx.WithEventManager(em), src, exampleContract.BeneficiaryAddr.String(), keepers)

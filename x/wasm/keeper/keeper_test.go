@@ -849,7 +849,7 @@ func TestExecute(t *testing.T) {
 	em := sdk.NewEventManager()
 	// when
 	res, err := keepers.ContractKeeper.Execute(ctx.WithEventManager(em), addr, fred, []byte(`{"release":{}}`), topUp)
-	diff := time.Now().Sub(start)
+	diff := time.Since(start)
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
@@ -938,7 +938,8 @@ func TestExecuteWithDeposit(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper
 			if spec.newBankParams != nil {
-				bankKeeper.SetParams(ctx, *spec.newBankParams)
+				err := bankKeeper.SetParams(ctx, *spec.newBankParams)
+				require.NoError(t, err)
 			}
 			if spec.fundAddr {
 				fundAccounts(t, ctx, accKeeper, bankKeeper, spec.srcActor, sdk.NewCoins(sdk.NewInt64Coin("denom", 200)))
@@ -1053,6 +1054,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -1095,6 +1097,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 
 	// this should throw out of gas exception (panic)
 	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	require.Error(t, err)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -1572,7 +1575,7 @@ func prettyEvents(t *testing.T, events sdk.Events) string {
 	for i, e := range events {
 		attr := make([]map[string]string, len(e.Attributes))
 		for j, a := range e.Attributes {
-			attr[j] = map[string]string{string(a.Key): string(a.Value)}
+			attr[j] = map[string]string{a.Key: a.Value}
 		}
 		r[i] = prettyEvent{Type: e.Type, Attr: attr}
 	}
@@ -2277,8 +2280,9 @@ func TestIteratorContractByCreator(t *testing.T) {
 	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 
 	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
-	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	require.NoError(t, err)
 
+	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
 	initMsgBz := HackatomExampleInitMsg{
@@ -2404,7 +2408,7 @@ func TestSetContractAdmin(t *testing.T) {
 func attrsToStringMap(attrs []abci.EventAttribute) map[string]string {
 	r := make(map[string]string, len(attrs))
 	for _, v := range attrs {
-		r[string(v.Key)] = string(v.Value)
+		r[v.Key] = v.Value
 	}
 	return r
 }

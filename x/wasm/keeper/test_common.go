@@ -755,7 +755,7 @@ var keyCounter uint64
 
 // we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
 // depends on the actual bytes (due to ugly CanonicalAddress encoding)
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { //nolint:unparam
 	keyCounter++
 	seed := make([]byte, 8)
 	binary.BigEndian.PutUint64(seed, keyCounter)

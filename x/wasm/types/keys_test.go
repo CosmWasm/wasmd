@@ -108,9 +108,6 @@ func TestGetContractByCreatorSecondaryIndexKey(t *testing.T) {
 	}
 	assert.Equal(t, exp, got)
 
-	// test that contract addresses of 32 length are still supported
-	contractAddr = bytes.Repeat([]byte{4}, 32)
-
 	// test that creator is contract addresses of 32 length
 	contractAddr = bytes.Repeat([]byte{4}, 32)
 	creatorAddr = bytes.Repeat([]byte{8}, 32)

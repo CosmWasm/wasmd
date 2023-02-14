@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const invalidAddress = "invalid address"
+
 func TestValidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string
@@ -187,8 +189,6 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
 		expErr bool
@@ -280,8 +280,6 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContract2Proposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContract2Proposal
 		expErr bool
@@ -577,8 +575,6 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *SudoContractProposal
 		expErr bool
@@ -630,8 +626,6 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
 		expErr bool
@@ -689,8 +683,6 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
 		expErr bool
@@ -742,8 +734,6 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *ClearAdminProposal
 		expErr bool

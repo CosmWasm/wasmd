@@ -67,7 +67,9 @@ func TestGenesisExportImport(t *testing.T) {
 		codeID, _, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
-			contractKeeper.PinCode(srcCtx, codeID)
+			err = contractKeeper.PinCode(srcCtx, codeID)
+			require.NoError(t, err)
+
 		}
 		if contractExtension {
 			anyTime := time.Now().UTC()
@@ -75,14 +77,16 @@ func TestGenesisExportImport(t *testing.T) {
 			f.NilChance(0).Fuzz(&nestedType)
 			myExtension, err := v1beta1.NewProposal(&nestedType, 1, anyTime, anyTime)
 			require.NoError(t, err)
-			contract.SetExtension(&myExtension)
+			err = contract.SetExtension(&myExtension)
+			require.NoError(t, err)
 		}
 
 		contract.CodeID = codeID
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
-		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		err = wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		require.NoError(t, err)
 	}
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
@@ -120,7 +124,8 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	_, err = InitGenesis(dstCtx, dstKeeper, importState)
+	require.NoError(t, err)
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -676,7 +681,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 type StakingKeeperMock struct {
 	err             error
 	validatorUpdate []abci.ValidatorUpdate
-	expCalls        int
+	expCalls        int //nolint:unused
 	gotCalls        int
 }
 
@@ -685,18 +690,14 @@ func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]
 	return s.validatorUpdate, s.err
 }
 
-func (s *StakingKeeperMock) verifyCalls(t *testing.T) {
-	assert.Equal(t, s.expCalls, s.gotCalls, "number calls")
-}
-
 var _ MessageRouter = &MockMsgHandler{}
 
 type MockMsgHandler struct {
 	result   *sdk.Result
 	err      error
-	expCalls int
+	expCalls int //nolint:unused
 	gotCalls int
-	expMsg   sdk.Msg
+	expMsg   sdk.Msg //nolint:unused
 	gotMsg   sdk.Msg
 }
 
@@ -708,12 +709,4 @@ func (m *MockMsgHandler) Handle(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, erro
 	m.gotCalls++
 	m.gotMsg = msg
 	return m.result, m.err
-}
-
-func (m *MockMsgHandler) verifyCalls(t *testing.T) {
-	if m == nil {
-		return
-	}
-	assert.Equal(t, m.expMsg, m.gotMsg, "message param")
-	assert.Equal(t, m.expCalls, m.gotCalls, "number calls")
 }

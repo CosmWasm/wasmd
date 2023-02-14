@@ -331,7 +331,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 				Chain: &testdata.ChainQuery{
 					Request: &wasmvmtypes.QueryRequest{
 						Bank: &wasmvmtypes.BankQuery{
-							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+							Supply: &wasmvmtypes.SupplyQuery{Denom: spec.denom},
 						},
 					},
 				},
@@ -629,17 +629,8 @@ type customQueryResponse struct {
 	Msg string `json:"msg"`
 }
 
-// these are the return values from contract -> go depending on type of query
-type ownerResponse struct {
-	Owner string `json:"owner"`
-}
-
 type capitalizedResponse struct {
 	Text string `json:"text"`
-}
-
-type chainResponse struct {
-	Data []byte `json:"data"`
 }
 
 // reflectPlugins needs to be registered in test setup to handle custom query callbacks

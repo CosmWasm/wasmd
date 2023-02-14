@@ -10,7 +10,6 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -199,20 +198,6 @@ var ( // store keys
 	maxValueKey     = []byte("max-value")
 )
 
-func (p player) loadEndpoints(store prefix.Store, channelID string) *connectedChannelsModel {
-	var counterparties []connectedChannelsModel
-	if bz := store.Get(ibcEndpointsKey); bz != nil {
-		require.NoError(p.t, json.Unmarshal(bz, &counterparties))
-	}
-	for _, v := range counterparties {
-		if v.Our.ChannelID == channelID {
-			return &v
-		}
-	}
-	p.t.Fatalf("no counterparty found for channel %q", channelID)
-	return nil
-}
-
 func (p player) storeEndpoint(store wasmvm.KVStore, channel wasmvmtypes.IBCChannel) {
 	var counterparties []connectedChannelsModel
 	if b := store.Get(ibcEndpointsKey); b != nil {
@@ -240,11 +225,11 @@ var ( // store keys
 func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	// parse received data and store
 	packet := msg.Packet
-	var receivedBall hit
+	var receivedBall Hit
 	if err := json.Unmarshal(packet.Data, &receivedBall); err != nil {
 		return &wasmvmtypes.IBCReceiveResult{
 			Ok: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: hitAcknowledgement{Error: err.Error()}.GetBytes(),
+				Acknowledgement: HitAcknowledgement{Error: err.Error()}.GetBytes(),
 			},
 			// no hit msg, we stop the game
 		}, 0, nil
@@ -285,12 +270,12 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, ms
 // OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	// parse received data and store
-	var sentBall hit
+	var sentBall Hit
 	if err := json.Unmarshal(msg.OriginalPacket.Data, &sentBall); err != nil {
 		return nil, 0, err
 	}
 
-	var ack hitAcknowledgement
+	var ack HitAcknowledgement
 	if err := json.Unmarshal(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
@@ -337,15 +322,15 @@ func counterParty(s string) string {
 }
 
 // hit is ibc packet payload
-type hit map[string]uint64
+type Hit map[string]uint64
 
-func NewHit(player string, count uint64) hit {
+func NewHit(player string, count uint64) Hit {
 	return map[string]uint64{
 		player: count,
 	}
 }
 
-func (h hit) GetBytes() []byte {
+func (h Hit) GetBytes() []byte {
 	b, err := json.Marshal(h)
 	if err != nil {
 		panic(err)
@@ -353,25 +338,25 @@ func (h hit) GetBytes() []byte {
 	return b
 }
 
-func (h hit) String() string {
+func (h Hit) String() string {
 	return fmt.Sprintf("Ball %s", string(h.GetBytes()))
 }
 
-func (h hit) BuildAck() hitAcknowledgement {
-	return hitAcknowledgement{Success: &h}
+func (h Hit) BuildAck() HitAcknowledgement {
+	return HitAcknowledgement{Success: &h}
 }
 
-func (h hit) BuildError(errMsg string) hitAcknowledgement {
-	return hitAcknowledgement{Error: errMsg}
+func (h Hit) BuildError(errMsg string) HitAcknowledgement {
+	return HitAcknowledgement{Error: errMsg}
 }
 
 // hitAcknowledgement is ibc acknowledgment payload
-type hitAcknowledgement struct {
+type HitAcknowledgement struct {
 	Error   string `json:"error,omitempty"`
-	Success *hit   `json:"success,omitempty"`
+	Success *Hit   `json:"success,omitempty"`
 }
 
-func (a hitAcknowledgement) GetBytes() []byte {
+func (a HitAcknowledgement) GetBytes() []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
 		panic(err)

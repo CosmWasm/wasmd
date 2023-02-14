@@ -82,7 +82,8 @@ func TestInitGenesis(t *testing.T) {
 	q2 := newData.grpcQueryRouter
 
 	// initialize new app with genstate
-	InitGenesis(newData.ctx, &newData.keeper, *genState)
+	_, err = InitGenesis(newData.ctx, &newData.keeper, *genState)
+	require.NoError(t, err)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
 	assertCodeList(t, q2, newData.ctx, 1, data.encConf.Marshaler)

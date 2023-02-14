@@ -89,7 +89,7 @@ func TestIBCQuerier(t *testing.T) {
 		srcQuery      *wasmvmtypes.IBCQuery
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
-		expJsonResult string
+		expJSONResult string
 		expErr        *sdkerrors.Error
 	}{
 		"query port id": {
@@ -102,7 +102,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{},
-			expJsonResult: `{"port_id":"myIBCPortID"}`,
+			expJSONResult: `{"port_id":"myIBCPortID"}`,
 		},
 		"query list channels - all": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -111,7 +111,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -151,7 +151,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -178,7 +178,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{"channels": []}`,
+			expJSONResult: `{"channels": []}`,
 		},
 		"query channel": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -201,7 +201,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myQueryPortID",
@@ -242,7 +242,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myLoadedPortID",
@@ -278,7 +278,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel in closed state": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -301,7 +301,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel - empty result": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -315,7 +315,7 @@ func TestIBCQuerier(t *testing.T) {
 					return channeltypes.Channel{}, false
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 	}
 	for name, spec := range specs {
@@ -326,7 +326,7 @@ func TestIBCQuerier(t *testing.T) {
 			if spec.expErr != nil {
 				return
 			}
-			assert.JSONEq(t, spec.expJsonResult, string(gotResult), string(gotResult))
+			assert.JSONEq(t, spec.expJSONResult, string(gotResult), string(gotResult))
 		})
 	}
 }
@@ -566,7 +566,8 @@ func TestQueryErrors(t *testing.T) {
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
 	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
-	wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	require.NoError(t, err)
 
 	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
 	accepted := keeper.AcceptedStargateQueries{

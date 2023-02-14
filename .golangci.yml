@@ -29,9 +29,22 @@ linters:
     - unused
 
 # TODO: fix the sdkerrors.Wrap deprecation warning and re-enable staticcheck
+# TODO: fix the use of deprecated gov style
 
 issues:
   exclude-rules:
+    - text: "sdkerrors.ABCIInfo is deprecated"
+      linters:
+        - staticcheck
+    - text: "sdkerrors.IsOf is deprecated"
+      linters:
+        - staticcheck
+    - text: "Use WeightedProposalMsg instead"
+      linters:
+        - staticcheck
+    - text: "Use MsgSimulatorFn instead"
+      linters:
+        - staticcheck
     - text: "Error return value of `flagSet.Set` is not checked"
       linters:
         - errcheck
