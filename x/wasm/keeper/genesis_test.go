@@ -687,7 +687,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 }
 
 // isValidFuzzStateModels: check if the keysModel is contain the key of model
-func isValidFuzzStateModels(t *testing.T, keysModel []string, stateModels []types.Model ) ([]string, bool){
+func isValidFuzzStateModels(t *testing.T, keysModel []string, stateModels []types.Model) ([]string, bool) {
 	tmpKeysModel := keysModel
 	isContainKey := false
 	for _, model := range stateModels {
