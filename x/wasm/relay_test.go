@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,8 +34,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	specs := map[string]struct {
 		contract             wasmtesting.IBCContractCallbacks
 		setupContract        func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
-		expChainABalanceDiff sdk.Int
-		expChainBBalanceDiff sdk.Int
+		expChainABalanceDiff math.Int
+		expChainBBalanceDiff math.Int
 	}{
 		"ack": {
 			contract: &ackReceiverContract{},

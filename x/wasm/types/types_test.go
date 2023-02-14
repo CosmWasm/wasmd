@@ -10,7 +10,6 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
@@ -55,7 +54,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"invalid extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&v1beta1.TextProposal{})
+				any, err := types.NewAnyWithValue(&v1beta1.TextProposal{})
 				require.NoError(t, err)
 				c.Extension = any
 			},
@@ -64,7 +63,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"not validatable extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&v1beta1.Proposal{})
+				any, err := types.NewAnyWithValue(&v1beta1.Proposal{})
 				require.NoError(t, err)
 				c.Extension = any
 			},

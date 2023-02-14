@@ -14,7 +14,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // SA1019: proto is deprecated
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -373,6 +373,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 		Address: creator.String(),
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
+	require.NoError(t, err)
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
@@ -575,7 +576,7 @@ func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	customMsg, err := json.Marshal(reflectCustomMsg{
+	customMsg, _ := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
 	})
 	res := wasmvmtypes.CosmosMsg{
