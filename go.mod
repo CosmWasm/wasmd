@@ -74,6 +74,7 @@ require (
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
+	github.com/cosmos/interchain-accounts v0.4.1-0.20230129194959-49ab09ed3227 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.9.0 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect

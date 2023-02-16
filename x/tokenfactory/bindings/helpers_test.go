@@ -14,12 +14,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 func CreateTestInput() (*app.WasmApp, sdk.Context) {
-	osmosis := app.Setup(&testing.T{}, false)
+	var emptyWasmOpts []wasm.Option
+
+	osmosis := app.Setup(&testing.T{}, emptyWasmOpts...)
 	ctx := osmosis.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "osmosis-1", Time: time.Now().UTC()})
 	return osmosis, ctx
 }

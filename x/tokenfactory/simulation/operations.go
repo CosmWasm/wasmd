@@ -3,10 +3,9 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/CosmWasm/wasmd/app/params"
+	appparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/tokenfactory/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -54,27 +53,27 @@ func WeightedOperations(
 
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgCreateDenom, &weightMsgCreateDenom, nil,
 		func(_ *rand.Rand) {
-			weightMsgCreateDenom = params.DefaultWeightMsgCreateDenom
+			weightMsgCreateDenom = appparams.DefaultWeightMsgCreateDenom
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMint, &weightMsgMint, nil,
 		func(_ *rand.Rand) {
-			weightMsgMint = params.DefaultWeightMsgMint
+			weightMsgMint = appparams.DefaultWeightMsgMint
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgBurn, &weightMsgBurn, nil,
 		func(_ *rand.Rand) {
-			weightMsgBurn = params.DefaultWeightMsgBurn
+			weightMsgBurn = appparams.DefaultWeightMsgBurn
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgChangeAdmin, &weightMsgChangeAdmin, nil,
 		func(_ *rand.Rand) {
-			weightMsgChangeAdmin = params.DefaultWeightMsgChangeAdmin
+			weightMsgChangeAdmin = appparams.DefaultWeightMsgChangeAdmin
 		},
 	)
 	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgSetDenomMetadata, &weightMsgSetDenomMetadata, nil,
 		func(_ *rand.Rand) {
-			weightMsgSetDenomMetadata = params.DefaultWeightMsgSetDenomMetadata
+			weightMsgSetDenomMetadata = appparams.DefaultWeightMsgSetDenomMetadata
 		},
 	)
 
@@ -390,7 +389,7 @@ func BuildOperationInput(
 	return simulation.OperationInput{
 		R:               r,
 		App:             app,
-		TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+		TxGen:           appparams.MakeEncodingConfig().TxConfig,
 		Cdc:             nil,
 		Msg:             msg,
 		MsgType:         msg.Type(),

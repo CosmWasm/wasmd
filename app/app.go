@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
 	"io"
 	"os"
 	"path/filepath"
@@ -115,6 +116,17 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+
+	"github.com/CosmWasm/wasmd/x/tokenfactory/bindings"
+	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	// Note: please do your research before using this in production app, this is a demo and not an officially
+	// supported IBC team implementation. It has no known issues, but do your own research before using it.
+	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
+	intertxkeeper "github.com/cosmos/interchain-accounts/x/inter-tx/keeper"
+	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -125,10 +137,20 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	// token factory
+	"github.com/CosmWasm/wasmd/x/tokenfactory"
+	tokenfactorykeeper "github.com/CosmWasm/wasmd/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/CosmWasm/wasmd/x/tokenfactory/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 )
 
-const appName = "WasmApp"
+const (
+	appName            = "WasmApp"
+	MockFeePort string = ibcmock.ModuleName + ibcfeetypes.ModuleName
+)
 
 // We pull these out so we can set them with LDFLAGS in the Makefile
 var (
@@ -221,7 +243,9 @@ var (
 		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		ica.AppModuleBasic{},
+		intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+		tokenfactory.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -237,6 +261,7 @@ var (
 		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
 		wasm.ModuleName:                {authtypes.Burner},
+		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -259,8 +284,10 @@ type WasmApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
-	BankKeeper            bankkeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
+	AuthzKeeper   authzkeeper.Keeper
+	BankKeeper    bankkeeper.BaseKeeper
+
 	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
@@ -270,7 +297,6 @@ type WasmApp struct {
 	CrisisKeeper          *crisiskeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
-	AuthzKeeper           authzkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
@@ -280,13 +306,16 @@ type WasmApp struct {
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	IBCFeeKeeper        ibcfeekeeper.Keeper
 	ICAControllerKeeper icacontrollerkeeper.Keeper
+	TokenFactoryKeeper  tokenfactorykeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
+	InterTxKeeper       intertxkeeper.Keeper
 	TransferKeeper      ibctransferkeeper.Keeper
 	WasmKeeper          wasm.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
+	ScopedInterTxKeeper       capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
@@ -325,14 +354,29 @@ func NewWasmApp(
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey,
-		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey,
-		authzkeeper.StoreKey, nftkeeper.StoreKey, group.StoreKey,
+		authtypes.StoreKey,
+		banktypes.StoreKey,
+		stakingtypes.StoreKey,
+		crisistypes.StoreKey,
+		minttypes.StoreKey,
+		distrtypes.StoreKey,
+		slashingtypes.StoreKey,
+		govtypes.StoreKey,
+		paramstypes.StoreKey,
+		consensusparamtypes.StoreKey,
+		upgradetypes.StoreKey,
+		feegrant.StoreKey,
+		evidencetypes.StoreKey,
+		capabilitytypes.StoreKey,
+		authzkeeper.StoreKey,
+		nftkeeper.StoreKey,
+		group.StoreKey,
 		// non sdk store keys
-		ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
-		wasm.StoreKey, icahosttypes.StoreKey,
+		ibcexported.StoreKey,
+		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
+		wasm.StoreKey,
+		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
 	)
 
@@ -377,6 +421,7 @@ func NewWasmApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+	scopedInterTxKeeper := app.CapabilityKeeper.ScopeToModule(intertxtypes.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
 	app.CapabilityKeeper.Seal()
@@ -404,6 +449,11 @@ func NewWasmApp(
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
+		appCodec,
+		keys[feegrant.StoreKey],
+		app.AccountKeeper,
+	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
@@ -430,6 +480,14 @@ func NewWasmApp(
 		keys[slashingtypes.StoreKey],
 		app.StakingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		keys[tokenfactorytypes.StoreKey],
+		app.GetSubspace(tokenfactorytypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
 	)
 
 	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
@@ -557,6 +615,14 @@ func NewWasmApp(
 		scopedTransferKeeper,
 	)
 
+	// IBC Fee Module keeper
+	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
+		appCodec, keys[ibcfeetypes.StoreKey],
+		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	)
+
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
 		keys[icahosttypes.StoreKey],
@@ -579,6 +645,11 @@ func NewWasmApp(
 		app.MsgServiceRouter(),
 	)
 
+	// For wasmd we use the demo controller from https://github.com/cosmos/interchain-accounts but see notes below
+	app.InterTxKeeper = intertxkeeper.NewKeeper(appCodec, keys[intertxtypes.StoreKey], app.ICAControllerKeeper, app.ScopedInterTxKeeper)
+
+	app.EvidenceKeeper = *evidenceKeeper
+
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
@@ -588,7 +659,8 @@ func NewWasmApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
+	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,token_factory"
+	wasmOpts = append(bindings.RegisterCustomPlugins(&app.BankKeeper, &app.TokenFactoryKeeper), wasmOpts...)
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
@@ -623,11 +695,13 @@ func NewWasmApp(
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
 	// icaAuthModuleKeeper.SendTx -> icaController.SendPacket -> fee.SendPacket -> channel.SendPacket
+
+	// Note: please do your research before using this in production app, this is a demo and not an officially
+	// supported IBC team implementation. Do your own research before using it.
 	var icaControllerStack porttypes.IBCModule
-	// integration point for custom authentication modules
-	// see https://medium.com/the-interchain-foundation/ibc-go-v6-changes-to-interchain-accounts-and-how-it-impacts-your-chain-806c185300d7
-	var noAuthzModule porttypes.IBCModule
-	icaControllerStack = icacontroller.NewIBCMiddleware(noAuthzModule, app.ICAControllerKeeper)
+	// You will likely want to use your own reviewed and maintained ica auth module
+	icaControllerStack = intertx.NewIBCModule(app.InterTxKeeper)
+	icaControllerStack = icacontroller.NewIBCMiddleware(icaControllerStack, app.ICAControllerKeeper)
 	icaControllerStack = ibcfee.NewIBCMiddleware(icaControllerStack, app.IBCFeeKeeper)
 
 	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
@@ -645,6 +719,7 @@ func NewWasmApp(
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasm.ModuleName, wasmStack).
+		AddRoute(intertxtypes.ModuleName, icaControllerStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -805,6 +880,7 @@ func NewWasmApp(
 	app.ScopedWasmKeeper = scopedWasmKeeper
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
+	app.ScopedInterTxKeeper = scopedInterTxKeeper
 
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
 	// antehandlers, but are run _after_ the `runMsgs` execution. They are also
@@ -1046,6 +1122,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
+	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)

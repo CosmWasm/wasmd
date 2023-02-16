@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
-func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
-	return []simtypes.ParamChange{
-		simulation.NewSimParamChange(
+func ParamChanges(r *rand.Rand) []simtypes.LegacyParamChange {
+	return []simtypes.LegacyParamChange{
+		simulation.NewSimLegacyParamChange(
 			types.ModuleName,
 			string(types.KeyDenomCreationFee),
 			func(r *rand.Rand) string {

@@ -700,9 +700,9 @@ func isValidFuzzStateModels(t *testing.T, keysModel []string, stateModels []type
 	}
 	if isContainKey {
 		return tmpKeysModel, false
-	} else {
-		return keysModel, true
 	}
+	return keysModel, true
+
 }
 
 type StakingKeeperMock struct {
