@@ -10,6 +10,7 @@
 * [\#5](https://github.com/line/wasmd/pull/5) bump up wasmd v0.29.1
 * [\#7](https://github.com/line/wasmd/pull/7) separate custom features in `x/wasm` into `x/wasmplus` module
 * [\#8](https://github.com/line/wasmd/pull/8) Bump line/lbm-sdk to a7557b1d10
+* [\#10](https://github.com/line/wasmd/pull/10) update wasmvm version
 
 ### Bug Fixes
 

@@ -14,7 +14,7 @@ require (
 	github.com/line/ibc-go/v3 v3.3.2-0.20230210040007-d855e1d87f26
 	github.com/line/lbm-sdk v0.46.1-0.20230209105703-b88647308597
 	github.com/line/ostracon v1.0.9-0.20230209043112-5aca894db3a6
-	github.com/line/wasmvm v1.1.1-0.11.0.0.20230113085344-89650a7edd05
+	github.com/line/wasmvm v1.1.1-0.11.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rakyll/statik v0.1.7
