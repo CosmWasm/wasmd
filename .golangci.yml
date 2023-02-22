@@ -57,7 +57,7 @@ issues:
     - text: "sdkerrors.Error is deprecated: the type has been moved to cosmossdk.io/errors module"
       linters:
         - staticcheck
-    - text: "sdkerrors.Wrap is deprecated: functionality of this package has been moved to it's own module"
+    - text: "sdkerrors.Wrap is deprecated"
       linters:
         - staticcheck
     - text: "Use of weak random number generator"
