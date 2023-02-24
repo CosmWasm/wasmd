@@ -40,6 +40,6 @@ updates:
   - dependency-name: github.com/spf13/cobra
     versions:
     - 1.1.2
-  - dependency-name: github.com/tendermint/tm-db
+  - dependency-name: github.com/cometbft/cometbft-db
     versions:
     - 0.6.4
