@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
+	"os"
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,6 +31,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 )
 
 type KeeperTestHelper struct {
@@ -59,8 +60,12 @@ func (s *KeeperTestHelper) Setup() {
 }
 
 func (s *KeeperTestHelper) SetupTestForInitGenesis() {
-	// Setting to True, leads to init genesis not running
-	s.App = app.Setup(s.T())
+	db := dbm.NewMemDB()
+	s.App = app.NewWasmAppWithCustomOptions(s.T(), true, app.SetupOptions{
+		Logger:  log.NewTMLogger(log.NewSyncWriter(os.Stdout)),
+		DB:      db,
+		AppOpts: simtestutil.NewAppOptionsWithFlagHome(s.T().TempDir()),
+	})
 	s.Ctx = s.App.BaseApp.NewContext(true, tmtypes.Header{})
 }
 
