@@ -16,7 +16,7 @@ require (
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/iavl v0.20.0-alpha4
-	github.com/cosmos/ibc-go/v7 v7.0.0-beta2
+	github.com/cosmos/ibc-go/v7 v7.0.0-rc0
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
 	github.com/cosmos/interchain-accounts v0.4.1-0.20230129194959-49ab09ed3227
 	github.com/docker/distribution v2.8.1+incompatible
@@ -68,7 +68,6 @@ require (
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
-	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.1 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.4.2 // indirect
@@ -147,8 +146,6 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tendermint/tendermint v0.37.0-rc2 // indirect
-	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/zondax/hid v0.9.1 // indirect
@@ -177,7 +174,8 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use cometbft enabled wasmvm
 	github.com/CosmWasm/wasmvm => github.com/notional-labs/wasmvm v1.0.0-soon2.0.20230224221603-dbeeef0006f5
-	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20230224231207-60bc9fbde6c6
+	github.com/cosmos/ibc-go/v7 => github.com/cosmos/ibc-go/v7 v7.0.0-20230224085028-0a79e38d9199
+	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20230224232143-e9404a7e24d2
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// TODO: remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.4.2

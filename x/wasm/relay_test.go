@@ -697,6 +697,7 @@ func (c *ackReceiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmv
 
 	// call original ibctransfer keeper to not copy all code into this
 	ibcPacket := toIBCPacket(packet)
+	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
 		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
