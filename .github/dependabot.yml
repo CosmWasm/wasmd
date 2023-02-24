@@ -18,7 +18,7 @@ updates:
     - 0.14.0-beta4
     - 0.14.0-beta5
     - 0.14.0-rc1
-  - dependency-name: github.com/tendermint/tendermint
+  - dependency-name: github.com/cometbft/cometbft
     versions:
     - 0.34.10
     - 0.34.4

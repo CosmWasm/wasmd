@@ -25,8 +25,8 @@ how [CosmJS](https://github.com/cosmos/cosmjs) gets the events it shows to the c
 
 In Tendermint 0.35, the `events` field will be one flattened list of events over all messages. Just as if we concatenated all
 the per-message arrays contained in the `log` field. This fix was made as
-[part of an event system refactoring](https://github.com/tendermint/tendermint/pull/6634). This refactoring is also giving us
-[pluggable event indexing engines](https://github.com/tendermint/tendermint/pull/6411), so we can use eg. PostgreSQL to
+[part of an event system refactoring](https://github.com/cometbft/cometbft/pull/6634). This refactoring is also giving us
+[pluggable event indexing engines](https://github.com/cometbft/cometbft/pull/6411), so we can use eg. PostgreSQL to
 store and query the events with more powerful indexes.
 
 However, currently (until Tendermint 0.34 used in Cosmos SDK 0.40-0.43), all events of one transaction are "flat-mapped" on type. 
