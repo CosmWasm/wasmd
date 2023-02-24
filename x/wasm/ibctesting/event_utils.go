@@ -8,9 +8,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func getSendPackets(evts []abci.Event) []channeltypes.Packet {

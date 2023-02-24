@@ -3,10 +3,15 @@ package apptesting
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
-	"os"
+
 	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,17 +26,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	authzcodec "github.com/CosmWasm/wasmd/x/tokenfactory/types/authzcodec"
 
 	"github.com/CosmWasm/wasmd/app"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 type KeeperTestHelper struct {
