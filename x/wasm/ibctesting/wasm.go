@@ -54,7 +54,7 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 		Sender:       chain.SenderAccount.GetAddress().String(),
 		WASMByteCode: byteCode,
 	}
-	r, err := chain.SendNonDefaultSenderMsgs(storeMsg...)
+	r, err := chain.SendMsgs(storeMsg)
 	require.NoError(chain.t, err)
 	// unmarshal protobuf response from data
 	require.Len(chain.t, r.MsgResponses, 1)

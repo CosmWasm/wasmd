@@ -101,7 +101,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 		privVal := mock.NewPV()
 		pubKey, err := privVal.GetPubKey()
 		require.NoError(t, err)
-		validators = append(validators, tmtypes.NewValidator(pubkey: pubKey;)
+		validators = append(validators, tmtypes.NewValidator(pubKey, 1))
 		signersByAddress[pubKey.Address().String()] = privVal
 	}
 
