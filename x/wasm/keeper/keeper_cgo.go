@@ -23,13 +23,13 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
-	distrKeeper types.DistributionKeeper,
+	distKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
-	_ GRPCQueryRouter,
+	queryRouter GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
@@ -60,7 +60,7 @@ func NewKeeper(
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}

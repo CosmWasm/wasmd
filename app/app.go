@@ -821,7 +821,7 @@ func NewWasmApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		// wasm after ibc transfer
-		tokenfactorytypes.ModuleName,  
+		tokenfactorytypes.ModuleName,
 		wasm.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)

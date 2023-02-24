@@ -36,8 +36,6 @@ service Msg {
 
 // MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
-  option (cosmos.msg.v1.signer) = "sender";
-
   // Sender is the actor that signed the messages
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
