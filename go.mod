@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.47.0-rc2.0.20230223214337-b1235071211e
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.4
 	github.com/cosmos/iavl v0.20.0-alpha4
@@ -39,6 +38,7 @@ require (
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cometbft/cometbft v0.37.0-alpha.3
 	github.com/cometbft/cometbft-db v0.7.0
+	github.com/cosmos/cosmos-sdk v0.47.0-rc2.0.20230220103612-f094a0c33410
 	github.com/cosmos/interchain-accounts v0.4.1-0.20230129194959-49ab09ed3227
 	github.com/gogo/protobuf v1.3.2
 	github.com/spf13/viper v1.15.0
@@ -148,7 +148,7 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/cometbft/cometbft v0.37.0-rc2 // indirect
+	github.com/tendermint/tendermint v0.37.0-rc2 // indirect
 	github.com/tendermint/tm-db v0.6.7 // indirect
 	github.com/tidwall/btree v1.6.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
