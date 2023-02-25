@@ -543,10 +543,10 @@ func TestEncoding(t *testing.T) {
 			if tc.expError {
 				assert.Error(t, err)
 				return
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.output, res)
 			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
+
 			// and valid sdk message
 			for _, v := range res {
 				gotErr := v.ValidateBasic()
