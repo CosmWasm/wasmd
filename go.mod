@@ -174,7 +174,9 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use cometbft enabled wasmvm
 	github.com/CosmWasm/wasmvm => github.com/notional-labs/wasmvm v1.0.0-soon2.0.20230224221603-dbeeef0006f5
+	// use ibc-go with cometbft
 	github.com/cosmos/ibc-go/v7 => github.com/cosmos/ibc-go/v7 v7.0.0-20230224085028-0a79e38d9199
+	// use interchain accounts with cometbft
 	github.com/cosmos/interchain-accounts => github.com/notional-labs/interchain-accounts v0.0.0-20230224232143-e9404a7e24d2
 	// dgrijalva/jwt-go is deprecated and doesn't receive security updates.
 	// TODO: remove it: https://github.com/cosmos/cosmos-sdk/issues/13134
