@@ -598,6 +598,7 @@ func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshal
 		return nil, sdkerrors.Wrap(err, "to json")
 	}
 
+	protoResponse.Reset()
 	return bz, nil
 }
 

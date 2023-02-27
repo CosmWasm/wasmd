@@ -1014,13 +1014,13 @@ func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) error {
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, IDKey []byte, val uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	if store.Has(lastIDKey) {
-		return sdkerrors.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(lastIDKey))
+	if store.Has(IDKey) {
+		return sdkerrors.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(IDKey))
 	}
 	bz := sdk.Uint64ToBigEndian(val)
-	store.Set(lastIDKey, bz)
+	store.Set(IDKey, bz)
 	return nil
 }
 
