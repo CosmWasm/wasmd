@@ -308,14 +308,20 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacket = nil
 			// when
 			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.capKeeper)
-			data, evts, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
+			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
 				return
 			}
-			assert.Nil(t, data)
+
 			assert.Nil(t, evts)
+			require.NotNil(t, data)
+
+			msg := &types.MsgIBCSendResponse{Sequence: 1}
+			val, err := msg.Marshal()
+			require.NoError(t, err)
+			assert.Equal(t, data[0], val)
 			assert.Equal(t, spec.expPacketSent, capturedPacket)
 		})
 	}

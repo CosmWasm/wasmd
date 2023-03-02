@@ -188,7 +188,19 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block),
 		msg.IBC.SendPacket.Timeout.Timestamp,
 	)
-	return nil, nil, h.channelKeeper.SendPacket(ctx, channelCap, packet)
+
+	if err := h.channelKeeper.SendPacket(ctx, channelCap, packet); err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "failed to send packet")
+	}
+
+	resp := &types.MsgIBCSendResponse{Sequence: sequence}
+	val, err := resp.Marshal()
+	if err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "failed to marshal sequence response")
+	}
+
+	data = append(data, val)
+	return nil, data, nil
 }
 
 var _ Messenger = MessageHandlerFunc(nil)
