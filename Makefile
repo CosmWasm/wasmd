@@ -87,7 +87,7 @@ else
 endif
 
 build-windows-client: go.sum
-	GOOS=windows GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd-client.exe ./cmd/wasmd
+	GOOS=windows GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
