@@ -32,6 +32,6 @@ message MsgIBCCloseChannel {
 
 // MsgIBCSendResponse
 message MsgIBCSendResponse {
-  // sequence number of the transfer packet sent
+  // Sequence number of the IBC packet sent
   uint64 sequence = 1;
 }

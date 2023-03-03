@@ -124,7 +124,7 @@ var xxx_messageInfo_MsgIBCCloseChannel proto.InternalMessageInfo
 
 // MsgIBCSendResponse
 type MsgIBCSendResponse struct {
-	// sequence number of the transfer packet sent
+	// Sequence number of the IBC packet sent
 	Sequence uint64 `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
 }
 

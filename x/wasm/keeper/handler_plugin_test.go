@@ -318,10 +318,13 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			assert.Nil(t, evts)
 			require.NotNil(t, data)
 
-			msg := &types.MsgIBCSendResponse{Sequence: 1}
-			val, err := msg.Marshal()
+			expMsg := types.MsgIBCSendResponse{Sequence: 1}
+
+			actualMsg := types.MsgIBCSendResponse{}
+			err := actualMsg.Unmarshal(data[0])
 			require.NoError(t, err)
-			assert.Equal(t, data[0], val)
+
+			assert.Equal(t, expMsg, actualMsg)
 			assert.Equal(t, spec.expPacketSent, capturedPacket)
 		})
 	}

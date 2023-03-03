@@ -583,7 +583,7 @@ MsgIBCSendResponse
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sequence` | [uint64](#uint64) |  | sequence number of the transfer packet sent |
+| `sequence` | [uint64](#uint64) |  | Sequence number of the IBC packet sent |
 
 
 
