@@ -151,7 +151,7 @@ func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper)
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
-func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, error) {
 	if msg.IBC == nil || msg.IBC.SendPacket == nil {
 		return nil, nil, types.ErrUnknownMsg
 	}
@@ -199,8 +199,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		return nil, nil, sdkerrors.Wrap(err, "failed to marshal sequence response")
 	}
 
-	data = append(data, val)
-	return nil, data, nil
+	return nil, [][]byte{val}, nil
 }
 
 var _ Messenger = MessageHandlerFunc(nil)
