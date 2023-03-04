@@ -49,7 +49,7 @@ func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 
 func randBytes(n int) []byte {
 	r := make([]byte, n)
-	rand.Read(r)
+	rand.Read(r) //nolint:staticcheck
 	return r
 }
 

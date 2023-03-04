@@ -25,7 +25,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
-var emptyWasmOpts []wasm.Option = nil
+var emptyWasmOpts []wasm.Option
 
 func TestWasmdExport(t *testing.T) {
 	db := db.NewMemDB()
@@ -119,27 +119,7 @@ func TestGetEnabledProposals(t *testing.T) {
 	}
 }
 
-func setGenesis(gapp *WasmApp) error {
-	genesisState := NewDefaultGenesisState()
-	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	if err != nil {
-		return err
-	}
-
-	// Initialize the chain
-	gapp.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
-
-	gapp.Commit()
-	return nil
-}
-
 func SetupGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, opts []wasm.Option, app *WasmApp, balances ...banktypes.Balance) GenesisState {
-
 	genesisState := NewDefaultGenesisState()
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)

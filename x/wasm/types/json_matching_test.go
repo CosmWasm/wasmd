@@ -81,11 +81,11 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 			expResult:   false,
 		},
 		// not supported: https://github.com/golang/go/issues/24415
-		//"errors for duplicate key": {
+		// "errors for duplicate key": {
 		//	src:         []byte(`{"claim": "foo", "claim":"bar"}`),
 		//	allowedKeys: []string{"claim"},
 		//	expErr:      ErrNotAJSONObject,
-		//},
+		// },
 
 		// Not one top-level key
 		"false for no top-level key": {
