@@ -196,7 +196,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	resp := &types.MsgIBCSendResponse{Sequence: sequence}
 	val, err := resp.Marshal()
 	if err != nil {
-		return nil, nil, sdkerrors.Wrap(err, "failed to marshal sequence response")
+		return nil, nil, sdkerrors.Wrap(err, "failed to marshal IBC send response")
 	}
 
 	return nil, [][]byte{val}, nil
