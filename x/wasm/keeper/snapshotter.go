@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"io"
 
+	errorsmod "cosmossdk.io/errors"
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -101,13 +101,13 @@ func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	}
 	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
 
 	// FIXME: check which codeIDs the checksum matches??
 	_, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	return nil
 }
@@ -133,7 +133,7 @@ func (ws *WasmSnapshotter) processAllItems(
 		}
 
 		if err := cb(ctx, ws.wasm, payload); err != nil {
-			return sdkerrors.Wrap(err, "processing snapshot item")
+			return errorsmod.Wrap(err, "processing snapshot item")
 		}
 	}
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -573,7 +574,7 @@ func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error
 	}
 	rawBz, err := cdc.MarshalJSON(any)
 	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wasmvmtypes.CosmosMsg{}, errorsmod.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	customMsg, err := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
@@ -598,12 +599,12 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 		var custom reflectCustomMsg
 		err := json.Unmarshal(msg, &custom)
 		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+			return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
 			var any codectypes.Any
 			if err := cdc.UnmarshalJSON(custom.Raw, &any); err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+				return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
 			var msg sdk.Msg
 			if err := cdc.UnpackAny(&any, &msg); err != nil {
@@ -612,9 +613,9 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 			return []sdk.Msg{msg}, nil
 		}
 		if custom.Debug != "" {
-			return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
+			return nil, errorsmod.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
 		}
-		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
+		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 	}
 }
 
@@ -652,7 +653,7 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+		return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if custom.Capitalized != nil {
 		msg := strings.ToUpper(custom.Capitalized.Text)
@@ -661,5 +662,5 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	if custom.Ping != nil {
 		return json.Marshal(customQueryResponse{Msg: "pong"})
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
+	return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }

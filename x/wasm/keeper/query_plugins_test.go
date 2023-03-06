@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -538,7 +539,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
@@ -546,7 +547,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
