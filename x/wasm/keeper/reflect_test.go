@@ -542,6 +542,29 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	require.Equal(t, []byte{}, reflectRawRes.Data)
 }
 
+func TestRustPanicIsHandled(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	keeper := keepers.ContractKeeper
+
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
+
+	// upload code
+	codeID, _, err := keeper.Create(ctx, creator, testdata.CyberpunkContractWasm(), nil)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), codeID)
+
+	contractAddr, _, err := keeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "cyberpunk contract", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, contractAddr)
+
+	// when panic is triggered
+	msg := []byte(`{"panic":{}}`)
+	gotData, err := keeper.Execute(ctx, contractAddr, creator, msg, nil)
+	require.ErrorIs(t, err, types.ErrExecuteFailed)
+	assert.Contains(t, err.Error(), "panicked at 'This page intentionally faulted'")
+	assert.Nil(t, gotData)
+}
+
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
