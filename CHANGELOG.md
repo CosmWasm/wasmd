@@ -8,6 +8,10 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...v0.31.0)
 
+- Fix checksum check for zipped gov store proposals [\#1232](https://github.com/CosmWasm/wasmd/issues/1232)
+- Return IBC packet sequence number in the handler plugin [\#1154](https://github.com/CosmWasm/wasmd/issues/1154)
+- Add Windows client-side support [\#1169](https://github.com/CosmWasm/wasmd/issues/1169)
+- Upgrade Cosmos-SDK to [v0.45.14](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.14)
 - Add missing events for admin-related methods [\#1173](https://github.com/CosmWasm/wasmd/issues/1173)
 - Disallow storing new codes with ACCESS\_TYPE\_ONLY\_ADDRESS [\#1144](https://github.com/CosmWasm/wasmd/issues/1144)
 - Upgrade to CosmWasm/wasmvm [v1.2.0](https://github.com/CosmWasm/wasmvm/releases/tag/v1.2.0) including
@@ -34,6 +38,7 @@
 - See "State Machine Breaking" changes in [IBC-go](https://github.com/cosmos/ibc-go/releases/tag/v4.3.0)
 - See notes about the "store fix" in [Cosmos-sdk](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.12)
 - Wasmd can now be used as a library without CGO
+- Wasmd client can now be used on Windows
 
 ### Migration notes:
 - This release does not include any state migrations but breaking changes that require a coordinated chain upgrade
