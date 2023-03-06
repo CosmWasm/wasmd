@@ -106,7 +106,7 @@ func TestParseVerificationFlags(t *testing.T) {
 			flagSet := ProposalStoreCodeCmd().Flags()
 			require.NoError(t, flagSet.Parse(spec.args))
 
-			gotMsg, err := parseStoreCodeArgs("../../keeper/testdata/hackatom.wasm", mySender, flagSet)
+			gotMsg, err := parseStoreCodeArgs(spec.srcPath, mySender, flagSet)
 			require.NoError(t, err)
 			require.True(t, ioutils.IsGzip(gotMsg.WASMByteCode))
 
