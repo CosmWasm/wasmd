@@ -9,13 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-<<<<<<< HEAD
-=======
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-
-	"github.com/docker/distribution/reference"
-
->>>>>>> 1a8019b (Fix client checksum verification (#1234))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
