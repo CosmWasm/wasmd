@@ -27,20 +27,31 @@ func TestStoreCodeProposal(t *testing.T) {
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	rawWasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+	gzippedWasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 	checksum, err := hex.DecodeString("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
 	require.NoError(t, err)
 
 	specs := map[string]struct {
 		codeID    int64
+		code      []byte
 		unpinCode bool
 	}{
 		"upload with pinning (default)": {
 			unpinCode: false,
+			code:      rawWasmCode,
 		},
 		"upload with code unpin": {
 			unpinCode: true,
+			code:      rawWasmCode,
+		},
+		"upload with raw wasm code": {
+			code: rawWasmCode,
+		},
+		"upload with zipped wasm code": {
+			code: gzippedWasmCode,
 		},
 	}
 
@@ -51,7 +62,7 @@ func TestStoreCodeProposal(t *testing.T) {
 
 			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
 				p.RunAs = myActorAddress
-				p.WASMByteCode = wasmCode
+				p.WASMByteCode = spec.code
 				p.UnpinCode = spec.unpinCode
 				p.CodeHash = checksum
 			})
@@ -73,7 +84,7 @@ func TestStoreCodeProposal(t *testing.T) {
 
 			storedCode, err := wasmKeeper.GetByteCode(ctx, 1)
 			require.NoError(t, err)
-			assert.Equal(t, wasmCode, storedCode)
+			assert.Equal(t, rawWasmCode, storedCode)
 		})
 	}
 }

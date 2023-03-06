@@ -99,6 +99,7 @@ func StoreCodeCmd() *cobra.Command {
 	return cmd
 }
 
+// Prepares MsgStoreCode object from flags with gzipped wasm byte code field
 func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgStoreCode, error) {
 	wasm, err := os.ReadFile(file)
 	if err != nil {
