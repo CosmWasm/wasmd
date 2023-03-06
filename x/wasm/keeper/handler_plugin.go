@@ -167,34 +167,16 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
-<<<<<<< HEAD
 	seq, err := h.channelKeeper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
 	moduleLogger(ctx).Debug("ibc packet set", "seq", seq)
-	return nil, nil, err
-=======
-	packet := channeltypes.NewPacket(
-		msg.IBC.SendPacket.Data,
-		sequence,
-		contractIBCPortID,
-		contractIBCChannelID,
-		channelInfo.Counterparty.PortId,
-		channelInfo.Counterparty.ChannelId,
-		ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block),
-		msg.IBC.SendPacket.Timeout.Timestamp,
-	)
 
-	if err := h.channelKeeper.SendPacket(ctx, channelCap, packet); err != nil {
-		return nil, nil, sdkerrors.Wrap(err, "failed to send packet")
-	}
-
-	resp := &types.MsgIBCSendResponse{Sequence: sequence}
+	resp := &types.MsgIBCSendResponse{Sequence: seq}
 	val, err := resp.Marshal()
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "failed to marshal IBC send response")
 	}
 
 	return nil, [][]byte{val}, nil
->>>>>>> 4f1c57f (Return IBC packet sequence number (#1225))
 }
 
 var _ Messenger = MessageHandlerFunc(nil)
