@@ -3,10 +3,10 @@ package keeper
 import (
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -36,7 +36,7 @@ func (k Keeper) OnOpenChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return "", sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res != nil {
 		return res.Version, nil
@@ -69,7 +69,7 @@ func (k Keeper) OnConnectChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelConnect(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
@@ -100,7 +100,7 @@ func (k Keeper) OnCloseChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
@@ -130,10 +130,10 @@ func (k Keeper) OnRecvPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" { // handle error case as before https://github.com/CosmWasm/wasmvm/commit/c300106fe5c9426a495f8e10821e00a9330c56c6
-		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, res.Err)
+		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
 	}
 	// note submessage reply results can overwrite the `Acknowledgement` data
 	return k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
@@ -164,7 +164,7 @@ func (k Keeper) OnAckPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketAck(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
 }
@@ -191,7 +191,7 @@ func (k Keeper) OnTimeoutPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketTimeout(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
