@@ -139,7 +139,7 @@ message AbsoluteTxPosition {
 message Model {
   // hex-encode key to read it better (this is often ascii)
   bytes key = 1 [ (gogoproto.casttype) =
-                      "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+                      "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
   // base64-encode raw value
   bytes value = 2;
 }
