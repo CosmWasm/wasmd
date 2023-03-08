@@ -29,6 +29,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 var (
@@ -107,6 +108,8 @@ type AppModule struct {
 	accountKeeper      types.AccountKeeper // for simulation
 	bankKeeper         simulation.BankKeeper
 	router             keeper.MessageRouter
+	// legacySubspace is used solely for migration of x/params managed parameters
+	legacySubspace paramstypes.Subspace
 }
 
 // NewAppModule creates a new AppModule object
@@ -117,6 +120,7 @@ func NewAppModule(
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
 	router *baseapp.MsgServiceRouter,
+	ss paramstypes.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic:     AppModuleBasic{},
@@ -126,6 +130,7 @@ func NewAppModule(
 		accountKeeper:      ak,
 		bankKeeper:         bk,
 		router:             router,
+		legacySubspace:     ss,
 	}
 }
 
@@ -141,14 +146,18 @@ func (am AppModule) IsAppModule() { // marker
 // module. It should be incremented on each consensus-breaking change
 // introduced by the module. To avoid wrong/empty versions, the initial version
 // should be set to 1.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper)))
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 
-	m := keeper.NewMigrator(*am.keeper)
+	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
+	if err != nil {
+		panic(err)
+	}
+	err = cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3)
 	if err != nil {
 		panic(err)
 	}

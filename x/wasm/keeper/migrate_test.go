@@ -9,8 +9,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
+
+type mockSubspace struct {
+	ps types.Params
+}
+
+func newMockSubspace(ps types.Params) mockSubspace {
+	return mockSubspace{ps: ps}
+}
+
+func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
+	*ps.(*types.Params) = ms.ps
+}
 
 func TestMigrate1To2(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -46,8 +59,9 @@ func TestMigrate1To2(t *testing.T) {
 	ctx.KVStore(wasmKeeper.storeKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info2.Created.Bytes(), gotContractAddr2))
 	ctx.KVStore(wasmKeeper.storeKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info3.Created.Bytes(), gotContractAddr3))
 
+	// legacy
 	// migrator
-	migrator := NewMigrator(*wasmKeeper)
+	migrator := NewMigrator(*wasmKeeper, nil)
 	migrator.Migrate1to2(ctx)
 
 	// check new store

@@ -418,7 +418,6 @@ func createTestInput(
 	keeper := NewKeeper(
 		appCodec,
 		keys[types.StoreKey],
-		subspace(types.ModuleName),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -432,6 +431,7 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		availableCapabilities,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)
 	keeper.SetParams(ctx, types.DefaultParams())
