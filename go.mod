@@ -3,6 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.19
 
 require (
+<<<<<<< HEAD
 	github.com/CosmWasm/wasmvm v1.2.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
 	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230119225816-30bd414d8353
@@ -11,6 +12,15 @@ require (
 	github.com/cosmos/iavl v0.19.4
 	github.com/cosmos/ibc-go/v7 v7.0.0-beta2
 	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
+=======
+	github.com/CosmWasm/wasmvm v1.2.1
+	github.com/cosmos/cosmos-proto v1.0.0-beta.2
+	github.com/cosmos/cosmos-sdk v0.45.14
+	github.com/cosmos/gogoproto v1.4.6
+	github.com/cosmos/iavl v0.19.5
+	github.com/cosmos/ibc-go/v4 v4.3.0
+	github.com/cosmos/interchain-accounts v0.2.6
+>>>>>>> 850f901b (Upgrade to wasmvm 1.2.1 (#1245))
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
 	github.com/golang/protobuf v1.5.2

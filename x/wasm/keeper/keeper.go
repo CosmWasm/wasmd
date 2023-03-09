@@ -292,14 +292,14 @@ func (k Keeper) instantiate(
 	// create prefixed data store
 	// 0x03 | BuildContractAddressClassic (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	vmStore := types.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 
 	// instantiate wasm contract
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
@@ -431,9 +431,9 @@ func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	querier := k.newQueryHandler(ctx, contractAddress)
 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
+	vmStore := types.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, &prefixStore, cosmwasmAPI, &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
@@ -708,25 +708,34 @@ func (k Keeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []
 	return prefixStore.Get(key)
 }
 
-func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractInfo, types.CodeInfo, prefix.Store, error) {
+// internal helper function
+func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress) (types.ContractInfo, types.CodeInfo, wasmvm.KVStore, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
+<<<<<<< HEAD
 		return types.ContractInfo{}, types.CodeInfo{}, prefix.Store{}, errorsmod.Wrap(types.ErrNotFound, "contract")
+=======
+		return types.ContractInfo{}, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "contract")
+>>>>>>> 850f901b (Upgrade to wasmvm 1.2.1 (#1245))
 	}
 	var contractInfo types.ContractInfo
 	k.cdc.MustUnmarshal(contractBz, &contractInfo)
 
 	codeInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
 	if codeInfoBz == nil {
+<<<<<<< HEAD
 		return contractInfo, types.CodeInfo{}, prefix.Store{}, errorsmod.Wrap(types.ErrNotFound, "code info")
+=======
+		return contractInfo, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "code info")
+>>>>>>> 850f901b (Upgrade to wasmvm 1.2.1 (#1245))
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return contractInfo, codeInfo, prefixStore, nil
+	return contractInfo, codeInfo, types.NewStoreAdapter(prefixStore), nil
 }
 
 func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
