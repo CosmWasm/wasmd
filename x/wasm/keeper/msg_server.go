@@ -12,11 +12,12 @@ import (
 var _ types.MsgServer = msgServer{}
 
 type msgServer struct {
-	keeper types.ContractOpsKeeper
+	contractKeeper types.ContractOpsKeeper
+	wasmKeeper     Keeper
 }
 
-func NewMsgServerImpl(k types.ContractOpsKeeper) types.MsgServer {
-	return &msgServer{keeper: k}
+func NewMsgServerImpl(ck types.ContractOpsKeeper, wk Keeper) types.MsgServer {
+	return &msgServer{contractKeeper: ck, wasmKeeper: wk}
 }
 
 func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*types.MsgStoreCodeResponse, error) {
@@ -202,9 +203,31 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := m.keeper.SetAccessConfig(ctx, msg.CodeID, sdk.AccAddress(msg.Sender), *msg.NewInstantiatePermission); err != nil {
+	if err := m.contractKeeper.SetAccessConfig(ctx, msg.CodeID, sdk.AccAddress(msg.Sender), *msg.NewInstantiatePermission); err != nil {
 		return nil, err
 	}
 
 	return &types.MsgUpdateInstantiateConfigResponse{}, nil
+}
+
+func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	authority := m.wasmKeeper.authority
+	if authority != req.Authority {
+		return nil, sdkerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := m.wasmKeeper.SetParams(ctx, req.Params); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(sdk.AttributeKeySender, req.Authority),
+		),
+	)
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

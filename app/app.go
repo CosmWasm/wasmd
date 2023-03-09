@@ -588,7 +588,6 @@ func NewWasmApp(
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
-		app.GetSubspace(wasm.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -602,6 +601,7 @@ func NewWasmApp(
 		wasmDir,
 		wasmConfig,
 		availableCapabilities,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
 
@@ -678,7 +678,7 @@ func NewWasmApp(
 		groupmodule.NewAppModule(appCodec, app.GroupKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter()),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(paramstypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),

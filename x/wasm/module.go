@@ -149,7 +149,7 @@ func (am AppModule) IsAppModule() { // marker
 func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper)))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper), *am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 
 	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)

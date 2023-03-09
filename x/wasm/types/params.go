@@ -6,12 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-=======
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
->>>>>>> Add MsgUpdateParams support
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"

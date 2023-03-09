@@ -464,7 +464,7 @@ func createTestInput(
 		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper, subspace(govtypes.ModuleName)),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier))
-	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper), keeper))
 	types.RegisterQueryServer(querier, NewGrpcQuerier(appCodec, keys[types.ModuleName], keeper, keeper.queryGasLimit))
 
 	keepers := TestKeepers{
