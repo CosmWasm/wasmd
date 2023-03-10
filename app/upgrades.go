@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,10 +65,11 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 			// wasm
 		case wasmtypes.ModuleName:
 			keyTable = wasmtypes.ParamKeyTable() //nolint:staticcheck
+		default:
+			continue
 		}
 
 		if !subspace.HasKeyTable() {
-			fmt.Printf(">>>%s\n", subspace.Name())
 			subspace.WithKeyTable(keyTable)
 		}
 	}
