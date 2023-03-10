@@ -2,8 +2,8 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )

@@ -9,8 +9,17 @@ import (
 	"testing"
 	"time"
 
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+
 	errorsmod "cosmossdk.io/errors"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cometbft/cometbft/libs/rand"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -67,12 +76,6 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/libs/rand"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -273,6 +276,42 @@ func createTestInput(
 	subspace := func(m string) paramstypes.Subspace {
 		r, ok := paramsKeeper.GetSubspace(m)
 		require.True(t, ok)
+
+		var keyTable paramstypes.KeyTable
+		switch r.Name() {
+		case authtypes.ModuleName:
+			keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
+		case banktypes.ModuleName:
+			keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
+		case stakingtypes.ModuleName:
+			keyTable = stakingtypes.ParamKeyTable()
+		case minttypes.ModuleName:
+			keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
+		case distributiontypes.ModuleName:
+			keyTable = distributiontypes.ParamKeyTable() //nolint:staticcheck
+		case slashingtypes.ModuleName:
+			keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
+		case govtypes.ModuleName:
+			keyTable = govv1.ParamKeyTable() //nolint:staticcheck
+		case crisistypes.ModuleName:
+			keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
+			// ibc types
+		case ibctransfertypes.ModuleName:
+			keyTable = ibctransfertypes.ParamKeyTable()
+		case icahosttypes.SubModuleName:
+			keyTable = icahosttypes.ParamKeyTable()
+		case icacontrollertypes.SubModuleName:
+			keyTable = icacontrollertypes.ParamKeyTable()
+			// wasm
+		case types.ModuleName:
+			keyTable = types.ParamKeyTable() //nolint:staticcheck
+		default:
+			return r
+		}
+
+		if !r.HasKeyTable() {
+			r = r.WithKeyTable(keyTable)
+		}
 		return r
 	}
 	maccPerms := map[string][]string{ // module account permissions
