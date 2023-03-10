@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'proto/**'
+      - "proto/**"
 
     # Sequence of patterns matched against refs/tags
     tags:
@@ -16,13 +16,13 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.1.0
-      - uses: bufbuild/buf-setup-action@v1.13.1
+      - uses: actions/checkout@v3.3.0
+      - uses: bufbuild/buf-setup-action@v1.15.1
 
       # lint checks
       - uses: bufbuild/buf-lint-action@v1
         with:
-          input: 'proto'
+          input: "proto"
 
       # TODO: Add this when project is more stable.
       # backward compatibility breaking checks
@@ -34,5 +34,5 @@ jobs:
       # publish proto files
       - uses: bufbuild/buf-push-action@v1
         with:
-          input: 'proto'
+          input: "proto"
           buf_token: ${{ secrets.BUF_TOKEN }}

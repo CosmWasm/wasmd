@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -700,7 +700,7 @@ func (c *ackReceiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmv
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
 
 	var log []wasmvmtypes.EventAttribute // note: all events are under `wasm` event type
@@ -725,7 +725,7 @@ func (c *ackReceiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtyp
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
 	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
 
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil

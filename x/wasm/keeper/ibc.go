@@ -3,8 +3,8 @@ package keeper
 import (
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
@@ -39,7 +39,7 @@ func PortIDForContract(addr sdk.AccAddress) string {
 
 func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefix) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "without prefix")
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
 	}
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }

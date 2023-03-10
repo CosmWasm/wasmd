@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -92,7 +93,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 	return cmd
 }
 
-func parseVerificationFlags(wasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
+func parseVerificationFlags(gzippedWasm []byte, flags *flag.FlagSet) (string, string, []byte, error) {
 	source, err := flags.GetString(flagSource)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("source: %s", err)
@@ -123,10 +124,14 @@ func parseVerificationFlags(wasm []byte, flags *flag.FlagSet) (string, string, [
 		if len(codeHash) == 0 {
 			return "", "", nil, fmt.Errorf("code hash is required")
 		}
-		// wasm is unzipped in parseStoreCodeArgs
+		// wasm is gzipped in parseStoreCodeArgs
 		// checksum generation will be decoupled here
 		// reference https://github.com/CosmWasm/wasmvm/issues/359
-		checksum := sha256.Sum256(wasm)
+		raw, err := ioutils.Uncompress(gzippedWasm, uint64(types.MaxWasmSize))
+		if err != nil {
+			return "", "", nil, fmt.Errorf("invalid zip: %w", err)
+		}
+		checksum := sha256.Sum256(raw)
 		if !bytes.Equal(checksum[:], codeHash) {
 			return "", "", nil, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
 		}

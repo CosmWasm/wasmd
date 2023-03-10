@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"runtime/debug"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -87,7 +88,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]string, 0)
@@ -177,7 +178,7 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				err = sdkerrors.Wrapf(sdkerrors.ErrOutOfGas,
+				err = errorsmod.Wrapf(sdkerrors.ErrOutOfGas,
 					"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
 					rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
 				)
@@ -208,7 +209,7 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
 	}
 	rsp, err := queryCode(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
 	switch {
@@ -280,7 +281,7 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 
 	code, err := keeper.GetByteCode(ctx, codeID)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "loading wasm code")
+		return nil, errorsmod.Wrap(err, "loading wasm code")
 	}
 
 	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil

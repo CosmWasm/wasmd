@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -538,7 +539,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
@@ -546,7 +547,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
@@ -748,6 +749,31 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
 		})
 	}
+}
+
+func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
+	appCodec := app.MakeEncodingConfig().Marshaler
+
+	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
+	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
+		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+		Pagination: &query.PageResponse{
+			NextKey: []byte("foo"),
+		},
+	})
+
+	bz, err := hex.DecodeString("0a090a036261721202333012050a03666f6f")
+	require.NoError(t, err)
+
+	// first marshal
+	response, err := keeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
+
+	// second marshal
+	response, err = keeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
 }
 
 // TestDeterministicJsonMarshal tests that we get deterministic JSON marshalled response upon

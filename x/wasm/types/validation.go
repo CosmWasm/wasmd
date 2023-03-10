@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	errorsmod "cosmossdk.io/errors"
 	"github.com/docker/distribution/reference"
 )
 
@@ -24,10 +24,10 @@ var (
 
 func validateWasmCode(s []byte, maxSize int) error {
 	if len(s) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "is required")
+		return errorsmod.Wrap(ErrEmpty, "is required")
 	}
 	if len(s) > maxSize {
-		return sdkerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
+		return errorsmod.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
 	}
 	return nil
 }
@@ -35,7 +35,7 @@ func validateWasmCode(s []byte, maxSize int) error {
 // ValidateLabel ensure label constraints
 func ValidateLabel(label string) error {
 	if label == "" {
-		return sdkerrors.Wrap(ErrEmpty, "is required")
+		return errorsmod.Wrap(ErrEmpty, "is required")
 	}
 	if len(label) > MaxLabelSize {
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxLabelSize)
@@ -47,7 +47,7 @@ func ValidateLabel(label string) error {
 func ValidateSalt(salt []byte) error {
 	switch n := len(salt); {
 	case n == 0:
-		return sdkerrors.Wrap(ErrEmpty, "is required")
+		return errorsmod.Wrap(ErrEmpty, "is required")
 	case n > MaxSaltSize:
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxSaltSize)
 	}
