@@ -3,8 +3,8 @@ module github.com/CosmWasm/wasmd
 go 1.19
 
 require (
-	github.com/CosmWasm/wasmvm v1.2.0
-	github.com/cosmos/cosmos-proto v1.0.0-beta.1
+	github.com/CosmWasm/wasmvm v1.2.1
+	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.0-rc1.0.20230119225816-30bd414d8353
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.3
@@ -165,7 +165,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
-	pgregory.net/rapid v0.5.3 // indirect
+	pgregory.net/rapid v0.5.5 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
