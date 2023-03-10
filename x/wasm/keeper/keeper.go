@@ -714,22 +714,14 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
-<<<<<<< HEAD
-		return types.ContractInfo{}, types.CodeInfo{}, prefix.Store{}, errorsmod.Wrap(types.ErrNotFound, "contract")
-=======
 		return types.ContractInfo{}, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "contract")
->>>>>>> 850f901b (Upgrade to wasmvm 1.2.1 (#1245))
 	}
 	var contractInfo types.ContractInfo
 	k.cdc.MustUnmarshal(contractBz, &contractInfo)
 
 	codeInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
 	if codeInfoBz == nil {
-<<<<<<< HEAD
-		return contractInfo, types.CodeInfo{}, prefix.Store{}, errorsmod.Wrap(types.ErrNotFound, "code info")
-=======
 		return contractInfo, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "code info")
->>>>>>> 850f901b (Upgrade to wasmvm 1.2.1 (#1245))
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
