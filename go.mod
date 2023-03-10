@@ -172,8 +172,6 @@ require (
 replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
-	// use cometbft enabled wasmvm
-	github.com/CosmWasm/wasmvm => github.com/notional-labs/wasmvm v1.0.0-soon2.0.20230224221603-dbeeef0006f5
 	// use cometbft enabled ibc-go
 	github.com/cosmos/ibc-go/v7 => github.com/cosmos/ibc-go/v7 v7.0.0-20230224085028-0a79e38d9199
 	// use cometbft enabled interchain-accounts
