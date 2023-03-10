@@ -25,6 +25,12 @@ message MsgIBCSend {
   bytes data = 6;
 }
 
+// MsgIBCSendResponse
+message MsgIBCSendResponse {
+  // Sequence number of the IBC packet sent
+  uint64 sequence = 1;
+}
+
 // MsgIBCCloseChannel port and channel need to be owned by the contract
 message MsgIBCCloseChannel {
   string channel = 2 [ (gogoproto.moretags) = "yaml:\"source_channel\"" ];

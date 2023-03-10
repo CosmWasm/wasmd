@@ -6,11 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	errorsmod "cosmossdk.io/errors"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -34,8 +33,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	specs := map[string]struct {
 		contract             wasmtesting.IBCContractCallbacks
 		setupContract        func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
-		expChainABalanceDiff math.Int
-		expChainBBalanceDiff math.Int
+		expChainABalanceDiff sdk.Int
+		expChainBBalanceDiff sdk.Int
 	}{
 		"ack": {
 			contract: &ackReceiverContract{},
@@ -601,7 +600,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
-func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) { //nolint:revive
+func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	packet := msg.Packet
 
 	var data ibctransfertypes.FungibleTokenPacketData
@@ -627,14 +626,14 @@ var _ wasmtesting.IBCContractCallbacks = &closeChannelContract{}
 
 type closeChannelContract struct {
 	contractStub
-	t *testing.T //nolint:unused
+	t *testing.T
 }
 
 func (c *closeChannelContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
 
-func (s *closeChannelContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) { //nolint:revive
+func (s *closeChannelContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 	var in closeIBCChannel
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err
@@ -700,7 +699,7 @@ func (c *ackReceiverContract) IBCPacketReceive(codeID wasmvm.Checksum, env wasmv
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
 
 	var log []wasmvmtypes.EventAttribute // note: all events are under `wasm` event type
@@ -725,7 +724,7 @@ func (c *ackReceiverContract) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtyp
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
 	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
-		return nil, 0, sdkerrors.Wrap(err, "within our smart contract")
+		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
 
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil

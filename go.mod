@@ -8,11 +8,11 @@ require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.6.0.20230216172121-959ce49135e4
 	cosmossdk.io/tools/rosetta v0.2.1
-	github.com/CosmWasm/wasmvm v1.2.0
-	github.com/cometbft/cometbft v0.37.0-alpha.3
+	github.com/CosmWasm/wasmvm v1.2.1
+	github.com/cometbft/cometbft v0.37.0
 	github.com/cometbft/cometbft-db v0.7.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
-	github.com/cosmos/cosmos-sdk v0.47.0-rc2.0.20230224204036-a6adb0821462
+	github.com/cosmos/cosmos-sdk v0.47.0-rc3
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/iavl v0.20.0-alpha4

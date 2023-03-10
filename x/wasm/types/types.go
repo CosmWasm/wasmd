@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,20 +25,20 @@ const (
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "key")
+		return errorsmod.Wrap(ErrEmpty, "key")
 	}
 	return nil
 }
 
 func (c CodeInfo) ValidateBasic() error {
 	if len(c.CodeHash) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code hash")
+		return errorsmod.Wrap(ErrEmpty, "code hash")
 	}
 	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
-		return sdkerrors.Wrap(err, "creator")
+		return errorsmod.Wrap(err, "creator")
 	}
 	if err := c.InstantiateConfig.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "instantiate config")
+		return errorsmod.Wrap(err, "instantiate config")
 	}
 	return nil
 }
@@ -78,18 +79,18 @@ type validatable interface {
 // but also in the genesis import process.
 func (c *ContractInfo) ValidateBasic() error {
 	if c.CodeID == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code id")
+		return errorsmod.Wrap(ErrEmpty, "code id")
 	}
 	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
-		return sdkerrors.Wrap(err, "creator")
+		return errorsmod.Wrap(err, "creator")
 	}
 	if len(c.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(c.Admin); err != nil {
-			return sdkerrors.Wrap(err, "admin")
+			return errorsmod.Wrap(err, "admin")
 		}
 	}
 	if err := ValidateLabel(c.Label); err != nil {
-		return sdkerrors.Wrap(err, "label")
+		return errorsmod.Wrap(err, "label")
 	}
 	if c.Extension == nil {
 		return nil
@@ -100,7 +101,7 @@ func (c *ContractInfo) ValidateBasic() error {
 		return nil
 	}
 	if err := e.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "extension")
+		return errorsmod.Wrap(err, "extension")
 	}
 	return nil
 }
@@ -119,7 +120,7 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 	}
 	any, err := codectypes.NewAnyWithValue(ext)
 	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
+		return errorsmod.Wrap(sdkerrors.ErrPackAny, err.Error())
 	}
 
 	c.Extension = any
@@ -131,12 +132,12 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 //
 //	var d MyContractDetails
 //	if err := info.ReadExtension(&d); err != nil {
-//		return nil, sdkerrors.Wrap(err, "extension")
+//		return nil, errorsmod.Wrap(err, "extension")
 //	}
 func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 	rv := reflect.ValueOf(e)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "not a pointer")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidType, "not a pointer")
 	}
 	if c.Extension == nil {
 		return nil
@@ -145,7 +146,7 @@ func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 	cached := c.Extension.GetCachedValue()
 	elem := reflect.ValueOf(cached).Elem()
 	if !elem.Type().AssignableTo(rv.Elem().Type()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "extension is of type %s but argument of %s", elem.Type(), rv.Elem().Type())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "extension is of type %s but argument of %s", elem.Type(), rv.Elem().Type())
 	}
 	rv.Elem().Set(elem)
 	return nil
@@ -261,7 +262,7 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 	if c.Updated == nil {
 		return ErrEmpty.Wrap("updated")
 	}
-	return sdkerrors.Wrap(c.Msg.ValidateBasic(), "msg")
+	return errorsmod.Wrap(c.Msg.ValidateBasic(), "msg")
 }
 
 // NewEnv initializes the environment for a contract instance
