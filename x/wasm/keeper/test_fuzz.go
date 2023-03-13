@@ -3,9 +3,9 @@ package keeper
 import (
 	"encoding/json"
 
+	tmBytes "github.com/cometbft/cometbft/libs/bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	fuzz "github.com/google/gofuzz"
-	tmBytes "github.com/tendermint/tendermint/libs/bytes"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
