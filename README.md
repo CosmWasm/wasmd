@@ -118,6 +118,7 @@ The protobuf files for this project are published automatically to the [buf repo
 
 | wasmd version | buf tag                                                                                                                                     |
 |---------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 0.31.x        | [e0e5a6fa433449e695af692478c86fb5](https://buf.build/cosmwasm/wasmd/tree/e0e5a6fa433449e695af692478c86fb5:cosmwasm/wasm/v1) | 
 | 0.30.x        | [6508ee062011440c907de6f5c40398ea](https://buf.build/cosmwasm/wasmd/tree/6508ee062011440c907de6f5c40398ea:cosmwasm/wasm/v1) | 
 | 0.29.x        | [51931206dbe09529c1819a8a2863d291035a2549](https://buf.build/cosmwasm/wasmd/tree/51931206dbe09529c1819a8a2863d291035a2549:cosmwasm/wasm/v1) | 
 
