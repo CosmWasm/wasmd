@@ -793,7 +793,7 @@ var xxx_messageInfo_MsgUpdateInstantiateConfigResponse proto.InternalMessageInfo
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
 //
-// Since: cosmos-sdk 0.47
+// Since: 0.40
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
@@ -844,7 +844,7 @@ var xxx_messageInfo_MsgUpdateParams proto.InternalMessageInfo
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
 //
-// Since: cosmos-sdk 0.47
+// Since: 0.40
 type MsgUpdateParamsResponse struct{}
 
 func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse{} }
@@ -1013,7 +1013,7 @@ type MsgClient interface {
 	// UpdateParams defines a governance operation for updating the x/wasm
 	// module parameters. The authority is defined in the keeper.
 	//
-	// Since: cosmos-sdk 0.47
+	// Since: 0.40
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
 
@@ -1129,7 +1129,7 @@ type MsgServer interface {
 	// UpdateParams defines a governance operation for updating the x/wasm
 	// module parameters. The authority is defined in the keeper.
 	//
-	// Since: cosmos-sdk 0.47
+	// Since: 0.40
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
 

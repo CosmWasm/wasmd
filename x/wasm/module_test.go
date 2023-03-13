@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,7 +51,7 @@ func setupTest(t *testing.T) testData {
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, paramstypes.Subspace{}),
+		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,

@@ -1559,7 +1559,7 @@ MsgUpdateInstantiateConfigResponse returns empty data
 ### MsgUpdateParams
 MsgUpdateParams is the Msg/UpdateParams request type.
 
-Since: cosmos-sdk 0.47
+Since: 0.40
 
 
 | Field | Type | Label | Description |
@@ -1580,7 +1580,7 @@ NOTE: All parameters must be supplied. |
 MsgUpdateParamsResponse defines the response structure for executing a
 MsgUpdateParams message.
 
-Since: cosmos-sdk 0.47
+Since: 0.40
 
 
 
@@ -1610,7 +1610,7 @@ Msg defines the wasm Msg service.
 | `UpdateInstantiateConfig` | [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig) | [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse) | UpdateInstantiateConfig updates instantiate config for a smart contract | |
 | `UpdateParams` | [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmwasm.wasm.v1.MsgUpdateParamsResponse) | UpdateParams defines a governance operation for updating the x/wasm module parameters. The authority is defined in the keeper.
 
-Since: cosmos-sdk 0.47 | |
+Since: 0.40 | |
 
  <!-- end services -->
 

@@ -5,30 +5,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
-
-type mockSubspace struct {
-	ps types.Params
-}
-
-func newMockSubspace(ps types.Params) mockSubspace {
-	return mockSubspace{ps: ps}
-}
-
-func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
-	*ps.(*types.Params) = ms.ps
-}
 
 func TestMigrate1To2(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -66,7 +48,7 @@ func TestMigrate1To2(t *testing.T) {
 
 	// legacy
 	// migrator
-	migrator := NewMigrator(*wasmKeeper, nil)
+	migrator := NewMigrator(*wasmKeeper)
 	err = migrator.Migrate1to2(ctx)
 	require.NoError(t, err)
 
@@ -78,44 +60,4 @@ func TestMigrate1To2(t *testing.T) {
 	})
 
 	require.Equal(t, []string{gotContractAddr1.String(), gotContractAddr2.String(), gotContractAddr3.String()}, allContract)
-}
-
-func TestMigrate2To3(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	wasmKeeper := keepers.WasmKeeper
-
-	storeKey := sdk.NewKVStoreKey("test-migration")
-	tKey := sdk.NewTransientStoreKey("transient_test")
-	ctx = defaultContext(storeKey, tKey)
-	store := ctx.KVStore(storeKey)
-
-	wasmKeeper.storeKey = storeKey
-	legacySubspace := newMockSubspace(types.DefaultParams())
-
-	//when
-	migrator := NewMigrator(*wasmKeeper, legacySubspace)
-	err := migrator.Migrate2to3(ctx)
-
-	//then
-	require.NoError(t, err)
-	bz := store.Get(types.ParamsKey)
-
-	var res types.Params
-	require.NoError(t, wasmKeeper.cdc.Unmarshal(bz, &res))
-	require.Equal(t, legacySubspace.ps, res)
-}
-
-// defaultContext creates a sdk.Context with a fresh MemDB that can be used in tests.
-func defaultContext(key storetypes.StoreKey, tkey storetypes.StoreKey) sdk.Context {
-	db := dbm.NewMemDB()
-	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
-	cms.MountStoreWithDB(tkey, storetypes.StoreTypeTransient, db)
-	err := cms.LoadLatestVersion()
-	if err != nil {
-		panic(err)
-	}
-	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
-
-	return ctx
 }

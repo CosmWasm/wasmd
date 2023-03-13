@@ -36,7 +36,7 @@ service Msg {
   // UpdateParams defines a governance operation for updating the x/wasm
   // module parameters. The authority is defined in the keeper.
   //
-  // Since: cosmos-sdk 0.47
+  // Since: 0.40
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
@@ -216,7 +216,7 @@ message MsgUpdateInstantiateConfigResponse {}
 
 // MsgUpdateParams is the Msg/UpdateParams request type.
 //
-// Since: cosmos-sdk 0.47
+// Since: 0.40
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
 
@@ -232,5 +232,5 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse defines the response structure for executing a
 // MsgUpdateParams message.
 //
-// Since: cosmos-sdk 0.47
+// Since: 0.40
 message MsgUpdateParamsResponse {}

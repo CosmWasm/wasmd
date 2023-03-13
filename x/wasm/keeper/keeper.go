@@ -128,6 +128,7 @@ func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	return params
 }
 
+// SetParams sets all wasm parameters.
 func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) error {
 	if err := ps.ValidateBasic(); err != nil {
 		return err
