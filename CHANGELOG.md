@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.31.0...HEAD)
 
-## [v0.31.0](https://github.com/CosmWasm/wasmd/tree/v0.31.0) (2023-01-xx)
+## [v0.31.0](https://github.com/CosmWasm/wasmd/tree/v0.31.0) (2023-03-13)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...v0.31.0)
 
