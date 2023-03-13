@@ -434,7 +434,8 @@ func createTestInput(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)
-	keeper.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, keeper.SetParams(ctx, types.DefaultParams()))
+
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
 

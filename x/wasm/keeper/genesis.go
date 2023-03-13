@@ -20,7 +20,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 	contractKeeper := NewGovPermissionKeeper(keeper)
 	err := keeper.SetParams(ctx, data.Params)
 	if err != nil {
-		return nil, sdkerrors.Wrapf(err, "set params")
+		return nil, errorsmod.Wrapf(err, "set params")
 	}
 
 	var maxCodeID uint64
