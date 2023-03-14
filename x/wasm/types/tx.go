@@ -74,6 +74,11 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
 			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
 		}
+		// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
+		// but not for new contracts
+		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
+			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
+		}
 	}
 	return nil
 }
@@ -425,6 +430,11 @@ func (msg MsgUpdateInstantiateConfig) ValidateBasic() error {
 
 	if err := msg.NewInstantiatePermission.ValidateBasic(); err != nil {
 		return errorsmod.Wrap(err, "instantiate permission")
+	}
+	// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
+	// but not for new contracts
+	if msg.NewInstantiatePermission.Permission == AccessTypeOnlyAddress {
+		return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
 	}
 	// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
 	// but not for new contracts
