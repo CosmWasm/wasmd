@@ -12,6 +12,7 @@ option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all) = true;
 
 // StoreCodeProposal gov proposal content type to submit WASM code to the system
+// Deprecated:
 message StoreCodeProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -41,6 +42,7 @@ message StoreCodeProposal {
 
 // InstantiateContractProposal gov proposal content type to instantiate a
 // contract.
+// Deprecated:
 message InstantiateContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -67,6 +69,7 @@ message InstantiateContractProposal {
 
 // InstantiateContract2Proposal gov proposal content type to instantiate
 // contract 2
+// Deprecated:
 message InstantiateContract2Proposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -97,6 +100,7 @@ message InstantiateContract2Proposal {
 }
 
 // MigrateContractProposal gov proposal content type to migrate a contract.
+// Deprecated:
 message MigrateContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -115,6 +119,7 @@ message MigrateContractProposal {
 }
 
 // SudoContractProposal gov proposal content type to call sudo on a contract.
+// Deprecated:
 message SudoContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -130,6 +135,7 @@ message SudoContractProposal {
 
 // ExecuteContractProposal gov proposal content type to call execute on a
 // contract.
+// Deprecated:
 message ExecuteContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -151,6 +157,7 @@ message ExecuteContractProposal {
 }
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.
+// Deprecated:
 message UpdateAdminProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -166,6 +173,7 @@ message UpdateAdminProposal {
 
 // ClearAdminProposal gov proposal content type to clear the admin of a
 // contract.
+// Deprecated:
 message ClearAdminProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -179,6 +187,7 @@ message ClearAdminProposal {
 
 // PinCodesProposal gov proposal content type to pin a set of code ids in the
 // wasmvm cache.
+// Deprecated:
 message PinCodesProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -195,6 +204,7 @@ message PinCodesProposal {
 
 // UnpinCodesProposal gov proposal content type to unpin a set of code ids in
 // the wasmvm cache.
+// Deprecated:
 message UnpinCodesProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -220,6 +230,7 @@ message AccessConfigUpdate {
 
 // UpdateInstantiateConfigProposal gov proposal content type to update
 // instantiate config to a  set of code ids.
+// Deprecated:
 message UpdateInstantiateConfigProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -235,6 +246,7 @@ message UpdateInstantiateConfigProposal {
 
 // StoreAndInstantiateContractProposal gov proposal content type to store
 // and instantiate the contract.
+// Deprecated:
 message StoreAndInstantiateContractProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 

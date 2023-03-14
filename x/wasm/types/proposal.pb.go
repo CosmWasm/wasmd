@@ -31,6 +31,7 @@ var (
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // StoreCodeProposal gov proposal content type to submit WASM code to the system
+// Deprecated:
 type StoreCodeProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -93,6 +94,7 @@ var xxx_messageInfo_StoreCodeProposal proto.InternalMessageInfo
 
 // InstantiateContractProposal gov proposal content type to instantiate a
 // contract.
+// Deprecated:
 type InstantiateContractProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -151,6 +153,7 @@ var xxx_messageInfo_InstantiateContractProposal proto.InternalMessageInfo
 
 // InstantiateContract2Proposal gov proposal content type to instantiate
 // contract 2
+// Deprecated:
 type InstantiateContract2Proposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -213,6 +216,7 @@ func (m *InstantiateContract2Proposal) XXX_DiscardUnknown() {
 var xxx_messageInfo_InstantiateContract2Proposal proto.InternalMessageInfo
 
 // MigrateContractProposal gov proposal content type to migrate a contract.
+// Deprecated:
 type MigrateContractProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -264,6 +268,7 @@ func (m *MigrateContractProposal) XXX_DiscardUnknown() {
 var xxx_messageInfo_MigrateContractProposal proto.InternalMessageInfo
 
 // SudoContractProposal gov proposal content type to call sudo on a contract.
+// Deprecated:
 type SudoContractProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -314,6 +319,7 @@ var xxx_messageInfo_SudoContractProposal proto.InternalMessageInfo
 
 // ExecuteContractProposal gov proposal content type to call execute on a
 // contract.
+// Deprecated:
 type ExecuteContractProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -367,6 +373,7 @@ func (m *ExecuteContractProposal) XXX_DiscardUnknown() {
 var xxx_messageInfo_ExecuteContractProposal proto.InternalMessageInfo
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.
+// Deprecated:
 type UpdateAdminProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -417,6 +424,7 @@ var xxx_messageInfo_UpdateAdminProposal proto.InternalMessageInfo
 
 // ClearAdminProposal gov proposal content type to clear the admin of a
 // contract.
+// Deprecated:
 type ClearAdminProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
@@ -465,6 +473,7 @@ var xxx_messageInfo_ClearAdminProposal proto.InternalMessageInfo
 
 // PinCodesProposal gov proposal content type to pin a set of code ids in the
 // wasmvm cache.
+// Deprecated:
 type PinCodesProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty" yaml:"title"`
@@ -513,6 +522,7 @@ var xxx_messageInfo_PinCodesProposal proto.InternalMessageInfo
 
 // UnpinCodesProposal gov proposal content type to unpin a set of code ids in
 // the wasmvm cache.
+// Deprecated:
 type UnpinCodesProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty" yaml:"title"`
@@ -607,6 +617,7 @@ var xxx_messageInfo_AccessConfigUpdate proto.InternalMessageInfo
 
 // UpdateInstantiateConfigProposal gov proposal content type to update
 // instantiate config to a  set of code ids.
+// Deprecated:
 type UpdateInstantiateConfigProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty" yaml:"title"`
@@ -656,6 +667,7 @@ var xxx_messageInfo_UpdateInstantiateConfigProposal proto.InternalMessageInfo
 
 // StoreAndInstantiateContractProposal gov proposal content type to store
 // and instantiate the contract.
+// Deprecated:
 type StoreAndInstantiateContractProposal struct {
 	// Title is a short summary
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`

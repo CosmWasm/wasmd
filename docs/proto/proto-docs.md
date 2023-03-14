@@ -628,6 +628,7 @@ applied.
 ### ClearAdminProposal
 ClearAdminProposal gov proposal content type to clear the admin of a
 contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -646,6 +647,7 @@ contract.
 ### ExecuteContractProposal
 ExecuteContractProposal gov proposal content type to call execute on a
 contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -667,6 +669,7 @@ contract.
 ### InstantiateContract2Proposal
 InstantiateContract2Proposal gov proposal content type to instantiate
 contract 2
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -692,6 +695,7 @@ contract 2
 ### InstantiateContractProposal
 InstantiateContractProposal gov proposal content type to instantiate a
 contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -714,6 +718,7 @@ contract.
 
 ### MigrateContractProposal
 MigrateContractProposal gov proposal content type to migrate a contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -736,6 +741,7 @@ Note: skipping 3 as this was previously used for unneeded run_as |
 ### PinCodesProposal
 PinCodesProposal gov proposal content type to pin a set of code ids in the
 wasmvm cache.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -754,6 +760,7 @@ wasmvm cache.
 ### StoreAndInstantiateContractProposal
 StoreAndInstantiateContractProposal gov proposal content type to store
 and instantiate the contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -781,6 +788,7 @@ and instantiate the contract.
 
 ### StoreCodeProposal
 StoreCodeProposal gov proposal content type to submit WASM code to the system
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -804,6 +812,7 @@ StoreCodeProposal gov proposal content type to submit WASM code to the system
 
 ### SudoContractProposal
 SudoContractProposal gov proposal content type to call sudo on a contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -823,6 +832,7 @@ SudoContractProposal gov proposal content type to call sudo on a contract.
 ### UnpinCodesProposal
 UnpinCodesProposal gov proposal content type to unpin a set of code ids in
 the wasmvm cache.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -840,6 +850,7 @@ the wasmvm cache.
 
 ### UpdateAdminProposal
 UpdateAdminProposal gov proposal content type to set an admin for a contract.
+Deprecated:
 
 
 | Field | Type | Label | Description |
@@ -859,6 +870,7 @@ UpdateAdminProposal gov proposal content type to set an admin for a contract.
 ### UpdateInstantiateConfigProposal
 UpdateInstantiateConfigProposal gov proposal content type to update
 instantiate config to a  set of code ids.
+Deprecated:
 
 
 | Field | Type | Label | Description |

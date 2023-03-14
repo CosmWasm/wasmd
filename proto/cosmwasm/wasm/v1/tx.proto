@@ -32,6 +32,12 @@ service Msg {
   // UpdateInstantiateConfig updates instantiate config for a smart contract
   rpc UpdateInstantiateConfig(MsgUpdateInstantiateConfig)
       returns (MsgUpdateInstantiateConfigResponse);
+  // SudoContract updates instantiate config for a smart contract
+  rpc SudoContract(MsgSudoContract) returns (MsgSudoContractResponse);
+  // PinCodes updates instantiate config for a smart contract
+  rpc PinCodes(MsgPinCodes) returns (MsgPinCodesResponse);
+  // PinCodes updates instantiate config for a smart contract
+  rpc UnpinCodes(MsgUnpinCodes) returns (MsgUnpinCodesResponse);
 }
 
 // MsgStoreCode submit Wasm code to the system
@@ -207,3 +213,85 @@ message MsgUpdateInstantiateConfig {
 
 // MsgUpdateInstantiateConfigResponse returns empty data
 message MsgUpdateInstantiateConfigResponse {}
+
+// MsgSudoContract calls sudo on a contract.
+message MsgSudoContract {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Contract is the address of the smart contract
+  string contract = 2;
+  // Msg json encoded message to be passed to the contract as sudo
+  bytes msg = 3 [ (gogoproto.casttype) = "RawContractMessage" ];
+}
+
+// MsgSudoContractResponse returns empty data
+message MsgSudoContractResponse {}
+
+// MsgPinCodes pins a set of code ids in the wasmvm cache.
+message MsgPinCodes {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // CodeIDs references the new WASM codes
+  repeated uint64 code_ids = 2 [
+    (gogoproto.customname) = "CodeIDs",
+    (gogoproto.moretags) = "yaml:\"code_ids\""
+  ];
+}
+
+// MsgPinCodesResponse returns empty data
+message MsgPinCodesResponse {}
+
+// MsgUnpinCodes unpins a set of code ids in the wasmvm cache.
+message MsgUnpinCodes {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // CodeIDs references the WASM codes
+  repeated uint64 code_ids = 2 [
+    (gogoproto.customname) = "CodeIDs",
+    (gogoproto.moretags) = "yaml:\"code_ids\""
+  ];
+}
+
+// MsgUnpinCodesResponse returns empty data
+message MsgUnpinCodesResponse {}
+
+// MsgStoreAndInstantiateContract stores and instantiates the contract.
+message MsgStoreAndInstantiateContract {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string run_as = 2;
+  // WASMByteCode can be raw or gzip compressed
+  bytes wasm_byte_code = 3 [ (gogoproto.customname) = "WASMByteCode" ];
+  // InstantiatePermission to apply on contract creation, optional
+  AccessConfig instantiate_permission = 4;
+  // UnpinCode code on upload, optional
+  bool unpin_code = 5;
+  // Admin is an optional address that can execute migrations
+  string admin = 6;
+  // Label is optional metadata to be stored with a constract instance.
+  string label = 7;
+  // Msg json encoded message to be passed to the contract on instantiation
+  bytes msg = 8 [ (gogoproto.casttype) = "RawContractMessage" ];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 9 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Source is the URL where the code is hosted
+  string source = 10;
+  // Builder is the docker image used to build the code deterministically, used
+  // for smart contract verification
+  string builder = 11;
+  // CodeHash is the SHA256 sum of the code outputted by builder, used for smart
+  // contract verification
+  bytes code_hash = 12;
+}
