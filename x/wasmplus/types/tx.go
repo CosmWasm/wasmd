@@ -3,12 +3,10 @@ package types
 import (
 	sdk "github.com/line/lbm-sdk/types"
 	sdkerrors "github.com/line/lbm-sdk/types/errors"
-
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
 )
 
 func (msg MsgStoreCodeAndInstantiateContract) Route() string {
-	return wasmtypes.RouterKey
+	return RouterKey
 }
 
 func (msg MsgStoreCodeAndInstantiateContract) Type() string {
@@ -51,7 +49,7 @@ func (msg MsgStoreCodeAndInstantiateContract) ValidateBasic() error {
 }
 
 func (msg MsgStoreCodeAndInstantiateContract) GetSignBytes() []byte {
-	return sdk.MustSortJSON(wasmtypes.ModuleCdc.MustMarshalJSON(&msg))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
 func (msg MsgStoreCodeAndInstantiateContract) GetSigners() []sdk.AccAddress {

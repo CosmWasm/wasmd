@@ -13,6 +13,7 @@
 * [\#10](https://github.com/line/wasmd/pull/10) update wasmvm version
 
 ### Bug Fixes
+* [\#12](https://github.com/line/wasmd/pull/12) fix not to register wrong codec in `x/wasmplus`
 
 ### Breaking Changes
 

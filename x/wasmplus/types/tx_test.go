@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/line/lbm-sdk/types"
+	"github.com/line/lbm-sdk/x/auth/legacy/legacytx"
 
 	wasmTypes "github.com/line/wasmd/x/wasm/types"
 )
@@ -134,4 +135,38 @@ func TestNewMsgStoreCodeAndInstantiateContractGetSigners(t *testing.T) {
 	res := NewMsgStoreCodeAndInstantiateContract(sdk.AccAddress([]byte("input111111111111111"))).GetSigners()
 	bytes := sdk.MustAccAddressFromBech32(res[0].String())
 	require.Equal(t, "696e707574313131313131313131313131313131", fmt.Sprintf("%v", hex.EncodeToString(bytes)))
+}
+
+func TestMsgJsonSignBytes(t *testing.T) {
+	const myInnerMsg = `{"foo":"bar"}`
+	specs := map[string]struct {
+		src legacytx.LegacyMsg
+		exp string
+	}{
+		"MsgInstantiateContract with every field": {
+			src: &MsgStoreCodeAndInstantiateContract{Sender: "sender1", WASMByteCode: []byte{89, 69, 76, 76, 79, 87, 32, 83, 85, 66, 77, 65, 82, 73, 78, 69},
+				InstantiatePermission: &wasmTypes.AccessConfig{Permission: wasmTypes.AccessTypeAnyOfAddresses, Addresses: []string{"address1", "address2"}},
+				Admin:                 "admin1", Label: "My", Msg: wasmTypes.RawContractMessage(myInnerMsg), Funds: sdk.Coins{{Denom: "denom1", Amount: sdk.NewInt(1)}}},
+			exp: `
+{
+	"type":"wasm/MsgStoreCodeAndInstantiateContract",
+	"value": {"admin":"admin1","funds":[{"amount":"1","denom":"denom1"}],"instantiate_permission":{"addresses":["address1","address2"],
+		"permission":"AnyOfAddresses"},"label":"My","msg":{"foo":"bar"},"sender":"sender1","wasm_byte_code":"WUVMTE9XIFNVQk1BUklORQ=="}
+}`,
+		},
+		"MsgInstantiateContract with minimum field": {
+			src: &MsgStoreCodeAndInstantiateContract{},
+			exp: `
+{
+	"type":"wasm/MsgStoreCodeAndInstantiateContract",
+	"value": {"funds":[]}
+}`,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			bz := spec.src.GetSignBytes()
+			assert.JSONEq(t, spec.exp, string(bz), "raw: %s", string(bz))
+		})
+	}
 }
