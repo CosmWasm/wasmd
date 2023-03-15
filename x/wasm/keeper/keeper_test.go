@@ -1574,7 +1574,7 @@ func prettyEvents(t *testing.T, events sdk.Events) string {
 	for i, e := range events {
 		attr := make([]map[string]string, len(e.Attributes))
 		for j, a := range e.Attributes {
-			attr[j] = map[string]string{string(a.Key): string(a.Value)}
+			attr[j] = map[string]string{a.Key: a.Value}
 		}
 		r[i] = prettyEvent{Type: e.Type, Attr: attr}
 	}
@@ -2407,7 +2407,7 @@ func TestSetContractAdmin(t *testing.T) {
 func attrsToStringMap(attrs []abci.EventAttribute) map[string]string {
 	r := make(map[string]string, len(attrs))
 	for _, v := range attrs {
-		r[string(v.Key)] = string(v.Value)
+		r[v.Key] = v.Value
 	}
 	return r
 }

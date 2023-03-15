@@ -194,8 +194,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label        string         = "label"
-		salt         []byte         = []byte("mySalt")
+		label                       = "label"
+		salt                        = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
@@ -448,7 +448,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, types.EventTypeMigrate, em.Events()[0].Type)
 	require.Equal(t, types.EventTypeGovContractResult, em.Events()[1].Type)
 	require.Len(t, em.Events()[1].Attributes, 1)
-	assert.Equal(t, types.AttributeKeyResultDataHex, string(em.Events()[1].Attributes[0].Key))
+	assert.Equal(t, types.AttributeKeyResultDataHex, em.Events()[1].Attributes[0].Key)
 }
 
 func TestExecuteProposal(t *testing.T) {
