@@ -83,7 +83,8 @@ func TestGenesisExportImport(t *testing.T) {
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
-		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		err = wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		require.NoError(t, err)
 	}
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
