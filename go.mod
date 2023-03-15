@@ -7,7 +7,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.45.14
 	github.com/cosmos/gogoproto v1.4.6
-	github.com/cosmos/iavl v0.19.5
+	github.com/cosmos/iavl v0.20.0
 	github.com/cosmos/ibc-go/v4 v4.3.0
 	github.com/cosmos/interchain-accounts v0.2.6
 	github.com/docker/distribution v2.8.1+incompatible
@@ -56,6 +56,7 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20220817183557-09c6e030a677 // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.0 // indirect
+	github.com/cometbft/cometbft-db v0.7.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/cosmos-db v0.0.0-20221226095112-f3c38ecb5e32 // indirect
@@ -129,6 +130,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.14.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tidwall/btree v1.5.0 // indirect
 	github.com/zondax/hid v0.9.1 // indirect
