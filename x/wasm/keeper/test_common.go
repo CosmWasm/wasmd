@@ -284,7 +284,7 @@ func createTestInput(
 		case banktypes.ModuleName:
 			keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 		case stakingtypes.ModuleName:
-			keyTable = stakingtypes.ParamKeyTable() 
+			keyTable = stakingtypes.ParamKeyTable()
 		case minttypes.ModuleName:
 			keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
 		case distributiontypes.ModuleName:
@@ -297,11 +297,11 @@ func createTestInput(
 			keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
 			// ibc types
 		case ibctransfertypes.ModuleName:
-			keyTable = ibctransfertypes.ParamKeyTable() 
+			keyTable = ibctransfertypes.ParamKeyTable()
 		case icahosttypes.SubModuleName:
-			keyTable = icahosttypes.ParamKeyTable() 
+			keyTable = icahosttypes.ParamKeyTable()
 		case icacontrollertypes.SubModuleName:
-			keyTable = icacontrollertypes.ParamKeyTable() 
+			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case types.ModuleName:
 			keyTable = types.ParamKeyTable() //nolint:staticcheck

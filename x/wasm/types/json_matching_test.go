@@ -85,7 +85,7 @@ func TestIsJSONObjectWithTopLevelKey(t *testing.T) {
 		//	src:         []byte(`{"claim": "foo", "claim":"bar"}`),
 		//	allowedKeys: []string{"claim"},
 		//	expErr:      ErrNotAJSONObject,
-		//},
+		// },
 
 		// Not one top-level key
 		"false for no top-level key": {

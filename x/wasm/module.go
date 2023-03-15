@@ -46,7 +46,7 @@ const (
 // AppModuleBasic defines the basic application module used by the wasm module.
 type AppModuleBasic struct{}
 
-func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { 
+func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	RegisterCodec(amino)
 }
 
