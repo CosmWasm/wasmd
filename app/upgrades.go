@@ -64,7 +64,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case wasmtypes.ModuleName:
-			keyTable = wasmtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = wasmtypes.ParamKeyTable() 
 		default:
 			continue
 		}
