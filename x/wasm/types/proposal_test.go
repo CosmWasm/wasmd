@@ -13,8 +13,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const invalidAddress = "invalid address"
-
 func TestValidateProposalCommons(t *testing.T) {
 	type commonProposal struct {
 		Title, Description string

@@ -142,7 +142,7 @@ import (
 
 	// unnamed import of statik for swagger UI support
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	_ "github.com/cosmos/cosmos-sdk/client/docs/statik" // statik for swagger UI support
 )
 
 const (
