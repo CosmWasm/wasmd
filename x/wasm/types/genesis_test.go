@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const invalid = "invalid"
+const invalidAddress = "invalid"
 
 func TestValidateGenesisState(t *testing.T) {
 	specs := map[string]struct {
