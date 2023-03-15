@@ -25,10 +25,23 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
+
+type mockSubspace struct {
+	ps types.Params
+}
+
+func newMockSubspace(ps types.Params) mockSubspace {
+	return mockSubspace{ps: ps}
+}
+
+func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
+	*ps.(*types.Params) = ms.ps
+}
 
 type testData struct {
 	module           AppModule
@@ -51,7 +64,7 @@ func setupTest(t *testing.T) testData {
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil),
+		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(types.DefaultParams())),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,

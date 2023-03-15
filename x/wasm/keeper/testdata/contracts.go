@@ -7,14 +7,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 )
 
-//go:embed reflect.wasm
-var reflectContract []byte
-
-//go:embed reflect_1_1.wasm
-var migrateReflectContract []byte
-
-//go:embed cyberpunk.wasm
-var cyberpunkContract []byte
+var (
+	//go:embed reflect.wasm
+	reflectContract []byte
+	//go:embed reflect_1_1.wasm
+	migrateReflectContract []byte
+	//go:embed cyberpunk.wasm
+	cyberpunkContract []byte
+	//go:embed ibc_reflect.wasm
+	ibcReflectContract []byte
+	//go:embed burner.wasm
+	burnerContract []byte
+	//go:embed hackatom.wasm
+	hackatomContract []byte
+)
 
 func ReflectContractWasm() []byte {
 	return reflectContract
@@ -26,6 +32,18 @@ func MigrateReflectContractWasm() []byte {
 
 func CyberpunkContractWasm() []byte {
 	return cyberpunkContract
+}
+
+func IBCReflectContractWasm() []byte {
+	return ibcReflectContract
+}
+
+func BurnerContractWasm() []byte {
+	return burnerContract
+}
+
+func HackatomContractWasm() []byte {
+	return hackatomContract
 }
 
 // ReflectHandleMsg is used to encode handle messages

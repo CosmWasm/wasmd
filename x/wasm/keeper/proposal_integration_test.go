@@ -14,8 +14,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/params/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -639,98 +637,6 @@ func TestAdminProposals(t *testing.T) {
 			cInfo := wasmKeeper.GetContractInfo(ctx, contractAddr)
 			require.NotNil(t, cInfo)
 			assert.Equal(t, spec.expAdmin.String(), cInfo.Admin)
-		})
-	}
-}
-
-func TestUpdateParamsProposal(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, "staking")
-	wasmKeeper := keepers.WasmKeeper
-
-	var (
-		legacyAmino                           = keepers.EncodingConfig.Amino
-		myAddress              sdk.AccAddress = make([]byte, types.ContractAddrLen)
-		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
-	)
-
-	specs := map[string]struct {
-		src                proposal.ParamChange
-		expUploadConfig    types.AccessConfig
-		expInstantiateType types.AccessType
-	}{
-		"update upload permission param": {
-			src: proposal.ParamChange{
-				Subspace: types.ModuleName,
-				Key:      string(types.ParamStoreKeyUploadAccess),
-				Value:    string(legacyAmino.MustMarshalJSON(&types.AllowNobody)),
-			},
-			expUploadConfig:    types.AllowNobody,
-			expInstantiateType: types.AccessTypeEverybody,
-		},
-		"update upload permission with same as current value": {
-			src: proposal.ParamChange{
-				Subspace: types.ModuleName,
-				Key:      string(types.ParamStoreKeyUploadAccess),
-				Value:    string(legacyAmino.MustMarshalJSON(&types.AllowEverybody)),
-			},
-			expUploadConfig:    types.AllowEverybody,
-			expInstantiateType: types.AccessTypeEverybody,
-		},
-		"update upload permission param with address": {
-			src: proposal.ParamChange{
-				Subspace: types.ModuleName,
-				Key:      string(types.ParamStoreKeyUploadAccess),
-				Value:    string(legacyAmino.MustMarshalJSON(&oneAddressAccessConfig)),
-			},
-			expUploadConfig:    oneAddressAccessConfig,
-			expInstantiateType: types.AccessTypeEverybody,
-		},
-		"update instantiate param": {
-			src: proposal.ParamChange{
-				Subspace: types.ModuleName,
-				Key:      string(types.ParamStoreKeyInstantiateAccess),
-				Value:    string(legacyAmino.MustMarshalJSON(types.AccessTypeNobody)),
-			},
-			expUploadConfig:    types.AllowEverybody,
-			expInstantiateType: types.AccessTypeNobody,
-		},
-		"update instantiate param as default": {
-			src: proposal.ParamChange{
-				Subspace: types.ModuleName,
-				Key:      string(types.ParamStoreKeyInstantiateAccess),
-				Value:    string(legacyAmino.MustMarshalJSON(types.AccessTypeEverybody)),
-			},
-			expUploadConfig:    types.AllowEverybody,
-			expInstantiateType: types.AccessTypeEverybody,
-		},
-	}
-	for msg, spec := range specs {
-		t.Run(msg, func(t *testing.T) {
-			wasmKeeper.SetParams(ctx, types.DefaultParams())
-
-			// encode + decode as CLI to play nice with amino
-			bz := legacyAmino.MustMarshalJSON(&utils.ParamChangeProposalJSON{
-				Title:       "Foo",
-				Description: "Bar",
-				Changes:     []utils.ParamChangeJSON{{Subspace: spec.src.Subspace, Key: spec.src.Key, Value: json.RawMessage(spec.src.Value)}},
-			})
-			t.Log(string(bz))
-
-			var jsonProposal utils.ParamChangeProposalJSON
-			require.NoError(t, legacyAmino.UnmarshalJSON(bz, &jsonProposal))
-			src := &proposal.ParameterChangeProposal{
-				Title:       jsonProposal.Title,
-				Description: jsonProposal.Description,
-				Changes:     jsonProposal.Changes.ToParamChanges(),
-			}
-
-			// when
-			mustSubmitAndExecuteLegacyProposal(t, ctx, src, myAddress.String(), keepers)
-
-			// then
-			assert.True(t, spec.expUploadConfig.Equals(wasmKeeper.getUploadAccessConfig(ctx)),
-				"got %#v not %#v", wasmKeeper.getUploadAccessConfig(ctx), spec.expUploadConfig)
-			assert.Equal(t, spec.expInstantiateType, wasmKeeper.getInstantiateAccessConfig(ctx))
 		})
 	}
 }
