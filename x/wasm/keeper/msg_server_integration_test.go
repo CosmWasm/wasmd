@@ -120,7 +120,8 @@ func TestUpdateParams(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			wasmApp.WasmKeeper.SetParams(ctx, types.DefaultParams())
+			err := wasmApp.WasmKeeper.SetParams(ctx, types.DefaultParams())
+			require.NoError(t, err)
 
 			// when
 			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)

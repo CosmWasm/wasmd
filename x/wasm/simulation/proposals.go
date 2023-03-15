@@ -26,7 +26,6 @@ const (
 	WeightStoreAndInstantiateContractProposal = "weight_store_and_instantiate_contract_proposal"
 )
 
-//nolint:staticcheck
 func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedProposalContent {
 	return []simtypes.WeightedProposalContent{
 		// simulation.NewWeightedProposalContent(
@@ -125,7 +124,7 @@ func ProposalContents(bk BankKeeper, wasmKeeper WasmKeeper) []simtypes.WeightedP
 // Current problem: out of gas (defaul gaswanted config of gov SimulateMsgSubmitProposal is 10_000_000)
 // but this proposal may need more than it
 //
-//nolint:staticcheck
+
 func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
@@ -150,7 +149,7 @@ func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorF
 
 // Simulate instantiate contract proposal
 //
-//nolint:staticcheck
+
 func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
@@ -177,7 +176,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 
 // Simulate execute contract proposal
 //
-//nolint:staticcheck
+
 func SimulateExecuteContractProposal(
 	bk BankKeeper,
 	wasmKeeper WasmKeeper,
@@ -239,7 +238,7 @@ func DefaultSimulateUpdateAdminProposalContractSelector(
 
 // Simulate update admin contract proposal
 //
-//nolint:staticcheck
+
 func SimulateUpdateAdminProposal(wasmKeeper WasmKeeper, contractSelector UpdateAdminContractSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
@@ -273,7 +272,7 @@ func DefaultSimulateContractSelector(
 
 // Simulate clear admin proposal
 //
-//nolint:staticcheck
+
 func SimulateClearAdminProposal(wasmKeeper WasmKeeper, contractSelector ClearAdminContractSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		ctAddress := contractSelector(ctx, wasmKeeper)
@@ -293,7 +292,7 @@ type MigrateContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.A
 
 // Simulate migrate contract proposal
 //
-//nolint:staticcheck
+
 func SimulateMigrateContractProposal(wasmKeeper WasmKeeper, contractSelector MigrateContractProposalContractSelector, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		ctAddress := contractSelector(ctx, wasmKeeper)
@@ -320,7 +319,7 @@ type SudoContractProposalContractSelector func(sdk.Context, WasmKeeper) sdk.AccA
 
 // Simulate sudo contract proposal
 //
-//nolint:staticcheck
+
 func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoContractProposalContractSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		ctAddress := contractSelector(ctx, wasmKeeper)
@@ -339,7 +338,7 @@ func SimulateSudoContractProposal(wasmKeeper WasmKeeper, contractSelector SudoCo
 
 // Simulate pin contract proposal
 //
-//nolint:staticcheck
+
 func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		codeID := codeSelector(ctx, wasmKeeper)
@@ -357,7 +356,7 @@ func SimulatePinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelec
 
 // Simulate unpin contract proposal
 //
-//nolint:staticcheck
+
 func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		codeID := codeSelector(ctx, wasmKeeper)
@@ -375,7 +374,7 @@ func SimulateUnpinContractProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSel
 
 // Simulate update instantiate config proposal
 //
-//nolint:staticcheck
+
 func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		codeID := codeSelector(ctx, wasmKeeper)
@@ -400,7 +399,6 @@ func SimulateUpdateInstantiateConfigProposal(wasmKeeper WasmKeeper, codeSelector
 	}
 }
 
-//nolint:staticcheck
 func SimulateStoreAndInstantiateContractProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)

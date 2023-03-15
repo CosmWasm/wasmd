@@ -18,7 +18,7 @@ import (
 
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
-	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 
@@ -55,7 +55,8 @@ func TestModuleMigrations(t *testing.T) {
 
 			fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
 			fromVM[wasm.ModuleName] = spec.startVersion
-			upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+			_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+			require.NoError(t, err)
 
 			// when
 			gotVM, err := wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)

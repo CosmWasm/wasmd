@@ -124,10 +124,11 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 			accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
-			keepers.WasmKeeper.SetParams(ctx, types.Params{
+			err := keepers.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowEverybody,
 				InstantiateDefaultPermission: spec.srcPermission,
 			})
+			require.NoError(t, err)
 			fundAccounts(t, ctx, accKeeper, bankKeeper, myAddr, deposit)
 
 			codeID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
@@ -182,9 +183,10 @@ func TestCreateWithParamPermissions(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
 			params.CodeUploadAccess = spec.chainUpload
-			keepers.WasmKeeper.SetParams(ctx, params)
+			err := keepers.WasmKeeper.SetParams(ctx, params)
+			require.NoError(t, err)
 			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
-			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+			_, _, err = keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
 				return
@@ -260,7 +262,8 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
 			params.InstantiateDefaultPermission = spec.defaultPermssion
-			keeper.SetParams(ctx, params)
+			err := keeper.SetParams(ctx, params)
+			require.NoError(t, err)
 			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError == nil {
@@ -2149,7 +2152,8 @@ func TestSetAccessConfig(t *testing.T) {
 
 			newParams := types.DefaultParams()
 			newParams.InstantiateDefaultPermission = spec.chainPermission
-			k.SetParams(ctx, newParams)
+			err := k.SetParams(ctx, newParams)
+			require.NoError(t, err)
 
 			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
 			// when

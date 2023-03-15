@@ -26,10 +26,11 @@ const testingString = "testing"
 func TestStoreCodeProposal(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(parentCtx, types.Params{
+	err := wasmKeeper.SetParams(parentCtx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 	rawWasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	gzippedWasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
@@ -122,10 +123,11 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 func TestInstantiateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -179,10 +181,11 @@ func TestInstantiateProposal(t *testing.T) {
 func TestInstantiate2Proposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -237,10 +240,11 @@ func TestInstantiate2Proposal(t *testing.T) {
 func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -317,10 +321,11 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -375,10 +380,11 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 func TestMigrateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -612,10 +618,11 @@ func TestAdminProposals(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, "staking")
 			wasmKeeper := keepers.WasmKeeper
-			wasmKeeper.SetParams(ctx, types.Params{
+			err := wasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowNobody,
 				InstantiateDefaultPermission: types.AccessTypeNobody,
 			})
+			require.NoError(t, err)
 
 			codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfo, wasmCode))

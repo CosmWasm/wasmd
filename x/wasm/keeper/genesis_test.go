@@ -90,7 +90,8 @@ func TestGenesisExportImport(t *testing.T) {
 	}
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
-	wasmKeeper.SetParams(srcCtx, wasmParams)
+	err = wasmKeeper.SetParams(srcCtx, wasmParams)
+	require.NoError(t, err)
 
 	// export
 	exportedState := ExportGenesis(srcCtx, wasmKeeper)
@@ -124,7 +125,8 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	_, err = InitGenesis(dstCtx, dstKeeper, importState)
+	require.NoError(t, err)
 
 	// compare whole DB
 
