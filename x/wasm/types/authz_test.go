@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 
@@ -539,7 +540,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 		auth      authztypes.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
-		expErr    *sdkerrors.Error
+		expErr    *errorsmod.Error
 	}{
 		"accepted and updated - contract execution": {
 			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(2), NewAllowAllMessagesFilter())),

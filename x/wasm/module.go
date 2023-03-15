@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"runtime/debug"
 	"strings"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
+	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -108,6 +108,8 @@ type AppModule struct {
 	accountKeeper      types.AccountKeeper // for simulation
 	bankKeeper         simulation.BankKeeper
 	router             keeper.MessageRouter
+	// legacySubspace is used solely for migration of x/params managed parameters
+	legacySubspace exported.Subspace
 }
 
 // NewAppModule creates a new AppModule object
@@ -118,6 +120,7 @@ func NewAppModule(
 	ak types.AccountKeeper,
 	bk simulation.BankKeeper,
 	router *baseapp.MsgServiceRouter,
+	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic:     AppModuleBasic{},
@@ -127,6 +130,7 @@ func NewAppModule(
 		accountKeeper:      ak,
 		bankKeeper:         bk,
 		router:             router,
+		legacySubspace:     ss,
 	}
 }
 
@@ -142,14 +146,18 @@ func (am AppModule) IsAppModule() { // marker
 // module. It should be incremented on each consensus-breaking change
 // introduced by the module. To avoid wrong/empty versions, the initial version
 // should be set to 1.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(keeper.NewDefaultPermissionKeeper(am.keeper)))
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 
-	m := keeper.NewMigrator(*am.keeper)
+	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
+	if err != nil {
+		panic(err)
+	}
+	err = cfg.RegisterMigration(types.ModuleName, 2, m.Migrate2to3)
 	if err != nil {
 		panic(err)
 	}
@@ -201,13 +209,10 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
+//
+
 func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
 	return simulation.ProposalContents(am.bankKeeper, am.keeper)
-}
-
-// RandomizedParams creates randomized bank param changes for the simulator.
-func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.LegacyParamChange {
-	return simulation.ParamChanges(r, am.cdc)
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types

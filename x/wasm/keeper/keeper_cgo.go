@@ -9,7 +9,6 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/codec"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -19,29 +18,25 @@ import (
 func NewKeeper(
 	cdc codec.Codec,
 	storeKey storetypes.StoreKey,
-	paramSpace paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
-	distKeeper types.DistributionKeeper,
+	distrKeeper types.DistributionKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
-	queryRouter GRPCQueryRouter,
+	_ GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
+	authority string,
 	opts ...Option,
 ) Keeper {
 	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
 		panic(err)
-	}
-	// set KeyTable if it has not already been set
-	if !paramSpace.HasKeyTable() {
-		paramSpace = paramSpace.WithKeyTable(types.ParamKeyTable())
 	}
 
 	keeper := &Keeper{
@@ -55,12 +50,12 @@ func NewKeeper(
 		capabilityKeeper:     capabilityKeeper,
 		messenger:            NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
-		paramSpace:           paramSpace,
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
+		authority:            authority,
 	}
-	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distKeeper, channelKeeper, keeper)
+	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	for _, o := range opts {
 		o.apply(keeper)
 	}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -42,7 +43,7 @@ func TestQueryAllContractState(t *testing.T) {
 		srcQuery            *types.QueryAllContractStateRequest
 		expModelContains    []types.Model
 		expModelContainsNot []types.Model
-		expErr              *sdkErrors.Error
+		expErr              *errorsmod.Error
 	}{
 		"query all": {
 			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
@@ -167,7 +168,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 
 	specs := map[string]struct {
 		doInContract func()
-		expErr       *sdkErrors.Error
+		expErr       *errorsmod.Error
 	}{
 		"out of gas": {
 			doInContract: func() {
@@ -216,7 +217,7 @@ func TestQueryRawContractState(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery *types.QueryRawContractStateRequest
 		expData  []byte
-		expErr   *sdkErrors.Error
+		expErr   *errorsmod.Error
 	}{
 		"query raw key": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
@@ -613,7 +614,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery   *types.QueryPinnedCodesRequest
 		expCodeIDs []uint64
-		expErr     *sdkErrors.Error
+		expErr     *errorsmod.Error
 	}{
 		"query all": {
 			srcQuery:   &types.QueryPinnedCodesRequest{},
@@ -672,10 +673,11 @@ func TestQueryParams(t *testing.T) {
 	require.Equal(t, paramsResponse.Params.CodeUploadAccess, defaultParams.CodeUploadAccess)
 	require.Equal(t, paramsResponse.Params.InstantiateDefaultPermission, defaultParams.InstantiateDefaultPermission)
 
-	keeper.SetParams(ctx, types.Params{
+	err = keeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)

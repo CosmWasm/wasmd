@@ -113,7 +113,7 @@ func TestCountTxDecorator(t *testing.T) {
 func TestLimitSimulationGasDecorator(t *testing.T) {
 	var (
 		hundred sdk.Gas = 100
-		zero    sdk.Gas
+		zero    sdk.Gas = 0 //nolint:revive // leave the zero for clarity
 	)
 	specs := map[string]struct {
 		customLimit *sdk.Gas
@@ -169,12 +169,14 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			if spec.expErr != nil {
 				require.PanicsWithValue(t, spec.expErr, func() {
 					ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-					ante.AnteHandle(ctx, nil, spec.simulation, nextAnte) //nolint:errcheck
+					_, err := ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+					require.NoError(t, err)
 				})
 				return
 			}
 			ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-			ante.AnteHandle(ctx, nil, spec.simulation, nextAnte) //nolint:errcheck
+			_, err := ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+			require.NoError(t, err)
 		})
 	}
 }

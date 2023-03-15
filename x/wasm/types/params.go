@@ -6,15 +6,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-)
-
-var (
-	ParamStoreKeyUploadAccess      = []byte("uploadAccess")
-	ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
 )
 
 var AllAccessTypes = []AccessType{
@@ -98,11 +92,6 @@ var (
 	AllowNobody         = AccessConfig{Permission: AccessTypeNobody}
 )
 
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
-}
-
 // DefaultParams returns default wasm parameters
 func DefaultParams() Params {
 	return Params{
@@ -117,14 +106,6 @@ func (p Params) String() string {
 		panic(err)
 	}
 	return string(out)
-}
-
-// ParamSetPairs returns the parameter set pairs.
-func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(ParamStoreKeyUploadAccess, &p.CodeUploadAccess, validateAccessConfig),
-		paramtypes.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
-	}
 }
 
 // ValidateBasic performs basic validation on wasm parameters

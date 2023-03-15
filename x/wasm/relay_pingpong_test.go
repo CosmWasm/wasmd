@@ -225,11 +225,11 @@ var ( // store keys
 func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 	// parse received data and store
 	packet := msg.Packet
-	var receivedBall Hit
+	var receivedBall hit
 	if err := json.Unmarshal(packet.Data, &receivedBall); err != nil {
 		return &wasmvmtypes.IBCReceiveResult{
 			Ok: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: HitAcknowledgement{Error: err.Error()}.GetBytes(),
+				Acknowledgement: hitAcknowledgement{Error: err.Error()}.GetBytes(),
 			},
 			// no hit msg, we stop the game
 		}, 0, nil
@@ -270,12 +270,12 @@ func (p player) IBCPacketReceive(codeID wasmvm.Checksum, env wasmvmtypes.Env, ms
 // OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
 func (p player) IBCPacketAck(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	// parse received data and store
-	var sentBall Hit
+	var sentBall hit
 	if err := json.Unmarshal(msg.OriginalPacket.Data, &sentBall); err != nil {
 		return nil, 0, err
 	}
 
-	var ack HitAcknowledgement
+	var ack hitAcknowledgement
 	if err := json.Unmarshal(msg.Acknowledgement.Data, &ack); err != nil {
 		return nil, 0, err
 	}
@@ -322,15 +322,15 @@ func counterParty(s string) string {
 }
 
 // hit is ibc packet payload
-type Hit map[string]uint64
+type hit map[string]uint64
 
-func NewHit(player string, count uint64) Hit {
+func NewHit(player string, count uint64) hit { //nolint:revive // no need to make this public
 	return map[string]uint64{
 		player: count,
 	}
 }
 
-func (h Hit) GetBytes() []byte {
+func (h hit) GetBytes() []byte {
 	b, err := json.Marshal(h)
 	if err != nil {
 		panic(err)
@@ -338,25 +338,25 @@ func (h Hit) GetBytes() []byte {
 	return b
 }
 
-func (h Hit) String() string {
+func (h hit) String() string {
 	return fmt.Sprintf("Ball %s", string(h.GetBytes()))
 }
 
-func (h Hit) BuildAck() HitAcknowledgement {
-	return HitAcknowledgement{Success: &h}
+func (h hit) BuildAck() hitAcknowledgement {
+	return hitAcknowledgement{Success: &h}
 }
 
-func (h Hit) BuildError(errMsg string) HitAcknowledgement {
-	return HitAcknowledgement{Error: errMsg}
+func (h hit) BuildError(errMsg string) hitAcknowledgement {
+	return hitAcknowledgement{Error: errMsg}
 }
 
 // hitAcknowledgement is ibc acknowledgment payload
-type HitAcknowledgement struct {
+type hitAcknowledgement struct {
 	Error   string `json:"error,omitempty"`
-	Success *Hit   `json:"success,omitempty"`
+	Success *hit   `json:"success,omitempty"`
 }
 
-func (a HitAcknowledgement) GetBytes() []byte {
+func (a hitAcknowledgement) GetBytes() []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
 		panic(err)

@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -91,7 +90,7 @@ func TestIBCQuerier(t *testing.T) {
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
 		expJSONResult string
-		expErr        *sdkerrors.Error
+		expErr        *errorsmod.Error
 	}{
 		"query port id": {
 			srcQuery: &wasmvmtypes.IBCQuery{

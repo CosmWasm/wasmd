@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -123,10 +124,11 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 			accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
-			keepers.WasmKeeper.SetParams(ctx, types.Params{
+			err := keepers.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowEverybody,
 				InstantiateDefaultPermission: spec.srcPermission,
 			})
+			require.NoError(t, err)
 			fundAccounts(t, ctx, accKeeper, bankKeeper, myAddr, deposit)
 
 			codeID, _, err := keeper.Create(ctx, myAddr, hackatomWasm, nil)
@@ -148,7 +150,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	specs := map[string]struct {
 		policy      AuthorizationPolicy
 		chainUpload types.AccessConfig
-		expError    *sdkerrors.Error
+		expError    *errorsmod.Error
 	}{
 		"default": {
 			policy:      DefaultAuthorizationPolicy{},
@@ -181,9 +183,10 @@ func TestCreateWithParamPermissions(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
 			params.CodeUploadAccess = spec.chainUpload
-			keepers.WasmKeeper.SetParams(ctx, params)
+			err := keepers.WasmKeeper.SetParams(ctx, params)
+			require.NoError(t, err)
 			keeper := NewPermissionedKeeper(keepers.WasmKeeper, spec.policy)
-			_, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
+			_, _, err = keeper.Create(ctx, creator, hackatomWasm, nil)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError != nil {
 				return
@@ -212,7 +215,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
 		// expError is nil iff the request is allowed
-		expError *sdkerrors.Error
+		expError *errorsmod.Error
 	}{
 		"override everybody": {
 			defaultPermssion:    types.AccessTypeEverybody,
@@ -259,7 +262,8 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			params := types.DefaultParams()
 			params.InstantiateDefaultPermission = spec.defaultPermssion
-			keeper.SetParams(ctx, params)
+			err := keeper.SetParams(ctx, params)
+			require.NoError(t, err)
 			codeID, _, err := contractKeeper.Create(ctx, creator, hackatomWasm, spec.requestedPermission)
 			require.True(t, spec.expError.Is(err), err)
 			if spec.expError == nil {
@@ -511,7 +515,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 	specs := map[string]struct {
 		srcPermission types.AccessConfig
 		srcActor      sdk.AccAddress
-		expError      *sdkerrors.Error
+		expError      *errorsmod.Error
 	}{
 		"default": {
 			srcPermission: types.DefaultUploadAccess,
@@ -748,7 +752,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	// overwrite wasmvm in router
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
-	types.RegisterMsgServer(router, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	types.RegisterMsgServer(router, newMsgServerImpl(NewDefaultPermissionKeeper(keeper), *keeper))
 	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
@@ -1053,8 +1057,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	}()
 
 	// this should throw out of gas exception (panic)
-	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
-	require.Error(t, err)
+	_, _ = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"cpu_loop":{}}`), nil)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -1096,8 +1099,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	}()
 
 	// this should throw out of gas exception (panic)
-	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
-	require.Error(t, err)
+	_, _ = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -1141,7 +1143,7 @@ func TestMigrate(t *testing.T) {
 		fromCodeID           uint64
 		toCodeID             uint64
 		migrateMsg           []byte
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 		expVerifier          sdk.AccAddress
 		expIBCPort           bool
 		initMsg              []byte
@@ -1614,7 +1616,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 		newAdmin             sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 	}{
 		"all good with admin set": {
 			instAdmin: fred,
@@ -1683,7 +1685,7 @@ func TestClearContractAdmin(t *testing.T) {
 		instAdmin            sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 	}{
 		"all good when called by proper admin": {
 			instAdmin: fred,
@@ -2150,7 +2152,8 @@ func TestSetAccessConfig(t *testing.T) {
 
 			newParams := types.DefaultParams()
 			newParams.InstantiateDefaultPermission = spec.chainPermission
-			k.SetParams(ctx, newParams)
+			err := k.SetParams(ctx, newParams)
+			require.NoError(t, err)
 
 			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
 			// when
@@ -2202,7 +2205,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
 		expBalances sdk.Coins
 		expHandled  bool
-		expErr      *sdkerrors.Error
+		expErr      *errorsmod.Error
 	}{
 		"vesting account - all removed": {
 			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },

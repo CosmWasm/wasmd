@@ -394,15 +394,20 @@ func TestDispatchSubmessages(t *testing.T) {
 				WithGasMeter(sdk.NewGasMeter(100)).
 				WithEventManager(em).WithLogger(log.TestingLogger())
 			d := NewMessageDispatcher(spec.msgHandler, spec.replyer)
+
+			// run the test
 			gotData, gotErr := d.DispatchSubmessages(ctx, RandomAccountAddress(t), "any_port", spec.msgs)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				assert.Empty(t, em.Events())
 				return
 			}
+
+			// if we don't expect an error, we should get no error
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expData, gotData)
 
+			// ensure the commits are what we expect
 			assert.Equal(t, spec.expCommits, mockStore.Committed)
 			if len(spec.expEvents) == 0 {
 				assert.Empty(t, em.Events())
