@@ -73,7 +73,7 @@ func TestConstructorOptions(t *testing.T) {
 		"api costs": {
 			srcOpt: WithAPICosts(1, 2),
 			verify: func(t *testing.T, k Keeper) {
-				t.Cleanup(setApiDefaults)
+				t.Cleanup(setAPIDefaults)
 				assert.Equal(t, uint64(1), costHumanize)
 				assert.Equal(t, uint64(2), costCanonical)
 			},
@@ -109,7 +109,7 @@ func TestConstructorOptions(t *testing.T) {
 	}
 }
 
-func setApiDefaults() {
+func setAPIDefaults() {
 	costHumanize = DefaultGasCostHumanAddress * DefaultGasMultiplier
 	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
 }

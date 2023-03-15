@@ -79,7 +79,7 @@ func TestICA(t *testing.T) {
 	}
 	relativeTimeout := uint64(time.Minute.Nanoseconds()) // note this is in nanoseconds
 	msgSendTx := icacontrollertypes.NewMsgSendTx(ownerAddr.String(), path.EndpointA.ConnectionID, relativeTimeout, payloadPacket)
-	res, err = controllerChain.SendMsgs(msgSendTx)
+	_, err = controllerChain.SendMsgs(msgSendTx)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(controllerChain.PendingSendPackets))

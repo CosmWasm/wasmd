@@ -477,8 +477,6 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.BeneficiaryAddr.String(),
 	}
 
-	em := sdk.NewEventManager()
-
 	// fails on store - this doesn't have permission
 	govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -497,7 +495,7 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.VerifierAddr.String(),
 	}
 
-	em = sdk.NewEventManager()
+	em := sdk.NewEventManager()
 
 	// when
 	mustSubmitAndExecuteLegacyProposal(t, ctx.WithEventManager(em), src, exampleContract.BeneficiaryAddr.String(), keepers)

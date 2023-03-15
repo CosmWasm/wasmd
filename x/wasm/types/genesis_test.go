@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const invalid = "invalid"
+
 func TestValidateGenesisState(t *testing.T) {
 	specs := map[string]struct {
 		srcMutator func(*GenesisState)
@@ -36,7 +38,7 @@ func TestValidateGenesisState(t *testing.T) {
 		},
 		"contract invalid": {
 			srcMutator: func(s *GenesisState) {
-				s.Contracts[0].ContractAddress = "invalid"
+				s.Contracts[0].ContractAddress = invalid
 			},
 			expError: true,
 		},
@@ -118,13 +120,13 @@ func TestContractValidateBasic(t *testing.T) {
 		"all good": {srcMutator: func(_ *Contract) {}},
 		"contract address invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractAddress = "invalid"
+				c.ContractAddress = invalid
 			},
 			expError: true,
 		},
 		"contract info invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractInfo.Creator = "invalid"
+				c.ContractInfo.Creator = invalid
 			},
 			expError: true,
 		},

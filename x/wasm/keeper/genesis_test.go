@@ -68,7 +68,8 @@ func TestGenesisExportImport(t *testing.T) {
 		codeID, _, err := contractKeeper.Create(srcCtx, creatorAddr, wasmCode, &codeInfo.InstantiateConfig)
 		require.NoError(t, err)
 		if pinned {
-			contractKeeper.PinCode(srcCtx, codeID)
+			err = contractKeeper.PinCode(srcCtx, codeID)
+			require.NoError(t, err)
 		}
 		if contractExtension {
 			anyTime := time.Now().UTC()
@@ -76,15 +77,18 @@ func TestGenesisExportImport(t *testing.T) {
 			f.NilChance(0).Fuzz(&nestedType)
 			myExtension, err := v1beta1.NewProposal(&nestedType, 1, anyTime, anyTime)
 			require.NoError(t, err)
-			contract.SetExtension(&myExtension)
+			err = contract.SetExtension(&myExtension)
+			require.NoError(t, err)
 		}
 
 		contract.CodeID = codeID
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
 		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
 		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
-		wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		err = wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
+		require.NoError(t, err)
 	}
+
 	var wasmParams types.Params
 	f.NilChance(0).Fuzz(&wasmParams)
 	wasmKeeper.SetParams(srcCtx, wasmParams)
@@ -121,7 +125,7 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState wasmTypes.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState)
+	InitGenesis(dstCtx, dstKeeper, importState) //nolint:errcheck // TODO: when we check the error here, we find duplicate keys in the store
 
 	// compare whole DB
 	for j := range srcStoreKeys {
@@ -677,7 +681,6 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 type StakingKeeperMock struct {
 	err             error
 	validatorUpdate []abci.ValidatorUpdate
-	expCalls        int
 	gotCalls        int
 }
 

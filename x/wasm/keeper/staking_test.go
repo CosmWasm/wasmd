@@ -14,7 +14,6 @@ import (
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,7 @@ type StakingInitMsg struct {
 	Decimals  uint8          `json:"decimals"`
 	Validator sdk.ValAddress `json:"validator"`
 	ExitTax   sdk.Dec        `json:"exit_tax"`
-	// MinWithdrawal is uint128 encoded as a string (use sdk.Int?)
+	// MinWithdrawal is uint128 encoded as a string (use math.Int?)
 	MinWithdrawl string `json:"min_withdrawal"`
 }
 
@@ -87,7 +86,7 @@ type InvestmentResponse struct {
 	Owner        sdk.AccAddress `json:"owner"`
 	Validator    sdk.ValAddress `json:"validator"`
 	ExitTax      sdk.Dec        `json:"exit_tax"`
-	// MinWithdrawl is uint128 encoded as a string (use sdk.Int?)
+	// MinWithdrawl is uint128 encoded as a string (use math.Int?)
 	MinWithdrawl string `json:"min_withdrawal"`
 }
 
@@ -655,10 +654,10 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
 	msg := &stakingtypes.MsgCreateValidator{
-		Description: types.Description{
+		Description: stakingtypes.Description{
 			Moniker: "Validator power",
 		},
-		Commission: types.CommissionRates{
+		Commission: stakingtypes.CommissionRates{
 			Rate:          sdk.MustNewDecFromStr("0.1"),
 			MaxRate:       sdk.MustNewDecFromStr("0.2"),
 			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),

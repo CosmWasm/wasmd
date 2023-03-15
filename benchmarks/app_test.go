@@ -34,7 +34,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 )
 
-func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
+func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
 	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
 
 	if withGenesis {
@@ -182,7 +182,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	storeTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
-	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
+	_, _, err = wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
 	codeID := uint64(1)
 
@@ -216,13 +216,13 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	gasWanted := 500000 + 10000*uint64(numAccounts)
 	initTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
 	require.NoError(b, err)
-	_, res, err = wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
+	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
 
 	// TODO: parse contract address better
 	evt := res.Events[len(res.Events)-1]
 	attr := evt.Attributes[0]
-	contractAddr := string(attr.Value)
+	contractAddr := attr.Value
 
 	wasmApp.EndBlock(abci.RequestEndBlock{Height: height})
 	wasmApp.Commit()
@@ -259,7 +259,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 			info.MinterKey,
 		)
 		require.NoError(b, err)
-		info.SeqNum += 1
+		info.SeqNum++
 	}
 
 	return txs
