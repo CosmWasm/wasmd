@@ -29,8 +29,6 @@ linters:
     - unparam
     - unused
 
-# TODO: fix the use of deprecated gov style, that'll remove the exclusion of "simtypes" below.
-
 issues:
   exclude-rules:
     - text: "simtypes"
