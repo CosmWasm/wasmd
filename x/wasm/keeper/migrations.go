@@ -3,8 +3,10 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	v1 "github.com/CosmWasm/wasmd/x/wasm/migrations/v1"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
+
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -20,34 +22,11 @@ func NewMigrator(keeper Keeper, legacySubspace exported.Subspace) Migrator {
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
-		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
-		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractInfo.Created, contractAddr)
-		return false
-	})
-	return nil
+	return v1.NewMigrator(m.keeper, m.keeper.addToContractCreatorSecondaryIndex).Migrate1to2(ctx)
 }
 
 // Migrate2to3 migrates the x/wasm module state from the consensus
-// version 2 to version 3. Specifically, it takes the parameters that are currently stored
-// and managed by the x/params module and stores them directly into the x/wasm
-// module state.
+// version 2 to version 3.
 func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	k := m.keeper
-	store := ctx.KVStore(k.storeKey)
-	var currParams types.Params
-	m.legacySubspace.GetParamSet(ctx, &currParams)
-
-	if err := currParams.ValidateBasic(); err != nil {
-		return err
-	}
-
-	bz, err := k.cdc.Marshal(&currParams)
-	if err != nil {
-		return err
-	}
-
-	store.Set(types.ParamsKey, bz)
-
-	return nil
+	return v2.MigrateStore(ctx, m.keeper.storeKey, m.legacySubspace, m.keeper.cdc)
 }
