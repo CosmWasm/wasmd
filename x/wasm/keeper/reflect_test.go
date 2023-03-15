@@ -332,7 +332,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 				Chain: &testdata.ChainQuery{
 					Request: &wasmvmtypes.QueryRequest{
 						Bank: &wasmvmtypes.BankQuery{
-							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+							Supply: &wasmvmtypes.SupplyQuery{Denom: spec.denom},
 						},
 					},
 				},

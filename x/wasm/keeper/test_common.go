@@ -304,7 +304,7 @@ func createTestInput(
 			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case types.ModuleName:
-			keyTable = types.ParamKeyTable() //nolint:staticcheck
+			keyTable = types.ParamKeyTable()
 		default:
 			return r
 		}

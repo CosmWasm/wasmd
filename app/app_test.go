@@ -1,12 +1,10 @@
 package app
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +14,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
-var emptyWasmOpts []wasm.Option = nil
+var emptyWasmOpts []wasm.Option
 
 func TestWasmdExport(t *testing.T) {
 	db := dbm.NewMemDB()
@@ -84,23 +82,4 @@ func TestGetEnabledProposals(t *testing.T) {
 			assert.Equal(t, tc.expected, proposals)
 		})
 	}
-}
-
-func setGenesis(gapp *WasmApp) error {
-	genesisState := NewDefaultGenesisState(gapp.appCodec)
-	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
-	if err != nil {
-		return err
-	}
-
-	// Initialize the chain
-	gapp.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
-
-	gapp.Commit()
-	return nil
 }
