@@ -51,10 +51,12 @@ func FuzzContractCodeHistory(m *types.ContractCodeHistoryEntry, c fuzz.Continue)
 
 func FuzzStateModel(m *types.Model, c fuzz.Continue) {
 	m.Key = tmBytes.HexBytes(c.RandString())
-	if len(m.Key) == 0 {
-		m.Key = tmBytes.HexBytes("non empty key")
+	if len(m.Key) != 0 {
+		c.Fuzz(&m.Value)
+		return
 	}
-	c.Fuzz(&m.Value)
+	// try again, keys must not be empty
+	FuzzStateModel(m, c)
 }
 
 func FuzzAccessType(m *types.AccessType, c fuzz.Continue) {
