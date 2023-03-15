@@ -21,7 +21,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const testingString = "testing"
+const myTestLabel = "testing"
 
 func TestStoreCodeProposal(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, "staking")
