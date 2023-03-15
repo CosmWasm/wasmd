@@ -145,7 +145,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = testingString
+		p.Label = myTestLabel
 	})
 	em := sdk.NewEventManager()
 
@@ -161,7 +161,7 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, uint64(1), cInfo.CodeID)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, testingString, cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    src.CodeID,
@@ -274,7 +274,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 				p.CodeID = firstCodeID
 				p.RunAs = oneAddress.String()
 				p.Admin = spec.srcAdmin
-				p.Label = testingString
+				p.Label = myTestLabel
 			})
 			govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 			msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -299,7 +299,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 			assert.Equal(t, uint64(1), cInfo.CodeID)
 			assert.Equal(t, oneAddress.String(), cInfo.Creator)
 			assert.Equal(t, "", cInfo.Admin)
-			assert.Equal(t, testingString, cInfo.Label)
+			assert.Equal(t, myTestLabel, cInfo.Label)
 			expHistory := []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    src.CodeID,
@@ -342,7 +342,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 		p.WASMByteCode = wasmCode
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = testingString
+		p.Label = myTestLabel
 		p.CodeHash = checksum
 	})
 	em := sdk.NewEventManager()
@@ -358,7 +358,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, testingString, cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    cInfo.CodeID,
@@ -400,7 +400,7 @@ func TestMigrateProposal(t *testing.T) {
 	)
 
 	contractInfo := types.ContractInfoFixture(func(c *types.ContractInfo) {
-		c.Label = testingString
+		c.Label = myTestLabel
 		c.Admin = anyAddress.String()
 		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
@@ -437,7 +437,7 @@ func TestMigrateProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(2), cInfo.CodeID)
 	assert.Equal(t, anyAddress.String(), cInfo.Admin)
-	assert.Equal(t, testingString, cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    firstCodeID,
