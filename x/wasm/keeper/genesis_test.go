@@ -686,10 +686,6 @@ func (s *StakingKeeperMock) ApplyAndReturnValidatorSetUpdates(_ sdk.Context) ([]
 	return s.validatorUpdate, s.err
 }
 
-func (s *StakingKeeperMock) verifyCalls(t *testing.T) {
-	assert.Equal(t, s.expCalls, s.gotCalls, "number calls")
-}
-
 var _ MessageRouter = &MockMsgHandler{}
 
 type MockMsgHandler struct {
@@ -709,12 +705,4 @@ func (m *MockMsgHandler) Handle(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, erro
 	m.gotCalls++
 	m.gotMsg = msg
 	return m.result, m.err
-}
-
-func (m *MockMsgHandler) verifyCalls(t *testing.T) {
-	if m == nil {
-		return
-	}
-	assert.Equal(t, m.expMsg, m.gotMsg, "message param")
-	assert.Equal(t, m.expCalls, m.gotCalls, "number calls")
 }

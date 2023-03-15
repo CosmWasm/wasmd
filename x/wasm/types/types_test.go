@@ -10,7 +10,6 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -186,7 +185,7 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	RegisterInterfaces(interfaceRegistry)
 	// register proposal as extension type
