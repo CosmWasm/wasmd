@@ -23,6 +23,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+const testingString = "testing"
+
 func TestStoreCodeProposal(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
@@ -143,7 +145,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = testingString
 	})
 	em := sdk.NewEventManager()
 
@@ -159,7 +161,7 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, uint64(1), cInfo.CodeID)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, testingString, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    src.CodeID,
@@ -194,8 +196,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label                       = "label"
-		salt                        = []byte("mySalt")
+		label        string         = "label"
+		salt         []byte         = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
@@ -270,7 +272,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 				p.CodeID = firstCodeID
 				p.RunAs = oneAddress.String()
 				p.Admin = spec.srcAdmin
-				p.Label = "testing"
+				p.Label = testingString
 			})
 			govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 			msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -295,7 +297,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 			assert.Equal(t, uint64(1), cInfo.CodeID)
 			assert.Equal(t, oneAddress.String(), cInfo.Creator)
 			assert.Equal(t, "", cInfo.Admin)
-			assert.Equal(t, "testing", cInfo.Label)
+			assert.Equal(t, testingString, cInfo.Label)
 			expHistory := []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    src.CodeID,
@@ -337,7 +339,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 		p.WASMByteCode = wasmCode
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = testingString
 		p.CodeHash = checksum
 	})
 	em := sdk.NewEventManager()
@@ -353,7 +355,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, testingString, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    cInfo.CodeID,
@@ -394,7 +396,7 @@ func TestMigrateProposal(t *testing.T) {
 	)
 
 	contractInfo := types.ContractInfoFixture(func(c *types.ContractInfo) {
-		c.Label = "testing"
+		c.Label = testingString
 		c.Admin = anyAddress.String()
 		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
@@ -431,7 +433,7 @@ func TestMigrateProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(2), cInfo.CodeID)
 	assert.Equal(t, anyAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, testingString, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    firstCodeID,
@@ -448,7 +450,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, types.EventTypeMigrate, em.Events()[0].Type)
 	require.Equal(t, types.EventTypeGovContractResult, em.Events()[1].Type)
 	require.Len(t, em.Events()[1].Attributes, 1)
-	assert.Equal(t, types.AttributeKeyResultDataHex, em.Events()[1].Attributes[0].Key)
+	assert.Equal(t, types.AttributeKeyResultDataHex, string(em.Events()[1].Attributes[0].Key))
 }
 
 func TestExecuteProposal(t *testing.T) {
