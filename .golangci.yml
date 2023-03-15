@@ -29,11 +29,13 @@ linters:
     - unparam
     - unused
 
-# TODO: fix the sdkerrors.Wrap deprecation warning and re-enable staticcheck
-# TODO: fix the use of deprecated gov style
+# TODO: fix the use of deprecated gov style, that'll remove the exclusion of "simtypes" below.
 
 issues:
   exclude-rules:
+    - text: "simtypes"
+      linters:
+        - staticcheck
     - text: "Use of weak random number generator"
       linters:
         - gosec

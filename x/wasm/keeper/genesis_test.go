@@ -659,7 +659,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	srcKeeper := NewKeeper(
 		encodingConfig.Marshaler,
 		keyWasm,
-		pk.Subspace(types.ModuleName).WithKeyTable(types.ParamKeyTable()),
+		pk.Subspace(types.ModuleName).WithKeyTable(types.ParamKeyTable()), //nolint:staticcheck
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},
