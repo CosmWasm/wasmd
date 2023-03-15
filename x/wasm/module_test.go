@@ -79,7 +79,7 @@ func setupTest(t *testing.T) testData {
 	return data
 }
 
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { //nolint:unparam
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
@@ -381,7 +381,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	}
 
 	h := data.msgServiceRouter.Handler(msg)
-	res, err := h(data.ctx, msg)
+	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -400,7 +400,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Label:  "testing",
 	}
 	h = data.msgServiceRouter.Handler(&initCmd)
-	res, err = h(data.ctx, &initCmd)
+	res, err := h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
@@ -544,13 +544,13 @@ func prettyAttrs(attrs []abci.EventAttribute) []sdk.Attribute {
 }
 
 func prettyAttr(attr abci.EventAttribute) sdk.Attribute {
-	return sdk.NewAttribute(string(attr.Key), string(attr.Value))
+	return sdk.NewAttribute(attr.Key, attr.Value)
 }
 
 func assertAttribute(t *testing.T, key string, value string, attr abci.EventAttribute) {
 	t.Helper()
-	assert.Equal(t, key, string(attr.Key), prettyAttr(attr))
-	assert.Equal(t, value, string(attr.Value), prettyAttr(attr))
+	assert.Equal(t, key, attr.Key, prettyAttr(attr))
+	assert.Equal(t, value, attr.Value, prettyAttr(attr))
 }
 
 func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, expectedNum int, marshaler codec.Codec) {
@@ -571,7 +571,7 @@ func assertCodeList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, e
 	assert.Equal(t, expectedNum, len(res.CodeInfos))
 }
 
-func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) {
+func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) { //nolint:unparam
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -591,7 +591,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	assert.Equal(t, expectedBytes, rsp.Data)
 }
 
-func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) {
+func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) { //nolint:unparam
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractsByCodeRequest{CodeId: codeID})
 	require.NoError(t, err)
@@ -610,7 +610,7 @@ func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Contex
 	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
 
 	hasAddrs := make([]string, len(rsp.Contracts))
-	for i, r := range rsp.Contracts {
+	for i, r := range rsp.Contracts { //nolint:gosimple
 		hasAddrs[i] = r
 	}
 	assert.Equal(t, expContractAddrs, hasAddrs)
@@ -634,7 +634,7 @@ func assertContractState(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Conte
 	assert.Equal(t, expectedBz, rsp.Data)
 }
 
-func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) {
+func assertContractInfo(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress, marshaler codec.Codec) { //nolint:unparam
 	t.Helper()
 	bz, err := marshaler.Marshal(&types.QueryContractInfoRequest{Address: contractBech32Addr})
 	require.NoError(t, err)

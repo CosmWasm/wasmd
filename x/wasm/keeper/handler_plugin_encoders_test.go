@@ -11,10 +11,10 @@ import (
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -543,10 +543,10 @@ func TestEncoding(t *testing.T) {
 			if tc.expError {
 				assert.Error(t, err)
 				return
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.output, res)
 			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
+
 			// and valid sdk message
 			for _, v := range res {
 				gotErr := v.ValidateBasic()
@@ -778,10 +778,10 @@ func TestEncodeGovMsg(t *testing.T) {
 			if tc.expError {
 				assert.Error(t, gotEncErr)
 				return
-			} else {
-				require.NoError(t, gotEncErr)
-				assert.Equal(t, tc.output, res)
 			}
+			require.NoError(t, gotEncErr)
+			assert.Equal(t, tc.output, res)
+
 			// and valid sdk message
 			for _, v := range res {
 				gotErr := v.ValidateBasic()

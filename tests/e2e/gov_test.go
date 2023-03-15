@@ -105,7 +105,7 @@ func TestGovVoteByContract(t *testing.T) {
 
 			// with other delegators voted yes
 			_, err = chain.SendMsgs(v1.NewMsgVote(chain.SenderAccount.GetAddress(), propID, v1.VoteOption_VOTE_OPTION_YES, ""))
-			require.NoError(t, gotErr)
+			require.NoError(t, err)
 
 			// when contract votes
 			spec.vote.ProposalId = propID

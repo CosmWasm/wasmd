@@ -35,10 +35,17 @@ func TestMigrate1To2(t *testing.T) {
 
 	// create with no balance is also legal
 	gotContractAddr1, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	require.NoError(t, err)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+
+	// create with no balance is also legal
 	gotContractAddr2, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	require.NoError(t, err)
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+
+	// create with no balance is also legal
 	gotContractAddr3, _, err := keepers.ContractKeeper.Instantiate(ctx.WithEventManager(em), example.CodeID, creator, nil, initMsgBz, "demo contract 1", nil)
+	require.NoError(t, err)
 
 	info1 := wasmKeeper.GetContractInfo(ctx, gotContractAddr1)
 	info2 := wasmKeeper.GetContractInfo(ctx, gotContractAddr2)
@@ -50,7 +57,7 @@ func TestMigrate1To2(t *testing.T) {
 	ctx.KVStore(keepers.WasmStoreKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info3.Created.Bytes(), gotContractAddr3))
 
 	// migrator
-	keeper.NewMigrator(*wasmKeeper, nil).Migrate1to2(ctx)
+	err = keeper.NewMigrator(*wasmKeeper, nil).Migrate1to2(ctx)
 	require.NoError(t, err)
 
 	// check new store

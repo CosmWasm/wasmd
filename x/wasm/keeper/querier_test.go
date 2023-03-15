@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -42,7 +43,7 @@ func TestQueryAllContractState(t *testing.T) {
 		srcQuery            *types.QueryAllContractStateRequest
 		expModelContains    []types.Model
 		expModelContainsNot []types.Model
-		expErr              *sdkErrors.Error
+		expErr              *errorsmod.Error
 	}{
 		"query all": {
 			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
@@ -167,7 +168,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 
 	specs := map[string]struct {
 		doInContract func()
-		expErr       *sdkErrors.Error
+		expErr       *errorsmod.Error
 	}{
 		"out of gas": {
 			doInContract: func() {
@@ -216,7 +217,7 @@ func TestQueryRawContractState(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery *types.QueryRawContractStateRequest
 		expData  []byte
-		expErr   *sdkErrors.Error
+		expErr   *errorsmod.Error
 	}{
 		"query raw key": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
@@ -553,7 +554,8 @@ func TestQueryContractInfo(t *testing.T) {
 		myExt, err := govv1beta1.NewProposal(&govv1beta1.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
 		require.NoError(t, err)
 		myExt.TotalDeposit = nil
-		info.SetExtension(&myExt)
+		err = info.SetExtension(&myExt)
+		require.NoError(t, err)
 	}
 	specs := map[string]struct {
 		src    *types.QueryContractInfoRequest
@@ -612,7 +614,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery   *types.QueryPinnedCodesRequest
 		expCodeIDs []uint64
-		expErr     *sdkErrors.Error
+		expErr     *errorsmod.Error
 	}{
 		"query all": {
 			srcQuery:   &types.QueryPinnedCodesRequest{},
@@ -671,10 +673,11 @@ func TestQueryParams(t *testing.T) {
 	require.Equal(t, paramsResponse.Params.CodeUploadAccess, defaultParams.CodeUploadAccess)
 	require.Equal(t, paramsResponse.Params.InstantiateDefaultPermission, defaultParams.InstantiateDefaultPermission)
 
-	keeper.SetParams(ctx, types.Params{
+	err = keeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)
@@ -694,19 +697,19 @@ func TestQueryCodeInfo(t *testing.T) {
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
 	require.NoError(t, err)
 	specs := map[string]struct {
-		codeId       uint64
+		codeID       uint64
 		accessConfig types.AccessConfig
 	}{
 		"everybody": {
-			codeId:       1,
+			codeID:       1,
 			accessConfig: types.AllowEverybody,
 		},
 		"nobody": {
-			codeId:       10,
+			codeID:       10,
 			accessConfig: types.AllowNobody,
 		},
 		"with_address": {
-			codeId:       20,
+			codeID:       20,
 			accessConfig: types.AccessTypeOnlyAddress.With(anyAddress),
 		},
 	}
@@ -714,19 +717,19 @@ func TestQueryCodeInfo(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			codeInfo.InstantiateConfig = spec.accessConfig
-			require.NoError(t, keeper.importCode(ctx, spec.codeId,
+			require.NoError(t, keeper.importCode(ctx, spec.codeID,
 				codeInfo,
 				wasmCode),
 			)
 
 			q := Querier(keeper)
 			got, err := q.Code(sdk.WrapSDKContext(ctx), &types.QueryCodeRequest{
-				CodeId: spec.codeId,
+				CodeId: spec.codeID,
 			})
 			require.NoError(t, err)
 			expectedResponse := &types.QueryCodeResponse{
 				CodeInfoResponse: &types.CodeInfoResponse{
-					CodeID:                spec.codeId,
+					CodeID:                spec.codeID,
 					Creator:               codeInfo.Creator,
 					DataHash:              codeInfo.CodeHash,
 					InstantiatePermission: spec.accessConfig,
@@ -756,22 +759,22 @@ func TestQueryCodeInfoList(t *testing.T) {
 
 	codes := []struct {
 		name     string
-		codeId   uint64
+		codeID   uint64
 		codeInfo types.CodeInfo
 	}{
 		{
 			name:     "everybody",
-			codeId:   1,
+			codeID:   1,
 			codeInfo: codeInfoWithConfig(types.AllowEverybody),
 		},
 		{
-			codeId:   10,
+			codeID:   10,
 			name:     "nobody",
 			codeInfo: codeInfoWithConfig(types.AllowNobody),
 		},
 		{
 			name:     "with_address",
-			codeId:   20,
+			codeID:   20,
 			codeInfo: codeInfoWithConfig(types.AccessTypeOnlyAddress.With(anyAddress)),
 		},
 	}
@@ -779,14 +782,14 @@ func TestQueryCodeInfoList(t *testing.T) {
 	allCodesResponse := make([]types.CodeInfoResponse, 0)
 	for _, code := range codes {
 		t.Run(fmt.Sprintf("import_%s", code.name), func(t *testing.T) {
-			require.NoError(t, keeper.importCode(ctx, code.codeId,
+			require.NoError(t, keeper.importCode(ctx, code.codeID,
 				code.codeInfo,
 				wasmCode),
 			)
 		})
 
 		allCodesResponse = append(allCodesResponse, types.CodeInfoResponse{
-			CodeID:                code.codeId,
+			CodeID:                code.codeID,
 			Creator:               code.codeInfo.Creator,
 			DataHash:              code.codeInfo.CodeHash,
 			InstantiatePermission: code.codeInfo.InstantiateConfig,

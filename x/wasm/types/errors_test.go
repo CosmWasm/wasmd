@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 	}{
 		"IsOf": {
 			exec: func(t *testing.T) {
-				assert.True(t, sdkerrors.IsOf(myErr, myErr.sdkErr))
+				assert.True(t, errorsmod.IsOf(myErr, myErr.sdkErr))
 				assert.Equal(t, myErr.sdkErr, myErr.Unwrap())
 			},
 		},
@@ -65,7 +65,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info": {
 			exec: func(t *testing.T) {
-				codespace, code, log := sdkerrors.ABCIInfo(myErr, false)
+				codespace, code, log := errorsmod.ABCIInfo(myErr, false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)
 				assert.Equal(t, "no such code", log)
@@ -73,7 +73,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info - wrapped": {
 			exec: func(t *testing.T) {
-				codespace, code, log := sdkerrors.ABCIInfo(myErr.Wrap("my description"), false)
+				codespace, code, log := errorsmod.ABCIInfo(myErr.Wrap("my description"), false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)
 				assert.Equal(t, "my description: no such code", log)

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +50,7 @@ func TestGrants(t *testing.T) {
 		filter         types.ContractAuthzFilterX
 		transferAmount sdk.Coin
 		senderKey      cryptotypes.PrivKey
-		expErr         *sdkerrors.Error
+		expErr         *errorsmod.Error
 	}{
 		"in limits and filter": {
 			limit:          types.NewMaxFundsLimit(myAmount),

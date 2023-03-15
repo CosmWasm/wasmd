@@ -21,13 +21,16 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+const myTestLabel = "testing"
+
 func TestStoreCodeProposal(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(parentCtx, types.Params{
+	err := wasmKeeper.SetParams(parentCtx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 	rawWasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 	gzippedWasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
@@ -120,10 +123,11 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 func TestInstantiateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -141,7 +145,7 @@ func TestInstantiateProposal(t *testing.T) {
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = myTestLabel
 	})
 	em := sdk.NewEventManager()
 
@@ -157,7 +161,7 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, uint64(1), cInfo.CodeID)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    src.CodeID,
@@ -177,10 +181,11 @@ func TestInstantiateProposal(t *testing.T) {
 func TestInstantiate2Proposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -192,8 +197,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label        string         = "label"
-		salt         []byte         = []byte("mySalt")
+		label                       = "label"
+		salt                        = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
@@ -235,10 +240,11 @@ func TestInstantiate2Proposal(t *testing.T) {
 func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -268,7 +274,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 				p.CodeID = firstCodeID
 				p.RunAs = oneAddress.String()
 				p.Admin = spec.srcAdmin
-				p.Label = "testing"
+				p.Label = myTestLabel
 			})
 			govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 			msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -293,7 +299,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 			assert.Equal(t, uint64(1), cInfo.CodeID)
 			assert.Equal(t, oneAddress.String(), cInfo.Creator)
 			assert.Equal(t, "", cInfo.Admin)
-			assert.Equal(t, "testing", cInfo.Label)
+			assert.Equal(t, myTestLabel, cInfo.Label)
 			expHistory := []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
 				CodeID:    src.CodeID,
@@ -315,10 +321,11 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -335,7 +342,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 		p.WASMByteCode = wasmCode
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
-		p.Label = "testing"
+		p.Label = myTestLabel
 		p.CodeHash = checksum
 	})
 	em := sdk.NewEventManager()
@@ -351,7 +358,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, oneAddress.String(), cInfo.Creator)
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    cInfo.CodeID,
@@ -373,10 +380,11 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 func TestMigrateProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
-	wasmKeeper.SetParams(ctx, types.Params{
+	err := wasmKeeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -392,7 +400,7 @@ func TestMigrateProposal(t *testing.T) {
 	)
 
 	contractInfo := types.ContractInfoFixture(func(c *types.ContractInfo) {
-		c.Label = "testing"
+		c.Label = myTestLabel
 		c.Admin = anyAddress.String()
 		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
@@ -429,7 +437,7 @@ func TestMigrateProposal(t *testing.T) {
 	require.NotNil(t, cInfo)
 	assert.Equal(t, uint64(2), cInfo.CodeID)
 	assert.Equal(t, anyAddress.String(), cInfo.Admin)
-	assert.Equal(t, "testing", cInfo.Label)
+	assert.Equal(t, myTestLabel, cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
 		Operation: types.ContractCodeHistoryOperationTypeInit,
 		CodeID:    firstCodeID,
@@ -446,7 +454,7 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, types.EventTypeMigrate, em.Events()[0].Type)
 	require.Equal(t, types.EventTypeGovContractResult, em.Events()[1].Type)
 	require.Len(t, em.Events()[1].Attributes, 1)
-	assert.Equal(t, types.AttributeKeyResultDataHex, string(em.Events()[1].Attributes[0].Key))
+	assert.Equal(t, types.AttributeKeyResultDataHex, em.Events()[1].Attributes[0].Key)
 }
 
 func TestExecuteProposal(t *testing.T) {
@@ -475,8 +483,6 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.BeneficiaryAddr.String(),
 	}
 
-	em := sdk.NewEventManager()
-
 	// fails on store - this doesn't have permission
 	govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 	msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
@@ -495,7 +501,7 @@ func TestExecuteProposal(t *testing.T) {
 		RunAs:       exampleContract.VerifierAddr.String(),
 	}
 
-	em = sdk.NewEventManager()
+	em := sdk.NewEventManager()
 
 	// when
 	mustSubmitAndExecuteLegacyProposal(t, ctx.WithEventManager(em), src, exampleContract.BeneficiaryAddr.String(), keepers)
@@ -612,10 +618,11 @@ func TestAdminProposals(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, "staking")
 			wasmKeeper := keepers.WasmKeeper
-			wasmKeeper.SetParams(ctx, types.Params{
+			err := wasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             types.AllowNobody,
 				InstantiateDefaultPermission: types.AccessTypeNobody,
 			})
+			require.NoError(t, err)
 
 			codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			require.NoError(t, wasmKeeper.importCode(ctx, 1, codeInfo, wasmCode))

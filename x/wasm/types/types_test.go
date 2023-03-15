@@ -10,7 +10,6 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -33,7 +32,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *ContractInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"admin empty": {
@@ -41,7 +40,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   false,
 		},
 		"admin not an address": {
-			srcMutator: func(c *ContractInfo) { c.Admin = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Admin = invalidAddress },
 			expError:   true,
 		},
 		"label empty": {
@@ -102,7 +101,7 @@ func TestCodeInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *CodeInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *CodeInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"Instantiate config invalid": {
@@ -186,7 +185,7 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	RegisterInterfaces(interfaceRegistry)
 	// register proposal as extension type
@@ -228,7 +227,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return &v1beta1.Proposal{}
@@ -245,7 +245,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"nil argument value": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return nil
@@ -254,7 +255,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"non matching types": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return &v1beta1.TextProposal{}

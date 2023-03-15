@@ -94,10 +94,7 @@ func TestValidateProposalCommons(t *testing.T) {
 }
 
 func TestValidateStoreCodeProposal(t *testing.T) {
-	var (
-		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
-	)
+	var anyAddress sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
 
 	specs := map[string]struct {
 		src    *StoreCodeProposal
@@ -187,8 +184,6 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContractProposal
 		expErr bool
@@ -280,8 +275,6 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 }
 
 func TestValidateInstantiateContract2Proposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *InstantiateContract2Proposal
 		expErr bool
@@ -379,10 +372,7 @@ func TestValidateInstantiateContract2Proposal(t *testing.T) {
 }
 
 func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
-	var (
-		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
-		invalidAddress                = "invalid address"
-	)
+	var anyAddress sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
 
 	specs := map[string]struct {
 		src    *StoreAndInstantiateContractProposal
@@ -577,8 +567,6 @@ func TestValidateMigrateContractProposal(t *testing.T) {
 }
 
 func TestValidateSudoContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *SudoContractProposal
 		expErr bool
@@ -630,8 +618,6 @@ func TestValidateSudoContractProposal(t *testing.T) {
 }
 
 func TestValidateExecuteContractProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *ExecuteContractProposal
 		expErr bool
@@ -689,8 +675,6 @@ func TestValidateExecuteContractProposal(t *testing.T) {
 }
 
 func TestValidateUpdateAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *UpdateAdminProposal
 		expErr bool
@@ -742,8 +726,6 @@ func TestValidateUpdateAdminProposal(t *testing.T) {
 }
 
 func TestValidateClearAdminProposal(t *testing.T) {
-	invalidAddress := "invalid address"
-
 	specs := map[string]struct {
 		src    *ClearAdminProposal
 		expErr bool

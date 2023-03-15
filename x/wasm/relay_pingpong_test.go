@@ -10,7 +10,6 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -199,20 +198,6 @@ var ( // store keys
 	maxValueKey     = []byte("max-value")
 )
 
-func (p player) loadEndpoints(store prefix.Store, channelID string) *connectedChannelsModel {
-	var counterparties []connectedChannelsModel
-	if bz := store.Get(ibcEndpointsKey); bz != nil {
-		require.NoError(p.t, json.Unmarshal(bz, &counterparties))
-	}
-	for _, v := range counterparties {
-		if v.Our.ChannelID == channelID {
-			return &v
-		}
-	}
-	p.t.Fatalf("no counterparty found for channel %q", channelID)
-	return nil
-}
-
 func (p player) storeEndpoint(store wasmvm.KVStore, channel wasmvmtypes.IBCChannel) {
 	var counterparties []connectedChannelsModel
 	if b := store.Get(ibcEndpointsKey); b != nil {
@@ -339,7 +324,7 @@ func counterParty(s string) string {
 // hit is ibc packet payload
 type hit map[string]uint64
 
-func NewHit(player string, count uint64) hit {
+func NewHit(player string, count uint64) hit { //nolint:revive // no need to make this public
 	return map[string]uint64{
 		player: count,
 	}

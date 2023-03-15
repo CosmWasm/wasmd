@@ -280,7 +280,7 @@ func hasWasmModuleEvent(ctx sdk.Context, contractAddr sdk.AccAddress) bool {
 	for _, e := range ctx.EventManager().Events() {
 		if e.Type == types.WasmModuleEventType {
 			for _, a := range e.Attributes {
-				if string(a.Key) == types.AttributeKeyContractAddr && string(a.Value) == contractAddr.String() {
+				if a.Key == types.AttributeKeyContractAddr && a.Value == contractAddr.String() {
 					return true
 				}
 			}
