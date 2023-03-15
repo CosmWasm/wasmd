@@ -15,7 +15,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck // we'd like to use this version of the library
+	"github.com/cosmos/gogoproto/proto" //nolint:staticcheck // we'd like to use this version of the library
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
