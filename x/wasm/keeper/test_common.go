@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
@@ -194,6 +196,7 @@ type TestKeepers struct {
 	Faucet           *TestFaucet
 	MultiStore       sdk.CommitMultiStore
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
+	WasmStoreKey     *storetypes.KVStoreKey
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
@@ -418,7 +421,6 @@ func createTestInput(
 	keeper := NewKeeper(
 		appCodec,
 		keys[types.StoreKey],
-		subspace(types.ModuleName),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -432,9 +434,11 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		availableCapabilities,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)
-	keeper.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, keeper.SetParams(ctx, types.DefaultParams()))
+
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
 
@@ -464,7 +468,7 @@ func createTestInput(
 		gov.NewAppModule(appCodec, govKeeper, accountKeeper, bankKeeper, subspace(govtypes.ModuleName)),
 	)
 	am.RegisterServices(module.NewConfigurator(appCodec, msgRouter, querier))
-	types.RegisterMsgServer(msgRouter, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	types.RegisterMsgServer(msgRouter, newMsgServerImpl(NewDefaultPermissionKeeper(keeper), keeper))
 	types.RegisterQueryServer(querier, NewGrpcQuerier(appCodec, keys[types.ModuleName], keeper, keeper.queryGasLimit))
 
 	keepers := TestKeepers{
@@ -481,6 +485,7 @@ func createTestInput(
 		Faucet:           faucet,
 		MultiStore:       ms,
 		ScopedWasmKeeper: scopedWasmKeeper,
+		WasmStoreKey:     keys[types.StoreKey],
 	}
 	return ctx, keepers
 }
@@ -593,28 +598,31 @@ type ExampleContract struct {
 }
 
 func StoreHackatomExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	return StoreExampleContract(t, ctx, keepers, "./testdata/hackatom.wasm")
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.HackatomContractWasm())
 }
 
 func StoreBurnerExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	return StoreExampleContract(t, ctx, keepers, "./testdata/burner.wasm")
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.BurnerContractWasm())
 }
 
 func StoreIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	return StoreExampleContract(t, ctx, keepers, "./testdata/ibc_reflect.wasm")
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.IBCReflectContractWasm())
 }
 
 func StoreReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	return StoreExampleContract(t, ctx, keepers, "./testdata/reflect.wasm")
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.ReflectContractWasm())
 }
 
 func StoreExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
+	wasmCode, err := os.ReadFile(wasmFile)
+	require.NoError(t, err)
+	return StoreExampleContractWasm(t, ctx, keepers, wasmCode)
+}
+
+func StoreExampleContractWasm(t testing.TB, ctx sdk.Context, keepers TestKeepers, wasmCode []byte) ExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, _, creatorAddr := keyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
-
-	wasmCode, err := os.ReadFile(wasmFile)
-	require.NoError(t, err)
 
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
 	require.NoError(t, err)

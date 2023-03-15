@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -21,9 +22,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +36,7 @@ import (
 const firstCodeID = 1
 
 func TestGenesisExportImport(t *testing.T) {
-	wasmKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
+	wasmKeeper, srcCtx := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
@@ -105,7 +105,7 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// setup new instances
-	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
+	dstKeeper, dstCtx := setupKeeper(t)
 
 	// reset contract code index in source DB for comparison with dest DB
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
@@ -124,23 +124,22 @@ func TestGenesisExportImport(t *testing.T) {
 	InitGenesis(dstCtx, dstKeeper, importState)
 
 	// compare whole DB
-	for j := range srcStoreKeys {
-		srcIT := srcCtx.KVStore(srcStoreKeys[j]).Iterator(nil, nil)
-		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
-		for i := 0; srcIT.Valid(); i++ {
-			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", srcStoreKeys[j].Name(), srcIT.Key())
-			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())
-			dstIT.Next()
-			srcIT.Next()
-		}
-		if !assert.False(t, dstIT.Valid()) {
-			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
-		}
-		srcIT.Close()
-		dstIT.Close()
+	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
+	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
+
+	for i := 0; srcIT.Valid(); i++ {
+		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", wasmKeeper.storeKey.Name(), srcIT.Key())
+		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
+		require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", wasmKeeper.storeKey.Name(), i, srcIT.Key())
+		dstIT.Next()
+		srcIT.Next()
 	}
+	if !assert.False(t, dstIT.Valid()) {
+		t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
+	}
+	srcIT.Close()
+	dstIT.Close()
 }
 
 func TestGenesisInit(t *testing.T) {
@@ -458,7 +457,7 @@ func TestGenesisInit(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			keeper, ctx, _ := setupKeeper(t)
+			keeper, ctx := setupKeeper(t)
 
 			require.NoError(t, types.ValidateGenesis(spec.src))
 			_, gotErr := InitGenesis(ctx, keeper, spec.src)
@@ -538,7 +537,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
   {"id_key": "BGxhc3RDb250cmFjdElk", "value": "3"}
   ]
 }`
-	keeper, ctx, _ := setupKeeper(t)
+	keeper, ctx := setupKeeper(t)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -618,22 +617,17 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
 }
 
-func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
+func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	t.Helper()
 	tempDir, err := os.MkdirTemp("", "wasm")
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
-	var (
-		keyParams  = sdk.NewKVStoreKey(paramtypes.StoreKey)
-		tkeyParams = sdk.NewTransientStoreKey(paramtypes.TStoreKey)
-		keyWasm    = sdk.NewKVStoreKey(wasmTypes.StoreKey)
-	)
+
+	keyWasm := sdk.NewKVStoreKey(wasmTypes.StoreKey)
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(keyParams, storetypes.StoreTypeIAVL, db)
-	ms.MountStoreWithDB(tkeyParams, storetypes.StoreTypeTransient, db)
 	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, tmproto.Header{
@@ -651,12 +645,10 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 	v1beta1.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	wasmConfig := wasmTypes.DefaultWasmConfig()
-	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
 
 	srcKeeper := NewKeeper(
 		encodingConfig.Marshaler,
 		keyWasm,
-		pk.Subspace(wasmTypes.ModuleName).WithKeyTable(types.ParamKeyTable()),
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},
@@ -670,8 +662,9 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []storetypes.StoreKey) {
 		tempDir,
 		wasmConfig,
 		AvailableCapabilities,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	return &srcKeeper, ctx, []storetypes.StoreKey{keyWasm, keyParams}
+	return &srcKeeper, ctx
 }
 
 type StakingKeeperMock struct {

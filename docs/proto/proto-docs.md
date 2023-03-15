@@ -98,6 +98,8 @@
     - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse)
     - [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig)
     - [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse)
+    - [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams)
+    - [MsgUpdateParamsResponse](#cosmwasm.wasm.v1.MsgUpdateParamsResponse)
   
     - [Msg](#cosmwasm.wasm.v1.Msg)
   
@@ -1551,6 +1553,39 @@ MsgUpdateInstantiateConfigResponse returns empty data
 
 
 
+
+<a name="cosmwasm.wasm.v1.MsgUpdateParams"></a>
+
+### MsgUpdateParams
+MsgUpdateParams is the Msg/UpdateParams request type.
+
+Since: 0.40
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  | authority is the address of the governance account. |
+| `params` | [Params](#cosmwasm.wasm.v1.Params) |  | params defines the x/wasm parameters to update.
+
+NOTE: All parameters must be supplied. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateParamsResponse"></a>
+
+### MsgUpdateParamsResponse
+MsgUpdateParamsResponse defines the response structure for executing a
+MsgUpdateParams message.
+
+Since: 0.40
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1573,6 +1608,9 @@ Msg defines the wasm Msg service.
 | `UpdateAdmin` | [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin) | [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse) | UpdateAdmin sets a new admin for a smart contract | |
 | `ClearAdmin` | [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin) | [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse) | ClearAdmin removes any admin stored for a smart contract | |
 | `UpdateInstantiateConfig` | [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig) | [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse) | UpdateInstantiateConfig updates instantiate config for a smart contract | |
+| `UpdateParams` | [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmwasm.wasm.v1.MsgUpdateParamsResponse) | UpdateParams defines a governance operation for updating the x/wasm module parameters. The authority is defined in the keeper.
+
+Since: 0.40 | |
 
  <!-- end services -->
 

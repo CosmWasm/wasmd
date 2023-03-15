@@ -11,14 +11,29 @@ import (
 
 var _ types.MsgServer = msgServer{}
 
+// abstract type
+type paramStore interface {
+	GetAuthority() string
+	SetParams(ctx sdk.Context, params types.Params) error
+}
+
+// grpc message server implementation
 type msgServer struct {
-	keeper types.ContractOpsKeeper
+	keeper     types.ContractOpsKeeper
+	paramStore paramStore
 }
 
-func NewMsgServerImpl(k types.ContractOpsKeeper) types.MsgServer {
-	return &msgServer{keeper: k}
+// NewMsgServerImpl default constructor
+func NewMsgServerImpl(k *Keeper) types.MsgServer {
+	return newMsgServerImpl(NewDefaultPermissionKeeper(k), k)
 }
 
+// newMsgServerImpl internal constructor to overwrite interfaces for testing
+func newMsgServerImpl(k types.ContractOpsKeeper, p paramStore) types.MsgServer {
+	return &msgServer{keeper: k, paramStore: p}
+}
+
+// StoreCode stores a new wasm code on chain
 func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*types.MsgStoreCodeResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
@@ -207,4 +222,19 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	}
 
 	return &types.MsgUpdateInstantiateConfigResponse{}, nil
+}
+
+// UpdateParams updates the module parameters
+func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	authority := m.paramStore.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := m.paramStore.SetParams(ctx, req.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

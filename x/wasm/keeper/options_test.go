@@ -8,7 +8,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,7 +102,7 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, spec.srcOpt)
+			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

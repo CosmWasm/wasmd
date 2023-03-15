@@ -1,9 +1,11 @@
-package keeper
+package v1_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -13,17 +15,18 @@ import (
 )
 
 func TestMigrate1To2(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1"
+	ctx, keepers := keeper.CreateTestInput(t, false, AvailableCapabilities)
 	wasmKeeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	keepers.Faucet.Fund(ctx, creator, deposit...)
-	example := StoreHackatomExampleContract(t, ctx, keepers)
+	example := keeper.StoreHackatomExampleContract(t, ctx, keepers)
 
-	initMsg := HackatomExampleInitMsg{
-		Verifier:    RandomAccountAddress(t),
-		Beneficiary: RandomAccountAddress(t),
+	initMsg := keeper.HackatomExampleInitMsg{
+		Verifier:    keeper.RandomAccountAddress(t),
+		Beneficiary: keeper.RandomAccountAddress(t),
 	}
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
@@ -42,13 +45,13 @@ func TestMigrate1To2(t *testing.T) {
 	info3 := wasmKeeper.GetContractInfo(ctx, gotContractAddr3)
 
 	// remove key
-	ctx.KVStore(wasmKeeper.storeKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info1.Created.Bytes(), gotContractAddr1))
-	ctx.KVStore(wasmKeeper.storeKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info2.Created.Bytes(), gotContractAddr2))
-	ctx.KVStore(wasmKeeper.storeKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info3.Created.Bytes(), gotContractAddr3))
+	ctx.KVStore(keepers.WasmStoreKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info1.Created.Bytes(), gotContractAddr1))
+	ctx.KVStore(keepers.WasmStoreKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info2.Created.Bytes(), gotContractAddr2))
+	ctx.KVStore(keepers.WasmStoreKey).Delete(types.GetContractByCreatorSecondaryIndexKey(creator, info3.Created.Bytes(), gotContractAddr3))
 
 	// migrator
-	migrator := NewMigrator(*wasmKeeper)
-	migrator.Migrate1to2(ctx)
+	keeper.NewMigrator(*wasmKeeper, nil).Migrate1to2(ctx)
+	require.NoError(t, err)
 
 	// check new store
 	var allContract []string

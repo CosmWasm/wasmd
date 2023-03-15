@@ -5,7 +5,6 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -15,7 +14,6 @@ import (
 func NewKeeper(
 	cdc codec.Codec,
 	storeKey storetypes.StoreKey,
-	paramSpace paramtypes.Subspace,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -29,6 +27,7 @@ func NewKeeper(
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
+	authority string,
 	opts ...Option,
 ) Keeper {
 	panic("not implemented, please build with cgo enabled")
