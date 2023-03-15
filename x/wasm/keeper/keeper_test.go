@@ -149,7 +149,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	specs := map[string]struct {
 		policy      AuthorizationPolicy
 		chainUpload types.AccessConfig
-		expError    *sdkerrors.Error
+		expError    *errorsmod.Error
 	}{
 		"default": {
 			policy:      DefaultAuthorizationPolicy{},
@@ -213,7 +213,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
 		// expError is nil iff the request is allowed
-		expError *sdkerrors.Error
+		expError *errorsmod.Error
 	}{
 		"override everybody": {
 			defaultPermssion:    types.AccessTypeEverybody,
@@ -1140,7 +1140,7 @@ func TestMigrate(t *testing.T) {
 		fromCodeID           uint64
 		toCodeID             uint64
 		migrateMsg           []byte
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 		expVerifier          sdk.AccAddress
 		expIBCPort           bool
 		initMsg              []byte
@@ -1613,7 +1613,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 		newAdmin             sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 	}{
 		"all good with admin set": {
 			instAdmin: fred,
@@ -1682,7 +1682,7 @@ func TestClearContractAdmin(t *testing.T) {
 		instAdmin            sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *sdkerrors.Error
+		expErr               *errorsmod.Error
 	}{
 		"all good when called by proper admin": {
 			instAdmin: fred,
