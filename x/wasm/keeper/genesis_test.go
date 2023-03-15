@@ -124,7 +124,8 @@ func TestGenesisExportImport(t *testing.T) {
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
 	require.NoError(t, err)
-	InitGenesis(dstCtx, dstKeeper, importState) //nolint:errcheck // TODO: when we check the error here, we find duplicate keys in the store
+	_, err = InitGenesis(dstCtx, dstKeeper, importState)
+	require.NoError(t, err)
 
 	// compare whole DB
 	for j := range srcStoreKeys {
