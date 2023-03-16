@@ -8,28 +8,16 @@ import (
 	"runtime/debug"
 	"strings"
 	"testing"
-	"time"
-
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
-
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -39,12 +27,16 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // SimAppChainID hardcoded chainID for simulation
@@ -83,7 +75,7 @@ func TestFullAppSimulation(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		ModuleAccountAddrs(),
+		BlockedAddresses(),
 		config,
 		app.AppCodec(),
 	)
@@ -109,7 +101,7 @@ func TestAppImportExport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		ModuleAccountAddrs(),
+		BlockedAddresses(),
 		config,
 		app.AppCodec(),
 	)
@@ -138,7 +130,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	var genesisState GenesisState
@@ -151,8 +143,8 @@ func TestAppImportExport(t *testing.T) {
 			if !strings.Contains(err, "validator set is empty after InitGenesis") {
 				panic(r)
 			}
-			app.Logger().Info("Skipping simulation as all validators have been unbonded")
-			app.Logger().Info("err", err, "stacktrace", string(debug.Stack()))
+			t.Log("Skipping simulation as all validators have been unbonded")
+			t.Logf("err: %s stacktrace: %s\n", err, string(debug.Stack()))
 		}
 	}()
 
@@ -206,7 +198,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(app, app.AppCodec(), config),
-		ModuleAccountAddrs(),
+		BlockedAddresses(),
 		config,
 		app.AppCodec(),
 	)
@@ -240,10 +232,11 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
+		ChainId:       SimAppChainID,
 		AppStateBytes: exported.AppState,
 	})
 
@@ -254,7 +247,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 		simtestutil.SimulationOperations(newApp, newApp.AppCodec(), config),
-		ModuleAccountAddrs(),
+		BlockedAddresses(),
 		config,
 		app.AppCodec(),
 	)
@@ -280,7 +273,7 @@ func setupSimulationApp(t *testing.T, msg string) (simtypes.Config, dbm.DB, simt
 	appOptions[flags.FlagHome] = dir // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt)
+	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", app.Name())
 	return config, db, appOptions, app
 }
@@ -319,7 +312,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, interBlockCacheOpt())
+			app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -333,7 +326,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				simtestutil.AppStateFn(app.AppCodec(), app.SimulationManager(), app.DefaultGenesis()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
 				simtestutil.SimulationOperations(app, app.AppCodec(), config),
-				ModuleAccountAddrs(),
+				BlockedAddresses(),
 				config,
 				app.AppCodec(),
 			)
@@ -354,16 +347,4 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 		}
 	}
-}
-
-// AppStateFn returns the initial application state using a genesis or the simulation parameters.
-// It panics if the user provides files for both of them.
-// If a file is not given for the genesis or the sim params, it creates a randomized one.
-func AppStateFn(codec codec.Codec, manager *module.SimulationManager) simtypes.AppStateFn {
-	// quick hack to setup app state genesis with our app modules
-	simapp.ModuleBasics = ModuleBasics
-	if simapp.FlagGenesisTimeValue == 0 { // always set to have a block time
-		simapp.FlagGenesisTimeValue = time.Now().Unix()
-	}
-	return simapp.AppStateFn(codec, manager)
 }
