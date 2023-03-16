@@ -2,7 +2,7 @@ version: v1
 name: buf.build/cosmwasm/wasmd
 deps:
   - buf.build/cosmos/cosmos-proto
-  - buf.build/cosmos/cosmos-sdk:2aa7ff2b23df473a85b7a7fe1884105d #v0.47.0-rc
+  - buf.build/cosmos/cosmos-sdk:v0.47.0
   - buf.build/cosmos/gogo-proto
 breaking:
   use:
