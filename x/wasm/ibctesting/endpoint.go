@@ -2,6 +2,7 @@ package ibctesting
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -180,6 +181,7 @@ func (endpoint *Endpoint) UpgradeChain() error {
 	}
 
 	// update chain
+	baseapp.SetChainID(newChainID)(endpoint.Chain.App.BaseApp)
 	endpoint.Chain.ChainID = newChainID
 	endpoint.Chain.CurrentHeader.ChainID = newChainID
 	endpoint.Chain.NextBlock() // commit changes
