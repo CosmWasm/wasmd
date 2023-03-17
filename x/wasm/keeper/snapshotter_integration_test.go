@@ -20,7 +20,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func TestSnapshotter(t *testing.T) {
@@ -49,7 +48,7 @@ func TestSnapshotter(t *testing.T) {
 				Time:    time.Now(),
 			})
 			wasmKeeper := app.NewTestSupport(t, srcWasmApp).WasmKeeper()
-			contractKeeper := keeper.NewDefaultPermissionKeeper(&wasmKeeper)
+			contractKeeper := NewDefaultPermissionKeeper(&wasmKeeper)
 
 			srcCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			for i, v := range spec.wasmFiles {

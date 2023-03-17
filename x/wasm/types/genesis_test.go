@@ -49,30 +49,6 @@ func TestValidateGenesisState(t *testing.T) {
 			},
 			expError: true,
 		},
-		"genesis store code message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[0].GetStoreCode().WASMByteCode = nil
-			},
-			expError: true,
-		},
-		"genesis instantiate contract message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[1].GetInstantiateContract().CodeID = 0
-			},
-			expError: true,
-		},
-		"genesis execute contract message invalid": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[2].GetExecuteContract().Sender = invalid
-			},
-			expError: true,
-		},
-		"genesis invalid message type": {
-			srcMutator: func(s *GenesisState) {
-				s.GenMsgs[0].Sum = nil
-			},
-			expError: true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

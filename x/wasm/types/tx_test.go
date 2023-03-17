@@ -681,7 +681,7 @@ func TestMsgJsonSignBytes(t *testing.T) {
 }
 
 func TestMsgUpdateInstantiateConfig(t *testing.T) {
-	bad, err := sdk.AccAddressFromHex("012345")
+	bad, err := sdk.AccAddressFromHexUnsafe("012345")
 	require.NoError(t, err)
 	badAddress := bad.String()
 	// proper address size

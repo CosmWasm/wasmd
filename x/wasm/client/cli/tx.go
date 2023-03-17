@@ -335,7 +335,8 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 			if err != nil {
 				return nil, fmt.Errorf("admin %s", err)
 			}
-			adminStr = info.GetAddress().String()
+			adminStrGet, err := info.GetAddress()
+			adminStr = adminStrGet.String()
 		} else {
 			adminStr = addr.String()
 		}
