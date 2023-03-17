@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func TestLegacyQueryContractState(t *testing.T) {
 	contractID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
@@ -168,7 +168,7 @@ func TestLegacyQueryContractListByCodeOrdering(t *testing.T) {
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
@@ -285,7 +285,7 @@ func TestLegacyQueryContractHistory(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			_, _, myContractAddr := keyPubAddr()
+			_, _, myContractAddr := KeyPubAddr()
 			keeper.appendToContractHistory(ctx, myContractAddr, spec.srcHistory...)
 
 			var defaultQueryGasLimit sdk.Gas = 3000000

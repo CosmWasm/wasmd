@@ -271,7 +271,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
@@ -818,7 +818,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,

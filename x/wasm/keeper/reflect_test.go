@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"encoding/json"
@@ -14,10 +14,11 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck // this is the correct import for protobuf
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -38,13 +39,13 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate,cosmwasm_1_1"
 
 func TestReflectContractSend(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, bob := keyPubAddr()
+	_, _, bob := keeper.KeyPubAddr()
 
 	// upload reflect code
 	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -65,7 +66,7 @@ func TestReflectContractSend(t *testing.T) {
 	require.NotEmpty(t, reflectAddr)
 
 	// now we set contract as verifier of an escrow
-	initMsg := HackatomExampleInitMsg{
+	initMsg := keeper.HackatomExampleInitMsg{
 		Verifier:    reflectAddr,
 		Beneficiary: bob,
 	}
@@ -77,10 +78,10 @@ func TestReflectContractSend(t *testing.T) {
 	require.NotEmpty(t, escrowAddr)
 
 	// let's make sure all balances make sense
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000))) // 100k - 40k - 25k
-	checkAccount(t, ctx, accKeeper, bankKeeper, reflectAddr, reflectStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, escrowAddr, escrowStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, nil)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000))) // 100k - 40k - 25k
+	CheckAccount(t, ctx, accKeeper, bankKeeper, reflectAddr, reflectStart)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, escrowAddr, escrowStart)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, nil)
 
 	// now for the trick.... we reflect a message through the reflect to call the escrow
 	// we also send an additional 14k tokens there.
@@ -110,21 +111,21 @@ func TestReflectContractSend(t *testing.T) {
 	require.NoError(t, err)
 
 	// did this work???
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000)))     // same as before
-	checkAccount(t, ctx, accKeeper, bankKeeper, reflectAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 26000))) // 40k - 14k (from send)
-	checkAccount(t, ctx, accKeeper, bankKeeper, escrowAddr, sdk.Coins{})                                     // emptied reserved
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, sdk.NewCoins(sdk.NewInt64Coin("denom", 39000)))         // all escrow of 25k + 14k
+	CheckAccount(t, ctx, accKeeper, bankKeeper, creator, sdk.NewCoins(sdk.NewInt64Coin("denom", 35000)))     // same as before
+	CheckAccount(t, ctx, accKeeper, bankKeeper, reflectAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 26000))) // 40k - 14k (from send)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, escrowAddr, sdk.Coins{})                                     // emptied reserved
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, sdk.NewCoins(sdk.NewInt64Coin("denom", 39000)))         // all escrow of 25k + 14k
 }
 
 func TestReflectCustomMsg(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	bob := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, _, fred := keeper.KeyPubAddr()
 
 	// upload code
 	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -149,9 +150,9 @@ func TestReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// check some account values
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// bob can send contract's tokens to fred (using SendMsg)
 	msgs := []wasmvmtypes.CosmosMsg{{
@@ -176,10 +177,10 @@ func TestReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
 
 	// construct an opaque message
 	var sdkSendMsg sdk.Msg = &banktypes.MsgSend{
@@ -201,15 +202,15 @@ func TestReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got more coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 38000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 2000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, deposit)
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -256,8 +257,8 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -299,8 +300,8 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectTotalSupplyQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 	// upload code
 	codeID := StoreReflectContract(t, ctx, keepers).CodeID
@@ -567,7 +568,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	assert.Nil(t, gotData)
 }
 
-func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+func CheckAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)

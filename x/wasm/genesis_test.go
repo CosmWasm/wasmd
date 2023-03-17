@@ -30,7 +30,7 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 	assertStoreCodeResponse(t, res.Data, 1)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := initMsg{
 		Verifier:    fred,
 		Beneficiary: bob,

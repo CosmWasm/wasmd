@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"bytes"
@@ -535,7 +535,7 @@ func TestSudoProposal(t *testing.T) {
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract
-	_, _, anyAddr := keyPubAddr()
+	_, _, anyAddr := KeyPubAddr()
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")

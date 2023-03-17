@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"crypto/sha256"
