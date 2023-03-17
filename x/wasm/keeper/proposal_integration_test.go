@@ -182,8 +182,8 @@ func TestInstantiate2Proposal(t *testing.T) {
 	var (
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
-		label        string         = "label"
-		salt         []byte         = []byte("mySalt")
+		label                       = "label"
+		salt                        = []byte("mySalt")
 	)
 	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
 		p.CodeID = firstCodeID
