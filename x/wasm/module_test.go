@@ -50,7 +50,7 @@ func setupTest(t *testing.T) testData {
 	return data
 }
 
-func KeyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { 
+func KeyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
@@ -572,7 +572,7 @@ func assertContractState(t *testing.T, q sdk.Querier, ctx sdk.Context, contractB
 	assert.Equal(t, expectedBz, res[0].Value)
 }
 
-func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress) {
+func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBech32Addr string, codeID uint64, creator sdk.AccAddress) { //nolint:unparam
 	t.Helper()
 	path := []string{QueryGetContract, contractBech32Addr}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
