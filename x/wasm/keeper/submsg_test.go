@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ import (
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -28,7 +29,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	creatorBalance := deposit.Sub(contractStart...)
-	_, _, fred := keyPubAddr()
+	_, _, fred := KeyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -41,9 +42,9 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// check some account values
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// creator can send contract's tokens to fred (using SendMsg)
 	msg := wasmvmtypes.CosmosMsg{
@@ -72,10 +73,10 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	checkAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
 	// contract lost them
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
 
 	// query the reflect state to ensure the result was stored
 	query := testdata.ReflectQueryMsg{
@@ -105,7 +106,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	subGasLimit := uint64(300_000)
 
 	// prep - create one chain and upload the code
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 	keeper := keepers.WasmKeeper
@@ -121,8 +122,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 	hackatomID, _, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
+	_, _, bob := KeyPubAddr()
+	_, _, fred := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -283,7 +284,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
-			_, _, empty := keyPubAddr()
+			_, _, empty := KeyPubAddr()
 
 			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
 			require.NoError(t, err)
@@ -360,14 +361,14 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, _, fred := KeyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -426,14 +427,14 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, _, fred := KeyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)

@@ -139,7 +139,7 @@ type TestFaucet struct {
 func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
 	require.NotEmpty(t, initialAmount)
 	r := &TestFaucet{t: t, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
-	_, _, addr := keyPubAddr()
+	_, _, addr := KeyPubAddr()
 	r.sender = addr
 	r.Mint(ctx, addr, initialAmount...)
 	r.balance = initialAmount
@@ -169,7 +169,7 @@ func (f *TestFaucet) Fund(parentCtx sdk.Context, receiver sdk.AccAddress, amount
 }
 
 func (f *TestFaucet) NewFundedRandomAccount(ctx sdk.Context, amounts ...sdk.Coin) sdk.AccAddress {
-	_, _, addr := keyPubAddr()
+	_, _, addr := KeyPubAddr()
 	f.Fund(ctx, addr, amounts...)
 	return addr
 }
@@ -537,7 +537,7 @@ func handleExecute(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgExe
 }
 
 func RandomAccountAddress(_ testing.TB) sdk.AccAddress {
-	_, _, addr := keyPubAddr()
+	_, _, addr := KeyPubAddr()
 	return addr
 }
 
@@ -576,7 +576,7 @@ func StoreReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) Ex
 
 func StoreExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
-	creator, _, creatorAddr := keyPubAddr()
+	creator, _, creatorAddr := KeyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 
 	wasmCode, err := os.ReadFile(wasmFile)
@@ -620,7 +620,7 @@ func StoreRandomContractWithAccessConfig(
 ) ExampleContract {
 	t.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
-	creator, _, creatorAddr := keyPubAddr()
+	creator, _, creatorAddr := KeyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint:gocritic
@@ -645,10 +645,10 @@ type HackatomExampleInstance struct {
 func InstantiateHackatomExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
 	contract := StoreHackatomExampleContract(t, ctx, keepers)
 
-	verifier, _, verifierAddr := keyPubAddr()
+	verifier, _, verifierAddr := KeyPubAddr()
 	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, contract.InitialAmount)
 
-	beneficiary, _, beneficiaryAddr := keyPubAddr()
+	beneficiary, _, beneficiaryAddr := KeyPubAddr()
 	initMsgBz := HackatomExampleInitMsg{
 		Verifier:    verifierAddr,
 		Beneficiary: beneficiaryAddr,
@@ -762,7 +762,7 @@ var keyCounter uint64
 
 // we need to make this deterministic (same every test run), as encoded address size and thus gas cost,
 // depends on the actual bytes (due to ugly CanonicalAddress encoding)
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+func KeyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
 	keyCounter++
 	seed := make([]byte, 8)
 	binary.BigEndian.PutUint64(seed, keyCounter)

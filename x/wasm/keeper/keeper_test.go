@@ -997,7 +997,7 @@ func TestExecuteWithPanic(t *testing.T) {
 	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -1029,7 +1029,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -1072,7 +1072,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -1353,7 +1353,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, originalContractID, burnerContractID)
 
-	_, _, myPayoutAddr := keyPubAddr()
+	_, _, myPayoutAddr := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: fred,
@@ -1517,8 +1517,8 @@ func TestSudo(t *testing.T) {
 	contractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
+	_, _, bob := KeyPubAddr()
+	_, _, fred := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -1530,7 +1530,7 @@ func TestSudo(t *testing.T) {
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", addr.String())
 
 	// the community is broke
-	_, _, community := keyPubAddr()
+	_, _, community := KeyPubAddr()
 	comAcct := accKeeper.GetAccount(ctx, community)
 	require.Nil(t, comAcct)
 
@@ -1603,7 +1603,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, anyAddr := keyPubAddr()
+	_, _, anyAddr := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: anyAddr,
@@ -1673,7 +1673,7 @@ func TestClearContractAdmin(t *testing.T) {
 	originalContractID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 	require.NoError(t, err)
 
-	_, _, anyAddr := keyPubAddr()
+	_, _, anyAddr := KeyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: anyAddr,

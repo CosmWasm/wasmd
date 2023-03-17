@@ -128,10 +128,10 @@ func TestInitializeStaking(t *testing.T) {
 	require.NotEmpty(t, stakingAddr)
 
 	// nothing spent here
-	checkAccount(t, ctx, accKeeper, bankKeeper, creator, deposit)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, creator, deposit)
 
 	// try to register with a validator not on the list and it fails
-	_, _, bob := keyPubAddr()
+	_, _, bob := KeyPubAddr()
 	badInitMsg := StakingInitMsg{
 		Name:         "Missing Validator",
 		Symbol:       "MISS",
@@ -254,8 +254,8 @@ func TestBonding(t *testing.T) {
 	require.NoError(t, err)
 
 	// check some account values - the money is on neither account (cuz it is bonded)
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
 	// make sure the proper number of tokens have been bonded
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
@@ -312,8 +312,8 @@ func TestUnbonding(t *testing.T) {
 
 	// check some account values - the money is on neither account (cuz it is bonded)
 	// Note: why is this immediate? just test setup?
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
 	// make sure the proper number of tokens have been bonded (80k - 27k = 53k)
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
@@ -381,8 +381,8 @@ func TestReinvest(t *testing.T) {
 
 	// check some account values - the money is on neither account (cuz it is bonded)
 	// Note: why is this immediate? just test setup?
-	checkAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
-	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.Coins{})
+	CheckAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
 	// check the delegation itself
 	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
