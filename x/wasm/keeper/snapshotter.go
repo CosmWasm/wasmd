@@ -98,6 +98,14 @@ func (ws *WasmSnapshotter) Restore(
 	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
 }
 
+func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {
+	// nothing to do
+}
+
+func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {
+	//
+}
+
 func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")

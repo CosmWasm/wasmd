@@ -34,7 +34,6 @@ func MigrateContractCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -80,13 +79,12 @@ func UpdateContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
+func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) { //nolint:unparam
 	msg := types.MsgUpdateAdmin{
 		Sender:   cliCtx.GetFromAddress().String(),
 		Contract: args[0],
@@ -117,7 +115,6 @@ func ClearContractAdminCmd() *cobra.Command {
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
-		SilenceUsage: true,
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd

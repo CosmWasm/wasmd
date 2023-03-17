@@ -9,11 +9,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	ibcfee "github.com/cosmos/ibc-go/v6/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -61,7 +61,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 
 	// when a transfer package is sent
 	transferCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))
-	ibcPayloadMsg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, transferCoin, actorChainA.String(), receiver.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()))
+	ibcPayloadMsg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, transferCoin, actorChainA.String(), receiver.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()), "notional")
 	ibcPackageFee := ibcfee.NewFee(oneToken, oneToken, sdk.Coins{})
 	feeMsg := ibcfee.NewMsgPayPacketFee(ibcPackageFee, ibctransfertypes.PortID, path.EndpointA.ChannelID, actorChainA.String(), nil)
 	_, err = chainA.SendMsgs(feeMsg, ibcPayloadMsg)
@@ -86,7 +86,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 	require.NoError(t, err)
 
 	// and transfer from B to A
-	ibcPayloadMsg = ibctransfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, transferCoin, actorChainB.String(), receiver.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()))
+	ibcPayloadMsg = ibctransfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, transferCoin, actorChainB.String(), receiver.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()), "notional")
 	ibcPackageFee = ibcfee.NewFee(oneToken, oneToken, sdk.Coins{})
 	feeMsg = ibcfee.NewMsgPayPacketFee(ibcPackageFee, ibctransfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), nil)
 	_, err = chainB.SendMsgs(feeMsg, ibcPayloadMsg)
@@ -192,7 +192,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	require.NoError(t, err)
 
 	// and when sent back from chain B to A
-	ibcPayloadMsg := ibctransfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, gotBalance, actorChainB.String(), actorChainA.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()))
+	ibcPayloadMsg := ibctransfertypes.NewMsgTransfer(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, gotBalance, actorChainB.String(), actorChainA.String(), clienttypes.Height{}, uint64(time.Now().Add(time.Minute).UnixNano()), "notional")
 	ibcPackageFee = ibcfee.NewFee(oneToken, oneToken, sdk.Coins{})
 	feeMsg = ibcfee.NewMsgPayPacketFee(ibcPackageFee, ibctransfertypes.PortID, path.EndpointB.ChannelID, actorChainB.String(), nil)
 	_, err = chainB.SendMsgs(feeMsg, ibcPayloadMsg)

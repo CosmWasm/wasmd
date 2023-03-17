@@ -4,11 +4,14 @@ import (
 	"testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/golang/protobuf/proto"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // SA1019: proto is deprecated
 	"github.com/stretchr/testify/assert"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -581,10 +584,10 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      myAddr.String(),
-					Option:     govtypes.OptionYes,
+					Voter:      addr1.String(),
+					Option:     govv1.OptionYes,
 				},
 			},
 		},
@@ -596,10 +599,10 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      myAddr.String(),
-					Option:     govtypes.OptionNo,
+					Voter:      addr1.String(),
+					Option:     govv1.OptionNo,
 				},
 			},
 		},
@@ -611,10 +614,10 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 10,
-					Voter:      myAddr.String(),
-					Option:     govtypes.OptionAbstain,
+					Voter:      addr1.String(),
+					Option:     govv1.OptionAbstain,
 				},
 			},
 		},
@@ -626,10 +629,10 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVote{
+				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      myAddr.String(),
-					Option:     govtypes.OptionNoWithVeto,
+					Voter:      addr1.String(),
+					Option:     govv1.OptionNoWithVeto,
 				},
 			},
 		},

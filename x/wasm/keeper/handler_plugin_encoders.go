@@ -10,11 +10,11 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -318,10 +318,10 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "vote option")
 		}
-		m := govtypes.NewMsgVote(sender, msg.Vote.ProposalId, voteOption)
+		m := govv1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption)
 		return []sdk.Msg{m}, nil
 	case msg.VoteWeighted != nil:
-		opts := make([]govtypes.WeightedVoteOption, len(msg.VoteWeighted.Options))
+		opts := make([]govv1.WeightedVoteOption, len(msg.VoteWeighted.Options))
 		for i, v := range msg.VoteWeighted.Options {
 			weight, err := sdk.NewDecFromStr(v.Weight)
 			if err != nil {
@@ -331,9 +331,9 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "vote option")
 			}
-			opts[i] = govtypes.WeightedVoteOption{Option: voteOption, Weight: weight}
+			opts[i] = govv1.WeightedVoteOption{Option: voteOption, Weight: weight}
 		}
-		m := govtypes.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
+		m := govv1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
 		return []sdk.Msg{m}, nil
 
 	default:
@@ -341,21 +341,24 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 	}
 }
 
-func convertVoteOption(s interface{}) (govtypes.VoteOption, error) {
-	var option govtypes.VoteOption
+func convertVoteOption(s interface{}) (govv1.VoteOption, error) {
+	var option govv1.VoteOption
 	switch s {
 	case wasmvmtypes.Yes:
-		option = govtypes.OptionYes
+		option = govv1.OptionYes
 	case wasmvmtypes.No:
-		option = govtypes.OptionNo
+		option = govv1.OptionNo
 	case wasmvmtypes.NoWithVeto:
-		option = govtypes.OptionNoWithVeto
+		option = govv1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
-		option = govtypes.OptionAbstain
-	default:
-		return govtypes.OptionEmpty, types.ErrInvalid
+		option = govv1.OptionAbstain
 	}
-	return option, nil
+	vote := &govv1.MsgVote{
+		ProposalId: msg.Vote.ProposalId,
+		Voter:      sender.String(),
+		Option:     option,
+	}
+	return []sdk.Msg{vote}, nil
 }
 
 // ConvertWasmIBCTimeoutHeightToCosmosHeight converts a wasmvm type ibc timeout height to ibc module type height

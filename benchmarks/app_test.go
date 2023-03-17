@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"encoding/json"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -11,12 +12,13 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -24,6 +26,12 @@ import (
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) {
@@ -37,18 +45,61 @@ func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option
 
 // SetupWithGenesisAccounts initializes a new WasmApp with the provided genesis
 // accounts and possible balances.
-func SetupWithGenesisAccounts(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
+func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	appCodec := app.NewTestSupport(b, wasmApp).AppCodec()
 
+	privVal := mock.NewPV()
+	pubKey, err := privVal.GetPubKey()
+	require.NoError(b, err)
+
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 
+	validator := tmtypes.NewValidator(pubKey, 1)
+	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+
+	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
+	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
+
+	bondAmt := sdk.DefaultPowerReduction
+
+	for _, val := range valSet.Validators {
+		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pkAny, _ := codectypes.NewAnyWithValue(pk)
+		validator := stakingtypes.Validator{
+			OperatorAddress:   sdk.ValAddress(val.Address).String(),
+			ConsensusPubkey:   pkAny,
+			Jailed:            false,
+			Status:            stakingtypes.Bonded,
+			Tokens:            bondAmt,
+			DelegatorShares:   sdk.OneDec(),
+			Description:       stakingtypes.Description{},
+			UnbondingHeight:   int64(0),
+			UnbondingTime:     time.Unix(0, 0).UTC(),
+			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			MinSelfDelegation: sdk.ZeroInt(),
+		}
+		validators = append(validators, validator)
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
+
+	}
+	// set validators and delegations
+	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
+	genesisState[stakingtypes.ModuleName] = appCodec.MustMarshalJSON(stakingGenesis)
+
 	totalSupply := sdk.NewCoins()
+
+	// add bonded amount to bonded pool module account
+	balances = append(balances, banktypes.Balance{
+		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
+		Coins:   sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, bondAmt)},
+	})
+	// update total supply
 	for _, b := range balances {
+		// add genesis acc tokens and delegated tokens to total supply
 		totalSupply = totalSupply.Add(b.Coins...)
 	}
-
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
 	genesisState[banktypes.ModuleName] = appCodec.MustMarshalJSON(bankGenesis)
 
@@ -111,7 +162,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 			Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
 		}
 	}
-	wasmApp := SetupWithGenesisAccounts(b, db, genAccs, bals...)
+	wasmApp := SetupWithGenesisAccountsAndValSet(b, db, genAccs, bals...)
 
 	// add wasm contract
 	height := int64(2)
@@ -125,9 +176,10 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
-	storeTx, err := helpers.GenTx(txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
+	storeTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())),
+		txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
 	require.NoError(b, err)
-	_, res, err := wasmApp.Deliver(txGen.TxEncoder(), storeTx)
+	_, _, err = wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
 	require.NoError(b, err)
 	codeID := uint64(1)
 
@@ -159,9 +211,16 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Msg:    initBz,
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
-	initTx, err := helpers.GenTx(txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
+	initTx, err := helpers.GenSignedMockTx(rand.New(rand.NewSource(time.Now().UnixNano())),
+		txGen,
+		[]sdk.Msg{&initMsg},
+		nil, gasWanted,
+		"",
+		[]uint64{0},
+		[]uint64{1},
+		minter)
 	require.NoError(b, err)
-	_, res, err = wasmApp.Deliver(txGen.TxEncoder(), initTx)
+	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
 	require.NoError(b, err)
 
 	// TODO: parse contract address better
@@ -191,7 +250,8 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
 		require.NoError(b, err)
-		txs[i], err = helpers.GenTx(
+		txs[i], err = helpers.GenSignedMockTx(
+			rand.New(rand.NewSource(time.Now().UnixNano())),
 			info.TxConfig,
 			msgs,
 			fees,
@@ -202,7 +262,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 			info.MinterKey,
 		)
 		require.NoError(b, err)
-		info.SeqNum += 1
+		info.SeqNum++
 	}
 
 	return txs

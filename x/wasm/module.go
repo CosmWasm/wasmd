@@ -17,14 +17,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
-	"github.com/CosmWasm/wasmd/x/wasm/client/rest" //nolint:staticcheck
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -45,7 +43,7 @@ const (
 // AppModuleBasic defines the basic application module used by the wasm module.
 type AppModuleBasic struct{}
 
-func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { //nolint:staticcheck
+func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	RegisterCodec(amino)
 }
 
@@ -77,11 +75,6 @@ func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, config client
 		return err
 	}
 	return ValidateGenesis(data)
-}
-
-// RegisterRESTRoutes registers the REST routes for the wasm module.
-func (AppModuleBasic) RegisterRESTRoutes(cliCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(cliCtx, rtr)
 }
 
 // GetTxCmd returns the root tx command for the wasm module.
@@ -146,7 +139,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	}
 }
 
-func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { //nolint:staticcheck
+func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
 	return keeper.NewLegacyQuerier(am.keeper, am.keeper.QueryGasLimit())
 }
 
@@ -201,8 +194,8 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
-	return simulation.ProposalContents(am.bankKeeper, am.keeper)
+func (AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+	return nil
 }
 
 // RandomizedParams creates randomized bank param changes for the simulator.

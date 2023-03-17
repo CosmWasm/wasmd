@@ -1,6 +1,7 @@
 package ibctesting
 
 import (
+	"cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -10,7 +11,7 @@ import (
 )
 
 // Fund an address with the given amount in default denom
-func (chain *TestChain) Fund(addr sdk.AccAddress, amount sdk.Int) {
+func (chain *TestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 	require.NoError(chain.t, chain.sendMsgs(&banktypes.MsgSend{
 		FromAddress: chain.SenderAccount.GetAddress().String(),
 		ToAddress:   addr.String(),

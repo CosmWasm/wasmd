@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	hosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	hosttypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,6 +38,8 @@ func TestICA(t *testing.T) {
 	ownerAddr := sdk.AccAddress(controllerChain.SenderPrivKey.PubKey().Address())
 	msg := intertxtypes.NewMsgRegisterAccount(ownerAddr.String(), path.EndpointA.ConnectionID, "")
 	res, err := controllerChain.SendMsgs(msg)
+	require.NoError(t, err)
+
 	chanID, portID, version := parseIBCChannelEvents(t, res)
 
 	// next open channels on both sides
@@ -48,7 +50,7 @@ func TestICA(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  icatypes.PortID,
+		PortID:  icatypes.HostPortID,
 		Version: icatypes.Version,
 		Order:   channeltypes.ORDERED,
 	}
@@ -69,7 +71,7 @@ func TestICA(t *testing.T) {
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
 	msg2, err := intertxtypes.NewMsgSubmitTx(payloadMsg, path.EndpointA.ConnectionID, ownerAddr.String())
 	require.NoError(t, err)
-	res, err = controllerChain.SendMsgs(msg2)
+	_, err = controllerChain.SendMsgs(msg2)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(controllerChain.PendingSendPackets))

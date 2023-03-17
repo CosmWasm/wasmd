@@ -6,14 +6,15 @@ import (
 	"testing"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v6/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -33,8 +34,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 	specs := map[string]struct {
 		contract             wasmtesting.IBCContractCallbacks
 		setupContract        func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
-		expChainABalanceDiff sdk.Int
-		expChainBBalanceDiff sdk.Int
+		expChainABalanceDiff math.Int
+		expChainBBalanceDiff math.Int
 	}{
 		"ack": {
 			contract: &ackReceiverContract{},
@@ -100,7 +101,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			// when transfer via sdk transfer from A (module) -> B (contract)
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
+			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
 			require.NoError(t, path.EndpointB.UpdateClient())
@@ -583,7 +584,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	require.Equal(s.t, in.CoinsToSend.Amount.String(), info.Funds[0].Amount)
 	require.Equal(s.t, in.CoinsToSend.Denom, info.Funds[0].Denom)
 	dataPacket := ibctransfertypes.NewFungibleTokenPacketData(
-		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), info.Sender, in.ReceiverAddr,
+		in.CoinsToSend.Denom, in.CoinsToSend.Amount.String(), info.Sender, in.ReceiverAddr, "",
 	)
 	if err := dataPacket.ValidateBasic(); err != nil {
 		return nil, 0, err
@@ -599,7 +600,7 @@ func (s *sendEmulatedIBCTransferContract) Execute(code wasmvm.Checksum, env wasm
 	return &wasmvmtypes.Response{Messages: []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: ibcMsg}}}}, 0, nil
 }
 
-func (c *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (s *sendEmulatedIBCTransferContract) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	packet := msg.Packet
 
 	var data ibctransfertypes.FungibleTokenPacketData
@@ -625,14 +626,13 @@ var _ wasmtesting.IBCContractCallbacks = &closeChannelContract{}
 
 type closeChannelContract struct {
 	contractStub
-	t *testing.T
 }
 
 func (c *closeChannelContract) IBCChannelClose(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 	return &wasmvmtypes.IBCBasicResponse{}, 1, nil
 }
 
-func (s *closeChannelContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+func (c *closeChannelContract) Execute(code wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 	var in closeIBCChannel
 	if err := json.Unmarshal(executeMsg, &in); err != nil {
 		return nil, 0, err

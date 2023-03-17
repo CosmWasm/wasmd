@@ -10,9 +10,8 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/rand"
@@ -55,7 +54,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"invalid extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.TextProposal{})
+				any, err := types.NewAnyWithValue(&govtypes.TextProposal{})
 				require.NoError(t, err)
 				c.Extension = any
 			},
@@ -64,7 +63,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"not validatable extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
+				any, err := types.NewAnyWithValue(&govtypes.Proposal{})
 				require.NoError(t, err)
 				c.Extension = any
 			},
@@ -228,7 +227,7 @@ func TestContractInfoReadExtension(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				i.SetExtension(&myExtension) //nolint:errcheck
 			},
 			param: func() ContractInfoExtension {
 				return &govtypes.Proposal{}
@@ -245,7 +244,7 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"nil argument value": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				i.SetExtension(&myExtension) //nolint:errcheck
 			},
 			param: func() ContractInfoExtension {
 				return nil
@@ -254,7 +253,7 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"non matching types": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				i.SetExtension(&myExtension) //nolint:errcheck
 			},
 			param: func() ContractInfoExtension {
 				return &govtypes.TextProposal{}

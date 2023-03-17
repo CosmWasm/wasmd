@@ -1,32 +1,27 @@
-package keeper_test
+package keeper
 
 import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/store"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	dbm "github.com/tendermint/tm-db"
+
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -89,7 +84,7 @@ func TestIBCQuerier(t *testing.T) {
 		srcQuery      *wasmvmtypes.IBCQuery
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
-		expJsonResult string
+		expJSONResult string
 		expErr        *sdkerrors.Error
 	}{
 		"query port id": {
@@ -102,7 +97,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{},
-			expJsonResult: `{"port_id":"myIBCPortID"}`,
+			expJSONResult: `{"port_id":"myIBCPortID"}`,
 		},
 		"query list channels - all": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -111,7 +106,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -151,7 +146,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -178,7 +173,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{"channels": []}`,
+			expJSONResult: `{"channels": []}`,
 		},
 		"query channel": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -201,7 +196,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myQueryPortID",
@@ -242,7 +237,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myLoadedPortID",
@@ -278,7 +273,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel in closed state": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -301,7 +296,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel - empty result": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -315,18 +310,18 @@ func TestIBCQuerier(t *testing.T) {
 					return channeltypes.Channel{}, false
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			h := keeper.IBCQuerier(spec.wasmKeeper, spec.channelKeeper)
-			gotResult, gotErr := h(sdk.Context{}, keeper.RandomAccountAddress(t), spec.srcQuery)
+			h := IBCQuerier(spec.wasmKeeper, spec.channelKeeper)
+			gotResult, gotErr := h(sdk.Context{}, RandomAccountAddress(t), spec.srcQuery)
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
 				return
 			}
-			assert.JSONEq(t, spec.expJsonResult, string(gotResult), string(gotResult))
+			assert.JSONEq(t, spec.expJSONResult, string(gotResult), string(gotResult))
 		})
 	}
 }
@@ -337,10 +332,10 @@ func TestBankQuerierBalance(t *testing.T) {
 	}}
 
 	ctx := sdk.Context{}
-	q := keeper.BankQuerier(mock)
+	q := BankQuerier(mock)
 	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
 		Balance: &wasmvmtypes.BalanceQuery{
-			Address: keeper.RandomBech32AccountAddress(t),
+			Address: RandomBech32AccountAddress(t),
 			Denom:   "ALX",
 		},
 	})
@@ -357,9 +352,9 @@ func TestBankQuerierBalance(t *testing.T) {
 }
 
 func TestContractInfoWasmQuerier(t *testing.T) {
-	myValidContractAddr := keeper.RandomBech32AccountAddress(t)
-	myCreatorAddr := keeper.RandomBech32AccountAddress(t)
-	myAdminAddr := keeper.RandomBech32AccountAddress(t)
+	myValidContractAddr := RandomBech32AccountAddress(t)
+	myCreatorAddr := RandomBech32AccountAddress(t)
+	myAdminAddr := RandomBech32AccountAddress(t)
 	var ctx sdk.Context
 
 	specs := map[string]struct {
@@ -446,7 +441,7 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			q := keeper.WasmQuerier(spec.mock)
+			q := WasmQuerier(spec.mock)
 			gotBz, gotErr := q(ctx, spec.req)
 			if spec.expErr {
 				require.Error(t, gotErr)
@@ -552,78 +547,13 @@ func TestQueryErrors(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			mock := keeper.WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+			mock := WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 				return nil, spec.src
 			})
 			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB()))
-			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, keeper.NewDefaultWasmGasRegister())
+			q := NewQueryHandler(ctx, mock, sdk.AccAddress{}, NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
-		})
-	}
-}
-
-func TestAcceptListStargateQuerier(t *testing.T) {
-	wasmApp := app.SetupWithEmptyStore(t)
-	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
-	wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
-
-	addrs := app.AddTestAddrs(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
-	accepted := keeper.AcceptedStargateQueries{
-		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
-		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
-	}
-
-	marshal := func(pb proto.Message) []byte {
-		b, err := proto.Marshal(pb)
-		require.NoError(t, err)
-		return b
-	}
-
-	specs := map[string]struct {
-		req     *wasmvmtypes.StargateQuery
-		expErr  bool
-		expResp string
-	}{
-		"in accept list - success result": {
-			req: &wasmvmtypes.StargateQuery{
-				Path: "/cosmos.auth.v1beta1.Query/Account",
-				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
-			},
-			expResp: fmt.Sprintf(`{"account":{"@type":"/cosmos.auth.v1beta1.BaseAccount","address":%q,"pub_key":null,"account_number":"1","sequence":"0"}}`, addrs[0].String()),
-		},
-		"in accept list - error result": {
-			req: &wasmvmtypes.StargateQuery{
-				Path: "/cosmos.auth.v1beta1.Query/Account",
-				Data: marshal(&authtypes.QueryAccountRequest{Address: sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address()).String()}),
-			},
-			expErr: true,
-		},
-		"not in accept list": {
-			req: &wasmvmtypes.StargateQuery{
-				Path: "/cosmos.bank.v1beta1.Query/AllBalances",
-				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
-			},
-			expErr: true,
-		},
-		"unknown route": {
-			req: &wasmvmtypes.StargateQuery{
-				Path: "/no/route/to/this",
-				Data: marshal(&banktypes.QueryAllBalancesRequest{Address: addrs[0].String()}),
-			},
-			expErr: true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			q := keeper.AcceptListStargateQuerier(accepted, wasmApp.GRPCQueryRouter(), wasmApp.AppCodec())
-			gotBz, gotErr := q(ctx, spec.req)
-			if spec.expErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-			assert.JSONEq(t, spec.expResp, string(gotBz), string(gotBz))
 		})
 	}
 }

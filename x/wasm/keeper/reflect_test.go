@@ -14,7 +14,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // this is the correct import for protobuf
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -262,7 +262,7 @@ func TestReflectStargateQuery(t *testing.T) {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	expectedBalance := funds.Sub(contractStart)
+	expectedBalance := funds.Sub(contractStart...)
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
@@ -331,7 +331,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 				Chain: &testdata.ChainQuery{
 					Request: &wasmvmtypes.QueryRequest{
 						Bank: &wasmvmtypes.BankQuery{
-							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+							Supply: &wasmvmtypes.SupplyQuery{Denom: spec.denom},
 						},
 					},
 				},
@@ -373,6 +373,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 		Address: creator.String(),
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
+	require.NoError(t, err)
+
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
@@ -384,10 +386,10 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// make a query on the chain, should not be whitelisted
+	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
 
 	// now, try to build a protobuf query
 	protoRequest = wasmvmtypes.QueryRequest{
@@ -404,7 +406,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
 
 	// and another one
 	protoRequest = wasmvmtypes.QueryRequest{
@@ -421,7 +423,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "Stargate queries are disabled")
 }
 
 type reflectState struct {
@@ -598,7 +600,7 @@ func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	customMsg, err := json.Marshal(reflectCustomMsg{
+	customMsg, _ := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
 	})
 	res := wasmvmtypes.CosmosMsg{
@@ -651,17 +653,8 @@ type customQueryResponse struct {
 	Msg string `json:"msg"`
 }
 
-// these are the return values from contract -> go depending on type of query
-type ownerResponse struct {
-	Owner string `json:"owner"`
-}
-
 type capitalizedResponse struct {
 	Text string `json:"text"`
-}
-
-type chainResponse struct {
-	Data []byte `json:"data"`
 }
 
 // reflectPlugins needs to be registered in test setup to handle custom query callbacks

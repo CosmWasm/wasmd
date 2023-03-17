@@ -50,7 +50,7 @@ func setupTest(t *testing.T) testData {
 	return data
 }
 
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) {
+func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { //nolint:unparam
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
@@ -354,7 +354,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
-	res, err := h(data.ctx, msg)
+	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
 	_, _, bob := keyPubAddr()
@@ -372,7 +372,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		Funds:  deposit,
 		Label:  "testing",
 	}
-	res, err = h(data.ctx, &initCmd)
+	res, err := h(data.ctx, &initCmd)
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", contractBech32Addr)
@@ -514,7 +514,7 @@ func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum in
 	assert.Equal(t, expectedNum, len(res))
 }
 
-func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expectedBytes []byte) {
+func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expectedBytes []byte) { //nolint:unparam
 	path := []string{QueryGetCode, fmt.Sprintf("%d", codeID)}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
@@ -534,7 +534,7 @@ func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64
 	assert.EqualValues(t, codeID, res["id"])
 }
 
-func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expContractAddrs []string) {
+func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expContractAddrs []string) { //nolint:unparam
 	bz, sdkerr := q(ctx, []string{QueryListContractByCode, fmt.Sprintf("%d", codeID)}, abci.RequestQuery{})
 	require.NoError(t, sdkerr)
 
@@ -548,7 +548,7 @@ func assertContractList(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uin
 	require.NoError(t, err)
 
 	hasAddrs := make([]string, len(res))
-	for i, r := range res {
+	for i, r := range res { //nolint:gosimple
 		hasAddrs[i] = r
 	}
 

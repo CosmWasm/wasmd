@@ -57,7 +57,7 @@ func WithQueryHandlerDecorator(d func(old WasmVMQueryHandler) WasmVMQueryHandler
 }
 
 // WithQueryPlugins is an optional constructor parameter to pass custom query plugins for wasmVM requests.
-// This option expects the default `QueryHandler` set and should not be combined with Option `WithQueryHandler` or `WithQueryHandlerDecorator`.
+// This option expects the default `QueryHandler` set an should not be combined with Option `WithQueryHandler` or `WithQueryHandlerDecorator`.
 func WithQueryPlugins(x *QueryPlugins) Option {
 	return optsFn(func(k *Keeper) {
 		q, ok := k.wasmVMQueryHandler.(QueryPlugins)

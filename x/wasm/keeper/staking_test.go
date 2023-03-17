@@ -16,7 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -183,7 +182,7 @@ func initializeStaking(t *testing.T) initInfo {
 	v, found := stakingKeeper.GetValidator(ctx, valAddr)
 	assert.True(t, found)
 	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1000000))
-	assert.Equal(t, v.Status, stakingtypes.Bonded)
+	assert.Equal(t, v.Status, types.Bonded)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
@@ -660,7 +659,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
-	msg := stakingtypes.MsgCreateValidator{
+	msg := types.MsgCreateValidator{
 		Description: types.Description{
 			Moniker: "Validator power",
 		},
@@ -676,8 +675,8 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 		Value:             value,
 	}
 
-	h := staking.NewHandler(stakingKeeper)
-	_, err = h(ctx, &msg)
+	h := stakingkeeper.NewMsgServerImpl(stakingKeeper)
+	_, err = h.CreateValidator(ctx, &msg)
 	require.NoError(t, err)
 	return addr
 }

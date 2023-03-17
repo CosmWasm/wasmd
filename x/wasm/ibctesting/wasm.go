@@ -8,9 +8,8 @@ import (
 	"os"
 	"strings"
 
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/golang/protobuf/proto" //nolint
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -56,11 +55,9 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	}
 	r, err := chain.SendMsgs(storeMsg)
 	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
-	// unmarshal protobuf response from data
+
 	var pInstResp types.MsgStoreCodeResponse
-	require.NoError(chain.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
+	require.NoError(chain.t, pInstResp.Unmarshal(r.MsgResponses[0].Value))
 	require.NotEmpty(chain.t, pInstResp.CodeID)
 	require.NotEmpty(chain.t, pInstResp.Checksum)
 	return pInstResp
@@ -78,11 +75,9 @@ func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.A
 
 	r, err := chain.SendMsgs(instantiateMsg)
 	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
 
 	var pExecResp types.MsgInstantiateContractResponse
-	require.NoError(chain.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
+	require.NoError(chain.t, pExecResp.Unmarshal(r.MsgResponses[0].Value))
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
 	require.NoError(chain.t, err)
 	return a
@@ -124,12 +119,6 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	}
 	// unpack json content
 	return json.Unmarshal(resp.Data, response)
-}
-
-func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
-	var protoResult sdk.TxMsgData
-	require.NoError(chain.t, proto.Unmarshal(r.Data, &protoResult))
-	return protoResult
 }
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address

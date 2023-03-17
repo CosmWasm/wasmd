@@ -3,14 +3,15 @@ package wasm
 import (
 	"math"
 
+	sdkerrors "cosmossdk.io/errors"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v6/modules/core/exported"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -50,7 +51,7 @@ func (i IBCHandler) OnChanOpenInit(
 	}
 	contractAddr, err := ContractFromPortID(portID)
 	if err != nil {
-		return "", sdkerrors.Wrapf(err, "contract port id")
+		return version, sdkerrors.Wrapf(err, "contract port id")
 	}
 
 	msg := wasmvmtypes.IBCChannelOpenMsg{
@@ -69,7 +70,7 @@ func (i IBCHandler) OnChanOpenInit(
 	// Allow contracts to return a version (or default to proposed version if unset)
 	acceptedVersion, err := i.keeper.OnOpenChannel(ctx, contractAddr, msg)
 	if err != nil {
-		return "", err
+		return version, err
 	}
 	if acceptedVersion == "" {
 		acceptedVersion = version
@@ -77,7 +78,7 @@ func (i IBCHandler) OnChanOpenInit(
 
 	// Claim channel capability passed back by IBC module
 	if err := i.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
-		return "", sdkerrors.Wrap(err, "claim capability")
+		return version, sdkerrors.Wrap(err, "claim capability")
 	}
 	return acceptedVersion, nil
 }

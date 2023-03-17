@@ -9,6 +9,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func TestCountTxDecorator(t *testing.T) {
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100
 
@@ -115,7 +116,7 @@ func TestCountTxDecorator(t *testing.T) {
 func TestLimitSimulationGasDecorator(t *testing.T) {
 	var (
 		hundred sdk.Gas = 100
-		zero    sdk.Gas = 0
+		zero    sdk.Gas
 	)
 	specs := map[string]struct {
 		customLimit *sdk.Gas

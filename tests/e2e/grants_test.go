@@ -3,8 +3,9 @@ package e2e_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,9 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestGrants(t *testing.T) {
@@ -75,7 +73,7 @@ func TestGrants(t *testing.T) {
 			filter:         types.NewAllowAllMessagesFilter(),
 			senderKey:      otherPrivKey,
 			transferAmount: myAmount,
-			expErr:         sdkerrors.ErrUnauthorized,
+			expErr:         authz.ErrNoAuthorizationFound,
 		},
 	}
 	for name, spec := range specs {
@@ -84,7 +82,7 @@ func TestGrants(t *testing.T) {
 			grant, err := types.NewContractGrant(contractAddr, spec.limit, spec.filter)
 			require.NoError(t, err)
 			authorization := types.NewContractExecutionAuthorization(*grant)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, time.Now().Add(time.Hour))
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, nil) // TODO: add expiration
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)

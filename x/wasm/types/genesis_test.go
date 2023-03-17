@@ -8,12 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/stretchr/testify/require"
 )
+
+const invalid = "invalid"
 
 func TestValidateGenesisState(t *testing.T) {
 	specs := map[string]struct {
@@ -37,13 +39,37 @@ func TestValidateGenesisState(t *testing.T) {
 		},
 		"contract invalid": {
 			srcMutator: func(s *GenesisState) {
-				s.Contracts[0].ContractAddress = "invalid"
+				s.Contracts[0].ContractAddress = invalid
 			},
 			expError: true,
 		},
 		"sequence invalid": {
 			srcMutator: func(s *GenesisState) {
 				s.Sequences[0].IDKey = nil
+			},
+			expError: true,
+		},
+		"genesis store code message invalid": {
+			srcMutator: func(s *GenesisState) {
+				s.GenMsgs[0].GetStoreCode().WASMByteCode = nil
+			},
+			expError: true,
+		},
+		"genesis instantiate contract message invalid": {
+			srcMutator: func(s *GenesisState) {
+				s.GenMsgs[1].GetInstantiateContract().CodeID = 0
+			},
+			expError: true,
+		},
+		"genesis execute contract message invalid": {
+			srcMutator: func(s *GenesisState) {
+				s.GenMsgs[2].GetExecuteContract().Sender = invalid
+			},
+			expError: true,
+		},
+		"genesis invalid message type": {
+			srcMutator: func(s *GenesisState) {
+				s.GenMsgs[0].Sum = nil
 			},
 			expError: true,
 		},
@@ -119,13 +145,13 @@ func TestContractValidateBasic(t *testing.T) {
 		"all good": {srcMutator: func(_ *Contract) {}},
 		"contract address invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractAddress = "invalid"
+				c.ContractAddress = invalid
 			},
 			expError: true,
 		},
 		"contract info invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractInfo.Creator = "invalid"
+				c.ContractInfo.Creator = invalid
 			},
 			expError: true,
 		},

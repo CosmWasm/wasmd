@@ -9,8 +9,8 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -163,17 +163,13 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		return nil, nil, sdkerrors.Wrapf(types.ErrEmpty, "ibc channel")
 	}
 
-	sequence, found := h.channelKeeper.GetNextSequenceSend(ctx, contractIBCPortID, contractIBCChannelID)
+	_, found := h.channelKeeper.GetNextSequenceSend(ctx, contractIBCPortID, contractIBCChannelID)
 	if !found {
 		return nil, nil, sdkerrors.Wrapf(channeltypes.ErrSequenceSendNotFound,
 			"source port: %s, source channel: %s", contractIBCPortID, contractIBCChannelID,
 		)
 	}
 
-	channelInfo, ok := h.channelKeeper.GetChannel(ctx, contractIBCPortID, contractIBCChannelID)
-	if !ok {
-		return nil, nil, sdkerrors.Wrap(channeltypes.ErrInvalidChannel, "not found")
-	}
 	channelCap, ok := h.capabilityKeeper.GetCapability(ctx, host.ChannelCapabilityPath(contractIBCPortID, contractIBCChannelID))
 	if !ok {
 		return nil, nil, sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
