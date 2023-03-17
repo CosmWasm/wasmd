@@ -45,7 +45,7 @@ const (
 // AppModuleBasic defines the basic application module used by the wasm module.
 type AppModuleBasic struct{}
 
-func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { //nolint:staticcheck
+func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) { 
 	RegisterCodec(amino)
 }
 
@@ -146,7 +146,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	}
 }
 
-func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { //nolint:staticcheck
+func (am AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier { 
 	return keeper.NewLegacyQuerier(am.keeper, am.keeper.QueryGasLimit())
 }
 
