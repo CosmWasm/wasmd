@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -16,23 +17,23 @@ import (
 func TestCompileCosts(t *testing.T) {
 	specs := map[string]struct {
 		srcLen    int
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		exp       sdk.Gas
 		expPanic  bool
 	}{
 		"one byte": {
 			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			exp:       sdk.Gas(3), // DefaultCompileCost
 		},
 		"zero byte": {
 			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			exp:       sdk.Gas(0),
 		},
 		"negative len": {
 			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			expPanic:  true,
 		},
 	}
@@ -40,11 +41,11 @@ func TestCompileCosts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
+					keeper.NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
 				})
 				return
 			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
+			gotGas := keeper.NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
 			assert.Equal(t, spec.exp, gotGas)
 		})
 	}
@@ -53,48 +54,48 @@ func TestCompileCosts(t *testing.T) {
 func TestNewContractInstanceCosts(t *testing.T) {
 	specs := map[string]struct {
 		srcLen    int
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		pinned    bool
 		exp       sdk.Gas
 		expPanic  bool
 	}{
 		"small msg - pinned": {
 			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       DefaultContractMessageDataCost,
+			exp:       keeper.DefaultContractMessageDataCost,
 		},
 		"big msg - pinned": {
 			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       DefaultContractMessageDataCost * sdk.Gas(math.MaxUint32),
+			exp:       keeper.DefaultContractMessageDataCost * sdk.Gas(math.MaxUint32),
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
 			pinned:    true,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			exp:       sdk.Gas(0),
 		},
 		"small msg - unpinned": {
 			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost + DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultContractMessageDataCost + keeper.DefaultInstanceCost,
 		},
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultContractMessageDataCost*math.MaxUint32 + keeper.DefaultInstanceCost,
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost,
 		},
 
 		"negative len": {
 			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			expPanic:  true,
 		},
 	}
@@ -102,11 +103,11 @@ func TestNewContractInstanceCosts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
+					keeper.NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
 				})
 				return
 			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
+			gotGas := keeper.NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
 			assert.Equal(t, spec.exp, gotGas)
 		})
 	}
@@ -116,48 +117,48 @@ func TestContractInstanceCosts(t *testing.T) {
 	// same as TestNewContractInstanceCosts currently
 	specs := map[string]struct {
 		srcLen    int
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		pinned    bool
 		exp       sdk.Gas
 		expPanic  bool
 	}{
 		"small msg - pinned": {
 			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       DefaultContractMessageDataCost,
+			exp:       keeper.DefaultContractMessageDataCost,
 		},
 		"big msg - pinned": {
 			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       DefaultContractMessageDataCost * math.MaxUint32,
+			exp:       keeper.DefaultContractMessageDataCost * math.MaxUint32,
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
 			pinned:    true,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			exp:       sdk.Gas(0),
 		},
 		"small msg - unpinned": {
 			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost + DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultContractMessageDataCost + keeper.DefaultInstanceCost,
 		},
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultContractMessageDataCost*math.MaxUint32 + keeper.DefaultInstanceCost,
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost,
 		},
 
 		"negative len": {
 			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			expPanic:  true,
 		},
 	}
@@ -165,11 +166,11 @@ func TestContractInstanceCosts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
+					keeper.NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
 				})
 				return
 			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
+			gotGas := keeper.NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
 			assert.Equal(t, spec.exp, gotGas)
 		})
 	}
@@ -178,7 +179,7 @@ func TestContractInstanceCosts(t *testing.T) {
 func TestReplyCost(t *testing.T) {
 	specs := map[string]struct {
 		src       wasmvmtypes.Reply
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		pinned    bool
 		exp       sdk.Gas
 		expPanic  bool
@@ -194,9 +195,9 @@ func TestReplyCost(t *testing.T) {
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost, // 3 == len("foo")
+			exp:       3*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost + keeper.DefaultContractMessageDataCost, // 3 == len("foo")
 		},
 		"subcall response with events - pinned": {
 			src: wasmvmtypes.Reply{
@@ -208,23 +209,23 @@ func TestReplyCost(t *testing.T) {
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       3*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo")
+			exp:       3*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost, // 3 == len("foo")
 		},
 		"subcall response with events exceeds free tier- pinned": {
 			src: wasmvmtypes.Reply{
 				Result: wasmvmtypes.SubMsgResult{
 					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
-							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", DefaultEventAttributeDataFreeTier), Value: "myData"}}},
+							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", keeper.DefaultEventAttributeDataFreeTier), Value: "myData"}}},
 						},
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
+			exp:       (3+6)*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - pinned": {
 			src: wasmvmtypes.Reply{
@@ -232,9 +233,9 @@ func TestReplyCost(t *testing.T) {
 					Err: "foo",
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       3 * DefaultContractMessageDataCost,
+			exp:       3 * keeper.DefaultContractMessageDataCost,
 		},
 		"subcall response with events and data - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -247,8 +248,8 @@ func TestReplyCost(t *testing.T) {
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost + 3*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost + keeper.DefaultContractMessageDataCost,
 		},
 		"subcall response with events - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -260,21 +261,21 @@ func TestReplyCost(t *testing.T) {
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost + 3*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost,
 		},
 		"subcall response with events exceeds free tier- unpinned": {
 			src: wasmvmtypes.Reply{
 				Result: wasmvmtypes.SubMsgResult{
 					Ok: &wasmvmtypes.SubMsgResponse{
 						Events: []wasmvmtypes.Event{
-							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", DefaultEventAttributeDataFreeTier), Value: "myData"}}},
+							{Type: "foo", Attributes: []wasmvmtypes.EventAttribute{{Key: strings.Repeat("x", keeper.DefaultEventAttributeDataFreeTier), Value: "myData"}}},
 						},
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost + (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost + (3+6)*keeper.DefaultEventAttributeDataCost + keeper.DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -282,8 +283,8 @@ func TestReplyCost(t *testing.T) {
 					Err: "foo",
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost + 3*DefaultContractMessageDataCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost + 3*keeper.DefaultContractMessageDataCost,
 		},
 		"subcall response with empty events": {
 			src: wasmvmtypes.Reply{
@@ -293,8 +294,8 @@ func TestReplyCost(t *testing.T) {
 					},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost,
 		},
 		"subcall response with events unset": {
 			src: wasmvmtypes.Reply{
@@ -302,19 +303,19 @@ func TestReplyCost(t *testing.T) {
 					Ok: &wasmvmtypes.SubMsgResponse{},
 				},
 			},
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost,
+			srcConfig: keeper.DefaultGasRegisterConfig(),
+			exp:       keeper.DefaultInstanceCost,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).ReplyCosts(spec.pinned, spec.src)
+					keeper.NewWasmGasRegister(spec.srcConfig).ReplyCosts(spec.pinned, spec.src)
 				})
 				return
 			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).ReplyCosts(spec.pinned, spec.src)
+			gotGas := keeper.NewWasmGasRegister(spec.srcConfig).ReplyCosts(spec.pinned, spec.src)
 			assert.Equal(t, spec.exp, gotGas)
 		})
 	}
@@ -329,11 +330,11 @@ func TestEventCosts(t *testing.T) {
 	}{
 		"empty events": {
 			srcEvents: make([]wasmvmtypes.Event, 1),
-			expGas:    DefaultPerCustomEventCost,
+			expGas:    keeper.DefaultPerCustomEventCost,
 		},
 		"empty attributes": {
 			srcAttrs: make([]wasmvmtypes.EventAttribute, 1),
-			expGas:   DefaultPerAttributeCost,
+			expGas:   keeper.DefaultPerAttributeCost,
 		},
 		"both nil": {
 			expGas: 0,
@@ -341,7 +342,7 @@ func TestEventCosts(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotGas := NewDefaultWasmGasRegister().EventCosts(spec.srcAttrs, spec.srcEvents)
+			gotGas := keeper.NewDefaultWasmGasRegister().EventCosts(spec.srcAttrs, spec.srcEvents)
 			assert.Equal(t, spec.expGas, gotGas)
 		})
 	}
@@ -350,24 +351,24 @@ func TestEventCosts(t *testing.T) {
 func TestToWasmVMGasConversion(t *testing.T) {
 	specs := map[string]struct {
 		src       storetypes.Gas
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		exp       uint64
 		expPanic  bool
 	}{
 		"0": {
 			src:       0,
 			exp:       0,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 		},
 		"max": {
-			srcConfig: WasmGasRegisterConfig{
+			srcConfig: keeper.WasmGasRegisterConfig{
 				GasMultiplier: 1,
 			},
 			src: math.MaxUint64,
 			exp: math.MaxUint64,
 		},
 		"overflow": {
-			srcConfig: WasmGasRegisterConfig{
+			srcConfig: keeper.WasmGasRegisterConfig{
 				GasMultiplier: 2,
 			},
 			src:      math.MaxUint64,
@@ -378,12 +379,12 @@ func TestToWasmVMGasConversion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					r := NewWasmGasRegister(spec.srcConfig)
+					r := keeper.NewWasmGasRegister(spec.srcConfig)
 					_ = r.ToWasmVMGas(spec.src)
 				})
 				return
 			}
-			r := NewWasmGasRegister(spec.srcConfig)
+			r := keeper.NewWasmGasRegister(spec.srcConfig)
 			got := r.ToWasmVMGas(spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
@@ -394,23 +395,23 @@ func TestFromWasmVMGasConversion(t *testing.T) {
 	specs := map[string]struct {
 		src       uint64
 		exp       storetypes.Gas
-		srcConfig WasmGasRegisterConfig
+		srcConfig keeper.WasmGasRegisterConfig
 		expPanic  bool
 	}{
 		"0": {
 			src:       0,
 			exp:       0,
-			srcConfig: DefaultGasRegisterConfig(),
+			srcConfig: keeper.DefaultGasRegisterConfig(),
 		},
 		"max": {
-			srcConfig: WasmGasRegisterConfig{
+			srcConfig: keeper.WasmGasRegisterConfig{
 				GasMultiplier: 1,
 			},
 			src: math.MaxUint64,
 			exp: math.MaxUint64,
 		},
 		"missconfigured": {
-			srcConfig: WasmGasRegisterConfig{
+			srcConfig: keeper.WasmGasRegisterConfig{
 				GasMultiplier: 0,
 			},
 			src:      1,
@@ -421,12 +422,12 @@ func TestFromWasmVMGasConversion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					r := NewWasmGasRegister(spec.srcConfig)
+					r := keeper.NewWasmGasRegister(spec.srcConfig)
 					_ = r.FromWasmVMGas(spec.src)
 				})
 				return
 			}
-			r := NewWasmGasRegister(spec.srcConfig)
+			r := keeper.NewWasmGasRegister(spec.srcConfig)
 			got := r.FromWasmVMGas(spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
@@ -462,10 +463,10 @@ func TestUncompressCosts(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
-				assert.Panics(t, func() { NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn) })
+				assert.Panics(t, func() { keeper.NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn) })
 				return
 			}
-			got := NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn)
+			got := keeper.NewDefaultWasmGasRegister().UncompressCosts(spec.lenIn)
 			assert.Equal(t, spec.exp, got)
 		})
 	}
