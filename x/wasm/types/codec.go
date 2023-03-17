@@ -11,7 +11,7 @@ import (
 )
 
 // RegisterLegacyAminoCodec registers the account types and interface
-func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { 
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract2{}, "wasm/MsgInstantiateContract2", nil)

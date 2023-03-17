@@ -15,7 +15,6 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -661,10 +660,10 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper stakingkeeper.Kee
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
 	msg := stakingtypes.MsgCreateValidator{
-		Description: types.Description{
+		Description: stakingtypes.Description{
 			Moniker: "Validator power",
 		},
-		Commission: types.CommissionRates{
+		Commission: stakingtypes.CommissionRates{
 			Rate:          sdk.MustNewDecFromStr("0.1"),
 			MaxRate:       sdk.MustNewDecFromStr("0.2"),
 			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),

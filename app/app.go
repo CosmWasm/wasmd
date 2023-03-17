@@ -188,7 +188,7 @@ var (
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			append(
-				wasmclient.ProposalHandlers, 
+				wasmclient.ProposalHandlers,
 				paramsclient.ProposalHandler,
 				distrclient.ProposalHandler,
 				upgradeclient.ProposalHandler,
@@ -236,7 +236,7 @@ var (
 // WasmApp extended ABCI application
 type WasmApp struct {
 	*baseapp.BaseApp
-	legacyAmino       *codec.LegacyAmino 
+	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
 	interfaceRegistry types.InterfaceRegistry
 
@@ -862,7 +862,7 @@ func (app *WasmApp) ModuleAccountAddrs() map[string]bool {
 //
 // NOTE: This is solely to be used for testing purposes as it may be desirable
 // for modules to register their own custom testing types.
-func (app *WasmApp) LegacyAmino() *codec.LegacyAmino { 
+func (app *WasmApp) LegacyAmino() *codec.LegacyAmino {
 	return app.legacyAmino
 }
 
