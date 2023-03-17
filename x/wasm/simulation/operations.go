@@ -38,6 +38,7 @@ const (
 
 // WasmKeeper is a subset of the wasm keeper used by simulations
 type WasmKeeper interface {
+	GetAuthority() string
 	GetParams(ctx sdk.Context) types.Params
 	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
 	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool)

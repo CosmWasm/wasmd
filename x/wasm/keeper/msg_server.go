@@ -238,3 +238,99 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+// PinCodes pins a set of code ids in the wasmvm cache.
+func (m msgServer) PinCodes(goCtx context.Context, req *types.MsgPinCodes) (*types.MsgPinCodesResponse, error) {
+	authority := m.paramStore.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	for _, codeID := range req.CodeIDs {
+		if err := m.keeper.PinCode(ctx, codeID); err != nil {
+			return nil, err
+		}
+	}
+
+	return &types.MsgPinCodesResponse{}, nil
+}
+
+// UnpinCodes unpins a set of code ids in the wasmvm cache.
+func (m msgServer) UnpinCodes(goCtx context.Context, req *types.MsgUnpinCodes) (*types.MsgUnpinCodesResponse, error) {
+	authority := m.paramStore.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	for _, codeID := range req.CodeIDs {
+		if err := m.keeper.UnpinCode(ctx, codeID); err != nil {
+			return nil, err
+		}
+	}
+
+	return &types.MsgUnpinCodesResponse{}, nil
+}
+
+// SudoContract calls sudo on a contract.
+func (m msgServer) SudoContract(goCtx context.Context, req *types.MsgSudoContract) (*types.MsgSudoContractResponse, error) {
+	authority := m.paramStore.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(req.Contract)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "contract")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	data, err := m.keeper.Sudo(ctx, contractAddr, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgSudoContractResponse{Data: data}, nil
+}
+
+// StoreAndInstantiateContract stores and instantiates the contract.
+func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types.MsgStoreAndInstantiateContract) (*types.MsgStoreAndInstantiateContractResponse, error) {
+	authority := m.paramStore.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	authorityAddr, err := sdk.AccAddressFromBech32(authority)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "admin")
+	}
+
+	if err = req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	var adminAddr sdk.AccAddress
+	if req.Admin != "" {
+		if adminAddr, err = sdk.AccAddressFromBech32(req.Admin); err != nil {
+			return nil, errorsmod.Wrap(err, "admin")
+		}
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	codeID, _, err := m.keeper.Create(ctx, authorityAddr, req.WASMByteCode, req.InstantiatePermission)
+	if err != nil {
+		return nil, err
+	}
+
+	contractAddr, data, err := m.keeper.Instantiate(ctx, codeID, authorityAddr, adminAddr, req.Msg, req.Label, req.Funds)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgStoreAndInstantiateContractResponse{
+		Address: contractAddr.String(),
+		Data:    data,
+	}, nil
+}

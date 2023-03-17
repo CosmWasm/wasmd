@@ -1513,7 +1513,7 @@ Since: 0.40
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  | authority is the address of the governance account. |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
 | `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the new WASM codes |
 
 
@@ -1545,15 +1545,14 @@ Since: 0.40
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  | authority is the address of the governance account. |
-| `run_as` | [string](#string) |  |  |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
-| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional |
+| `unpin_code` | [bool](#bool) |  | UnpinCode code on upload, optional. As default the uploaded contract is pinned to cache. |
 | `admin` | [string](#string) |  | Admin is an optional address that can execute migrations |
 | `label` | [string](#string) |  | Label is optional metadata to be stored with a constract instance. |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on instantiation |
-| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred to the contract on instantiation |
+| `funds` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Funds coins that are transferred from the authority account to the contract on instantiation |
 | `source` | [string](#string) |  | Source is the URL where the code is hosted |
 | `builder` | [string](#string) |  | Builder is the docker image used to build the code deterministically, used for smart contract verification |
 | `code_hash` | [bytes](#bytes) |  | CodeHash is the SHA256 sum of the code outputted by builder, used for smart contract verification |
@@ -1570,6 +1569,12 @@ MsgStoreAndInstantiateContractResponse defines the response structure
 for executing a MsgStoreAndInstantiateContract message.
 
 Since: 0.40
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the bech32 address of the new contract instance. |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
 
 
 
@@ -1619,7 +1624,7 @@ Since: 0.40
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  | authority is the address of the governance account. |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
 | `contract` | [string](#string) |  | Contract is the address of the smart contract |
 | `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract as sudo |
 
@@ -1637,6 +1642,11 @@ MsgSudoContract message.
 Since: 0.40
 
 
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
+
+
 
 
 
@@ -1651,7 +1661,7 @@ Since: 0.40
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  | authority is the address of the governance account. |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
 | `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the WASM codes |
 
 
@@ -1736,7 +1746,7 @@ Since: 0.40
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `authority` | [string](#string) |  | authority is the address of the governance account. |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
 | `params` | [Params](#cosmwasm.wasm.v1.Params) |  | params defines the x/wasm parameters to update.
 
 NOTE: All parameters must be supplied. |
@@ -1783,10 +1793,18 @@ Msg defines the wasm Msg service.
 | `UpdateParams` | [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams) | [MsgUpdateParamsResponse](#cosmwasm.wasm.v1.MsgUpdateParamsResponse) | UpdateParams defines a governance operation for updating the x/wasm module parameters. The authority is defined in the keeper.
 
 Since: 0.40 | |
-| `SudoContract` | [MsgSudoContract](#cosmwasm.wasm.v1.MsgSudoContract) | [MsgSudoContractResponse](#cosmwasm.wasm.v1.MsgSudoContractResponse) | SudoContract calls sudo on a contract. | |
-| `PinCodes` | [MsgPinCodes](#cosmwasm.wasm.v1.MsgPinCodes) | [MsgPinCodesResponse](#cosmwasm.wasm.v1.MsgPinCodesResponse) | PinCodes pins a set of code ids in the wasmvm cache. | |
-| `UnpinCodes` | [MsgUnpinCodes](#cosmwasm.wasm.v1.MsgUnpinCodes) | [MsgUnpinCodesResponse](#cosmwasm.wasm.v1.MsgUnpinCodesResponse) | UnpinCodes unpins a set of code ids in the wasmvm cache. | |
-| `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract stores and instantiates the contract. | |
+| `SudoContract` | [MsgSudoContract](#cosmwasm.wasm.v1.MsgSudoContract) | [MsgSudoContractResponse](#cosmwasm.wasm.v1.MsgSudoContractResponse) | SudoContract defines a governance operation for calling sudo on a contract. The authority is defined in the keeper.
+
+Since: 0.40 | |
+| `PinCodes` | [MsgPinCodes](#cosmwasm.wasm.v1.MsgPinCodes) | [MsgPinCodesResponse](#cosmwasm.wasm.v1.MsgPinCodesResponse) | PinCodes defines a governance operation for pinning a set of code ids in the wasmvm cache. The authority is defined in the keeper.
+
+Since: 0.40 | |
+| `UnpinCodes` | [MsgUnpinCodes](#cosmwasm.wasm.v1.MsgUnpinCodes) | [MsgUnpinCodesResponse](#cosmwasm.wasm.v1.MsgUnpinCodesResponse) | UnpinCodes defines a governance operation for unpinning a set of code ids in the wasmvm cache. The authority is defined in the keeper.
+
+Since: 0.40 | |
+| `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract defines a governance operation for storing and instantiating the contract. The authority is defined in the keeper.
+
+Since: 0.40 | |
 
  <!-- end services -->
 
