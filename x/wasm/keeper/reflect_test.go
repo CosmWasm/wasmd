@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-proto/proto"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,9 +14,11 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -38,13 +39,13 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 const ReflectFeatures = "staking,mask,stargate,cosmwasm_1_1"
 
 func TestReflectContractSend(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, bob := keyPubAddr()
+	_, _, bob := keeper.keyPubAddr()
 
 	// upload reflect code
 	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -65,7 +66,7 @@ func TestReflectContractSend(t *testing.T) {
 	require.NotEmpty(t, reflectAddr)
 
 	// now we set contract as verifier of an escrow
-	initMsg := HackatomExampleInitMsg{
+	initMsg := keeper.HackatomExampleInitMsg{
 		Verifier:    reflectAddr,
 		Beneficiary: bob,
 	}
@@ -117,14 +118,14 @@ func TestReflectContractSend(t *testing.T) {
 }
 
 func TestReflectCustomMsg(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.ContractKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	bob := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, _, fred := keeper.keyPubAddr()
 
 	// upload code
 	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -208,8 +209,8 @@ func TestReflectCustomMsg(t *testing.T) {
 }
 
 func TestMaskReflectCustomQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -256,8 +257,8 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 }
 
 func TestReflectStargateQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -299,8 +300,8 @@ func TestReflectStargateQuery(t *testing.T) {
 }
 
 func TestReflectTotalSupplyQuery(t *testing.T) {
-	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	cdc := keeper.MakeEncodingConfig(t).Marshaler
+	ctx, keepers := keeper.CreateTestInput(t, false, ReflectFeatures, keeper.WithMessageEncoders(reflectEncoders(cdc)), keeper.WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
 	// upload code
 	codeID := StoreReflectContract(t, ctx, keepers).CodeID
