@@ -1,4 +1,4 @@
-package keeper_test
+package keeper
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +20,7 @@ import (
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgSuccessCase(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
 	accKeeper, keeper, bankKeeper := keepers.AccountKeeper, keepers.WasmKeeper, keepers.BankKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -42,9 +41,9 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// check some account values
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, contractStart)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// creator can send contract's tokens to fred (using SendMsg)
 	msg := wasmvmtypes.CosmosMsg{
@@ -73,10 +72,10 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	require.NoError(t, err)
 
 	// fred got coins
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, fred, sdk.NewCoins(sdk.NewInt64Coin("denom", 15000)))
 	// contract lost them
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
-	keeper.CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
+	CheckAccount(t, ctx, accKeeper, bankKeeper, contractAddr, sdk.NewCoins(sdk.NewInt64Coin("denom", 25000)))
+	CheckAccount(t, ctx, accKeeper, bankKeeper, creator, creatorBalance)
 
 	// query the reflect state to ensure the result was stored
 	query := testdata.ReflectQueryMsg{
@@ -106,7 +105,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	subGasLimit := uint64(300_000)
 
 	// prep - create one chain and upload the code
-	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	ctx = ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 	keeper := keepers.WasmKeeper
@@ -361,7 +360,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -427,7 +426,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 
 // Try a simple send, no gas limit to for a sanity check before trying table tests
 func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, keeper.ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
