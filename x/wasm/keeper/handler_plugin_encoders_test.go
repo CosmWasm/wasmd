@@ -306,7 +306,8 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			expError: false, // fails in the handler
+			expError:   false, // fails in the handler
+			expInvalid: true,
 			output: []sdk.Msg{
 				&stakingtypes.MsgDelegate{
 					DelegatorAddress: addr1.String(),
@@ -586,7 +587,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			output: []sdk.Msg{
 				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govv1.OptionYes,
 				},
 			},
@@ -601,7 +602,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			output: []sdk.Msg{
 				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govv1.OptionNo,
 				},
 			},
@@ -616,7 +617,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			output: []sdk.Msg{
 				&govv1.MsgVote{
 					ProposalId: 10,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govv1.OptionAbstain,
 				},
 			},
@@ -631,7 +632,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			output: []sdk.Msg{
 				&govv1.MsgVote{
 					ProposalId: 1,
-					Voter:      addr1.String(),
+					Voter:      myAddr.String(),
 					Option:     govv1.OptionNoWithVeto,
 				},
 			},
@@ -658,11 +659,11 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVoteWeighted{
+				&govv1.MsgVoteWeighted{
 					ProposalId: 1,
 					Voter:      myAddr.String(),
-					Options: []govtypes.WeightedVoteOption{
-						{Option: govtypes.OptionYes, Weight: sdk.NewDec(1)},
+					Options: []*govv1.WeightedVoteOption{
+						{Option: govv1.OptionYes, Weight: sdk.NewDec(1).String()},
 					},
 				},
 			},
@@ -683,14 +684,14 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVoteWeighted{
+				&govv1.MsgVoteWeighted{
 					ProposalId: 1,
 					Voter:      myAddr.String(),
-					Options: []govtypes.WeightedVoteOption{
-						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(23, 2)},
-						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(24, 2)},
-						{Option: govtypes.OptionAbstain, Weight: sdk.NewDecWithPrec(26, 2)},
-						{Option: govtypes.OptionNoWithVeto, Weight: sdk.NewDecWithPrec(27, 2)},
+					Options: []*govv1.WeightedVoteOption{
+						{Option: govv1.OptionYes, Weight: sdk.NewDecWithPrec(23, 2).String()},
+						{Option: govv1.OptionNo, Weight: sdk.NewDecWithPrec(24, 2).String()},
+						{Option: govv1.OptionAbstain, Weight: sdk.NewDecWithPrec(26, 2).String()},
+						{Option: govv1.OptionNoWithVeto, Weight: sdk.NewDecWithPrec(27, 2).String()},
 					},
 				},
 			},
@@ -709,12 +710,12 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVoteWeighted{
+				&govv1.MsgVoteWeighted{
 					ProposalId: 1,
 					Voter:      myAddr.String(),
-					Options: []govtypes.WeightedVoteOption{
-						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(5, 1)},
-						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(5, 1)},
+					Options: []*govv1.WeightedVoteOption{
+						{Option: govv1.OptionYes, Weight: sdk.NewDecWithPrec(5, 1).String()},
+						{Option: govv1.OptionYes, Weight: sdk.NewDecWithPrec(5, 1).String()},
 					},
 				},
 			},
@@ -734,12 +735,12 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVoteWeighted{
+				&govv1.MsgVoteWeighted{
 					ProposalId: 1,
 					Voter:      myAddr.String(),
-					Options: []govtypes.WeightedVoteOption{
-						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(51, 2)},
-						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(5, 1)},
+					Options: []*govv1.WeightedVoteOption{
+						{Option: govv1.OptionYes, Weight: sdk.NewDecWithPrec(51, 2).String()},
+						{Option: govv1.OptionNo, Weight: sdk.NewDecWithPrec(5, 1).String()},
 					},
 				},
 			},
@@ -759,12 +760,12 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 			output: []sdk.Msg{
-				&govtypes.MsgVoteWeighted{
+				&govv1.MsgVoteWeighted{
 					ProposalId: 1,
 					Voter:      myAddr.String(),
-					Options: []govtypes.WeightedVoteOption{
-						{Option: govtypes.OptionYes, Weight: sdk.NewDecWithPrec(49, 2)},
-						{Option: govtypes.OptionNo, Weight: sdk.NewDecWithPrec(5, 1)},
+					Options: []*govv1.WeightedVoteOption{
+						{Option: govv1.OptionYes, Weight: sdk.NewDecWithPrec(49, 2).String()},
+						{Option: govv1.OptionNo, Weight: sdk.NewDecWithPrec(5, 1).String()},
 					},
 				},
 			},

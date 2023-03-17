@@ -17,6 +17,8 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -193,15 +195,17 @@ func TestInstantiate2Proposal(t *testing.T) {
 	contractAddress := BuildContractAddressPredictable(codeInfo.CodeHash, oneAddress, salt, []byte{})
 
 	em := sdk.NewEventManager()
+	events := em.Events()
 
 	// when stored
-	storedProposal, err := govKeeper.SubmitProposal(ctx, src)
+	message, err := govv1.NewLegacyContent(src, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	require.NoError(t, err)
 
-	// and proposal execute
-	handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-	err = handler(ctx.WithEventManager(em), storedProposal.GetContent())
-	require.NoError(t, err)
+	handler := govKeeper.Router().Handler(message)
+
+	res, gotErr := handler(ctx, message)
+	events = append(events, res.GetEvents()...)
+	require.NoError(t, gotErr)
 
 	cInfo := wasmKeeper.GetContractInfo(ctx, contractAddress)
 	require.NotNil(t, cInfo)
@@ -218,12 +222,12 @@ func TestInstantiate2Proposal(t *testing.T) {
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddress))
 	// and event
-	require.Len(t, em.Events(), 3, "%#v", em.Events())
-	require.Equal(t, types.EventTypeInstantiate, em.Events()[0].Type)
-	require.Equal(t, types.WasmModuleEventType, em.Events()[1].Type)
-	require.Equal(t, types.EventTypeGovContractResult, em.Events()[2].Type)
-	require.Len(t, em.Events()[2].Attributes, 1)
-	require.NotEmpty(t, em.Events()[2].Attributes[0])
+	require.Len(t, events, 3, "%#v", events)
+	require.Equal(t, types.EventTypeInstantiate, events[0].Type)
+	require.Equal(t, types.WasmModuleEventType, events[1].Type)
+	require.Equal(t, types.EventTypeGovContractResult, events[2].Type)
+	require.Len(t, events[2].Attributes, 1)
+	require.NotEmpty(t, events[2].Attributes[0])
 }
 
 func TestInstantiateProposal_NoAdmin(t *testing.T) {
@@ -1034,7 +1038,8 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			}
 
 			// when stored
-			storedProposal, gotErr := govKeeper.SubmitProposal(ctx, &proposal)
+			message, gotErr := govv1.NewLegacyContent(&proposal, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+			_, gotErr = govKeeper.SubmitProposal(ctx, []sdk.Msg{message}, "")
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -1042,8 +1047,10 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			handler := govKeeper.Router().GetRoute(storedProposal.ProposalRoute())
-			gotErr = handler(ctx, storedProposal.GetContent())
+
+			handler := govKeeper.Router().Handler(message)
+
+			_, gotErr = handler(ctx, message)
 			require.NoError(t, gotErr)
 
 			// then

@@ -318,10 +318,10 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 		if err != nil {
 			return nil, sdkerrors.Wrap(err, "vote option")
 		}
-		m := govv1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption)
+		m := govv1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption, "")
 		return []sdk.Msg{m}, nil
 	case msg.VoteWeighted != nil:
-		opts := make([]govv1.WeightedVoteOption, len(msg.VoteWeighted.Options))
+		opts := govv1.WeightedVoteOptions{}
 		for i, v := range msg.VoteWeighted.Options {
 			weight, err := sdk.NewDecFromStr(v.Weight)
 			if err != nil {
@@ -331,9 +331,9 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 			if err != nil {
 				return nil, sdkerrors.Wrap(err, "vote option")
 			}
-			opts[i] = govv1.WeightedVoteOption{Option: voteOption, Weight: weight}
+			opts = append(opts, &govv1.WeightedVoteOption{Option: voteOption, Weight: weight.String()})
 		}
-		m := govv1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
+		m := govv1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts, "")
 		return []sdk.Msg{m}, nil
 
 	default:
@@ -352,13 +352,10 @@ func convertVoteOption(s interface{}) (govv1.VoteOption, error) {
 		option = govv1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
 		option = govv1.OptionAbstain
+	default:
+		return govv1.OptionEmpty, types.ErrInvalid
 	}
-	vote := &govv1.MsgVote{
-		ProposalId: msg.Vote.ProposalId,
-		Voter:      sender.String(),
-		Option:     option,
-	}
-	return []sdk.Msg{vote}, nil
+	return option, nil
 }
 
 // ConvertWasmIBCTimeoutHeightToCosmosHeight converts a wasmvm type ibc timeout height to ibc module type height

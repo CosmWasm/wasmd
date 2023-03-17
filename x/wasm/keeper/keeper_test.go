@@ -411,6 +411,7 @@ func TestInstantiate(t *testing.T) {
 	require.Equal(t, "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", gotContractAddr.String())
 
 	gasAfter := ctx.GasMeter().GasConsumed()
+	fmt.Print(uint64(0x1b5c1), gasAfter-gasBefore)
 	if types.EnableGasVerification {
 		require.Equal(t, uint64(0x1b5c1), gasAfter-gasBefore)
 	}

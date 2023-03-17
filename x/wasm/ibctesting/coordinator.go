@@ -163,6 +163,7 @@ func (coord *Coordinator) CreateChannels(path *Path) {
 	require.NoError(coord.t, err)
 
 	err = path.EndpointA.ChanOpenAck()
+	fmt.Println(err.Error())
 	require.NoError(coord.t, err)
 
 	err = path.EndpointB.ChanOpenConfirm()

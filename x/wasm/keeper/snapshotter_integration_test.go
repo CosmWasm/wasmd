@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +49,7 @@ func TestSnapshotter(t *testing.T) {
 				Time:    time.Now(),
 			})
 			wasmKeeper := app.NewTestSupport(t, srcWasmApp).WasmKeeper()
-			contractKeeper := NewDefaultPermissionKeeper(&wasmKeeper)
+			contractKeeper := keeper.NewDefaultPermissionKeeper(&wasmKeeper)
 
 			srcCodeIDToChecksum := make(map[uint64][]byte, len(spec.wasmFiles))
 			for i, v := range spec.wasmFiles {

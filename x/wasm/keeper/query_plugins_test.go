@@ -1,4 +1,4 @@
-package keeper
+package keeper_test
 
 import (
 	"encoding/hex"
@@ -10,6 +10,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	dbm "github.com/tendermint/tm-db"
@@ -22,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -315,8 +317,8 @@ func TestIBCQuerier(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			h := IBCQuerier(spec.wasmKeeper, spec.channelKeeper)
-			gotResult, gotErr := h(sdk.Context{}, RandomAccountAddress(t), spec.srcQuery)
+			h := keeper.IBCQuerier(spec.wasmKeeper, spec.channelKeeper)
+			gotResult, gotErr := h(sdk.Context{}, keeper.RandomAccountAddress(t), spec.srcQuery)
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
 				return
@@ -332,10 +334,10 @@ func TestBankQuerierBalance(t *testing.T) {
 	}}
 
 	ctx := sdk.Context{}
-	q := BankQuerier(mock)
+	q := keeper.BankQuerier(mock)
 	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
 		Balance: &wasmvmtypes.BalanceQuery{
-			Address: RandomBech32AccountAddress(t),
+			Address: keeper.RandomBech32AccountAddress(t),
 			Denom:   "ALX",
 		},
 	})
@@ -352,9 +354,9 @@ func TestBankQuerierBalance(t *testing.T) {
 }
 
 func TestContractInfoWasmQuerier(t *testing.T) {
-	myValidContractAddr := RandomBech32AccountAddress(t)
-	myCreatorAddr := RandomBech32AccountAddress(t)
-	myAdminAddr := RandomBech32AccountAddress(t)
+	myValidContractAddr := keeper.RandomBech32AccountAddress(t)
+	myCreatorAddr := keeper.RandomBech32AccountAddress(t)
+	myAdminAddr := keeper.RandomBech32AccountAddress(t)
 	var ctx sdk.Context
 
 	specs := map[string]struct {
@@ -441,7 +443,7 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			q := WasmQuerier(spec.mock)
+			q := keeper.WasmQuerier(spec.mock)
 			gotBz, gotErr := q(ctx, spec.req)
 			if spec.expErr {
 				require.Error(t, gotErr)
@@ -547,11 +549,11 @@ func TestQueryErrors(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			mock := WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+			mock := keeper.WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 				return nil, spec.src
 			})
 			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB()))
-			q := NewQueryHandler(ctx, mock, sdk.AccAddress{}, NewDefaultWasmGasRegister())
+			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, keeper.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
 		})

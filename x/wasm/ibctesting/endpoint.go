@@ -305,6 +305,7 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 		height,
 		endpoint.Chain.SenderAccount.GetAddress().String(),
 	)
+	fmt.Println(msg)
 	res, err := endpoint.Chain.SendMsgs(msg)
 	if err != nil {
 		return err
