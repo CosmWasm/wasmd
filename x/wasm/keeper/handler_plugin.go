@@ -176,7 +176,6 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	}
 
 	_, err := h.channelKeeper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
-
 	if err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "failed to send packet")
 	}
