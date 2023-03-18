@@ -38,6 +38,7 @@ func TestICA(t *testing.T) {
 	ownerAddr := sdk.AccAddress(controllerChain.SenderPrivKey.PubKey().Address())
 	msg := intertxtypes.NewMsgRegisterAccount(ownerAddr.String(), path.EndpointA.ConnectionID, "")
 	res, err := controllerChain.SendMsgs(msg)
+	require.NoError(t, err)
 	chanID, portID, version := parseIBCChannelEvents(t, res)
 
 	// next open channels on both sides
@@ -69,7 +70,7 @@ func TestICA(t *testing.T) {
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
 	msg2, err := intertxtypes.NewMsgSubmitTx(payloadMsg, path.EndpointA.ConnectionID, ownerAddr.String())
 	require.NoError(t, err)
-	res, err = controllerChain.SendMsgs(msg2)
+	_, err = controllerChain.SendMsgs(msg2)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(controllerChain.PendingSendPackets))

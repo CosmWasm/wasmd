@@ -227,7 +227,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return &govtypes.Proposal{}
@@ -244,7 +245,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"nil argument value": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return nil
@@ -253,7 +255,8 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"non matching types": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return &govtypes.TextProposal{}
