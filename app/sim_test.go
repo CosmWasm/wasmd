@@ -145,7 +145,7 @@ func TestAppImportExport(t *testing.T) {
 
 	t.Log("importing genesis...")
 
-	_, newDB, newDir, _, _, err := SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	_, newDB, newDir, _, _, err := SetupSimulation("leveldb-app-sim-2", "Simulation-2") //nolint:dogsled
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {

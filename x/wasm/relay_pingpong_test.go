@@ -324,7 +324,7 @@ func counterParty(s string) string {
 // hit is ibc packet payload
 type hit map[string]uint64
 
-func NewHit(player string, count uint64) hit {
+func NewHit(player string, count uint64) hit { //nolint:revive // no need to make this public
 	return map[string]uint64{
 		player: count,
 	}
