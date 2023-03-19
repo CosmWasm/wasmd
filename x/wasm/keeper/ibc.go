@@ -15,8 +15,8 @@ import (
 // returns a string name of the port or error if we cannot bind it.
 // this will fail if call twice.
 func (k Keeper) bindIbcPort(ctx sdk.Context, portID string) error {
-	cap := k.portKeeper.BindPort(ctx, portID)
-	return k.ClaimCapability(ctx, cap, host.PortPath(portID))
+	portCap := k.portKeeper.BindPort(ctx, portID)
+	return k.ClaimCapability(ctx, portCap, host.PortPath(portID))
 }
 
 // ensureIbcPort is like registerIbcPort, but it checks if we already hold the port

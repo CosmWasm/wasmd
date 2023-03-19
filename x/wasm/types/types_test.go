@@ -54,18 +54,18 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"invalid extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.TextProposal{})
+				codecAny, err := codectypes.NewAnyWithValue(&govtypes.TextProposal{})
 				require.NoError(t, err)
-				c.Extension = any
+				c.Extension = codecAny
 			},
 			expError: true,
 		},
 		"not validatable extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
+				codecAny, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
 				require.NoError(t, err)
-				c.Extension = any
+				c.Extension = codecAny
 			},
 		},
 	}

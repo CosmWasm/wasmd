@@ -117,12 +117,12 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 			return err
 		}
 	}
-	any, err := codectypes.NewAnyWithValue(ext)
+	codecAny, err := codectypes.NewAnyWithValue(ext)
 	if err != nil {
 		return sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
 	}
 
-	c.Extension = any
+	c.Extension = codecAny
 	return nil
 }
 

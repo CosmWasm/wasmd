@@ -592,11 +592,11 @@ type reflectCustomMsg struct {
 // toReflectRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
 func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
-	any, err := codectypes.NewAnyWithValue(msg)
+	codecAny, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, err
 	}
-	rawBz, err := cdc.MarshalJSON(any)
+	rawBz, err := cdc.MarshalJSON(codecAny)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -626,12 +626,12 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
-			var any codectypes.Any
-			if err := cdc.UnmarshalJSON(custom.Raw, &any); err != nil {
+			var codecAny codectypes.Any
+			if err := cdc.UnmarshalJSON(custom.Raw, &codecAny); err != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
 			var msg sdk.Msg
-			if err := cdc.UnpackAny(&any, &msg); err != nil {
+			if err := cdc.UnpackAny(&codecAny, &msg); err != nil {
 				return nil, err
 			}
 			return []sdk.Msg{msg}, nil
