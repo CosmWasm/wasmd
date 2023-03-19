@@ -71,10 +71,8 @@ func UpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			msg, err := parseUpdateContractAdminArgs(args, clientCtx)
-			if err != nil {
-				return err
-			}
+			msg := parseUpdateContractAdminArgs(args, clientCtx)
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -86,13 +84,13 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
+func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) types.MsgUpdateAdmin {
 	msg := types.MsgUpdateAdmin{
 		Sender:   cliCtx.GetFromAddress().String(),
 		Contract: args[0],
 		NewAdmin: args[1],
 	}
-	return msg, nil
+	return msg
 }
 
 // ClearContractAdminCmd clears an admin for a contract

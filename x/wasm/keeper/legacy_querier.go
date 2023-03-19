@@ -60,13 +60,13 @@ func NewLegacyQuerier(keeper types.ViewKeeper, gasLimit sdk.Gas) sdk.Querier {
 			}
 			rsp, err = queryCode(ctx, codeID, keeper)
 		case QueryListCode:
-			rsp, err = queryCodeList(ctx, keeper)
+			rsp = queryCodeList(ctx, keeper)
 		case QueryContractHistory:
 			contractAddr, addrErr := sdk.AccAddressFromBech32(path[1])
 			if addrErr != nil {
 				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, addrErr.Error())
 			}
-			rsp, err = queryContractHistory(ctx, contractAddr, keeper)
+			rsp = queryContractHistory(ctx, contractAddr, keeper)
 		default:
 			return nil, sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown data query endpoint")
 		}
@@ -121,7 +121,7 @@ func queryContractState(ctx sdk.Context, bech, queryMethod string, data []byte, 
 	}
 }
 
-func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoResponse, error) {
+func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) []types.CodeInfoResponse {
 	var info []types.CodeInfoResponse
 	keeper.IterateCodeInfos(ctx, func(i uint64, res types.CodeInfo) bool {
 		info = append(info, types.CodeInfoResponse{
@@ -132,16 +132,16 @@ func queryCodeList(ctx sdk.Context, keeper types.ViewKeeper) ([]types.CodeInfoRe
 		})
 		return false
 	})
-	return info, nil
+	return info
 }
 
-func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) ([]types.ContractCodeHistoryEntry, error) {
+func queryContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, keeper types.ViewKeeper) []types.ContractCodeHistoryEntry {
 	history := keeper.GetContractHistory(ctx, contractAddr)
 	// redact response
 	for i := range history {
 		history[i].Updated = nil
 	}
-	return history, nil
+	return history
 }
 
 func queryContractListByCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) []string {
