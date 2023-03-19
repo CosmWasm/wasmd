@@ -311,7 +311,7 @@ func (g ContractGrant) ValidateBasic() error {
 type UndefinedFilter struct{}
 
 // Accept always returns error
-func (f *UndefinedFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *UndefinedFilter) Accept(_ sdk.Context, _ RawContractMessage) (bool, error) {
 	return false, sdkerrors.ErrNotFound.Wrapf("undefined filter")
 }
 
@@ -326,7 +326,7 @@ func NewAllowAllMessagesFilter() *AllowAllMessagesFilter {
 }
 
 // Accept accepts any valid json message content.
-func (f *AllowAllMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *AllowAllMessagesFilter) Accept(_ sdk.Context, msg RawContractMessage) (bool, error) {
 	return true, msg.ValidateBasic()
 }
 
@@ -379,7 +379,7 @@ func NewAcceptedMessagesFilter(msgs ...RawContractMessage) *AcceptedMessagesFilt
 }
 
 // Accept only payload messages which are equal to the granted one.
-func (f *AcceptedMessagesFilter) Accept(ctx sdk.Context, msg RawContractMessage) (bool, error) {
+func (f *AcceptedMessagesFilter) Accept(_ sdk.Context, msg RawContractMessage) (bool, error) {
 	for _, v := range f.Messages {
 		if v.Equal(msg) {
 			return true, nil
@@ -425,7 +425,7 @@ func (u UndefinedLimit) ValidateBasic() error {
 }
 
 // Accept always returns error
-func (u UndefinedLimit) Accept(ctx sdk.Context, msg AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
+func (u UndefinedLimit) Accept(_ sdk.Context, _ AuthzableWasmMsg) (*ContractAuthzLimitAcceptResult, error) {
 	return nil, sdkerrors.ErrNotFound.Wrapf("undefined filter")
 }
 

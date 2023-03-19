@@ -488,6 +488,7 @@ func TestExecuteProposal(t *testing.T) {
 	msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
 	_, err = submitLegacyProposal(t, ctx, badSrc, exampleContract.BeneficiaryAddr.String(), govAuthority, msgServer)
 	require.Error(t, err)
+
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
 	require.Equal(t, bal.Amount, sdk.NewInt(100))
@@ -517,7 +518,7 @@ func TestSudoProposal(t *testing.T) {
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract
-	_, _, anyAddr := keyPubAddr()
+	_, anyAddr := keyPubAddr()
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")

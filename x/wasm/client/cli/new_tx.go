@@ -72,6 +72,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 			}
 
 			msg := parseUpdateContractAdminArgs(args, clientCtx)
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
