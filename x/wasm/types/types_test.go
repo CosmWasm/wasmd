@@ -32,7 +32,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *ContractInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"admin empty": {
@@ -40,7 +40,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   false,
 		},
 		"admin not an address": {
-			srcMutator: func(c *ContractInfo) { c.Admin = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Admin = invalidAddress },
 			expError:   true,
 		},
 		"label empty": {
@@ -101,7 +101,7 @@ func TestCodeInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *CodeInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *CodeInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"Instantiate config invalid": {
