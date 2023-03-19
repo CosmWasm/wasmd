@@ -1058,6 +1058,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 
 func TestExecuteWithStorageLoop(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+
 	keeper := keepers.ContractKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -1094,7 +1095,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 	}()
 
 	// this should throw out of gas exception (panic)
-	_, err = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
+	_, _ = keepers.ContractKeeper.Execute(ctx, addr, fred, []byte(`{"storage_loop":{}}`), nil)
 	require.True(t, false, "We must panic before this line")
 }
 
@@ -2277,6 +2278,7 @@ func TestIteratorContractByCreator(t *testing.T) {
 	mockAddress3 := keepers.Faucet.NewFundedRandomAccount(parentCtx, topUp...)
 
 	contract1ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
+	require.NoError(t, err)
 	contract2ID, _, err := keeper.Create(parentCtx, creator, hackatomWasm, nil)
 
 	require.NoError(t, err)
