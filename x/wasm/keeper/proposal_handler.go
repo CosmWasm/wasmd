@@ -281,10 +281,8 @@ func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 	if err != nil {
 		return sdkerrors.Wrap(err, "contract")
 	}
-	if err := k.ClearContractAdmin(ctx, contractAddr, nil); err != nil {
-		return err
-	}
-	return nil
+	err = k.ClearContractAdmin(ctx, contractAddr, nil)
+	return err
 }
 
 func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
