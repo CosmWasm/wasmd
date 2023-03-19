@@ -28,7 +28,7 @@ func NewKeeper(
 	capabilityKeeper types.CapabilityKeeper,
 	portSource types.ICS20TransferPortSource,
 	router MessageRouter,
-	queryRouter GRPCQueryRouter,
+	_ GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,

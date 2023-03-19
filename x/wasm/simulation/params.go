@@ -11,7 +11,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-func ParamChanges(r *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {
+func ParamChanges(_ *rand.Rand, cdc codec.Codec) []simtypes.ParamChange {
 	params := types.DefaultParams()
 	return []simtypes.ParamChange{
 		simulation.NewSimParamChange(types.ModuleName, string(types.ParamStoreKeyUploadAccess),

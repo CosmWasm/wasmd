@@ -125,7 +125,7 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, 
 	return []sdk.Msg{&sdkMsg}, nil
 }
 
-func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
+func NoCustomMsg(_ sdk.AccAddress, _ json.RawMessage) ([]sdk.Msg, error) {
 	return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "custom variant not supported")
 }
 

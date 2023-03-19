@@ -374,6 +374,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
 	require.NoError(t, err)
+
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",

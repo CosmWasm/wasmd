@@ -537,7 +537,7 @@ func toStdTxResponse(cliCtx client.Context, w http.ResponseWriter, data wasmProp
 	tx.WriteGeneratedTxResponse(cliCtx, w, baseReq, msg)
 }
 
-func EmptyRestHandler(cliCtx client.Context) govrest.ProposalRESTHandler {
+func EmptyRestHandler(_ client.Context) govrest.ProposalRESTHandler {
 	return govrest.ProposalRESTHandler{
 		SubRoute: "unsupported",
 		Handler: func(w http.ResponseWriter, r *http.Request) {

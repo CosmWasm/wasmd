@@ -157,7 +157,7 @@ func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *test
 	}
 }
 
-func buildMemDB(b *testing.B) dbm.DB {
+func buildMemDB(_ *testing.B) dbm.DB {
 	return dbm.NewMemDB()
 }
 
