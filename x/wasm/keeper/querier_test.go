@@ -554,7 +554,8 @@ func TestQueryContractInfo(t *testing.T) {
 		myExt, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
 		require.NoError(t, err)
 		myExt.TotalDeposit = nil
-		info.SetExtension(&myExt)
+		err = info.SetExtension(&myExt)
+		require.NoError(t, err)
 	}
 	specs := map[string]struct {
 		src    *types.QueryContractInfoRequest

@@ -22,7 +22,8 @@ func TestModuleMigrations(t *testing.T) {
 	}
 	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
 	fromVM[wasm.ModuleName] = 1 // start with initial version
-	upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+	_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+	require.NoError(t, err)
 	// when
 	gotVM, err := wasmApp.ModuleManager().RunMigrations(ctx, wasmApp.ModuleConfigurator(), fromVM)
 	// then

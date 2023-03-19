@@ -53,7 +53,8 @@ func TestMigrate1To2(t *testing.T) {
 
 	// migrator
 	migrator := NewMigrator(*wasmKeeper)
-	migrator.Migrate1to2(ctx)
+	err = migrator.Migrate1to2(ctx)
+	require.NoError(t, err)
 
 	// check new store
 	var allContract []string
