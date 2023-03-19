@@ -550,10 +550,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			src, err := parseUpdateContractAdminArgs(args, clientCtx)
-			if err != nil {
-				return err
-			}
+			src := parseUpdateContractAdminArgs(args, clientCtx)
 
 			content := types.UpdateAdminProposal{
 				Title:       proposalTitle,
