@@ -55,7 +55,6 @@ issues:
 
 linters-settings:
   revive:
-    enable-all-rules: true
     # When set to false, ignores files with "GENERATED" header, similar to golint
     ignore-generated-header: true
 
