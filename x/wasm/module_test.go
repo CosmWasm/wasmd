@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -79,11 +78,11 @@ func setupTest(t *testing.T) testData {
 	return data
 }
 
-func keyPubAddr() (crypto.PrivKey, crypto.PubKey, sdk.AccAddress) { //nolint:unparam
+func keyPubAddr() sdk.AccAddress {
 	key := ed25519.GenPrivKey()
 	pub := key.PubKey()
 	addr := sdk.AccAddress(pub.Address())
-	return key, pub, addr
+	return addr
 }
 
 func mustLoad(path string) []byte {
@@ -95,11 +94,11 @@ func mustLoad(path string) []byte {
 }
 
 var (
-	_, _, addrAcc1 = keyPubAddr()
-	addr1          = addrAcc1.String()
-	testContract   = mustLoad("./keeper/testdata/hackatom.wasm")
-	maskContract   = testdata.ReflectContractWasm()
-	oldContract    = mustLoad("./testdata/escrow_0.7.wasm")
+	addrAcc1     = keyPubAddr()
+	addr1        = addrAcc1.String()
+	testContract = mustLoad("./keeper/testdata/hackatom.wasm")
+	maskContract = testdata.ReflectContractWasm()
+	oldContract  = mustLoad("./testdata/escrow_0.7.wasm")
 )
 
 func TestHandleCreate(t *testing.T) {
@@ -190,8 +189,8 @@ func TestHandleInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	assertStoreCodeResponse(t, res.Data, 1)
 
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
+	bob := keyPubAddr()
+	fred := keyPubAddr()
 
 	initPayload := initMsg{
 		Verifier:    fred,
@@ -251,7 +250,7 @@ func TestHandleExecute(t *testing.T) {
 	require.NoError(t, err)
 	assertStoreCodeResponse(t, res.Data, 1)
 
-	_, _, bob := keyPubAddr()
+	bob := keyPubAddr()
 	initMsg := initMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -384,7 +383,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	_, err := h(data.ctx, msg)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	bob := keyPubAddr()
 	initMsg := map[string]interface{}{
 		"verifier":    fred.String(),
 		"beneficiary": bob.String(),

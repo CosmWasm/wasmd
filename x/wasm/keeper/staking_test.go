@@ -130,7 +130,7 @@ func TestInitializeStaking(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, creator, deposit)
 
 	// try to register with a validator not on the list and it fails
-	_, _, bob := keyPubAddr()
+	_, bob := keyPubAddr()
 	badInitMsg := StakingInitMsg{
 		Name:         "Missing Validator",
 		Symbol:       "MISS",

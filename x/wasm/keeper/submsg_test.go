@@ -28,7 +28,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	creatorBalance := deposit.Sub(contractStart...)
-	_, _, fred := keyPubAddr()
+	_, fred := keyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -121,8 +121,8 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 	hackatomID, _, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)
-	_, _, bob := keyPubAddr()
-	_, _, fred := keyPubAddr()
+	_, bob := keyPubAddr()
+	_, fred := keyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    fred,
 		Beneficiary: bob,
@@ -283,7 +283,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			creator := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart...)
-			_, _, empty := keyPubAddr()
+			_, empty := keyPubAddr()
 
 			contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, reflectID, creator, nil, []byte("{}"), fmt.Sprintf("contract %s", name), contractStart)
 			require.NoError(t, err)
@@ -367,7 +367,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, fred := keyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -433,7 +433,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, fred := keyPubAddr()
 
 	// upload code
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)

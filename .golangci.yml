@@ -54,11 +54,10 @@ issues:
   max-same-issues: 10000
 
 linters-settings:
-  dogsled:
-    max-blank-identifiers: 3
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
+  revive:
+    # When set to false, ignores files with "GENERATED" header, similar to golint
+    ignore-generated-header: true
+
   nolintlint:
     allow-unused: false
     allow-leading-space: true

@@ -148,9 +148,7 @@ func SimulateStoreCodeProposal(wasmKeeper WasmKeeper) simtypes.ContentSimulatorF
 }
 
 // Simulate instantiate contract proposal
-//
-
-func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
+func SimulateInstantiateContractProposal(_ BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.ContentSimulatorFn {
 	return func(r *rand.Rand, ctx sdk.Context, accs []simtypes.Account) simtypes.Content {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		// admin
@@ -178,7 +176,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 //
 
 func SimulateExecuteContractProposal(
-	bk BankKeeper,
+	_ BankKeeper,
 	wasmKeeper WasmKeeper,
 	contractSelector MsgExecuteContractSelector,
 	senderSelector MsgExecuteSenderSelector,
