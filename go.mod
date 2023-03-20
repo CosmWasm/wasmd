@@ -164,7 +164,7 @@ require (
 )
 
 replace (
-
+	// fix nil desitantion channel id err 
 	github.com/cosmos/ibc-go/v6 => github.com/notional-labs/ibc-go/v6 v6.1.1-0.20230320072703-2bb93fc8c7a6
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
