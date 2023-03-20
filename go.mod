@@ -164,6 +164,8 @@ require (
 )
 
 replace (
+
+	github.com/cosmos/ibc-go/v6 => github.com/notional-labs/ibc-go/v6 v6.1.1-0.20230320072703-2bb93fc8c7a6
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.8.1
