@@ -5,9 +5,9 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -47,8 +47,8 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 						wasmtesting.NewIBCContractMockWasmer(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(0))
-				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(1))
+				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
+				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(2))
 				myContractAddr = chainA.SeedNewContractInstance()
 				contractInfo   = chainA.App.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
@@ -98,8 +98,8 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 						wasmtesting.NewIBCContractMockWasmer(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(0))
-				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(1))
+				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
+				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(2))
 				myContractAddr = chainA.SeedNewContractInstance()
 				contractInfo   = chainA.ContractInfo(myContractAddr)
 			)

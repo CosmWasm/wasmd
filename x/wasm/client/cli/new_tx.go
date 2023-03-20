@@ -3,10 +3,10 @@ package cli
 import (
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -44,7 +44,7 @@ func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMi
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
-		return types.MsgMigrateContract{}, sdkerrors.Wrap(err, "code id")
+		return types.MsgMigrateContract{}, errorsmod.Wrap(err, "code id")
 	}
 
 	migrateMsg := args[2]
@@ -71,10 +71,8 @@ func UpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			msg, err := parseUpdateContractAdminArgs(args, clientCtx)
-			if err != nil {
-				return err
-			}
+			msg := parseUpdateContractAdminArgs(args, clientCtx)
+
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -86,13 +84,13 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
+func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) types.MsgUpdateAdmin {
 	msg := types.MsgUpdateAdmin{
 		Sender:   cliCtx.GetFromAddress().String(),
 		Contract: args[0],
 		NewAdmin: args[1],
 	}
-	return msg, nil
+	return msg
 }
 
 // ClearContractAdminCmd clears an admin for a contract

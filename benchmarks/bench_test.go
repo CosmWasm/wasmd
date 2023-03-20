@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -107,15 +107,16 @@ func BenchmarkTxSending(b *testing.B) {
 
 				for j := 0; j < blockSize; j++ {
 					idx := i*blockSize + j
-
-					_, _, err := appInfo.App.Check(txEncoder, txs[idx])
-					if err != nil {
-						panic("something is broken in checking transaction")
-					}
-					_, _, err = appInfo.App.Deliver(txEncoder, txs[idx])
+					bz, err := txEncoder(txs[idx])
 					require.NoError(b, err)
+					rsp := appInfo.App.CheckTx(abci.RequestCheckTx{
+						Tx:   bz,
+						Type: abci.CheckTxType_New,
+					})
+					require.True(b, rsp.IsOK())
+					dRsp := appInfo.App.DeliverTx(abci.RequestDeliverTx{Tx: bz})
+					require.True(b, dRsp.IsOK())
 				}
-
 				appInfo.App.EndBlock(abci.RequestEndBlock{Height: height})
 				appInfo.App.Commit()
 				height++
@@ -157,7 +158,7 @@ func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *test
 	}
 }
 
-func buildMemDB(b *testing.B) dbm.DB {
+func buildMemDB(_ *testing.B) dbm.DB {
 	return dbm.NewMemDB()
 }
 

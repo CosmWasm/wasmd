@@ -7,11 +7,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	authzcodec "github.com/cosmos/cosmos-sdk/x/authz/codec"
+	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	groupcodec "github.com/cosmos/cosmos-sdk/x/group/codec"
 )
 
 // RegisterLegacyAminoCodec registers the account types and interface
-func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { //nolint:staticcheck
+func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract2{}, "wasm/MsgInstantiateContract2", nil)
@@ -20,6 +23,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { //nolint:staticcheck
 	cdc.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/MsgUpdateAdmin", nil)
 	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/MsgClearAdmin", nil)
 	cdc.RegisterConcrete(&MsgUpdateInstantiateConfig{}, "wasm/MsgUpdateInstantiateConfig", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "wasm/MsgUpdateParams", nil)
 
 	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
 	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
@@ -63,9 +67,10 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgIBCCloseChannel{},
 		&MsgIBCSend{},
 		&MsgUpdateInstantiateConfig{},
+		&MsgUpdateParams{},
 	)
 	registry.RegisterImplementations(
-		(*govtypes.Content)(nil),
+		(*v1beta1.Content)(nil),
 		&StoreCodeProposal{},
 		&InstantiateContractProposal{},
 		&InstantiateContract2Proposal{},
@@ -80,9 +85,9 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&StoreAndInstantiateContractProposal{},
 	)
 
-	registry.RegisterInterface("ContractInfoExtension", (*ContractInfoExtension)(nil))
+	registry.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
 
-	registry.RegisterInterface("ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
+	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
 	registry.RegisterImplementations(
 		(*ContractAuthzFilterX)(nil),
 		&AllowAllMessagesFilter{},
@@ -90,7 +95,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&AcceptedMessagesFilter{},
 	)
 
-	registry.RegisterInterface("ContractAuthzLimitX", (*ContractAuthzLimitX)(nil))
+	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzLimitX", (*ContractAuthzLimitX)(nil))
 	registry.RegisterImplementations(
 		(*ContractAuthzLimitX)(nil),
 		&MaxCallsLimit{},
@@ -119,4 +124,10 @@ func init() {
 	RegisterLegacyAminoCodec(amino)
 	cryptocodec.RegisterCrypto(amino)
 	amino.Seal()
+
+	// Register all Amino interfaces and concrete types on the authz  and gov Amino codec so that this can later be
+	// used to properly serialize MsgGrant, MsgExec and MsgSubmitProposal instances
+	RegisterLegacyAminoCodec(authzcodec.Amino)
+	RegisterLegacyAminoCodec(govcodec.Amino)
+	RegisterLegacyAminoCodec(groupcodec.Amino)
 }

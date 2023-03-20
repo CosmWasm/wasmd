@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
-	"github.com/tendermint/tendermint/libs/rand"
-
 	"github.com/stretchr/testify/require"
 )
+
+const invalidAddress = "invalid address"
 
 func TestValidateGenesisState(t *testing.T) {
 	specs := map[string]struct {
@@ -37,7 +38,7 @@ func TestValidateGenesisState(t *testing.T) {
 		},
 		"contract invalid": {
 			srcMutator: func(s *GenesisState) {
-				s.Contracts[0].ContractAddress = "invalid"
+				s.Contracts[0].ContractAddress = invalidAddress
 			},
 			expError: true,
 		},
@@ -119,13 +120,13 @@ func TestContractValidateBasic(t *testing.T) {
 		"all good": {srcMutator: func(_ *Contract) {}},
 		"contract address invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractAddress = "invalid"
+				c.ContractAddress = invalidAddress
 			},
 			expError: true,
 		},
 		"contract info invalid": {
 			srcMutator: func(c *Contract) {
-				c.ContractInfo.Creator = "invalid"
+				c.ContractInfo.Creator = invalidAddress
 			},
 			expError: true,
 		},
@@ -168,7 +169,7 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 
 	anyTime := time.Now().UTC()
 	// using gov proposal here as a random protobuf types as it contains an Any type inside for nested unpacking
-	myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
+	myExtension, err := v1beta1.NewProposal(&v1beta1.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
 	require.NoError(t, err)
 	myExtension.TotalDeposit = nil
 
@@ -182,10 +183,10 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 	// register proposal as extension type
 	interfaceRegistry.RegisterImplementations(
 		(*ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
+		&v1beta1.Proposal{},
 	)
 	// register gov types for nested Anys
-	govtypes.RegisterInterfaces(interfaceRegistry)
+	v1beta1.RegisterInterfaces(interfaceRegistry)
 
 	// when encode
 	gs := GenesisState{
@@ -205,7 +206,7 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 	dest := destGs.Contracts[0].ContractInfo
 	assert.Equal(t, src, dest)
 	// and sanity check nested any
-	var destExt govtypes.Proposal
+	var destExt v1beta1.Proposal
 	require.NoError(t, dest.ReadExtension(&destExt))
 	assert.Equal(t, destExt.GetTitle(), "bar")
 }

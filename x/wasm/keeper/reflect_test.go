@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -14,7 +15,7 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +45,7 @@ func TestReflectContractSend(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, bob := keyPubAddr()
+	_, bob := keyPubAddr()
 
 	// upload reflect code
 	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -124,7 +125,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	bob := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, fred := keyPubAddr()
 
 	// upload code
 	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -262,7 +263,7 @@ func TestReflectStargateQuery(t *testing.T) {
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
-	expectedBalance := funds.Sub(contractStart)
+	expectedBalance := funds.Sub(contractStart...)
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
@@ -331,7 +332,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 				Chain: &testdata.ChainQuery{
 					Request: &wasmvmtypes.QueryRequest{
 						Bank: &wasmvmtypes.BankQuery{
-							Supply: &wasmvmtypes.SupplyQuery{spec.denom},
+							Supply: &wasmvmtypes.SupplyQuery{Denom: spec.denom},
 						},
 					},
 				},
@@ -373,6 +374,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 		Address: creator.String(),
 	}
 	protoQueryBin, err := proto.Marshal(&protoQuery)
+	require.NoError(t, err)
+
 	protoRequest := wasmvmtypes.QueryRequest{
 		Stargate: &wasmvmtypes.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
@@ -590,21 +593,21 @@ type reflectCustomMsg struct {
 // toReflectRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
 func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
-	any, err := codectypes.NewAnyWithValue(msg)
+	codecAny, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, err
 	}
-	rawBz, err := cdc.MarshalJSON(any)
+	rawBz, err := cdc.MarshalJSON(codecAny)
 	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wasmvmtypes.CosmosMsg{}, errorsmod.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
-	customMsg, err := json.Marshal(reflectCustomMsg{
+	customMsg, _ := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
 	})
 	res := wasmvmtypes.CosmosMsg{
 		Custom: customMsg,
 	}
-	return res, nil
+	return res, err
 }
 
 // reflectEncoders needs to be registered in test setup to handle custom message callbacks
@@ -621,23 +624,23 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 		var custom reflectCustomMsg
 		err := json.Unmarshal(msg, &custom)
 		if err != nil {
-			return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+			return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
-			var any codectypes.Any
-			if err := cdc.UnmarshalJSON(custom.Raw, &any); err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+			var codecAny codectypes.Any
+			if err := cdc.UnmarshalJSON(custom.Raw, &codecAny); err != nil {
+				return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
 			var msg sdk.Msg
-			if err := cdc.UnpackAny(&any, &msg); err != nil {
+			if err := cdc.UnpackAny(&codecAny, &msg); err != nil {
 				return nil, err
 			}
 			return []sdk.Msg{msg}, nil
 		}
 		if custom.Debug != "" {
-			return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
+			return nil, errorsmod.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
 		}
-		return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
+		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 	}
 }
 
@@ -651,17 +654,9 @@ type customQueryResponse struct {
 	Msg string `json:"msg"`
 }
 
-// these are the return values from contract -> go depending on type of query
-type ownerResponse struct {
-	Owner string `json:"owner"`
-}
-
+// this is from the contract to the go code (capitalized or ping)
 type capitalizedResponse struct {
 	Text string `json:"text"`
-}
-
-type chainResponse struct {
-	Data []byte `json:"data"`
 }
 
 // reflectPlugins needs to be registered in test setup to handle custom query callbacks
@@ -675,7 +670,7 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+		return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if custom.Capitalized != nil {
 		msg := strings.ToUpper(custom.Capitalized.Text)
@@ -684,5 +679,5 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	if custom.Ping != nil {
 		return json.Marshal(customQueryResponse{Msg: "pong"})
 	}
-	return nil, sdkerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
+	return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }

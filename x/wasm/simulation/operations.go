@@ -5,13 +5,16 @@ import (
 	"math/rand"
 	"os"
 
+	errorsmod "cosmossdk.io/errors"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	"github.com/CosmWasm/wasmd/app/params"
@@ -109,11 +112,10 @@ func WeightedOperations(
 			panic(err)
 		}
 	}
-
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
 			weightMsgStoreCode,
-			SimulateMsgStoreCode(ak, bk, wasmKeeper, wasmBz, 5_000_000),
+			SimulateMsgStoreCode(ak, bk, wasmKeeper, wasmBz),
 		),
 		simulation.NewWeightedOperation(
 			weightMsgInstantiateContract,
@@ -322,7 +324,12 @@ func SimulateMsgUpdateAmin(
 }
 
 // SimulateMsgStoreCode generates a MsgStoreCode with random values
-func SimulateMsgStoreCode(ak types.AccountKeeper, bk BankKeeper, wasmKeeper WasmKeeper, wasmBz []byte, gas uint64) simtypes.Operation {
+func SimulateMsgStoreCode(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	wasmBz []byte,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -345,7 +352,7 @@ func SimulateMsgStoreCode(ak types.AccountKeeper, bk BankKeeper, wasmKeeper Wasm
 			InstantiatePermission: &config,
 		}
 		txCtx := BuildOperationInput(r, app, ctx, &msg, simAccount, ak, bk, nil)
-		return GenAndDeliverTxWithRandFees(txCtx, gas)
+		return simulation.GenAndDeliverTxWithRandFees(txCtx)
 	}
 }
 
@@ -366,7 +373,12 @@ func DefaultSimulationCodeIDSelector(ctx sdk.Context, wasmKeeper WasmKeeper) uin
 }
 
 // SimulateMsgInstantiateContract generates a MsgInstantiateContract with random values
-func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmKeeper WasmKeeper, codeSelector CodeIDSelector) simtypes.Operation {
+func SimulateMsgInstantiateContract(
+	ak types.AccountKeeper,
+	bk BankKeeper,
+	wasmKeeper WasmKeeper,
+	codeSelector CodeIDSelector,
+) simtypes.Operation {
 	return func(
 		r *rand.Rand,
 		app *baseapp.BaseApp,
@@ -475,10 +487,12 @@ func BuildOperationInput(
 	bk BankKeeper,
 	deposit sdk.Coins,
 ) simulation.OperationInput {
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	txConfig := tx.NewTxConfig(codec.NewProtoCodec(interfaceRegistry), tx.DefaultSignModes)
 	return simulation.OperationInput{
 		R:               r,
 		App:             app,
-		TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+		TxGen:           txConfig,
 		Cdc:             nil,
 		Msg:             msg,
 		MsgType:         msg.Type(),
@@ -506,23 +520,23 @@ func DefaultSimulationExecuteSenderSelector(wasmKeeper WasmKeeper, ctx sdk.Conte
 	var none simtypes.Account
 	bz, err := json.Marshal(testdata.ReflectQueryMsg{Owner: &struct{}{}})
 	if err != nil {
-		return none, sdkerrors.Wrap(err, "build smart query")
+		return none, errorsmod.Wrap(err, "build smart query")
 	}
 	got, err := wasmKeeper.QuerySmart(ctx, contractAddr, bz)
 	if err != nil {
-		return none, sdkerrors.Wrap(err, "exec smart query")
+		return none, errorsmod.Wrap(err, "exec smart query")
 	}
 	var ownerRes testdata.OwnerResponse
 	if err := json.Unmarshal(got, &ownerRes); err != nil || ownerRes.Owner == "" {
-		return none, sdkerrors.Wrap(err, "parse smart query response")
+		return none, errorsmod.Wrap(err, "parse smart query response")
 	}
 	ownerAddr, err := sdk.AccAddressFromBech32(ownerRes.Owner)
 	if err != nil {
-		return none, sdkerrors.Wrap(err, "parse contract owner address")
+		return none, errorsmod.Wrap(err, "parse contract owner address")
 	}
 	simAccount, ok := simtypes.FindAccount(accs, ownerAddr)
 	if !ok {
-		return none, sdkerrors.Wrap(err, "unknown contract owner address")
+		return none, errorsmod.Wrap(err, "unknown contract owner address")
 	}
 	return simAccount, nil
 }

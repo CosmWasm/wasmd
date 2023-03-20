@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -18,19 +18,23 @@ type ValidatorSetSource interface {
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]abci.ValidatorUpdate, error) {
 	contractKeeper := NewGovPermissionKeeper(keeper)
-	keeper.SetParams(ctx, data.Params)
+	err := keeper.SetParams(ctx, data.Params)
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "set params")
+	}
+
 	var maxCodeID uint64
 	for i, code := range data.Codes {
 		err := keeper.importCode(ctx, code.CodeID, code.CodeInfo, code.CodeBytes)
 		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "code %d with id: %d", i, code.CodeID)
+			return nil, errorsmod.Wrapf(err, "code %d with id: %d", i, code.CodeID)
 		}
 		if code.CodeID > maxCodeID {
 			maxCodeID = code.CodeID
 		}
 		if code.Pinned {
 			if err := contractKeeper.PinCode(ctx, code.CodeID); err != nil {
-				return nil, sdkerrors.Wrapf(err, "contract number %d", i)
+				return nil, errorsmod.Wrapf(err, "contract number %d", i)
 			}
 		}
 	}
@@ -39,11 +43,11 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 	for i, contract := range data.Contracts {
 		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractAddress)
 		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "address in contract number %d", i)
+			return nil, errorsmod.Wrapf(err, "address in contract number %d", i)
 		}
 		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState, contract.ContractCodeHistory)
 		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "contract number %d", i)
+			return nil, errorsmod.Wrapf(err, "contract number %d", i)
 		}
 		maxContractID = i + 1 // not ideal but max(contractID) is not persisted otherwise
 	}
@@ -51,18 +55,18 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 	for i, seq := range data.Sequences {
 		err := keeper.importAutoIncrementID(ctx, seq.IDKey, seq.Value)
 		if err != nil {
-			return nil, sdkerrors.Wrapf(err, "sequence number %d", i)
+			return nil, errorsmod.Wrapf(err, "sequence number %d", i)
 		}
 	}
 
 	// sanity check seq values
 	seqVal := keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID)
 	if seqVal <= maxCodeID {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
 	}
 	seqVal = keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID)
 	if seqVal <= uint64(maxContractID) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
 	return nil, nil
 }

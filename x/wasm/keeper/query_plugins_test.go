@@ -7,23 +7,23 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	dbm "github.com/cometbft/cometbft-db"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -89,8 +89,8 @@ func TestIBCQuerier(t *testing.T) {
 		srcQuery      *wasmvmtypes.IBCQuery
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
-		expJsonResult string
-		expErr        *sdkerrors.Error
+		expJSONResult string
+		expErr        *errorsmod.Error
 	}{
 		"query port id": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -102,7 +102,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{},
-			expJsonResult: `{"port_id":"myIBCPortID"}`,
+			expJSONResult: `{"port_id":"myIBCPortID"}`,
 		},
 		"query list channels - all": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -111,7 +111,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -151,7 +151,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -178,7 +178,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{"channels": []}`,
+			expJSONResult: `{"channels": []}`,
 		},
 		"query channel": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -201,7 +201,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myQueryPortID",
@@ -242,7 +242,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myLoadedPortID",
@@ -278,7 +278,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel in closed state": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -301,7 +301,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel - empty result": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -315,7 +315,7 @@ func TestIBCQuerier(t *testing.T) {
 					return channeltypes.Channel{}, false
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 	}
 	for name, spec := range specs {
@@ -326,7 +326,7 @@ func TestIBCQuerier(t *testing.T) {
 			if spec.expErr != nil {
 				return
 			}
-			assert.JSONEq(t, spec.expJsonResult, string(gotResult), string(gotResult))
+			assert.JSONEq(t, spec.expJSONResult, string(gotResult), string(gotResult))
 		})
 	}
 }
@@ -538,7 +538,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
@@ -546,7 +546,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
@@ -566,9 +566,10 @@ func TestQueryErrors(t *testing.T) {
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
 	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
-	wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	require.NoError(t, err)
 
-	addrs := app.AddTestAddrs(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
+	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
 	accepted := keeper.AcceptedStargateQueries{
 		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
 		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},

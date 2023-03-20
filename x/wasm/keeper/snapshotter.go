@@ -4,12 +4,11 @@ import (
 	"encoding/hex"
 	"io"
 
+	errorsmod "cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	protoio "github.com/gogo/protobuf/io"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -45,7 +44,7 @@ func (ws *WasmSnapshotter) SupportedFormats() []uint32 {
 	return []uint32{SnapshotFormat}
 }
 
-func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) error {
+func (ws *WasmSnapshotter) SnapshotExtension(height uint64, payloadWriter snapshot.ExtensionPayloadWriter) error {
 	cacheMS, err := ws.cms.CacheMultiStoreWithVersion(int64(height))
 	if err != nil {
 		return err
@@ -77,7 +76,7 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 			return true
 		}
 
-		err = snapshot.WriteExtensionItem(protoWriter, compressedWasm)
+		err = payloadWriter(compressedWasm)
 		if err != nil {
 			rerr = err
 			return true
@@ -89,28 +88,26 @@ func (ws *WasmSnapshotter) Snapshot(height uint64, protoWriter protoio.Writer) e
 	return rerr
 }
 
-func (ws *WasmSnapshotter) Restore(
-	height uint64, format uint32, protoReader protoio.Reader,
-) (snapshot.SnapshotItem, error) {
+func (ws *WasmSnapshotter) RestoreExtension(height uint64, format uint32, payloadReader snapshot.ExtensionPayloadReader) error {
 	if format == SnapshotFormat {
-		return ws.processAllItems(height, protoReader, restoreV1, finalizeV1)
+		return ws.processAllItems(height, payloadReader, restoreV1, finalizeV1)
 	}
-	return snapshot.SnapshotItem{}, snapshot.ErrUnknownFormat
+	return snapshot.ErrUnknownFormat
 }
 
-func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
+func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")
 	}
 	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
 
 	// FIXME: check which codeIDs the checksum matches??
 	_, err = k.wasmVM.Create(wasmCode)
 	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+		return errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
 	return nil
 }
@@ -122,35 +119,23 @@ func finalizeV1(ctx sdk.Context, k *Keeper) error {
 
 func (ws *WasmSnapshotter) processAllItems(
 	height uint64,
-	protoReader protoio.Reader,
+	payloadReader snapshot.ExtensionPayloadReader,
 	cb func(sdk.Context, *Keeper, []byte) error,
 	finalize func(sdk.Context, *Keeper) error,
-) (snapshot.SnapshotItem, error) {
+) error {
 	ctx := sdk.NewContext(ws.cms, tmproto.Header{Height: int64(height)}, false, log.NewNopLogger())
-
-	// keep the last item here... if we break, it will either be empty (if we hit io.EOF)
-	// or contain the last item (if we hit payload == nil)
-	var item snapshot.SnapshotItem
 	for {
-		item = snapshot.SnapshotItem{}
-		err := protoReader.ReadMsg(&item)
+		payload, err := payloadReader()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "invalid protobuf message")
+			return err
 		}
 
-		// if it is not another ExtensionPayload message, then it is not for us.
-		// we should return it an let the manager handle this one
-		payload := item.GetExtensionPayload()
-		if payload == nil {
-			break
-		}
-
-		if err := cb(ctx, ws.wasm, payload.Payload); err != nil {
-			return snapshot.SnapshotItem{}, sdkerrors.Wrap(err, "processing snapshot item")
+		if err := cb(ctx, ws.wasm, payload); err != nil {
+			return errorsmod.Wrap(err, "processing snapshot item")
 		}
 	}
 
-	return item, finalize(ctx, ws.wasm)
+	return finalize(ctx, ws.wasm)
 }

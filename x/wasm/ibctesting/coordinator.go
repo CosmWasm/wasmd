@@ -2,24 +2,21 @@ package ibctesting
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	abci "github.com/cometbft/cometbft/abci/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
-const ChainIDPrefix = "testchain"
-
 var (
-	globalStartTime = time.Date(2020, 12, 4, 10, 30, 0, 0, time.UTC)
 	TimeIncrement   = time.Second * 5
+	globalStartTime = time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)
 )
 
 // Coordinator is a testing struct which contains N TestChain's. It handles keeping all chains
@@ -39,11 +36,11 @@ func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *Coordinat
 		CurrentTime: globalStartTime,
 	}
 
-	for i := 0; i < n; i++ {
+	for i := 1; i <= n; i++ {
 		chainID := GetChainID(i)
 		var x []wasmkeeper.Option
-		if len(opts) > i {
-			x = opts[i]
+		if len(opts) > (i - 1) {
+			x = opts[i-1]
 		}
 		chains[chainID] = NewTestChain(t, coord, chainID, x...)
 	}
@@ -183,7 +180,7 @@ func (coord *Coordinator) GetChain(chainID string) *TestChain {
 
 // GetChainID returns the chainID used for the provided index.
 func GetChainID(index int) string {
-	return ChainIDPrefix + strconv.Itoa(index)
+	return ibctesting.GetChainID(index)
 }
 
 // CommitBlock commits a block on the provided indexes and then increments the global time.
@@ -220,11 +217,9 @@ func (coord *Coordinator) ConnOpenInitOnBothChains(path *Path) error {
 		return err
 	}
 
-	if err := path.EndpointB.UpdateClient(); err != nil {
-		return err
-	}
+	err := path.EndpointB.UpdateClient()
 
-	return nil
+	return err
 }
 
 // ChanOpenInitOnBothChains initializes a channel on the source chain and counterparty chain
@@ -245,11 +240,9 @@ func (coord *Coordinator) ChanOpenInitOnBothChains(path *Path) error {
 		return err
 	}
 
-	if err := path.EndpointB.UpdateClient(); err != nil {
-		return err
-	}
+	err := path.EndpointB.UpdateClient()
 
-	return nil
+	return err
 }
 
 // RelayAndAckPendingPackets sends pending packages from path.EndpointA to the counterparty chain and acks

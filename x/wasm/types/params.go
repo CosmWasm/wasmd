@@ -4,17 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/gogo/protobuf/jsonpb"
+	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-)
-
-var (
-	ParamStoreKeyUploadAccess      = []byte("uploadAccess")
-	ParamStoreKeyInstantiateAccess = []byte("instantiateAccess")
 )
 
 var AllAccessTypes = []AccessType{
@@ -44,7 +38,7 @@ func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
 			bech32Addrs[i] = v.String()
 		}
 		if err := assertValidAddresses(bech32Addrs); err != nil {
-			panic(sdkerrors.Wrap(err, "addresses"))
+			panic(errorsmod.Wrap(err, "addresses"))
 		}
 		return AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: bech32Addrs}
 	}
@@ -98,11 +92,6 @@ var (
 	AllowNobody         = AccessConfig{Permission: AccessTypeNobody}
 )
 
-// ParamKeyTable returns the parameter key table.
-func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
-}
-
 // DefaultParams returns default wasm parameters
 func DefaultParams() Params {
 	return Params{
@@ -117,14 +106,6 @@ func (p Params) String() string {
 		panic(err)
 	}
 	return string(out)
-}
-
-// ParamSetPairs returns the parameter set pairs.
-func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(ParamStoreKeyUploadAccess, &p.CodeUploadAccess, validateAccessConfig),
-		paramtypes.NewParamSetPair(ParamStoreKeyInstantiateAccess, &p.InstantiateDefaultPermission, validateAccessType),
-	}
 }
 
 // ValidateBasic performs basic validation on wasm parameters
@@ -152,24 +133,24 @@ func validateAccessType(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	if a == AccessTypeUnspecified {
-		return sdkerrors.Wrap(ErrEmpty, "type")
+		return errorsmod.Wrap(ErrEmpty, "type")
 	}
 	for _, v := range AllAccessTypes {
 		if v == a {
 			return nil
 		}
 	}
-	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
+	return errorsmod.Wrapf(ErrInvalid, "unknown type: %q", a)
 }
 
 // ValidateBasic performs basic validation
 func (a AccessConfig) ValidateBasic() error {
 	switch a.Permission {
 	case AccessTypeUnspecified:
-		return sdkerrors.Wrap(ErrEmpty, "type")
+		return errorsmod.Wrap(ErrEmpty, "type")
 	case AccessTypeNobody, AccessTypeEverybody:
 		if len(a.Address) != 0 {
-			return sdkerrors.Wrap(ErrInvalid, "address not allowed for this type")
+			return errorsmod.Wrap(ErrInvalid, "address not allowed for this type")
 		}
 		return nil
 	case AccessTypeOnlyAddress:
@@ -182,9 +163,9 @@ func (a AccessConfig) ValidateBasic() error {
 		if a.Address != "" {
 			return ErrInvalid.Wrap("address field set")
 		}
-		return sdkerrors.Wrap(assertValidAddresses(a.Addresses), "addresses")
+		return errorsmod.Wrap(assertValidAddresses(a.Addresses), "addresses")
 	}
-	return sdkerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
+	return errorsmod.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
 }
 
 func assertValidAddresses(addrs []string) error {
@@ -194,7 +175,7 @@ func assertValidAddresses(addrs []string) error {
 	idx := make(map[string]struct{}, len(addrs))
 	for _, a := range addrs {
 		if _, err := sdk.AccAddressFromBech32(a); err != nil {
-			return sdkerrors.Wrapf(err, "address: %s", a)
+			return errorsmod.Wrapf(err, "address: %s", a)
 		}
 		if _, exists := idx[a]; exists {
 			return ErrDuplicate.Wrapf("address: %s", a)

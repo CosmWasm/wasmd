@@ -192,7 +192,7 @@ message CodeInfoResponse {
   string creator = 2;
   bytes data_hash = 3
       [ (gogoproto.casttype) =
-            "github.com/tendermint/tendermint/libs/bytes.HexBytes" ];
+            "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
   // Used in v1beta1
   reserved 4, 5;
   AccessConfig instantiate_permission = 6 [ (gogoproto.nullable) = false ];
@@ -229,8 +229,7 @@ message QueryPinnedCodesRequest {
 // QueryPinnedCodesResponse is the response type for the
 // Query/PinnedCodes RPC method
 message QueryPinnedCodesResponse {
-  repeated uint64 code_ids = 1
-      [ (gogoproto.nullable) = false, (gogoproto.customname) = "CodeIDs" ];
+  repeated uint64 code_ids = 1 [ (gogoproto.customname) = "CodeIDs" ];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
