@@ -136,7 +136,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 
 		return &types.MsgInstantiateContract{
 			Sender: authority,
-			Admin:  string(adminAccount.Address),
+			Admin:  adminAccount.Address.String(),
 			CodeID: codeID,
 			Label:  simtypes.RandStringOfLength(r, 10),
 			Msg:    []byte(`{}`),
@@ -161,11 +161,17 @@ func SimulateExecuteContractProposal(
 			return nil
 		}
 
-		return &types.MsgExecuteContract{
+		msg := &types.MsgExecuteContract{
 			Sender:   authority,
 			Contract: ctAddress.String(),
 			Funds:    sdk.Coins{},
 		}
+
+		if err := payloader(msg); err != nil {
+			return nil
+		}
+
+		return msg
 	}
 }
 
