@@ -748,10 +748,11 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 
 			msgs := make([]sdk.Msg, len(updates))
 			for i, update := range updates {
+				permission := update.InstantiatePermission
 				msgs[i] = &types.MsgUpdateInstantiateConfig{
 					Sender:                   authority,
 					CodeID:                   update.CodeID,
-					NewInstantiatePermission: &update.InstantiatePermission,
+					NewInstantiatePermission: &permission,
 				}
 			}
 
