@@ -103,7 +103,7 @@ func TestParseVerificationFlags(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			flagSet := ProposalStoreCodeCmd().Flags()
+			flagSet := ProposalStoreAndInstantiateContractCmd().Flags()
 			require.NoError(t, flagSet.Parse(spec.args))
 
 			gotMsg, err := parseStoreCodeArgs(spec.srcPath, mySender.String(), flagSet)

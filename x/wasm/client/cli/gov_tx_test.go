@@ -145,7 +145,7 @@ func TestParseCodeInfoFlags(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			flags := ProposalStoreCodeCmd().Flags()
+			flags := ProposalStoreAndInstantiateContractCmd().Flags()
 			require.NoError(t, flags.Parse(spec.args))
 			_, _, _, gotErr := parseVerificationFlags(wasmBin, flags)
 			if spec.expErr {
