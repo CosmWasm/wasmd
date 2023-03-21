@@ -90,7 +90,8 @@ message ContractInfo {
   // Extension is an extension point to store custom metadata within the
   // persistence model.
   google.protobuf.Any extension = 7
-      [ (cosmos_proto.accepts_interface) = "ContractInfoExtension" ];
+      [ (cosmos_proto.accepts_interface) =
+            "cosmwasm.wasm.v1.ContractInfoExtension" ];
 }
 
 // ContractCodeHistoryOperationType actions that caused a code change

@@ -460,6 +460,73 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 	}
 }
 
+func TestCodeInfoWasmQuerier(t *testing.T) {
+	myCreatorAddr := keeper.RandomBech32AccountAddress(t)
+	var ctx sdk.Context
+
+	myRawChecksum := []byte("myHash78901234567890123456789012")
+	specs := map[string]struct {
+		req    *wasmvmtypes.WasmQuery
+		mock   mockWasmQueryKeeper
+		expRes wasmvmtypes.CodeInfoResponse
+		expErr bool
+	}{
+		"all good": {
+			req: &wasmvmtypes.WasmQuery{
+				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
+			},
+			mock: mockWasmQueryKeeper{
+				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+					return &types.CodeInfo{
+						CodeHash: myRawChecksum,
+						Creator:  myCreatorAddr,
+						InstantiateConfig: types.AccessConfig{
+							Permission: types.AccessTypeNobody,
+							Addresses:  []string{myCreatorAddr},
+						},
+					}
+				},
+			},
+			expRes: wasmvmtypes.CodeInfoResponse{
+				CodeID:   1,
+				Creator:  myCreatorAddr,
+				Checksum: myRawChecksum,
+			},
+		},
+		"empty code id": {
+			req: &wasmvmtypes.WasmQuery{
+				CodeInfo: &wasmvmtypes.CodeInfoQuery{},
+			},
+			expErr: true,
+		},
+		"unknown code id": {
+			req: &wasmvmtypes.WasmQuery{
+				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
+			},
+			mock: mockWasmQueryKeeper{
+				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+					return nil
+				},
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			q := keeper.WasmQuerier(spec.mock)
+			gotBz, gotErr := q(ctx, spec.req)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			var gotRes wasmvmtypes.CodeInfoResponse
+			require.NoError(t, json.Unmarshal(gotBz, &gotRes), string(gotBz))
+			assert.Equal(t, spec.expRes, gotRes)
+		})
+	}
+}
+
 func TestQueryErrors(t *testing.T) {
 	specs := map[string]struct {
 		src    error
@@ -467,12 +534,20 @@ func TestQueryErrors(t *testing.T) {
 	}{
 		"no error": {},
 		"no such contract": {
-			src:    &types.ErrNoSuchContract{Addr: "contract-addr"},
+			src:    types.ErrNoSuchContractFn("contract-addr"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(&types.ErrNoSuchContract{Addr: "contract-addr"}, "my additional data"),
+			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
+		},
+		"no such code": {
+			src:    types.ErrNoSuchCodeFn(123),
+			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
+		},
+		"no such code - wrapped": {
+			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
 	for name, spec := range specs {
@@ -558,6 +633,7 @@ type mockWasmQueryKeeper struct {
 	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	QuerySmartFn      func(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
 	IsPinnedCodeFn    func(ctx sdk.Context, codeID uint64) bool
+	GetCodeInfoFn     func(ctx sdk.Context, codeID uint64) *types.CodeInfo
 }
 
 func (m mockWasmQueryKeeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
@@ -586,6 +662,13 @@ func (m mockWasmQueryKeeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
 		panic("not expected to be called")
 	}
 	return m.IsPinnedCodeFn(ctx, codeID)
+}
+
+func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+	if m.GetCodeInfoFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetCodeInfoFn(ctx, codeID)
 }
 
 type bankKeeperMock struct {
@@ -664,6 +747,31 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
 		})
 	}
+}
+
+func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
+	appCodec := app.MakeEncodingConfig().Marshaler
+
+	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
+	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
+		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+		Pagination: &query.PageResponse{
+			NextKey: []byte("foo"),
+		},
+	})
+
+	bz, err := hex.DecodeString("0a090a036261721202333012050a03666f6f")
+	require.NoError(t, err)
+
+	// first marshal
+	response, err := keeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
+
+	// second marshal
+	response, err = keeper.ConvertProtoToJSONMarshal(appCodec, protoMarshaler, bz)
+	require.NoError(t, err)
+	require.Equal(t, expected, response)
 }
 
 // TestDeterministicJsonMarshal tests that we get deterministic JSON marshalled response upon

@@ -61,10 +61,10 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 		return res, nil
 	}
 
-	// special mappings to system error (which are not redacted)
-	var noSuchContract *types.ErrNoSuchContract
-	if ok := errors.As(err, &noSuchContract); ok {
-		err = wasmvmtypes.NoSuchContract{Addr: noSuchContract.Addr}
+	// special mappings to wasmvm system error (which are not redacted)
+	var wasmvmErr types.WasmVMErrorable
+	if ok := errors.As(err, &wasmvmErr); ok {
+		err = wasmvmErr.ToWasmVMError()
 	}
 
 	// Issue #759 - we don't return error string for worries of non-determinism
@@ -92,6 +92,7 @@ type contractMetaDataSource interface {
 
 type wasmQueryKeeper interface {
 	contractMetaDataSource
+	GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
 	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
@@ -528,21 +529,38 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			return k.QueryRaw(ctx, addr, request.Raw.Key), nil
 		case request.ContractInfo != nil:
-			addr, err := sdk.AccAddressFromBech32(request.ContractInfo.ContractAddr)
+			contractAddr := request.ContractInfo.ContractAddr
+			addr, err := sdk.AccAddressFromBech32(contractAddr)
 			if err != nil {
-				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, request.ContractInfo.ContractAddr)
+				return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, contractAddr)
 			}
 			info := k.GetContractInfo(ctx, addr)
 			if info == nil {
-				return nil, &types.ErrNoSuchContract{Addr: request.ContractInfo.ContractAddr}
+				return nil, types.ErrNoSuchContractFn(contractAddr).
+					Wrapf("address %s", contractAddr)
 			}
-
 			res := wasmvmtypes.ContractInfoResponse{
 				CodeID:  info.CodeID,
 				Creator: info.Creator,
 				Admin:   info.Admin,
 				Pinned:  k.IsPinnedCode(ctx, info.CodeID),
 				IBCPort: info.IBCPortID,
+			}
+			return json.Marshal(res)
+		case request.CodeInfo != nil:
+			if request.CodeInfo.CodeID == 0 {
+				return nil, types.ErrEmpty.Wrap("code id")
+			}
+			info := k.GetCodeInfo(ctx, request.CodeInfo.CodeID)
+			if info == nil {
+				return nil, types.ErrNoSuchCodeFn(request.CodeInfo.CodeID).
+					Wrapf("code id %d", request.CodeInfo.CodeID)
+			}
+
+			res := wasmvmtypes.CodeInfoResponse{
+				CodeID:   request.CodeInfo.CodeID,
+				Creator:  info.Creator,
+				Checksum: info.CodeHash,
 			}
 			return json.Marshal(res)
 		}
@@ -582,6 +600,7 @@ func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshal
 		return nil, sdkerrors.Wrap(err, "to json")
 	}
 
+	protoResponse.Reset()
 	return bz, nil
 }
 

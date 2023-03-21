@@ -122,3 +122,42 @@ func ClearContractAdminCmd() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
+
+// UpdateInstantiateConfigCmd updates instantiate config for a smart contract.
+func UpdateInstantiateConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "update-instantiate-config [code_id_int64]",
+		Short:   "Update instantiate config for a codeID",
+		Aliases: []string{"update-instantiate-config"},
+		Args:    cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			codeID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+			perm, err := parseAccessConfigFlags(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgUpdateInstantiateConfig{
+				Sender:                   string(clientCtx.GetFromAddress()),
+				CodeID:                   codeID,
+				NewInstantiatePermission: perm,
+			}
+			if err = msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+		SilenceUsage: true,
+	}
+
+	addInstantiatePermissionFlags(cmd)
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}

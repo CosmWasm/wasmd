@@ -279,6 +279,105 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 	}
 }
 
+func TestValidateInstantiateContract2Proposal(t *testing.T) {
+	invalidAddress := "invalid address"
+
+	specs := map[string]struct {
+		src    *InstantiateContract2Proposal
+		expErr bool
+	}{
+		"all good": {
+			src: InstantiateContract2ProposalFixture(),
+		},
+		"without admin": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Admin = ""
+			}),
+		},
+		"without init msg": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Msg = nil
+			}),
+			expErr: true,
+		},
+		"with invalid init msg": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Msg = []byte("not a json string")
+			}),
+			expErr: true,
+		},
+		"without init funds": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Funds = nil
+			}),
+		},
+		"base data missing": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Title = ""
+			}),
+			expErr: true,
+		},
+		"run_as missing": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.RunAs = ""
+			}),
+			expErr: true,
+		},
+		"run_as invalid": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.RunAs = invalidAddress
+			}),
+			expErr: true,
+		},
+		"admin invalid": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Admin = invalidAddress
+			}),
+			expErr: true,
+		},
+		"code id empty": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.CodeID = 0
+			}),
+			expErr: true,
+		},
+		"label empty": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Label = ""
+			}),
+			expErr: true,
+		},
+		"init funds negative": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+			}),
+			expErr: true,
+		},
+		"init funds with duplicates": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+			}),
+			expErr: true,
+		},
+		"init with empty salt": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Salt = nil
+			}),
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 	var (
 		anyAddress     sdk.AccAddress = bytes.Repeat([]byte{0x0}, ContractAddrLen)
