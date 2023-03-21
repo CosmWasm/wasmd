@@ -20,7 +20,7 @@ const (
 	defaultContractDebugMode         = false
 
 	// ContractAddrLen defines a valid address length for contracts
-	ContractAddrLen = 32
+	ContractAddrLen = 20
 	// SDKAddrLen defines a valid address length that was used in sdk address generation
 	SDKAddrLen = 20
 )
