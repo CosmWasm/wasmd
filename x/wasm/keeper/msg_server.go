@@ -302,7 +302,7 @@ func (m msgServer) SudoContract(goCtx context.Context, req *types.MsgSudoContrac
 func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types.MsgStoreAndInstantiateContract) (*types.MsgStoreAndInstantiateContractResponse, error) {
 	authorityAddr, err := sdk.AccAddressFromBech32(req.Authority)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "admin")
+		return nil, errorsmod.Wrap(err, "authority")
 	}
 
 	if err = req.ValidateBasic(); err != nil {
