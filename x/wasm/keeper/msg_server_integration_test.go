@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +59,7 @@ func TestUpdateParams(t *testing.T) {
 	var (
 		myAddress              sdk.AccAddress = make([]byte, types.ContractAddrLen)
 		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
-		govAuthority                          = wasmApp.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
+		govAuthority                          = wasmApp.WasmKeeper.GetAuthority()
 	)
 
 	specs := map[string]struct {
@@ -156,11 +155,11 @@ func TestPinCodes(t *testing.T) {
 		addr   string
 		expErr bool
 	}{
-		"pin codes with authority": {
+		"authority can pin codes": {
 			addr:   authority,
 			expErr: false,
 		},
-		"pin codes without authority": {
+		"other address cannot pin codes": {
 			addr:   myAddress.String(),
 			expErr: true,
 		},
@@ -213,11 +212,11 @@ func TestUnpinCodes(t *testing.T) {
 		addr   string
 		expErr bool
 	}{
-		"unpin codes with authority": {
+		"authority can unpin codes": {
 			addr:   authority,
 			expErr: false,
 		},
-		"unpin codes without authority": {
+		"other address cannot unpin codes": {
 			addr:   myAddress.String(),
 			expErr: true,
 		},
@@ -293,11 +292,11 @@ func TestSudoContract(t *testing.T) {
 		addr   string
 		expErr bool
 	}{
-		"sudo contract with authority": {
+		"authority can call sudo on a contract": {
 			addr:   authority,
 			expErr: false,
 		},
-		"sudo contract without authority": {
+		"other address cannot call sudo on a contract": {
 			addr:   myAddress.String(),
 			expErr: true,
 		},
@@ -370,22 +369,22 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 		permission *types.AccessConfig
 		expErr     bool
 	}{
-		"allow nodbody permission with authority": {
+		"authority can store and instantiate when permission is nobody": {
 			addr:       authority,
 			permission: &types.AllowNobody,
 			expErr:     false,
 		},
-		"allow nodbody permission without authority": {
+		"other address cannot store and instantiate when permission is nobody": {
 			addr:       myAddress.String(),
 			permission: &types.AllowNobody,
 			expErr:     true,
 		},
-		"allow everybody permission with authority": {
+		"authority can store and instantiate when permission is everybody": {
 			addr:       authority,
 			permission: &types.AllowEverybody,
 			expErr:     false,
 		},
-		"allow everybody permission without authority": {
+		"other address can store and instantiate when permission is everybody": {
 			addr:       myAddress.String(),
 			permission: &types.AllowEverybody,
 			expErr:     false,
@@ -406,6 +405,134 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 				Funds:                 sdk.Coins{},
 			}
 			_, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUpdateAdmin(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                      = wasmApp.WasmKeeper.GetAuthority()
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+	)
+
+	specs := map[string]struct {
+		addr   string
+		expErr bool
+	}{
+		"authority can update admin": {
+			addr:   authority,
+			expErr: false,
+		},
+		"admin can update admin": {
+			addr:   myAddress.String(),
+			expErr: false,
+		},
+		"other address cannot update admin": {
+			addr:   otherAddr.String(),
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			_, _, newAdmin := testdata.KeyTestPubAddr()
+
+			// setup
+			msg := &types.MsgStoreAndInstantiateContract{
+				Authority:             spec.addr,
+				WASMByteCode:          wasmContract,
+				InstantiatePermission: &types.AllowEverybody,
+				Admin:                 myAddress.String(),
+				UnpinCode:             false,
+				Label:                 "test",
+				Msg:                   []byte(`{}`),
+				Funds:                 sdk.Coins{},
+			}
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var storeAndInstantiateResponse types.MsgStoreAndInstantiateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeAndInstantiateResponse))
+
+			// when
+			msgUpdateAdmin := &types.MsgUpdateAdmin{
+				Sender:   spec.addr,
+				NewAdmin: newAdmin.String(),
+				Contract: storeAndInstantiateResponse.Address,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateAdmin)(ctx, msgUpdateAdmin)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestClearAdmin(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                      = wasmApp.WasmKeeper.GetAuthority()
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+	)
+
+	specs := map[string]struct {
+		addr   string
+		expErr bool
+	}{
+		"authority can clear admin": {
+			addr:   authority,
+			expErr: false,
+		},
+		"admin can clear admin": {
+			addr:   myAddress.String(),
+			expErr: false,
+		},
+		"other address cannot clear admin": {
+			addr:   otherAddr.String(),
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+
+			// setup
+			msg := &types.MsgStoreAndInstantiateContract{
+				Authority:             spec.addr,
+				WASMByteCode:          wasmContract,
+				InstantiatePermission: &types.AllowEverybody,
+				Admin:                 myAddress.String(),
+				UnpinCode:             false,
+				Label:                 "test",
+				Msg:                   []byte(`{}`),
+				Funds:                 sdk.Coins{},
+			}
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var storeAndInstantiateResponse types.MsgStoreAndInstantiateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeAndInstantiateResponse))
+
+			// when
+			msgClearAdmin := &types.MsgClearAdmin{
+				Sender:   spec.addr,
+				Contract: storeAndInstantiateResponse.Address,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgClearAdmin)(ctx, msgClearAdmin)
 
 			//then
 			if spec.expErr {
