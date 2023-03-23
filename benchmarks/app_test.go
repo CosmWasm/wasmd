@@ -38,7 +38,7 @@ func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option
 	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
 
 	if withGenesis {
-		return wasmApp, app.NewDefaultGenesisState(wasmApp.AppCodec())
+		return wasmApp, wasmApp.DefaultGenesis()
 	}
 	return wasmApp, app.GenesisState{}
 }

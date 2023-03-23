@@ -69,7 +69,7 @@ func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, 
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 	app := NewWasmApp(log.NewNopLogger(), db, nil, true, wasmtypes.EnableAllProposals, appOptions, opts, bam.SetChainID(chainID), bam.SetSnapshot(snapshotStore, snapshottypes.SnapshotOptions{KeepRecent: 2}))
 	if withGenesis {
-		return app, NewDefaultGenesisState(app.AppCodec())
+		return app, app.DefaultGenesis()
 	}
 	return app, GenesisState{}
 }
@@ -94,7 +94,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 	}
 
 	app := NewWasmApp(options.Logger, options.DB, nil, true, wasmtypes.EnableAllProposals, options.AppOpts, options.WasmOpts)
-	genesisState := NewDefaultGenesisState(app.appCodec)
+	genesisState := app.DefaultGenesis()
 	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 	require.NoError(t, err)
 
@@ -209,7 +209,7 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 		},
 	}
 
-	genesisState := NewDefaultGenesisState(app.appCodec)
+	genesisState := app.DefaultGenesis()
 	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
 	require.NoError(t, err)
 
@@ -277,7 +277,7 @@ func NewTestNetworkFixture() network.TestFixture {
 
 	return network.TestFixture{
 		AppConstructor: appCtr,
-		GenesisState:   NewDefaultGenesisState(app.AppCodec()),
+		GenesisState:   app.DefaultGenesis(),
 		EncodingConfig: testutil.TestEncodingConfig{
 			InterfaceRegistry: app.InterfaceRegistry(),
 			Codec:             app.AppCodec(),

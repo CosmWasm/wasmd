@@ -1,3 +1,5 @@
+//go:build !app_v2
+
 package app
 
 import (

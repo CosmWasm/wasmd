@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -28,10 +27,10 @@ func TestIBCFeesTransfer(t *testing.T) {
 	//   with an ics-20 channel established
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
-	marshaler := app.MakeEncodingConfig().Marshaler
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
 	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
+	marshaler := chainA.App.AppCodec()
 
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
@@ -111,12 +110,12 @@ func TestIBCFeesWasm(t *testing.T) {
 	//   and an ibc channel established
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
-	marshaler := app.MakeEncodingConfig().Marshaler
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
 	chainB := coord.GetChain(ibctesting.GetChainID(2))
 	actorChainA := sdk.AccAddress(chainA.SenderPrivKey.PubKey().Address())
 	actorChainB := sdk.AccAddress(chainB.SenderPrivKey.PubKey().Address())
+	marshaler := chainA.App.AppCodec()
 
 	// setup chain A
 	codeID := chainA.StoreCodeFile("./testdata/cw20_base.wasm.gz").CodeID

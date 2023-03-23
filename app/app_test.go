@@ -48,11 +48,6 @@ func TestBlockedAddrs(t *testing.T) {
 	}
 }
 
-func TestGetMaccPerms(t *testing.T) {
-	dup := GetMaccPerms()
-	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
-}
-
 func TestGetEnabledProposals(t *testing.T) {
 	cases := map[string]struct {
 		proposalsEnabled string
