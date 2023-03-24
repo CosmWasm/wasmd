@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -201,8 +202,21 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			}
 			return json.Marshal(res)
 		}
+		if request.AllDenomMetadata != nil {
+			denomMetadata := bankKeeper.GetAllDenomMetaData(ctx)
+			res := AllDenomMetadataResponse{
+				Metadata: denomMetadata,
+			}
+			return json.Marshal(res)
+		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown BankQuery variant"}
 	}
+}
+
+// Response type for denom metadata queries.
+// Defining the type in wasmd instead of wasmvm allows for maximum compatibility with the cosmos-sdk Metadata type.
+type AllDenomMetadataResponse struct {
+	Metadata []banktypes.Metadata `json:"metadata"`
 }
 
 func NoCustomQuerier(sdk.Context, json.RawMessage) ([]byte, error) {
