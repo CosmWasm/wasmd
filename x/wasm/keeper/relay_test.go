@@ -174,6 +174,7 @@ func TestOnConnectChannel(t *testing.T) {
 					Channel: myChannel,
 				},
 			}
+
 			err := keepers.WasmKeeper.OnConnectChannel(ctx, spec.contractAddr, msg)
 
 			// then
@@ -325,6 +326,7 @@ func TestOnRecvPacket(t *testing.T) {
 		expContractGas     sdk.Gas
 		expAck             []byte
 		expErr             bool
+		expPanic           bool
 		expEventTypes      []string
 	}{
 		"consume contract gas": {
@@ -349,7 +351,7 @@ func TestOnRecvPacket(t *testing.T) {
 				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
 			contractErr: errors.New("test, ignore"),
-			expErr:      true,
+			expPanic:    true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr:   example.Contract,
@@ -444,6 +446,12 @@ func TestOnRecvPacket(t *testing.T) {
 
 			// when
 			msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: myPacket}
+			if spec.expPanic {
+				assert.Panics(t, func() {
+					keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, msg)
+				})
+				return
+			}
 			gotAck, err := keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, msg)
 
 			// then

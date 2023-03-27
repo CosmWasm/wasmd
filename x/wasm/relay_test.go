@@ -32,10 +32,13 @@ func TestFromIBCTransferToContract(t *testing.T) {
 
 	transferAmount := sdk.NewInt(1)
 	specs := map[string]struct {
-		contract             wasmtesting.IBCContractCallbacks
-		setupContract        func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
-		expChainABalanceDiff math.Int
-		expChainBBalanceDiff math.Int
+		contract                    wasmtesting.IBCContractCallbacks
+		setupContract               func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
+		expChainAPendingSendPackets int
+		expChainBPendingSendPackets int
+		expChainABalanceDiff        math.Int
+		expChainBBalanceDiff        math.Int
+		expErr                      bool
 	}{
 		"ack": {
 			contract: &ackReceiverContract{},
@@ -44,8 +47,10 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				c.t = t
 				c.chain = chain
 			},
-			expChainABalanceDiff: transferAmount.Neg(),
-			expChainBBalanceDiff: transferAmount,
+			expChainAPendingSendPackets: 0,
+			expChainBPendingSendPackets: 0,
+			expChainABalanceDiff:        transferAmount.Neg(),
+			expChainBBalanceDiff:        transferAmount,
 		},
 		"nack": {
 			contract: &nackReceiverContract{},
@@ -53,8 +58,10 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				c := contract.(*nackReceiverContract)
 				c.t = t
 			},
-			expChainABalanceDiff: sdk.ZeroInt(),
-			expChainBBalanceDiff: sdk.ZeroInt(),
+			expChainAPendingSendPackets: 0,
+			expChainBPendingSendPackets: 0,
+			expChainABalanceDiff:        sdk.ZeroInt(),
+			expChainBBalanceDiff:        sdk.ZeroInt(),
 		},
 		"error": {
 			contract: &errorReceiverContract{},
@@ -62,8 +69,11 @@ func TestFromIBCTransferToContract(t *testing.T) {
 				c := contract.(*errorReceiverContract)
 				c.t = t
 			},
-			expChainABalanceDiff: sdk.ZeroInt(),
-			expChainBBalanceDiff: sdk.ZeroInt(),
+			expChainAPendingSendPackets: 1,
+			expChainBPendingSendPackets: 0,
+			expChainABalanceDiff:        transferAmount.Neg(),
+			expChainBBalanceDiff:        sdk.ZeroInt(),
+			expErr:                      true,
 		},
 	}
 	for name, spec := range specs {
@@ -101,6 +111,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			// when transfer via sdk transfer from A (module) -> B (contract)
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
+
 			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
@@ -112,11 +123,15 @@ func TestFromIBCTransferToContract(t *testing.T) {
 
 			// and when relay to chain B and handle Ack on chain A
 			err = coordinator.RelayAndAckPendingPackets(path)
-			require.NoError(t, err)
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 
 			// then
-			require.Equal(t, 0, len(chainA.PendingSendPackets))
-			require.Equal(t, 0, len(chainB.PendingSendPackets))
+			require.Equal(t, spec.expChainAPendingSendPackets, len(chainA.PendingSendPackets))
+			require.Equal(t, spec.expChainBPendingSendPackets, len(chainB.PendingSendPackets))
 
 			// and source chain balance was decreased
 			newChainABalance := chainA.Balance(chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
