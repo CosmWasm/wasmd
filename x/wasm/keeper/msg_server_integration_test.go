@@ -369,22 +369,22 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 		permission *types.AccessConfig
 		expErr     bool
 	}{
-		"authority can store and instantiate when permission is nobody": {
+		"authority can store and instantiate a contract when permission is nobody": {
 			addr:       authority,
 			permission: &types.AllowNobody,
 			expErr:     false,
 		},
-		"other address cannot store and instantiate when permission is nobody": {
+		"other address cannot store and instantiate a contract when permission is nobody": {
 			addr:       myAddress.String(),
 			permission: &types.AllowNobody,
 			expErr:     true,
 		},
-		"authority can store and instantiate when permission is everybody": {
+		"authority can store and instantiate a contract when permission is everybody": {
 			addr:       authority,
 			permission: &types.AllowEverybody,
 			expErr:     false,
 		},
-		"other address can store and instantiate when permission is everybody": {
+		"other address can store and instantiate a contract when permission is everybody": {
 			addr:       myAddress.String(),
 			permission: &types.AllowEverybody,
 			expErr:     false,
@@ -533,6 +533,244 @@ func TestClearAdmin(t *testing.T) {
 				Contract: storeAndInstantiateResponse.Address,
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgClearAdmin)(ctx, msgClearAdmin)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestMigrateContract(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                      = wasmApp.WasmKeeper.GetAuthority()
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+	)
+
+	specs := map[string]struct {
+		addr   string
+		expErr bool
+	}{
+		"authority can migrate a contract": {
+			addr:   authority,
+			expErr: false,
+		},
+		"admin can migrate a contract": {
+			addr:   myAddress.String(),
+			expErr: false,
+		},
+		"other address cannot migrate a contract": {
+			addr:   otherAddr.String(),
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			_, _, sender := testdata.KeyTestPubAddr()
+			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+				m.WASMByteCode = hackatomContract
+				m.Sender = sender.String()
+			})
+
+			//store code
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var storeCodeResponse types.MsgStoreCodeResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeCodeResponse))
+
+			// instantiate contract
+			initMsg := keeper.HackatomExampleInitMsg{
+				Verifier:    sender,
+				Beneficiary: myAddress,
+			}
+			initMsgBz, err := json.Marshal(initMsg)
+			require.NoError(t, err)
+
+			msgInstantiate := &types.MsgInstantiateContract{
+				Sender: sender.String(),
+				Admin:  myAddress.String(),
+				CodeID: storeCodeResponse.CodeID,
+				Label:  "test",
+				Msg:    initMsgBz,
+				Funds:  sdk.Coins{},
+			}
+			rsp, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
+			require.NoError(t, err)
+			var instantiateResponse types.MsgInstantiateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &instantiateResponse))
+
+			// when
+			migMsg := struct {
+				Verifier sdk.AccAddress `json:"verifier"`
+			}{Verifier: myAddress}
+			migMsgBz, err := json.Marshal(migMsg)
+			require.NoError(t, err)
+			msgMigrateContract := &types.MsgMigrateContract{
+				Sender:   spec.addr,
+				Msg:      migMsgBz,
+				Contract: instantiateResponse.Address,
+				CodeID:   storeCodeResponse.CodeID,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgMigrateContract)(ctx, msgMigrateContract)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestInstantiateContract(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		addr       string
+		permission *types.AccessConfig
+		expErr     bool
+	}{
+		"authority can instantiate a contract when permission is nobody": {
+			addr:       authority,
+			permission: &types.AllowNobody,
+			expErr:     false,
+		},
+		"other address cannot instantiate a contract when permission is nobody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowNobody,
+			expErr:     true,
+		},
+		"authority can instantiate a contract when permission is everybody": {
+			addr:       authority,
+			permission: &types.AllowEverybody,
+			expErr:     false,
+		},
+		"other address can  instantiate a contract when permission is everybody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowEverybody,
+			expErr:     false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			_, _, sender := testdata.KeyTestPubAddr()
+			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+				m.WASMByteCode = wasmContract
+				m.Sender = sender.String()
+				m.InstantiatePermission = spec.permission
+			})
+
+			// store code
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var result types.MsgStoreCodeResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+			// when
+			msgInstantiate := &types.MsgInstantiateContract{
+				Sender: spec.addr,
+				Admin:  myAddress.String(),
+				CodeID: result.CodeID,
+				Label:  "test",
+				Msg:    []byte(`{}`),
+				Funds:  sdk.Coins{},
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestInstantiateContract2(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		addr       string
+		salt       string
+		permission *types.AccessConfig
+		expErr     bool
+	}{
+		"authority can instantiate a contract when permission is nobody": {
+			addr:       authority,
+			permission: &types.AllowNobody,
+			salt:       "salt1",
+			expErr:     false,
+		},
+		"other address cannot instantiate a contract when permission is nobody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowNobody,
+			salt:       "salt2",
+			expErr:     true,
+		},
+		"authority can instantiate a contract when permission is everybody": {
+			addr:       authority,
+			permission: &types.AllowEverybody,
+			salt:       "salt3",
+			expErr:     false,
+		},
+		"other address can  instantiate a contract when permission is everybody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowEverybody,
+			salt:       "salt4",
+			expErr:     false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			_, _, sender := testdata.KeyTestPubAddr()
+			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+				m.WASMByteCode = wasmContract
+				m.Sender = sender.String()
+				m.InstantiatePermission = spec.permission
+			})
+
+			// store code
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var result types.MsgStoreCodeResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+			// when
+			msgInstantiate := &types.MsgInstantiateContract2{
+				Sender: spec.addr,
+				Admin:  myAddress.String(),
+				CodeID: result.CodeID,
+				Label:  "label",
+				Msg:    []byte(`{}`),
+				Funds:  sdk.Coins{},
+				Salt:   []byte(spec.salt),
+				FixMsg: true,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
 
 			//then
 			if spec.expErr {
