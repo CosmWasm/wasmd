@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"fmt"
 	"math"
 
 	errorsmod "cosmossdk.io/errors"
@@ -267,23 +268,38 @@ func (i IBCHandler) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(err, "contract port id"))
 	}
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
-	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
+
+	em := sdk.NewEventManager()
+	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
+		// the state gets reverted, we keep only wasm events that do not contain custom data
+		for _, e := range em.Events() {
+			if types.IsAcceptedEventOnRecvPacketErrorAck(e.Type) {
+				ctx.EventManager().EmitEvent(e)
+			}
+		}
+		// the `NewErrorAcknowledgement` redacts the error message, it is
+		// recommended by the ibc-module devs to log the raw error as event:
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypePacketRecv,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String()),
+				sdk.NewAttribute(types.AttributeKeyAckError, err.Error()), // contains original error message not redacted
+				sdk.NewAttribute(types.AttributeKeyAckSuccess, "false"),
+			))
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
-	return ContractConfirmStateAck(ack)
-}
-
-var _ ibcexported.Acknowledgement = ContractConfirmStateAck{}
-
-type ContractConfirmStateAck []byte
-
-func (w ContractConfirmStateAck) Success() bool {
-	return true // always commit state
-}
-
-func (w ContractConfirmStateAck) Acknowledgement() []byte {
-	return w
+	// emit all contract and submessage events on success
+	ctx.EventManager().EmitEvents(em.Events())
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypePacketRecv,
+			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
+		))
+	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
