@@ -14,6 +14,7 @@
 
 ### Bug Fixes
 * [\#12](https://github.com/line/wasmd/pull/12) fix not to register wrong codec in `x/wasmplus`
+* [\#14](https://github.com/line/wasmd/pull/14) fix the cmd error that does not recognize wasmvm library version
 
 ### Breaking Changes
 

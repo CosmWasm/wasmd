@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/dvsekhvalnov/jose2go/base64url"
@@ -20,6 +24,7 @@ import (
 	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
 	"github.com/line/ostracon/crypto"
 	"github.com/line/ostracon/crypto/ed25519"
+	wasmvm "github.com/line/wasmvm"
 
 	"github.com/line/wasmd/x/wasm/keeper"
 	"github.com/line/wasmd/x/wasm/keeper/testdata"
@@ -591,4 +596,39 @@ func assertContractInfo(t *testing.T, q sdk.Querier, ctx sdk.Context, contractBe
 
 	assert.Equal(t, codeID, res.CodeID)
 	assert.Equal(t, creator.String(), res.Creator)
+}
+
+func TestCheckLibwasmVersion(t *testing.T) {
+	f, err := os.Open(filepath.Join(moduleBasePath(t), "go.mod"))
+	assert.NoError(t, err)
+
+	res, err := io.ReadAll(f)
+	assert.NoError(t, err)
+	parsed := strings.Split(string(res), "\n")
+	var expected string
+	for _, line := range parsed {
+		if strings.Contains(line, "github.com/line/wasmvm") {
+			expected = strings.Split(strings.TrimSpace(line), " ")[1]
+		}
+	}
+	got, err := wasmvm.LibwasmvmVersion()
+	assert.NoError(t, err)
+	assert.Contains(t, expected, got)
+}
+
+func moduleBasePath(t *testing.T) string {
+	t.Helper()
+
+	err := os.Setenv("GO111MODULE", "on")
+	if err != nil {
+		t.Fatalf("unable to set GO111MODULE env var: %v", err)
+	}
+
+	cmd := exec.Command("go", "list", "-f", "{{.Module.Dir}}")
+	out, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("failed to evaluate Go module base path: %v", err)
+	}
+
+	return strings.TrimSpace(string(out))
 }
