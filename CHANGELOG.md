@@ -1,6 +1,22 @@
 # Changelog
 
-## [Unreleased](https://github.com/line/wasmd/tree/HEAD)
+## [Unreleased](https://github.com/line/wasmd/compare/v0.1.0...HEAD)
+
+### Features
+
+### Improvements
+
+### Bug Fixes
+
+### Breaking Changes
+
+### Build, CI
+
+### Document Updates
+
+
+
+## [v0.1.0](https://github.com/line/wasmd/releases/tag/v0.1.0) - 2023.03.28
 
 ### Features
 * [\#9](https://github.com/line/wasmd/pull/9) apply the changes of lbm-sdk and ostracon proto
