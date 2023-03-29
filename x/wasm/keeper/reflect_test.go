@@ -45,7 +45,7 @@ func TestReflectContractSend(t *testing.T) {
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, bob := keyPubAddr()
+	_, bob := keyPubAddr()
 
 	// upload reflect code
 	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -125,7 +125,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	bob := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	_, _, fred := keyPubAddr()
+	_, fred := keyPubAddr()
 
 	// upload code
 	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
@@ -592,11 +592,11 @@ type reflectCustomMsg struct {
 // toReflectRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
 func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
-	any, err := codectypes.NewAnyWithValue(msg)
+	codecAny, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, err
 	}
-	rawBz, err := cdc.MarshalJSON(any)
+	rawBz, err := cdc.MarshalJSON(codecAny)
 	if err != nil {
 		return wasmvmtypes.CosmosMsg{}, errorsmod.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
@@ -606,7 +606,7 @@ func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error
 	res := wasmvmtypes.CosmosMsg{
 		Custom: customMsg,
 	}
-	return res, nil
+	return res, err
 }
 
 // reflectEncoders needs to be registered in test setup to handle custom message callbacks
@@ -626,12 +626,12 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 			return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
-			var any codectypes.Any
-			if err := cdc.UnmarshalJSON(custom.Raw, &any); err != nil {
+			var codecAny codectypes.Any
+			if err := cdc.UnmarshalJSON(custom.Raw, &codecAny); err != nil {
 				return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
 			var msg sdk.Msg
-			if err := cdc.UnpackAny(&any, &msg); err != nil {
+			if err := cdc.UnpackAny(&codecAny, &msg); err != nil {
 				return nil, err
 			}
 			return []sdk.Msg{msg}, nil
@@ -653,6 +653,7 @@ type customQueryResponse struct {
 	Msg string `json:"msg"`
 }
 
+// this is from the contract to the go code (capitalized or ping)
 type capitalizedResponse struct {
 	Text string `json:"text"`
 }

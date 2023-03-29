@@ -95,7 +95,7 @@ func (ws *WasmSnapshotter) RestoreExtension(height uint64, format uint32, payloa
 	return snapshot.ErrUnknownFormat
 }
 
-func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
+func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")
 	}

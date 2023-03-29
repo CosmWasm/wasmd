@@ -114,7 +114,7 @@ type (
 	BankEncoder                    = keeper.BankEncoder
 	CustomEncoder                  = keeper.CustomEncoder
 	StakingEncoder                 = keeper.StakingEncoder
-	WasmEncoder                    = keeper.WasmEncoder //nolint:revive
+	WasmEncoder                    = keeper.WasmEncoder
 	MessageEncoders                = keeper.MessageEncoders
 	Keeper                         = keeper.Keeper
 	QueryHandler                   = keeper.QueryHandler

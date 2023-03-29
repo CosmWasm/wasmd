@@ -72,7 +72,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the wasm module.
-func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, config client.TxEncodingConfig, message json.RawMessage) error {
+func (b AppModuleBasic) ValidateGenesis(marshaler codec.JSONCodec, _ client.TxEncodingConfig, message json.RawMessage) error {
 	var data GenesisState
 	err := marshaler.UnmarshalJSON(message, &data)
 	if err != nil {
@@ -150,7 +150,6 @@ func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
-	types.RegisterQueryServer(cfg.QueryServer(), NewQuerier(am.keeper))
 
 	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
@@ -164,7 +163,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the wasm module invariants.
-func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
+func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // QuerierRoute returns the wasm module's querier route name.
 func (AppModule) QuerierRoute() string {
@@ -209,14 +208,12 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 }
 
 // ProposalContents doesn't return any content functions for governance proposals.
-//
-
-func (am AppModule) ProposalContents(simState module.SimulationState) []simtypes.WeightedProposalContent {
+func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
 	return simulation.ProposalContents(am.bankKeeper, am.keeper)
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types
-func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
 }
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
@@ -285,7 +282,7 @@ func getExpectedLibwasmVersion() string {
 	return ""
 }
 
-func checkLibwasmVersion(cmd *cobra.Command, args []string) error {
+func checkLibwasmVersion(_ *cobra.Command, _ []string) error {
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
