@@ -781,3 +781,77 @@ func TestInstantiateContract2(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateInstantiateConfig(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		creator   sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		addr       string
+		permission *types.AccessConfig
+		expErr     bool
+	}{
+		"authority can update instantiate config when permission is subset": {
+			addr:       authority,
+			permission: &types.AllowNobody,
+			expErr:     false,
+		},
+		"creator can update instantiate config when permission is subset": {
+			addr:       creator.String(),
+			permission: &types.AllowNobody,
+			expErr:     false,
+		},
+		"authority can update instantiate config when permission is not subset": {
+			addr:       authority,
+			permission: &types.AllowEverybody,
+			expErr:     false,
+		},
+		"creator cannot  update instantiate config when permission is not subset": {
+			addr:       creator.String(),
+			permission: &types.AllowEverybody,
+			expErr:     true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+				CodeUploadAccess:             types.AllowEverybody,
+				InstantiateDefaultPermission: types.AccessTypeNobody,
+			})
+			require.NoError(t, err)
+
+			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+				m.WASMByteCode = wasmContract
+				m.Sender = creator.String()
+				m.InstantiatePermission = &types.AllowNobody
+			})
+
+			// store code
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var result types.MsgStoreCodeResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+			// when
+			msgUpdateInstantiateConfig := &types.MsgUpdateInstantiateConfig{
+				Sender:                   spec.addr,
+				CodeID:                   result.CodeID,
+				NewInstantiatePermission: spec.permission,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateInstantiateConfig)(ctx, msgUpdateInstantiateConfig)
+
+			//then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

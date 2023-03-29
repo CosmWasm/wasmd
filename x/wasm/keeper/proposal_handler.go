@@ -15,13 +15,15 @@ import (
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
+//
+// Deprecated: Do not use.
 func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	return NewWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
 }
 
 // NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
 //
-//nolint:staticcheck
+// Deprecated: Do not use.
 func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {

@@ -219,9 +219,13 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "sender")
+	}
 	policy := m.selectAuthorizationPolicy(msg.Sender)
 
-	if err := m.keeper.setAccessConfig(ctx, msg.CodeID, sdk.AccAddress(msg.Sender), *msg.NewInstantiatePermission, policy); err != nil {
+	if err := m.keeper.setAccessConfig(ctx, msg.CodeID, senderAddr, *msg.NewInstantiatePermission, policy); err != nil {
 		return nil, err
 	}
 
@@ -230,6 +234,9 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 
 // UpdateParams updates the module parameters
 func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
@@ -245,6 +252,10 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 
 // PinCodes pins a set of code ids in the wasmvm cache.
 func (m msgServer) PinCodes(goCtx context.Context, req *types.MsgPinCodes) (*types.MsgPinCodesResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
@@ -262,6 +273,10 @@ func (m msgServer) PinCodes(goCtx context.Context, req *types.MsgPinCodes) (*typ
 
 // UnpinCodes unpins a set of code ids in the wasmvm cache.
 func (m msgServer) UnpinCodes(goCtx context.Context, req *types.MsgUnpinCodes) (*types.MsgUnpinCodesResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
@@ -279,6 +294,9 @@ func (m msgServer) UnpinCodes(goCtx context.Context, req *types.MsgUnpinCodes) (
 
 // SudoContract calls sudo on a contract.
 func (m msgServer) SudoContract(goCtx context.Context, req *types.MsgSudoContract) (*types.MsgSudoContractResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
@@ -300,6 +318,10 @@ func (m msgServer) SudoContract(goCtx context.Context, req *types.MsgSudoContrac
 
 // StoreAndInstantiateContract stores and instantiates the contract.
 func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types.MsgStoreAndInstantiateContract) (*types.MsgStoreAndInstantiateContractResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
 	authorityAddr, err := sdk.AccAddressFromBech32(req.Authority)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "authority")
