@@ -125,11 +125,14 @@ distclean: clean
 ### Testing
 
 
-test: test-unit
+test: test-unit test-app2
 test-all: check test-race test-cover
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...
+
+test-app2:
+	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock app_v2' ./app/... ./tests/...
 
 test-race:
 	@VERSION=$(VERSION) go test -mod=readonly -race -tags='ledger test_ledger_mock' ./...
@@ -200,4 +203,4 @@ proto-check-breaking:
 .PHONY: all install install-debug \
 	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race \
-	test-sim-import-export build-windows-client \
+	test-sim-import-export build-windows-client test-app2 \

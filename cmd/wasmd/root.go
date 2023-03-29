@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
+
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
@@ -40,7 +42,7 @@ import (
 // NewRootCmd creates a new root command for wasmd. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := getEncodingConfig()
 
 	cfg := sdk.GetConfig()
 	cfg.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
@@ -91,6 +93,18 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	initRootCmd(rootCmd, encodingConfig)
 
 	return rootCmd, encodingConfig
+}
+
+// creates an app instance temporary to fetch the encoding config. Not great...
+func getEncodingConfig() params.EncodingConfig {
+	tempApp := app.NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, nil, sims.NewAppOptionsWithFlagHome(app.DefaultNodeHome), nil)
+	encodingConfig := params.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Marshaler:         tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
+	return encodingConfig
 }
 
 // initTendermintConfig helps to override default Tendermint Config values.
