@@ -21,7 +21,8 @@ type BankViewKeeper interface {
 	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetSupply(ctx sdk.Context, denom string) sdk.Coin
-	GetAllDenomMetaData(ctx sdk.Context) []banktypes.Metadata
+	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	DenomsMetadata(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error)
 }
 
 // Burner is a subset of the sdk bank keeper methods

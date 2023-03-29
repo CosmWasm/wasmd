@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -357,6 +358,49 @@ func TestBankQuerierBalance(t *testing.T) {
 }
 
 func TestBankQuerierMetadata(t *testing.T) {
+	metadata := banktypes.Metadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+			},
+		},
+	}
+
+	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+		if denom == "utest" {
+			return metadata, true
+		} else {
+			return banktypes.Metadata{}, false
+		}
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "utest",
+		},
+	})
+	require.NoError(t, gotErr)
+	var got wasmvmtypes.DenomMetadataResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wasmvmtypes.DenomMetadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []*wasmvmtypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+			},
+		},
+	}
+	assert.Equal(t, exp, got)
+}
+
+func TestBankQuerierAllMetadata(t *testing.T) {
 	metadata := []banktypes.Metadata{
 		{
 			Name: "Test Token",
@@ -370,8 +414,10 @@ func TestBankQuerierMetadata(t *testing.T) {
 		},
 	}
 
-	mock := bankKeeperMock{GetAllDenomMetadataFn: func(ctx sdk.Context) []banktypes.Metadata {
-		return metadata
+	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+		return &banktypes.QueryDenomsMetadataResponse{
+			Metadatas: metadata,
+		}, nil
 	}}
 
 	ctx := sdk.Context{}
@@ -380,10 +426,21 @@ func TestBankQuerierMetadata(t *testing.T) {
 		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{},
 	})
 	require.NoError(t, gotErr)
-	var got keeper.AllDenomMetadataResponse
+	var got wasmvmtypes.AllDenomMetadataResponse
 	require.NoError(t, json.Unmarshal(gotBz, &got))
-	exp := keeper.AllDenomMetadataResponse{
-		Metadata: metadata,
+	exp := wasmvmtypes.AllDenomMetadataResponse{
+		Metadata: []wasmvmtypes.DenomMetadata{
+			{
+				Name: "Test Token",
+				Base: "utest",
+				DenomUnits: []*wasmvmtypes.DenomUnit{
+					{
+						Denom:    "utest",
+						Exponent: 0,
+					},
+				},
+			},
+		},
 	}
 	assert.Equal(t, exp, got)
 }
@@ -705,10 +762,11 @@ func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.
 }
 
 type bankKeeperMock struct {
-	GetSupplyFn           func(ctx sdk.Context, denom string) sdk.Coin
-	GetBalanceFn          func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetAllBalancesFn      func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	GetAllDenomMetadataFn func(ctx sdk.Context) []banktypes.Metadata
+	GetSupplyFn         func(ctx sdk.Context, denom string) sdk.Coin
+	GetBalanceFn        func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalancesFn    func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetDenomMetadataFn  func(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	GetDenomsMetadataFn func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error)
 }
 
 func (m bankKeeperMock) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
@@ -732,11 +790,18 @@ func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 	return m.GetAllBalancesFn(ctx, addr)
 }
 
-func (m bankKeeperMock) GetAllDenomMetaData(ctx sdk.Context) []banktypes.Metadata {
-	if m.GetAllDenomMetadataFn == nil {
+func (m bankKeeperMock) GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+	if m.GetDenomMetadataFn == nil {
 		panic("not expected to be called")
 	}
-	return m.GetAllDenomMetadataFn(ctx)
+	return m.GetDenomMetadataFn(ctx, denom)
+}
+
+func (m bankKeeperMock) DenomsMetadata(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+	if m.GetDenomsMetadataFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetDenomsMetadataFn(ctx, req)
 }
 
 func TestConvertProtoToJSONMarshal(t *testing.T) {
