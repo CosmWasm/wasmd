@@ -173,7 +173,7 @@ func TestPinCodes(t *testing.T) {
 				m.Sender = sender.String()
 			})
 
-			//store code
+			// store code
 			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 			require.NoError(t, err)
 			var result types.MsgStoreCodeResponse
@@ -187,7 +187,7 @@ func TestPinCodes(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgPinCodes)(ctx, msgPinCodes)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 				assert.False(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
@@ -252,7 +252,7 @@ func TestUnpinCodes(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgUnpinCodes)(ctx, msgUnpinCodes)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 				assert.True(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
@@ -310,7 +310,7 @@ func TestSudoContract(t *testing.T) {
 				m.Sender = sender.String()
 			})
 
-			//store code
+			// store code
 			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 			require.NoError(t, err)
 			var storeCodeResponse types.MsgStoreCodeResponse
@@ -345,7 +345,7 @@ func TestSudoContract(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgSudoContract)(ctx, msgSudoContract)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -392,7 +392,6 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-
 			// when
 			msg := &types.MsgStoreAndInstantiateContract{
 				Authority:             spec.addr,
@@ -406,7 +405,7 @@ func TestStoreAndInstantiateContract(t *testing.T) {
 			}
 			_, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -471,7 +470,7 @@ func TestUpdateAdmin(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateAdmin)(ctx, msgUpdateAdmin)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -510,7 +509,6 @@ func TestClearAdmin(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-
 			// setup
 			msg := &types.MsgStoreAndInstantiateContract{
 				Authority:             spec.addr,
@@ -534,7 +532,7 @@ func TestClearAdmin(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgClearAdmin)(ctx, msgClearAdmin)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -580,7 +578,7 @@ func TestMigrateContract(t *testing.T) {
 				m.Sender = sender.String()
 			})
 
-			//store code
+			// store code
 			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 			require.NoError(t, err)
 			var storeCodeResponse types.MsgStoreCodeResponse
@@ -621,7 +619,7 @@ func TestMigrateContract(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgMigrateContract)(ctx, msgMigrateContract)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -693,7 +691,7 @@ func TestInstantiateContract(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -772,7 +770,7 @@ func TestInstantiateContract2(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgInstantiate)(ctx, msgInstantiate)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {
@@ -846,7 +844,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateInstantiateConfig)(ctx, msgUpdateInstantiateConfig)
 
-			//then
+			// then
 			if spec.expErr {
 				require.Error(t, err)
 			} else {

@@ -121,10 +121,11 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 )
 
 const appName = "WasmApp"
