@@ -25,7 +25,7 @@ func MigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			msg, err := parseMigrateContractArgs(args, clientCtx)
+			msg, err := parseMigrateContractArgs(args, clientCtx.GetFromAddress().String())
 			if err != nil {
 				return err
 			}
@@ -40,7 +40,7 @@ func MigrateContractCmd() *cobra.Command {
 	return cmd
 }
 
-func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMigrateContract, error) {
+func parseMigrateContractArgs(args []string, sender string) (types.MsgMigrateContract, error) {
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
@@ -50,7 +50,7 @@ func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMi
 	migrateMsg := args[2]
 
 	msg := types.MsgMigrateContract{
-		Sender:   cliCtx.GetFromAddress().String(),
+		Sender:   sender,
 		Contract: args[0],
 		CodeID:   codeID,
 		Msg:      []byte(migrateMsg),
@@ -71,8 +71,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			msg := parseUpdateContractAdminArgs(args, clientCtx)
-
+			msg := parseUpdateContractAdminArgs(args, clientCtx.GetFromAddress().String())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -84,9 +83,9 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) types.MsgUpdateAdmin {
+func parseUpdateContractAdminArgs(args []string, sender string) types.MsgUpdateAdmin {
 	msg := types.MsgUpdateAdmin{
-		Sender:   cliCtx.GetFromAddress().String(),
+		Sender:   sender,
 		Contract: args[0],
 		NewAdmin: args[1],
 	}
