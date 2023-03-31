@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmwasm/wasm/v1/types.proto";
+import "amino/amino.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_stringer_all) = false;
@@ -17,6 +18,7 @@ option (gogoproto.equal_all) = true;
 // a v1 governance proposal.
 message StoreCodeProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/StoreCodeProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -49,6 +51,7 @@ message StoreCodeProposal {
 // a v1 governance proposal.
 message InstantiateContractProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/InstantiateContractProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -68,6 +71,7 @@ message InstantiateContractProposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
@@ -78,6 +82,7 @@ message InstantiateContractProposal {
 // a v1 governance proposal.
 message InstantiateContract2Proposal {
   option deprecated = true;
+  option (amino.name) = "wasm/InstantiateContract2Proposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -97,6 +102,7 @@ message InstantiateContract2Proposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 8 [
     (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
   // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
@@ -112,6 +118,7 @@ message InstantiateContract2Proposal {
 // a v1 governance proposal.
 message MigrateContractProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/MigrateContractProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -134,6 +141,7 @@ message MigrateContractProposal {
 // a v1 governance proposal.
 message SudoContractProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/SudoContractProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -152,6 +160,7 @@ message SudoContractProposal {
 // a v1 governance proposal.
 message ExecuteContractProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/ExecuteContractProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -167,6 +176,7 @@ message ExecuteContractProposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
@@ -177,6 +187,7 @@ message ExecuteContractProposal {
 // a v1 governance proposal.
 message UpdateAdminProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/UpdateAdminProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -195,6 +206,7 @@ message UpdateAdminProposal {
 // a v1 governance proposal.
 message ClearAdminProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/ClearAdminProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -211,6 +223,7 @@ message ClearAdminProposal {
 // a v1 governance proposal.
 message PinCodesProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/PinCodesProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -230,6 +243,7 @@ message PinCodesProposal {
 // a v1 governance proposal.
 message UnpinCodesProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/UnpinCodesProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -249,7 +263,8 @@ message AccessConfigUpdate {
   // CodeID is the reference to the stored WASM code to be updated
   uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
   // InstantiatePermission to apply to the set of code ids
-  AccessConfig instantiate_permission = 2 [ (gogoproto.nullable) = false ];
+  AccessConfig instantiate_permission = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -258,6 +273,7 @@ message AccessConfigUpdate {
 // the x/gov module via a v1 governance proposal.
 message UpdateInstantiateConfigProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/UpdateInstantiateConfigProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -267,7 +283,7 @@ message UpdateInstantiateConfigProposal {
   // AccessConfigUpdate contains the list of code ids and the access config
   // to be applied.
   repeated AccessConfigUpdate access_config_updates = 3
-      [ (gogoproto.nullable) = false ];
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -276,6 +292,7 @@ message UpdateInstantiateConfigProposal {
 // the x/gov module via a v1 governance proposal.
 message StoreAndInstantiateContractProposal {
   option deprecated = true;
+  option (amino.name) = "wasm/StoreAndInstantiateContractProposal";
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
@@ -299,6 +316,7 @@ message StoreAndInstantiateContractProposal {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 10 [
     (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
   // Source is the URL where the code is hosted
