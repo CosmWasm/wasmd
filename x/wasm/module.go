@@ -208,9 +208,9 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
 }
 
-// ProposalContents doesn't return any content functions for governance proposals.
-func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
-	return simulation.ProposalContents(am.bankKeeper, am.keeper)
+// ProposalMsgs returns msgs used for governance proposals for simulations.
+func (am AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+	return simulation.ProposalMsgs(am.bankKeeper, am.keeper)
 }
 
 // RegisterStoreDecoder registers a decoder for supply module's types

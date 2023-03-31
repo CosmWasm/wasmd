@@ -12,6 +12,8 @@ var (
 	// and https://github.com/golang/go/blob/master/src/net/http/sniff.go#L186
 	gzipIdent = []byte("\x1F\x8B\x08")
 
+	// magic number for Wasm is "\0asm"
+	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-module
 	wasmIdent = []byte("\x00\x61\x73\x6D")
 )
 

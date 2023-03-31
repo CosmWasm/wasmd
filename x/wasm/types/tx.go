@@ -74,11 +74,6 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
 			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
 		}
-		// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
-		// but not for new contracts
-		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
-			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
-		}
 	}
 	return nil
 }
@@ -478,5 +473,165 @@ func (msg MsgUpdateParams) GetSignBytes() []byte {
 }
 
 func (msg MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
 	return msg.Params.ValidateBasic()
+}
+
+func (msg MsgPinCodes) Route() string {
+	return RouterKey
+}
+
+func (msg MsgPinCodes) Type() string {
+	return "pin-codes"
+}
+
+func (msg MsgPinCodes) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgPinCodes) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgPinCodes) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+	if len(msg.CodeIDs) == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
+	}
+	return nil
+}
+
+func (msg MsgUnpinCodes) Route() string {
+	return RouterKey
+}
+
+func (msg MsgUnpinCodes) Type() string {
+	return "unpin-codes"
+}
+
+func (msg MsgUnpinCodes) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgUnpinCodes) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgUnpinCodes) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+	if len(msg.CodeIDs) == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
+	}
+	return nil
+}
+
+func (msg MsgSudoContract) Route() string {
+	return RouterKey
+}
+
+func (msg MsgSudoContract) Type() string {
+	return "sudo-contract"
+}
+
+func (msg MsgSudoContract) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgSudoContract) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgSudoContract) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
+		return errorsmod.Wrap(err, "contract")
+	}
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(err, "payload msg")
+	}
+	return nil
+}
+
+func (msg MsgStoreAndInstantiateContract) Route() string {
+	return RouterKey
+}
+
+func (msg MsgStoreAndInstantiateContract) Type() string {
+	return "store-and-instantiate-contract"
+}
+
+func (msg MsgStoreAndInstantiateContract) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgStoreAndInstantiateContract) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+
+	if err := ValidateLabel(msg.Label); err != nil {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+	}
+
+	if !msg.Funds.IsValid() {
+		return sdkerrors.ErrInvalidCoins
+	}
+
+	if len(msg.Admin) != 0 {
+		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
+			return errorsmod.Wrap(err, "admin")
+		}
+	}
+
+	if err := ValidateVerificationInfo(msg.Source, msg.Builder, msg.CodeHash); err != nil {
+		return errorsmod.Wrapf(err, "code verification info")
+	}
+
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(err, "payload msg")
+	}
+
+	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+	}
+
+	if msg.InstantiatePermission != nil {
+		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
+			return errorsmod.Wrap(err, "instantiate permission")
+		}
+		// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
+		// but not for new contracts
+		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
+			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
+		}
+	}
+	return nil
 }
