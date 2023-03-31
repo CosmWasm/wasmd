@@ -1,7 +1,6 @@
 package wasm
 
 import (
-	"fmt"
 	"math"
 
 	errorsmod "cosmossdk.io/errors"
@@ -265,40 +264,22 @@ func (i IBCHandler) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(err, "contract port id"))
+		// this must not happen as ports were registered before
+		panic(errorsmod.Wrapf(err, "contract port id"))
 	}
-	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 
 	em := sdk.NewEventManager()
+	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
-		// the state gets reverted, we keep only wasm events that do not contain custom data
-		for _, e := range em.Events() {
-			if types.IsAcceptedEventOnRecvPacketErrorAck(e.Type) {
-				ctx.EventManager().EmitEvent(e)
-			}
-		}
-		// the `NewErrorAcknowledgement` redacts the error message, it is
-		// recommended by the ibc-module devs to log the raw error as event:
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypePacketRecv,
-				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-				sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String()),
-				sdk.NewAttribute(types.AttributeKeyAckError, err.Error()), // contains original error message not redacted
-				sdk.NewAttribute(types.AttributeKeyAckSuccess, "false"),
-			))
+		// the state gets reverted, so we drop all captured events
+		types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
+
 	// emit all contract and submessage events on success
 	ctx.EventManager().EmitEvents(em.Events())
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypePacketRecv,
-			sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddr.String()),
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
-		))
+	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
 	return ack
 }
 

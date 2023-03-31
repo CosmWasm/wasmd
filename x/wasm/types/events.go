@@ -1,5 +1,12 @@
 package types
 
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+)
+
 const (
 	// WasmModuleEventType is stored with any contract TX that returns non empty EventAttributes
 	WasmModuleEventType = "wasm"
@@ -21,27 +28,25 @@ const (
 	// add new types to IsAcceptedEventOnRecvPacketErrorAck
 )
 
-// IsAcceptedEventOnRecvPacketErrorAck returns true for all wasm event types that do not contain custom attributes
-func IsAcceptedEventOnRecvPacketErrorAck(s string) bool {
-	for _, v := range []string{
-		EventTypeStoreCode,
-		EventTypeInstantiate,
-		EventTypeExecute,
-		// EventTypeMigrate, not true as we rolled back
-		// EventTypePinCode, not relevant
-		// EventTypeUnpinCode, not relevant
-		EventTypeSudo,
-		EventTypeReply,
-		EventTypeGovContractResult,
-		// EventTypeUpdateContractAdmin, not true
-		// EventTypeUpdateCodeAccessConfig, not true
-		// EventTypePacketRecv, can not happen
-	} {
-		if s == v {
-			return true
-		}
+// EmitAcknowledgementEvent emits an event signalling a successful or failed acknowledgement and including the error
+// details if any.
+func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack exported.Acknowledgement, err error) {
+	attributes := []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, ModuleName),
+		sdk.NewAttribute(AttributeKeyContractAddr, contractAddr.String()),
+		sdk.NewAttribute(AttributeKeyAckSuccess, fmt.Sprintf("%t", ack.Success())),
 	}
-	return false
+
+	if err != nil {
+		attributes = append(attributes, sdk.NewAttribute(AttributeKeyAckError, err.Error()))
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			EventTypePacketRecv,
+			attributes...,
+		),
+	)
 }
 
 // event attributes returned from contract execution
