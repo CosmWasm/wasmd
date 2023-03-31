@@ -96,6 +96,7 @@ import (
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
+<<<<<<< HEAD
 	// Note: please do your research before using this in production app, this is a demo and not an officially
 	// supported IBC team implementation. It has no known issues, but do your own research before using it.
 	intertx "github.com/cosmos/interchain-accounts/x/inter-tx"
@@ -112,12 +113,20 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
+=======
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+
+>>>>>>> 887ee0ee (Add amino annotations to proto (#1280))
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+<<<<<<< HEAD
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+=======
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+>>>>>>> 887ee0ee (Add amino annotations to proto (#1280))
 )
 
 const appName = "WasmApp"
