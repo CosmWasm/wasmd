@@ -20,6 +20,7 @@
 
 ### Features
 * [\#9](https://github.com/line/wasmd/pull/9) apply the changes of lbm-sdk and ostracon proto
+* [\#21](https://github.com/line/wasmd/pull/21) bump up line/ibc-go v3.3.2
 
 ### Improvements
 * [\#1](https://github.com/line/wasmd/pull/1) apply all changes of `x/wasm` in lbm-sdk until [lbm-sdk@3bdcb6ffe01c81615bedb777ca0e039cc46ef00c](https://github.com/line/lbm-sdk/tree/3bdcb6ffe01c81615bedb777ca0e039cc46ef00c)

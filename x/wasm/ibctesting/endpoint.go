@@ -11,7 +11,7 @@ import (
 	commitmenttypes "github.com/line/ibc-go/v3/modules/core/23-commitment/types"
 	host "github.com/line/ibc-go/v3/modules/core/24-host"
 	"github.com/line/ibc-go/v3/modules/core/exported"
-	ibcoctypes "github.com/line/ibc-go/v3/modules/light-clients/99-ostracon/types"
+	ibctmtypes "github.com/line/ibc-go/v3/modules/light-clients/07-tendermint/types"
 	ibctesting "github.com/line/ibc-go/v3/testing"
 )
 
@@ -86,12 +86,12 @@ func (endpoint *Endpoint) CreateClient() (err error) {
 	)
 
 	switch endpoint.ClientConfig.GetClientType() {
-	case exported.Ostracon:
+	case exported.Tendermint:
 		tmConfig, ok := endpoint.ClientConfig.(*ibctesting.OstraconConfig)
 		require.True(endpoint.Chain.t, ok)
 
 		height := endpoint.Counterparty.Chain.LastHeader.GetHeight().(clienttypes.Height)
-		clientState = ibcoctypes.NewClientState(
+		clientState = ibctmtypes.NewClientState(
 			endpoint.Counterparty.Chain.ChainID, tmConfig.TrustLevel, tmConfig.TrustingPeriod, tmConfig.UnbondingPeriod, tmConfig.MaxClockDrift,
 			height, commitmenttypes.GetSDKSpecs(), ibctesting.UpgradePath, tmConfig.AllowUpdateAfterExpiry, tmConfig.AllowUpdateAfterMisbehaviour,
 		)
@@ -134,8 +134,8 @@ func (endpoint *Endpoint) UpdateClient() (err error) {
 	var header exported.Header
 
 	switch endpoint.ClientConfig.GetClientType() {
-	case exported.Ostracon:
-		header, err = endpoint.Chain.ConstructUpdateOCClientHeader(endpoint.Counterparty.Chain, endpoint.ClientID)
+	case exported.Tendermint:
+		header, err = endpoint.Chain.ConstructUpdateTMClientHeader(endpoint.Counterparty.Chain, endpoint.ClientID)
 
 	default:
 		err = fmt.Errorf("client type %s is not supported", endpoint.ClientConfig.GetClientType())

@@ -17,7 +17,7 @@ import (
 	host "github.com/line/ibc-go/v3/modules/core/24-host"
 	"github.com/line/ibc-go/v3/modules/core/exported"
 	"github.com/line/ibc-go/v3/modules/core/types"
-	ibcoctypes "github.com/line/ibc-go/v3/modules/light-clients/99-ostracon/types"
+	ibctmtypes "github.com/line/ibc-go/v3/modules/light-clients/07-tendermint/types"
 	"github.com/line/ibc-go/v3/testing/mock"
 	"github.com/line/lbm-sdk/client"
 	"github.com/line/lbm-sdk/codec"
@@ -41,7 +41,7 @@ import (
 	"github.com/line/wasmd/x/wasm"
 )
 
-// TestChain is a testing struct that wraps a simapp with the last OC Header, the current ABCI
+// TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
 // header and the validators of the TestChain. It also contains a field called ChainID. This
 // is the clientID that *other* chains use to refer to this TestChain. The SenderAccount
 // is used for delivering transactions through the application state.
@@ -52,7 +52,7 @@ type TestChain struct {
 	Coordinator   *Coordinator
 	App           *app.WasmApp
 	ChainID       string
-	LastHeader    *ibcoctypes.Header // header for last block height committed
+	LastHeader    *ibctmtypes.Header // header for last block height committed
 	CurrentHeader tmproto.Header     // header for current block height
 	QueryServer   types.QueryServer
 	TxConfig      client.TxConfig
@@ -213,7 +213,7 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 func (chain *TestChain) NextBlock() {
 	// set the last header to the current header
 	// use nil trusted fields
-	chain.LastHeader = chain.CurrentOCClientHeader()
+	chain.LastHeader = chain.CurrentTMClientHeader()
 
 	// increment the current header
 	chain.CurrentHeader = tmproto.Header{
@@ -341,15 +341,15 @@ func (chain *TestChain) GetPrefix() commitmenttypes.MerklePrefix {
 	return commitmenttypes.NewMerklePrefix(chain.App.IBCKeeper.ConnectionKeeper.GetCommitmentPrefix().Bytes())
 }
 
-// ConstructUpdateOCClientHeader will construct a valid 99-ostracon Header to update the
+// ConstructUpdateTMClientHeader will construct a valid 07-tendermint Header to update the
 // light client on the source chain.
-func (chain *TestChain) ConstructUpdateOCClientHeader(counterparty *TestChain, clientID string) (*ibcoctypes.Header, error) {
-	return chain.ConstructUpdateOCClientHeaderWithTrustedHeight(counterparty, clientID, clienttypes.ZeroHeight())
+func (chain *TestChain) ConstructUpdateTMClientHeader(counterparty *TestChain, clientID string) (*ibctmtypes.Header, error) {
+	return chain.ConstructUpdateTMClientHeaderWithTrustedHeight(counterparty, clientID, clienttypes.ZeroHeight())
 }
 
-// ConstructUpdateOCClientHeader will construct a valid 99-ostracon Header to update the
+// ConstructUpdateTMClientHeaderWithTrustedHeight will construct a valid 07-tendermint Header to update the
 // light client on the source chain.
-func (chain *TestChain) ConstructUpdateOCClientHeaderWithTrustedHeight(counterparty *TestChain, clientID string, trustedHeight clienttypes.Height) (*ibcoctypes.Header, error) {
+func (chain *TestChain) ConstructUpdateTMClientHeaderWithTrustedHeight(counterparty *TestChain, clientID string, trustedHeight clienttypes.Height) (*ibctmtypes.Header, error) {
 	header := counterparty.LastHeader
 	// Relayer must query for LatestHeight on client to get TrustedHeight if the trusted height is not set
 	if trustedHeight.IsZero() {
@@ -371,7 +371,7 @@ func (chain *TestChain) ConstructUpdateOCClientHeaderWithTrustedHeight(counterpa
 		// NextValidatorsHash
 		tmTrustedVals, ok = counterparty.GetValsAtHeight(int64(trustedHeight.RevisionHeight + 1))
 		if !ok {
-			return nil, sdkerrors.Wrapf(ibcoctypes.ErrInvalidHeaderHeight, "could not retrieve trusted validators at trustedHeight: %d", trustedHeight)
+			return nil, sdkerrors.Wrapf(ibctmtypes.ErrInvalidHeaderHeight, "could not retrieve trusted validators at trustedHeight: %d", trustedHeight)
 		}
 	}
 	// inject trusted fields into last header
@@ -393,15 +393,15 @@ func (chain *TestChain) ExpireClient(amount time.Duration) {
 	chain.Coordinator.IncrementTimeBy(amount)
 }
 
-// CurrentOCClientHeader creates a OC header using the current header parameters
+// CurrentTMClientHeader creates a TM header using the current header parameters
 // on the chain. The trusted fields in the header are set to nil.
-func (chain *TestChain) CurrentOCClientHeader() *ibcoctypes.Header {
-	return chain.CreateOCClientHeader(chain.ChainID, chain.CurrentHeader.Height, clienttypes.Height{}, chain.CurrentHeader.Time, chain.Vals, nil, chain.Signers)
+func (chain *TestChain) CurrentTMClientHeader() *ibctmtypes.Header {
+	return chain.CreateTMClientHeader(chain.ChainID, chain.CurrentHeader.Height, clienttypes.Height{}, chain.CurrentHeader.Time, chain.Vals, nil, chain.Signers)
 }
 
-// CreateOCClientHeader creates a OC header to update the OC client. Args are passed in to allow
+// CreateTMClientHeader creates a TM header to update the TM client. Args are passed in to allow
 // caller flexibility to use params that differ from the chain.
-func (chain *TestChain) CreateOCClientHeader(chainID string, blockHeight int64, trustedHeight clienttypes.Height, timestamp time.Time, tmValSet, tmTrustedVals *octypes.ValidatorSet, signers []octypes.PrivValidator) *ibcoctypes.Header {
+func (chain *TestChain) CreateTMClientHeader(chainID string, blockHeight int64, trustedHeight clienttypes.Height, timestamp time.Time, tmValSet, tmTrustedVals *octypes.ValidatorSet, signers []octypes.PrivValidator) *ibctmtypes.Header {
 	var (
 		valSet      *tmproto.ValidatorSet
 		trustedVals *tmproto.ValidatorSet
@@ -450,7 +450,7 @@ func (chain *TestChain) CreateOCClientHeader(chainID string, blockHeight int64, 
 
 	// The trusted fields may be nil. They may be filled before relaying messages to a client.
 	// The relayer is responsible for querying client and injecting appropriate trusted fields.
-	return &ibcoctypes.Header{
+	return &ibctmtypes.Header{
 		SignedHeader:      signedHeader,
 		ValidatorSet:      valSet,
 		TrustedHeight:     trustedHeight,
