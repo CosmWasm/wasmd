@@ -5,11 +5,20 @@ go 1.19
 require (
 	github.com/CosmWasm/wasmvm v1.2.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
+<<<<<<< HEAD
 	github.com/cosmos/cosmos-sdk v0.45.15
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/iavl v0.19.5
 	github.com/cosmos/ibc-go/v4 v4.3.0
 	github.com/cosmos/interchain-accounts v0.2.6
+=======
+	github.com/cosmos/cosmos-sdk v0.47.0
+	github.com/cosmos/gogogateway v1.2.0 // indirect
+	github.com/cosmos/gogoproto v1.4.7
+	github.com/cosmos/iavl v0.20.0
+	github.com/cosmos/ibc-go/v7 v7.0.0
+	github.com/cosmos/ics23/go v0.9.1-0.20221207100636-b1abd8678aab // indirect
+>>>>>>> 9aad04f (Bump github.com/cosmos/gogoproto from 1.4.6 to 1.4.7 (#1306))
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0
 	github.com/gogo/protobuf v1.3.3
