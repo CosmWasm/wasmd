@@ -2208,12 +2208,16 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		expErr      *errorsmod.Error
 	}{
 		"vesting account - all removed": {
-			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
+				return myVestingAccount
+			},
 			expBalances: sdk.NewCoins(),
 			expHandled:  true,
 		},
 		"vesting account with other tokens - only original denoms removed": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
 				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
 				return myVestingAccount
 			},
@@ -2222,6 +2226,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		},
 		"non vesting account - not handled": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
 				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
 			},
 			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),

@@ -91,6 +91,7 @@ type PacketAck struct {
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
 func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
+	t.Helper()
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -130,6 +131,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
 func NewTestChainWithValSet(t *testing.T, coord *Coordinator, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasm.Option) *TestChain {
+	t.Helper()
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []SenderAccount{}

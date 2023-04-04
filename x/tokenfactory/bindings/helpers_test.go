@@ -28,6 +28,7 @@ func CreateTestInput() (*app.WasmApp, sdk.Context) {
 }
 
 func FundAccount(t *testing.T, ctx sdk.Context, osmosis *app.WasmApp, acct sdk.AccAddress) {
+	t.Helper()
 	// TODO:
 	// err := simapp.FundAccount(osmosis.BankKeeper, ctx, acct, sdk.NewCoins(
 	// 	sdk.NewCoin("uosmo", sdk.NewInt(10000000000)),
@@ -53,6 +54,7 @@ func RandomBech32AccountAddress() string {
 }
 
 func storeReflectCode(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr sdk.AccAddress) uint64 {
+	t.Helper()
 	wasmCode, err := os.ReadFile("./testdata/token_reflect.wasm")
 	require.NoError(t, err)
 
@@ -64,6 +66,7 @@ func storeReflectCode(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr s
 }
 
 func instantiateReflectContract(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, funder sdk.AccAddress) sdk.AccAddress {
+	t.Helper()
 	initMsgBz := []byte("{}")
 	contractKeeper := keeper.NewDefaultPermissionKeeper(tokenz.WasmKeeper)
 	codeID := uint64(1)
@@ -74,6 +77,7 @@ func instantiateReflectContract(t *testing.T, ctx sdk.Context, tokenz *app.WasmA
 }
 
 func fundAccount(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr sdk.AccAddress, coins sdk.Coins) {
+	t.Helper()
 	// TODO:
 	// err := simapp.FundAccount(
 	// 	tokenz.BankKeeper,
@@ -90,6 +94,7 @@ func fundAccount(t *testing.T, ctx sdk.Context, tokenz *app.WasmApp, addr sdk.Ac
 }
 
 func SetupCustomApp(t *testing.T, addr sdk.AccAddress) (*app.WasmApp, sdk.Context) {
+	t.Helper()
 	tokenz, ctx := CreateTestInput()
 	wasmKeeper := tokenz.WasmKeeper
 

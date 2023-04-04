@@ -37,6 +37,7 @@ func TestInstantiate2(t *testing.T) {
 	)
 	// create instances for duplicate checks
 	exampleContract := func(t *testing.T, ctx sdk.Context, fixMsg bool) {
+		t.Helper()
 		_, _, err := keepers.ContractKeeper.Instantiate2(
 			ctx,
 			example.CodeID,
@@ -51,9 +52,11 @@ func TestInstantiate2(t *testing.T) {
 		require.NoError(t, err)
 	}
 	exampleWithFixMsg := func(t *testing.T, ctx sdk.Context) {
+		t.Helper()
 		exampleContract(t, ctx, true)
 	}
 	exampleWithoutFixMsg := func(t *testing.T, ctx sdk.Context) {
+		t.Helper()
 		exampleContract(t, ctx, false)
 	}
 	specs := map[string]struct {
