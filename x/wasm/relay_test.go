@@ -31,20 +31,13 @@ func TestFromIBCTransferToContract(t *testing.T) {
 
 	transferAmount := sdk.NewInt(1)
 	specs := map[string]struct {
-<<<<<<< HEAD
-		contract             wasmtesting.IBCContractCallbacks
-		setupContract        func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
-		expChainABalanceDiff sdk.Int
-		expChainBBalanceDiff sdk.Int
-=======
 		contract                    wasmtesting.IBCContractCallbacks
 		setupContract               func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
 		expChainAPendingSendPackets int
 		expChainBPendingSendPackets int
-		expChainABalanceDiff        math.Int
-		expChainBBalanceDiff        math.Int
+		expChainABalanceDiff        sdk.Int
+		expChainBBalanceDiff        sdk.Int
 		expErr                      bool
->>>>>>> 5edfd6c (Update OnRecvPacket method to panic when an error is returned (#1298))
 	}{
 		"ack": {
 			contract: &ackReceiverContract{},
@@ -117,12 +110,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			// when transfer via sdk transfer from A (module) -> B (contract)
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
-<<<<<<< HEAD
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
-=======
 
-			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
->>>>>>> 5edfd6c (Update OnRecvPacket method to panic when an error is returned (#1298))
+			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0)
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)
 			require.NoError(t, path.EndpointB.UpdateClient())

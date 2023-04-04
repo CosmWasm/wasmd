@@ -130,11 +130,7 @@ func (k Keeper) OnRecvPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-<<<<<<< HEAD
-		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
-=======
 		panic(execErr)
->>>>>>> 5edfd6c (Update OnRecvPacket method to panic when an error is returned (#1298))
 	}
 	if res.Err != "" { // handle error case as before https://github.com/CosmWasm/wasmvm/commit/c300106fe5c9426a495f8e10821e00a9330c56c6
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, res.Err)
