@@ -57,7 +57,7 @@ type testData struct {
 
 func setupTest(t *testing.T) testData {
 	t.Helper()
-	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1")
+	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,token_factory")
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()
