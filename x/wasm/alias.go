@@ -57,7 +57,7 @@ var (
 	WasmQuerier               = keeper.WasmQuerier
 	CreateTestInput           = keeper.CreateTestInput
 	TestHandler               = keeper.TestHandler
-	NewWasmProposalHandler    = keeper.NewWasmProposalHandler
+	NewWasmProposalHandler    = keeper.NewWasmProposalHandler //nolint:staticcheck
 	NewQuerier                = keeper.Querier
 	ContractFromPortID        = keeper.ContractFromPortID
 	WithWasmEngine            = keeper.WithWasmEngine
