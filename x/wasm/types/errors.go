@@ -85,8 +85,6 @@ var (
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(errorsmod.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
-	// ErrSameAdmin error to show the old admin and new admin are same.
-	ErrSameAdmin = errorsmod.Register(DefaultCodespace, 29, "new admin is the same as the old")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted
