@@ -506,35 +506,6 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			expMsgCount: 1,
 		},
-		"fails without enough sender balance": {
-			srcGenesis: types.GenesisState{
-				Params: types.DefaultParams(),
-				Codes: []types.Code{
-					{
-						CodeID:    1,
-						CodeInfo:  types.CodeInfoFixture(),
-						CodeBytes: wasmIdent,
-					},
-				},
-				Contracts: []types.Contract{
-					{
-						ContractAddress: firstContractAddress,
-						ContractInfo:    types.ContractInfoFixture(),
-						ContractState:   []types.Model{},
-						ContractCodeHistory: []types.ContractCodeHistoryEntry{
-							types.ContractCodeHistoryEntryFixture(),
-						},
-					},
-				},
-			},
-			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
-				flagSet := cmd.Flags()
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
-				flagSet.Set("amount", "10stake")
-			},
-			expError: true,
-		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {

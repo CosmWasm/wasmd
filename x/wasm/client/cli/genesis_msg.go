@@ -173,14 +173,6 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 			}
 
 			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance, although it may be consumed by appState previous message already
-				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
-				case err != nil:
-					return err
-				case !ok:
-					return errors.New("sender has not enough account balance")
-				}
-
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_ExecuteContract{ExecuteContract: &msg},
 				})
