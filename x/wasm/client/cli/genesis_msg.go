@@ -359,24 +359,6 @@ func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, 
 	return true, nil
 }
 
-func hasContract(state *types.GenesisState, contractAddr string) bool {
-	for _, c := range state.Contracts {
-		if c.ContractAddress == contractAddr {
-			return true
-		}
-	}
-	seq := contractSeqValue(state)
-	for _, m := range state.GenMsgs {
-		if msg := m.GetInstantiateContract(); msg != nil {
-			if keeper.BuildContractAddressClassic(msg.CodeID, seq).String() == contractAddr {
-				return true
-			}
-			seq++
-		}
-	}
-	return false
-}
-
 // GenesisData contains raw and unmarshalled data from the genesis file
 type GenesisData struct {
 	GenesisFile     string
