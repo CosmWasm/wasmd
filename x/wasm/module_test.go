@@ -578,7 +578,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	path := "/cosmwasm.wasm.v1.Query/Code"
 	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
 	if len(expectedBytes) == 0 {
-		assert.ErrorIs(t, err, types.ErrNotFound)
+		assert.ErrorIs(t, err, types.ErrNoSuchCodeFn(1))
 		return
 	}
 	require.NoError(t, err)

@@ -43,6 +43,7 @@ var (
 
 	// ErrEmpty error for empty content
 	ErrEmpty = errorsmod.Register(DefaultCodespace, 12, "empty")
+	ErrZero  = errorsmod.Register(DefaultCodespace, 22, "0's not allowed")
 
 	// ErrLimit error for content that exceeds a limit
 	ErrLimit = errorsmod.Register(DefaultCodespace, 13, "exceeds limit")
