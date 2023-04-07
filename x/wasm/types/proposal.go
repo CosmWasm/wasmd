@@ -845,7 +845,6 @@ func (p PinCodesProposal) ValidateBasic() error {
 	for _, num1 := range p.CodeIDs {
 		if num1 == 0 {
 			return errorsmod.Wrap(ErrZero, "0 not accepted")
-
 		}
 		for _, num2 := range p.CodeIDs {
 			if num1 == num2 {
@@ -900,7 +899,6 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 	for _, num1 := range p.CodeIDs {
 		if num1 == 0 {
 			return errorsmod.Wrap(ErrZero, "0 not accepted")
-
 		}
 		for _, num2 := range p.CodeIDs {
 			if num1 == num2 {
