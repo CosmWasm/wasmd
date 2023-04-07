@@ -842,6 +842,17 @@ func (p PinCodesProposal) ValidateBasic() error {
 	if len(p.CodeIDs) == 0 {
 		return errorsmod.Wrap(ErrEmpty, "code ids")
 	}
+	for _, num1 := range p.CodeIDs {
+		if num1 == 0 {
+			return errorsmod.Wrap(ErrZero, "0 not accepted")
+
+		}
+		for _, num2 := range p.CodeIDs {
+			if num1 == num2 {
+				return errorsmod.Wrap(ErrDuplicate, "duplicate")
+			}
+		}
+	}
 	return nil
 }
 
@@ -886,6 +897,18 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 	if len(p.CodeIDs) == 0 {
 		return errorsmod.Wrap(ErrEmpty, "code ids")
 	}
+	for _, num1 := range p.CodeIDs {
+		if num1 == 0 {
+			return errorsmod.Wrap(ErrEmpty, "0 not accepted")
+
+		}
+		for _, num2 := range p.CodeIDs {
+			if num1 == num2 {
+				return errorsmod.Wrap(ErrDuplicate, "duplicate")
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -951,6 +974,7 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
+
 	if len(p.AccessConfigUpdates) == 0 {
 		return errorsmod.Wrap(ErrEmpty, "code updates")
 	}
