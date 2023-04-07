@@ -16,6 +16,8 @@ var (
 
 	// ErrAccountExists error for a contract account that already exists
 	ErrAccountExists = errorsmod.Register(DefaultCodespace, 3, "contract account already exists")
+	//ErrZero error for zero prevention error
+	ErrZero = errorsmod.Register(DefaultCodespace, 22, "0's not allowed")
 
 	// ErrInstantiateFailed error for rust instantiate contract failure
 	ErrInstantiateFailed = errorsmod.Register(DefaultCodespace, 4, "instantiate wasm contract failed")
