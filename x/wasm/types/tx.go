@@ -262,7 +262,7 @@ func (msg MsgUpdateAdmin) ValidateBasic() error {
 		return errorsmod.Wrap(err, "new admin")
 	}
 	if strings.EqualFold(msg.Sender, msg.NewAdmin) {
-		return errorsmod.Wrap(ErrInvalidMsg, "new admin is the same as the old")
+		return errorsmod.Wrap(ErrInvalid, "new admin is the same as the old")
 	}
 	return nil
 }
