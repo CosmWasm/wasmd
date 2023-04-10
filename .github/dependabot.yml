@@ -18,7 +18,7 @@ updates:
     - 0.14.0-beta4
     - 0.14.0-beta5
     - 0.14.0-rc1
-  - dependency-name: github.com/cometbft/cometbft
+  - dependency-name: github.com/tendermint/tendermint
     versions:
     - 0.34.10
     - 0.34.4
@@ -40,6 +40,6 @@ updates:
   - dependency-name: github.com/spf13/cobra
     versions:
     - 1.1.2
-  - dependency-name: github.com/cometbft/cometbft-db
+  - dependency-name: github.com/tendermint/tm-db
     versions:
     - 0.6.4
