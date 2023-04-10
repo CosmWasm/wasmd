@@ -43,7 +43,6 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"ack": {
 			contract: &ackReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
-				t.Helper()
 				c := contract.(*ackReceiverContract)
 				c.t = t
 				c.chain = chain
@@ -56,7 +55,6 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"nack": {
 			contract: &nackReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
-				t.Helper()
 				c := contract.(*nackReceiverContract)
 				c.t = t
 			},
@@ -68,7 +66,6 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"error": {
 			contract: &errorReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
-				t.Helper()
 				c := contract.(*errorReceiverContract)
 				c.t = t
 			},
@@ -114,6 +111,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			// when transfer via sdk transfer from A (module) -> B (contract)
 			coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, transferAmount)
 			timeoutHeight := clienttypes.NewHeight(1, 110)
+
 			msg := ibctransfertypes.NewMsgTransfer(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID, coinToSendToB, chainA.SenderAccount.GetAddress().String(), chainB.SenderAccount.GetAddress().String(), timeoutHeight, 0, "")
 			_, err := chainA.SendMsgs(msg)
 			require.NoError(t, err)

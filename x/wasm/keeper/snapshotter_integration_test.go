@@ -103,7 +103,6 @@ func TestSnapshotter(t *testing.T) {
 }
 
 func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
-	t.Helper()
 	senderPrivKey := ed25519.GenPrivKey()
 	pubKey, err := cryptocodec.ToTmPubKeyInterface(senderPrivKey.PubKey())
 	require.NoError(t, err)

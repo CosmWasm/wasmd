@@ -56,8 +56,7 @@ type testData struct {
 }
 
 func setupTest(t *testing.T) testData {
-	t.Helper()
-	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,token_factory")
+	ctx, keepers := CreateTestInput(t, false, "iterator,staking,stargate,cosmwasm_1_1")
 	encConf := keeper.MakeEncodingConfig(t)
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()
@@ -348,6 +347,7 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, deposit.Add(topUp...), balance)
 
 	// ensure contract has updated balance
+
 	contractAcct = data.acctKeeper.GetAccount(data.ctx, contractAddr)
 	require.NotNil(t, contractAcct)
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))

@@ -32,9 +32,7 @@ func TestCountTxDecorator(t *testing.T) {
 		expErr         bool
 	}{
 		"no initial counter set": {
-			setupDB: func(t *testing.T, ctx sdk.Context) {
-				t.Helper()
-			},
+			setupDB: func(t *testing.T, ctx sdk.Context) {},
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 				gotCounter, ok := types.TXCounter(ctx)
 				require.True(t, ok)
@@ -47,7 +45,6 @@ func TestCountTxDecorator(t *testing.T) {
 		},
 		"persistent counter incremented - big endian": {
 			setupDB: func(t *testing.T, ctx sdk.Context) {
-				t.Helper()
 				bz := []byte{0, 0, 0, 0, 0, 0, 0, myCurrentBlockHeight, 1, 0, 0, 2}
 				ctx.MultiStore().GetKVStore(keyWasm).Set(types.TXCounterPrefix, bz)
 			},
@@ -63,7 +60,6 @@ func TestCountTxDecorator(t *testing.T) {
 		},
 		"old height counter replaced": {
 			setupDB: func(t *testing.T, ctx sdk.Context) {
-				t.Helper()
 				previousHeight := byte(myCurrentBlockHeight - 1)
 				bz := []byte{0, 0, 0, 0, 0, 0, 0, previousHeight, 0, 0, 0, 1}
 				ctx.MultiStore().GetKVStore(keyWasm).Set(types.TXCounterPrefix, bz)
@@ -80,7 +76,6 @@ func TestCountTxDecorator(t *testing.T) {
 		},
 		"simulation not persisted": {
 			setupDB: func(t *testing.T, ctx sdk.Context) {
-				t.Helper()
 			},
 			simulate: true,
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {

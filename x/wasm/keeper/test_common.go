@@ -15,6 +15,7 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 
 	errorsmod "cosmossdk.io/errors"
+
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -105,9 +106,8 @@ var moduleBasics = module.NewBasicManager(
 	vesting.AppModuleBasic{},
 )
 
-func MakeTestCodec(tb testing.TB) codec.Codec {
-	tb.Helper()
-	return MakeEncodingConfig(tb).Marshaler
+func MakeTestCodec(t testing.TB) codec.Codec {
+	return MakeEncodingConfig(t).Marshaler
 }
 
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
@@ -144,10 +144,9 @@ type TestFaucet struct {
 	minterModuleName string
 }
 
-func NewTestFaucet(tb testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
-	tb.Helper()
-	require.NotEmpty(tb, initialAmount)
-	r := &TestFaucet{t: tb, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
+func NewTestFaucet(t testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
+	require.NotEmpty(t, initialAmount)
+	r := &TestFaucet{t: t, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
 	_, addr := keyPubAddr()
 	r.sender = addr
 	r.Mint(ctx, addr, initialAmount...)
@@ -201,46 +200,33 @@ type TestKeepers struct {
 }
 
 // CreateDefaultTestInput common settings for CreateTestInput
-func CreateDefaultTestInput(tb testing.TB) (sdk.Context, TestKeepers) {
-	tb.Helper()
-	return CreateTestInput(tb, false, "staking")
+func CreateDefaultTestInput(t testing.TB) (sdk.Context, TestKeepers) {
+	return CreateTestInput(t, false, "staking")
 }
 
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(tb testing.TB, isCheckTx bool, availableCapabilities string, opts ...Option) (sdk.Context, TestKeepers) {
-	tb.Helper()
+func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities string, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
-	return createTestInput(tb, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
+	return createTestInput(t, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
 
 // encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func createTestInput(
-	tb testing.TB,
+	t testing.TB,
 	isCheckTx bool,
 	availableCapabilities string,
 	wasmConfig types.WasmConfig,
 	db dbm.DB,
 	opts ...Option,
 ) (sdk.Context, TestKeepers) {
-	tb.Helper()
-	tempDir := tb.TempDir()
+	tempDir := t.TempDir()
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey,
-		banktypes.StoreKey,
-		stakingtypes.StoreKey,
-		minttypes.StoreKey,
-		distributiontypes.StoreKey,
-		slashingtypes.StoreKey,
-		govtypes.StoreKey,
-		paramstypes.StoreKey,
-		ibcexported.StoreKey,
-		upgradetypes.StoreKey,
-		evidencetypes.StoreKey,
-		ibctransfertypes.StoreKey,
-		capabilitytypes.StoreKey,
-		feegrant.StoreKey,
-		authzkeeper.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
+		minttypes.StoreKey, distributiontypes.StoreKey, slashingtypes.StoreKey,
+		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
+		evidencetypes.StoreKey, ibctransfertypes.StoreKey,
+		capabilitytypes.StoreKey, feegrant.StoreKey, authzkeeper.StoreKey,
 		types.StoreKey,
 	)
 	ms := store.NewCommitMultiStore(db)
@@ -257,7 +243,7 @@ func createTestInput(
 		ms.MountStoreWithDB(v, storetypes.StoreTypeMemory, db)
 	}
 
-	require.NoError(tb, ms.LoadLatestVersion())
+	require.NoError(t, ms.LoadLatestVersion())
 
 	ctx := sdk.NewContext(ms, tmproto.Header{
 		Height: 1234567,
@@ -265,7 +251,7 @@ func createTestInput(
 	}, isCheckTx, log.NewNopLogger())
 	ctx = types.WithTXCounter(ctx, 0)
 
-	encodingConfig := MakeEncodingConfig(tb)
+	encodingConfig := MakeEncodingConfig(t)
 	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(
@@ -292,7 +278,7 @@ func createTestInput(
 	}
 	subspace := func(m string) paramstypes.Subspace {
 		r, ok := paramsKeeper.GetSubspace(m)
-		require.True(tb, ok)
+		require.True(t, ok)
 
 		var keyTable paramstypes.KeyTable
 		switch r.Name() {
@@ -354,7 +340,7 @@ func createTestInput(
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
-	require.NoError(tb, accountKeeper.SetParams(ctx, authtypes.DefaultParams()))
+	require.NoError(t, accountKeeper.SetParams(ctx, authtypes.DefaultParams()))
 
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -363,7 +349,7 @@ func createTestInput(
 		blockedAddrs,
 		authtypes.NewModuleAddress(banktypes.ModuleName).String(),
 	)
-	require.NoError(tb, bankKeeper.SetParams(ctx, banktypes.DefaultParams()))
+	require.NoError(t, bankKeeper.SetParams(ctx, banktypes.DefaultParams()))
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -373,7 +359,7 @@ func createTestInput(
 		authtypes.NewModuleAddress(stakingtypes.ModuleName).String(),
 	)
 	stakingtypes.DefaultParams()
-	require.NoError(tb, stakingKeeper.SetParams(ctx, TestingStakeParams))
+	require.NoError(t, stakingKeeper.SetParams(ctx, TestingStakeParams))
 
 	distKeeper := distributionkeeper.NewKeeper(
 		appCodec,
@@ -384,7 +370,7 @@ func createTestInput(
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(distributiontypes.ModuleName).String(),
 	)
-	require.NoError(tb, distKeeper.SetParams(ctx, distributiontypes.DefaultParams()))
+	require.NoError(t, distKeeper.SetParams(ctx, distributiontypes.DefaultParams()))
 	stakingKeeper.SetHooks(distKeeper.Hooks())
 
 	// set genesis items required for distribution
@@ -399,7 +385,7 @@ func createTestInput(
 		authtypes.NewModuleAddress(upgradetypes.ModuleName).String(),
 	)
 
-	faucet := NewTestFaucet(tb, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
+	faucet := NewTestFaucet(t, ctx, bankKeeper, minttypes.ModuleName, sdk.NewCoin("stake", sdk.NewInt(100_000_000_000)))
 
 	// set some funds ot pay out validatores, based on code from:
 	// https://github.com/cosmos/cosmos-sdk/blob/fea231556aee4d549d7551a6190389c4328194eb/x/distribution/keeper/keeper_test.go#L50-L57
@@ -451,7 +437,7 @@ func createTestInput(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)
-	require.NoError(tb, keeper.SetParams(ctx, types.DefaultParams()))
+	require.NoError(t, keeper.SetParams(ctx, types.DefaultParams()))
 
 	// add wasm handler so we can loop-back (contracts calling contracts)
 	contractKeeper := NewDefaultPermissionKeeper(&keeper)
@@ -471,7 +457,7 @@ func createTestInput(
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	require.NoError(tb, govKeeper.SetParams(ctx, govv1.DefaultParams()))
+	require.NoError(t, govKeeper.SetParams(ctx, govv1.DefaultParams()))
 	govKeeper.SetLegacyRouter(govRouter)
 	govKeeper.SetProposalID(ctx, 1)
 
@@ -599,9 +585,8 @@ func DeterministicAccountAddress(_ testing.TB, v byte) sdk.AccAddress {
 	return bytes.Repeat([]byte{v}, address.Len)
 }
 
-func RandomBech32AccountAddress(tb testing.TB) string {
-	tb.Helper()
-	return RandomAccountAddress(tb).String()
+func RandomBech32AccountAddress(t testing.TB) string {
+	return RandomAccountAddress(t).String()
 }
 
 type ExampleContract struct {
@@ -612,43 +597,35 @@ type ExampleContract struct {
 	Checksum      []byte
 }
 
-func StoreHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	tb.Helper()
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm())
+func StoreHackatomExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.HackatomContractWasm())
 }
 
-func StoreBurnerExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	tb.Helper()
-
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm())
+func StoreBurnerExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.BurnerContractWasm())
 }
 
-func StoreIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	tb.Helper()
-
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm())
+func StoreIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.IBCReflectContractWasm())
 }
 
-func StoreReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
-	tb.Helper()
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm())
+func StoreReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
+	return StoreExampleContractWasm(t, ctx, keepers, testdata.ReflectContractWasm())
 }
 
-func StoreExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
-	tb.Helper()
+func StoreExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
 	wasmCode, err := os.ReadFile(wasmFile)
-	require.NoError(tb, err)
-	return StoreExampleContractWasm(tb, ctx, keepers, wasmCode)
+	require.NoError(t, err)
+	return StoreExampleContractWasm(t, ctx, keepers, wasmCode)
 }
 
-func StoreExampleContractWasm(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmCode []byte) ExampleContract {
-	tb.Helper()
+func StoreExampleContractWasm(t testing.TB, ctx sdk.Context, keepers TestKeepers, wasmCode []byte) ExampleContract {
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, creatorAddr := keyPubAddr()
-	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, nil)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	hash := keepers.WasmKeeper.GetCodeInfo(ctx, codeID).CodeHash
 	return ExampleContract{anyAmount, creator, creatorAddr, codeID, hash}
 }
@@ -661,11 +638,11 @@ type ExampleContractInstance struct {
 }
 
 // SeedNewContractInstance sets the mock wasmerEngine in keeper and calls store + instantiate to init the contract's metadata
-func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
-	tb.Helper()
-	exampleContract := StoreRandomContract(tb, ctx, keepers, mock)
+func SeedNewContractInstance(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
+	t.Helper()
+	exampleContract := StoreRandomContract(t, ctx, keepers, mock)
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return ExampleContractInstance{
 		ExampleContract: exampleContract,
 		Contract:        contractAddr,
@@ -673,25 +650,24 @@ func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers
 }
 
 // StoreRandomContract sets the mock wasmerEngine in keeper and calls store
-func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
-	tb.Helper()
-	return StoreRandomContractWithAccessConfig(tb, ctx, keepers, mock, nil)
+func StoreRandomContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+	return StoreRandomContractWithAccessConfig(t, ctx, keepers, mock, nil)
 }
 
 func StoreRandomContractWithAccessConfig(
-	tb testing.TB, ctx sdk.Context,
+	t testing.TB, ctx sdk.Context,
 	keepers TestKeepers,
 	mock types.WasmerEngine,
 	cfg *types.AccessConfig,
 ) ExampleContract {
-	tb.Helper()
+	t.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, creatorAddr := keyPubAddr()
-	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...) //nolint:gocritic
 	codeID, checksum, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, cfg)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID, Checksum: checksum}
 	return exampleContract
 }
@@ -708,24 +684,23 @@ type HackatomExampleInstance struct {
 }
 
 // InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
-func InstantiateHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
-	tb.Helper()
-	contract := StoreHackatomExampleContract(tb, ctx, keepers)
+func InstantiateHackatomExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
+	contract := StoreHackatomExampleContract(t, ctx, keepers)
 
 	verifier, verifierAddr := keyPubAddr()
-	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, contract.InitialAmount)
+	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, verifierAddr, contract.InitialAmount)
 
 	beneficiary, beneficiaryAddr := keyPubAddr()
 	initMsgBz := HackatomExampleInitMsg{
 		Verifier:    verifierAddr,
 		Beneficiary: beneficiaryAddr,
-	}.GetBytes(tb)
+	}.GetBytes(t)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 
 	adminAddr := contract.CreatorAddr
 	label := "demo contract to query"
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, contract.CodeID, contract.CreatorAddr, adminAddr, initMsgBz, label, initialAmount)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return HackatomExampleInstance{
 		ExampleContract: contract,
 		Contract:        contractAddr,
@@ -746,14 +721,13 @@ type ExampleInstance struct {
 }
 
 // InstantiateReflectExampleContract load and instantiate the "./testdata/reflect.wasm" contract
-func InstantiateReflectExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
-	tb.Helper()
-	example := StoreReflectContract(tb, ctx, keepers)
+func InstantiateReflectExampleContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
+	example := StoreReflectContract(t, ctx, keepers)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	label := "demo contract to query"
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, example.CreatorAddr, []byte("{}"), label, initialAmount)
 
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return ExampleInstance{
 		ExampleContract: example,
 		Contract:        contractAddr,
@@ -767,10 +741,9 @@ type HackatomExampleInitMsg struct {
 	Beneficiary sdk.AccAddress `json:"beneficiary"`
 }
 
-func (m HackatomExampleInitMsg) GetBytes(tb testing.TB) []byte {
-	tb.Helper()
+func (m HackatomExampleInitMsg) GetBytes(t testing.TB) []byte {
 	initMsgBz, err := json.Marshal(m)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return initMsgBz
 }
 
@@ -782,18 +755,17 @@ type IBCReflectExampleInstance struct {
 }
 
 // InstantiateIBCReflectContract load and instantiate the "./testdata/ibc_reflect.wasm" contract
-func InstantiateIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
-	tb.Helper()
-	reflectID := StoreReflectContract(tb, ctx, keepers).CodeID
-	ibcReflectID := StoreIBCReflectContract(tb, ctx, keepers).CodeID
+func InstantiateIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
+	reflectID := StoreReflectContract(t, ctx, keepers).CodeID
+	ibcReflectID := StoreIBCReflectContract(t, ctx, keepers).CodeID
 
 	initMsgBz := IBCReflectInitMsg{
 		ReflectCodeID: reflectID,
-	}.GetBytes(tb)
-	adminAddr := RandomAccountAddress(tb)
+	}.GetBytes(t)
+	adminAddr := RandomAccountAddress(t)
 
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return IBCReflectExampleInstance{
 		Admin:         adminAddr,
 		Contract:      contractAddr,
@@ -806,10 +778,9 @@ type IBCReflectInitMsg struct {
 	ReflectCodeID uint64 `json:"reflect_code_id"`
 }
 
-func (m IBCReflectInitMsg) GetBytes(tb testing.TB) []byte {
-	tb.Helper()
+func (m IBCReflectInitMsg) GetBytes(t testing.TB) []byte {
 	initMsgBz, err := json.Marshal(m)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return initMsgBz
 }
 
@@ -817,18 +788,16 @@ type BurnerExampleInitMsg struct {
 	Payout sdk.AccAddress `json:"payout"`
 }
 
-func (m BurnerExampleInitMsg) GetBytes(tb testing.TB) []byte {
-	tb.Helper()
+func (m BurnerExampleInitMsg) GetBytes(t testing.TB) []byte {
 	initMsgBz, err := json.Marshal(m)
-	require.NoError(tb, err)
+	require.NoError(t, err)
 	return initMsgBz
 }
 
-func fundAccounts(tb testing.TB, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
-	tb.Helper()
+func fundAccounts(t testing.TB, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	NewTestFaucet(tb, ctx, bank, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
+	NewTestFaucet(t, ctx, bank, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
 }
 
 var keyCounter uint64

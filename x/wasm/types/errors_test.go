@@ -17,26 +17,22 @@ func TestWasmVMFlavouredError(t *testing.T) {
 	}{
 		"IsOf": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				assert.True(t, errorsmod.IsOf(myErr, myErr.sdkErr))
 				assert.Equal(t, myErr.sdkErr, myErr.Unwrap())
 			},
 		},
 		"unwrapped": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				assert.Equal(t, myErr.sdkErr, myErr.Unwrap())
 			},
 		},
 		"caused": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				assert.Equal(t, myErr.sdkErr, myErr.Cause())
 			},
 		},
 		"wrapped supports WasmVMErrorable": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr.Wrap("my description"), &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
@@ -45,7 +41,6 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"wrappedf supports WasmVMErrorable": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr.Wrapf("my description: %d", 1), &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
@@ -54,7 +49,6 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"supports WasmVMErrorable": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr, &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
@@ -63,7 +57,6 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"fallback to sdk error when wasmvm error unset": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(WasmVMFlavouredError{sdkErr: ErrEmpty}, &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
@@ -72,7 +65,6 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				codespace, code, log := errorsmod.ABCIInfo(myErr, false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)
@@ -81,7 +73,6 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info - wrapped": {
 			exec: func(t *testing.T) {
-				t.Helper()
 				codespace, code, log := errorsmod.ABCIInfo(myErr.Wrap("my description"), false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)

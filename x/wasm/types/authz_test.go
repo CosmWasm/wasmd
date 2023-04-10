@@ -396,20 +396,17 @@ func TestValidateContractGrant(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 		},
 		"invalid address": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant([]byte{}, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
 		},
 		"invalid limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
@@ -417,14 +414,12 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"invalid filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 			},
 			expErr: true,
 		},
 		"empty limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = nil
 				return r
@@ -434,7 +429,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"empty filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = nil
 				return r
@@ -443,7 +437,6 @@ func TestValidateContractGrant(t *testing.T) {
 		},
 		"wrong limit type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = r.Filter
 				return r
@@ -453,7 +446,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"wrong filter type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = r.Limit
 				return r
@@ -486,52 +478,44 @@ func TestValidateContractAuthorization(t *testing.T) {
 	}{
 		"contract execution": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant)
 			},
 		},
 		"contract execution - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract execution - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract execution - empty grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization()
 			},
 			expErr: true,
 		},
 		"contract migration": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant)
 			},
 		},
 		"contract migration - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract migration - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract migration - empty grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization()
 			},
 			expErr: true,

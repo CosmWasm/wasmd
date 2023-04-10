@@ -448,7 +448,7 @@ func TestOnRecvPacket(t *testing.T) {
 			msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: myPacket}
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					_, _ = keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, msg)
+					keepers.WasmKeeper.OnRecvPacket(ctx, spec.contractAddr, msg)
 				})
 				return
 			}

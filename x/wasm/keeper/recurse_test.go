@@ -25,7 +25,6 @@ type recurseWrapper struct {
 }
 
 func buildRecurseQuery(t *testing.T, msg Recurse) []byte {
-	t.Helper()
 	wrapper := recurseWrapper{Recurse: msg}
 	bz, err := json.Marshal(wrapper)
 	require.NoError(t, err)
@@ -40,7 +39,6 @@ type recurseResponse struct {
 var totalWasmQueryCounter int
 
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
-	t.Helper()
 	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
 		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++

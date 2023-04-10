@@ -9,7 +9,6 @@ import (
 )
 
 func TestInitGenesis(t *testing.T) {
-	t.Helper()
 	data := setupTest(t)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
