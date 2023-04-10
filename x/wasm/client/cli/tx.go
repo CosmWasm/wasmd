@@ -44,6 +44,7 @@ const (
 	flagMaxFunds                  = "max-funds"
 	flagAllowAllMsgs              = "allow-all-messages"
 	flagNoTokenTransfer           = "no-token-transfer" //nolint:gosec
+	flagAuthority                 = "authority"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -66,6 +67,7 @@ func GetTxCmd() *cobra.Command {
 		ClearContractAdminCmd(),
 		GrantAuthorizationCmd(),
 		UpdateInstantiateConfigCmd(),
+		SubmitProposalCmd(),
 	)
 	return txCmd
 }
