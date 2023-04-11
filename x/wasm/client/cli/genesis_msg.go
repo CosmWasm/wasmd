@@ -173,18 +173,6 @@ func GenesisExecuteContractCmd(defaultNodeHome string, genesisMutator GenesisMut
 			}
 
 			return genesisMutator.AlterWasmModuleState(cmd, func(state *types.GenesisState, appState map[string]json.RawMessage) error {
-				// simple sanity check that sender has some balance, although it may be consumed by appState previous message already
-				switch ok, err := hasAccountBalance(cmd, appState, senderAddr, msg.Funds); {
-				case err != nil:
-					return err
-				case !ok:
-					return errors.New("sender has not enough account balance")
-				}
-
-				// - does contract address exists?
-				if !hasContract(state, msg.Contract) {
-					return fmt.Errorf("unknown contract: %s", msg.Contract)
-				}
 				state.GenMsgs = append(state.GenMsgs, types.GenesisState_GenMsgs{
 					Sum: &types.GenesisState_GenMsgs_ExecuteContract{ExecuteContract: &msg},
 				})
@@ -356,24 +344,6 @@ func hasAccountBalance(cmd *cobra.Command, appState map[string]json.RawMessage, 
 		return false, err
 	}
 	return true, nil
-}
-
-func hasContract(state *types.GenesisState, contractAddr string) bool {
-	for _, c := range state.Contracts {
-		if c.ContractAddress == contractAddr {
-			return true
-		}
-	}
-	seq := contractSeqValue(state)
-	for _, m := range state.GenMsgs {
-		if msg := m.GetInstantiateContract(); msg != nil {
-			if keeper.BuildContractAddressClassic(msg.CodeID, seq).String() == contractAddr {
-				return true
-			}
-			seq++
-		}
-	}
-	return false
 }
 
 // GenesisData contains raw and unmarshalled data from the genesis file

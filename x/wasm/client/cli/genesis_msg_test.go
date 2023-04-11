@@ -364,9 +364,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 
 func TestExecuteContractCmd(t *testing.T) {
 	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
-	minimalWasmGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
-	}
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
 	anyValidWasmFile.Write(wasmIdent)
@@ -452,15 +449,6 @@ func TestExecuteContractCmd(t *testing.T) {
 			},
 			expMsgCount: 2,
 		},
-		"fails with unknown contract address": {
-			srcGenesis: minimalWasmGenesis,
-			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{keeper.RandomBech32AccountAddress(t), `{}`})
-				flagSet := cmd.Flags()
-				flagSet.Set("run-as", myWellFundedAccount)
-			},
-			expError: true,
-		},
 		"succeeds with unknown account when no funds": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),
@@ -517,35 +505,6 @@ func TestExecuteContractCmd(t *testing.T) {
 				flagSet.Set("amount", "100stake")
 			},
 			expMsgCount: 1,
-		},
-		"fails without enough sender balance": {
-			srcGenesis: types.GenesisState{
-				Params: types.DefaultParams(),
-				Codes: []types.Code{
-					{
-						CodeID:    1,
-						CodeInfo:  types.CodeInfoFixture(),
-						CodeBytes: wasmIdent,
-					},
-				},
-				Contracts: []types.Contract{
-					{
-						ContractAddress: firstContractAddress,
-						ContractInfo:    types.ContractInfoFixture(),
-						ContractState:   []types.Model{},
-						ContractCodeHistory: []types.ContractCodeHistoryEntry{
-							types.ContractCodeHistoryEntryFixture(),
-						},
-					},
-				},
-			},
-			mutator: func(cmd *cobra.Command) {
-				cmd.SetArgs([]string{firstContractAddress, `{}`})
-				flagSet := cmd.Flags()
-				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
-				flagSet.Set("amount", "10stake")
-			},
-			expError: true,
 		},
 	}
 	for msg, spec := range specs {
