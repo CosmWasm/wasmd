@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/line/wasmd/compare/v0.1.0...HEAD)
+## [Unreleased](https://github.com/line/wasmd/compare/v0.1.2...HEAD)
 
 ### Features
 
@@ -15,12 +15,16 @@
 ### Document Updates
 
 
+## [v0.1.2](https://github.com/line/wasmd/releases/tag/v0.1.2) - 2023.04.10
+
+### Features
+* [\#21](https://github.com/line/wasmd/pull/21) bump up line/ibc-go v3.3.2
+
 
 ## [v0.1.0](https://github.com/line/wasmd/releases/tag/v0.1.0) - 2023.03.28
 
 ### Features
 * [\#9](https://github.com/line/wasmd/pull/9) apply the changes of lbm-sdk and ostracon proto
-* [\#21](https://github.com/line/wasmd/pull/21) bump up line/ibc-go v3.3.2
 
 ### Improvements
 * [\#1](https://github.com/line/wasmd/pull/1) apply all changes of `x/wasm` in lbm-sdk until [lbm-sdk@3bdcb6ffe01c81615bedb777ca0e039cc46ef00c](https://github.com/line/lbm-sdk/tree/3bdcb6ffe01c81615bedb777ca0e039cc46ef00c)
