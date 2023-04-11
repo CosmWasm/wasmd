@@ -1,5 +1,5 @@
 syntax = "proto3";
-package cosmwasm.tokenfactory.v1beta1;
+package osmosis.tokenfactory.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
