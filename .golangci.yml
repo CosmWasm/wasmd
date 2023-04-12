@@ -31,9 +31,6 @@ linters:
 
 issues:
   exclude-rules:
-    - text: "simtypes"
-      linters:
-        - staticcheck
     - text: "Use of weak random number generator"
       linters:
         - gosec
