@@ -19,11 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-<<<<<<< HEAD
         uses: actions/checkout@v3.4.0
-=======
-        uses: actions/checkout@v3.5.1
->>>>>>> d95eebf4 (Bump actions/checkout from 3.5.0 to 3.5.1 (#1329))
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL

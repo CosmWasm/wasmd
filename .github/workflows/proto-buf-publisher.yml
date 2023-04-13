@@ -17,14 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 <<<<<<< HEAD
-<<<<<<< HEAD
       - uses: actions/checkout@v3.4.0
       - uses: bufbuild/buf-setup-action@v1.15.1
 =======
       - uses: actions/checkout@v3.5.0
-=======
-      - uses: actions/checkout@v3.5.1
->>>>>>> d95eebf4 (Bump actions/checkout from 3.5.0 to 3.5.1 (#1329))
       - uses: bufbuild/buf-setup-action@v1.17.0
 >>>>>>> cbfa6abc (Bump bufbuild/buf-setup-action from 1.16.0 to 1.17.0 (#1318))
 
