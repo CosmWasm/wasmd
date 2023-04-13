@@ -12,7 +12,8 @@ option (gogoproto.goproto_getters_all) = false;
 // ContractExecutionAuthorization defines authorization for wasm execute.
 // Since: wasmd 0.30
 message ContractExecutionAuthorization {
-  option (cosmos_proto.implements_interface) = "Authorization";
+  option (cosmos_proto.implements_interface) =
+      "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract executions
   repeated ContractGrant grants = 1 [ (gogoproto.nullable) = false ];
@@ -21,7 +22,8 @@ message ContractExecutionAuthorization {
 // ContractMigrationAuthorization defines authorization for wasm contract
 // migration. Since: wasmd 0.30
 message ContractMigrationAuthorization {
-  option (cosmos_proto.implements_interface) = "Authorization";
+  option (cosmos_proto.implements_interface) =
+      "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract migrations
   repeated ContractGrant grants = 1 [ (gogoproto.nullable) = false ];
@@ -35,20 +37,22 @@ message ContractGrant {
 
   // Limit defines execution limits that are enforced and updated when the grant
   // is applied. When the limit lapsed the grant is removed.
-  google.protobuf.Any limit = 2
-      [ (cosmos_proto.accepts_interface) = "ContractAuthzLimitX" ];
+  google.protobuf.Any limit = 2 [ (cosmos_proto.accepts_interface) =
+                                      "cosmwasm.wasm.v1.ContractAuthzLimitX" ];
 
   // Filter define more fine-grained control on the message payload passed
   // to the contract in the operation. When no filter applies on execution, the
   // operation is prohibited.
   google.protobuf.Any filter = 3
-      [ (cosmos_proto.accepts_interface) = "ContractAuthzFilterX" ];
+      [ (cosmos_proto.accepts_interface) =
+            "cosmwasm.wasm.v1.ContractAuthzFilterX" ];
 }
 
 // MaxCallsLimit limited number of calls to the contract. No funds transferable.
 // Since: wasmd 0.30
 message MaxCallsLimit {
-  option (cosmos_proto.implements_interface) = "ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
   uint64 remaining = 1;
@@ -57,7 +61,8 @@ message MaxCallsLimit {
 // MaxFundsLimit defines the maximal amounts that can be sent to the contract.
 // Since: wasmd 0.30
 message MaxFundsLimit {
-  option (cosmos_proto.implements_interface) = "ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Amounts is the maximal amount of tokens transferable to the contract.
   repeated cosmos.base.v1beta1.Coin amounts = 1 [
@@ -70,7 +75,8 @@ message MaxFundsLimit {
 // the maximal number of calls executable. Both need to remain >0 to be valid.
 // Since: wasmd 0.30
 message CombinedLimit {
-  option (cosmos_proto.implements_interface) = "ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
   uint64 calls_remaining = 1;
@@ -85,14 +91,16 @@ message CombinedLimit {
 // message.
 // Since: wasmd 0.30
 message AllowAllMessagesFilter {
-  option (cosmos_proto.implements_interface) = "ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
 }
 
 // AcceptedMessageKeysFilter accept only the specific contract message keys in
 // the json object to be executed.
 // Since: wasmd 0.30
 message AcceptedMessageKeysFilter {
-  option (cosmos_proto.implements_interface) = "ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of unique keys
   repeated string keys = 1;
@@ -102,7 +110,8 @@ message AcceptedMessageKeysFilter {
 // executed.
 // Since: wasmd 0.30
 message AcceptedMessagesFilter {
-  option (cosmos_proto.implements_interface) = "ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) =
+      "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of raw contract messages
   repeated bytes messages = 1 [ (gogoproto.casttype) = "RawContractMessage" ];

@@ -166,13 +166,13 @@ sdk.NewEvent(
 sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 )
 
 // Execute Contract
 sdk.NewEvent(
     "execute",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 )
 
 // Migrate Contract
@@ -180,20 +180,20 @@ sdk.NewEvent(
     "migrate",
     // Note: this is the new code id that is being migrated to
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 )
 
 // Set new admin
 sdk.NewEvent(
     "update_admin",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("admin", msg.NewAdmin),
 )
 
 // Clear admin
 sdk.NewEvent(
     "clear_admin",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 )
 
 // Pin Code
@@ -211,7 +211,7 @@ sdk.NewEvent(
 // Emitted when processing a submessage reply
 sdk.NewEvent(
     "reply",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     // If the submessage was successful, and reply is processing the success case
     sdk.NewAttribute("mode", "handle_success"),
     // If the submessage returned an error that was "caught" by the reply block
@@ -221,12 +221,12 @@ sdk.NewEvent(
 // Emitted when handling sudo
 sdk.NewEvent(
     "sudo",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 )
 ```
 
-Note that every event that affects a contract (not store code, pin or unpin) will return the contract_addr as
-`_contract_addr`. The events that are related to a particular wasm code (store code, instantiate, pin, unpin, and migrate)
+Note that every event that affects a contract (not store code, pin or unpin) will return the contract_address as
+`_contract_address`. The events that are related to a particular wasm code (store code, instantiate, pin, unpin, and migrate)
 will emit that as `code_id`. All attributes prefixed with `_` are reserved and may not be emitted by a smart contract,
 so we use the underscore prefix consistently with attributes that may be injected into custom events.
 
@@ -247,14 +247,14 @@ an eg. `transfer` event from the bank module. The output here may look like:
 ```go
 sdk.NewEvent(
     "wasm-promote"
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("batch_id", "6"),
     sdk.NewAttribute("address", "cosmos1234567"),
     sdk.NewAttribute("address", "cosmos1765432"),
 ),
 sdk.NewEvent(
     "wasm-promote"
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("batch_id", "7"),
     sdk.NewAttribute("address", "cosmos19875632"),
 )
@@ -267,7 +267,7 @@ more than flattening them all into one event like:
 ```go
 sdk.NewEvent(
     "wasm"
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("action", "promote"),
     sdk.NewAttribute("batch_id", "6"),
     sdk.NewAttribute("address", "cosmos1234567"),
@@ -338,11 +338,11 @@ sdk.NewEvent(
 // top-level exection call
 sdk.NewEvent(
     "execute",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
 ),
 sdk.NewEvent(
     "wasm",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("custom", "from contract"),
 ),
 
@@ -350,24 +350,24 @@ sdk.NewEvent(
 sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
-    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("_contract_address", newContract.String()),
 )
 // didn't emit any attributes, but one event
 sdk.NewEvent(
     "wasm-custom",
-    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("_contract_address", newContract.String()),
     sdk.NewAttribute("foobar", "baz"),
 ),
 
 // handling the reply (this doesn't emit a message event as it never goes through the message server)
 sdk.NewEvent(
     "reply",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("mode", "handle_success"),
 ),
 sdk.NewEvent(
     "wasm",
-    sdk.NewAttribute("_contract_addr", contractAddr.String()),
+    sdk.NewAttribute("_contract_address", contractAddr.String()),
     sdk.NewAttribute("custom", "from contract"),
 ),
 
@@ -389,11 +389,11 @@ field, and the following in the `events` field:
 sdk.NewEvent(
     "instantiate",
     sdk.NewAttribute("code_id", fmt.Sprintf("%d", msg.CodeID)),
-    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("_contract_address", newContract.String()),
 )
 sdk.NewEvent(
     "wasm-custom",
-    sdk.NewAttribute("_contract_addr", newContract.String()),
+    sdk.NewAttribute("_contract_address", newContract.String()),
     sdk.NewAttribute("foobar", "baz"),
 ),
 ```

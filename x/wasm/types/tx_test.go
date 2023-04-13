@@ -679,3 +679,73 @@ func TestMsgJsonSignBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgUpdateInstantiateConfig(t *testing.T) {
+	bad, err := sdk.AccAddressFromHex("012345")
+	require.NoError(t, err)
+	badAddress := bad.String()
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgUpdateInstantiateConfig
+		expErr bool
+	}{
+		"all good": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   goodAddress,
+				CodeID:                   1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
+			},
+		},
+		"retained AccessTypeOnlyAddress": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   goodAddress,
+				CodeID:                   1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
+			},
+			expErr: true,
+		},
+		"bad sender": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   badAddress,
+				CodeID:                   1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
+			},
+			expErr: true,
+		},
+		"invalid NewInstantiatePermission": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   goodAddress,
+				CodeID:                   1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
+			},
+			expErr: true,
+		},
+		"missing code id": {
+			src: MsgUpdateInstantiateConfig{
+				Sender:                   goodAddress,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
+			},
+			expErr: true,
+		},
+		"missing NewInstantiatePermission": {
+			src: MsgUpdateInstantiateConfig{
+				Sender: goodAddress,
+				CodeID: 1,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

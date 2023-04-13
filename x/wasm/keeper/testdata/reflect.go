@@ -13,12 +13,19 @@ var reflectContract []byte
 //go:embed reflect_1_1.wasm
 var migrateReflectContract []byte
 
+//go:embed cyberpunk.wasm
+var cyberpunkContract []byte
+
 func ReflectContractWasm() []byte {
 	return reflectContract
 }
 
 func MigrateReflectContractWasm() []byte {
 	return migrateReflectContract
+}
+
+func CyberpunkContractWasm() []byte {
+	return cyberpunkContract
 }
 
 // ReflectHandleMsg is used to encode handle messages

@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/spf13/cobra"
@@ -65,6 +65,7 @@ func GetTxCmd() *cobra.Command {
 		UpdateContractAdminCmd(),
 		ClearContractAdminCmd(),
 		GrantAuthorizationCmd(),
+		UpdateInstantiateConfigCmd(),
 	)
 	return txCmd
 }
@@ -93,14 +94,12 @@ func StoreCodeCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
-	cmd.Flags().String(flagInstantiateByAddress, "", "Deprecated: Only this address can instantiate a contract from the code, optional")
-	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+	addInstantiatePermissionFlags(cmd)
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
+// Prepares MsgStoreCode object from flags with gzipped wasm byte code field
 func parseStoreCodeArgs(file string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgStoreCode, error) {
 	wasm, err := os.ReadFile(file)
 	if err != nil {
@@ -153,12 +152,7 @@ func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
 		return nil, fmt.Errorf("instantiate by address: %s", err)
 	}
 	if onlyAddrStr != "" {
-		allowedAddr, err := sdk.AccAddressFromBech32(onlyAddrStr)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, flagInstantiateByAddress)
-		}
-		x := types.AccessTypeOnlyAddress.With(allowedAddr)
-		return &x, nil
+		return nil, fmt.Errorf("not supported anymore. Use: %s", flagInstantiateByAnyOfAddress)
 	}
 	everybodyStr, err := flags.GetString(flagInstantiateByEverybody)
 	if err != nil {
@@ -190,6 +184,13 @@ func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
 	return nil, nil
 }
 
+func addInstantiatePermissionFlags(cmd *cobra.Command) {
+	cmd.Flags().String(flagInstantiateByEverybody, "", "Everybody can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagInstantiateNobody, "", "Nobody except the governance process can instantiate a contract from the code, optional")
+	cmd.Flags().String(flagInstantiateByAddress, "", fmt.Sprintf("Removed: use %s instead", flagInstantiateByAnyOfAddress))
+	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
+}
+
 // InstantiateContractCmd will instantiate a contract from previously uploaded code.
 func InstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -208,7 +209,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 			if err != nil {
 				return err
 			}
-			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
+			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -222,7 +223,7 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
@@ -259,7 +260,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 			if err != nil {
 				return fmt.Errorf("fix msg: %w", err)
 			}
-			data, err := parseInstantiateArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
+			data, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -283,7 +284,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
-	cmd.Flags().String(flagAdmin, "", "Address of an admin")
+	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
 	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
@@ -291,7 +292,7 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 	return cmd
 }
 
-func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (*types.MsgInstantiateContract, error) {
+func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender sdk.AccAddress, flags *flag.FlagSet) (*types.MsgInstantiateContract, error) {
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
@@ -317,6 +318,7 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 	if err != nil {
 		return nil, fmt.Errorf("admin: %s", err)
 	}
+
 	noAdmin, err := flags.GetBool(flagNoAdmin)
 	if err != nil {
 		return nil, fmt.Errorf("no-admin: %s", err)
@@ -328,6 +330,19 @@ func parseInstantiateArgs(rawCodeID, initMsg string, sender sdk.AccAddress, flag
 	}
 	if adminStr != "" && noAdmin {
 		return nil, fmt.Errorf("you set an admin and passed --no-admin, those cannot both be true")
+	}
+
+	if adminStr != "" {
+		addr, err := sdk.AccAddressFromBech32(adminStr)
+		if err != nil {
+			info, err := kr.Key(adminStr)
+			if err != nil {
+				return nil, fmt.Errorf("admin %s", err)
+			}
+			adminStr = info.GetAddress().String()
+		} else {
+			adminStr = addr.String()
+		}
 	}
 
 	// build and sign the transaction, then broadcast to Tendermint
