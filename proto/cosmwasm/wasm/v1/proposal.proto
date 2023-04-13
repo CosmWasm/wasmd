@@ -65,8 +65,7 @@ message InstantiateContractProposal {
   ];
 }
 
-// InstantiateContract2Proposal gov proposal content type to instantiate
-// contract 2
+// InstantiateContract2Proposal gov proposal content type to instantiate contract 2
 message InstantiateContract2Proposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
@@ -75,7 +74,7 @@ message InstantiateContract2Proposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's enviroment as sender
-  string run_as = 3;
+  string run_as =  3;
   // Admin is an optional address that can execute migrations
   string admin = 4;
   // CodeID is the reference to the stored WASM code
