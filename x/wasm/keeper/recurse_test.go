@@ -16,9 +16,8 @@ import (
 )
 
 type Recurse struct {
-	Depth    uint32         `json:"depth"`
-	Work     uint32         `json:"work"`
-	Contract sdk.AccAddress `json:"contract"`
+	Depth uint32 `json:"depth"`
+	Work  uint32 `json:"work"`
 }
 
 type recurseWrapper struct {
@@ -54,12 +53,12 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 
 func TestGasCostOnQuery(t *testing.T) {
 	const (
-		GasNoWork uint64 = 63_958
+		GasNoWork uint64 = 63_950
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork50 uint64 = 64_401 // this is a little shy of 50k gas - to keep an eye on the limit
+		GasWork50 uint64 = 64_218 // this is a little shy of 50k gas - to keep an eye on the limit
 
-		GasReturnUnhashed uint64 = 33
-		GasReturnHashed   uint64 = 25
+		GasReturnUnhashed uint64 = 32
+		GasReturnHashed   uint64 = 27
 	)
 
 	cases := map[string]struct {
@@ -92,7 +91,7 @@ func TestGasCostOnQuery(t *testing.T) {
 				Depth: 1,
 				Work:  50,
 			},
-			expectedGas: 2*GasWork50 + GasReturnHashed + 1, // +1 for rounding
+			expectedGas: 2*GasWork50 + GasReturnHashed,
 		},
 		"recursion 4, some work": {
 			gasLimit: 400_000,
@@ -100,7 +99,7 @@ func TestGasCostOnQuery(t *testing.T) {
 				Depth: 4,
 				Work:  50,
 			},
-			expectedGas: 5*GasWork50 + 4*GasReturnHashed + 1,
+			expectedGas: 5*GasWork50 + 4*GasReturnHashed,
 		},
 	}
 
@@ -117,7 +116,6 @@ func TestGasCostOnQuery(t *testing.T) {
 
 			// do the query
 			recurse := tc.msg
-			recurse.Contract = contractAddr
 			msg := buildRecurseQuery(t, recurse)
 			data, err := keeper.QuerySmart(ctx, contractAddr, msg)
 			require.NoError(t, err)
@@ -186,7 +184,6 @@ func TestGasOnExternalQuery(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			recurse := tc.msg
-			recurse.Contract = contractAddr
 			msg := buildRecurseQuery(t, recurse)
 
 			querier := NewGrpcQuerier(keeper.cdc, keeper.storeKey, keeper, tc.gasLimit)
@@ -211,9 +208,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = 84_236 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 77_206 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
-		GasReturnHashed uint64 = 26
+		GasReturnHashed uint64 = 27
 	)
 
 	cases := map[string]struct {
@@ -241,10 +238,10 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			},
 			expectQueriesFromContract: 5,
 			// FIXME: why -1 ... confused a bit by calculations, seems like rounding issues
-			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed) - 1,
+			expectedGas: GasWork2k + 5*(GasWork2k+GasReturnHashed),
 		},
 		// this is where we expect an error...
-		// it has enough gas to run 4 times and die on the 5th (4th time dispatching to sub-contract)
+		// it has enough gas to run 5 times and die on the 6th (5th time dispatching to sub-contract)
 		// however, if we don't charge the cpu gas before sub-dispatching, we can recurse over 20 times
 		"deep recursion, should die on 5th level": {
 			gasLimit: 400_000,
@@ -252,7 +249,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 				Depth: 50,
 				Work:  2000,
 			},
-			expectQueriesFromContract: 4,
+			expectQueriesFromContract: 5,
 			expectOutOfGas:            true,
 		},
 		"very deep recursion, hits recursion limit": {
@@ -264,7 +261,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			expectQueriesFromContract: 10,
 			expectOutOfGas:            false,
 			expectError:               "query wasm contract failed", // Error we get from the contract instance doing the failing query, not wasmd
-			expectedGas:               10*(GasWork2k+GasReturnHashed) - 264,
+			expectedGas:               10*(GasWork2k+GasReturnHashed) - 247,
 		},
 	}
 
@@ -281,7 +278,6 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 			// prepare the query
 			recurse := tc.msg
-			recurse.Contract = contractAddr
 			msg := buildRecurseQuery(t, recurse)
 
 			// if we expect out of gas, make sure this panics

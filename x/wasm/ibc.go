@@ -154,12 +154,6 @@ func (i IBCHandler) OnChanOpenAck(
 		return sdkerrors.Wrapf(channeltypes.ErrChannelNotFound, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
 	channelInfo.Counterparty.ChannelId = counterpartyChannelID
-	// This is a bit ugly, but it is set AFTER the callback is done, yet we want to provide the contract
-	// access to the channel in queries. We can revisit how to better integrate with ibc-go in the future,
-	// but this is the best/safest we can do now. (If you remove this, you error when sending a packet during the
-	// OnChanOpenAck entry point)
-	// https://github.com/cosmos/ibc-go/pull/647/files#diff-54b5be375a2333c56f2ae1b5b4dc13ac9c734561e30286505f39837ee75762c7R25
-	i.channelKeeper.SetChannel(ctx, portID, channelID, channelInfo)
 
 	appVersion, ok := i.appVersionGetter.GetAppVersion(ctx, portID, channelID)
 	if !ok {

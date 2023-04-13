@@ -2,12 +2,49 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.31.0...HEAD)
+
+## [v0.31.0](https://github.com/CosmWasm/wasmd/tree/v0.31.0) (2023-03-13)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.30.0...v0.31.0)
+
+- Upgrade wasmvm to v1.2.1 [\#1245](https://github.com/CosmWasm/wasmd/pull/1245), see [wasmvm v1.2.1](https://github.com/CosmWasm/wasmvm/releases/tag/v1.2.1)
+- Fix checksum check for zipped gov store proposals [\#1232](https://github.com/CosmWasm/wasmd/issues/1232)
+- Return IBC packet sequence number in the handler plugin [\#1154](https://github.com/CosmWasm/wasmd/issues/1154)
+- Add Windows client-side support [\#1169](https://github.com/CosmWasm/wasmd/issues/1169)
+- Upgrade Cosmos-SDK to [v0.45.14](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.14)
+- Add missing events for admin-related methods [\#1173](https://github.com/CosmWasm/wasmd/issues/1173)
+- Disallow storing new codes with ACCESS\_TYPE\_ONLY\_ADDRESS [\#1144](https://github.com/CosmWasm/wasmd/issues/1144)
+- Support builds without CGO  [\#1129](https://github.com/CosmWasm/wasmd/issues/1129)
+- Wasmd does not sort coins when converting from CosmWasm Coins to SDK
+  Coins [\#1118](https://github.com/CosmWasm/wasmd/issues/1118)
+- Add InstantiateContract2Proposal [\#1062](https://github.com/CosmWasm/wasmd/issues/1062)
+- CLI: Allow using key name for --admin [\#1039](https://github.com/CosmWasm/wasmd/issues/1039)
+- More gov proposal simulations [\#1107](https://github.com/CosmWasm/wasmd/pull/1107)
+- Remove genesis messages [\#987](https://github.com/CosmWasm/wasmd/issues/987)
+- Update instantiate config command [\#843](https://github.com/CosmWasm/wasmd/issues/843)
+- Upgrade IBC-go to [v4.3.0](https://github.com/cosmos/ibc-go/releases/tag/v4.3.0) [\#1180](https://github.com/CosmWasm/wasmd/pull/1180)
+- Upgrade ICA to [v0.2.6](https://github.com/cosmos/interchain-accounts-demo/releases/tag/v0.2.6) [\#1192](https://github.com/CosmWasm/wasmd/pull/1192)
+
+### Notable changes:
+- Genesis messages were deprecated before and are removed with this release
+- New `cosmwasm_1_2` [capability](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) to
+  enable new features:
+  - Support for `gov.MsgVoteWeighted`, `wasm.Instantiate2` messages
+  - code info query for contracts
+- See "State Machine Breaking" changes in [IBC-go](https://github.com/cosmos/ibc-go/releases/tag/v4.3.0)
+- See notes about the "store fix" in [Cosmos-sdk](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.12)
+- Wasmd can now be used as a library without CGO
+- Wasmd client can now be used on Windows
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade
 
 ## [v0.30.0](https://github.com/CosmWasm/wasmd/tree/v0.30.0) (2022-12-02)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.29.2...v0.30.0)
-* Provide source, builder and codehash information in store code proposal message[\#1072](https://github.com/CosmWasm/wasmd/pull/1072)
+- Provide source, builder and codehash information in store code proposal message[\#1072](https://github.com/CosmWasm/wasmd/pull/1072)
+- Add new CLI query/ endpoint to get contracts by creator address [\#998](https://github.com/CosmWasm/wasmd/pull/998)
 - Upgrade to Go v1.19 [\#1044](https://github.com/CosmWasm/wasmd/pull/1044)
 - Upgrade to Cosmos-sdk to v0.45.11 [/#1096](https://github.com/CosmWasm/wasmd/pull/1096/)
 - Upgrade to IBC v4.2.0 with interchain-accounts v0.2.4 [\#1088](https://github.com/CosmWasm/wasmd/pull/1088)
@@ -20,9 +57,10 @@
 - IBC fee middleware is setup in `app.go`. Please note that it can be enabled with new channels only. A nice read is this [article](https://medium.com/the-interchain-foundation/ibc-relaying-as-a-service-the-in-protocol-incentivization-story-2c008861a957).
 - Authz for wasm contracts can be granted via `wasmd tx wasm grant` and executed via `wasmd tx authz exec` command  
 - Go v1.19 required to prevent a mixed chain setup with older versions. Just to be on the safe side.
-- Store code proposal types have new metadata fields added that can help to build client side tooling to verify the wasm contract in the proposal 
+- Store code proposal types have new metadata fields added that can help to build client side tooling to verify the wasm contract in the proposal
 
 ### Migration notes:
+- The wasmd module version was bumped and a [state migration](https://github.com/CosmWasm/wasmd/pull/1021/files#diff-4357c2137e24f583b8f852cc210320cb71af18e2fdfb8c21b55d8667cfe54690R20) registered.
 - See ibc-go [migration notes](https://github.com/cosmos/ibc-go/blob/v4.2.0/docs/migrations)
 - See interchain-accounts [`MsgRegisterAccount.Version` field](https://github.com/cosmos/interchain-accounts-demo/compare/v0.1.0...v0.2.4#diff-ac8bca25810de6d3eef95f74fc9acf2223f3687822e6227b584e0d3b40db6566). Full diff [v0.1.0 to v0.2.4](https://github.com/cosmos/interchain-accounts-demo/compare/v0.1.0...v0.2.4)
 

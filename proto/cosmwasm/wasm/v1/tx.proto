@@ -28,11 +28,14 @@ service Msg {
   rpc UpdateAdmin(MsgUpdateAdmin) returns (MsgUpdateAdminResponse);
   // ClearAdmin removes any admin stored for a smart contract
   rpc ClearAdmin(MsgClearAdmin) returns (MsgClearAdminResponse);
+  // UpdateInstantiateConfig updates instantiate config for a smart contract
+  rpc UpdateInstantiateConfig(MsgUpdateInstantiateConfig)
+      returns (MsgUpdateInstantiateConfigResponse);
 }
 
 // MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
-  // Sender is the that actor that signed the messages
+  // Sender is the actor that signed the messages
   string sender = 1;
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 2 [ (gogoproto.customname) = "WASMByteCode" ];
@@ -166,7 +169,7 @@ message MsgUpdateAdminResponse {}
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
-  // Sender is the that actor that signed the messages
+  // Sender is the actor that signed the messages
   string sender = 1;
   // Contract is the address of the smart contract
   string contract = 3;
@@ -174,3 +177,16 @@ message MsgClearAdmin {
 
 // MsgClearAdminResponse returns empty data
 message MsgClearAdminResponse {}
+
+// MsgUpdateInstantiateConfig updates instantiate config for a smart contract
+message MsgUpdateInstantiateConfig {
+  // Sender is the that actor that signed the messages
+  string sender = 1;
+  // CodeID references the stored WASM code
+  uint64 code_id = 2 [ (gogoproto.customname) = "CodeID" ];
+  // NewInstantiatePermission is the new access control
+  AccessConfig new_instantiate_permission = 3;
+}
+
+// MsgUpdateInstantiateConfigResponse returns empty data
+message MsgUpdateInstantiateConfigResponse {}

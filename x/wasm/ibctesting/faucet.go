@@ -47,6 +47,6 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	if err != nil {
 		return r, err
 	}
-	chain.captureIBCEvents(r)
+	chain.CaptureIBCEvents(r)
 	return r, nil
 }

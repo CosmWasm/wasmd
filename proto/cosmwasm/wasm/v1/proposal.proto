@@ -2,6 +2,7 @@ syntax = "proto3";
 package cosmwasm.wasm.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmwasm/wasm/v1/types.proto";
 
@@ -12,6 +13,8 @@ option (gogoproto.equal_all) = true;
 
 // StoreCodeProposal gov proposal content type to submit WASM code to the system
 message StoreCodeProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -39,6 +42,8 @@ message StoreCodeProposal {
 // InstantiateContractProposal gov proposal content type to instantiate a
 // contract.
 message InstantiateContractProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -60,8 +65,41 @@ message InstantiateContractProposal {
   ];
 }
 
+// InstantiateContract2Proposal gov proposal content type to instantiate
+// contract 2
+message InstantiateContract2Proposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
+  // Title is a short summary
+  string title = 1;
+  // Description is a human readable text
+  string description = 2;
+  // RunAs is the address that is passed to the contract's enviroment as sender
+  string run_as = 3;
+  // Admin is an optional address that can execute migrations
+  string admin = 4;
+  // CodeID is the reference to the stored WASM code
+  uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
+  // Label is optional metadata to be stored with a constract instance.
+  string label = 6;
+  // Msg json encode message to be passed to the contract on instantiation
+  bytes msg = 7 [ (gogoproto.casttype) = "RawContractMessage" ];
+  // Funds coins that are transferred to the contract on instantiation
+  repeated cosmos.base.v1beta1.Coin funds = 8 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
+  bytes salt = 9;
+  // FixMsg include the msg value into the hash for the predictable address.
+  // Default is false
+  bool fix_msg = 10;
+}
+
 // MigrateContractProposal gov proposal content type to migrate a contract.
 message MigrateContractProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -78,6 +116,8 @@ message MigrateContractProposal {
 
 // SudoContractProposal gov proposal content type to call sudo on a contract.
 message SudoContractProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -91,6 +131,8 @@ message SudoContractProposal {
 // ExecuteContractProposal gov proposal content type to call execute on a
 // contract.
 message ExecuteContractProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -110,6 +152,8 @@ message ExecuteContractProposal {
 
 // UpdateAdminProposal gov proposal content type to set an admin for a contract.
 message UpdateAdminProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -123,6 +167,8 @@ message UpdateAdminProposal {
 // ClearAdminProposal gov proposal content type to clear the admin of a
 // contract.
 message ClearAdminProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text
@@ -134,6 +180,8 @@ message ClearAdminProposal {
 // PinCodesProposal gov proposal content type to pin a set of code ids in the
 // wasmvm cache.
 message PinCodesProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
@@ -148,6 +196,8 @@ message PinCodesProposal {
 // UnpinCodesProposal gov proposal content type to unpin a set of code ids in
 // the wasmvm cache.
 message UnpinCodesProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
@@ -171,6 +221,8 @@ message AccessConfigUpdate {
 // UpdateInstantiateConfigProposal gov proposal content type to update
 // instantiate config to a  set of code ids.
 message UpdateInstantiateConfigProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
@@ -184,6 +236,8 @@ message UpdateInstantiateConfigProposal {
 // StoreAndInstantiateContractProposal gov proposal content type to store
 // and instantiate the contract.
 message StoreAndInstantiateContractProposal {
+  option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
+
   // Title is a short summary
   string title = 1;
   // Description is a human readable text

@@ -16,7 +16,7 @@ type ValidatorSetSource interface {
 // InitGenesis sets supply information for genesis.
 //
 // CONTRACT: all types of accounts must have been already initialized/created
-func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgHandler sdk.Handler) ([]abci.ValidatorUpdate, error) {
+func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]abci.ValidatorUpdate, error) {
 	contractKeeper := NewGovPermissionKeeper(keeper)
 	keeper.SetParams(ctx, data.Params)
 	var maxCodeID uint64
@@ -64,21 +64,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgHa
 	if seqVal <= uint64(maxContractID) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
 	}
-
-	if len(data.GenMsgs) == 0 {
-		return nil, nil
-	}
-	for _, genTx := range data.GenMsgs {
-		msg := genTx.AsMsg()
-		if msg == nil {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unknown message")
-		}
-		_, err := msgHandler(ctx, msg)
-		if err != nil {
-			return nil, sdkerrors.Wrap(err, "genesis")
-		}
-	}
-	return []abci.ValidatorUpdate{}, nil
+	return nil, nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
