@@ -227,8 +227,6 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
 	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
 	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
-
-	startCmd.PreRunE = chainPreRuns(checkLibwasmVersion, startCmd.PreRunE)
 }
 
 // ReadWasmConfig reads the wasm specifig configuration
@@ -280,7 +278,7 @@ func getExpectedLibwasmVersion() string {
 	return ""
 }
 
-func checkLibwasmVersion(cmd *cobra.Command, args []string) error {
+func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
