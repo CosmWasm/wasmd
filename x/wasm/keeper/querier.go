@@ -45,7 +45,8 @@ func (q GrpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	return rsp, nil
 }
@@ -120,7 +121,8 @@ func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 
 	r := make([]types.Model, 0)
@@ -155,7 +157,8 @@ func (q GrpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 	}
 
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	rsp := q.keeper.QueryRaw(ctx, contractAddr, req.QueryData)
 	return &types.QueryRawContractStateResponse{Data: rsp}, nil
@@ -199,7 +202,8 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	case err != nil:
 		return nil, err
 	case bz == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	return &types.QuerySmartContractStateResponse{Data: bz}, nil
 }
@@ -216,7 +220,7 @@ func (q GrpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
 	}
 	return &types.QueryCodeResponse{
 		CodeInfoResponse: rsp.CodeInfoResponse,
@@ -255,7 +259,8 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(addr.String()).
+			Wrapf("address %s", addr.String())
 	}
 	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),

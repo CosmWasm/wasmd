@@ -702,7 +702,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 
 	const nonExistingCodeID = 9999
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, nonExistingCodeID, creator, nil, initMsgBz, "demo contract 2", nil)
-	require.True(t, types.ErrNotFound.Is(err), err)
+	require.Equal(t, types.ErrNoSuchCodeFn(nonExistingCodeID).Wrapf("code id %d", nonExistingCodeID).Error(), err.Error())
 	require.Nil(t, addr)
 }
 
@@ -983,7 +983,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := RandomAccountAddress(t)
 	_, err := keeper.Execute(ctx, nonExistingAddress, creator, []byte(`{}`), nil)
-	require.True(t, types.ErrNotFound.Is(err), err)
+	require.Equal(t, types.ErrNoSuchContractFn(nonExistingAddress.String()).Wrapf("address %s", nonExistingAddress.String()).Error(), err.Error())
 }
 
 func TestExecuteWithPanic(t *testing.T) {
