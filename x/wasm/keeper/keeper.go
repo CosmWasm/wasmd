@@ -232,7 +232,11 @@ func (k Keeper) instantiate(
 
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
+<<<<<<< HEAD
 		return nil, nil, sdkerrors.Wrap(types.ErrNotFound, "code")
+=======
+		return nil, nil, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
 		return nil, nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
@@ -711,14 +715,24 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
+<<<<<<< HEAD
 		return types.ContractInfo{}, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "contract")
+=======
+		return types.ContractInfo{}, types.CodeInfo{}, nil, types.ErrNoSuchContractFn(contractAddress.String()).
+			Wrapf("address %s", contractAddress.String())
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	var contractInfo types.ContractInfo
 	k.cdc.MustUnmarshal(contractBz, &contractInfo)
 
 	codeInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
 	if codeInfoBz == nil {
+<<<<<<< HEAD
 		return contractInfo, types.CodeInfo{}, nil, sdkerrors.Wrap(types.ErrNotFound, "code info")
+=======
+		return contractInfo, types.CodeInfo{}, nil, types.ErrNoSuchCodeFn(contractInfo.CodeID).
+			Wrapf("code id %d", contractInfo.CodeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
@@ -840,7 +854,11 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
+<<<<<<< HEAD
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+=======
+		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 
 	if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
@@ -861,7 +879,11 @@ func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
+<<<<<<< HEAD
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+=======
+		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	if err := k.wasmVM.Unpin(codeInfo.CodeHash); err != nil {
 		return sdkerrors.Wrap(types.ErrUnpinContractFailed, err.Error())
@@ -890,9 +912,14 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		codeInfo := k.GetCodeInfo(ctx, types.ParsePinnedCodeIndex(iter.Key()))
+		codeID := types.ParsePinnedCodeIndex(iter.Key())
+		codeInfo := k.GetCodeInfo(ctx, codeID)
 		if codeInfo == nil {
+<<<<<<< HEAD
 			return sdkerrors.Wrap(types.ErrNotFound, "code info")
+=======
+			return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 		}
 		if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
 			return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
@@ -905,7 +932,12 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAddress, ext types.ContractInfoExtension) error {
 	info := k.GetContractInfo(ctx, contractAddr)
 	if info == nil {
+<<<<<<< HEAD
 		return sdkerrors.Wrap(types.ErrNotFound, "contract info")
+=======
+		return types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	if err := info.SetExtension(ext); err != nil {
 		return err
@@ -918,7 +950,11 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, authz AuthorizationPolicy) error {
 	info := k.GetCodeInfo(ctx, codeID)
 	if info == nil {
+<<<<<<< HEAD
 		return sdkerrors.Wrap(types.ErrNotFound, "code info")
+=======
+		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
 	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
@@ -1025,7 +1061,11 @@ func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uin
 
 func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, entries []types.ContractCodeHistoryEntry) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
+<<<<<<< HEAD
 		return sdkerrors.Wrapf(types.ErrNotFound, "code id: %d", c.CodeID)
+=======
+		return types.ErrNoSuchCodeFn(c.CodeID).Wrapf("code id %d", c.CodeID)
+>>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	}
 	if k.HasContractInfo(ctx, contractAddr) {
 		return sdkerrors.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
