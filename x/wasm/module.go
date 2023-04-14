@@ -292,18 +292,3 @@ func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
-
-type preRunFn func(cmd *cobra.Command, args []string) error
-
-func chainPreRuns(pfns ...preRunFn) preRunFn {
-	return func(cmd *cobra.Command, args []string) error {
-		for _, pfn := range pfns {
-			if pfn != nil {
-				if err := pfn(cmd, args); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	}
-}
