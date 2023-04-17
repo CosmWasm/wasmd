@@ -68,6 +68,11 @@ func (msg MsgStoreCode) ValidateBasic() error {
 		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
 			return sdkerrors.Wrap(err, "instantiate permission")
 		}
+		// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
+		// but not for new contracts
+		if msg.InstantiatePermission.Permission == AccessTypeOnlyAddress {
+			return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
+		}
 	}
 	return nil
 }
@@ -389,6 +394,51 @@ func (msg MsgInstantiateContract2) GetSignBytes() []byte {
 }
 
 func (msg MsgInstantiateContract2) GetSigners() []sdk.AccAddress {
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{senderAddr}
+}
+
+func (msg MsgUpdateInstantiateConfig) Route() string {
+	return RouterKey
+}
+
+func (msg MsgUpdateInstantiateConfig) Type() string {
+	return "update-instantiate-config"
+}
+
+func (msg MsgUpdateInstantiateConfig) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return sdkerrors.Wrap(err, "sender")
+	}
+
+	if msg.CodeID == 0 {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+	}
+
+	if msg.NewInstantiatePermission == nil {
+		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "instantiate permission is required")
+	}
+
+	if err := msg.NewInstantiatePermission.ValidateBasic(); err != nil {
+		return sdkerrors.Wrap(err, "instantiate permission")
+	}
+	// AccessTypeOnlyAddress is still considered valid as legacy instantiation permission
+	// but not for new contracts
+	if msg.NewInstantiatePermission.Permission == AccessTypeOnlyAddress {
+		return ErrInvalid.Wrap("unsupported type, use AccessTypeAnyOfAddresses instead")
+	}
+
+	return nil
+}
+
+func (msg MsgUpdateInstantiateConfig) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgUpdateInstantiateConfig) GetSigners() []sdk.AccAddress {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil { // should never happen as valid basic rejects invalid addresses
 		panic(err.Error())

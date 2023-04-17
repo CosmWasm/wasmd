@@ -21,4 +21,5 @@ var ProposalHandlers = []govclient.ProposalHandler{
 	govclient.NewProposalHandler(cli.ProposalUnpinCodesCmd, rest.UnpinCodeProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalUpdateInstantiateConfigCmd, rest.UpdateInstantiateConfigProposalHandler),
 	govclient.NewProposalHandler(cli.ProposalStoreAndInstantiateContractCmd, rest.EmptyRestHandler),
+	govclient.NewProposalHandler(cli.ProposalInstantiateContract2Cmd, rest.EmptyRestHandler),
 }

@@ -80,10 +80,14 @@ all: install lint test
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
+	$(error wasmd server not supported. Use "make build-windows-client" for client)
 	exit 1
 else
 	go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd ./cmd/wasmd
 endif
+
+build-windows-client: go.sum
+	GOOS=windows GOARCH=amd64 go build -mod=readonly $(BUILD_FLAGS) -o build/wasmd.exe ./cmd/wasmd
 
 build-contract-tests-hooks:
 ifeq ($(OS),Windows_NT)
@@ -193,4 +197,4 @@ proto-check-breaking:
 .PHONY: all install install-debug \
 	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race \
-	test-sim-import-export \
+	test-sim-import-export build-windows-client \

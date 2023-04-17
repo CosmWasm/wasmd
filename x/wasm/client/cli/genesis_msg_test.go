@@ -161,6 +161,22 @@ func TestInstantiateContractCmd(t *testing.T) {
 			},
 			expMsgCount: 2,
 		},
+		"all good with code id from genesis store messages without initial sequence and key name admin": {
+			srcGenesis: types.GenesisState{
+				Params: types.DefaultParams(),
+				GenMsgs: []types.GenesisState_GenMsgs{
+					{Sum: &types.GenesisState_GenMsgs_StoreCode{StoreCode: types.MsgStoreCodeFixture()}},
+				},
+			},
+			mutator: func(cmd *cobra.Command) {
+				cmd.SetArgs([]string{"1", `{}`})
+				flagSet := cmd.Flags()
+				flagSet.Set("label", "testing")
+				flagSet.Set("run-as", defaultTestKeyName)
+				flagSet.Set("admin", defaultTestKeyName)
+			},
+			expMsgCount: 2,
+		},
 		"all good with code id from genesis store messages and sequence set": {
 			srcGenesis: types.GenesisState{
 				Params: types.DefaultParams(),

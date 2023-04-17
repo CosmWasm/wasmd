@@ -465,7 +465,7 @@ func TestGenesisInit(t *testing.T) {
 				},
 				Params: types.DefaultParams(),
 			},
-			stakingMock:    StakingKeeperMock{expCalls: 0, validatorUpdate: []abci.ValidatorUpdate{}},
+			stakingMock:    StakingKeeperMock{expCalls: 0, validatorUpdate: []abci.ValidatorUpdate(nil)},
 			msgHandlerMock: MockMsgHandler{expCalls: 1, expMsg: types.MsgStoreCodeFixture()},
 			expSuccess:     true,
 		},

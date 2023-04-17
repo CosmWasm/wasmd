@@ -78,7 +78,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgHa
 			return nil, sdkerrors.Wrap(err, "genesis")
 		}
 	}
-	return []abci.ValidatorUpdate{}, nil
+	return nil, nil
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

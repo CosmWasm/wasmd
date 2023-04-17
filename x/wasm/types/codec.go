@@ -19,11 +19,13 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { //nolint:staticcheck
 	cdc.RegisterConcrete(&MsgMigrateContract{}, "wasm/MsgMigrateContract", nil)
 	cdc.RegisterConcrete(&MsgUpdateAdmin{}, "wasm/MsgUpdateAdmin", nil)
 	cdc.RegisterConcrete(&MsgClearAdmin{}, "wasm/MsgClearAdmin", nil)
+	cdc.RegisterConcrete(&MsgUpdateInstantiateConfig{}, "wasm/MsgUpdateInstantiateConfig", nil)
 
 	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
 	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
 	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
 	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
+	cdc.RegisterConcrete(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal", nil)
 	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
 	cdc.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
 	cdc.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal", nil)
@@ -60,11 +62,13 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgClearAdmin{},
 		&MsgIBCCloseChannel{},
 		&MsgIBCSend{},
+		&MsgUpdateInstantiateConfig{},
 	)
 	registry.RegisterImplementations(
 		(*govtypes.Content)(nil),
 		&StoreCodeProposal{},
 		&InstantiateContractProposal{},
+		&InstantiateContract2Proposal{},
 		&MigrateContractProposal{},
 		&SudoContractProposal{},
 		&ExecuteContractProposal{},
