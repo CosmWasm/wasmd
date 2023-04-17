@@ -278,6 +278,17 @@ func getExpectedLibwasmVersion() string {
 	return ""
 }
 
+// CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
+// of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
+// shared libraries that are copied or moved from their default location, e.g. when building the node
+// on one machine and deploying it to other machines.
+//
+// Usually the libwasmvm version (the Rust project) and wasmvm version (the Go project) match. However,
+// there are situations in which this is not the case. This can be during development or if one of the
+// two is patched. In such cases it is advised to not execute the check.
+//
+// An alternative method to obtain the libwasmvm version loaded at runtime is executing
+// `wasmd query wasm libwasmvm-version`.
 func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
