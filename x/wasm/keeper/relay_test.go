@@ -324,7 +324,7 @@ func TestOnRecvPacket(t *testing.T) {
 		overwriteMessenger *wasmtesting.MockMessageHandler
 		mockReplyFn        func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error)
 		expContractGas     sdk.Gas
-		expAck             []byte
+		expAck             ContractConfirmStateAck
 		expErr             bool
 		expPanic           bool
 		expEventTypes      []string
@@ -370,7 +370,7 @@ func TestOnRecvPacket(t *testing.T) {
 				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
 			},
 			expEventTypes: []string{types.WasmModuleEventType},
-			expAck:        []byte("myAck"),
+			expAck:        ContractConfirmStateAck("myAck"),
 		},
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
@@ -387,7 +387,7 @@ func TestOnRecvPacket(t *testing.T) {
 				}},
 			},
 			expEventTypes: []string{types.WasmModuleEventType, "wasm-custom"},
-			expAck:        []byte("myAck"),
+			expAck:        ContractConfirmStateAck("myAck"),
 		},
 		"messenger errors returned, events stored": {
 			contractAddr:   example.Contract,
@@ -411,7 +411,7 @@ func TestOnRecvPacket(t *testing.T) {
 			mockReplyFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 				return &wasmvmtypes.Response{Data: []byte("myBetterAck")}, 0, nil
 			},
-			expAck:        []byte("myBetterAck"),
+			expAck:        ContractConfirmStateAck("myBetterAck"),
 			expEventTypes: []string{types.EventTypeReply},
 		},
 		"unknown contract address": {
