@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/Finschia/wasmd/compare/v0.1.2...HEAD)
+## [Unreleased](https://github.com/Finschia/wasmd/compare/v0.1.3...HEAD)
 
 ### Features
 
@@ -11,9 +11,14 @@
 ### Breaking Changes
 
 ### Build, CI
-* [\#30](https://github.com/Finschia/wasmd/pull/30) replace line repositories with finschia repositories
 
 ### Document Updates
+
+
+## [v0.1.3](https://github.com/Finschia/wasmd/releases/tag/v0.1.3) - 2023.04.19
+
+### Build, CI
+* [\#30](https://github.com/Finschia/wasmd/pull/30) replace line repositories with finschia repositories
 
 
 ## [v0.1.2](https://github.com/Finschia/wasmd/releases/tag/v0.1.2) - 2023.04.10
