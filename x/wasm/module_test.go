@@ -514,43 +514,9 @@ func assertCodeList(t *testing.T, q sdk.Querier, ctx sdk.Context, expectedNum in
 	assert.Equal(t, expectedNum, len(res))
 }
 
-<<<<<<< HEAD
 func assertCodeBytes(t *testing.T, q sdk.Querier, ctx sdk.Context, codeID uint64, expectedBytes []byte) {
 	path := []string{QueryGetCode, fmt.Sprintf("%d", codeID)}
 	bz, sdkerr := q(ctx, path, abci.RequestQuery{})
-=======
-func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expectedBytes []byte, marshaler codec.Codec) { //nolint:unparam
-	t.Helper()
-	bz, err := marshaler.Marshal(&types.QueryCodeRequest{CodeId: codeID})
-	require.NoError(t, err)
-
-	path := "/cosmwasm.wasm.v1.Query/Code"
-	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
-	if len(expectedBytes) == 0 {
-		require.Equal(t, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID).Error(), err.Error())
-		return
-	}
-	require.NoError(t, err)
-	require.True(t, resp.IsOK())
-	bz = resp.Value
-
-	var rsp types.QueryCodeResponse
-	require.NoError(t, marshaler.Unmarshal(bz, &rsp))
-	assert.Equal(t, expectedBytes, rsp.Data)
-}
-
-func assertContractList(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, codeID uint64, expContractAddrs []string, marshaler codec.Codec) { //nolint:unparam
-	t.Helper()
-	bz, err := marshaler.Marshal(&types.QueryContractsByCodeRequest{CodeId: codeID})
-	require.NoError(t, err)
-
-	path := "/cosmwasm.wasm.v1.Query/ContractsByCode"
-	resp, sdkerr := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
-	if len(expContractAddrs) == 0 {
-		assert.ErrorIs(t, err, types.ErrNotFound)
-		return
-	}
->>>>>>> 127d9fda (Cleanup ErrNotFound cases)
 	require.NoError(t, sdkerr)
 
 	if len(expectedBytes) == 0 {
