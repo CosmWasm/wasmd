@@ -1,5 +1,12 @@
 Name: Test wasmd
 
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - gh-actions-demo
+
 jobs:
   test-unit:
     name: Run tests
