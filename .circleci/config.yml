@@ -125,8 +125,6 @@ jobs:
           name: Run simulations
           command: |
             make test-sim-multi-seed-short test-sim-import-export test-sim-deterministic
-      - store_artifacts:
-          path: /tmp
 
   upload-coverage:
     executor: golang
