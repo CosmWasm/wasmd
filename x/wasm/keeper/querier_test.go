@@ -38,20 +38,22 @@ func TestQueryAllContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
 
+	randomAddr := RandomBech32AccountAddress(t)
+
 	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery            *types.QueryAllContractStateRequest
 		expModelContains    []types.Model
 		expModelContainsNot []types.Model
-		expErr              *errorsmod.Error
+		expErr              error
 	}{
 		"query all": {
 			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
 			expModelContains: contractModel,
 		},
 		"query all with unknown address": {
-			srcQuery: &types.QueryAllContractStateRequest{Address: RandomBech32AccountAddress(t)},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QueryAllContractStateRequest{Address: randomAddr},
+			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 		"with pagination offset": {
 			srcQuery: &types.QueryAllContractStateRequest{
@@ -99,8 +101,9 @@ func TestQueryAllContractState(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.AllContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
+
 			if spec.expErr != nil {
+				require.Equal(t, spec.expErr.Error(), err.Error())
 				return
 			}
 			for _, exp := range spec.expModelContains {
@@ -119,6 +122,8 @@ func TestQuerySmartContractState(t *testing.T) {
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract.String()
+
+	randomAddr := RandomBech32AccountAddress(t)
 
 	q := Querier(keeper)
 	specs := map[string]struct {
@@ -140,8 +145,8 @@ func TestQuerySmartContractState(t *testing.T) {
 			expErr:   status.Error(codes.InvalidArgument, "invalid query data"),
 		},
 		"query smart with unknown address": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte(`{"verifier":{}}`)},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QuerySmartContractStateRequest{Address: randomAddr, QueryData: []byte(`{"verifier":{}}`)},
+			expErr:   types.ErrNoSuchContractFn(randomAddr),
 		},
 	}
 	for msg, spec := range specs {
@@ -213,11 +218,13 @@ func TestQueryRawContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, exampleContract.Contract, contractModel))
 
+	randomAddr := RandomBech32AccountAddress(t)
+
 	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery *types.QueryRawContractStateRequest
 		expData  []byte
-		expErr   *errorsmod.Error
+		expErr   error
 	}{
 		"query raw key": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
@@ -240,15 +247,15 @@ func TestQueryRawContractState(t *testing.T) {
 			expData:  nil,
 		},
 		"query raw with unknown address": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte("foo")},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QueryRawContractStateRequest{Address: randomAddr, QueryData: []byte("foo")},
+			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.RawContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
 			if spec.expErr != nil {
+				assert.Equal(t, spec.expErr.Error(), err.Error())
 				return
 			}
 			assert.Equal(t, spec.expData, got.Data)
