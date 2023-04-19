@@ -124,9 +124,13 @@ jobs:
       - run:
           name: Run simulations
           command: |
+<<<<<<< HEAD
             make test-sim-multi-seed-short
       - store_artifacts:
           path: /tmp
+=======
+            make test-sim-multi-seed-short test-sim-import-export test-sim-deterministic
+>>>>>>> 22b5903b (Remove simulations logs storage from CI)
 
   upload-coverage:
     executor: golang
