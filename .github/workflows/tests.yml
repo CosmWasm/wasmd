@@ -1,19 +1,13 @@
-name: Build wasmd
-
-on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - gh-actions-demo
+Name: Test wasmd
 
 jobs:
-  build:
+  test-unit:
+    name: Run tests
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
           go-version: 1.19
-      - name: Build
-        run: make build
+      - name: Run tests
+        run: make test-all
