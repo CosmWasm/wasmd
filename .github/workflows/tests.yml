@@ -1,4 +1,4 @@
-Name: Test wasmd
+name: Test wasmd
 
 on:
   pull_request:
