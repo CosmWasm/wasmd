@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - gh-actions-demo
+      - gh-actions-demo # TODO: REMOVE THIS
 
 jobs:
   build:

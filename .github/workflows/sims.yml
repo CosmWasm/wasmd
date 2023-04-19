@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 */5 * * *"
+  push: # TODO: REMOVE THIS
+    branches:
+      - gh-actions-demo
 
 jobs:
   sim-tests:
