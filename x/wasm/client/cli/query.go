@@ -13,13 +13,13 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	"github.com/line/lbm-sdk/client"
-	"github.com/line/lbm-sdk/client/flags"
-	sdk "github.com/line/lbm-sdk/types"
-	wasmvm "github.com/line/wasmvm"
+	"github.com/Finschia/finschia-sdk/client"
+	"github.com/Finschia/finschia-sdk/client/flags"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	wasmvm "github.com/Finschia/wasmvm"
 
-	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func GetQueryCmd() *cobra.Command {
@@ -223,7 +223,7 @@ func GetCmdQueryCode() *cobra.Command {
 
 			fileName := "contract-" + strconv.FormatUint(codeID, 10) + ".wasm"
 			fmt.Printf("Downloading wasm code to %s\n", fileName)
-			return os.WriteFile(fileName, res.Data, 0600)
+			return os.WriteFile(fileName, res.Data, 0o600)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

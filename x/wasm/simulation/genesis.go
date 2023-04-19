@@ -1,9 +1,9 @@
 package simulation
 
 import (
-	"github.com/line/lbm-sdk/types/module"
+	"github.com/Finschia/finschia-sdk/types/module"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // RandomizedGenState generates a random GenesisState for wasm

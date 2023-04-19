@@ -4,10 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/address"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/address"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // AddressGenerator abstract address generator to be used for a single contract address

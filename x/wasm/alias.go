@@ -6,8 +6,8 @@
 package wasm
 
 import (
-	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 const (

@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	"github.com/line/lbm-sdk/client"
-	"github.com/line/lbm-sdk/client/flags"
+	"github.com/Finschia/finschia-sdk/client"
+	"github.com/Finschia/finschia-sdk/client/flags"
 
-	wasmcli "github.com/line/wasmd/x/wasm/client/cli"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmcli "github.com/Finschia/wasmd/x/wasm/client/cli"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 func GetQueryCmd() *cobra.Command {

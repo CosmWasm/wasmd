@@ -1,13 +1,13 @@
 package keeper
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals

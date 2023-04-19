@@ -1,8 +1,8 @@
 package wasmtesting
 
 import (
-	"github.com/line/lbm-sdk/baseapp"
-	sdk "github.com/line/lbm-sdk/types"
+	"github.com/Finschia/finschia-sdk/baseapp"
+	sdk "github.com/Finschia/finschia-sdk/types"
 )
 
 // MockMessageRouter mock for testing

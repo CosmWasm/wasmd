@@ -3,27 +3,29 @@ package lbm.wasm.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package                       = "github.com/line/wasmd/x/wasmplus/types";
+option go_package = "github.com/Finschia/wasmd/x/wasmplus/types";
 option (gogoproto.goproto_stringer_all) = false;
-option (gogoproto.goproto_getters_all)  = false;
-option (gogoproto.equal_all)            = true;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.equal_all) = true;
 
-// DeactivateContractProposal gov proposal content type adds a contract to inactive list.
+// DeactivateContractProposal gov proposal content type adds a contract to
+// inactive list.
 message DeactivateContractProposal {
   // Title is a short summary
-  string title = 1 [(gogoproto.moretags) = "yaml:\"title\""];
+  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
-  string description = 2 [(gogoproto.moretags) = "yaml:\"description\""];
+  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
   // Contract is the smart contract address to deactivate
-  string contract = 3 [(gogoproto.moretags) = "yaml:\"contract\""];
+  string contract = 3 [ (gogoproto.moretags) = "yaml:\"contract\"" ];
 }
 
-// ActivateContractProposal gov proposal content type deletes a contract from inactive list.
+// ActivateContractProposal gov proposal content type deletes a contract from
+// inactive list.
 message ActivateContractProposal {
   // Title is a short summary
-  string title = 1 [(gogoproto.moretags) = "yaml:\"title\""];
+  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
   // Description is a human readable text
-  string description = 2 [(gogoproto.moretags) = "yaml:\"description\""];
+  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
   // Contract is the smart contract address to activate
-  string contract = 3 [(gogoproto.moretags) = "yaml:\"contract\""];
+  string contract = 3 [ (gogoproto.moretags) = "yaml:\"contract\"" ];
 }

@@ -5,7 +5,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "cosmwasm/wasm/v1/types.proto";
 
-option go_package = "github.com/line/wasmd/x/wasm/types";
+option go_package = "github.com/Finschia/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the wasm Msg service.
@@ -66,7 +66,7 @@ message MsgInstantiateContract {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/Finschia/finschia-sdk/types.Coins"
   ];
 }
 
@@ -86,7 +86,7 @@ message MsgInstantiateContract2 {
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/Finschia/finschia-sdk/types.Coins"
   ];
   // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
   bytes salt = 7;
@@ -122,7 +122,7 @@ message MsgExecuteContract {
   // Funds coins that are transferred to the contract on execution
   repeated cosmos.base.v1beta1.Coin funds = 5 [
     (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/line/lbm-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/Finschia/finschia-sdk/types.Coins"
   ];
 }
 

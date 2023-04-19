@@ -6,10 +6,10 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/ostracon/libs/log"
 
-	wasmapp "github.com/line/wasmd/app"
-	"github.com/line/wasmd/x/wasm"
+	wasmapp "github.com/Finschia/wasmd/app"
+	"github.com/Finschia/wasmd/x/wasm"
 )
 
 // Setup initializes a new WasmApp with DefaultNodeHome for integration tests

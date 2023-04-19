@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestInstantiate2(t *testing.T) {

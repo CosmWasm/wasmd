@@ -19,7 +19,7 @@ for dir in $proto_dirs; do
   -I "proto" \
   -I "third_party/proto" \
   --gocosmos_out=plugins=interfacetype+grpc,\
-Mgoogle/protobuf/any.proto=github.com/line/lbm-sdk/codec/types:. \
+Mgoogle/protobuf/any.proto=github.com/Finschia/finschia-sdk/codec/types:. \
   --grpc-gateway_out=logtostderr=true:. \
   $(find "${dir}" -maxdepth 1 -name '*.proto')
 
@@ -34,5 +34,5 @@ buf protoc \
 $(find "$(pwd)/proto" -maxdepth 5 -name '*.proto')
 
 # move proto files to the right places
-cp -r github.com/line/wasmd/* ./
+cp -r github.com/Finschia/wasmd/* ./
 rm -rf github.com

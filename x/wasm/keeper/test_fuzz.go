@@ -5,10 +5,10 @@ import (
 
 	fuzz "github.com/google/gofuzz"
 
-	sdk "github.com/line/lbm-sdk/types"
-	tmBytes "github.com/line/ostracon/libs/bytes"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	tmBytes "github.com/Finschia/ostracon/libs/bytes"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 var ModelFuzzers = []interface{}{FuzzAddr, FuzzAddrString, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel, FuzzAccessType, FuzzAccessConfig, FuzzContractCodeHistory}

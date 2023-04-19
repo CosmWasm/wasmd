@@ -1,9 +1,9 @@
 # Wasm Zone
 
-[![codecov](https://codecov.io/gh/line/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/line/wasmd)
-[![Go Report Card](https://goreportcard.com/badge/github.com/line/wasmd)](https://goreportcard.com/report/github.com/line/wasmd)
-[![license](https://img.shields.io/github/license/line/wasmd.svg)](https://github.com/line/wasmd/blob/main/LICENSE)
-[![LoC](https://tokei.rs/b1/github/line/wasmd)](https://github.com/line/wasmd)
+[![codecov](https://codecov.io/gh/Finschia/wasmd/branch/main/graph/badge.svg)](https://codecov.io/gh/Finschia/wasmd)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Finschia/wasmd)](https://goreportcard.com/report/github.com/Finschia/wasmd)
+[![license](https://img.shields.io/github/license/Finschia/wasmd.svg)](https://github.com/Finschia/wasmd/blob/main/LICENSE)
+[![LoC](https://tokei.rs/b1/github/Finschia/wasmd)](https://github.com/Finschia/wasmd)
 <!-- [![GolangCI](https://golangci.com/badges/github.com/CosmWasm/wasmd.svg)](https://golangci.com/r/github.com/CosmWasm/wasmd) -->
 
 This repository hosts `Wasmd`, the first implementation of a cosmos zone with wasm smart contracts enabled.
@@ -24,30 +24,30 @@ A VM can support one or more contract-VM interface versions. The interface
 version is communicated by the contract via a Wasm export. This is the current
 compatibility list:
 
-| line/wasmd | cosmwasm/wasmd | line/wasmvm   | cosmwasm/wasmvm | cosmwasm-vm | cosmwasm-std |
-|------------|----------------|:--------------|-----------------|-------------|--------------|
-|            | 0.29           |               | v1.1.0          |             | 1.0-1.1      |
-|            | 0.28           |               | v1.0.0          |             | 1.0-1.1      |
-| 0.1        | 0.27           | v1.0.0-0.10.0 | v1.0.0          |             | 1.0          |
-|            | 0.26           |               | 1.0.0-beta10    |             | 1.0          |
-|            | 0.25           |               | 1.0.0-beta10    |             | 1.0          |
-|            | 0.24           |               | 1.0.0-beta7     | 1.0.0-beta6 | 1.0          |
-|            | 0.23           |               |                 | 1.0.0-beta5 | 1.0          |
-|            | 0.22           |               |                 | 1.0.0-beta5 | 1.0          |
-|            | 0.21           |               |                 | 1.0.0-beta2 | 1.0          |
-|            | 0.20           |               |                 | 1.0.0-beta  | 1.0          |
-|            | 0.19           |               |                 | 0.16        | 0.16         |
-|            | 0.18           |               |                 | 0.16        | 0.16         |
-|            | 0.17           |               |                 | 0.14        | 0.14         |
-|            | 0.16           |               |                 | 0.14        | 0.14         |
-|            | 0.15           |               |                 | 0.13        | 0.11-0.13    |
-|            | 0.14           |               |                 | 0.13        | 0.11-0.13    |
-|            | 0.13           |               |                 | 0.12        | 0.11-0.13    |
-|            | 0.12           |               |                 | 0.12        | 0.11-0.13    |
-|            | 0.11           |               |                 | 0.11        | 0.11-0.13    |
-|            | 0.10           |               |                 | 0.10        | 0.10         |
-|            | 0.9            |               |                 | 0.9         | 0.9          |
-|            | 0.8            |               |                 | 0.8         | 0.8          |
+| Finschia/wasmd | cosmwasm/wasmd | Finschia/wasmvm | cosmwasm/wasmvm | cosmwasm-vm | cosmwasm-std |
+|----------------|----------------|:----------------|-----------------|-------------|--------------|
+|                | 0.29           |                 | v1.1.0          |             | 1.0-1.1      |
+|                | 0.28           |                 | v1.0.0          |             | 1.0-1.1      |
+| 0.1            | 0.27           | v1.0.0-0.10.0   | v1.0.0          |             | 1.0          |
+|                | 0.26           |                 | 1.0.0-beta10    |             | 1.0          |
+|                | 0.25           |                 | 1.0.0-beta10    |             | 1.0          |
+|                | 0.24           |                 | 1.0.0-beta7     | 1.0.0-beta6 | 1.0          |
+|                | 0.23           |                 |                 | 1.0.0-beta5 | 1.0          |
+|                | 0.22           |                 |                 | 1.0.0-beta5 | 1.0          |
+|                | 0.21           |                 |                 | 1.0.0-beta2 | 1.0          |
+|                | 0.20           |                 |                 | 1.0.0-beta  | 1.0          |
+|                | 0.19           |                 |                 | 0.16        | 0.16         |
+|                | 0.18           |                 |                 | 0.16        | 0.16         |
+|                | 0.17           |                 |                 | 0.14        | 0.14         |
+|                | 0.16           |                 |                 | 0.14        | 0.14         |
+|                | 0.15           |                 |                 | 0.13        | 0.11-0.13    |
+|                | 0.14           |                 |                 | 0.13        | 0.11-0.13    |
+|                | 0.13           |                 |                 | 0.12        | 0.11-0.13    |
+|                | 0.12           |                 |                 | 0.12        | 0.11-0.13    |
+|                | 0.11           |                 |                 | 0.11        | 0.11-0.13    |
+|                | 0.10           |                 |                 | 0.10        | 0.10         |
+|                | 0.9            |                 |                 | 0.9         | 0.9          |
+|                | 0.8            |                 |                 | 0.8         | 0.8          |
 
 Note: `cosmwasm_std v1.0` means it supports contracts compiled by any `v1.0.0-betaX` or `1.0.x`.
 It will also run contracts compiled with 1.x assuming they don't opt into any newer features.
@@ -131,10 +131,10 @@ to the configuration.
 
 Available flags:
  
-* `-X github.com/line/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
-* `-X github.com/line/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
-* `-X github.com/line/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
-* `-X github.com/line/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
+* `-X github.com/Finschia/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
+* `-X github.com/Finschia/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
+* `-X github.com/Finschia/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
+* `-X github.com/Finschia/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
     enable a subset of the x/wasm governance proposal types (overrides `ProposalsEnabled`)
 
 Examples:

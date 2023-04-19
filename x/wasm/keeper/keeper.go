@@ -13,19 +13,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/line/lbm-sdk/codec"
-	"github.com/line/lbm-sdk/store/prefix"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
-	vestingexported "github.com/line/lbm-sdk/x/auth/vesting/exported"
-	paramtypes "github.com/line/lbm-sdk/x/params/types"
-	"github.com/line/ostracon/libs/log"
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/codec"
+	"github.com/Finschia/finschia-sdk/store/prefix"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
+	vestingexported "github.com/Finschia/finschia-sdk/x/auth/vesting/exported"
+	paramtypes "github.com/Finschia/finschia-sdk/x/params/types"
+	"github.com/Finschia/ostracon/libs/log"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/ioutils"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/ioutils"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // contractMemoryLimit is the memory limit of each contract execution (in MiB)

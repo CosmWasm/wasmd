@@ -1,7 +1,7 @@
 syntax = "proto3";
 package ostracon.abci;
 
-option go_package = "github.com/line/ostracon/abci/types";
+option go_package = "github.com/Finschia/ostracon/abci/types";
 
 // For more information on gogo.proto, see:
 // https://github.com/gogo/protobuf/blob/master/extensions.md

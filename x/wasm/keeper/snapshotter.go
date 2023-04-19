@@ -7,13 +7,13 @@ import (
 	protoio "github.com/gogo/protobuf/io"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	snapshot "github.com/line/lbm-sdk/snapshots/types"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	"github.com/line/ostracon/libs/log"
+	snapshot "github.com/Finschia/finschia-sdk/snapshots/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	"github.com/Finschia/ostracon/libs/log"
 
-	"github.com/line/wasmd/x/wasm/ioutils"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/ioutils"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 var _ snapshot.ExtensionSnapshotter = &WasmSnapshotter{}

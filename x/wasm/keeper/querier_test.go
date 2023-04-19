@@ -14,16 +14,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	sdk "github.com/line/lbm-sdk/types"
-	sdkErrors "github.com/line/lbm-sdk/types/errors"
-	"github.com/line/lbm-sdk/types/query"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	"github.com/line/ostracon/libs/log"
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkErrors "github.com/Finschia/finschia-sdk/types/errors"
+	"github.com/Finschia/finschia-sdk/types/query"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
+	"github.com/Finschia/ostracon/libs/log"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestQueryAllContractState(t *testing.T) {

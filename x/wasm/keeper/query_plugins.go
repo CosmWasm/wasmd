@@ -6,15 +6,15 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	baseapp "github.com/line/lbm-sdk/baseapp"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
-	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	baseapp "github.com/Finschia/finschia-sdk/baseapp"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	distributiontypes "github.com/Finschia/finschia-sdk/x/distribution/types"
+	stakingtypes "github.com/Finschia/finschia-sdk/x/staking/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {

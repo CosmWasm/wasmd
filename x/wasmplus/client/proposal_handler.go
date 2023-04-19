@@ -1,10 +1,11 @@
 package client
 
 import (
-	govclient "github.com/line/lbm-sdk/x/gov/client"
-	"github.com/line/wasmd/x/wasmplus/client/cli"
+	govclient "github.com/Finschia/finschia-sdk/x/gov/client"
 
-	wasmcli "github.com/line/wasmd/x/wasm/client/cli"
+	"github.com/Finschia/wasmd/x/wasmplus/client/cli"
+
+	wasmcli "github.com/Finschia/wasmd/x/wasm/client/cli"
 )
 
 // ProposalHandlers define the wasm cli proposal types and rest handler.

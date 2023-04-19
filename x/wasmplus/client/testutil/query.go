@@ -3,11 +3,11 @@ package testutil
 import (
 	"github.com/gogo/protobuf/proto"
 
-	clitestutil "github.com/line/lbm-sdk/testutil/cli"
-	"github.com/line/lbm-sdk/types/query"
+	clitestutil "github.com/Finschia/finschia-sdk/testutil/cli"
+	"github.com/Finschia/finschia-sdk/types/query"
 
-	"github.com/line/wasmd/x/wasmplus/client/cli"
-	"github.com/line/wasmd/x/wasmplus/types"
+	"github.com/Finschia/wasmd/x/wasmplus/client/cli"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 func (s *IntegrationTestSuite) TestGetCmdListInactiveContracts() {

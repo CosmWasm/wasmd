@@ -13,18 +13,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/line/lbm-sdk/client"
-	"github.com/line/lbm-sdk/codec"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	ocrpcmocks "github.com/line/ostracon/rpc/client/mocks"
-	ocrpctypes "github.com/line/ostracon/rpc/core/types"
+	"github.com/Finschia/finschia-sdk/client"
+	"github.com/Finschia/finschia-sdk/codec"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	ocrpcmocks "github.com/Finschia/ostracon/rpc/client/mocks"
+	ocrpctypes "github.com/Finschia/ostracon/rpc/core/types"
 
-	"github.com/line/wasmd/x/wasmplus/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
-var (
-	accAddress = "link1yxfu3fldlgux939t0gwaqs82l4x77v2kasa7jf"
-)
+var accAddress = "link1yxfu3fldlgux939t0gwaqs82l4x77v2kasa7jf"
 
 type testcase []struct {
 	name  string
@@ -54,11 +52,14 @@ func TestGetCmdListInactiveContracts(t *testing.T) {
 				"page and offset cannot be used together"),
 			ctx,
 			[]string{"--page=2", "--offset=1"},
-			nil},
+			nil,
+		},
 		{
 			"invalid url",
-			&url.Error{Op: "parse", URL: string(rune(0)),
-				Err: errors.New("net/url: invalid control character in URL")},
+			&url.Error{
+				Op: "parse", URL: string(rune(0)),
+				Err: errors.New("net/url: invalid control character in URL"),
+			},
 			context.Background(),
 			[]string{"--node=" + string(rune(0))},
 			nil,
@@ -87,7 +88,8 @@ func TestGetCmdIsInactiveContract(t *testing.T) {
 	ctx := makeContext(bz)
 	tests := testcase{
 		{"execute success", nil, ctx, nil, []string{accAddress}},
-		{"bad status",
+		{
+			"bad status",
 			status.Error(codes.Unknown, ""),
 			ctx,
 			nil,
@@ -95,8 +97,10 @@ func TestGetCmdIsInactiveContract(t *testing.T) {
 		},
 		{
 			"invalid url",
-			&url.Error{Op: "parse", URL: string(rune(0)),
-				Err: errors.New("net/url: invalid control character in URL")},
+			&url.Error{
+				Op: "parse", URL: string(rune(0)),
+				Err: errors.New("net/url: invalid control character in URL"),
+			},
 			context.Background(),
 			[]string{"--node=" + string(rune(0))},
 			[]string{accAddress},

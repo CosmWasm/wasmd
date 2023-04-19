@@ -10,7 +10,7 @@ fi
 tag="$1"
 
 for contract in burner hackatom ibc_reflect ibc_reflect_send reflect staking; do
-  url="https://github.com/line/cosmwasm/releases/download/$tag/${contract}.wasm"
+  url="https://github.com/Finschia/cosmwasm/releases/download/$tag/${contract}.wasm"
   echo "Downloading $url ..."
   wget -O "${contract}.wasm" "$url"
 done

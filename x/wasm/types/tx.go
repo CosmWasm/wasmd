@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
 )
 
 // RawContractMessage defines a json message that is sent or returned by a wasm contract.

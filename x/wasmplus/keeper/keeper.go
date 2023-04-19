@@ -3,16 +3,16 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/line/lbm-sdk/codec"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
-	paramtypes "github.com/line/lbm-sdk/x/params/types"
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/finschia-sdk/codec"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	bankpluskeeper "github.com/Finschia/finschia-sdk/x/bankplus/keeper"
+	paramtypes "github.com/Finschia/finschia-sdk/x/params/types"
+	"github.com/Finschia/ostracon/libs/log"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 type Keeper struct {

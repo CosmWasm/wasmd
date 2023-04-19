@@ -3,8 +3,8 @@ package testdata
 import (
 	_ "embed"
 
-	"github.com/line/lbm-sdk/types"
-	typwasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/types"
+	typwasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 //go:embed reflect.wasm

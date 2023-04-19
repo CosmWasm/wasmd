@@ -3,14 +3,14 @@ package types
 import (
 	"context"
 
-	connectiontypes "github.com/line/ibc-go/v3/modules/core/03-connection/types"
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
-	sdk "github.com/line/lbm-sdk/types"
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
-	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	"github.com/line/lbm-sdk/x/distribution/types"
-	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
+	capabilitytypes "github.com/Finschia/finschia-sdk/x/capability/types"
+	"github.com/Finschia/finschia-sdk/x/distribution/types"
+	stakingtypes "github.com/Finschia/finschia-sdk/x/staking/types"
+	connectiontypes "github.com/Finschia/ibc-go/v3/modules/core/03-connection/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	ibcexported "github.com/Finschia/ibc-go/v3/modules/core/exported"
 )
 
 // BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper

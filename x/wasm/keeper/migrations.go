@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.

@@ -1,6 +1,6 @@
 # wasmplus
 
-Extended module of [line/wasmd/x/wasm](https://github.com/line/wasmd/tree/cae21ecd251cea44f56209e0a4586ca2979c6c87/x/wasm) module.
+Extended module of [finschia/wasmd/x/wasm](https://github.com/Finschia/wasmd/tree/cae21ecd251cea44f56209e0a4586ca2979c6c87/x/wasm) module.
 
 ## Concepts
 

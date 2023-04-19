@@ -1,10 +1,10 @@
 package simulation
 
 import (
-	"github.com/line/lbm-sdk/simapp/helpers"
-	sdk "github.com/line/lbm-sdk/types"
-	simtypes "github.com/line/lbm-sdk/types/simulation"
-	"github.com/line/lbm-sdk/x/simulation"
+	"github.com/Finschia/finschia-sdk/simapp/helpers"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	simtypes "github.com/Finschia/finschia-sdk/types/simulation"
+	"github.com/Finschia/finschia-sdk/x/simulation"
 )
 
 // GenAndDeliverTxWithRandFees generates a transaction with a random fee and delivers it.

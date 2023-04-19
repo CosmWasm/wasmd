@@ -11,18 +11,18 @@ import (
 	"github.com/stretchr/testify/suite"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/crypto/hd"
-	"github.com/line/lbm-sdk/crypto/keyring"
-	servertypes "github.com/line/lbm-sdk/server/types"
-	storetypes "github.com/line/lbm-sdk/store/types"
-	"github.com/line/lbm-sdk/testutil/network"
-	sdk "github.com/line/lbm-sdk/types"
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
-	ostrand "github.com/line/ostracon/libs/rand"
+	"github.com/Finschia/finschia-sdk/crypto/hd"
+	"github.com/Finschia/finschia-sdk/crypto/keyring"
+	servertypes "github.com/Finschia/finschia-sdk/server/types"
+	storetypes "github.com/Finschia/finschia-sdk/store/types"
+	"github.com/Finschia/finschia-sdk/testutil/network"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
+	ostrand "github.com/Finschia/ostracon/libs/rand"
 
-	wasmapp "github.com/line/wasmd/app"
-	"github.com/line/wasmd/app/params"
-	"github.com/line/wasmd/x/wasm/types"
+	wasmapp "github.com/Finschia/wasmd/app"
+	"github.com/Finschia/wasmd/app/params"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestIntegrationTestSuite(t *testing.T) {

@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/line/lbm-sdk/types"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	"github.com/line/lbm-sdk/x/params/client/utils"
-	"github.com/line/lbm-sdk/x/params/types/proposal"
-	wasmvm "github.com/line/wasmvm"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
+	"github.com/Finschia/finschia-sdk/x/params/client/utils"
+	"github.com/Finschia/finschia-sdk/x/params/types/proposal"
+	wasmvm "github.com/Finschia/wasmvm"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestStoreCodeProposal(t *testing.T) {

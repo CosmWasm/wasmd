@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/line/lbm-sdk/testutil/testdata"
+	"github.com/Finschia/finschia-sdk/testutil/testdata"
 
-	"github.com/line/wasmd/app"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/app"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 //go:embed testdata/reflect.wasm

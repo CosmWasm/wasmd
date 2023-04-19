@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 const (

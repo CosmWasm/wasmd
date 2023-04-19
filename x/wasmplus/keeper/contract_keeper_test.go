@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
 )
 
 func mustMarshal(t *testing.T, r interface{}) []byte {

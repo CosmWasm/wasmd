@@ -5,18 +5,18 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/line/lbm-sdk/baseapp"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	"github.com/line/lbm-sdk/types/module"
-	simtypes "github.com/line/lbm-sdk/types/simulation"
-	"github.com/line/lbm-sdk/x/simulation"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/baseapp"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	"github.com/Finschia/finschia-sdk/types/module"
+	simtypes "github.com/Finschia/finschia-sdk/types/simulation"
+	"github.com/Finschia/finschia-sdk/x/simulation"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/app/params"
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/keeper/testdata"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/app/params"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/keeper/testdata"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // Simulation operation weights constants

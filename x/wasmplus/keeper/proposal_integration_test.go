@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	"github.com/line/wasmd/x/wasmplus/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 func TestValidateDeactivateContractProposal(t *testing.T) {

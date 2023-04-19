@@ -10,12 +10,12 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/store"
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/finschia-sdk/store"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/ostracon/libs/log"
 
-	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestCountTxDecorator(t *testing.T) {

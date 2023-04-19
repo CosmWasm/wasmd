@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/line/lbm-sdk/std"
+	"github.com/Finschia/finschia-sdk/std"
 
-	"github.com/line/wasmd/app/params"
+	"github.com/Finschia/wasmd/app/params"
 )
 
 // MakeEncodingConfig creates a new EncodingConfig with all modules registered

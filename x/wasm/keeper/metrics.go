@@ -6,7 +6,7 @@ import (
 	go_prometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 
-	wasmvmtypes "github.com/line/wasmvm/types"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 const (

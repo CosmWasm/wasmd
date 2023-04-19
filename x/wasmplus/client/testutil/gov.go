@@ -3,13 +3,13 @@ package testutil
 import (
 	"fmt"
 
-	"github.com/line/lbm-sdk/client/flags"
-	clitestutil "github.com/line/lbm-sdk/testutil/cli"
-	sdk "github.com/line/lbm-sdk/types"
-	govcli "github.com/line/lbm-sdk/x/gov/client/cli"
-	"github.com/line/lbm-sdk/x/gov/types"
+	"github.com/Finschia/finschia-sdk/client/flags"
+	clitestutil "github.com/Finschia/finschia-sdk/testutil/cli"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	govcli "github.com/Finschia/finschia-sdk/x/gov/client/cli"
+	"github.com/Finschia/finschia-sdk/x/gov/types"
 
-	"github.com/line/wasmd/x/wasmplus/client/cli"
+	"github.com/Finschia/wasmd/x/wasmplus/client/cli"
 )
 
 func (s *IntegrationTestSuite) TestProposalDeactivateContractCmd() {

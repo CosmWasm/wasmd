@@ -1,5 +1,5 @@
-# docker build . -t line/wasmd:latest
-# docker run --rm -it line/wasmd:latest /bin/sh
+# docker build . -t finschia/wasmd:latest
+# docker run --rm -it finschia/wasmd:latest /bin/sh
 FROM golang:1.18-alpine3.15 AS go-builder
 ARG arch=x86_64
 
@@ -15,9 +15,9 @@ RUN apk add git
 WORKDIR /code
 COPY . /code/
 
-# See https://github.com/line/wasmvm/releases
-ADD https://github.com/line/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.x86_64.a /lib/libwasmvm_static.x86_64.a
-ADD https://github.com/line/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.aarch64.a /lib/libwasmvm_static.aarch64.a
+# See https://github.com/Finschia/wasmvm/releases
+ADD https://github.com/Finschia/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.x86_64.a /lib/libwasmvm_static.x86_64.a
+ADD https://github.com/Finschia/wasmvm/releases/download/v1.0.0-0.10.0/libwasmvm_static.aarch64.a /lib/libwasmvm_static.aarch64.a
 RUN sha256sum /lib/libwasmvm_static.aarch64.a | grep bc3db72ba32f34ad88ceb1d20479411bd7f50ccd6a5ca50cc8ca462a561e6189
 RUN sha256sum /lib/libwasmvm_static.x86_64.a | grep 352fa5de5f9dba66f0a38082541d3e63e21394fee3e577ea35e0906294c61276
 

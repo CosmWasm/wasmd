@@ -1318,7 +1318,8 @@ Query provides defines the gRPC querier service
 <a name="lbm.wasm.v1.EventActivateContractProposal"></a>
 
 ### EventActivateContractProposal
-EventActivateContractProposal is the event that is emitted when the contract is activates.
+EventActivateContractProposal is the event that is emitted when the contract
+is activates.
 
 
 | Field | Type | Label | Description |
@@ -1333,7 +1334,8 @@ EventActivateContractProposal is the event that is emitted when the contract is 
 <a name="lbm.wasm.v1.EventDeactivateContractProposal"></a>
 
 ### EventDeactivateContractProposal
-EventDeactivateContractProposal is the event that is emitted when the contract is deactivate.
+EventDeactivateContractProposal is the event that is emitted when the
+contract is deactivate.
 
 
 | Field | Type | Label | Description |
@@ -1400,7 +1402,8 @@ GenesisState - genesis state of x/wasm
 <a name="lbm.wasm.v1.ActivateContractProposal"></a>
 
 ### ActivateContractProposal
-ActivateContractProposal gov proposal content type deletes a contract from inactive list.
+ActivateContractProposal gov proposal content type deletes a contract from
+inactive list.
 
 
 | Field | Type | Label | Description |
@@ -1417,7 +1420,8 @@ ActivateContractProposal gov proposal content type deletes a contract from inact
 <a name="lbm.wasm.v1.DeactivateContractProposal"></a>
 
 ### DeactivateContractProposal
-DeactivateContractProposal gov proposal content type adds a contract to inactive list.
+DeactivateContractProposal gov proposal content type adds a contract to
+inactive list.
 
 
 | Field | Type | Label | Description |
@@ -1450,7 +1454,8 @@ DeactivateContractProposal gov proposal content type adds a contract to inactive
 <a name="lbm.wasm.v1.QueryInactiveContractRequest"></a>
 
 ### QueryInactiveContractRequest
-QueryIsInactiveContractRequest is the request type for Query/IsInactiveContract RPC method.
+QueryIsInactiveContractRequest is the request type for
+Query/IsInactiveContract RPC method.
 
 
 | Field | Type | Label | Description |
@@ -1465,7 +1470,8 @@ QueryIsInactiveContractRequest is the request type for Query/IsInactiveContract 
 <a name="lbm.wasm.v1.QueryInactiveContractResponse"></a>
 
 ### QueryInactiveContractResponse
-QueryInactiveContractsResponse is the response type for the Query/IsInactiveContract RPC method.
+QueryInactiveContractsResponse is the response type for the
+Query/IsInactiveContract RPC method.
 
 
 | Field | Type | Label | Description |
@@ -1480,7 +1486,8 @@ QueryInactiveContractsResponse is the response type for the Query/IsInactiveCont
 <a name="lbm.wasm.v1.QueryInactiveContractsRequest"></a>
 
 ### QueryInactiveContractsRequest
-QueryInactiveContractsRequest is the request type for Query/InactiveContract RPC method.
+QueryInactiveContractsRequest is the request type for Query/InactiveContract
+RPC method.
 
 
 | Field | Type | Label | Description |
@@ -1495,7 +1502,8 @@ QueryInactiveContractsRequest is the request type for Query/InactiveContract RPC
 <a name="lbm.wasm.v1.QueryInactiveContractsResponse"></a>
 
 ### QueryInactiveContractsResponse
-QueryInactiveContractsResponse is the response type for the Query/InactiveContract RPC method.
+QueryInactiveContractsResponse is the response type for the
+Query/InactiveContract RPC method.
 
 
 | Field | Type | Label | Description |
@@ -1538,7 +1546,8 @@ Query defines the gRPC querier service.
 <a name="lbm.wasm.v1.MsgStoreCodeAndInstantiateContract"></a>
 
 ### MsgStoreCodeAndInstantiateContract
-MsgStoreCodeAndInstantiateContract submit Wasm code to the system and instantiate a contract using it.
+MsgStoreCodeAndInstantiateContract submit Wasm code to the system and
+instantiate a contract using it.
 
 
 | Field | Type | Label | Description |
@@ -1559,7 +1568,8 @@ MsgStoreCodeAndInstantiateContract submit Wasm code to the system and instantiat
 <a name="lbm.wasm.v1.MsgStoreCodeAndInstantiateContractResponse"></a>
 
 ### MsgStoreCodeAndInstantiateContractResponse
-MsgStoreCodeAndInstantiateContractResponse returns store and instantiate result data.
+MsgStoreCodeAndInstantiateContractResponse returns store and instantiate
+result data.
 
 
 | Field | Type | Label | Description |
@@ -1582,7 +1592,7 @@ MsgStoreCodeAndInstantiateContractResponse returns store and instantiate result 
 <a name="lbm.wasm.v1.Msg"></a>
 
 ### Msg
-Msg defines the wasm Msg service for lbm-sdk.
+Msg defines the wasm Msg service for finschia-sdk.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |

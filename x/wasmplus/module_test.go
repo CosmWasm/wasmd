@@ -11,18 +11,18 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/module"
-	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
-	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
-	"github.com/line/ostracon/crypto"
-	"github.com/line/ostracon/crypto/ed25519"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/module"
+	authkeeper "github.com/Finschia/finschia-sdk/x/auth/keeper"
+	bankkeeper "github.com/Finschia/finschia-sdk/x/bank/keeper"
+	stakingkeeper "github.com/Finschia/finschia-sdk/x/staking/keeper"
+	"github.com/Finschia/ostracon/crypto"
+	"github.com/Finschia/ostracon/crypto/ed25519"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/keeper"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/keeper"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 type testData struct {

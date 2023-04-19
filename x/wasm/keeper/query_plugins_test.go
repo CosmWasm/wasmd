@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	"github.com/line/lbm-sdk/store"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/store"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestIBCQuerier(t *testing.T) {
@@ -359,12 +359,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 			req: &wasmvmtypes.WasmQuery{
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
-			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
-				val := types.ContractInfoFixture(func(i *types.ContractInfo) {
-					i.Admin, i.Creator, i.IBCPortID = myAdminAddr, myCreatorAddr, "myIBCPort"
-				})
-				return &val
-			},
+			mock: mockWasmQueryKeeper{
+				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
+						i.Admin, i.Creator, i.IBCPortID = myAdminAddr, myCreatorAddr, "myIBCPort"
+					})
+					return &val
+				},
 				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
@@ -394,12 +395,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 			req: &wasmvmtypes.WasmQuery{
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
-			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
-				val := types.ContractInfoFixture(func(i *types.ContractInfo) {
-					i.Admin, i.Creator = myAdminAddr, myCreatorAddr
-				})
-				return &val
-			},
+			mock: mockWasmQueryKeeper{
+				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
+						i.Admin, i.Creator = myAdminAddr, myCreatorAddr
+					})
+					return &val
+				},
 				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return false },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
@@ -413,12 +415,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 			req: &wasmvmtypes.WasmQuery{
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
-			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
-				val := types.ContractInfoFixture(func(i *types.ContractInfo) {
-					i.Creator = myCreatorAddr
-				})
-				return &val
-			},
+			mock: mockWasmQueryKeeper{
+				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
+						i.Creator = myCreatorAddr
+					})
+					return &val
+				},
 				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{

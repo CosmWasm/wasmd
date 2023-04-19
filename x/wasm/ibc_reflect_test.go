@@ -6,17 +6,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	ibctesting "github.com/line/ibc-go/v3/testing"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	ibctesting "github.com/Finschia/ibc-go/v3/testing"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	wasmibctesting "github.com/line/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmibctesting "github.com/Finschia/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
 )
 
-// todo check after bumping up to v3.3.0+ in line/ibc-go
+// todo check after bumping up to v3.3.0+ in finschia/ibc-go
 func TestIBCReflectContract(t *testing.T) {
-	t.Skip("check it later after enable use ibc-go v3.3.0+ in lbm-sdk")
+	t.Skip("check it later after enable use ibc-go v3.3.0+ in finschia-sdk")
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
 	//  chain B: reflect.wasm + ibc_reflect.wasm

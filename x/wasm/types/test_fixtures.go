@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 )
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
@@ -125,7 +125,7 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 }
 
 func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
-	var wasmIdent = []byte("\x00\x61\x73\x6D")
+	wasmIdent := []byte("\x00\x61\x73\x6D")
 	const anyAddress = "link1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqsh9tp23"
 	r := &MsgStoreCode{
 		Sender:                anyAddress,

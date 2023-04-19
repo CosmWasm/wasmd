@@ -1,10 +1,10 @@
 package types
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func (gs GenesisState) ValidateBasic() error {

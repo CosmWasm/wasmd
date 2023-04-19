@@ -6,12 +6,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/line/lbm-sdk/store/prefix"
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/query"
+	"github.com/Finschia/finschia-sdk/store/prefix"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/query"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 type queryKeeper interface {

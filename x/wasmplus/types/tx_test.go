@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/x/auth/legacy/legacytx"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/x/auth/legacy/legacytx"
 
-	wasmTypes "github.com/line/wasmd/x/wasm/types"
+	wasmTypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func NewMsgStoreCodeAndInstantiateContract(fromAddr sdk.AccAddress) *MsgStoreCodeAndInstantiateContract {
@@ -144,9 +144,11 @@ func TestMsgJsonSignBytes(t *testing.T) {
 		exp string
 	}{
 		"MsgInstantiateContract with every field": {
-			src: &MsgStoreCodeAndInstantiateContract{Sender: "sender1", WASMByteCode: []byte{89, 69, 76, 76, 79, 87, 32, 83, 85, 66, 77, 65, 82, 73, 78, 69},
+			src: &MsgStoreCodeAndInstantiateContract{
+				Sender: "sender1", WASMByteCode: []byte{89, 69, 76, 76, 79, 87, 32, 83, 85, 66, 77, 65, 82, 73, 78, 69},
 				InstantiatePermission: &wasmTypes.AccessConfig{Permission: wasmTypes.AccessTypeAnyOfAddresses, Addresses: []string{"address1", "address2"}},
-				Admin:                 "admin1", Label: "My", Msg: wasmTypes.RawContractMessage(myInnerMsg), Funds: sdk.Coins{{Denom: "denom1", Amount: sdk.NewInt(1)}}},
+				Admin:                 "admin1", Label: "My", Msg: wasmTypes.RawContractMessage(myInnerMsg), Funds: sdk.Coins{{Denom: "denom1", Amount: sdk.NewInt(1)}},
+			},
 			exp: `
 {
 	"type":"wasm/MsgStoreCodeAndInstantiateContract",

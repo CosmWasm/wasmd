@@ -8,9 +8,9 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	paramtypes "github.com/line/lbm-sdk/x/params/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	paramtypes "github.com/Finschia/finschia-sdk/x/params/types"
 )
 
 var (

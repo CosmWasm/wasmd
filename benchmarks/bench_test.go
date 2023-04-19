@@ -11,12 +11,12 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/crypto/keys/secp256k1"
-	sdk "github.com/line/lbm-sdk/types"
-	banktypes "github.com/line/lbm-sdk/x/bank/types"
-	ocabci "github.com/line/ostracon/abci/types"
+	"github.com/Finschia/finschia-sdk/crypto/keys/secp256k1"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	banktypes "github.com/Finschia/finschia-sdk/x/bank/types"
+	ocabci "github.com/Finschia/ostracon/abci/types"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func BenchmarkTxSending(b *testing.B) {

@@ -7,12 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/module"
-	upgradetypes "github.com/line/lbm-sdk/x/upgrade/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/module"
+	upgradetypes "github.com/Finschia/finschia-sdk/x/upgrade/types"
 
-	"github.com/line/wasmd/app"
-	"github.com/line/wasmd/x/wasm"
+	"github.com/Finschia/wasmd/app"
+	"github.com/Finschia/wasmd/x/wasm"
 )
 
 func TestModuleMigrations(t *testing.T) {

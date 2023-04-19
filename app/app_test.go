@@ -10,9 +10,9 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/ostracon/libs/log"
 
-	"github.com/line/wasmd/x/wasm"
+	"github.com/Finschia/wasmd/x/wasm"
 )
 
 var emptyWasmOpts []wasm.Option = nil
@@ -47,7 +47,7 @@ func TestBlockedAddrs(t *testing.T) {
 	blockedAddrs := gapp.BlockedAddrs()
 
 	for acc := range maccPerms {
-		//for acc := range gapp.BlockedAddrs() {
+		// for acc := range gapp.BlockedAddrs() {
 		t.Run(acc, func(t *testing.T) {
 			addr := gapp.AccountKeeper.GetModuleAddress(acc)
 			if blockedAddrs[addr.String()] {

@@ -9,20 +9,20 @@ import (
 	"github.com/spf13/cobra"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/line/lbm-sdk/client"
-	"github.com/line/lbm-sdk/codec"
-	cdctypes "github.com/line/lbm-sdk/codec/types"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	"github.com/line/lbm-sdk/types/module"
-	simtypes "github.com/line/lbm-sdk/types/simulation"
+	"github.com/Finschia/finschia-sdk/client"
+	"github.com/Finschia/finschia-sdk/codec"
+	cdctypes "github.com/Finschia/finschia-sdk/codec/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	"github.com/Finschia/finschia-sdk/types/module"
+	simtypes "github.com/Finschia/finschia-sdk/types/simulation"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/simulation"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/client/cli"
-	"github.com/line/wasmd/x/wasmplus/keeper"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/simulation"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/client/cli"
+	"github.com/Finschia/wasmd/x/wasmplus/keeper"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 var (

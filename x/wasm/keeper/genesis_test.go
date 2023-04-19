@@ -19,19 +19,19 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/store"
-	"github.com/line/lbm-sdk/store/prefix"
-	sdk "github.com/line/lbm-sdk/types"
-	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
-	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
-	distributionkeeper "github.com/line/lbm-sdk/x/distribution/keeper"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
-	paramskeeper "github.com/line/lbm-sdk/x/params/keeper"
-	paramtypes "github.com/line/lbm-sdk/x/params/types"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/finschia-sdk/store"
+	"github.com/Finschia/finschia-sdk/store/prefix"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	authkeeper "github.com/Finschia/finschia-sdk/x/auth/keeper"
+	bankpluskeeper "github.com/Finschia/finschia-sdk/x/bankplus/keeper"
+	distributionkeeper "github.com/Finschia/finschia-sdk/x/distribution/keeper"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
+	paramskeeper "github.com/Finschia/finschia-sdk/x/params/keeper"
+	paramtypes "github.com/Finschia/finschia-sdk/x/params/types"
+	stakingkeeper "github.com/Finschia/finschia-sdk/x/staking/keeper"
+	"github.com/Finschia/ostracon/libs/log"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 const firstCodeID = 1

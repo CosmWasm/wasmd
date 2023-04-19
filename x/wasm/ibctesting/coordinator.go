@@ -8,12 +8,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	host "github.com/line/ibc-go/v3/modules/core/24-host"
-	ibctesting "github.com/line/ibc-go/v3/testing"
-	ocabci "github.com/line/ostracon/abci/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	host "github.com/Finschia/ibc-go/v3/modules/core/24-host"
+	ibctesting "github.com/Finschia/ibc-go/v3/testing"
+	ocabci "github.com/Finschia/ostracon/abci/types"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
 )
 
 const ChainIDPrefix = "testchain"

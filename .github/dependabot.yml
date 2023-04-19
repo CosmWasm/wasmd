@@ -11,13 +11,13 @@ updates:
     interval: daily
   open-pull-requests-limit: 10
   ignore:
-  - dependency-name: github.com/line/wasmvm
+  - dependency-name: github.com/Finschia/wasmvm
     versions:
     - 1.0.0-0.10.0
-  - dependency-name: github.com/line/ostracon
+  - dependency-name: github.com/Finschia/ostracon
     versions:
     - 1.0.7
-  - dependency-name: github.com/line/lbm-sdk
+  - dependency-name: github.com/Finschia/finschia-sdk
     versions:
     - 0.46.0
   - dependency-name: google.golang.org/grpc

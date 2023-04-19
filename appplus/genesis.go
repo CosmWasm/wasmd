@@ -1,7 +1,7 @@
 package appplus
 
 import (
-	wasmapp "github.com/line/wasmd/app"
+	wasmapp "github.com/Finschia/wasmd/app"
 )
 
 // NewDefaultGenesisState generates the default state for the application.

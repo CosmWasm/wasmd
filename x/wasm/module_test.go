@@ -16,19 +16,19 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/address"
-	"github.com/line/lbm-sdk/types/module"
-	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
-	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
-	"github.com/line/ostracon/crypto"
-	"github.com/line/ostracon/crypto/ed25519"
-	wasmvm "github.com/line/wasmvm"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/address"
+	"github.com/Finschia/finschia-sdk/types/module"
+	authkeeper "github.com/Finschia/finschia-sdk/x/auth/keeper"
+	bankkeeper "github.com/Finschia/finschia-sdk/x/bank/keeper"
+	stakingkeeper "github.com/Finschia/finschia-sdk/x/staking/keeper"
+	"github.com/Finschia/ostracon/crypto"
+	"github.com/Finschia/ostracon/crypto/ed25519"
+	wasmvm "github.com/Finschia/wasmvm"
 
-	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/keeper/testdata"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/keeper/testdata"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 type testData struct {
@@ -283,7 +283,7 @@ func TestHandleExecute(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
-	// executing https://github.com/line/cosmwasm/blob/main/contracts/hackatom/src/contract.rs do_release
+	// executing https://github.com/Finschia/cosmwasm/blob/main/contracts/hackatom/src/contract.rs do_release
 	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
 
 	// this should be standard message event, plus x/wasm init event, plus 2 bank send event, plus a special event from the contract
@@ -403,7 +403,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 	}
 	res, err = h(data.ctx, &execCmd)
 	require.NoError(t, err)
-	// executing https://github.com/line/cosmwasm/blob/main/contracts/hackatom/src/contract.rs do_release
+	// executing https://github.com/Finschia/cosmwasm/blob/main/contracts/hackatom/src/contract.rs do_release
 	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
 
 	// ensure bob now exists and got both payments released
@@ -607,7 +607,7 @@ func TestCheckLibwasmVersion(t *testing.T) {
 	parsed := strings.Split(string(res), "\n")
 	var expected string
 	for _, line := range parsed {
-		if strings.Contains(line, "github.com/line/wasmvm") {
+		if strings.Contains(line, "github.com/Finschia/wasmvm") {
 			expected = strings.Split(strings.TrimSpace(line), " ")[1]
 		}
 	}

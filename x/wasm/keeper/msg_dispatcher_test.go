@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/ostracon/libs/log"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/ostracon/libs/log"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
 )
 
 func TestDispatchSubmessages(t *testing.T) {
@@ -101,10 +101,11 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			expData:    []byte("myReplyData"),
 			expCommits: []bool{true},
-			expEvents: []sdk.Event{{
-				Type:       "myEvent",
-				Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
-			},
+			expEvents: []sdk.Event{
+				{
+					Type:       "myEvent",
+					Attributes: []abci.EventAttribute{{Key: []byte("foo"), Value: []byte("bar")}},
+				},
 				sdk.NewEvent("wasm-reply"),
 			},
 		},

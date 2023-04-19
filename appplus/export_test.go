@@ -9,10 +9,10 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/ostracon/libs/log"
 
-	wasmapp "github.com/line/wasmd/app"
-	wasmplustypes "github.com/line/wasmd/x/wasmplus/types"
+	wasmapp "github.com/Finschia/wasmd/app"
+	wasmplustypes "github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 func TestZeroHeightGenesis(t *testing.T) {

@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	ibctesting "github.com/line/ibc-go/v3/testing"
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/ostracon/libs/rand"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	ibctesting "github.com/Finschia/ibc-go/v3/testing"
+	"github.com/Finschia/ostracon/libs/rand"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")

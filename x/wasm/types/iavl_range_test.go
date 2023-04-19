@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/store"
-	"github.com/line/lbm-sdk/store/iavl"
+	"github.com/Finschia/finschia-sdk/store"
+	"github.com/Finschia/finschia-sdk/store/iavl"
 )
 
 // This is modeled close to

@@ -1,7 +1,7 @@
 package os
 
-// This is same file with https://github.com/line/lbm-sdk/blob/main/internal/os/file.go
-// If the file.go of line/lbm-sdk move to other directory not internal, please use lbm-sdk's file.go
+// This is same file with https://github.com/Finschia/finschia-sdk/blob/main/internal/os/file.go
+// If the file.go of Finschia/finschia-sdk move to other directory not internal, please use finschia-sdk's file.go
 
 import (
 	"fmt"

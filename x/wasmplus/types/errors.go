@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdkErrors "github.com/line/lbm-sdk/types/errors"
+	sdkErrors "github.com/Finschia/finschia-sdk/types/errors"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // Codes for wasm contract errors

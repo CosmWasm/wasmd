@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/line/lbm-sdk/client/flags"
-	clitestutil "github.com/line/lbm-sdk/testutil/cli"
-	sdk "github.com/line/lbm-sdk/types"
+	"github.com/Finschia/finschia-sdk/client/flags"
+	clitestutil "github.com/Finschia/finschia-sdk/testutil/cli"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasmplus/client/cli"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasmplus/client/cli"
 )
 
 func (s *IntegrationTestSuite) TestStoreCodeAndInstantiateContractCmd() {

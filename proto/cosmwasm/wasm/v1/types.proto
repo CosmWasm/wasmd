@@ -5,7 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/line/wasmd/x/wasm/types";
+option go_package = "github.com/Finschia/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.equal_all) = true;
 
@@ -140,7 +140,7 @@ message AbsoluteTxPosition {
 message Model {
   // hex-encode key to read it better (this is often ascii)
   bytes key = 1 [ (gogoproto.casttype) =
-                      "github.com/line/ostracon/libs/bytes.HexBytes" ];
+                      "github.com/Finschia/ostracon/libs/bytes.HexBytes" ];
   // base64-encode raw value
   bytes value = 2;
 }

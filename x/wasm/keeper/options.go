@@ -6,9 +6,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
 
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 type optsFn func(*Keeper)

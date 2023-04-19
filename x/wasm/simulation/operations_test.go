@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/line/lbm-sdk/types/module"
-	"github.com/line/lbm-sdk/x/simulation"
+	"github.com/Finschia/finschia-sdk/types/module"
+	"github.com/Finschia/finschia-sdk/x/simulation"
 
-	wasmappparams "github.com/line/wasmd/app/params"
-	"github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/types"
+	wasmappparams "github.com/Finschia/wasmd/app/params"
+	"github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestWeightedOperations(t *testing.T) {

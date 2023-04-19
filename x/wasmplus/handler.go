@@ -5,12 +5,12 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	"github.com/line/wasmd/x/wasm"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/keeper"
-	"github.com/line/wasmd/x/wasmplus/types"
+	"github.com/Finschia/wasmd/x/wasm"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/keeper"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 func NewHandler(k wasmtypes.ContractOpsKeeper) sdk.Handler {

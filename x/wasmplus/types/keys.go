@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 const (
@@ -17,9 +17,7 @@ const (
 	StoreKey = wasmtypes.StoreKey
 )
 
-var (
-	InactiveContractPrefix = []byte{0x90}
-)
+var InactiveContractPrefix = []byte{0x90}
 
 func GetInactiveContractKey(contractAddress sdk.AccAddress) []byte {
 	key := make([]byte, len(InactiveContractPrefix)+len(contractAddress))

@@ -3,16 +3,16 @@ package wasm
 import (
 	"math"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	porttypes "github.com/line/ibc-go/v3/modules/core/05-port/types"
-	host "github.com/line/ibc-go/v3/modules/core/24-host"
-	ibcexported "github.com/line/ibc-go/v3/modules/core/exported"
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	capabilitytypes "github.com/Finschia/finschia-sdk/x/capability/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	porttypes "github.com/Finschia/ibc-go/v3/modules/core/05-port/types"
+	host "github.com/Finschia/ibc-go/v3/modules/core/24-host"
+	ibcexported "github.com/Finschia/ibc-go/v3/modules/core/exported"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	wasmTypes "github.com/line/wasmd/x/wasm/types"
+	wasmTypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}

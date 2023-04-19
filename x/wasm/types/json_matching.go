@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
 )
 
 // IsJSONObjectWithTopLevelKey checks if the given bytes are a valid JSON object

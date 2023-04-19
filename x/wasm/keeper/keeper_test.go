@@ -15,23 +15,23 @@ import (
 	"github.com/stretchr/testify/require"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/line/lbm-sdk/baseapp"
-	"github.com/line/lbm-sdk/crypto/keys/ed25519"
-	stypes "github.com/line/lbm-sdk/store/types"
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/address"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
-	"github.com/line/lbm-sdk/x/auth/vesting"
-	vestingtypes "github.com/line/lbm-sdk/x/auth/vesting/types"
-	banktypes "github.com/line/lbm-sdk/x/bank/types"
-	distributiontypes "github.com/line/lbm-sdk/x/distribution/types"
-	"github.com/line/ostracon/libs/rand"
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/baseapp"
+	"github.com/Finschia/finschia-sdk/crypto/keys/ed25519"
+	stypes "github.com/Finschia/finschia-sdk/store/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/address"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
+	"github.com/Finschia/finschia-sdk/x/auth/vesting"
+	vestingtypes "github.com/Finschia/finschia-sdk/x/auth/vesting/types"
+	banktypes "github.com/Finschia/finschia-sdk/x/bank/types"
+	distributiontypes "github.com/Finschia/finschia-sdk/x/distribution/types"
+	"github.com/Finschia/ostracon/libs/rand"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 // When migrated to go 1.16, embed package should be used instead.
@@ -2228,7 +2228,6 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 }
 
 func TestKeeper_GetByteCode(t *testing.T) {
-
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.ContractKeeper
 
@@ -2259,7 +2258,6 @@ func TestKeeper_GetByteCode(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
-
 		})
 	}
 }

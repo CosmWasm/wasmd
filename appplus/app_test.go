@@ -10,13 +10,13 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	db "github.com/tendermint/tm-db"
 
-	"github.com/line/lbm-sdk/server"
-	"github.com/line/ostracon/libs/log"
+	"github.com/Finschia/finschia-sdk/server"
+	"github.com/Finschia/ostracon/libs/log"
 
-	wasmapp "github.com/line/wasmd/app"
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	wasmplustypes "github.com/line/wasmd/x/wasmplus/types"
+	wasmapp "github.com/Finschia/wasmd/app"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	wasmplustypes "github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 var emptyWasmOpts []wasmkeeper.Option = nil

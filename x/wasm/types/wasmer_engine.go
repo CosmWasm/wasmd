@@ -1,8 +1,8 @@
 package types
 
 import (
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 // DefaultMaxQueryStackSize maximum size of the stack of contract instances doing queries

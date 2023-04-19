@@ -1,8 +1,8 @@
 package wasmtesting
 
 import (
-	storetypes "github.com/line/lbm-sdk/store/types"
-	sdk "github.com/line/lbm-sdk/types"
+	storetypes "github.com/Finschia/finschia-sdk/store/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 )
 
 // MockCommitMultiStore mock with a CacheMultiStore to capture commits

@@ -1,9 +1,9 @@
 package wasmtesting
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 
-	wasmvmtypes "github.com/line/wasmvm/types"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 // MockGasRegister mock that implements keeper.GasRegister

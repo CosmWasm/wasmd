@@ -3,11 +3,11 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/line/lbm-sdk/types"
-	sdkerrors "github.com/line/lbm-sdk/types/errors"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	sdkerrors "github.com/Finschia/finschia-sdk/types/errors"
 
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
-	"github.com/line/wasmd/x/wasmplus/types"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasmplus/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -21,7 +21,8 @@ func NewMsgServerImpl(k wasmtypes.ContractOpsKeeper) types.MsgServer {
 }
 
 func (m msgServer) StoreCodeAndInstantiateContract(goCtx context.Context,
-	msg *types.MsgStoreCodeAndInstantiateContract) (*types.MsgStoreCodeAndInstantiateContractResponse, error) {
+	msg *types.MsgStoreCodeAndInstantiateContract,
+) (*types.MsgStoreCodeAndInstantiateContractResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {

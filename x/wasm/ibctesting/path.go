@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
 )
 
 // Path contains two endpoints representing two chains connected over IBC

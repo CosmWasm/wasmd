@@ -5,30 +5,34 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 
-option go_package                      = "github.com/line/wasmd/x/wasmplus/types";
+option go_package = "github.com/Finschia/wasmd/x/wasmplus/types";
 option (gogoproto.goproto_getters_all) = false;
-option (gogoproto.equal_all)           = false;
+option (gogoproto.equal_all) = false;
 
 // Query defines the gRPC querier service.
 service Query {
   // InactiveContracts queries all inactive contracts
-  rpc InactiveContracts(QueryInactiveContractsRequest) returns (QueryInactiveContractsResponse) {
+  rpc InactiveContracts(QueryInactiveContractsRequest)
+      returns (QueryInactiveContractsResponse) {
     option (google.api.http).get = "/lbm/wasm/v1/inactive_contracts";
   };
 
   // InactiveContract check it the contract is inactive state or not
-  rpc InactiveContract(QueryInactiveContractRequest) returns (QueryInactiveContractResponse) {
+  rpc InactiveContract(QueryInactiveContractRequest)
+      returns (QueryInactiveContractResponse) {
     option (google.api.http).get = "/lbm/wasm/v1/inactive_contracts/{address}";
   }
 }
 
-// QueryInactiveContractsRequest is the request type for Query/InactiveContract RPC method.
+// QueryInactiveContractsRequest is the request type for Query/InactiveContract
+// RPC method.
 message QueryInactiveContractsRequest {
   // pagination defines an optional pagination for the request
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-// QueryInactiveContractsResponse is the response type for the Query/InactiveContract RPC method.
+// QueryInactiveContractsResponse is the response type for the
+// Query/InactiveContract RPC method.
 message QueryInactiveContractsResponse {
   // addresses is the inactive address list
   repeated string addresses = 1;
@@ -37,13 +41,15 @@ message QueryInactiveContractsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryIsInactiveContractRequest is the request type for Query/IsInactiveContract RPC method.
+// QueryIsInactiveContractRequest is the request type for
+// Query/IsInactiveContract RPC method.
 message QueryInactiveContractRequest {
   // address is the address of the contract
   string address = 1;
 }
 
-// QueryInactiveContractsResponse is the response type for the Query/IsInactiveContract RPC method.
+// QueryInactiveContractsResponse is the response type for the
+// Query/IsInactiveContract RPC method.
 message QueryInactiveContractResponse {
   // inactivated is the result if the contract is inactive contract or not
   bool inactivated = 1;

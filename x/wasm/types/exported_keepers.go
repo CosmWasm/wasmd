@@ -1,9 +1,9 @@
 package types
 
 import (
-	sdk "github.com/line/lbm-sdk/types"
-	capabilitytypes "github.com/line/lbm-sdk/x/capability/types"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	capabilitytypes "github.com/Finschia/finschia-sdk/x/capability/types"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 )
 
 // ViewKeeper provides read only operations

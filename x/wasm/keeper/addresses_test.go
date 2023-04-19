@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	tmbytes "github.com/line/ostracon/libs/bytes"
+	tmbytes "github.com/Finschia/ostracon/libs/bytes"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/line/lbm-sdk/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
 )
 
 func TestBuildContractAddress(t *testing.T) {

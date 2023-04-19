@@ -3,17 +3,17 @@ package app
 import (
 	"testing"
 
-	ibctransferkeeper "github.com/line/ibc-go/v3/modules/apps/transfer/keeper"
-	ibckeeper "github.com/line/ibc-go/v3/modules/core/keeper"
-	"github.com/line/lbm-sdk/baseapp"
-	"github.com/line/lbm-sdk/client"
-	"github.com/line/lbm-sdk/codec"
-	bankkeeper "github.com/line/lbm-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/line/lbm-sdk/x/capability/keeper"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
+	"github.com/Finschia/finschia-sdk/baseapp"
+	"github.com/Finschia/finschia-sdk/client"
+	"github.com/Finschia/finschia-sdk/codec"
+	bankkeeper "github.com/Finschia/finschia-sdk/x/bank/keeper"
+	capabilitykeeper "github.com/Finschia/finschia-sdk/x/capability/keeper"
+	stakingkeeper "github.com/Finschia/finschia-sdk/x/staking/keeper"
+	ibctransferkeeper "github.com/Finschia/ibc-go/v3/modules/apps/transfer/keeper"
+	ibckeeper "github.com/Finschia/ibc-go/v3/modules/core/keeper"
 
-	"github.com/line/wasmd/app/params"
-	"github.com/line/wasmd/x/wasm"
+	"github.com/Finschia/wasmd/app/params"
+	"github.com/Finschia/wasmd/x/wasm"
 )
 
 // Deprecated: use public app attributes directly

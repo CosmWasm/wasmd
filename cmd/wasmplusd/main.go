@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/line/lbm-sdk/server"
-	svrcmd "github.com/line/lbm-sdk/server/cmd"
+	"github.com/Finschia/finschia-sdk/server"
+	svrcmd "github.com/Finschia/finschia-sdk/server/cmd"
 
-	app "github.com/line/wasmd/appplus"
+	app "github.com/Finschia/wasmd/appplus"
 )
 
 func main() {

@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	sdk "github.com/line/lbm-sdk/types"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
 )
 
 func TestValidateProposalCommons(t *testing.T) {
@@ -527,7 +527,7 @@ func TestProposalStrings(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
 			}),
 			exp: `Store Code Proposal:
   Title:       Foo
@@ -643,7 +643,7 @@ func TestProposalYaml(t *testing.T) {
 	}{
 		"store code": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				p.WASMByteCode = []byte{01, 02, 03, 04, 05, 06, 07, 0x08, 0x09, 0x0a}
+				p.WASMByteCode = []byte{0o1, 0o2, 0o3, 0o4, 0o5, 0o6, 0o7, 0x08, 0x09, 0x0a}
 			}),
 			exp: `title: Foo
 description: Bar

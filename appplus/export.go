@@ -6,11 +6,11 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	servertypes "github.com/line/lbm-sdk/server/types"
-	sdk "github.com/line/lbm-sdk/types"
-	slashingtypes "github.com/line/lbm-sdk/x/slashing/types"
-	"github.com/line/lbm-sdk/x/staking"
-	stakingtypes "github.com/line/lbm-sdk/x/staking/types"
+	servertypes "github.com/Finschia/finschia-sdk/server/types"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	slashingtypes "github.com/Finschia/finschia-sdk/x/slashing/types"
+	"github.com/Finschia/finschia-sdk/x/staking"
+	stakingtypes "github.com/Finschia/finschia-sdk/x/staking/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis

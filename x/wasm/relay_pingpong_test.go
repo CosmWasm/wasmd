@@ -8,19 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	ibctransfertypes "github.com/line/ibc-go/v3/modules/apps/transfer/types"
-	clienttypes "github.com/line/ibc-go/v3/modules/core/02-client/types"
-	channeltypes "github.com/line/ibc-go/v3/modules/core/04-channel/types"
-	ibctesting "github.com/line/ibc-go/v3/testing"
-	"github.com/line/lbm-sdk/store/prefix"
-	sdk "github.com/line/lbm-sdk/types"
-	wasmvm "github.com/line/wasmvm"
-	wasmvmtypes "github.com/line/wasmvm/types"
+	"github.com/Finschia/finschia-sdk/store/prefix"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	ibctransfertypes "github.com/Finschia/ibc-go/v3/modules/apps/transfer/types"
+	clienttypes "github.com/Finschia/ibc-go/v3/modules/core/02-client/types"
+	channeltypes "github.com/Finschia/ibc-go/v3/modules/core/04-channel/types"
+	ibctesting "github.com/Finschia/ibc-go/v3/testing"
+	wasmvm "github.com/Finschia/wasmvm"
+	wasmvmtypes "github.com/Finschia/wasmvm/types"
 
-	wasmibctesting "github.com/line/wasmd/x/wasm/ibctesting"
-	wasmkeeper "github.com/line/wasmd/x/wasm/keeper"
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	wasmtypes "github.com/line/wasmd/x/wasm/types"
+	wasmibctesting "github.com/Finschia/wasmd/x/wasm/ibctesting"
+	wasmkeeper "github.com/Finschia/wasmd/x/wasm/keeper"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	wasmtypes "github.com/Finschia/wasmd/x/wasm/types"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 var doNotTimeout = clienttypes.NewHeight(1, 1111111)
 
 func TestPinPong(t *testing.T) {
-	t.Skip("check it later after enable use ibc-go v3.3.0+ in lbm-sdk")
+	t.Skip("check it later after enable use ibc-go v3.3.0+ in finschia-sdk")
 	// custom IBC protocol example
 	// scenario: given two chains,
 	//           with a contract on chain A and chain B

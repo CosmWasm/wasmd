@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/line/lbm-sdk/client"
+	"github.com/Finschia/finschia-sdk/client"
 
-	wasmcli "github.com/line/wasmd/x/wasm/client/cli"
+	wasmcli "github.com/Finschia/wasmd/x/wasm/client/cli"
 )
 
 func AddGenesisWasmMsgCmd(defaultNodeHome string) *cobra.Command {

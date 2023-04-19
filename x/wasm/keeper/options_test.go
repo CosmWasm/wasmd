@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	authkeeper "github.com/line/lbm-sdk/x/auth/keeper"
-	authtypes "github.com/line/lbm-sdk/x/auth/types"
-	vestingtypes "github.com/line/lbm-sdk/x/auth/vesting/types"
-	bankpluskeeper "github.com/line/lbm-sdk/x/bankplus/keeper"
-	distributionkeeper "github.com/line/lbm-sdk/x/distribution/keeper"
-	paramtypes "github.com/line/lbm-sdk/x/params/types"
-	stakingkeeper "github.com/line/lbm-sdk/x/staking/keeper"
+	authkeeper "github.com/Finschia/finschia-sdk/x/auth/keeper"
+	authtypes "github.com/Finschia/finschia-sdk/x/auth/types"
+	vestingtypes "github.com/Finschia/finschia-sdk/x/auth/vesting/types"
+	bankpluskeeper "github.com/Finschia/finschia-sdk/x/bankplus/keeper"
+	distributionkeeper "github.com/Finschia/finschia-sdk/x/distribution/keeper"
+	paramtypes "github.com/Finschia/finschia-sdk/x/params/types"
+	stakingkeeper "github.com/Finschia/finschia-sdk/x/staking/keeper"
 
-	"github.com/line/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/line/wasmd/x/wasm/types"
+	"github.com/Finschia/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/Finschia/wasmd/x/wasm/types"
 )
 
 func TestConstructorOptions(t *testing.T) {

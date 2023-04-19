@@ -1,15 +1,15 @@
 package types
 
 import (
-	"github.com/line/lbm-sdk/codec"
-	"github.com/line/lbm-sdk/codec/legacy"
-	"github.com/line/lbm-sdk/codec/types"
-	cryptocodec "github.com/line/lbm-sdk/crypto/codec"
-	sdk "github.com/line/lbm-sdk/types"
-	"github.com/line/lbm-sdk/types/msgservice"
-	authzcodec "github.com/line/lbm-sdk/x/authz/codec"
-	govcodec "github.com/line/lbm-sdk/x/gov/codec"
-	govtypes "github.com/line/lbm-sdk/x/gov/types"
+	"github.com/Finschia/finschia-sdk/codec"
+	"github.com/Finschia/finschia-sdk/codec/legacy"
+	"github.com/Finschia/finschia-sdk/codec/types"
+	cryptocodec "github.com/Finschia/finschia-sdk/crypto/codec"
+	sdk "github.com/Finschia/finschia-sdk/types"
+	"github.com/Finschia/finschia-sdk/types/msgservice"
+	authzcodec "github.com/Finschia/finschia-sdk/x/authz/codec"
+	govcodec "github.com/Finschia/finschia-sdk/x/gov/codec"
+	govtypes "github.com/Finschia/finschia-sdk/x/gov/types"
 )
 
 // RegisterLegacyAminoCodec registers the account types and interface
