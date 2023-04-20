@@ -239,7 +239,7 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 			cmd.Println("libwasmvm version check skipped")
 			return nil
 		}
-		return CheckLibwasmVersion()
+		return CheckLibwasmVersion(getExpectedLibwasmVersion())
 	}
 	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
@@ -304,14 +304,13 @@ func getExpectedLibwasmVersion() string {
 //
 // An alternative method to obtain the libwasmvm version loaded at runtime is executing
 // `wasmd query wasm libwasmvm-version`.
-func CheckLibwasmVersion() error {
+func CheckLibwasmVersion(wasmExpectedVersion string) error {
+	if wasmExpectedVersion == "" {
+		return fmt.Errorf("wasmvm module not exist")
+	}
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
-	}
-	wasmExpectedVersion := getExpectedLibwasmVersion()
-	if wasmExpectedVersion == "" {
-		return fmt.Errorf("wasmvm module not exist")
 	}
 	if !strings.Contains(wasmExpectedVersion, wasmVersion) {
 		return fmt.Errorf("libwasmversion mismatch. got: %s; expected: %s", wasmVersion, wasmExpectedVersion)
