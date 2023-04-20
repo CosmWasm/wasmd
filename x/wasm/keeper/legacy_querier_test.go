@@ -120,16 +120,15 @@ func TestLegacyQueryContractState(t *testing.T) {
 		},
 		"query smart with unknown address": {
 			srcPath:     []string{QueryGetContractState, anyAddr.String(), QueryMethodContractStateSmart},
-			srcReq:      abci.RequestQuery{Data: []byte(`{}`)},
+			srcReq:      abci.RequestQuery{Data: []byte(`{"verifier":{}}`)},
 			expModelLen: 0,
-			expErr:      types.ErrNotFound,
+			expErr:      types.ErrNoSuchContractFn(anyAddr.String()).Wrapf("address %s", anyAddr.String()),
 		},
 	}
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			binResult, err := q(ctx, spec.srcPath, spec.srcReq)
-			// require.True(t, spec.expErr.Is(err), "unexpected error")
 			require.True(t, errors.Is(err, spec.expErr), err)
 
 			// if smart query, check custom response
