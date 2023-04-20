@@ -24,6 +24,13 @@ func WithWasmEngine(x types.WasmerEngine) Option {
 	})
 }
 
+// WithWasmEngineDecorator is an optional constructor parameter to decorate the default wasmVM engine.
+func WithWasmEngineDecorator(d func(old types.WasmerEngine) types.WasmerEngine) Option {
+	return optsFn(func(k *Keeper) {
+		k.wasmVM = d(k.wasmVM)
+	})
+}
+
 // WithMessageHandler is an optional constructor parameter to set a custom handler for wasmVM messages.
 // This option should not be combined with Option `WithMessageEncoders` or `WithMessageHandlerDecorator`
 func WithMessageHandler(x Messenger) Option {
