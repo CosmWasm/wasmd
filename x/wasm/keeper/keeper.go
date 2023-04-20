@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -216,13 +217,24 @@ func (k Keeper) instantiate(
 	ctx sdk.Context,
 	codeID uint64,
 	creator, admin sdk.AccAddress,
-	initMsg []byte,
+	rawInitMsg []byte,
 	label string,
 	deposit sdk.Coins,
 	addressGenerator AddressGenerator,
 	authPolicy AuthorizationPolicy,
 ) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
+
+	var initMsg []byte
+
+	if rawInitMsg != nil {
+		var compactInitMsgBuffer bytes.Buffer
+		if err := json.Compact(&compactInitMsgBuffer, rawInitMsg); err != nil {
+			return nil, nil, sdkerrors.Wrap(err, "failed to compact initMsg")
+		}
+
+		initMsg = compactInitMsgBuffer.Bytes()
+	}
 
 	if creator == nil {
 		return nil, nil, types.ErrEmpty.Wrap("creator")
