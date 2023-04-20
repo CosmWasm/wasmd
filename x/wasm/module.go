@@ -37,9 +37,10 @@ var (
 
 // Module init related flags
 const (
-	flagWasmMemoryCacheSize    = "wasm.memory_cache_size"
-	flagWasmQueryGasLimit      = "wasm.query_gas_limit"
-	flagWasmSimulationGasLimit = "wasm.simulation_gas_limit"
+	flagWasmMemoryCacheSize        = "wasm.memory_cache_size"
+	flagWasmQueryGasLimit          = "wasm.query_gas_limit"
+	flagWasmSimulationGasLimit     = "wasm.simulation_gas_limit"
+	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.
@@ -227,6 +228,9 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
 	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
 	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
+	startCmd.Flags().Bool(flagWasmSkipWasmVMVersionCheck, false, "Skip check that ensures that libwasmvm version (the Rust project) and wasmvm version (the Go project) match")
+
+	startCmd.PreRunE = chainPreRuns(CheckLibwasmVersion, startCmd.PreRunE)
 }
 
 // ReadWasmConfig reads the wasm specifig configuration
@@ -290,6 +294,14 @@ func getExpectedLibwasmVersion() string {
 // An alternative method to obtain the libwasmvm version loaded at runtime is executing
 // `wasmd query wasm libwasmvm-version`.
 func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
+	skip, err := cmd.Flags().GetBool(flagWasmSkipWasmVMVersionCheck)
+	if err != nil {
+		return fmt.Errorf("unable to read skip flag value: %w", err)
+	}
+	if skip {
+		cmd.Println("libwasmvm version check skipped")
+		return nil
+	}
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
@@ -302,4 +314,19 @@ func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("libwasmversion mismatch. got: %s; expected: %s", wasmVersion, wasmExpectedVersion)
 	}
 	return nil
+}
+
+type preRunFn func(cmd *cobra.Command, args []string) error
+
+func chainPreRuns(pfns ...preRunFn) preRunFn {
+	return func(cmd *cobra.Command, args []string) error {
+		for _, pfn := range pfns {
+			if pfn != nil {
+				if err := pfn(cmd, args); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
 }
