@@ -216,13 +216,18 @@ func (k Keeper) instantiate(
 	ctx sdk.Context,
 	codeID uint64,
 	creator, admin sdk.AccAddress,
-	initMsg []byte,
+	rawInitMsg []byte,
 	label string,
 	deposit sdk.Coins,
 	addressGenerator AddressGenerator,
 	authPolicy AuthorizationPolicy,
 ) (sdk.AccAddress, []byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "instantiate")
+
+	initMsg, err := ioutils.CompactMsg(rawInitMsg)
+	if err != nil {
+		return nil, nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to compact init msg: %s", err.Error())
+	}
 
 	if creator == nil {
 		return nil, nil, types.ErrEmpty.Wrap("creator")
@@ -384,8 +389,14 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller 
 	return data, nil
 }
 
-func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ AuthorizationPolicy) ([]byte, error) {
+func (k Keeper) migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, rawMsg []byte, authZ AuthorizationPolicy) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
+
+	msg, err := ioutils.CompactMsg(rawMsg)
+	if err != nil {
+		return nil, sdkerrors.Wrapf(types.ErrInvalidMsg, "failed to compact migrate msg: %s", err.Error())
+	}
+
 	migrateSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, newCodeID), len(msg))
 	ctx.GasMeter().ConsumeGas(migrateSetupCosts, "Loading CosmWasm module: migrate")
 

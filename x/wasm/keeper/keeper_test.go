@@ -1228,7 +1228,7 @@ func TestMigrate(t *testing.T) {
 			fromCodeID: originalCodeID,
 			toCodeID:   originalCodeID,
 			migrateMsg: bytes.Repeat([]byte{0x1}, 7),
-			expErr:     types.ErrMigrationFailed,
+			expErr:     types.ErrInvalidMsg,
 		},
 		"fail in contract without migrate msg": {
 			admin:      creator,
