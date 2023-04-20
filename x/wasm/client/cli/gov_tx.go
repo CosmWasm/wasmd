@@ -9,8 +9,10 @@ import (
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -62,7 +64,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -152,7 +154,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -199,7 +201,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -248,7 +250,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -373,7 +375,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src, err := parseMigrateContractArgs(args, authority)
@@ -415,7 +417,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			contract := args[0]
@@ -472,7 +474,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			msg := types.MsgSudoContract{
@@ -515,7 +517,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			src := parseUpdateContractAdminArgs(args, authority)
@@ -554,7 +556,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			msg := types.MsgClearAdmin{
@@ -596,7 +598,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -654,7 +656,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -761,7 +763,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				authority = sdk.AccAddress(address.Module("gov")).String()
 			}
 
 			updates, err := parseAccessConfigUpdates(args)
@@ -797,6 +799,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 }
 
 func addCommonProposalFlags(cmd *cobra.Command) {
+	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
