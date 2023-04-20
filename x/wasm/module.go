@@ -230,7 +230,18 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
 	startCmd.Flags().Bool(flagWasmSkipWasmVMVersionCheck, false, "Skip check that ensures that libwasmvm version (the Rust project) and wasmvm version (the Go project) match")
 
-	startCmd.PreRunE = chainPreRuns(CheckLibwasmVersion, startCmd.PreRunE)
+	preCheck := func(cmd *cobra.Command, _ []string) error {
+		skip, err := cmd.Flags().GetBool(flagWasmSkipWasmVMVersionCheck)
+		if err != nil {
+			return fmt.Errorf("unable to read skip flag value: %w", err)
+		}
+		if skip {
+			cmd.Println("libwasmvm version check skipped")
+			return nil
+		}
+		return CheckLibwasmVersion()
+	}
+	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
 
 // ReadWasmConfig reads the wasm specifig configuration
@@ -293,15 +304,7 @@ func getExpectedLibwasmVersion() string {
 //
 // An alternative method to obtain the libwasmvm version loaded at runtime is executing
 // `wasmd query wasm libwasmvm-version`.
-func CheckLibwasmVersion(cmd *cobra.Command, args []string) error {
-	skip, err := cmd.Flags().GetBool(flagWasmSkipWasmVMVersionCheck)
-	if err != nil {
-		return fmt.Errorf("unable to read skip flag value: %w", err)
-	}
-	if skip {
-		cmd.Println("libwasmvm version check skipped")
-		return nil
-	}
+func CheckLibwasmVersion() error {
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
