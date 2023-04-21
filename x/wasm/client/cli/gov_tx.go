@@ -25,6 +25,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// DefaultGovAuthority is set to the gov module address.
+// Extension point for chains to overwrite the default
+var DefaultGovAuthority = sdk.AccAddress(address.Module("gov"))
+
 func SubmitProposalCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "submit-proposal",
@@ -64,7 +68,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -154,7 +158,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -201,7 +205,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -250,7 +254,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -375,7 +379,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src, err := parseMigrateContractArgs(args, authority)
@@ -417,7 +421,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			contract := args[0]
@@ -474,7 +478,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			msg := types.MsgSudoContract{
@@ -517,7 +521,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			src := parseUpdateContractAdminArgs(args, authority)
@@ -556,7 +560,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			msg := types.MsgClearAdmin{
@@ -598,7 +602,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -656,7 +660,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -763,7 +767,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 			}
 
 			if len(authority) == 0 {
-				authority = sdk.AccAddress(address.Module("gov")).String()
+				return errors.New("authority address is required")
 			}
 
 			updates, err := parseAccessConfigUpdates(args)
@@ -803,7 +807,7 @@ func addCommonProposalFlags(cmd *cobra.Command) {
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
 	cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
 	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
-	cmd.Flags().String(flagAuthority, "", "The address of the governance account.")
+	cmd.Flags().String(flagAuthority, DefaultGovAuthority.String(), "The address of the governance account. Default is the sdk gov module account")
 }
 
 func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, error) {
