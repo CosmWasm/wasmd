@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"github.com/cometbft/cometbft/libs/rand"
 	"io"
 	"os"
 	"testing"
@@ -52,8 +53,8 @@ func TestUncompress(t *testing.T) {
 			src:      asGzip(bytes.Repeat([]byte{0x1}, maxSize+1)),
 			expError: types.ErrLimit,
 		},
-		"handle other big gzip output": {
-			src:      asGzip(bytes.Repeat([]byte{0x1}, 2*maxSize)),
+		"handle big gzip archive": {
+			src:      asGzip(rand.Bytes(2 * maxSize)),
 			expError: types.ErrLimit,
 		},
 	}
