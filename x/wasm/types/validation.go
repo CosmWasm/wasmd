@@ -57,7 +57,7 @@ func ValidateSalt(salt []byte) error {
 // ValidateVerificationInfo ensure source, builder and checksum constraints
 func ValidateVerificationInfo(source, builder string, codeHash []byte) error {
 	// if any set require others to be set
-	if len(source) != 0 || len(builder) != 0 || codeHash != nil {
+	if len(source) != 0 || len(builder) != 0 || len(codeHash) != 0 {
 		if source == "" {
 			return fmt.Errorf("source is required")
 		}
