@@ -149,7 +149,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 		ctx.GasMeter().ConsumeGas(k.gasRegister.UncompressCosts(len(wasmCode)), "Uncompress gzip bytecode")
 		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
 		if err != nil {
-			return 0, checksum, sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+			return 0, checksum, types.ErrCreateFailed.Wrap(sdkerrors.Wrap(err, "uncompress wasm archive").Error())
 		}
 	}
 
@@ -191,7 +191,7 @@ func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeIn
 		var err error
 		wasmCode, err = ioutils.Uncompress(wasmCode, uint64(types.MaxWasmSize))
 		if err != nil {
-			return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+			return types.ErrCreateFailed.Wrap(sdkerrors.Wrap(err, "uncompress wasm archive").Error())
 		}
 	}
 	newCodeHash, err := k.wasmVM.Create(wasmCode)
