@@ -264,26 +264,26 @@ func (i IBCHandler) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(err, "contract port id"))
+		// this must not happen as ports were registered before
+		panic(errorsmod.Wrapf(err, "contract port id"))
 	}
+
+	em := sdk.NewEventManager()
 	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
-	ack, err := i.keeper.OnRecvPacket(ctx, contractAddr, msg)
+	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
-		return channeltypes.NewErrorAcknowledgement(err)
+		ack = channeltypes.NewErrorAcknowledgement(err)
+		types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
+		// the state gets reverted, so we drop all captured events
+		return ack
 	}
-	return ContractConfirmStateAck(ack)
-}
-
-var _ ibcexported.Acknowledgement = ContractConfirmStateAck{}
-
-type ContractConfirmStateAck []byte
-
-func (w ContractConfirmStateAck) Success() bool {
-	return true // always commit state
-}
-
-func (w ContractConfirmStateAck) Acknowledgement() []byte {
-	return w
+	if ack == nil || ack.Success() {
+		// emit all contract and submessage events on success
+		// nil ack is a success case, see: https://github.com/cosmos/ibc-go/blob/v7.0.0/modules/core/keeper/msg_server.go#L453
+		ctx.EventManager().EmitEvents(em.Events())
+	}
+	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, nil)
+	return ack
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
