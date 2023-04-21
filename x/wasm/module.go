@@ -296,9 +296,6 @@ func getExpectedLibwasmVersion() string {
 	return ""
 }
 
-<<<<<<< HEAD
-func checkLibwasmVersion(_ *cobra.Command, _ []string) error {
-=======
 // CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
 // of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
 // shared libraries that are copied or moved from their default location, e.g. when building the node
@@ -314,7 +311,6 @@ func CheckLibwasmVersion(wasmExpectedVersion string) error {
 	if wasmExpectedVersion == "" {
 		return fmt.Errorf("wasmvm module not exist")
 	}
->>>>>>> 09291688 (Don't run checkLibwasmVersion automatically on start (#1338))
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
