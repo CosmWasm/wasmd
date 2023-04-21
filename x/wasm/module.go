@@ -39,9 +39,10 @@ var (
 
 // Module init related flags
 const (
-	flagWasmMemoryCacheSize    = "wasm.memory_cache_size"
-	flagWasmQueryGasLimit      = "wasm.query_gas_limit"
-	flagWasmSimulationGasLimit = "wasm.simulation_gas_limit"
+	flagWasmMemoryCacheSize        = "wasm.memory_cache_size"
+	flagWasmQueryGasLimit          = "wasm.query_gas_limit"
+	flagWasmSimulationGasLimit     = "wasm.simulation_gas_limit"
+	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check" //nolint:gosec
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.
@@ -230,8 +231,20 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 	startCmd.Flags().Uint32(flagWasmMemoryCacheSize, defaults.MemoryCacheSize, "Sets the size in MiB (NOT bytes) of an in-memory cache for Wasm modules. Set to 0 to disable.")
 	startCmd.Flags().Uint64(flagWasmQueryGasLimit, defaults.SmartQueryGasLimit, "Set the max gas that can be spent on executing a query with a Wasm contract")
 	startCmd.Flags().String(flagWasmSimulationGasLimit, "", "Set the max gas that can be spent when executing a simulation TX")
+	startCmd.Flags().Bool(flagWasmSkipWasmVMVersionCheck, false, "Skip check that ensures that libwasmvm version (the Rust project) and wasmvm version (the Go project) match")
 
-	startCmd.PreRunE = chainPreRuns(checkLibwasmVersion, startCmd.PreRunE)
+	preCheck := func(cmd *cobra.Command, _ []string) error {
+		skip, err := cmd.Flags().GetBool(flagWasmSkipWasmVMVersionCheck)
+		if err != nil {
+			return fmt.Errorf("unable to read skip flag value: %w", err)
+		}
+		if skip {
+			cmd.Println("libwasmvm version check skipped")
+			return nil
+		}
+		return CheckLibwasmVersion(getExpectedLibwasmVersion())
+	}
+	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
 
 // ReadWasmConfig reads the wasm specifig configuration
@@ -283,14 +296,24 @@ func getExpectedLibwasmVersion() string {
 	return ""
 }
 
-func checkLibwasmVersion(_ *cobra.Command, _ []string) error {
+// CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
+// of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
+// shared libraries that are copied or moved from their default location, e.g. when building the node
+// on one machine and deploying it to other machines.
+//
+// Usually the libwasmvm version (the Rust project) and wasmvm version (the Go project) match. However,
+// there are situations in which this is not the case. This can be during development or if one of the
+// two is patched. In such cases it is advised to not execute the check.
+//
+// An alternative method to obtain the libwasmvm version loaded at runtime is executing
+// `wasmd query wasm libwasmvm-version`.
+func CheckLibwasmVersion(wasmExpectedVersion string) error {
+	if wasmExpectedVersion == "" {
+		return fmt.Errorf("wasmvm module not exist")
+	}
 	wasmVersion, err := wasmvm.LibwasmvmVersion()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
-	}
-	wasmExpectedVersion := getExpectedLibwasmVersion()
-	if wasmExpectedVersion == "" {
-		return fmt.Errorf("wasmvm module not exist")
 	}
 	if !strings.Contains(wasmExpectedVersion, wasmVersion) {
 		return fmt.Errorf("libwasmversion mismatch. got: %s; expected: %s", wasmVersion, wasmExpectedVersion)
