@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -23,7 +23,7 @@ func Uncompress(gzipSrc []byte, limit uint64) ([]byte, error) {
 	defer zr.Close()
 	bz, err := io.ReadAll(LimitReader(zr, int64(limit)))
 	if types.ErrLimit.Is(err) {
-		return nil, errorsmod.Wrapf(err, "max %d bytes", limit)
+		return nil, sdkerrors.Wrapf(err, "max %d bytes", limit)
 	}
 	return bz, err
 }

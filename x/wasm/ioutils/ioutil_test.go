@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"github.com/cometbft/cometbft/libs/rand"
 	"io"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
