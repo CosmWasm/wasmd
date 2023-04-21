@@ -3,6 +3,13 @@ package keeper
 import (
 	"time"
 
+<<<<<<< HEAD
+=======
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	errorsmod "cosmossdk.io/errors"
+>>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,7 +123,7 @@ func (k Keeper) OnRecvPacket(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	msg wasmvmtypes.IBCPacketReceiveMsg,
-) ([]byte, error) {
+) (ibcexported.Acknowledgement, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "ibc-recv-packet")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddr)
 	if err != nil {
@@ -130,13 +137,39 @@ func (k Keeper) OnRecvPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		panic(execErr)
+		panic(execErr) // let contract fully abort IBC receive in certain case
 	}
+<<<<<<< HEAD
 	if res.Err != "" { // handle error case as before https://github.com/CosmWasm/wasmvm/commit/c300106fe5c9426a495f8e10821e00a9330c56c6
 		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, res.Err)
+=======
+	if res.Err != "" {
+		// return error ACK with non-redacted contract message, state will be reverted
+		return channeltypes.Acknowledgement{
+			Response: &channeltypes.Acknowledgement_Error{Error: res.Err},
+		}, nil
+>>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
 	}
 	// note submessage reply results can overwrite the `Acknowledgement` data
-	return k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
+	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)
+	if err != nil {
+		// submessage errors result in error ACK with state reverted. Error message is redacted
+		return nil, err
+	}
+	// success ACK, state will be committed
+	return ContractConfirmStateAck(data), nil
+}
+
+var _ ibcexported.Acknowledgement = ContractConfirmStateAck{}
+
+type ContractConfirmStateAck []byte
+
+func (w ContractConfirmStateAck) Success() bool {
+	return true // always commit state
+}
+
+func (w ContractConfirmStateAck) Acknowledgement() []byte {
+	return w
 }
 
 // OnAckPacket calls the contract to handle the "acknowledgement" data which can contain success or failure of a packet
