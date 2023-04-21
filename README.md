@@ -27,6 +27,10 @@ compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
 |-------|--------------|-------------|--------------|
+<<<<<<< HEAD
+=======
+| 0.40  | v1.2.3       |             | 1.0-1.2      |
+>>>>>>> 45f79e93 (Bump github.com/CosmWasm/wasmvm from 1.2.1 to 1.2.3 (#1344))
 | 0.31  | v1.2.0       |             | 1.0-1.2      |
 | 0.30  | v1.1.0       |             | 1.0-1.1      |
 | 0.29  | v1.1.0       |             | 1.0-1.1      |
