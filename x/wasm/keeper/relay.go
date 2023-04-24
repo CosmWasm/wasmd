@@ -3,13 +3,9 @@ package keeper
 import (
 	"time"
 
-<<<<<<< HEAD
-=======
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
 
-	errorsmod "cosmossdk.io/errors"
->>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -139,16 +135,11 @@ func (k Keeper) OnRecvPacket(
 	if execErr != nil {
 		panic(execErr) // let contract fully abort IBC receive in certain case
 	}
-<<<<<<< HEAD
-	if res.Err != "" { // handle error case as before https://github.com/CosmWasm/wasmvm/commit/c300106fe5c9426a495f8e10821e00a9330c56c6
-		return nil, sdkerrors.Wrap(types.ErrExecuteFailed, res.Err)
-=======
 	if res.Err != "" {
 		// return error ACK with non-redacted contract message, state will be reverted
 		return channeltypes.Acknowledgement{
 			Response: &channeltypes.Acknowledgement_Error{Error: res.Err},
 		}, nil
->>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
 	}
 	// note submessage reply results can overwrite the `Acknowledgement` data
 	data, err := k.handleContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok.Messages, res.Ok.Attributes, res.Ok.Acknowledgement, res.Ok.Events)

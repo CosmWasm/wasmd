@@ -4,20 +4,15 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-<<<<<<< HEAD
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-=======
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
->>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
+	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -46,9 +41,9 @@ func TestOnRecvPacket(t *testing.T) {
 				{
 					Type: "ibc_packet_received",
 					Attributes: []abci.EventAttribute{
-						{Key: "module", Value: "wasm"},
-						{Key: "_contract_address", Value: "cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"},
-						{Key: "success", Value: "true"},
+						{Key: []byte("module"), Value: []byte("wasm")},
+						{Key: []byte("_contract_address"), Value: []byte("cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f")},
+						{Key: []byte("success"), Value: []byte("true")},
 					},
 				},
 			},
@@ -61,9 +56,9 @@ func TestOnRecvPacket(t *testing.T) {
 				{
 					Type: "ibc_packet_received",
 					Attributes: []abci.EventAttribute{
-						{Key: "module", Value: "wasm"},
-						{Key: "_contract_address", Value: "cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"},
-						{Key: "success", Value: "false"},
+						{Key: []byte("module"), Value: []byte("wasm")},
+						{Key: []byte("_contract_address"), Value: []byte("cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f")},
+						{Key: []byte("success"), Value: []byte("false")},
 					},
 				},
 			},
@@ -75,9 +70,9 @@ func TestOnRecvPacket(t *testing.T) {
 				{
 					Type: "ibc_packet_received",
 					Attributes: []abci.EventAttribute{
-						{Key: "module", Value: "wasm"},
-						{Key: "_contract_address", Value: "cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"},
-						{Key: "success", Value: "true"},
+						{Key: []byte("module"), Value: []byte("wasm")},
+						{Key: []byte("_contract_address"), Value: []byte("cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f")},
+						{Key: []byte("success"), Value: []byte("true")},
 					},
 				},
 			},
@@ -95,10 +90,10 @@ func TestOnRecvPacket(t *testing.T) {
 			expEvents: sdk.Events{{
 				Type: "ibc_packet_received",
 				Attributes: []abci.EventAttribute{
-					{Key: "module", Value: "wasm"},
-					{Key: "_contract_address", Value: "cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"},
-					{Key: "success", Value: "false"},
-					{Key: "error", Value: "testing: invalid"}, // not redacted
+					{Key: []byte("module"), Value: []byte("wasm")},
+					{Key: []byte("_contract_address"), Value: []byte("cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f")},
+					{Key: []byte("success"), Value: []byte("false")},
+					{Key: []byte("error"), Value: []byte("testing: invalid")}, // not redacted
 				},
 			}},
 		},

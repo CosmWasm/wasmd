@@ -264,12 +264,8 @@ func (i IBCHandler) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	contractAddr, err := ContractFromPortID(packet.DestinationPort)
 	if err != nil {
-<<<<<<< HEAD
-		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(err, "contract port id"))
-=======
 		// this must not happen as ports were registered before
-		panic(errorsmod.Wrapf(err, "contract port id"))
->>>>>>> 7cd5893e (Redesign IBC on packet recv error/ result.Err handling)
+		panic(sdkerrors.Wrapf(err, "contract port id"))
 	}
 
 	em := sdk.NewEventManager()
