@@ -99,6 +99,13 @@ func parseStoreAndInitResponse(t *testing.T, data []byte) (uint64, string) {
 	return codeID, addr
 }
 
+// ensure store code returns the expected response
+func assertStoreCodeResponse(t *testing.T, data []byte, expected uint64) {
+	var pStoreResp wasmtypes.MsgStoreCodeResponse
+	require.NoError(t, pStoreResp.Unmarshal(data))
+	require.Equal(t, pStoreResp.CodeID, expected)
+}
+
 type prettyEvent struct {
 	Type string
 	Attr []sdk.Attribute
@@ -396,4 +403,45 @@ func TestErrorsCreateAndInstantiate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleNonPlusWasmCreate(t *testing.T) {
+	data := setupTest(t)
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
+
+	h := data.module.Route().Handler()
+	q := data.module.LegacyQuerierHandler(nil)
+
+	msg := &wasmtypes.MsgStoreCode{
+		Sender:       creator.String(),
+		WASMByteCode: testContract,
+	}
+
+	res, err := h(data.ctx, msg)
+	require.NoError(t, err)
+	assertStoreCodeResponse(t, res.Data, 1)
+
+	require.Equal(t, 2, len(res.Events), prettyEvents(res.Events))
+	assert.Equal(t, "message", res.Events[0].Type)
+	assertAttribute(t, "module", "wasm", res.Events[0].Attributes[0])
+	assert.Equal(t, "store_code", res.Events[1].Type)
+	assertAttribute(t, "code_id", "1", res.Events[1].Attributes[1])
+
+	assertCodeList(t, q, data.ctx, 1)
+	assertCodeBytes(t, q, data.ctx, 1, testContract)
+}
+
+func TestErrorHandleNonPlusWasmCreate(t *testing.T) {
+	data := setupTest(t)
+	creator := data.faucet.NewFundedRandomAccount(data.ctx, sdk.NewInt64Coin("denom", 100000))
+
+	h := data.module.Route().Handler()
+
+	msg := &wasmtypes.MsgStoreCode{
+		Sender:       creator.String(),
+		WASMByteCode: []byte("invalid WASM contract"),
+	}
+
+	_, err := h(data.ctx, msg)
+	require.ErrorContains(t, err, "Wasm validation")
 }
