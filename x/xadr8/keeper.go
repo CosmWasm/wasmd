@@ -19,7 +19,8 @@ type Keeper struct {
 	auth          Authorization
 }
 type Authorization interface {
-	// is actor authorized to register a callback for a package
+	// IsAuthorized returns if actor authorized to register a callback for a package
+	// returning an error aborts the operations
 	IsAuthorized(ctx sdk.Context, actor sdk.AccAddress) (bool, error)
 }
 
@@ -87,8 +88,9 @@ func (k Keeper) RegisterPacketProcessedCallback(
 	if err != nil {
 		return err
 	}
-	store.Set(BuildCallbackKey(packetID), bz)
-
+	// register with address as we can not check for the correct sender here
+	// just allow multiple.They will be cleaned up on packet ack/timeout
+	store.Set(BuildCallbackKey(packetID, sender.String()), bz)
 	return nil
 }
 
@@ -115,12 +117,19 @@ func (k Keeper) ExecutePacketCallback(
 	exec Executor,
 ) error {
 	store := ctx.KVStore(k.storeKey)
-	key := BuildCallbackKey(packetID)
+	key := BuildCallbackKey(packetID, sender)
 	if !store.Has(key) { // this cheaper on gas and would handle the majority of packets
 		return nil
 	}
+
 	// always do housekeeping
-	defer store.Delete(BuildCallbackKey(packetID))
+	defer func() {
+		iter := store.Iterator(PrefixRange(BuildCallbackKeyPrefix(packetID)))
+		defer iter.Close()
+		for ; iter.Valid(); iter.Next() {
+			store.Delete(iter.Key())
+		}
+	}()
 
 	var o CallbackData
 	// deserialize. Should be from proto instead
