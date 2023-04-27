@@ -5,9 +5,10 @@ package keeper
 import (
 	"path/filepath"
 
+	"github.com/CosmWasm/wasmd/x/xwasmvm"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -34,7 +35,7 @@ func NewKeeper(
 	authority string,
 	opts ...Option,
 ) Keeper {
-	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	wasmer, err := xwasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
 		panic(err)
 	}

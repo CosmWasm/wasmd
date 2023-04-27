@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"github.com/cometbft/cometbft/libs/rand"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/cometbft/cometbft/libs/rand"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

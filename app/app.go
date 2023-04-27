@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/CosmWasm/wasmd/x/xadr8"
+
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 
@@ -333,6 +335,7 @@ func NewWasmApp(
 		ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
 		wasm.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
+		xadr8.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -581,6 +584,9 @@ func NewWasmApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
+	var adr8Keeper xadr8.Keeper // setup later
+	wasmOpts = append(wasmOpts, wasmkeeper.WithMessageHandlerDecorator(CustomMsgDecorator(&adr8Keeper)))
+
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	availableCapabilities := strings.Join(AllCapabilities(), ",")
@@ -612,9 +618,14 @@ func NewWasmApp(
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Stack
-	var transferStack porttypes.IBCModule
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+	var transferStack porttypes.Middleware
+	ibcTransferModule := transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = ibcfee.NewIBCMiddleware(ibcTransferModule, app.IBCFeeKeeper)
+	// demo how the middleware is used
+	adr8Keeper = *xadr8.NewKeeper(keys[xadr8.StoreKey], app.IBCKeeper.ChannelKeeper, wasmkeeper.NewAcceptOnlyContracts(&app.WasmKeeper))
+	// note that the concrete packet type is defined on the middleware
+	transferStack = xadr8.NewIBCMiddleware[*ibctransfertypes.FungibleTokenPacketData](appCodec, transferStack, &adr8Keeper, app.WasmKeeper)
+	// todo: it would be nice if middlewares could be chained easily
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:

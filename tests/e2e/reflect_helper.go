@@ -24,7 +24,7 @@ func InstantiateReflectContract(t *testing.T, chain *ibctesting.TestChain) sdk.A
 
 // MustExecViaReflectContract submit execute message to send payload to reflect contract
 func MustExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) *sdk.Result {
-	rsp, err := ExecViaReflectContract(t, chain, contractAddr, msgs)
+	rsp, err := ExecViaReflectContract(t, chain, contractAddr, msgs...)
 	require.NoError(t, err)
 	return rsp
 }
@@ -46,13 +46,13 @@ func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *i
 			},
 		}
 	}
-	rsp, err := ExecViaReflectContract(t, chain, contractAddr, vmMsgs)
+	rsp, err := ExecViaReflectContract(t, chain, contractAddr, vmMsgs...)
 	require.NoError(t, err)
 	return rsp
 }
 
 // ExecViaReflectContract submit execute message to send payload to reflect contract
-func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) (*sdk.Result, error) {
+func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) (*sdk.Result, error) {
 	require.NotEmpty(t, msgs)
 	reflectSend := testdata.ReflectHandleMsg{
 		Reflect: &testdata.ReflectPayload{Msgs: msgs},
@@ -65,4 +65,16 @@ func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractA
 		Msg:      reflectSendBz,
 	}
 	return chain.SendMsgs(execMsg)
+}
+
+func MustEncodeAsReflectCustomMessage(t *testing.T, payload interface{}) wasmvmtypes.CosmosMsg {
+	bz, err := json.Marshal(payload)
+	require.NoError(t, err)
+	// reflect expected payload to be wrapped in another obj
+	reflectCustomMsg := struct {
+		Raw []byte `json:"raw,omitempty"`
+	}{Raw: bz}
+	bz, err = json.Marshal(reflectCustomMsg)
+	require.NoError(t, err)
+	return wasmvmtypes.CosmosMsg{Custom: bz}
 }

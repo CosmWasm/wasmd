@@ -269,7 +269,7 @@ func (i IBCHandler) OnRecvPacket(
 	}
 
 	em := sdk.NewEventManager()
-	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
+	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: types.AsIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
@@ -300,7 +300,7 @@ func (i IBCHandler) OnAcknowledgementPacket(
 
 	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
 		Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
-		OriginalPacket:  newIBCPacket(packet),
+		OriginalPacket:  types.AsIBCPacket(packet),
 		Relayer:         relayer.String(),
 	})
 	if err != nil {
@@ -315,32 +315,12 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 	if err != nil {
 		return errorsmod.Wrapf(err, "contract port id")
 	}
-	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
+	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: types.AsIBCPacket(packet), Relayer: relayer.String()}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
 		return errorsmod.Wrap(err, "on timeout")
 	}
 	return nil
-}
-
-func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
-	timeout := wasmvmtypes.IBCTimeout{
-		Timestamp: packet.TimeoutTimestamp,
-	}
-	if !packet.TimeoutHeight.IsZero() {
-		timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
-			Height:   packet.TimeoutHeight.RevisionHeight,
-			Revision: packet.TimeoutHeight.RevisionNumber,
-		}
-	}
-
-	return wasmvmtypes.IBCPacket{
-		Data:     packet.Data,
-		Src:      wasmvmtypes.IBCEndpoint{ChannelID: packet.SourceChannel, PortID: packet.SourcePort},
-		Dest:     wasmvmtypes.IBCEndpoint{ChannelID: packet.DestinationChannel, PortID: packet.DestinationPort},
-		Sequence: packet.Sequence,
-		Timeout:  timeout,
-	}
 }
 
 func ValidateChannelParams(channelID string) error {
