@@ -12,8 +12,19 @@ import (
 
 var _ porttypes.Middleware = &IBCMiddleware{}
 
+// PacketDecoder IBC packet decoder definition
 type PacketDecoder interface {
+	// DecodeSender returns sender address of the given packet, true
+	// false on any issue of when not found
 	DecodeSender(packet channeltypes.Packet) (string, bool)
+}
+
+var _ PacketDecoder = PacketDecoderFn(nil)
+
+type PacketDecoderFn func(packet channeltypes.Packet) (string, bool)
+
+func (p PacketDecoderFn) DecodeSender(packet channeltypes.Packet) (string, bool) {
+	return p(packet)
 }
 
 // CallbackExecutor is an abstract callback executor. To be implemented by contract engines
