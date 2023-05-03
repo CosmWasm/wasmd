@@ -380,6 +380,7 @@ func createTestInput(
 		bankKeeper,
 		stakingKeeper,
 		distKeeper,
+		ibcKeeper.ChannelKeeper, // ICS4Wrapper
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,

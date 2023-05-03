@@ -663,6 +663,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 		nil,
 		nil,
 		nil,
+		nil,
 		tempDir,
 		wasmConfig,
 		AvailableCapabilities,
