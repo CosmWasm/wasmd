@@ -11,8 +11,14 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+<<<<<<< HEAD
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+=======
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+>>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -36,6 +42,7 @@ type SDKMessageHandler struct {
 
 func NewDefaultMessageHandler(
 	router MessageRouter,
+	ics4Wrapper ibctransfertypes.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
@@ -49,7 +56,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
-		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, channelKeeper, capabilityKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -144,12 +151,17 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
+	ics4Wrapper      ibctransfertypes.ICS4Wrapper
 	channelKeeper    types.ChannelKeeper
 	capabilityKeeper types.CapabilityKeeper
 }
 
-func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper) IBCRawPacketHandler {
-	return IBCRawPacketHandler{channelKeeper: chk, capabilityKeeper: cak}
+func NewIBCRawPacketHandler(ics4Wrapper ibctransfertypes.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+	return IBCRawPacketHandler{
+		ics4Wrapper:      ics4Wrapper,
+		channelKeeper:    channelKeeper,
+		capabilityKeeper: capabilityKeeper,
+	}
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
@@ -169,9 +181,25 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
+<<<<<<< HEAD
 	seq, err := h.channelKeeper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(err, "channel")
+=======
+	packet := channeltypes.NewPacket(
+		msg.IBC.SendPacket.Data,
+		sequence,
+		contractIBCPortID,
+		contractIBCChannelID,
+		channelInfo.Counterparty.PortId,
+		channelInfo.Counterparty.ChannelId,
+		ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block),
+		msg.IBC.SendPacket.Timeout.Timestamp,
+	)
+
+	if err := h.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
+		return nil, nil, sdkerrors.Wrap(err, "failed to send packet")
+>>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 	}
 	moduleLogger(ctx).Debug("ibc packet set", "seq", seq)
 

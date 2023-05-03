@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 )
 
 // NewKeeper creates a new contract Keeper instance
@@ -21,7 +23,12 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
+<<<<<<< HEAD
 	distrKeeper types.DistributionKeeper,
+=======
+	distKeeper types.DistributionKeeper,
+	ics4Wrapper ibctransfertypes.ICS4Wrapper,
+>>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
@@ -48,7 +55,7 @@ func NewKeeper(
 		accountPruner:        NewVestingCoinBurner(bankKeeper),
 		portKeeper:           portKeeper,
 		capabilityKeeper:     capabilityKeeper,
-		messenger:            NewDefaultMessageHandler(router, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
+		messenger:            NewDefaultMessageHandler(router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,

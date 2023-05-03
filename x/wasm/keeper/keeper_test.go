@@ -751,8 +751,13 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	// overwrite wasmvm in router
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
+<<<<<<< HEAD
 	types.RegisterMsgServer(router, NewMsgServerImpl(keeper))
 	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
+=======
+	types.RegisterMsgServer(router, NewMsgServerImpl(NewDefaultPermissionKeeper(keeper)))
+	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
+>>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 
