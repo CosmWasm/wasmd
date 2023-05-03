@@ -133,7 +133,10 @@ func (k Keeper) OnRecvPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketReceive(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		panic(execErr) // let contract fully abort IBC receive in certain case
+		panic(execErr) // let the contract fully abort an IBC packet receive.
+		// Throwing a panic here instead of an error ack will revert
+		// all state downstream and not persist any data in ibc-go.
+		// This can be triggered by throwing a panic in the contract
 	}
 	if res.Err != "" {
 		// return error ACK with non-redacted contract message, state will be reverted
