@@ -83,7 +83,7 @@ func TestOnRecvPacket(t *testing.T) {
 			}),
 			expPanic: true,
 		},
-		"messages executed with error": {
+		"returned messages executed with error": {
 			ibcPkg:               anyContractIBCPkg,
 			contractOkMsgExecErr: types.ErrInvalid.Wrap("testing"),
 			expAck:               channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
