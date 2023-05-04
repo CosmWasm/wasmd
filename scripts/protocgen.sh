@@ -21,7 +21,7 @@ done
 protoc_install_proto_gen_doc
 
 echo "Generating proto docs"
-buf generate --template buf.gen.doc.yml
+buf generate --template buf.gen.doc.yml --path cosmwasm/wasm/v1
 
 cd ..
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 
 	solomachine "github.com/cosmos/ibc-go/v7/modules/light-clients/06-solomachine"
@@ -20,7 +19,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -78,7 +76,6 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	"github.com/spf13/cast"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -261,6 +258,7 @@ func NewWasmApp(
 		&app.GroupKeeper,
 		&app.NFTKeeper,
 		&app.ConsensusParamsKeeper,
+		&app.WasmKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -323,13 +321,12 @@ func NewWasmApp(
 	keys := sdk.NewKVStoreKeys(
 		// non sdk store keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
-		wasm.StoreKey, icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey,
+		icahosttypes.StoreKey, icacontrollertypes.StoreKey,
 	)
 	app.MountKVStores(keys)
 	app.keys = keys
 	// set params subspaces
-	for _, m := range []string{ibctransfertypes.ModuleName, ibcexported.ModuleName, icahosttypes.SubModuleName, icacontrollertypes.SubModuleName, wasm.ModuleName} {
+	for _, m := range []string{ibctransfertypes.ModuleName, ibcexported.ModuleName, icahosttypes.SubModuleName, icacontrollertypes.SubModuleName} {
 		app.ParamsKeeper.Subspace(m)
 	}
 
@@ -405,37 +402,6 @@ func NewWasmApp(
 		app.MsgServiceRouter(),
 	)
 
-	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
-	wasmDir := filepath.Join(homePath, "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-	if err != nil {
-		panic(fmt.Sprintf("error while reading wasm config: %s", err))
-	}
-
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
-	app.WasmKeeper = wasm.NewKeeper(
-		app.appCodec,
-		keys[wasm.StoreKey],
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		distrkeeper.NewQuerier(app.DistrKeeper),
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
-		app.TransferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		wasmDir,
-		wasmConfig,
-		availableCapabilities,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		wasmOpts...,
-	)
-
 	// The gov proposal types can be individually enabled
 	if len(enabledProposals) != 0 {
 		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
@@ -484,7 +450,6 @@ func NewWasmApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
-		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 	}
 	app.RegisterModules(legacyModules...)
 	cfg := app.Configurator()

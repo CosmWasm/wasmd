@@ -52,6 +52,9 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	wasmmodulev1 "github.com/CosmWasm/wasmd/api/cosmwasm/wasm/module/v1"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
@@ -193,6 +196,12 @@ var (
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
+			},
+			{
+				Name: wasmtypes.ModuleName,
+				Config: appconfig.WrapAny(&wasmmodulev1.Module{
+					AvailableCapabilities: "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2",
+				}),
 			},
 		},
 	})

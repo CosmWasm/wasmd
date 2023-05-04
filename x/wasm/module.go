@@ -4,13 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 
 	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
+	"cosmossdk.io/depinject"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -18,18 +21,28 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	modulev1 "github.com/CosmWasm/wasmd/api/cosmwasm/wasm/module/v1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/simulation"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 )
 
 var (
@@ -51,7 +64,7 @@ func (b AppModuleBasic) RegisterLegacyAminoCodec(amino *codec.LegacyAmino) {
 	RegisterCodec(amino)
 }
 
-func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *runtime.ServeMux) {
+func (b AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, serveMux *gwruntime.ServeMux) {
 	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(clientCtx))
 	if err != nil {
 		panic(err)
@@ -197,6 +210,90 @@ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 // updates.
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
+}
+
+func init() {
+	appmodule.Register(
+		&modulev1.Module{},
+		appmodule.Provide(
+			ProvideModule,
+		),
+	)
+}
+
+type wasmInputs struct {
+	depinject.In
+
+	Config           *modulev1.Module
+	Cdc              codec.Codec
+	Key              *store.KVStoreKey
+	AppOpts          servertypes.AppOptions `optional:"true"`
+	WasmOpts         []Option               `optional:"true"`
+	MsgServiceRouter *baseapp.MsgServiceRouter
+	// GRPCQueryRouter  *baseapp.GRPCQueryRouter
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	StakingKeeper *stakingkeeper.Keeper
+	DistrKeeper   distrkeeper.Keeper
+
+	// IBCKeeper        *ibckeeper.Keeper
+	// TransferKeeper   ibctransferkeeper.Keeper
+	// ScopedWasmKeeper capabilitykeeper.ScopedKeeper
+
+	// LegacySubspace is used solely for migration of x/params managed parameters
+	LegacySubspace exported.Subspace `optional:"true"`
+}
+
+// Dependency Injection Outputs
+type wasmOutputs struct {
+	depinject.Out
+
+	Module     appmodule.AppModule
+	WasmKeeper Keeper
+}
+
+func ProvideModule(in wasmInputs) wasmOutputs {
+	var homePath string
+	var wasmConfig types.WasmConfig
+	var err error
+	if in.AppOpts != nil {
+		homePath = cast.ToString(in.AppOpts.Get(flags.FlagHome))
+		wasmConfig, err = ReadWasmConfig(in.AppOpts)
+		if err != nil {
+			panic(fmt.Sprintf("error while reading wasm config: %s", err))
+		}
+	}
+
+	wasmDir := filepath.Join(homePath, "wasm")
+
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	k := keeper.NewKeeper(
+		in.Cdc,
+		in.Key,
+		in.AccountKeeper,
+		in.BankKeeper,
+		in.StakingKeeper,
+		distrkeeper.NewQuerier(in.DistrKeeper),
+		nil,
+		nil,
+		nil,
+		nil,
+		in.MsgServiceRouter,
+		nil,
+		wasmDir,
+		wasmConfig,
+		in.Config.AvailableCapabilities,
+		authority.String(),
+		in.WasmOpts...,
+	)
+
+	m := NewAppModule(in.Cdc, &k, in.StakingKeeper, in.AccountKeeper, in.BankKeeper, in.MsgServiceRouter, in.LegacySubspace)
+	return wasmOutputs{WasmKeeper: k, Module: m}
 }
 
 // ____________________________________________________________________________
