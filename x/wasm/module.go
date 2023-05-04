@@ -41,11 +41,8 @@ import (
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 )
 
 var (
@@ -219,7 +216,7 @@ func init() {
 	appmodule.Register(
 		&modulev1.Module{},
 		appmodule.Provide(
-			provideModule,
+			ProvideModule,
 		),
 	)
 }
@@ -227,22 +224,21 @@ func init() {
 type wasmInputs struct {
 	depinject.In
 
-	Config                *modulev1.Module
-	Cdc                   codec.Codec
-	Key                   *store.KVStoreKey
-	AppOpts               servertypes.AppOptions `optional:"true"`
-	WasmOpts              []Option               `optional:"true"`
-	AvailableCapabilities string
-	MsgServiceRouter      *baseapp.MsgServiceRouter
-	GRPCQueryRouter       *baseapp.GRPCQueryRouter
-	AccountKeeper         authkeeper.AccountKeeper
-	BankKeeper            bankkeeper.Keeper
-	StakingKeeper         *stakingkeeper.Keeper
-	DistrKeeper           distrkeeper.Keeper
+	Config           *modulev1.Module
+	Cdc              codec.Codec
+	Key              *store.KVStoreKey
+	AppOpts          servertypes.AppOptions `optional:"true"`
+	WasmOpts         []Option               `optional:"true"`
+	MsgServiceRouter *baseapp.MsgServiceRouter
+	// GRPCQueryRouter  *baseapp.GRPCQueryRouter
+	AccountKeeper authkeeper.AccountKeeper
+	BankKeeper    bankkeeper.Keeper
+	StakingKeeper *stakingkeeper.Keeper
+	DistrKeeper   distrkeeper.Keeper
 
-	IBCKeeper        *ibckeeper.Keeper
-	TransferKeeper   ibctransferkeeper.Keeper
-	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
+	// IBCKeeper        *ibckeeper.Keeper
+	// TransferKeeper   ibctransferkeeper.Keeper
+	// ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 
 	// LegacySubspace is used solely for migration of x/params managed parameters
 	LegacySubspace exported.Subspace `optional:"true"`
@@ -253,10 +249,10 @@ type wasmOutputs struct {
 	depinject.Out
 
 	Module     appmodule.AppModule
-	WasmKeeper *Keeper
+	WasmKeeper Keeper
 }
 
-func provideModule(in wasmInputs) wasmOutputs {
+func ProvideModule(in wasmInputs) wasmOutputs {
 	var homePath string
 	var wasmConfig types.WasmConfig
 	var err error
@@ -283,21 +279,21 @@ func provideModule(in wasmInputs) wasmOutputs {
 		in.BankKeeper,
 		in.StakingKeeper,
 		distrkeeper.NewQuerier(in.DistrKeeper),
-		in.IBCKeeper.ChannelKeeper,
-		&in.IBCKeeper.PortKeeper,
-		in.ScopedWasmKeeper,
-		in.TransferKeeper,
+		nil,
+		nil,
+		nil,
+		nil,
 		in.MsgServiceRouter,
-		in.GRPCQueryRouter,
+		nil,
 		wasmDir,
 		wasmConfig,
-		in.AvailableCapabilities,
+		in.Config.AvailableCapabilities,
 		authority.String(),
 		in.WasmOpts...,
 	)
 
 	m := NewAppModule(in.Cdc, &k, in.StakingKeeper, in.AccountKeeper, in.BankKeeper, in.MsgServiceRouter, in.LegacySubspace)
-	return wasmOutputs{WasmKeeper: &k, Module: m}
+	return wasmOutputs{WasmKeeper: k, Module: m}
 }
 
 // ____________________________________________________________________________
