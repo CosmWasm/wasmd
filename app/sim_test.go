@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -115,12 +117,12 @@ func TestAppImportExport(t *testing.T) {
 		simtestutil.PrintStats(db)
 	}
 
-	fmt.Printf("exporting genesis...\n")
+	t.Log("exporting genesis...\n")
 
 	exported, err := app.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err)
 
-	fmt.Printf("importing genesis...\n")
+	t.Log("importing genesis...\n")
 
 	newDB, newDir, _, _, err := simtestutil.SetupSimulation(config, "leveldb-app-sim-2", "Simulation-2", simcli.FlagVerboseValue, simcli.FlagEnabledValue)
 	require.NoError(t, err, "simulation setup failed")
@@ -153,9 +155,9 @@ func TestAppImportExport(t *testing.T) {
 	newApp.ModuleManager.InitGenesis(ctxB, app.AppCodec(), genesisState)
 	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
 
-	fmt.Printf("comparing stores...\n")
-
+	t.Log("comparing stores...")
 	storeKeysPrefixes := []StoreKeysPrefixes{
+		{app.GetKey(wasmtypes.StoreKey), newApp.GetKey(wasmtypes.StoreKey), [][]byte{wasmtypes.TXCounterPrefix}},
 		{app.GetKey(authtypes.StoreKey), newApp.GetKey(authtypes.StoreKey), [][]byte{}},
 		{
 			app.GetKey(stakingtypes.StoreKey), newApp.GetKey(stakingtypes.StoreKey),
@@ -178,11 +180,12 @@ func TestAppImportExport(t *testing.T) {
 	for _, skp := range storeKeysPrefixes {
 		storeA := ctxA.KVStore(skp.A)
 		storeB := ctxB.KVStore(skp.B)
-
+		require.NotNil(t, storeA)
+		require.NotNil(t, storeB)
 		failedKVAs, failedKVBs := sdk.DiffKVStores(storeA, storeB, skp.Prefixes)
 		require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare")
 
-		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
+		t.Logf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
 		require.Equal(t, 0, len(failedKVAs), simtestutil.GetSimulationLog(skp.A.Name(), app.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
 }
