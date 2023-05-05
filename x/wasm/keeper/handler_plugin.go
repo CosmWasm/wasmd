@@ -9,6 +9,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 
@@ -34,6 +35,7 @@ type SDKMessageHandler struct {
 
 func NewDefaultMessageHandler(
 	router MessageRouter,
+	ics4Wrapper ibctransfertypes.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
@@ -47,7 +49,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
-		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, channelKeeper, capabilityKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -142,12 +144,17 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
+	ics4Wrapper      ibctransfertypes.ICS4Wrapper
 	channelKeeper    types.ChannelKeeper
 	capabilityKeeper types.CapabilityKeeper
 }
 
-func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper) IBCRawPacketHandler {
-	return IBCRawPacketHandler{channelKeeper: chk, capabilityKeeper: cak}
+func NewIBCRawPacketHandler(ics4Wrapper ibctransfertypes.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+	return IBCRawPacketHandler{
+		ics4Wrapper:      ics4Wrapper,
+		channelKeeper:    channelKeeper,
+		capabilityKeeper: capabilityKeeper,
+	}
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
@@ -189,7 +196,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 		msg.IBC.SendPacket.Timeout.Timestamp,
 	)
 
-	if err := h.channelKeeper.SendPacket(ctx, channelCap, packet); err != nil {
+	if err := h.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
 		return nil, nil, sdkerrors.Wrap(err, "failed to send packet")
 	}
 
