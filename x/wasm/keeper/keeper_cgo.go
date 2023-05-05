@@ -11,8 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 )
 
 // NewKeeper creates a new contract Keeper instance
@@ -23,8 +21,8 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
-	distKeeper types.DistributionKeeper,
-	ics4Wrapper ibctransfertypes.ICS4Wrapper,
+	distrKeeper types.DistributionKeeper,
+	ics4Wrapper types.IBCPacketSender,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
