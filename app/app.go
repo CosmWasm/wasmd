@@ -590,12 +590,8 @@ func NewWasmApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-<<<<<<< HEAD
 		distrkeeper.NewQuerier(app.DistrKeeper),
-=======
-		app.DistrKeeper,
 		app.IBCFeeKeeper, // ISC4 Wrapper: fee IBC middleware
->>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,

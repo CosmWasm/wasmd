@@ -424,12 +424,8 @@ func createTestInput(
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
-<<<<<<< HEAD
 		distributionkeeper.NewQuerier(distKeeper),
-=======
-		distKeeper,
 		ibcKeeper.ChannelKeeper, // ICS4Wrapper
->>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,

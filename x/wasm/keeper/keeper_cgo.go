@@ -23,12 +23,8 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
-<<<<<<< HEAD
-	distrKeeper types.DistributionKeeper,
-=======
 	distKeeper types.DistributionKeeper,
 	ics4Wrapper ibctransfertypes.ICS4Wrapper,
->>>>>>> 6dfa5cb4 (Use ICS4Wrapper to send raw IBC packets & fix Fee in wasm stack)
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	capabilityKeeper types.CapabilityKeeper,
