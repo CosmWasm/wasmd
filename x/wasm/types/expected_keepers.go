@@ -72,11 +72,21 @@ type StakingKeeper interface {
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
-	SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error
 	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 	IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
 	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
+}
+
+// IBCPacketSender defines the method for an IBC data package to be submitted.
+// The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
+// can add functionality on top of it. See ics4Wrapper in ibc-go.
+// It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
+//
+// For example, when ics-29 fee middleware is set up for the wasm ibc-stack, then the IBCFeeKeeper should be used, so
+// that they are in sync.
+type IBCPacketSender interface {
+	SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error
 }
 
 // ClientKeeper defines the expected IBC client keeper

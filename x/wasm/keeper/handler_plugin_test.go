@@ -227,6 +227,12 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 	var capturedPacket ibcexported.PacketI
 
+	capturePacketsSenderMock := &wasmtesting.MockIBCPacketSender{
+		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
+			capturedPacket = packet
+			return nil
+		},
+	}
 	chanKeeper := &wasmtesting.MockChannelKeeper{
 		GetNextSequenceSendFn: func(ctx sdk.Context, portID, channelID string) (uint64, bool) {
 			return 1, true
@@ -238,10 +244,6 @@ func TestIBCRawPacketHandler(t *testing.T) {
 					"other-channel-1",
 				),
 			}, true
-		},
-		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, packet ibcexported.PacketI) error {
-			capturedPacket = packet
-			return nil
 		},
 	}
 	capKeeper := &wasmtesting.MockCapabilityKeeper{
@@ -307,7 +309,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			capturedPacket = nil
 			// when
-			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.chanKeeper, spec.capKeeper)
+			h := NewIBCRawPacketHandler(capturePacketsSenderMock, spec.chanKeeper, spec.capKeeper)
 			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
