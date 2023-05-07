@@ -58,7 +58,7 @@ func TestUpdateParams(t *testing.T) {
 
 	var (
 		myAddress              sdk.AccAddress = make([]byte, types.ContractAddrLen)
-		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
+		oneAddressAccessConfig                = types.AccessTypeAnyOfAddresses.With(myAddress)
 		govAuthority                          = wasmApp.WasmKeeper.GetAuthority()
 	)
 

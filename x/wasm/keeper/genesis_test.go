@@ -575,8 +575,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
 		InstantiateConfig: types.AccessConfig{
-			Permission: types.AccessTypeOnlyAddress,
-			Address:    codeCreatorAddr,
+			Permission: types.AccessTypeAnyOfAddresses,
+			Addresses:  []string{codeCreatorAddr},
 		},
 	}
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)

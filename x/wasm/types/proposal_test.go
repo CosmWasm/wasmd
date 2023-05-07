@@ -130,7 +130,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"with instantiate permission": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				accessConfig := AccessTypeAnyOfAddresses.With(anyAddress)
 				p.InstantiatePermission = &accessConfig
 			}),
 		},
@@ -408,7 +408,7 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 		},
 		"with instantiate permission": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
-				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				accessConfig := AccessTypeAnyOfAddresses.With(anyAddress)
 				p.InstantiatePermission = &accessConfig
 			}),
 		},
