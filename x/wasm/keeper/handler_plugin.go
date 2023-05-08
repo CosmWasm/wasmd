@@ -35,7 +35,7 @@ type SDKMessageHandler struct {
 // NewDefaultMessageHandler constructor
 func NewDefaultMessageHandler(
 	router MessageRouter,
-	ics4Wrapper types.IBCPacketSender,
+	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
@@ -144,13 +144,13 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 
 // IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
-	ics4Wrapper      types.IBCPacketSender
+	ics4Wrapper      types.ICS4Wrapper
 	channelKeeper    types.ChannelKeeper
 	capabilityKeeper types.CapabilityKeeper
 }
 
 // NewIBCRawPacketHandler constructor
-func NewIBCRawPacketHandler(ics4Wrapper types.IBCPacketSender, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
 	return IBCRawPacketHandler{
 		ics4Wrapper:      ics4Wrapper,
 		channelKeeper:    channelKeeper,
