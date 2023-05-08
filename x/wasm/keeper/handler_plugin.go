@@ -9,7 +9,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 
@@ -33,9 +32,10 @@ type SDKMessageHandler struct {
 	encoders msgEncoder
 }
 
+// NewDefaultMessageHandler constructor
 func NewDefaultMessageHandler(
 	router MessageRouter,
-	ics4Wrapper ibctransfertypes.ICS4Wrapper,
+	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
@@ -142,14 +142,15 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 	return nil, nil, sdkerrors.Wrap(types.ErrUnknownMsg, "no handler found")
 }
 
-// IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
+// IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
-	ics4Wrapper      ibctransfertypes.ICS4Wrapper
+	ics4Wrapper      types.ICS4Wrapper
 	channelKeeper    types.ChannelKeeper
 	capabilityKeeper types.CapabilityKeeper
 }
 
-func NewIBCRawPacketHandler(ics4Wrapper ibctransfertypes.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+// NewIBCRawPacketHandler constructor
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
 	return IBCRawPacketHandler{
 		ics4Wrapper:      ics4Wrapper,
 		channelKeeper:    channelKeeper,
