@@ -355,15 +355,8 @@ func TestOnRecvPacket(t *testing.T) {
 		"contract aborts tx with error": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas,
-			contractResp: &wasmvmtypes.IBCReceiveResult{
-				Ok: &wasmvmtypes.IBCReceiveResponse{
-					Acknowledgement: []byte("myAck"),
-					Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}},
-					Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
-				},
-			},
-			contractErr: errors.New("test, ignore"),
-			expPanic:    true,
+			contractErr:    errors.New("test, ignore"),
+			expPanic:       true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr:   example.Contract,
