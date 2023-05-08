@@ -3,12 +3,13 @@ package types
 import (
 	"context"
 
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
@@ -72,7 +73,21 @@ type StakingKeeper interface {
 // ChannelKeeper defines the expected IBC channel keeper
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
+	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
+	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
+	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
+	IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
+	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
+}
 
+// ICS4Wrapper defines the method for an IBC data package to be submitted.
+// The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
+// can add functionality on top of it. See ics4Wrapper in ibc-go.
+// It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
+//
+// For example, when ics-29 fee middleware is set up for the wasm ibc-stack, then the IBCFeeKeeper should be used, so
+// that they are in sync.
+type ICS4Wrapper interface {
 	// SendPacket is called by a module in order to send an IBC packet on a channel.
 	// The packet sequence generated for the packet to be sent is returned. An error
 	// is returned if one occurs.
@@ -85,10 +100,6 @@ type ChannelKeeper interface {
 		timeoutTimestamp uint64,
 		data []byte,
 	) (uint64, error)
-	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
-	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
-	IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
-	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
 }
 
 // ClientKeeper defines the expected IBC client keeper

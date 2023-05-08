@@ -425,6 +425,7 @@ func createTestInput(
 		bankKeeper,
 		stakingKeeper,
 		distributionkeeper.NewQuerier(distKeeper),
+		ibcKeeper.ChannelKeeper, // ICS4Wrapper
 		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		scopedWasmKeeper,

@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/libs/log"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -236,15 +236,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	}
 	var capturedPacket *CapturedPacket
 
-	chanKeeper := &wasmtesting.MockChannelKeeper{
-		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
-			return channeltypes.Channel{
-				Counterparty: channeltypes.NewCounterparty(
-					"other-port",
-					"other-channel-1",
-				),
-			}, true
-		},
+	capturePacketsSenderMock := &wasmtesting.MockIBCPacketSender{
 		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 			capturedPacket = &CapturedPacket{
 				sourcePort:       sourcePort,
@@ -254,6 +246,16 @@ func TestIBCRawPacketHandler(t *testing.T) {
 				data:             data,
 			}
 			return 1, nil
+		},
+	}
+	chanKeeper := &wasmtesting.MockChannelKeeper{
+		GetChannelFn: func(ctx sdk.Context, srcPort, srcChan string) (channeltypes.Channel, bool) {
+			return channeltypes.Channel{
+				Counterparty: channeltypes.NewCounterparty(
+					"other-port",
+					"other-channel-1",
+				),
+			}, true
 		},
 	}
 	capKeeper := &wasmtesting.MockCapabilityKeeper{
@@ -303,7 +305,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			capturedPacket = nil
 			// when
-			h := NewIBCRawPacketHandler(spec.chanKeeper, spec.capKeeper)
+			h := NewIBCRawPacketHandler(capturePacketsSenderMock, spec.chanKeeper, spec.capKeeper)
 			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}})
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)

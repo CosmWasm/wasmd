@@ -113,7 +113,7 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}

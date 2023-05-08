@@ -752,7 +752,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	router := baseapp.NewMsgServiceRouter()
 	router.SetInterfaceRegistry(keepers.EncodingConfig.InterfaceRegistry)
 	types.RegisterMsgServer(router, NewMsgServerImpl(keeper))
-	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
+	keeper.messenger = NewDefaultMessageHandler(router, nil, nil, nil, nil, keepers.EncodingConfig.Marshaler, nil)
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 

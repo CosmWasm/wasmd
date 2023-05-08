@@ -34,8 +34,10 @@ type SDKMessageHandler struct {
 	encoders msgEncoder
 }
 
+// NewDefaultMessageHandler constructor
 func NewDefaultMessageHandler(
 	router MessageRouter,
+	ics4Wrapper types.ICS4Wrapper,
 	channelKeeper types.ChannelKeeper,
 	capabilityKeeper types.CapabilityKeeper,
 	bankKeeper types.Burner,
@@ -49,7 +51,7 @@ func NewDefaultMessageHandler(
 	}
 	return NewMessageHandlerChain(
 		NewSDKMessageHandler(router, encoders),
-		NewIBCRawPacketHandler(channelKeeper, capabilityKeeper),
+		NewIBCRawPacketHandler(ics4Wrapper, channelKeeper, capabilityKeeper),
 		NewBurnCoinMessageHandler(bankKeeper),
 	)
 }
@@ -142,14 +144,20 @@ func (m MessageHandlerChain) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAd
 	return nil, nil, errorsmod.Wrap(types.ErrUnknownMsg, "no handler found")
 }
 
-// IBCRawPacketHandler handels IBC.SendPacket messages which are published to an IBC channel.
+// IBCRawPacketHandler handles IBC.SendPacket messages which are published to an IBC channel.
 type IBCRawPacketHandler struct {
+	ics4Wrapper      types.ICS4Wrapper
 	channelKeeper    types.ChannelKeeper
 	capabilityKeeper types.CapabilityKeeper
 }
 
-func NewIBCRawPacketHandler(chk types.ChannelKeeper, cak types.CapabilityKeeper) IBCRawPacketHandler {
-	return IBCRawPacketHandler{channelKeeper: chk, capabilityKeeper: cak}
+// NewIBCRawPacketHandler constructor
+func NewIBCRawPacketHandler(ics4Wrapper types.ICS4Wrapper, channelKeeper types.ChannelKeeper, capabilityKeeper types.CapabilityKeeper) IBCRawPacketHandler {
+	return IBCRawPacketHandler{
+		ics4Wrapper:      ics4Wrapper,
+		channelKeeper:    channelKeeper,
+		capabilityKeeper: capabilityKeeper,
+	}
 }
 
 // DispatchMsg publishes a raw IBC packet onto the channel.
@@ -169,7 +177,7 @@ func (h IBCRawPacketHandler) DispatchMsg(ctx sdk.Context, _ sdk.AccAddress, cont
 	if !ok {
 		return nil, nil, errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
-	seq, err := h.channelKeeper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
+	seq, err := h.ics4Wrapper.SendPacket(ctx, channelCap, contractIBCPortID, contractIBCChannelID, ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.IBC.SendPacket.Timeout.Block), msg.IBC.SendPacket.Timeout.Timestamp, msg.IBC.SendPacket.Data)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(err, "channel")
 	}
