@@ -319,7 +319,7 @@ func TestOnRecvPacket(t *testing.T) {
 
 	specs := map[string]struct {
 		contractAddr       sdk.AccAddress
-		contractResp       *wasmvmtypes.IBCReceiveResponse
+		contractResp       *wasmvmtypes.IBCReceiveResult
 		contractErr        error
 		overwriteMessenger *wasmtesting.MockMessageHandler
 		mockReplyFn        func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error)
@@ -329,45 +329,54 @@ func TestOnRecvPacket(t *testing.T) {
 		expPanic           bool
 		expEventTypes      []string
 	}{
-		"consume contract gas": {
+		"contract returns success ack": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{Acknowledgement: []byte("myAck")},
 			},
 			expAck: []byte("myAck"),
 		},
-		"can return empty ack": {
+		"can return empty ack data": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas,
-			contractResp:   &wasmvmtypes.IBCReceiveResponse{},
-		},
-		"consume gas on error, ignore events + messages": {
-			contractAddr:   example.Contract,
-			expContractGas: myContractGas,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}},
-				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{},
 			},
-			contractErr: errors.New("test, ignore"),
-			expPanic:    true,
+		},
+		"contract Err result converted to error Ack": {
+			contractAddr:   example.Contract,
+			expContractGas: myContractGas,
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Err: "my-error",
+			},
+			expAck: []byte(`{"error":"my-error"}`), // without error msg redaction
+		},
+		"contract aborts tx with error": {
+			contractAddr:   example.Contract,
+			expContractGas: myContractGas,
+			contractErr:    errors.New("test, ignore"),
+			expPanic:       true,
 		},
 		"dispatch contract messages on success": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}, {ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Custom: json.RawMessage(`{"foo":"bar"}`)}}},
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{
+					Acknowledgement: []byte("myAck"),
+					Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}, {ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Custom: json.RawMessage(`{"foo":"bar"}`)}}},
+				},
 			},
 			expAck: []byte("myAck"),
 		},
 		"emit contract attributes on success": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas + 10,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{
+					Acknowledgement: []byte("myAck"),
+					Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+				},
 			},
 			expEventTypes: []string{types.WasmModuleEventType},
 			expAck:        []byte("myAck"),
@@ -375,27 +384,31 @@ func TestOnRecvPacket(t *testing.T) {
 		"emit contract events on success": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas + 46, // charge or custom event as well
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
-				Events: []wasmvmtypes.Event{{
-					Type: "custom",
-					Attributes: []wasmvmtypes.EventAttribute{{
-						Key:   "message",
-						Value: "to rudi",
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{
+					Acknowledgement: []byte("myAck"),
+					Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+					Events: []wasmvmtypes.Event{{
+						Type: "custom",
+						Attributes: []wasmvmtypes.EventAttribute{{
+							Key:   "message",
+							Value: "to rudi",
+						}},
 					}},
-				}},
+				},
 			},
 			expEventTypes: []string{types.WasmModuleEventType, "wasm-custom"},
 			expAck:        []byte("myAck"),
 		},
-		"messenger errors returned, events stored": {
+		"messenger errors returned": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas + 10,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}, {ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Custom: json.RawMessage(`{"foo":"bar"}`)}}},
-				Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{
+					Acknowledgement: []byte("myAck"),
+					Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}, {ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{Custom: json.RawMessage(`{"foo":"bar"}`)}}},
+					Attributes:      []wasmvmtypes.EventAttribute{{Key: "Foo", Value: "Bar"}},
+				},
 			},
 			overwriteMessenger: wasmtesting.NewErroringMessageHandler(),
 			expErr:             true,
@@ -404,9 +417,11 @@ func TestOnRecvPacket(t *testing.T) {
 		"submessage reply can overwrite ack data": {
 			contractAddr:   example.Contract,
 			expContractGas: myContractGas + storageCosts,
-			contractResp: &wasmvmtypes.IBCReceiveResponse{
-				Acknowledgement: []byte("myAck"),
-				Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}},
+			contractResp: &wasmvmtypes.IBCReceiveResult{
+				Ok: &wasmvmtypes.IBCReceiveResponse{
+					Acknowledgement: []byte("myAck"),
+					Messages:        []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{}}}},
+				},
 			},
 			mockReplyFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 				return &wasmvmtypes.Response{Data: []byte("myBetterAck")}, 0, nil
@@ -425,7 +440,7 @@ func TestOnRecvPacket(t *testing.T) {
 
 			m.IBCPacketReceiveFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 				assert.Equal(t, myPacket, msg.Packet)
-				return &wasmvmtypes.IBCReceiveResult{Ok: spec.contractResp}, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
 			}
 			if spec.mockReplyFn != nil {
 				m.ReplyFn = spec.mockReplyFn
@@ -462,17 +477,23 @@ func TestOnRecvPacket(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, spec.expAck, gotAck)
+			require.Equal(t, spec.expAck, gotAck.Acknowledgement())
 
 			// verify gas consumed
 			const storageCosts = sdk.Gas(2903)
 			assert.Equal(t, spec.expContractGas, ctx.GasMeter().GasConsumed()-before-storageCosts)
-			// verify msgs dispatched
-			require.Len(t, *capturedMsgs, len(spec.contractResp.Messages))
-			for i, m := range spec.contractResp.Messages {
-				assert.Equal(t, (*capturedMsgs)[i], m.Msg)
+
+			// verify msgs dispatched on success/ err response
+			if spec.contractResp.Err != "" {
+				assert.Empty(t, capturedMsgs) // no messages captured on err response
+				assert.Equal(t, spec.expEventTypes, stripTypes(ctx.EventManager().Events()))
+			} else {
+				require.Len(t, *capturedMsgs, len(spec.contractResp.Ok.Messages))
+				for i, m := range spec.contractResp.Ok.Messages {
+					assert.Equal(t, (*capturedMsgs)[i], m.Msg)
+				}
+				assert.Equal(t, spec.expEventTypes, stripTypes(ctx.EventManager().Events()))
 			}
-			assert.Equal(t, spec.expEventTypes, stripTypes(ctx.EventManager().Events()))
 		})
 	}
 }
