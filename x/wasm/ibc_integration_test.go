@@ -165,8 +165,8 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			}
 			var (
 				coord  = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
-				chainA = coord.GetChain(wasmibctesting.GetChainID(0))
-				chainB = coord.GetChain(wasmibctesting.GetChainID(1))
+				chainA = coord.GetChain(wasmibctesting.GetChainID(1))
+				chainB = coord.GetChain(wasmibctesting.GetChainID(2))
 			)
 			// setup chain A contract metadata for mock
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
