@@ -25,12 +25,12 @@ func TestOnRecvPacket(t *testing.T) {
 	})
 	myCustomEvent := sdk.NewEvent("testing")
 	specs := map[string]struct {
-		ibcPkg      channeltypes.Packet
-		contractRsp ibcexported.Acknowledgement
-		contractErr error
-		expEvents   sdk.Events
-		expPanic    bool
-		expAck      ibcexported.Acknowledgement
+		ibcPkg               channeltypes.Packet
+		contractRsp          ibcexported.Acknowledgement
+		contractOkMsgExecErr error
+		expEvents            sdk.Events
+		expPanic             bool
+		expAck               ibcexported.Acknowledgement
 	}{
 		"contract returns success response": {
 			ibcPkg:      anyContractIBCPkg,
@@ -83,10 +83,10 @@ func TestOnRecvPacket(t *testing.T) {
 			}),
 			expPanic: true,
 		},
-		"contract executed with error": {
-			ibcPkg:      anyContractIBCPkg,
-			contractErr: types.ErrInvalid.Wrap("testing"),
-			expAck:      channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
+		"returned messages executed with error": {
+			ibcPkg:               anyContractIBCPkg,
+			contractOkMsgExecErr: types.ErrInvalid.Wrap("testing"),
+			expAck:               channeltypes.NewErrorAcknowledgement(types.ErrInvalid.Wrap("testing")),
 			expEvents: sdk.Events{{
 				Type: "ibc_packet_received",
 				Attributes: []abci.EventAttribute{
@@ -104,7 +104,7 @@ func TestOnRecvPacket(t *testing.T) {
 				OnRecvPacketFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
 					// additional custom event to confirm event handling on state commit/ rollback
 					ctx.EventManager().EmitEvent(myCustomEvent)
-					return spec.contractRsp, spec.contractErr
+					return spec.contractRsp, spec.contractOkMsgExecErr
 				},
 			}
 			h := NewIBCHandler(mock, nil, nil)

@@ -273,16 +273,13 @@ func (i IBCHandler) OnRecvPacket(
 	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
-		types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
 		// the state gets reverted, so we drop all captured events
-		return ack
-	}
-	if ack == nil || ack.Success() {
+	} else if ack == nil || ack.Success() {
 		// emit all contract and submessage events on success
 		// nil ack is a success case, see: https://github.com/cosmos/ibc-go/blob/v7.0.0/modules/core/keeper/msg_server.go#L453
 		ctx.EventManager().EmitEvents(em.Events())
 	}
-	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, nil)
+	types.EmitAcknowledgementEvent(ctx, contractAddr, ack, err)
 	return ack
 }
 
