@@ -17,6 +17,11 @@ import (
 )
 
 func TestModuleMigrations(t *testing.T) {
+	addr := "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
+	address, err := sdk.AccAddressFromBech32(addr)
+
+	require.NoError(t, err)
+
 	wasmApp := app.Setup(t)
 	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
@@ -47,6 +52,21 @@ func TestModuleMigrations(t *testing.T) {
 			setup:        func(ctx sdk.Context) {},
 			exp:          types.DefaultParams(),
 		},
+		"with legacy params and access config migrated": {
+			startVersion: 1,
+			setup: func(ctx sdk.Context) {
+				params := types.Params{
+					CodeUploadAccess:             types.AccessTypeOnlyAddress.With(address),
+					InstantiateDefaultPermission: types.AccessTypeOnlyAddress,
+				}
+				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				sp.SetParamSet(ctx, &params)
+			},
+			exp: types.Params{
+				CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(address),
+				InstantiateDefaultPermission: types.AccessTypeAnyOfAddresses,
+			},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
@@ -63,10 +83,11 @@ func TestModuleMigrations(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			var expModuleVersion uint64 = 3
+			var expModuleVersion uint64 = 4
 			assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
 			gotParams := wasmApp.WasmKeeper.GetParams(ctx)
 			assert.Equal(t, spec.exp, gotParams)
+
 		})
 	}
 }
