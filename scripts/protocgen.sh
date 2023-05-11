@@ -18,6 +18,16 @@ for dir in $proto_dirs; do
   done
 done
 
+echo "Generating gogo proto code for legacy terra wasm"
+proto_dirs=$(find ./terra -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+for dir in $proto_dirs; do
+  for file in $(find "${dir}" -maxdepth 1 -name '*.proto'); do
+    if grep "option go_package" $file &> /dev/null ; then
+      buf generate --template buf.gen.gogo.yml $file
+    fi
+  done
+done
+
 protoc_install_proto_gen_doc
 
 echo "Generating proto docs"
@@ -25,8 +35,12 @@ buf generate --template buf.gen.doc.yml
 
 cd ..
 
+# change package name to legacy
+sed -i 's/package types/package legacy/' github.com/classic-terra/core/x/wasm/types/*.pb.go
+
 # move proto files to the right places
 cp -r github.com/CosmWasm/wasmd/* ./
+cp -r github.com/classic-terra/core/x/wasm/types/* ./x/wasm/types/legacy/
 rm -rf github.com
 
 go mod tidy
