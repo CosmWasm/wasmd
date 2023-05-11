@@ -2,7 +2,42 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.31.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.32.0...HEAD)
+
+## [v0.32.0](https://github.com/CosmWasm/wasmd/tree/v0.32.0) (2023-05-11)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.31.0...v0.32.0)
+
+- Redesign IBC on packet recv error/ result.Err handling [\#1358](https://github.com/CosmWasm/wasmd/pull/1358)
+- Use ICS4Wrapper to send raw IBC packets & fix Fee middleware in wasm stack [\#1375](https://github.com/CosmWasm/wasmd/pull/1375)
+- Better configuration for CosmWasm capabilities [\#1361](https://github.com/CosmWasm/wasmd/pull/1361)
+- Remove old starport config - unused [\#1359](https://github.com/CosmWasm/wasmd/pull/1359)
+- Better error message for wasm file limit exceeded [\#1354](https://github.com/CosmWasm/wasmd/pull/1354)
+- CLI param to bypass version check for wasm lib [\#1338](https://github.com/CosmWasm/wasmd/pull/1338)
+- Cleanup ErrNotFound cases [\#1343](https://github.com/CosmWasm/wasmd/pull/1343)
+- Add wasmvm decorator option [\#1350](https://github.com/CosmWasm/wasmd/pull/1350)
+- Bump github.com/prometheus/client_golang from 1.14.0 to 1.15.0 [/#1336](https://github.com/CosmWasm/wasmd/pull/1336)
+- Update OnRecvPacket method to panic when an error is returned by the VM [/#1303](https://github.com/CosmWasm/wasmd/pull/1303)
+- Removed the unnecessary usage of ErrInvalidMsg [\#1317](https://github.com/CosmWasm/wasmd/pull/1317)
+- Upgrade wasmvm to v1.2.3 [\#1355](https://github.com/CosmWasm/wasmd/pull/1355), see [wasmvm v1.2.3](https://github.com/CosmWasm/wasmvm/releases/tag/v1.2.3)
+- Upgrade to Cosmos-SDK v0.45.15 including CometBFT [\#1284](https://github.com/CosmWasm/wasmd/pull/1284)
+
+### Notable changes:
+- New CLI param to skip checkLibwasmVersion `--wasm.skip_wasmvm_version_check`
+- The wasmvm version includes the [Cherry](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2023-002.md) bugfix
+- New behaviour for Contracts returning errors on IBC packet receive.
+  - Let contract fully abort IBC receive in certain case [\#1220](https://github.com/CosmWasm/wasmd/issues/1220)
+  - Return non redacted error content on IBC packet recv [\#1289](https://github.com/CosmWasm/wasmd/issues/1289)
+  - Wasm and submessage events follow SDK transaction behaviour. Not persisted on state rollback  
+  - Full error message is stored in event [\#1288](https://github.com/CosmWasm/wasmd/issues/1288)
+  - See updates in cosmwasm [doc](https://github.com/CosmWasm/cosmwasm/pull/1646/files?short_path=f9839d7#diff-f9839d73197185aaec052064f43a324bd9309413f3ad36183c3247580b1b6669) for more details.  
+- The SDK v0.45.15 replaces Tendermint with CometBFT. This requires a `replace` statement in `go.mod`. 
+  Please read their [release notes](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.45.15) carefully for details
+- The SDK v0.45.x line reached its end-of-life.
+- CometBFT includes some [breaking changes](https://github.com/cometbft/cometbft/blob/v0.34.27/CHANGELOG.md#breaking-changes) 
+ 
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade
 
 ## [v0.31.0](https://github.com/CosmWasm/wasmd/tree/v0.31.0) (2023-03-13)
 
