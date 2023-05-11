@@ -161,7 +161,7 @@ jobs:
       - run:
           name: Ensure libwasmvm version is correct
           command: |
-            IN_DOCKER=$(docker run --rm "cosmwasm/wasmd:${CIRCLE_SHA1}" /usr/bin/wasmd query wasm libwasmvm-version)
+            IN_DOCKER=$(docker run --rm "cosmwasm/wasmd:${CIRCLE_SHA1}" /usr/bin/wasmd query wasm libwasmvm-version | tail -1)
             echo "Runtime libwasmvm-version in docker: $IN_DOCKER"
             IN_GOMOD=$(go list -m github.com/CosmWasm/wasmvm | cut -d" " -f2 | cut -d"v" -f2)
             echo "wasmvm version in go.mod: $IN_GOMOD"
