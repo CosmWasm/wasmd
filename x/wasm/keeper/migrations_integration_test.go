@@ -19,10 +19,10 @@ import (
 func TestModuleMigrations(t *testing.T) {
 	addr := "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
 	address, err := sdk.AccAddressFromBech32(addr)
-
 	require.NoError(t, err)
 
 	wasmApp := app.Setup(t)
+
 	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
@@ -87,7 +87,82 @@ func TestModuleMigrations(t *testing.T) {
 			assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
 			gotParams := wasmApp.WasmKeeper.GetParams(ctx)
 			assert.Equal(t, spec.exp, gotParams)
-
 		})
 	}
+}
+
+func TestAccessConfigMigrations(t *testing.T) {
+	addr := "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
+	address, err := sdk.AccAddressFromBech32(addr)
+	require.NoError(t, err)
+
+	wasmApp := app.Setup(t)
+
+	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
+		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
+	}
+
+	ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
+
+	// only address permission cannot be stored and returns an error
+	code1, err := storeCode(ctx, wasmApp, types.AccessTypeOnlyAddress.With(address))
+	require.Error(t, err)
+	require.Equal(t, uint64(0), code1)
+
+	// any address permission
+	code2, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
+	require.NoError(t, err)
+
+	// allow everybody permission
+	code3, err := storeCode(ctx, wasmApp, types.AllowEverybody)
+	require.NoError(t, err)
+
+	// allow nobody permission
+	code4, err := storeCode(ctx, wasmApp, types.AllowNobody)
+	require.NoError(t, err)
+
+	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	fromVM[wasm.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
+	_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+	require.NoError(t, err)
+
+	// when
+	gotVM, err := wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
+
+	// then
+	require.NoError(t, err)
+	var expModuleVersion uint64 = 4
+	assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
+
+	// only address was not stored
+	assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, code1))
+
+	// any address was not migrated
+	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code2).InstantiateConfig)
+
+	// allow everybody was not migrated
+	assert.Equal(t, types.AllowEverybody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code3).InstantiateConfig)
+
+	// allow nodoby was not migrated
+	assert.Equal(t, types.AllowNobody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code4).InstantiateConfig)
+}
+
+func storeCode(ctx sdk.Context, wasmApp *app.WasmApp, instantiatePermission types.AccessConfig) (codeID uint64, err error) {
+	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+		m.WASMByteCode = wasmContract
+		m.InstantiatePermission = &instantiatePermission
+	})
+	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+	if err != nil {
+		return
+	}
+
+	var result types.MsgStoreCodeResponse
+	err = wasmApp.AppCodec().Unmarshal(rsp.Data, &result)
+	if err != nil {
+		return
+	}
+
+	codeID = result.CodeID
+	return
 }

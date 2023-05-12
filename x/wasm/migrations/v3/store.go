@@ -6,6 +6,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// StoreCodeInfoFn stores code info
 type StoreCodeInfoFn func(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo)
 
 // Keeper abstract keeper
