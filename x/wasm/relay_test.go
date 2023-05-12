@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/app"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -20,7 +22,7 @@ import (
 
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtesting "github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -210,7 +212,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.App.BankKeeper
+	bankKeeperB := chainB.App.(*app.WasmApp).BankKeeper
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
@@ -285,7 +287,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	require.Equal(t, 0, len(chainB.PendingSendPackets))
 
 	// and dest chain balance contains voucher
-	bankKeeperB := chainB.App.BankKeeper
+	bankKeeperB := chainB.App.(*app.WasmApp).BankKeeper
 	expBalance := ibctransfertypes.GetTransferCoin(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, coinToSendToB.Denom, coinToSendToB.Amount)
 	gotBalance := chainB.Balance(chainB.SenderAccount.GetAddress(), expBalance.Denom)
 	assert.Equal(t, expBalance, gotBalance, "got total balance: %s", bankKeeperB.GetAllBalances(chainB.GetContext(), chainB.SenderAccount.GetAddress()))
@@ -712,7 +714,7 @@ func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.
 	// call original ibctransfer keeper to not copy all code into this
 	ibcPacket := toIBCPacket(packet)
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
-	err := c.chain.App.TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
+	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
@@ -737,7 +739,7 @@ func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env,
 	// call original ibctransfer keeper to not copy all code into this
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
-	err := c.chain.App.TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
+	err := c.chain.App.(*app.WasmApp).TransferKeeper.OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
 		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
 	}
