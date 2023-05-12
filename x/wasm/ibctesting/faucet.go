@@ -27,12 +27,12 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	chain.Coordinator.UpdateTimeForChain(chain)
 
 	addr := sdk.AccAddress(senderPrivKey.PubKey().Address().Bytes())
-	account := chain.App.AccountKeeper.GetAccount(chain.GetContext(), addr)
+	account := chain.App.GetAccountKeeper().GetAccount(chain.GetContext(), addr)
 	require.NotNil(chain.t, account)
 	_, r, err := app.SignAndDeliver(
 		chain.t,
 		chain.TxConfig,
-		chain.App.BaseApp,
+		chain.App.GetBaseApp(),
 		chain.GetContext().BlockHeader(),
 		msgs,
 		chain.ChainID,
