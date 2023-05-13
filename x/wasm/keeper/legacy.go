@@ -19,3 +19,19 @@ func (k Keeper) IterateLegacyContractInfo(ctx sdk.Context, cb func(legacytypes.C
 		}
 	}
 }
+
+// IterateLegacyContractInfo iterates all code infos in legacy terra wasm store
+func (k Keeper) IterateLegacyCodeInfo(ctx sdk.Context, cb func(legacytypes.CodeInfo) bool) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), legacytypes.CodeKey)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var code legacytypes.CodeInfo
+		k.cdc.MustUnmarshal(iter.Value(), &code)
+		// cb returns true to stop early
+		if cb(code) {
+			return
+		}
+	}
+}
