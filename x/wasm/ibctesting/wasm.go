@@ -125,5 +125,5 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.GetWasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
 }
