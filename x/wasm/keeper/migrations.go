@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -18,6 +19,13 @@ func NewMigrator(keeper Keeper) Migrator {
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+	// migrate legacy contract to new contract
+	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
+		newContractInfo := types.NewContractInfo(contractInfo.CodeID, contractInfo.Creator, contractInfo.Admin, contractInfo.InitMsg)
+
+		return false
+	})
+
 	m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
 		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
 		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractInfo.Created, contractAddr)
