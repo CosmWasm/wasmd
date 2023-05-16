@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/app"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -30,7 +32,8 @@ func TestICA(t *testing.T) {
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	hostChain := coord.GetChain(ibctesting.GetChainID(1))
 	hostParams := hosttypes.NewParams(true, []string{sdk.MsgTypeURL(&banktypes.MsgSend{})})
-	hostChain.App.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
+	hostApp := hostChain.App.(*app.WasmApp)
+	hostApp.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
 
 	controllerChain := coord.GetChain(ibctesting.GetChainID(2))
 
@@ -58,7 +61,8 @@ func TestICA(t *testing.T) {
 	coord.CreateChannels(path)
 
 	// assert ICA exists on controller
-	icaRsp, err := controllerChain.App.ICAControllerKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &icacontrollertypes.QueryInterchainAccountRequest{
+	contApp := controllerChain.App.(*app.WasmApp)
+	icaRsp, err := contApp.ICAControllerKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &icacontrollertypes.QueryInterchainAccountRequest{
 		Owner:        ownerAddr.String(),
 		ConnectionId: path.EndpointA.ConnectionID,
 	})

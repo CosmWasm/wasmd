@@ -5,6 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -48,6 +55,24 @@ type SenderAccount struct {
 	SenderAccount authtypes.AccountI
 }
 
+// ChainApp Abstract chain app definition used for testing
+type ChainApp interface {
+	abci.Application
+	AppCodec() codec.Codec
+	NewContext(isCheckTx bool, header tmproto.Header) sdk.Context
+	LastBlockHeight() int64
+	LastCommitID() storetypes.CommitID
+	GetBaseApp() *baseapp.BaseApp
+
+	TxConfig() client.TxConfig
+	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
+	GetIBCKeeper() *ibckeeper.Keeper
+	GetBankKeeper() bankkeeper.Keeper
+	GetStakingKeeper() *stakingkeeper.Keeper
+	GetAccountKeeper() authkeeper.AccountKeeper
+	GetWasmKeeper() wasm.Keeper
+}
+
 // TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
 // header and the validators of the TestChain. It also contains a field called ChainID. This
 // is the clientID that *other* chains use to refer to this TestChain. The SenderAccount
@@ -57,7 +82,7 @@ type TestChain struct {
 	t *testing.T
 
 	Coordinator   *Coordinator
-	App           *app.WasmApp
+	App           ChainApp
 	ChainID       string
 	LastHeader    *ibctm.Header  // header for last block height committed
 	CurrentHeader tmproto.Header // header for current block height
@@ -88,9 +113,23 @@ type PacketAck struct {
 	Ack    []byte
 }
 
+// ChainAppFactory abstract factory method that usually implemented by app.SetupWithGenesisValSet
+type ChainAppFactory func(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp
+
+// DefaultWasmAppFactory instantiates and sets up the default wasmd app
+func DefaultWasmAppFactory(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp {
+	return app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, balances...)
+}
+
+// NewDefaultTestChain initializes a new test chain with a default of 4 validators
+// Use this function if the tests do not need custom control over the validator set
+func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
+	return NewTestChain(t, coord, DefaultWasmAppFactory, chainID, opts...)
+}
+
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
+func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasm.Option) *TestChain {
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -111,7 +150,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 	// or, if equal, by address lexical order
 	valSet := tmtypes.NewValidatorSet(validators)
 
-	return NewTestChainWithValSet(t, coord, chainID, valSet, signersByAddress, opts...)
+	return NewTestChainWithValSet(t, coord, appFactory, chainID, valSet, signersByAddress, opts...)
 }
 
 // NewTestChainWithValSet initializes a new TestChain instance with the given validator set
@@ -129,7 +168,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm
 //
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
-func NewTestChainWithValSet(t *testing.T, coord *Coordinator, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasm.Option) *TestChain {
+func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasm.Option) *TestChain {
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []SenderAccount{}
@@ -158,7 +197,7 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, chainID string, va
 		senderAccs = append(senderAccs, senderAcc)
 	}
 
-	wasmApp := app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, genBals...)
+	wasmApp := appFactory(t, valSet, genAccs, chainID, opts, genBals...)
 
 	// create current header and call begin block
 	header := tmproto.Header{
@@ -176,7 +215,7 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, chainID string, va
 		ChainID:        chainID,
 		App:            wasmApp,
 		CurrentHeader:  header,
-		QueryServer:    wasmApp.IBCKeeper,
+		QueryServer:    wasmApp.GetIBCKeeper(),
 		TxConfig:       txConfig,
 		Codec:          wasmApp.AppCodec(),
 		Vals:           valSet,
@@ -194,7 +233,7 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, chainID string, va
 
 // GetContext returns the current context for the application.
 func (chain *TestChain) GetContext() sdk.Context {
-	return chain.App.BaseApp.NewContext(false, chain.CurrentHeader)
+	return chain.App.NewContext(false, chain.CurrentHeader)
 }
 
 // QueryProof performs an abci query with the given key and returns the proto encoded merkle proof
@@ -322,7 +361,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	_, r, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
-		chain.App.BaseApp,
+		chain.App.GetBaseApp(),
 		chain.GetContext().BlockHeader(),
 		msgs,
 		chain.ChainID,
@@ -351,7 +390,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 }
 
 func (chain *TestChain) CaptureIBCEvents(r *sdk.Result) {
-	toSend := getSendPackets(r.Events)
+	toSend := GetSendPackets(r.Events)
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
 		chain.PendingSendPackets = append(chain.PendingSendPackets, toSend...)
@@ -361,7 +400,7 @@ func (chain *TestChain) CaptureIBCEvents(r *sdk.Result) {
 // GetClientState retrieves the client state for the provided clientID. The client is
 // expected to exist otherwise testing will fail.
 func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
-	clientState, found := chain.App.IBCKeeper.ClientKeeper.GetClientState(chain.GetContext(), clientID)
+	clientState, found := chain.App.GetIBCKeeper().ClientKeeper.GetClientState(chain.GetContext(), clientID)
 	require.True(chain.t, found)
 
 	return clientState
@@ -370,13 +409,13 @@ func (chain *TestChain) GetClientState(clientID string) exported.ClientState {
 // GetConsensusState retrieves the consensus state for the provided clientID and height.
 // It will return a success boolean depending on if consensus state exists or not.
 func (chain *TestChain) GetConsensusState(clientID string, height exported.Height) (exported.ConsensusState, bool) {
-	return chain.App.IBCKeeper.ClientKeeper.GetClientConsensusState(chain.GetContext(), clientID, height)
+	return chain.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(chain.GetContext(), clientID, height)
 }
 
 // GetValsAtHeight will return the validator set of the chain at a given height. It will return
 // a success boolean depending on if the validator set exists or not at that height.
 func (chain *TestChain) GetValsAtHeight(height int64) (*tmtypes.ValidatorSet, bool) {
-	histInfo, ok := chain.App.StakingKeeper.GetHistoricalInfo(chain.GetContext(), height)
+	histInfo, ok := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
 	if !ok {
 		return nil, false
 	}
@@ -393,7 +432,7 @@ func (chain *TestChain) GetValsAtHeight(height int64) (*tmtypes.ValidatorSet, bo
 // GetAcknowledgement retrieves an acknowledgement for the provided packet. If the
 // acknowledgement does not exist then testing will fail.
 func (chain *TestChain) GetAcknowledgement(packet exported.PacketI) []byte {
-	ack, found := chain.App.IBCKeeper.ChannelKeeper.GetPacketAcknowledgement(chain.GetContext(), packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
+	ack, found := chain.App.GetIBCKeeper().ChannelKeeper.GetPacketAcknowledgement(chain.GetContext(), packet.GetDestPort(), packet.GetDestChannel(), packet.GetSequence())
 	require.True(chain.t, found)
 
 	return ack
@@ -401,7 +440,7 @@ func (chain *TestChain) GetAcknowledgement(packet exported.PacketI) []byte {
 
 // GetPrefix returns the prefix for used by a chain in connection creation
 func (chain *TestChain) GetPrefix() commitmenttypes.MerklePrefix {
-	return commitmenttypes.NewMerklePrefix(chain.App.IBCKeeper.ConnectionKeeper.GetCommitmentPrefix().Bytes())
+	return commitmenttypes.NewMerklePrefix(chain.App.GetIBCKeeper().ConnectionKeeper.GetCommitmentPrefix().Bytes())
 }
 
 // ConstructUpdateTMClientHeader will construct a valid 07-tendermint Header to update the
@@ -547,10 +586,10 @@ func MakeBlockID(hash []byte, partSetSize uint32, partSetHash []byte) tmtypes.Bl
 // Other applications must bind to the port in InitGenesis or modify this code.
 func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID string) {
 	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.PortPath(portID))
+	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
 	if !ok {
 		// create capability using the IBC capability keeper
-		portCap, err := chain.App.ScopedIBCKeeper.NewCapability(chain.GetContext(), host.PortPath(portID))
+		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), host.PortPath(portID))
 		require.NoError(chain.t, err)
 
 		// claim capability using the scopedKeeper
@@ -564,7 +603,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.Scope
 // GetPortCapability returns the port capability for the given portID. The capability must
 // exist, otherwise testing will fail.
 func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capability {
-	portCap, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.PortPath(portID))
+	portCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
 	require.True(chain.t, ok)
 
 	return portCap
@@ -576,9 +615,9 @@ func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capabi
 func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID, channelID string) {
 	capName := host.ChannelCapabilityPath(portID, channelID)
 	// check if the portId is already binded, if not bind it
-	_, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), capName)
+	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), capName)
 	if !ok {
-		portCap, err := chain.App.ScopedIBCKeeper.NewCapability(chain.GetContext(), capName)
+		portCap, err := chain.App.GetScopedIBCKeeper().NewCapability(chain.GetContext(), capName)
 		require.NoError(chain.t, err)
 		err = scopedKeeper.ClaimCapability(chain.GetContext(), portCap, capName)
 		require.NoError(chain.t, err)
@@ -590,7 +629,7 @@ func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.Sc
 // GetChannelCapability returns the channel capability for the given portID and channelID.
 // The capability must exist, otherwise testing will fail.
 func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilitytypes.Capability {
-	chanCap, ok := chain.App.ScopedIBCKeeper.GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
+	chanCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
 	require.True(chain.t, ok)
 
 	return chanCap
@@ -603,9 +642,9 @@ func (chain *TestChain) GetTimeoutHeight() clienttypes.Height {
 }
 
 func (chain *TestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
-	return chain.App.BankKeeper.GetBalance(chain.GetContext(), acc, denom)
+	return chain.App.GetBankKeeper().GetBalance(chain.GetContext(), acc, denom)
 }
 
 func (chain *TestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
-	return chain.App.BankKeeper.GetAllBalances(chain.GetContext(), acc)
+	return chain.App.GetBankKeeper().GetAllBalances(chain.GetContext(), acc)
 }

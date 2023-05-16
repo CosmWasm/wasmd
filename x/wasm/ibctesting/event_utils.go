@@ -13,11 +13,11 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
 
-func getSendPackets(evts []abci.Event) []channeltypes.Packet {
+func GetSendPackets(evts []abci.Event) []channeltypes.Packet {
 	var res []channeltypes.Packet
 	for _, evt := range evts {
 		if evt.Type == channeltypes.EventTypeSendPacket {
-			packet := parsePacketFromEvent(evt)
+			packet := ParsePacketFromEvent(evt)
 			res = append(res, packet)
 		}
 	}
@@ -32,7 +32,7 @@ func getSendPackets(evts []abci.Event) []channeltypes.Packet {
 //	}
 //}
 
-func parsePacketFromEvent(evt abci.Event) channeltypes.Packet {
+func ParsePacketFromEvent(evt abci.Event) channeltypes.Packet {
 	return channeltypes.Packet{
 		Sequence:           getUintField(evt, channeltypes.AttributeKeySequence),
 		SourcePort:         getField(evt, channeltypes.AttributeKeySrcPort),

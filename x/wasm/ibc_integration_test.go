@@ -3,6 +3,8 @@ package wasm_test
 import (
 	"testing"
 
+	"github.com/CosmWasm/wasmd/app"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -54,7 +56,8 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
 				chainB         = coordinator.GetChain(wasmibctesting.GetChainID(2))
 				myContractAddr = chainA.SeedNewContractInstance()
-				contractInfo   = chainA.App.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
+				appA           = chainA.App.(*app.WasmApp)
+				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
 
 			path := wasmibctesting.NewPath(chainA, chainB)
