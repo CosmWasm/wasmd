@@ -35,6 +35,7 @@ import (
 
 const firstCodeID = 1
 
+// go test -v -run ^TestGenesisExportImport$ github.com/CosmWasm/wasmd/x/wasm/keeper
 func TestGenesisExportImport(t *testing.T) {
 	wasmKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
@@ -541,7 +542,6 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
       },
 	  "contract_code_history": [
 		{
-			"operation": "CONTRACT_CODE_HISTORY_OPERATION_TYPE_INIT",
 			"code_id": "1",
 			"updated": {
 				"block_height" : "100",
@@ -550,7 +550,6 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 			"msg": {"foo": "bar"}
 	  	},
 		{
-			"operation": "CONTRACT_CODE_HISTORY_OPERATION_TYPE_MIGRATE",
 			"code_id": "1",
 			"updated": {
 				"block_height" : "200",

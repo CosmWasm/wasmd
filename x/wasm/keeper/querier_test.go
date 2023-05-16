@@ -551,7 +551,6 @@ func TestQueryContractInfo(t *testing.T) {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(),
 			expRsp: &types.QueryContractInfoResponse{
-				Address:      contractAddr.String(),
 				ContractInfo: types.ContractInfoFixture(),
 			},
 		},
@@ -559,7 +558,6 @@ func TestQueryContractInfo(t *testing.T) {
 			src:    &types.QueryContractInfoRequest{Address: contractAddr.String()},
 			stored: types.ContractInfoFixture(myExtension),
 			expRsp: &types.QueryContractInfoResponse{
-				Address:      contractAddr.String(),
 				ContractInfo: types.ContractInfoFixture(myExtension),
 			},
 		},

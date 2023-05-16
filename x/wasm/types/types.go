@@ -241,10 +241,6 @@ func (a *AbsoluteTxPosition) Bytes() []byte {
 
 // ValidateBasic syntax checks
 func (c ContractCodeHistoryEntry) ValidateBasic() error {
-	var found bool
-	if !found {
-		return ErrInvalid.Wrap("operation")
-	}
 	if c.CodeID == 0 {
 		return ErrEmpty.Wrap("code id")
 	}

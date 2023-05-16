@@ -807,7 +807,7 @@ func (k Keeper) IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, typ
 		var contract types.ContractInfo
 		k.cdc.MustUnmarshal(iter.Value(), &contract)
 		// cb returns true to stop early
-		if cb(iter.Key(), contract) {
+		if cb(iter.Key()[1:], contract) {
 			break
 		}
 	}

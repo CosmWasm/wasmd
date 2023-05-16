@@ -257,7 +257,6 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 		return nil, types.ErrNotFound
 	}
 	return &types.QueryContractInfoResponse{
-		Address:      addr.String(),
 		ContractInfo: *info,
 	}, nil
 }
