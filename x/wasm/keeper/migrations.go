@@ -83,7 +83,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 
 	ctx.Logger().Info("### Migrating Code Info ###")
 	m.keeper.IterateLegacyCodeInfo(ctx, func(codeInfo legacytypes.CodeInfo) bool {
-		creatorAddr, _ := sdk.AccAddressFromBech32(codeInfo.Creator)
+		creatorAddr := sdk.MustAccAddressFromBech32(codeInfo.Creator)
 		err := m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
 		if err != nil {
 			m.keeper.Logger(ctx).Error("Was not able to store legacy code ID")
@@ -95,16 +95,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
 
-		// Migrate AbsoluteTxPosition (Testing needed)
-		// I am afraid that setting all contracts at one absolute tx position will break query
-		createdAt := types.NewAbsoluteTxPosition(ctx)
-
-		creatorAddr, _ := sdk.AccAddressFromBech32(contractInfo.Creator)
-		admin, _ := sdk.AccAddressFromBech32(contractInfo.Admin)
-		contractAddr, _ := sdk.AccAddressFromBech32(contractInfo.Address)
-
-		newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, "", createdAt)
-		m.keeper.storeContractInfo(ctx, contractAddr, &newContract)
+		m.migrateAbsoluteTx(ctx, contractInfo)
 
 		return false
 	})
@@ -116,4 +107,17 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	})*/
 
 	return nil
+}
+
+// Migrate AbsoluteTxPosition (Testing needed)
+// I am afraid that setting all contracts at one absolute tx position will break query
+func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.ContractInfo) {
+	createdAt := types.NewAbsoluteTxPosition(ctx)
+
+	creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
+	admin := sdk.MustAccAddressFromBech32(contractInfo.Admin)
+	contractAddr := sdk.MustAccAddressFromBech32(contractInfo.Address)
+
+	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, "", createdAt)
+	m.keeper.storeContractInfo(ctx, contractAddr, &newContract)
 }
