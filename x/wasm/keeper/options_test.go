@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -33,7 +31,7 @@ func TestConstructorOptions(t *testing.T) {
 		},
 		"decorate wasmvm": {
 			srcOpt: WithWasmEngineDecorator(func(old types.WasmerEngine) types.WasmerEngine {
-				require.IsType(t, &wasmvm.VM{}, old)
+				require.IsType(t, &types.TrackingWasmerEngine{}, old)
 				return &wasmtesting.MockWasmer{}
 			}),
 			verify: func(t *testing.T, k Keeper) {
