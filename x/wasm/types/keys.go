@@ -24,15 +24,15 @@ const (
 
 // nolint
 var (
-	CodeKeyPrefix                                  = []byte{0x01}
-	ContractKeyPrefix                              = []byte{0x02}
-	ContractStorePrefix                            = []byte{0x03}
-	SequenceKeyPrefix                              = []byte{0x04}
-	ContractCodeHistoryElementPrefix               = []byte{0x05}
-	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x06}
-	PinnedCodeIndexPrefix                          = []byte{0x07}
-	TXCounterPrefix                                = []byte{0x08}
-	ContractsByCreatorPrefix                       = []byte{0x09}
+	CodeKeyPrefix                                  = []byte{0x0a}
+	ContractKeyPrefix                              = []byte{0x0b}
+	ContractStorePrefix                            = []byte{0x0c}
+	SequenceKeyPrefix                              = []byte{0x0d}
+	ContractCodeHistoryElementPrefix               = []byte{0x0e}
+	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x0f}
+	PinnedCodeIndexPrefix                          = []byte{0x10}
+	TXCounterPrefix                                = []byte{0x11}
+	ContractsByCreatorPrefix                       = []byte{0x12}
 
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)

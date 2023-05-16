@@ -394,7 +394,6 @@ func SimulateMsgInstantiateContract(ak types.AccountKeeper, bk BankKeeper, wasmK
 			Sender: simAccount.Address.String(),
 			Admin:  adminAccount.Address.String(),
 			CodeID: codeID,
-			Label:  simtypes.RandStringOfLength(r, 10),
 			Msg:    []byte(`{}`),
 			Funds:  deposit,
 		}
