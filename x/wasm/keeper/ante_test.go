@@ -84,8 +84,8 @@ func TestCountTxDecorator(t *testing.T) {
 				_, ok := types.TXCounter(ctx)
 				assert.False(t, ok)
 				require.True(t, simulate)
-				// and not stored
-				assert.False(t, ctx.MultiStore().GetKVStore(keyWasm).Has(types.TXCounterPrefix))
+				// and is stored // NOTE: simulation works different form vanilla wasmd
+				assert.True(t, ctx.MultiStore().GetKVStore(keyWasm).Has(types.TXCounterPrefix))
 				return ctx, nil
 			},
 		},

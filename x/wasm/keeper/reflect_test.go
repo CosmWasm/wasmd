@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -351,7 +352,10 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 
 func TestReflectInvalidStargateQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Marshaler
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(&QueryPlugins{
+		Custom:   performCustomQuery,
+		Stargate: AcceptListStargateQuerier(AcceptedStargateQueries{}, baseapp.NewGRPCQueryRouter(), cdc),
+	}))
 	keeper := keepers.WasmKeeper
 
 	funds := sdk.NewCoins(sdk.NewInt64Coin("denom", 320000))
@@ -387,7 +391,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should not be whitelisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "unsupported request")
 
 	// now, try to build a protobuf query
 	protoRequest = wasmvmtypes.QueryRequest{
@@ -404,7 +408,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "unsupported request")
 
 	// and another one
 	protoRequest = wasmvmtypes.QueryRequest{
@@ -421,7 +425,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	// make a query on the chain, should be blacklisted
 	_, err = keeper.QuerySmart(ctx, contractAddr, protoQueryBz)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "Unsupported query")
+	require.Contains(t, err.Error(), "unsupported request")
 }
 
 type reflectState struct {

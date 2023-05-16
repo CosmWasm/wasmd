@@ -171,7 +171,7 @@ The `ParamChangeProposal` is always enabled.
 ## CLI
 
 ```shell script
-  wasmd tx gov submit-proposal [command]
+  archwayd tx gov submit-proposal [command]
 
 Available Commands:
   wasm-store           Submit a wasm binary proposal
