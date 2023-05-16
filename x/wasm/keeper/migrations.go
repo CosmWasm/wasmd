@@ -83,12 +83,8 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 
 	ctx.Logger().Info("### Migrating Code Info ###")
 	m.keeper.IterateLegacyCodeInfo(ctx, func(codeInfo legacytypes.CodeInfo) bool {
-		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
-		if err != nil {
-			m.keeper.Logger(ctx).Error("was not able to parse creator address %s", codeInfo)
-			return false
-		}
-		err = m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
+		creatorAddr, _ := sdk.AccAddressFromBech32(codeInfo.Creator)
+		err := m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
 		if err != nil {
 			m.keeper.Logger(ctx).Error("Was not able to store legacy code ID")
 		}
@@ -96,10 +92,20 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	})
 
 	// TODO
-	/*m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
+	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
+
+		// Migrate AbsoluteTxPosition
+		createdAt := types.NewAbsoluteTxPosition(ctx)
+
+		creatorAddr, _ := sdk.AccAddressFromBech32(contractInfo.Creator)
+		admin, _ := sdk.AccAddressFromBech32(contractInfo.Admin)
+
+		newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, "", createdAt)
+		m.keeper.storeContractInfo(ctx, contractInfo.ContractAddress, newContract)
+
 		return false
-	})*/
+	})
 
 	/*m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
 		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
