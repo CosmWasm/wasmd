@@ -34,8 +34,27 @@ require (
 )
 
 require (
+<<<<<<< HEAD
 	cosmossdk.io/api v0.2.6 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
+=======
+	cosmossdk.io/api v0.3.1
+	cosmossdk.io/core v0.5.1
+	cosmossdk.io/errors v1.0.0-beta.7
+	cosmossdk.io/math v1.0.1
+	cosmossdk.io/tools/rosetta v0.2.1
+	github.com/cometbft/cometbft v0.37.1
+	github.com/cometbft/cometbft-db v0.7.0
+	github.com/spf13/viper v1.15.0
+)
+
+require (
+	cloud.google.com/go v0.110.0 // indirect
+	cloud.google.com/go/compute v1.18.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/iam v0.12.0 // indirect
+	cloud.google.com/go/storage v1.29.0 // indirect
+>>>>>>> f3338205 (Bump cosmossdk.io/math from 1.0.0 to 1.0.1 (#1401))
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
