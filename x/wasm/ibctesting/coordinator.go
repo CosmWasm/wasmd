@@ -31,8 +31,13 @@ type Coordinator struct {
 	Chains      map[string]*TestChain
 }
 
-// NewCoordinator initializes Coordinator with N TestChain's
+// NewCoordinator initializes Coordinator with n default wasm TestChain instances
 func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *Coordinator {
+	return NewCoordinatorX(t, n, DefaultWasmAppFactory, opts...)
+}
+
+// NewCoordinatorX initializes Coordinator with N TestChain instances using the given app factory
+func NewCoordinatorX(t *testing.T, n int, appFactory ChainAppFactory, opts ...[]wasmkeeper.Option) *Coordinator {
 	chains := make(map[string]*TestChain)
 	coord := &Coordinator{
 		t:           t,
@@ -45,7 +50,11 @@ func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *Coordinat
 		if len(opts) > i {
 			x = opts[i]
 		}
+<<<<<<< HEAD
 		chains[chainID] = NewTestChain(t, coord, chainID, x...)
+=======
+		chains[chainID] = NewTestChain(t, coord, appFactory, chainID, x...)
+>>>>>>> 4cde99fd (Extend ibctesting coordinator)
 	}
 	coord.Chains = chains
 
