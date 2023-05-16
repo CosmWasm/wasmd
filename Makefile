@@ -166,15 +166,14 @@ format: format-tools
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
-protoVer=0.11.6
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+PROTO_BUILDER_IMAGE=tendermintdev/sdk-proto-gen:v0.7
+PROTO_FORMATTER_IMAGE=tendermintdev/docker-build-proto@sha256:aabcfe2fc19c31c0f198d4cd26393f5e5ca9502d7ea3feafbfe972448fee7cae
 
 proto-all: proto-format proto-lint proto-gen format
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen.sh
+	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(PROTO_BUILDER_IMAGE) sh ./scripts/protocgen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"

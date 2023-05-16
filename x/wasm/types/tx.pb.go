@@ -9,8 +9,8 @@ import (
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	grpc1 "github.com/cosmos/gogoproto/grpc"
-	proto "github.com/cosmos/gogoproto/proto"
+	grpc1 "github.com/gogo/protobuf/grpc"
+	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -125,7 +125,7 @@ type MsgInstantiateContract struct {
 	// CodeID is the reference to the stored WASM code
 	CodeID uint64 `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 	// Label is optional metadata to be stored with a contract instance.
-	//string label = 4;
+	// string label = 4;
 	// Msg json encoded message to be passed to the contract on instantiation
 	Msg RawContractMessage `protobuf:"bytes,5,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`
 	// Funds coins that are transferred to the contract on instantiation
@@ -175,7 +175,7 @@ type MsgInstantiateContract2 struct {
 	// CodeID is the reference to the stored WASM code
 	CodeID uint64 `protobuf:"varint,3,opt,name=code_id,json=codeId,proto3" json:"code_id,omitempty"`
 	// Label is optional metadata to be stored with a contract instance.
-	//string label = 4;
+	// string label = 4;
 	// Msg json encoded message to be passed to the contract on instantiation
 	Msg RawContractMessage `protobuf:"bytes,5,opt,name=msg,proto3,casttype=RawContractMessage" json:"msg,omitempty"`
 	// Funds coins that are transferred to the contract on instantiation

@@ -9,7 +9,7 @@ import (
 	_ "github.com/cosmos/cosmos-proto"
 	types "github.com/cosmos/cosmos-sdk/codec/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/cosmos/gogoproto/proto"
+	proto "github.com/gogo/protobuf/proto"
 	github_com_tendermint_tendermint_libs_bytes "github.com/tendermint/tendermint/libs/bytes"
 	io "io"
 	math "math"
@@ -270,7 +270,7 @@ type ContractInfo struct {
 	// Admin is an optional address that can execute migrations
 	Admin string `protobuf:"bytes,3,opt,name=admin,proto3" json:"admin,omitempty"`
 	// Label is optional metadata to be stored with a contract instance.
-	//string label = 4;
+	// string label = 4;
 	// Created Tx position when the contract was instantiated.
 	Created   *AbsoluteTxPosition `protobuf:"bytes,5,opt,name=created,proto3" json:"created,omitempty"`
 	IBCPortID string              `protobuf:"bytes,6,opt,name=ibc_port_id,json=ibcPortId,proto3" json:"ibc_port_id,omitempty"`
