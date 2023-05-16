@@ -24,18 +24,20 @@ const (
 
 // nolint
 var (
-	CodeKeyPrefix                                  = []byte{0x0a}
-	ContractKeyPrefix                              = []byte{0x0b}
-	ContractStorePrefix                            = []byte{0x0c}
-	SequenceKeyPrefix                              = []byte{0x0d}
-	ContractCodeHistoryElementPrefix               = []byte{0x0e}
-	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x0f}
-	PinnedCodeIndexPrefix                          = []byte{0x10}
-	TXCounterPrefix                                = []byte{0x11}
-	ContractsByCreatorPrefix                       = []byte{0x12}
+	ContractStorePrefix                            = []byte{0x98}
+	SequenceKeyPrefix                              = []byte{0x99}
+	ContractCodeHistoryElementPrefix               = []byte{0x05}
+	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x06}
+	PinnedCodeIndexPrefix                          = []byte{0x07}
+	TXCounterPrefix                                = []byte{0x08}
+	ContractsByCreatorPrefix                       = []byte{0x09}
 
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
+
+	// Compatible key with old
+	CodeKeyPrefix     = []byte{0x03}
+	ContractKeyPrefix = []byte{0x04}
 )
 
 // GetCodeKey constructs the key for retreiving the ID for the WASM code
@@ -46,7 +48,7 @@ func GetCodeKey(codeID uint64) []byte {
 
 // GetContractAddressKey returns the key for the WASM contract instance
 func GetContractAddressKey(addr sdk.AccAddress) []byte {
-	return append(ContractKeyPrefix, addr...)
+	return append(ContractKeyPrefix, address.MustLengthPrefix(addr)...)
 }
 
 // GetContractsByCreatorPrefix returns the contracts by creator prefix for the WASM contract instance

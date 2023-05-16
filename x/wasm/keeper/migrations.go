@@ -83,12 +83,8 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 
 	ctx.Logger().Info("### Migrating Code Info ###")
 	m.keeper.IterateLegacyCodeInfo(ctx, func(codeInfo legacytypes.CodeInfo) bool {
-		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
-		if err != nil {
-			m.keeper.Logger(ctx).Error("was not able to parse creator address %s", codeInfo)
-			return false
-		}
-		err = m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
+		creatorAddr := sdk.MustAccAddressFromBech32(codeInfo.Creator)
+		err := m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
 		if err != nil {
 			m.keeper.Logger(ctx).Error("Was not able to store legacy code ID")
 		}
@@ -96,10 +92,13 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	})
 
 	// TODO
-	/*m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
+	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
+
+		m.migrateAbsoluteTx(ctx, contractInfo)
+
 		return false
-	})*/
+	})
 
 	/*m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
 		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
@@ -108,4 +107,17 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	})*/
 
 	return nil
+}
+
+// Migrate AbsoluteTxPosition (Testing needed)
+// I am afraid that setting all contracts at one absolute tx position will break query
+func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.ContractInfo) {
+	createdAt := types.NewAbsoluteTxPosition(ctx)
+
+	creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
+	admin := sdk.MustAccAddressFromBech32(contractInfo.Admin)
+	contractAddr := sdk.MustAccAddressFromBech32(contractInfo.Address)
+
+	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, "", createdAt)
+	m.keeper.storeContractInfo(ctx, contractAddr, &newContract)
 }

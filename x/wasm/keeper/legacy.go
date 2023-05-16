@@ -1,10 +1,18 @@
 package keeper
 
 import (
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// SetContractInfo stores ContractInfo for the given contractAddress
+func (k Keeper) SetLegacyContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, codeInfo legacytypes.ContractInfo) {
+	store := ctx.KVStore(k.storeKey)
+	b := k.cdc.MustMarshal(&codeInfo)
+	store.Set(types.GetContractAddressKey(contractAddress), b)
+}
 
 // IterateLegacyContractInfo iterates all contract infos in legacy terra wasm store
 func (k Keeper) IterateLegacyContractInfo(ctx sdk.Context, cb func(legacytypes.ContractInfo) bool) {

@@ -1,4 +1,4 @@
-package legacy 
+package legacy
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,6 +37,8 @@ const (
 // - 0x04<accAddress_Bytes>: ContractInfo
 //
 // - 0x05<accAddress_Bytes>: KVStore for contract
+
+// Need to remove this file and merge it with canonical keys.go. There can only be one store at a time.
 var (
 	LastCodeIDKey     = []byte{0x01}
 	LastInstanceIDKey = []byte{0x02}
