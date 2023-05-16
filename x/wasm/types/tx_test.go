@@ -59,7 +59,7 @@ func TestStoreCodeValidation(t *testing.T) {
 			msg: MsgStoreCode{
 				Sender:                goodAddress,
 				WASMByteCode:          []byte("foo"),
-				InstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
 			},
 			valid: false,
 		},
@@ -698,14 +698,6 @@ func TestMsgUpdateInstantiateConfig(t *testing.T) {
 				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
 			},
 		},
-		"retained AccessTypeOnlyAddress": {
-			src: MsgUpdateInstantiateConfig{
-				Sender:                   goodAddress,
-				CodeID:                   1,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
-			},
-			expErr: true,
-		},
 		"bad sender": {
 			src: MsgUpdateInstantiateConfig{
 				Sender:                   badAddress,
@@ -1120,7 +1112,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				WASMByteCode:          []byte("foo"),
 				Label:                 "foo",
 				Msg:                   []byte(`{"some": "data"}`),
-				InstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
 			},
 			valid: false,
 		},

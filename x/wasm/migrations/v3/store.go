@@ -1,6 +1,11 @@
 package v3
 
 import (
+	"encoding/binary"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -11,8 +16,6 @@ type StoreCodeInfoFn func(ctx sdk.Context, codeID uint64, codeInfo types.CodeInf
 
 // Keeper abstract keeper
 type wasmKeeper interface {
-	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
-	GetParams(ctx sdk.Context) types.Params
 	SetParams(ctx sdk.Context, ps types.Params) error
 }
 
@@ -28,32 +31,59 @@ func NewMigrator(k wasmKeeper, fn StoreCodeInfoFn) Migrator {
 }
 
 // Migrate3to4 migrates from version 3 to 4.
-func (m Migrator) Migrate3to4(ctx sdk.Context) error {
-	params := m.keeper.GetParams(ctx)
-	if params.CodeUploadAccess.Permission == types.AccessTypeOnlyAddress {
-		params.CodeUploadAccess.Permission = types.AccessTypeAnyOfAddresses
-		params.CodeUploadAccess.Addresses = []string{params.CodeUploadAccess.Address}
-		params.CodeUploadAccess.Address = ""
-	}
+func (m Migrator) Migrate3to4(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
+	var legacyParams Params
+	store := ctx.KVStore(storeKey)
+	bz := store.Get(types.ParamsKey)
+	if bz != nil {
+		cdc.MustUnmarshal(bz, &legacyParams)
 
-	if params.InstantiateDefaultPermission == types.AccessTypeOnlyAddress {
-		params.InstantiateDefaultPermission = types.AccessTypeAnyOfAddresses
-	}
+		newParams := types.Params{}
+		newParams.CodeUploadAccess = updateAccessConfig(legacyParams.CodeUploadAccess)
 
-	err := m.keeper.SetParams(ctx, params)
-	if err != nil {
-		return err
-	}
-
-	m.keeper.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
-		if info.InstantiateConfig.Permission == types.AccessTypeOnlyAddress {
-			info.InstantiateConfig.Permission = types.AccessTypeAnyOfAddresses
-			info.InstantiateConfig.Addresses = []string{info.InstantiateConfig.Address}
-			info.InstantiateConfig.Address = ""
-
-			m.storeCodeInfoFn(ctx, codeID, info)
+		if legacyParams.InstantiateDefaultPermission == AccessTypeOnlyAddress {
+			newParams.InstantiateDefaultPermission = types.AccessTypeAnyOfAddresses
+		} else {
+			newParams.InstantiateDefaultPermission = types.AccessType(legacyParams.InstantiateDefaultPermission)
 		}
-		return false
-	})
+
+		err := m.keeper.SetParams(ctx, newParams)
+		if err != nil {
+			return err
+		}
+	}
+
+	prefixStore := prefix.NewStore(store, types.CodeKeyPrefix)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var legacyCodeInfo CodeInfo
+		cdc.MustUnmarshal(iter.Value(), &legacyCodeInfo)
+
+		newAccessConfig := updateAccessConfig(legacyCodeInfo.InstantiateConfig)
+
+		newCodeInfo := types.CodeInfo{
+			CodeHash:          legacyCodeInfo.CodeHash,
+			Creator:           legacyCodeInfo.Creator,
+			InstantiateConfig: newAccessConfig,
+		}
+
+		m.storeCodeInfoFn(ctx, binary.BigEndian.Uint64(iter.Key()), newCodeInfo)
+	}
 	return nil
+}
+
+func updateAccessConfig(legacyAccessConfig AccessConfig) types.AccessConfig {
+	newAccessConfig := types.AccessConfig{}
+
+	switch legacyAccessConfig.Permission {
+	case AccessTypeOnlyAddress:
+		newAccessConfig.Permission = types.AccessTypeAnyOfAddresses
+		newAccessConfig.Addresses = []string{legacyAccessConfig.Address}
+	default:
+		newAccessConfig.Permission = types.AccessType(legacyAccessConfig.Permission)
+		newAccessConfig.Addresses = legacyAccessConfig.Addresses
+	}
+	return newAccessConfig
 }

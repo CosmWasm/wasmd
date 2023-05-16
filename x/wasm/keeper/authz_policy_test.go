@@ -29,16 +29,6 @@ func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {
 			contractInstConf: types.AllowEverybody,
 			exp:              true,
 		},
-		"upload only address - same": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(myActorAddress), types.AllowEverybody),
-			contractInstConf: types.AllowEverybody,
-			exp:              true,
-		},
-		"upload only address - different": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(otherAddress), types.AllowEverybody),
-			contractInstConf: types.AllowEverybody,
-			exp:              false,
-		},
 		"upload any address - included": {
 			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
 			contractInstConf: types.AllowEverybody,
@@ -96,14 +86,6 @@ func TestDefaultAuthzPolicyCanInstantiateContract(t *testing.T) {
 		"everybody": {
 			config: types.AllowEverybody,
 			exp:    true,
-		},
-		"only address - same": {
-			config: types.AccessTypeOnlyAddress.With(myActorAddress),
-			exp:    true,
-		},
-		"only address - different": {
-			config: types.AccessTypeOnlyAddress.With(otherAddress),
-			exp:    false,
 		},
 		"any address - included": {
 			config: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),
@@ -214,14 +196,6 @@ func TestGovAuthzPolicyCanCreateCode(t *testing.T) {
 			chainConfigs:     NewChainAccessConfigs(types.AllowEverybody, types.AllowEverybody),
 			contractInstConf: types.AllowEverybody,
 		},
-		"upload only address - same": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(myActorAddress), types.AllowEverybody),
-			contractInstConf: types.AllowEverybody,
-		},
-		"upload only address - different": {
-			chainConfigs:     NewChainAccessConfigs(types.AccessTypeOnlyAddress.With(otherAddress), types.AllowEverybody),
-			contractInstConf: types.AllowEverybody,
-		},
 		"upload any address - included": {
 			chainConfigs:     NewChainAccessConfigs(types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress), types.AllowEverybody),
 			contractInstConf: types.AllowEverybody,
@@ -264,12 +238,6 @@ func TestGovAuthzPolicyCanInstantiateContract(t *testing.T) {
 		},
 		"everybody": {
 			config: types.AllowEverybody,
-		},
-		"only address - same": {
-			config: types.AccessTypeOnlyAddress.With(myActorAddress),
-		},
-		"only address - different": {
-			config: types.AccessTypeOnlyAddress.With(otherAddress),
 		},
 		"any address - included": {
 			config: types.AccessTypeAnyOfAddresses.With(otherAddress, myActorAddress),

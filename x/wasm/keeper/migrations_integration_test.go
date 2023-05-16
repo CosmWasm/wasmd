@@ -17,10 +17,6 @@ import (
 )
 
 func TestModuleMigrations(t *testing.T) {
-	addr := "cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
-	address, err := sdk.AccAddressFromBech32(addr)
-	require.NoError(t, err)
-
 	wasmApp := app.Setup(t)
 
 	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
@@ -51,21 +47,6 @@ func TestModuleMigrations(t *testing.T) {
 			startVersion: wasmApp.ModuleManager.GetVersionMap()[types.ModuleName], // latest
 			setup:        func(ctx sdk.Context) {},
 			exp:          types.DefaultParams(),
-		},
-		"with legacy params and access config migrated": {
-			startVersion: 1,
-			setup: func(ctx sdk.Context) {
-				params := types.Params{
-					CodeUploadAccess:             types.AccessTypeOnlyAddress.With(address),
-					InstantiateDefaultPermission: types.AccessTypeOnlyAddress,
-				}
-				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
-				sp.SetParamSet(ctx, &params)
-			},
-			exp: types.Params{
-				CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(address),
-				InstantiateDefaultPermission: types.AccessTypeAnyOfAddresses,
-			},
 		},
 	}
 	for name, spec := range specs {
@@ -104,11 +85,6 @@ func TestAccessConfigMigrations(t *testing.T) {
 
 	ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
 
-	// only address permission cannot be stored and returns an error
-	code1, err := storeCode(ctx, wasmApp, types.AccessTypeOnlyAddress.With(address))
-	require.Error(t, err)
-	require.Equal(t, uint64(0), code1)
-
 	// any address permission
 	code2, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
 	require.NoError(t, err)
@@ -133,9 +109,6 @@ func TestAccessConfigMigrations(t *testing.T) {
 	require.NoError(t, err)
 	var expModuleVersion uint64 = 4
 	assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
-
-	// only address was not stored
-	assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, code1))
 
 	// any address was not migrated
 	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code2).InstantiateConfig)

@@ -35,5 +35,5 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 // Migrate3to4 migrates the x/wasm module state from the consensus
 // version 3 to version 4.
 func (m Migrator) Migrate3to4(ctx sdk.Context) error {
-	return v3.NewMigrator(m.keeper, m.keeper.storeCodeInfo).Migrate3to4(ctx)
+	return v3.NewMigrator(m.keeper, m.keeper.storeCodeInfo).Migrate3to4(ctx, m.keeper.storeKey, m.keeper.cdc)
 }
