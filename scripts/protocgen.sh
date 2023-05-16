@@ -35,12 +35,8 @@ buf generate --template buf.gen.doc.yml
 
 cd ..
 
-# change package name to legacy
-sed -i 's/package types/package legacy/' github.com/classic-terra/core/x/wasm/types/*.pb.go
-
 # move proto files to the right places
 cp -r github.com/CosmWasm/wasmd/* ./
-cp -r github.com/classic-terra/core/x/wasm/types/* ./x/wasm/types/legacy/
 rm -rf github.com
 
 go mod tidy

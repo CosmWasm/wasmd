@@ -715,12 +715,6 @@ func TestContractCodeHistoryEntryValidation(t *testing.T) {
 		"all good": {
 			src: ContractCodeHistoryEntryFixture(),
 		},
-		"unknown operation": {
-			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
-				entry.Operation = 0
-			}),
-			expErr: true,
-		},
 		"empty code id": {
 			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
 				entry.CodeID = 0

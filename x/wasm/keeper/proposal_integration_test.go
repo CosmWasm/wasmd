@@ -126,10 +126,9 @@ func TestInstantiateProposal(t *testing.T) {
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    src.CodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-		Msg:       src.Msg,
+		CodeID:  src.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+		Msg:     src.Msg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 	// and event
@@ -198,10 +197,9 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	assert.Equal(t, "", cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    src.CodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-		Msg:       src.Msg,
+		CodeID:  src.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+		Msg:     src.Msg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 	// and event
@@ -260,10 +258,9 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	assert.Equal(t, otherAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    cInfo.CodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-		Msg:       src.Msg,
+		CodeID:  cInfo.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+		Msg:     src.Msg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 	// and event
@@ -304,7 +301,7 @@ func TestMigrateProposal(t *testing.T) {
 		c.Created = types.NewAbsoluteTxPosition(ctx)
 	})
 	entries := []types.ContractCodeHistoryEntry{
-		{Operation: types.ContractCodeHistoryOperationTypeInit, CodeID: 1, Updated: contractInfo.Created},
+		{CodeID: 1, Updated: contractInfo.Created},
 	}
 	key, err := hex.DecodeString("636F6E666967")
 	require.NoError(t, err)
@@ -344,14 +341,12 @@ func TestMigrateProposal(t *testing.T) {
 	assert.Equal(t, anyAddress.String(), cInfo.Admin)
 	assert.Equal(t, "testing", cInfo.Label)
 	expHistory := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    firstCodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
+		CodeID:  firstCodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
 	}, {
-		Operation: types.ContractCodeHistoryOperationTypeMigrate,
-		CodeID:    src.CodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-		Msg:       src.Msg,
+		CodeID:  src.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+		Msg:     src.Msg,
 	}}
 	assert.Equal(t, expHistory, wasmKeeper.GetContractHistory(ctx, contractAddr))
 	// and events emitted
@@ -545,9 +540,8 @@ func TestAdminProposals(t *testing.T) {
 
 			entries := []types.ContractCodeHistoryEntry{
 				{
-					Operation: types.ContractCodeHistoryOperationTypeInit,
-					CodeID:    1,
-					Updated:   spec.state.Created,
+					CodeID:  1,
+					Updated: spec.state.Created,
 				},
 			}
 

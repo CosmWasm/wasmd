@@ -263,10 +263,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{}`),
 							},
 						},
 					},
@@ -292,10 +291,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{}`),
 							},
 						},
 					}, {
@@ -303,10 +301,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{"foo":"bar"}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -327,10 +324,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{"foo":"bar"}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -351,10 +347,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{"foo":"bar"}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{"foo":"bar"}`),
 							},
 						},
 					}, {
@@ -362,10 +357,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{"other":"value"}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{"other":"value"}`),
 							},
 						},
 					},
@@ -396,10 +390,9 @@ func TestGenesisInit(t *testing.T) {
 						},
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{"foo":"bar"}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{"foo":"bar"}`),
 							},
 						},
 					},
@@ -442,10 +435,9 @@ func TestGenesisInit(t *testing.T) {
 						ContractInfo:    types.ContractInfoFixture(func(c *wasmTypes.ContractInfo) { c.CodeID = 1 }, types.RandCreatedFields),
 						ContractCodeHistory: []types.ContractCodeHistoryEntry{
 							{
-								Operation: types.ContractCodeHistoryOperationTypeMigrate,
-								CodeID:    1,
-								Updated:   &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
-								Msg:       []byte(`{}`),
+								CodeID:  1,
+								Updated: &types.AbsoluteTxPosition{BlockHeight: rand.Uint64(), TxIndex: rand.Uint64()},
+								Msg:     []byte(`{}`),
 							},
 						},
 					},
@@ -632,8 +624,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 
 	expHistory := []types.ContractCodeHistoryEntry{
 		{
-			Operation: types.ContractCodeHistoryOperationTypeInit,
-			CodeID:    firstCodeID,
+			CodeID: firstCodeID,
 			Updated: &types.AbsoluteTxPosition{
 				BlockHeight: 100,
 				TxIndex:     10,
@@ -641,8 +632,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 			Msg: []byte(`{"foo": "bar"}`),
 		},
 		{
-			Operation: types.ContractCodeHistoryOperationTypeMigrate,
-			CodeID:    firstCodeID,
+			CodeID: firstCodeID,
 			Updated: &types.AbsoluteTxPosition{
 				BlockHeight: 200,
 				TxIndex:     10,
