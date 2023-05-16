@@ -43,18 +43,31 @@ type GRPCQueryRouter interface {
 
 var _ wasmvmtypes.Querier = QueryHandler{}
 
-func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byte, error) {
+func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (res []byte, err error) {
 	// set a limit for a subCtx
 	sdkGas := q.gasRegister.FromWasmVMGas(gasLimit)
-	// discard all changes/ events in subCtx by not committing the cached context
-	subCtx, _ := q.Ctx.WithGasMeter(sdk.NewGasMeter(sdkGas)).CacheContext()
 
-	// make sure we charge the higher level context even on panic
+	if err := types.CreateNewSession(&q.Ctx, sdkGas); err != nil {
+		return nil, err
+	}
+
+	// discard all changes/ events in subCtx by not committing the cached context
+	subCtx, _ := q.Ctx.CacheContext() //Instead, use prepare gas tracking sub ctx
+
 	defer func() {
-		q.Ctx.GasMeter().ConsumeGas(subCtx.GasMeter().GasConsumed(), "contract sub-query")
+		destroySessionErr := types.DestroySession(&q.Ctx)
+		if destroySessionErr != nil {
+			q.Ctx.Logger().Error("error while destroying a gas tracking session", "error", destroySessionErr)
+		}
+
+		if err != nil {
+			err = fmt.Errorf("error while querying from wasm smart contract, querier error: %s, error: %s", err, destroySessionErr)
+		} else {
+			err = destroySessionErr
+		}
 	}()
 
-	res, err := q.Plugins.HandleQuery(subCtx, q.Caller, request)
+	res, err = q.Plugins.HandleQuery(subCtx, q.Caller, request)
 	if err == nil {
 		// short-circuit, the rest is dealing with handling existing errors
 		return res, nil
@@ -72,6 +85,10 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 
 func (q QueryHandler) GasConsumed() uint64 {
 	return q.Ctx.GasMeter().GasConsumed()
+}
+
+func (q *QueryHandler) GetCtx() *sdk.Context {
+	return &q.Ctx
 }
 
 type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)

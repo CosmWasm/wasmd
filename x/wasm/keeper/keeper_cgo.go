@@ -43,7 +43,7 @@ func NewKeeper(
 	keeper := &Keeper{
 		storeKey:             storeKey,
 		cdc:                  cdc,
-		wasmVM:               wasmer,
+		wasmVM:               types.NewTrackingWasmerEngine(wasmer, &types.NoOpContractGasProcessor{}),
 		accountKeeper:        accountKeeper,
 		bank:                 NewBankCoinTransferrer(bankKeeper),
 		accountPruner:        NewVestingCoinBurner(bankKeeper),
