@@ -85,7 +85,6 @@ var (
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(sdkErrors.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
-	ErrZero = sdkErrors.Register(DefaultCodespace, 29, "0 is not accepted")
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted

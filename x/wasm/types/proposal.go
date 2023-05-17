@@ -854,13 +854,17 @@ func (p PinCodesProposal) ValidateBasic() error {
 	}
 	for _, num1 := range p.CodeIDs {
 		if num1 == 0 {
-			return sdkerrors.Wrap(ErrZero, "0 is not accepted")
+			return ErrInvalid.Wrap("0 is not accepted")
 
 		}
+		count := 0
 		for _, num2 := range p.CodeIDs {
 			if num1 == num2 {
-				return sdkerrors.Wrap(ErrDuplicate, "duplicate")
+				count++
 			}
+		}
+		if count > 1 {
+			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%s", num1)
 		}
 	}
 	return nil
@@ -909,13 +913,17 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 	}
 	for _, num1 := range p.CodeIDs {
 		if num1 == 0 {
-			return sdkerrors.Wrap(ErrZero, "0 is not accepted")
+			return ErrInvalid.Wrap("0 is not accepted")
 
 		}
+		count := 0
 		for _, num2 := range p.CodeIDs {
 			if num1 == num2 {
-				return sdkerrors.Wrap(ErrDuplicate, "duplicate")
+				count++
 			}
+		}
+		if count > 1 {
+			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%s", num1)
 		}
 	}
 	return nil
@@ -993,7 +1001,7 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 			return sdkerrors.Wrapf(ErrDuplicate, "duplicate code: %d", codeUpdate.CodeID)
 		}
 		if codeUpdate.CodeID == 0 {
-			return sdkerrors.Wrap(ErrZero, "0 is no accepted")
+			return ErrInvalid.Wrap("0 is not accepted")
 		}
 		if err := codeUpdate.InstantiatePermission.ValidateBasic(); err != nil {
 			return sdkerrors.Wrap(err, "instantiate permission")
