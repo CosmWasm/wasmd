@@ -86,15 +86,15 @@ func TestAccessConfigMigrations(t *testing.T) {
 	ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
 
 	// any address permission
-	code2, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
+	code1, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
 	require.NoError(t, err)
 
 	// allow everybody permission
-	code3, err := storeCode(ctx, wasmApp, types.AllowEverybody)
+	code2, err := storeCode(ctx, wasmApp, types.AllowEverybody)
 	require.NoError(t, err)
 
 	// allow nobody permission
-	code4, err := storeCode(ctx, wasmApp, types.AllowNobody)
+	code3, err := storeCode(ctx, wasmApp, types.AllowNobody)
 	require.NoError(t, err)
 
 	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
@@ -111,13 +111,13 @@ func TestAccessConfigMigrations(t *testing.T) {
 	assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
 
 	// any address was not migrated
-	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code2).InstantiateConfig)
+	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code1).InstantiateConfig)
 
 	// allow everybody was not migrated
-	assert.Equal(t, types.AllowEverybody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code3).InstantiateConfig)
+	assert.Equal(t, types.AllowEverybody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code2).InstantiateConfig)
 
 	// allow nodoby was not migrated
-	assert.Equal(t, types.AllowNobody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code4).InstantiateConfig)
+	assert.Equal(t, types.AllowNobody, wasmApp.WasmKeeper.GetCodeInfo(ctx, code3).InstantiateConfig)
 }
 
 func storeCode(ctx sdk.Context, wasmApp *app.WasmApp, instantiatePermission types.AccessConfig) (codeID uint64, err error) {
