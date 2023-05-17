@@ -86,7 +86,7 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 // that is executed on block 0.
 func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator GenesisMutator) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
+		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Instantiate a wasm contract",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -140,7 +140,6 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
-	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract.")
@@ -331,7 +330,6 @@ func GetAllContracts(state *types.GenesisState) []ContractMeta {
 					CodeID:  msg.CodeID,
 					Creator: msg.Sender,
 					Admin:   msg.Admin,
-					Label:   msg.Label,
 				},
 			})
 			seq++

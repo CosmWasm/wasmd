@@ -155,7 +155,6 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		Sender: addr.String(),
 		Admin:  addr.String(),
 		CodeID: codeID,
-		Label:  "Demo contract",
 		Msg:    initBz,
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)

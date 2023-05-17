@@ -139,7 +139,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("no-admin", "true")
 			},
@@ -155,7 +154,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("admin", myWellFundedAccount)
 			},
@@ -174,7 +172,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"100", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("no-admin", "true")
 			},
@@ -185,7 +182,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"2", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("no-admin", "true")
 			},
@@ -203,7 +199,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("no-admin", "true")
 			},
@@ -229,7 +224,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 			},
 			expError: true,
@@ -254,7 +248,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("no-admin", "true")
 				flagSet.Set("admin", myWellFundedAccount)
@@ -281,7 +274,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 				flagSet.Set("no-admin", "true")
 			},
@@ -307,7 +299,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", myWellFundedAccount)
 				flagSet.Set("amount", "100stake")
 				flagSet.Set("no-admin", "true")
@@ -334,7 +325,6 @@ func TestInstantiateContractCmd(t *testing.T) {
 			mutator: func(cmd *cobra.Command) {
 				cmd.SetArgs([]string{"1", `{}`})
 				flagSet := cmd.Flags()
-				flagSet.Set("label", "testing")
 				flagSet.Set("run-as", keeper.RandomBech32AccountAddress(t))
 				flagSet.Set("amount", "10stake")
 				flagSet.Set("no-admin", "true")
@@ -578,40 +568,40 @@ func TestGetAllContracts(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: "first-contract",
-						ContractInfo:    types.ContractInfo{Label: "first"},
+						ContractInfo:    types.ContractInfo{Admin: "first"},
 					},
 					{
 						ContractAddress: "second-contract",
-						ContractInfo:    types.ContractInfo{Label: "second"},
+						ContractInfo:    types.ContractInfo{Admin: "second"},
 					},
 				},
 			},
 			exp: []ContractMeta{
 				{
 					ContractAddress: "first-contract",
-					Info:            types.ContractInfo{Label: "first"},
+					Info:            types.ContractInfo{Admin: "first"},
 				},
 				{
 					ContractAddress: "second-contract",
-					Info:            types.ContractInfo{Label: "second"},
+					Info:            types.ContractInfo{Admin: "second"},
 				},
 			},
 		},
 		"read from message state": {
 			src: types.GenesisState{
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "first"}}},
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "second"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Admin: "first"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Admin: "second"}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
 					ContractAddress: keeper.BuildContractAddressClassic(0, 1).String(),
-					Info:            types.ContractInfo{Label: "first"},
+					Info:            types.ContractInfo{Admin: "first"},
 				},
 				{
 					ContractAddress: keeper.BuildContractAddressClassic(0, 2).String(),
-					Info:            types.ContractInfo{Label: "second"},
+					Info:            types.ContractInfo{Admin: "second"},
 				},
 			},
 		},
@@ -621,13 +611,13 @@ func TestGetAllContracts(t *testing.T) {
 					{IDKey: types.KeyLastInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Admin: "hundred"}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
 					ContractAddress: keeper.BuildContractAddressClassic(0, 100).String(),
-					Info:            types.ContractInfo{Label: "hundred"},
+					Info:            types.ContractInfo{Admin: "hundred"},
 				},
 			},
 		},
@@ -636,24 +626,24 @@ func TestGetAllContracts(t *testing.T) {
 				Contracts: []types.Contract{
 					{
 						ContractAddress: "first-contract",
-						ContractInfo:    types.ContractInfo{Label: "first"},
+						ContractInfo:    types.ContractInfo{Admin: "first"},
 					},
 				},
 				Sequences: []types.Sequence{
 					{IDKey: types.KeyLastInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
-					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
+					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Admin: "hundred"}}},
 				},
 			},
 			exp: []ContractMeta{
 				{
 					ContractAddress: "first-contract",
-					Info:            types.ContractInfo{Label: "first"},
+					Info:            types.ContractInfo{Admin: "first"},
 				},
 				{
 					ContractAddress: keeper.BuildContractAddressClassic(0, 100).String(),
-					Info:            types.ContractInfo{Label: "hundred"},
+					Info:            types.ContractInfo{Admin: "hundred"},
 				},
 			},
 		},

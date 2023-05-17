@@ -118,6 +118,6 @@ func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.Co
 	admin := sdk.MustAccAddressFromBech32(contractInfo.Admin)
 	contractAddr := sdk.MustAccAddressFromBech32(contractInfo.Address)
 
-	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, "", createdAt)
+	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, createdAt)
 	m.keeper.storeContractInfo(ctx, contractAddr, &newContract)
 }

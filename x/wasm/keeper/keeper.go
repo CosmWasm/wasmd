@@ -273,7 +273,7 @@ func (k Keeper) instantiate(
 	codeID uint64,
 	creator, admin sdk.AccAddress,
 	initMsg []byte,
-	label string,
+	//label string,
 	deposit sdk.Coins,
 	addressGenerator AddressGenerator,
 	authPolicy AuthorizationPolicy,
@@ -361,7 +361,7 @@ func (k Keeper) instantiate(
 
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(ctx)
-	contractInfo := types.NewContractInfo(codeID, creator, admin, label, createdAt)
+	contractInfo := types.NewContractInfo(codeID, creator, admin, /*label,*/ createdAt)
 
 	// check for IBC flag
 	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)

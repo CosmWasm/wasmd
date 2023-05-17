@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -42,14 +41,6 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		},
 		"admin not an address": {
 			srcMutator: func(c *ContractInfo) { c.Admin = "invalid address" },
-			expError:   true,
-		},
-		"label empty": {
-			srcMutator: func(c *ContractInfo) { c.Label = "" },
-			expError:   true,
-		},
-		"label exceeds limit": {
-			srcMutator: func(c *ContractInfo) { c.Label = strings.Repeat("a", MaxLabelSize+1) },
 			expError:   true,
 		},
 		"invalid extension": {
@@ -182,7 +173,7 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 	myExtension.TotalDeposit = nil
 
-	src := NewContractInfo(1, myAddr, myOtherAddr, "bar", &anyPos)
+	src := NewContractInfo(1, myAddr, myOtherAddr, &anyPos)
 	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
