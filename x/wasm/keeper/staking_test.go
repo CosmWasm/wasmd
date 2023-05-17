@@ -124,7 +124,7 @@ func TestInitializeStaking(t *testing.T) {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -144,7 +144,7 @@ func TestInitializeStaking(t *testing.T) {
 	badBz, err := json.Marshal(&badInitMsg)
 	require.NoError(t, err)
 
-	_, _, err = k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, badBz, "missing validator", nil)
+	_, _, err = k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, badBz, nil)
 	require.Error(t, err)
 
 	// no changes to bonding shares
@@ -207,7 +207,7 @@ func initializeStaking(t *testing.T) initInfo {
 	initBz, err := json.Marshal(&initMsg)
 	require.NoError(t, err)
 
-	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, "staking derivates - DRV", nil)
+	stakingAddr, _, err := k.ContractKeeper.Instantiate(ctx, stakingID, creator, nil, initBz, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, stakingAddr)
 
@@ -452,7 +452,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, uint64(2), maskID)
 
 	// creator instantiates a contract and gives it tokens
-	maskAddr, _, err := initInfo.contractKeeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), "mask contract 2", nil)
+	maskAddr, _, err := initInfo.contractKeeper.Instantiate(ctx, maskID, creator, nil, []byte("{}"), nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, maskAddr)
 

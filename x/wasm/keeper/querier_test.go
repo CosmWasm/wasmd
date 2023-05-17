@@ -296,7 +296,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 			ctx = setBlock(ctx, h)
 			h++
 		}
-		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, topUp)
 		require.NoError(t, err)
 	}
 
@@ -841,7 +841,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		ctx = setBlock(ctx, h)
 		h++
-		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		contract, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, topUp)
 		allExpecedContracts = append(allExpecedContracts, contract.String())
 		require.NoError(t, err)
 	}
