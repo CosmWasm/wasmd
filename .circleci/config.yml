@@ -95,6 +95,28 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
+  
+  test-system:
+    executor: golang
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Build and run system tests
+          command: make test-system
+      - store_artifacts:
+          path: /go/src/github.com/CosmWasm/wasmd/testnet/node0.out
+      - store_artifacts:
+          path: /go/src/github.com/CosmWasm/wasmd/testnet/node1.out
+      - store_artifacts:
+          path: /go/src/github.com/CosmWasm/wasmd/testnet/node2.out
+      - store_artifacts:
+          path: /go/src/github.com/CosmWasm/wasmd/testnet/node3.out
 
   benchmark:
     executor: golang
@@ -230,6 +252,9 @@ workflows:
           requires:
             - setup-dependencies
       - upload-coverage:
+          requires:
+            - test-cover
+      - test-system:
           requires:
             - test-cover
       - benchmark:
