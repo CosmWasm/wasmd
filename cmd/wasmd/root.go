@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
@@ -148,7 +150,7 @@ func initAppConfig() (string, interface{}) {
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	rootCmd.AddCommand(
 		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		// testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		NewTestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		config.Cmd(),
 		pruning.PruningCmd(newApp),
