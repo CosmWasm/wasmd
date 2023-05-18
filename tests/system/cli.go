@@ -263,7 +263,7 @@ func (c WasmdCli) QuerySmart(contractAddr, msg string, args ...string) string {
 }
 
 // QueryBalances queries all balances for an account. Returns json response
-// Example:`{"balances":[{"denom":"node0token","amount":"1000000000"},{"denom":"utgd","amount":"400000003"}],"pagination":{}}`
+// Example:`{"balances":[{"denom":"node0token","amount":"1000000000"},{"denom":"ustake","amount":"400000003"}],"pagination":{}}`
 func (c WasmdCli) QueryBalances(addr string) string {
 	return c.CustomQuery("q", "bank", "balances", addr)
 }
@@ -282,23 +282,6 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 	raw := c.CustomQuery("q", "bank", "total", "--denom="+denom)
 	require.Contains(c.t, raw, "amount", raw)
 	return gjson.Get(raw, "amount").Int()
-}
-
-// QueryValidator queries the validator for the given operator address. Returns json response
-func (c WasmdCli) QueryValidator(addr string) string {
-	return c.CustomQuery("q", "poe", "validator", addr)
-}
-
-// QueryValidatorRewards queries the validator rewards for the given operator address
-func (c WasmdCli) QueryValidatorRewards(addr string) sdk.DecCoin {
-	raw := c.CustomQuery("q", "poe", "validator-reward", addr)
-	require.NotEmpty(c.t, raw)
-
-	r := gjson.Get(raw, "reward")
-	amount, err := sdk.NewDecFromStr(gjson.Get(r.Raw, "amount").String())
-	require.NoError(c.t, err)
-	denom := gjson.Get(r.Raw, "denom").String()
-	return sdk.NewDecCoinFromDec(denom, amount)
 }
 
 func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
