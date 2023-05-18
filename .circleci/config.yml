@@ -110,13 +110,13 @@ jobs:
           name: Build and run system tests
           command: make test-system
       - store_artifacts:
-          path: /go/src/github.com/CosmWasm/wasmd/testnet/node0.out
+          path: /tmp/workspace/testnet/node0.out
       - store_artifacts:
-          path: /go/src/github.com/CosmWasm/wasmd/testnet/node1.out
+          path: /tmp/workspace/testnet/node1.out
       - store_artifacts:
-          path: /go/src/github.com/CosmWasm/wasmd/testnet/node2.out
+          path: /tmp/workspace/testnet/node2.out
       - store_artifacts:
-          path: /go/src/github.com/CosmWasm/wasmd/testnet/node3.out
+          path: /tmp/workspace/testnet/node3.out
 
   benchmark:
     executor: golang
