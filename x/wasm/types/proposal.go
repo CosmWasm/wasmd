@@ -864,7 +864,7 @@ func (p PinCodesProposal) ValidateBasic() error {
 			}
 		}
 		if count > 1 {
-			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%s", num1)
+			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%d", num1)
 		}
 	}
 	return nil
@@ -923,7 +923,7 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 			}
 		}
 		if count > 1 {
-			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%s", num1)
+			return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%d", num1)
 		}
 	}
 	return nil

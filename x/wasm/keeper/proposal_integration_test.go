@@ -787,6 +787,16 @@ func TestPinCodesProposal(t *testing.T) {
 			mockFn:     checksumCollector,
 			expErr:     true,
 		},
+		"pin code id is 0": {
+			srcCodeIDs: []uint64{0},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"pin duplicate code id ": {
+			srcCodeIDs: []uint64{hackatom.CodeID, hackatom.CodeID},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
 		"wasmvm failed with error": {
 			srcCodeIDs: []uint64{hackatom.CodeID},
 			mockFn: func(_ wasmvm.Checksum) error {
@@ -872,6 +882,16 @@ func TestUnpinCodesProposal(t *testing.T) {
 		},
 		"unpin empty code id list": {
 			srcCodeIDs: []uint64{},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"unpin code id is 0": {
+			srcCodeIDs: []uint64{0},
+			mockFn:     checksumCollector,
+			expErr:     true,
+		},
+		"unpin duplicate code id ": {
+			srcCodeIDs: []uint64{hackatom.CodeID, hackatom.CodeID},
 			mockFn:     checksumCollector,
 			expErr:     true,
 		},
@@ -968,6 +988,12 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 		"update empty list": {
 			accessConfigUpdates: make([]types.AccessConfigUpdate, 0),
 			expErr:              true,
+		},
+		"update code id is 0": {
+			accessConfigUpdates: []types.AccessConfigUpdate{
+				{CodeID: 0, InstantiatePermission: types.AllowNobody},
+			},
+			expErr: true,
 		},
 	}
 	parentCtx := ctx
