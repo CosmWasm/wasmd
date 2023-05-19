@@ -109,14 +109,6 @@ jobs:
       - run:
           name: Build and run system tests
           command: make test-system
-      - store_artifacts:
-          path: /tmp/workspace/testnet/node0.out
-      - store_artifacts:
-          path: /tmp/workspace/testnet/node1.out
-      - store_artifacts:
-          path: /tmp/workspace/testnet/node2.out
-      - store_artifacts:
-          path: /tmp/workspace/testnet/node3.out
 
   benchmark:
     executor: golang
