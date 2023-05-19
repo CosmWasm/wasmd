@@ -12,8 +12,6 @@ import (
 const MaxSaltSize = 64
 
 var (
-	// MaxLabelSize is the longest label that can be used when instantiating a contract
-	MaxLabelSize = 128 // extension point for chains to customize via compile flag.
 
 	// MaxWasmSize is the largest a compiled contract code can be when storing code on chain
 	MaxWasmSize = 800 * 1024 // extension point for chains to customize via compile flag.
@@ -28,17 +26,6 @@ func validateWasmCode(s []byte, maxSize int) error {
 	}
 	if len(s) > maxSize {
 		return sdkerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
-	}
-	return nil
-}
-
-// ValidateLabel ensure label constraints
-func ValidateLabel(label string) error {
-	if label == "" {
-		return sdkerrors.Wrap(ErrEmpty, "is required")
-	}
-	if len(label) > MaxLabelSize {
-		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxLabelSize)
 	}
 	return nil
 }

@@ -92,7 +92,6 @@ type InstantiateProposalJSONReq struct {
 	// Admin is an optional address that can execute migrations
 	Admin string          `json:"admin,omitempty" yaml:"admin"`
 	Code  uint64          `json:"code_id" yaml:"code_id"`
-	Label string          `json:"label" yaml:"label"`
 	Msg   json.RawMessage `json:"msg" yaml:"msg"`
 	Funds sdk.Coins       `json:"funds" yaml:"funds"`
 }
@@ -104,7 +103,6 @@ func (s InstantiateProposalJSONReq) Content() govtypes.Content {
 		RunAs:       s.RunAs,
 		Admin:       s.Admin,
 		CodeID:      s.Code,
-		Label:       s.Label,
 		Msg:         types.RawContractMessage(s.Msg),
 		Funds:       s.Funds,
 	}

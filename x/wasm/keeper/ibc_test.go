@@ -30,7 +30,7 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 
 	// create a second contract should give yet another portID (and different address)
 	creator := RandomAccountAddress(t)
-	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, creator, nil, initMsgBz, "ibc-reflect-2", nil)
+	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, creator, nil, initMsgBz, nil)
 	require.NoError(t, err)
 	require.NotEqual(t, example.Contract, addr)
 

@@ -52,7 +52,7 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, instantiatePermission 
 }
 
 // NewContractInfo creates a new instance of a given WASM contract info
-func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string, createdAt *AbsoluteTxPosition) ContractInfo {
+func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, createdAt *AbsoluteTxPosition) ContractInfo {
 	var adminAddr string
 	if !admin.Empty() {
 		adminAddr = admin.String()
@@ -61,7 +61,6 @@ func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string,
 		CodeID:  codeID,
 		Creator: creator.String(),
 		Admin:   adminAddr,
-		Label:   label,
 		Created: createdAt,
 	}
 }
@@ -85,9 +84,6 @@ func (c *ContractInfo) ValidateBasic() error {
 		if _, err := sdk.AccAddressFromBech32(c.Admin); err != nil {
 			return sdkerrors.Wrap(err, "admin")
 		}
-	}
-	if err := ValidateLabel(c.Label); err != nil {
-		return sdkerrors.Wrap(err, "label")
 	}
 	if c.Extension == nil {
 		return nil
