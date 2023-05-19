@@ -24,16 +24,14 @@ const (
 
 // nolint
 var (
-	SequenceKeyPrefix                              = []byte{0x99}
 	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x098}
 	PinnedCodeIndexPrefix                          = []byte{0x07}
 	TXCounterPrefix                                = []byte{0x08}
 	ContractsByCreatorPrefix                       = []byte{0x09}
 
-	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
-	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
-
 	// Compatible key with old
+	KeyLastCodeID                    = []byte{0x01}
+	KeyLastInstanceID                = []byte{0x02}
 	CodeKeyPrefix                    = []byte{0x03}
 	ContractKeyPrefix                = []byte{0x04}
 	ContractStorePrefix              = []byte{0x05}
