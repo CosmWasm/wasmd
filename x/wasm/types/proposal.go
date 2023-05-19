@@ -208,10 +208,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 	if p.CodeID == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
-	//this code can be removed based on the preference between silent trimming the label or validating the label
-	if p.Label != strings.TrimSpace(p.Label) {
-		p.Label = strings.TrimSpace(p.Label)
-	}
+	p.Label = strings.TrimSpace(p.Label)
 
 	if err := ValidateLabel(p.Label); err != nil {
 		return err

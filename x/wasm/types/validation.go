@@ -42,7 +42,7 @@ func ValidateLabel(label string) error {
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxLabelSize)
 	}
 	if label != strings.TrimSpace(label) {
-		return ErrInvalid.Wrapf("'%s'This label is not trimmed", label)
+		return ErrInvalid.Wrap("label must not start/end with whitespaces")
 	}
 	return nil
 }
