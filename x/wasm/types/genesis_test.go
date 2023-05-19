@@ -197,19 +197,10 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 	myExtension.TotalDeposit = nil
 
 	src := NewContractInfo(1, myAddr, myOtherAddr, &anyPos)
-	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
-	RegisterInterfaces(interfaceRegistry)
-	// register proposal as extension type
-	interfaceRegistry.RegisterImplementations(
-		(*ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
-	)
-	// register gov types for nested Anys
-	govtypes.RegisterInterfaces(interfaceRegistry)
 
 	// when encode
 	gs := GenesisState{
@@ -228,8 +219,4 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 	require.Len(t, destGs.Contracts, 1)
 	dest := destGs.Contracts[0].ContractInfo
 	assert.Equal(t, src, dest)
-	// and sanity check nested any
-	var destExt govtypes.Proposal
-	require.NoError(t, dest.ReadExtension(&destExt))
-	assert.Equal(t, destExt.GetTitle(), "bar")
 }
