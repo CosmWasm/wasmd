@@ -31,8 +31,6 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) { //nolint:staticcheck
 	cdc.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
 	cdc.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal", nil)
 
-	cdc.RegisterInterface((*ContractInfoExtension)(nil), nil)
-
 	cdc.RegisterInterface((*ContractAuthzFilterX)(nil), nil)
 	cdc.RegisterConcrete(&AllowAllMessagesFilter{}, "wasm/AllowAllMessagesFilter", nil)
 	cdc.RegisterConcrete(&AcceptedMessageKeysFilter{}, "wasm/AcceptedMessageKeysFilter", nil)
@@ -75,8 +73,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&UpdateInstantiateConfigProposal{},
 		&StoreAndInstantiateContractProposal{},
 	)
-
-	registry.RegisterInterface("ContractInfoExtension", (*ContractInfoExtension)(nil))
 
 	registry.RegisterInterface("ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
 	registry.RegisterImplementations(

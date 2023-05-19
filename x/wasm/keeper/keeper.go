@@ -273,7 +273,7 @@ func (k Keeper) instantiate(
 	codeID uint64,
 	creator, admin sdk.AccAddress,
 	initMsg []byte,
-	//label string,
+	// label string,
 	deposit sdk.Coins,
 	addressGenerator AddressGenerator,
 	authPolicy AuthorizationPolicy,
@@ -361,7 +361,7 @@ func (k Keeper) instantiate(
 
 	// persist instance first
 	createdAt := types.NewAbsoluteTxPosition(ctx)
-	contractInfo := types.NewContractInfo(codeID, creator, admin, /*label,*/ createdAt)
+	contractInfo := types.NewContractInfo(codeID, creator, admin /*label,*/, createdAt)
 
 	// check for IBC flag
 	report, err := k.wasmVM.AnalyzeCode(codeInfo.CodeHash)
@@ -947,19 +947,6 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 			return sdkerrors.Wrap(types.ErrPinContractFailed, err.Error())
 		}
 	}
-	return nil
-}
-
-// setContractInfoExtension updates the extension point data that is stored with the contract info
-func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAddress, ext types.ContractInfoExtension) error {
-	info := k.GetContractInfo(ctx, contractAddr)
-	if info == nil {
-		return sdkerrors.Wrap(types.ErrNotFound, "contract info")
-	}
-	if err := info.SetExtension(ext); err != nil {
-		return err
-	}
-	k.storeContractInfo(ctx, contractAddr, info)
 	return nil
 }
 

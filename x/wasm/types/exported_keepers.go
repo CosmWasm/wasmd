@@ -35,7 +35,7 @@ type ContractOpsKeeper interface {
 		codeID uint64,
 		creator, admin sdk.AccAddress,
 		initMsg []byte,
-		//label string,
+		// label string,
 		deposit sdk.Coins,
 	) (sdk.AccAddress, []byte, error)
 
@@ -45,7 +45,7 @@ type ContractOpsKeeper interface {
 		codeID uint64,
 		creator, admin sdk.AccAddress,
 		initMsg []byte,
-		//label string,
+		// label string,
 		deposit sdk.Coins,
 		salt []byte,
 		fixMsg bool,
@@ -71,9 +71,6 @@ type ContractOpsKeeper interface {
 
 	// UnpinCode removes the wasm contract from wasmvm cache
 	UnpinCode(ctx sdk.Context, codeID uint64) error
-
-	// SetContractInfoExtension updates the extension point data that is stored with the contract info
-	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra ContractInfoExtension) error
 
 	// SetAccessConfig updates the access config of a code id.
 	SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig AccessConfig) error
