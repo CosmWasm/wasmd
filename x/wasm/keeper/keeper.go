@@ -273,7 +273,7 @@ func (k Keeper) instantiate(
 	codeID uint64,
 	creator, admin sdk.AccAddress,
 	initMsg []byte,
-	//label string,
+	// label string,
 	deposit sdk.Coins,
 	addressGenerator AddressGenerator,
 	authPolicy AuthorizationPolicy,

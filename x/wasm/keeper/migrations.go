@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -27,19 +28,15 @@ func NewMigrator(keeper Keeper) Migrator {
 // in terra classic we don't have these params - so we set them
 // to default
 func (m Migrator) setWasmDefaultParams(ctx sdk.Context) {
-
 	params := types.DefaultParams()
 	m.keeper.SetParams(ctx, params)
-
 }
 
 // setLastCodeID sets the LastCodeId store to a value
 func (m Migrator) setLastCodeID(ctx sdk.Context, id uint64) {
-
 	store := ctx.KVStore(m.keeper.storeKey)
 	bz := sdk.Uint64ToBigEndian(id)
 	store.Set(types.KeyLastCodeID, bz)
-
 }
 
 // createCodeFromLegacy - this function migrates the CodeInfo store
@@ -77,7 +74,6 @@ func (m Migrator) createCodeFromLegacy(ctx sdk.Context, creator sdk.AccAddress, 
 // Migrate1to2 migrates from version 1 to 2. Note that this is not the
 // canonical migration path, because the terra classic wasm store is
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-
 	ctx.Logger().Info("### Setting Default wasmd parameters ###")
 	m.setWasmDefaultParams(ctx)
 
@@ -94,7 +90,6 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	// TODO
 	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
-
 		m.migrateAbsoluteTx(ctx, contractInfo)
 
 		return false

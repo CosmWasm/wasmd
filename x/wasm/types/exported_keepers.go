@@ -35,7 +35,7 @@ type ContractOpsKeeper interface {
 		codeID uint64,
 		creator, admin sdk.AccAddress,
 		initMsg []byte,
-		//label string,
+		// label string,
 		deposit sdk.Coins,
 	) (sdk.AccAddress, []byte, error)
 
@@ -45,7 +45,7 @@ type ContractOpsKeeper interface {
 		codeID uint64,
 		creator, admin sdk.AccAddress,
 		initMsg []byte,
-		//label string,
+		// label string,
 		deposit sdk.Coins,
 		salt []byte,
 		fixMsg bool,

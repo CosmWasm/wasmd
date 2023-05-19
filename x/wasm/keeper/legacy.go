@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 )
 
 // SetContractInfo stores ContractInfo for the given contractAddress
