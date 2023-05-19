@@ -195,7 +195,7 @@ func (c WasmdCli) withChainFlags(args ...string) []string {
 
 // WasmExecute send MsgExecute to a contract
 func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) string {
-	cmd := []string{"tx", "wasm", "execute", contractAddr, msg, "--from", from}
+	cmd := append([]string{"tx", "wasm", "execute", contractAddr, msg, "--from", from}, args...)
 	return c.CustomCommand(cmd...)
 }
 
@@ -263,7 +263,7 @@ func (c WasmdCli) QuerySmart(contractAddr, msg string, args ...string) string {
 }
 
 // QueryBalances queries all balances for an account. Returns json response
-// Example:`{"balances":[{"denom":"node0token","amount":"1000000000"},{"denom":"ustake","amount":"400000003"}],"pagination":{}}`
+// Example:`{"balances":[{"denom":"node0token","amount":"1000000000"},{"denom":"stake","amount":"400000003"}],"pagination":{}}`
 func (c WasmdCli) QueryBalances(addr string) string {
 	return c.CustomQuery("q", "bank", "balances", addr)
 }
