@@ -409,7 +409,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1a5db), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1a59f), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -419,10 +419,9 @@ func TestInstantiate(t *testing.T) {
 	assert.Equal(t, example.CodeID, info.CodeID)
 
 	exp := []types.ContractCodeHistoryEntry{{
-		Operation: types.ContractCodeHistoryOperationTypeInit,
-		CodeID:    example.CodeID,
-		Updated:   types.NewAbsoluteTxPosition(ctx),
-		Msg:       initMsgBz,
+		CodeID:  example.CodeID,
+		Updated: types.NewAbsoluteTxPosition(ctx),
+		Msg:     initMsgBz,
 	}}
 	assert.Equal(t, exp, keepers.WasmKeeper.GetContractHistory(ctx, gotContractAddr))
 
@@ -1269,15 +1268,13 @@ func TestMigrate(t *testing.T) {
 			assert.Equal(t, spec.expIBCPort, cInfo.IBCPortID != "", cInfo.IBCPortID)
 
 			expHistory := []types.ContractCodeHistoryEntry{{
-				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    spec.fromCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
-				Msg:       initMsgBz,
+				CodeID:  spec.fromCodeID,
+				Updated: types.NewAbsoluteTxPosition(ctx),
+				Msg:     initMsgBz,
 			}, {
-				Operation: types.ContractCodeHistoryOperationTypeMigrate,
-				CodeID:    spec.toCodeID,
-				Updated:   types.NewAbsoluteTxPosition(ctx),
-				Msg:       spec.migrateMsg,
+				CodeID:  spec.toCodeID,
+				Updated: types.NewAbsoluteTxPosition(ctx),
+				Msg:     spec.migrateMsg,
 			}}
 			assert.Equal(t, expHistory, keepers.WasmKeeper.GetContractHistory(ctx, contractAddr))
 

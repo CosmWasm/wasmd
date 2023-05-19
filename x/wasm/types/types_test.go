@@ -8,7 +8,6 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -177,7 +176,7 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	RegisterInterfaces(interfaceRegistry)
 	// register proposal as extension type
@@ -705,12 +704,6 @@ func TestContractCodeHistoryEntryValidation(t *testing.T) {
 	}{
 		"all good": {
 			src: ContractCodeHistoryEntryFixture(),
-		},
-		"unknown operation": {
-			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {
-				entry.Operation = 0
-			}),
-			expErr: true,
 		},
 		"empty code id": {
 			src: ContractCodeHistoryEntryFixture(func(entry *ContractCodeHistoryEntry) {

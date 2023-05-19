@@ -51,8 +51,6 @@ func NewCodeInfo(codeHash []byte, creator sdk.AccAddress, instantiatePermission 
 	}
 }
 
-var AllCodeHistoryTypes = []ContractCodeHistoryOperationType{ContractCodeHistoryOperationTypeGenesis, ContractCodeHistoryOperationTypeInit, ContractCodeHistoryOperationTypeMigrate}
-
 // NewContractInfo creates a new instance of a given WASM contract info
 func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, createdAt *AbsoluteTxPosition) ContractInfo {
 	var adminAddr string
@@ -149,19 +147,17 @@ func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 
 func (c ContractInfo) InitialHistory(initMsg []byte) ContractCodeHistoryEntry {
 	return ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryOperationTypeInit,
-		CodeID:    c.CodeID,
-		Updated:   c.Created,
-		Msg:       initMsg,
+		CodeID:  c.CodeID,
+		Updated: c.Created,
+		Msg:     initMsg,
 	}
 }
 
 func (c *ContractInfo) AddMigration(ctx sdk.Context, codeID uint64, msg []byte) ContractCodeHistoryEntry {
 	h := ContractCodeHistoryEntry{
-		Operation: ContractCodeHistoryOperationTypeMigrate,
-		CodeID:    codeID,
-		Updated:   NewAbsoluteTxPosition(ctx),
-		Msg:       msg,
+		CodeID:  codeID,
+		Updated: NewAbsoluteTxPosition(ctx),
+		Msg:     msg,
 	}
 	c.CodeID = codeID
 	return h
@@ -241,16 +237,6 @@ func (a *AbsoluteTxPosition) Bytes() []byte {
 
 // ValidateBasic syntax checks
 func (c ContractCodeHistoryEntry) ValidateBasic() error {
-	var found bool
-	for _, v := range AllCodeHistoryTypes {
-		if c.Operation == v {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return ErrInvalid.Wrap("operation")
-	}
 	if c.CodeID == 0 {
 		return ErrEmpty.Wrap("code id")
 	}
