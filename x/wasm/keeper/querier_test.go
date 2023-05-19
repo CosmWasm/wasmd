@@ -525,12 +525,6 @@ func TestQueryContractInfo(t *testing.T) {
 		anyDate      = time.Now().UTC()
 	)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	// register an example extension. must be protobuf
-	keepers.EncodingConfig.InterfaceRegistry.RegisterImplementations(
-		(*types.ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
-	)
-	govtypes.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
 
 	k := keepers.WasmKeeper
 	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
@@ -539,7 +533,6 @@ func TestQueryContractInfo(t *testing.T) {
 		myExt, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
 		require.NoError(t, err)
 		myExt.TotalDeposit = nil
-		info.SetExtension(&myExt)
 	}
 	specs := map[string]struct {
 		src    *types.QueryContractInfoRequest

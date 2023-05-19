@@ -2,13 +2,10 @@ package types
 
 import (
 	"fmt"
-	"reflect"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -85,63 +82,6 @@ func (c *ContractInfo) ValidateBasic() error {
 			return sdkerrors.Wrap(err, "admin")
 		}
 	}
-	if c.Extension == nil {
-		return nil
-	}
-
-	e, ok := c.Extension.GetCachedValue().(validatable)
-	if !ok {
-		return nil
-	}
-	if err := e.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "extension")
-	}
-	return nil
-}
-
-// SetExtension set new extension data. Calls `ValidateBasic() error` on non nil values when method is implemented by
-// the extension.
-func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
-	if ext == nil {
-		c.Extension = nil
-		return nil
-	}
-	if e, ok := ext.(validatable); ok {
-		if err := e.ValidateBasic(); err != nil {
-			return err
-		}
-	}
-	any, err := codectypes.NewAnyWithValue(ext)
-	if err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
-	}
-
-	c.Extension = any
-	return nil
-}
-
-// ReadExtension copies the extension value to the pointer passed as argument so that there is no need to cast
-// For example with a custom extension of type `MyContractDetails` it will look as following:
-//
-//	var d MyContractDetails
-//	if err := info.ReadExtension(&d); err != nil {
-//		return nil, sdkerrors.Wrap(err, "extension")
-//	}
-func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
-	rv := reflect.ValueOf(e)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidType, "not a pointer")
-	}
-	if c.Extension == nil {
-		return nil
-	}
-
-	cached := c.Extension.GetCachedValue()
-	elem := reflect.ValueOf(cached).Elem()
-	if !elem.Type().AssignableTo(rv.Elem().Type()) {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "extension is of type %s but argument of %s", elem.Type(), rv.Elem().Type())
-	}
-	rv.Elem().Set(elem)
 	return nil
 }
 
@@ -173,23 +113,6 @@ func (c *ContractInfo) AdminAddr() sdk.AccAddress {
 		panic(err.Error())
 	}
 	return admin
-}
-
-// ContractInfoExtension defines the extension point for custom data to be stored with a contract info
-type ContractInfoExtension interface {
-	proto.Message
-	String() string
-}
-
-var _ codectypes.UnpackInterfacesMessage = &ContractInfo{}
-
-// UnpackInterfaces implements codectypes.UnpackInterfaces
-func (c *ContractInfo) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
-	var details ContractInfoExtension
-	if err := unpacker.UnpackAny(c.Extension, &details); err != nil {
-		return err
-	}
-	return codectypes.UnpackInterfaces(details, unpacker)
 }
 
 // NewAbsoluteTxPosition gets a block position from the context

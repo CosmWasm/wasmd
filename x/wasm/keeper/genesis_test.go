@@ -16,13 +16,12 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	fuzz "github.com/google/gofuzz"
 
-	//fuzz "github.com/google/gofuzz"
+	// fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -51,19 +50,17 @@ func TestGenesisExportImport(t *testing.T) {
 
 	for i := 0; i < 25; i++ {
 		var (
-			codeInfo          types.CodeInfo
-			contract          types.ContractInfo
-			stateModels       []types.Model
-			history           []types.ContractCodeHistoryEntry
-			pinned            bool
-			contractExtension bool
+			codeInfo    types.CodeInfo
+			contract    types.ContractInfo
+			stateModels []types.Model
+			history     []types.ContractCodeHistoryEntry
+			pinned      bool
 		)
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
 		f.NilChance(0).Fuzz(&history)
 		f.Fuzz(&pinned)
-		f.Fuzz(&contractExtension)
 
 		creatorAddr, err := sdk.AccAddressFromBech32(codeInfo.Creator)
 		require.NoError(t, err)
@@ -71,14 +68,6 @@ func TestGenesisExportImport(t *testing.T) {
 		require.NoError(t, err)
 		if pinned {
 			contractKeeper.PinCode(srcCtx, codeID)
-		}
-		if contractExtension {
-			anyTime := time.Now().UTC()
-			var nestedType govtypes.TextProposal
-			f.NilChance(0).Fuzz(&nestedType)
-			myExtension, err := govtypes.NewProposal(&nestedType, 1, anyTime, anyTime)
-			require.NoError(t, err)
-			contract.SetExtension(&myExtension)
 		}
 
 		contract.CodeID = codeID
@@ -737,13 +726,6 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context, []sdk.StoreKey) {
 	}, false, log.NewNopLogger())
 
 	encodingConfig := MakeEncodingConfig(t)
-	// register an example extension. must be protobuf
-	encodingConfig.InterfaceRegistry.RegisterImplementations(
-		(*types.ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
-	)
-	// also registering gov interfaces for nested Any type
-	govtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	wasmConfig := types.DefaultWasmConfig()
 	pk := paramskeeper.NewKeeper(encodingConfig.Marshaler, encodingConfig.Amino, keyParams, tkeyParams)
