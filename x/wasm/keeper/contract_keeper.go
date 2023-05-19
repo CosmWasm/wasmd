@@ -29,7 +29,6 @@ type decoratedKeeper interface {
 	unpinCode(ctx sdk.Context, codeID uint64) error
 	execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 	Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
-	setContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
 	setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, autz AuthorizationPolicy) error
 	ClassicAddressGenerator() AddressGenerator
 }
@@ -64,7 +63,7 @@ func (p PermissionedKeeper) Instantiate(
 	//label string,
 	deposit sdk.Coins,
 ) (sdk.AccAddress, []byte, error) {
-	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg, /*label,*/ deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
+	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg /*label,*/, deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
 }
 
 // Instantiate2 creates an instance of a WASM contract using the predictable address generator
@@ -117,11 +116,6 @@ func (p PermissionedKeeper) PinCode(ctx sdk.Context, codeID uint64) error {
 
 func (p PermissionedKeeper) UnpinCode(ctx sdk.Context, codeID uint64) error {
 	return p.nested.unpinCode(ctx, codeID)
-}
-
-// SetContractInfoExtension updates the extra attributes that can be stored with the contract info
-func (p PermissionedKeeper) SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error {
-	return p.nested.setContractInfoExtension(ctx, contract, extra)
 }
 
 // SetAccessConfig updates the access config of a code id.

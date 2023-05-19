@@ -72,9 +72,6 @@ type ContractOpsKeeper interface {
 	// UnpinCode removes the wasm contract from wasmvm cache
 	UnpinCode(ctx sdk.Context, codeID uint64) error
 
-	// SetContractInfoExtension updates the extension point data that is stored with the contract info
-	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra ContractInfoExtension) error
-
 	// SetAccessConfig updates the access config of a code id.
 	SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig AccessConfig) error
 }
