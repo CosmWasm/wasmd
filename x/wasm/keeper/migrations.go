@@ -40,7 +40,7 @@ func (m Migrator) setLastCodeID(ctx sdk.Context, id uint64) {
 }
 
 // createCodeFromLegacy - this function migrates the CodeInfo store
-func (m Migrator) createCodeFromLegacy(ctx sdk.Context, creator sdk.AccAddress, codeID uint64, hash []byte) error {
+func (m Migrator) migrateCodeFromLegacy(ctx sdk.Context, creator sdk.AccAddress, codeID uint64, hash []byte) error {
 	if creator == nil {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "creator cannot be nil")
 	}
@@ -50,10 +50,10 @@ func (m Migrator) createCodeFromLegacy(ctx sdk.Context, creator sdk.AccAddress, 
 	defaultAccessConfig := m.keeper.getInstantiateAccessConfig(ctx).With(creator)
 
 	// unsure whether we need this?
-	_, err := m.keeper.wasmVM.AnalyzeCode(hash)
-	if err != nil {
-		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
-	}
+	//_, err := m.keeper.wasmVM.AnalyzeCode(hash)
+	//if err != nil {
+	//	return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
+	//}
 
 	// can we expect the code IDs to come in order from the
 	// iterator? Dunno - that's why we need this mechanism to
@@ -80,7 +80,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	ctx.Logger().Info("### Migrating Code Info ###")
 	m.keeper.IterateLegacyCodeInfo(ctx, func(codeInfo legacytypes.CodeInfo) bool {
 		creatorAddr := sdk.MustAccAddressFromBech32(codeInfo.Creator)
-		err := m.createCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
+		err := m.migrateCodeFromLegacy(ctx, creatorAddr, codeInfo.CodeID, codeInfo.CodeHash)
 		if err != nil {
 			m.keeper.Logger(ctx).Error("Was not able to store legacy code ID")
 		}

@@ -3,13 +3,38 @@ package keeper
 import (
 	"bytes"
 	"testing"
+	"encoding/binary"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/stretchr/testify/require"
 
 	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
+	types "github.com/CosmWasm/wasmd/x/wasm/types"
 )
+
+func TestMigrateCodeFromLegacy(t *testing.T) {
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	wasmkeeper := keepers.WasmKeeper
+	migrator := NewMigrator(*wasmkeeper)
+	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
+	id := uint64(12345)
+	hash := []byte("12345")
+
+	err := migrator.migrateCodeFromLegacy(ctx, creator, id, hash)
+	require.NoError(t, err)
+
+	// retrieve codeInfo per ID
+	codeInfo := wasmkeeper.GetCodeInfo(ctx, id)
+	require.NotEqual(t, codeInfo, nil, "Empty codeInfo after code migration")
+
+	// check fields in codeInfo
+	require.Equal(t, []byte("12345"), codeInfo.CodeHash, "Wrong hash after code migration")
+	require.Equal(t, creator.String(), codeInfo.Creator, "Wrong code creator after code migration")
+	require.Equal(t, codeInfo.InstantiateConfig, wasmkeeper.getInstantiateAccessConfig(ctx).With(creator), "Wrong InstantiateAccessConfig after code migration")
+	
+}
 
 // integration testing of smart contract
 func TestMigrate1To2(t *testing.T) {
@@ -19,7 +44,7 @@ func TestMigrate1To2(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	keepers.Faucet.Fund(ctx, creator, deposit...)
-	newLegacyContract(wasmKeeper, creator, ctx, t)
+	newLegacyContract(wasmKeeper, ctx, creator, t)
 
 	// migrator
 	migrator := NewMigrator(*wasmKeeper)
@@ -36,7 +61,7 @@ func TestMigrateAbsoluteTx(t *testing.T) {
 	creator := getFundedAccount(ctx, faucet)
 
 	// instantiate legacy contract
-	legacyContract := newLegacyContract(wasmKeeper, creator, ctx, t)
+	legacyContract := newLegacyContract(wasmKeeper, ctx, creator, t)
 
 	// migrator
 	migrator := NewMigrator(*wasmKeeper)
@@ -56,7 +81,7 @@ func getFundedAccount(ctx sdk.Context, faucet *TestFaucet) sdk.AccAddress {
 	return creator
 }
 
-func newLegacyContract(wasmkeeper *Keeper, creator sdk.AccAddress, ctx sdk.Context, t *testing.T) legacytypes.ContractInfo {
+func newLegacyContract(wasmkeeper *Keeper, ctx sdk.Context, creator sdk.AccAddress, t *testing.T) legacytypes.ContractInfo {
 	t.Helper()
 
 	contractAddress := RandomAccountAddress(t)
@@ -65,3 +90,45 @@ func newLegacyContract(wasmkeeper *Keeper, creator sdk.AccAddress, ctx sdk.Conte
 
 	return contract
 }
+
+// StoreCodeLegacy stores a legacy code info into the code info store
+func newLegacyCode(wasmkeeper *Keeper, ctx sdk.Context, id uint64, creator sdk.AccAddress, hash []byte) legacytypes.CodeInfo {
+	
+	codeInfo := legacytypes.NewCodeInfo(id, creator, hash)
+	wasmkeeper.SetLegacyCodeInfo(ctx, id, codeInfo)
+	wasmkeeper.Logger(ctx).Debug("storing new contract", "code_id", id)
+
+	return codeInfo
+}
+
+// newCodeInfoLegacy stores CodeInfo for the given codeID in legacy store
+func newCodeInfoLegacy(wasmkeeper *Keeper, ctx sdk.Context, codeID uint64, codeInfo legacytypes.CodeInfo) {
+	store := ctx.KVStore(wasmkeeper.storeKey)
+	bz := wasmkeeper.cdc.MustMarshal(&codeInfo)
+	store.Set(types.GetCodeKey(codeID), bz)
+}
+
+// SetLastCodeID sets last code id in legacy store
+func setLastCodeIDLegacy(wasmkeeper *Keeper, ctx sdk.Context, id uint64) {
+	store := ctx.KVStore(wasmkeeper.storeKey)
+	bz := sdk.Uint64ToBigEndian(id)
+	store.Set(legacytypes.LastCodeIDKey, bz)
+}
+
+// GetLastCodeID return last code ID from legacy store
+func getLastCodeIDLegacy(wasmkeeper *Keeper, ctx sdk.Context) (uint64, error) {
+	store := ctx.KVStore(wasmkeeper.storeKey)
+	bz := store.Get(legacytypes.LastCodeIDKey)
+	if bz == nil {
+		// if it is not set we set it here
+		// normally this would have been set
+		// on genesis - but we don't have that
+		// for legacy wasm
+		setLastCodeIDLegacy(wasmkeeper, ctx, 1)
+		return 1, nil
+	}
+
+	return binary.BigEndian.Uint64(bz), nil
+}
+
+
