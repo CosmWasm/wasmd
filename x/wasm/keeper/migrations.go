@@ -90,23 +90,29 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	// TODO
 	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
-		m.migrateAbsoluteTx(ctx, contractInfo)
+
+		contractAddress := sdk.MustAccAddressFromBech32(contractInfo.Address)
+		creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
+
+		newContract := m.migrateAbsoluteTx(ctx, contractInfo)
+
+		// add to contract history
+		history := newContract.InitialHistory(contractInfo.InitMsg)
+		m.keeper.appendToContractHistory(ctx, contractAddress, history)
+		// add to contract creator secondary index
+		m.keeper.addToContractCreatorSecondaryIndex(ctx, creatorAddr, newContract.Created, contractAddress)
+		// add to contract code secondary index
+		m.keeper.addToContractCodeSecondaryIndex(ctx, contractAddress, history)
 
 		return false
 	})
-
-	/*m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
-		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
-		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractInfo.Created, contractAddr)
-		return false
-	})*/
 
 	return nil
 }
 
 // Migrate AbsoluteTxPosition (Testing needed)
 // I am afraid that setting all contracts at one absolute tx position will break query
-func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.ContractInfo) {
+func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.ContractInfo) types.ContractInfo {
 	createdAt := types.NewAbsoluteTxPosition(ctx)
 
 	creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
@@ -115,4 +121,6 @@ func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.Co
 
 	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, createdAt)
 	m.keeper.storeContractInfo(ctx, contractAddr, &newContract)
+
+	return newContract
 }
