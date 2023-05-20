@@ -48,6 +48,31 @@ func TestMigrateAbsoluteTx(t *testing.T) {
 	require.NotNil(t, newContract)
 }
 
+// go test -v -run ^TestAddContractCodeHistorySubStore$ github.com/CosmWasm/wasmd/x/wasm/keeper
+func TestAddContractCodeHistorySubStore(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	wasmKeeper := keepers.WasmKeeper
+	faucet := keepers.Faucet
+
+	creator := getFundedAccount(ctx, faucet)
+
+	// instantiate 3 legacy contracts
+	legacyContract := newLegacyContract(wasmKeeper, creator, ctx, t)
+
+	// migrator
+	migrator := NewMigrator(*wasmKeeper)
+	wasmKeeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
+		newContract := migrator.migrateAbsoluteTx(ctx, contractInfo)
+		contractAddress := sdk.MustAccAddressFromBech32(contractInfo.Address)
+		migrator.keeper.appendToContractHistory(ctx, contractAddress, newContract.InitialHistory(contractInfo.InitMsg))
+		return false
+	})
+
+	// check query after migration is populated
+	res := wasmKeeper.GetContractHistory(ctx, sdk.MustAccAddressFromBech32(legacyContract.Address))
+	require.Equal(t, 1, len(res))
+}
+
 func getFundedAccount(ctx sdk.Context, faucet *TestFaucet) sdk.AccAddress {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("uluna", 1000000))
 	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
