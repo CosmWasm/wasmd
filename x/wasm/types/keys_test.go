@@ -14,11 +14,11 @@ func TestGetContractByCodeIDSecondaryIndexPrefix(t *testing.T) {
 	}{
 		"small number": {
 			src: 1,
-			exp: []byte{152, 0, 0, 0, 0, 0, 0, 0, 1},
+			exp: []byte{16, 0, 0, 0, 0, 0, 0, 0, 1},
 		},
 		"big number": {
 			src: 1 << (8 * 7),
-			exp: []byte{152, 1, 0, 0, 0, 0, 0, 0, 0},
+			exp: []byte{16, 1, 0, 0, 0, 0, 0, 0, 0},
 		},
 	}
 	for msg, spec := range specs {
@@ -62,7 +62,7 @@ func TestGetContractByCreatedSecondaryIndexKey(t *testing.T) {
 	addr := bytes.Repeat([]byte{4}, 20)
 	got := GetContractByCreatedSecondaryIndexKey(addr, e)
 	exp := []byte{
-		152,                    // prefix
+		16,                     // prefix
 		0, 0, 0, 0, 0, 0, 0, 1, // codeID
 		1, 0, 0, 0, 0, 0, 0, 2, // height
 		1, 0, 0, 0, 0, 0, 0, 3, // index
@@ -74,7 +74,7 @@ func TestGetContractByCreatedSecondaryIndexKey(t *testing.T) {
 	addr = bytes.Repeat([]byte{4}, ContractAddrLen)
 	got = GetContractByCreatedSecondaryIndexKey(addr, e)
 	exp = []byte{
-		152,                    // prefix
+		16,                     // prefix
 		0, 0, 0, 0, 0, 0, 0, 1, // codeID
 		1, 0, 0, 0, 0, 0, 0, 2, // height
 		1, 0, 0, 0, 0, 0, 0, 3, // index

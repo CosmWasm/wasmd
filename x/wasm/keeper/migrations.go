@@ -91,20 +91,21 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	m.keeper.Logger(ctx).Info("#### Migrating Contract Info ###")
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
 
+		contractAddress := sdk.MustAccAddressFromBech32(contractInfo.Address)
+		creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
+
 		newContract := m.migrateAbsoluteTx(ctx, contractInfo)
 
 		// add to contract history
-		contractAddress := sdk.MustAccAddressFromBech32(contractInfo.Address)
-		m.keeper.appendToContractHistory(ctx, contractAddress, newContract.InitialHistory(contractInfo.InitMsg))
+		history := newContract.InitialHistory(contractInfo.InitMsg)
+		m.keeper.appendToContractHistory(ctx, contractAddress, history)
+		// add to contract creator secondary index
+		m.keeper.addToContractCreatorSecondaryIndex(ctx, creatorAddr, newContract.Created, contractAddress)
+		// add to contract code secondary index
+		m.keeper.addToContractCodeSecondaryIndex(ctx, contractAddress, history)
 
 		return false
 	})
-
-	/*m.keeper.IterateContractInfo(ctx, func(contractAddr sdk.AccAddress, contractInfo types.ContractInfo) bool {
-		creator := sdk.MustAccAddressFromBech32(contractInfo.Creator)
-		m.keeper.addToContractCreatorSecondaryIndex(ctx, creator, contractInfo.Created, contractAddr)
-		return false
-	})*/
 
 	return nil
 }

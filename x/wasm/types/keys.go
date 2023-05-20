@@ -24,18 +24,18 @@ const (
 
 // nolint
 var (
-	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x098}
+
+	// Compatible key with old
+	KeyLastCodeID                                  = []byte{0x01}
+	KeyLastInstanceID                              = []byte{0x02}
+	CodeKeyPrefix                                  = []byte{0x03}
+	ContractKeyPrefix                              = []byte{0x04}
+	ContractStorePrefix                            = []byte{0x05}
+	ContractCodeHistoryElementPrefix               = []byte{0x06}
 	PinnedCodeIndexPrefix                          = []byte{0x07}
 	TXCounterPrefix                                = []byte{0x08}
 	ContractsByCreatorPrefix                       = []byte{0x09}
-
-	// Compatible key with old
-	KeyLastCodeID                    = []byte{0x01}
-	KeyLastInstanceID                = []byte{0x02}
-	CodeKeyPrefix                    = []byte{0x03}
-	ContractKeyPrefix                = []byte{0x04}
-	ContractStorePrefix              = []byte{0x05}
-	ContractCodeHistoryElementPrefix = []byte{0x06}
+	ContractByCodeIDAndCreatedSecondaryIndexPrefix = []byte{0x10}
 )
 
 // GetCodeKey constructs the key for retreiving the ID for the WASM code
