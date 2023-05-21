@@ -30,7 +30,7 @@ func TestMigrateCodeFromLegacy(t *testing.T) {
 	require.NotEqual(t, codeInfo, nil, "Empty codeInfo after code migration")
 
 	// check fields in codeInfo
-	require.Equal(t, []byte("12345"), codeInfo.CodeHash, "Wrong hash after code migration")
+	require.Equal(t, hash, codeInfo.CodeHash, "Wrong hash after code migration")
 	require.Equal(t, creator.String(), codeInfo.Creator, "Wrong code creator after code migration")
 	require.Equal(t, codeInfo.InstantiateConfig, wasmkeeper.getInstantiateAccessConfig(ctx).With(creator), "Wrong InstantiateAccessConfig after code migration")
 	
