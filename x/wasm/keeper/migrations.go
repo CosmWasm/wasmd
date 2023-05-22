@@ -116,7 +116,11 @@ func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.Co
 	createdAt := types.NewAbsoluteTxPosition(ctx)
 
 	creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
-	admin := sdk.MustAccAddressFromBech32(contractInfo.Admin)
+	// admin field can be null in legacy contract
+	admin := sdk.AccAddress{}
+	if contractInfo.Admin != "" {
+		admin = sdk.MustAccAddressFromBech32(contractInfo.Admin)
+	}
 	contractAddr := sdk.MustAccAddressFromBech32(contractInfo.Address)
 
 	newContract := types.NewContractInfo(contractInfo.CodeID, creatorAddr, admin, createdAt)
