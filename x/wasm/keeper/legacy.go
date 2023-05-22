@@ -9,10 +9,17 @@ import (
 )
 
 // SetContractInfo stores ContractInfo for the given contractAddress
-func (k Keeper) SetLegacyContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, codeInfo legacytypes.ContractInfo) {
+func (k Keeper) SetLegacyContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress, contractInfo legacytypes.ContractInfo) {
 	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshal(&codeInfo)
-	store.Set(types.GetContractAddressKey(contractAddress), b)
+	bz := k.cdc.MustMarshal(&contractInfo)
+	store.Set(types.GetContractAddressKey(contractAddress), bz)
+}
+
+// SetLegacyCodeInfo stores code info in legacy store
+func (k Keeper) SetLegacyCodeInfo(ctx sdk.Context, id uint64, codeInfo legacytypes.CodeInfo) {
+	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(&codeInfo)
+	store.Set(types.GetCodeKey(id), bz)
 }
 
 // IterateLegacyContractInfo iterates all contract infos in legacy terra wasm store
