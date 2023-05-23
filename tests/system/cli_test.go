@@ -4,6 +4,8 @@ package system
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -13,6 +15,29 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 )
+
+func TestUnsafeResetAll(t *testing.T) {
+	// scenario:
+	// 	given a non-empty wasm dir exists in the node home
+	//  when `unsafe-reset-all` is executed
+	// 	then the dir and all files in it are removed
+
+	wasmDir := filepath.Join(workDir, sut.nodePath(0), "wasm")
+	require.NoError(t, os.MkdirAll(wasmDir, os.ModePerm))
+
+	_, err := os.CreateTemp(wasmDir, "testing")
+	require.NoError(t, err)
+
+	// when
+	sut.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
+
+	// then
+	sut.withEachNodeHome(func(i int, home string) {
+		if _, err := os.Stat(wasmDir); !os.IsNotExist(err) {
+			t.Fatal("expected wasm dir to be removed")
+		}
+	})
+}
 
 func TestVestingAccounts(t *testing.T) {
 	// Scenario:

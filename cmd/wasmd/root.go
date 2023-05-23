@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tmcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/params"
@@ -157,6 +159,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	extendUnsafeResetAllCmd(rootCmd)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -301,4 +304,27 @@ func appExport(
 	}
 
 	return wasmApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// extendUnsafeResetAllCmd - also clear wasm dir
+func extendUnsafeResetAllCmd(rootCmd *cobra.Command) {
+	unsafeResetCmd := tmcmd.ResetAllCmd.Use
+	for _, branchCmd := range rootCmd.Commands() {
+		if branchCmd.Use != "tendermint" {
+			continue
+		}
+		for _, cmd := range branchCmd.Commands() {
+			if cmd.Use == unsafeResetCmd {
+				serverRunE := cmd.RunE
+				cmd.RunE = func(cmd *cobra.Command, args []string) error {
+					if err := serverRunE(cmd, args); err != nil {
+						return nil
+					}
+					serverCtx := server.GetServerContextFromCmd(cmd)
+					return os.RemoveAll(filepath.Join(serverCtx.Config.RootDir, "wasm"))
+				}
+				return
+			}
+		}
+	}
 }
