@@ -2,15 +2,15 @@ package keeper
 
 import (
 	"bytes"
-	"testing"
 	"encoding/binary"
+	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/stretchr/testify/require"
 
-	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 	types "github.com/CosmWasm/wasmd/x/wasm/types"
+	legacytypes "github.com/CosmWasm/wasmd/x/wasm/types/legacy"
 )
 
 func TestMigrateCodeFromLegacy(t *testing.T) {
@@ -33,7 +33,7 @@ func TestMigrateCodeFromLegacy(t *testing.T) {
 	require.Equal(t, hash, codeInfo.CodeHash, "Wrong hash after code migration")
 	require.Equal(t, creator.String(), codeInfo.Creator, "Wrong code creator after code migration")
 	require.Equal(t, codeInfo.InstantiateConfig, wasmkeeper.getInstantiateAccessConfig(ctx).With(creator), "Wrong InstantiateAccessConfig after code migration")
-	
+
 }
 
 // integration testing of smart contract
@@ -82,7 +82,7 @@ func TestAddContractCodeHistorySubStore(t *testing.T) {
 	creator := getFundedAccount(ctx, faucet)
 
 	// instantiate 3 legacy contracts
-	legacyContract := newLegacyContract(wasmKeeper, creator, ctx, t)
+	legacyContract := newLegacyContract(wasmKeeper, ctx, creator, t)
 
 	// migrator
 	migrator := NewMigrator(*wasmKeeper)
@@ -118,7 +118,7 @@ func newLegacyContract(wasmkeeper *Keeper, ctx sdk.Context, creator sdk.AccAddre
 
 // StoreCodeLegacy stores a legacy code info into the code info store
 func newLegacyCode(wasmkeeper *Keeper, ctx sdk.Context, id uint64, creator sdk.AccAddress, hash []byte) legacytypes.CodeInfo {
-	
+
 	codeInfo := legacytypes.NewCodeInfo(id, creator, hash)
 	wasmkeeper.SetLegacyCodeInfo(ctx, id, codeInfo)
 	wasmkeeper.Logger(ctx).Debug("storing new contract", "code_id", id)
@@ -155,5 +155,3 @@ func getLastCodeIDLegacy(wasmkeeper *Keeper, ctx sdk.Context) (uint64, error) {
 
 	return binary.BigEndian.Uint64(bz), nil
 }
-
-
