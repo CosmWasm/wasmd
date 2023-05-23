@@ -74,6 +74,57 @@ func TestVestingAccounts(t *testing.T) {
 	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("ustake", sdk.NewInt(200000002))), getGenesisBalance([]byte(raw), vest3Addr))
 }
 
+func TestStakeUnstake(t *testing.T) {
+	// Scenario:
+	// delegate tokens to validator
+	// undelegate some tokens
+
+	sut.ResetChain(t)
+
+	cli := NewWasmdCLI(t, sut, verbose)
+
+	//add genesis account with some tokens
+	account1Addr := cli.AddKey("account1")
+	sut.ModifyGenesisCLI(t,
+		[]string{"genesis", "add-genesis-account", account1Addr, "100000000stake"},
+	)
+
+	sut.StartChain(t)
+
+	// query validator address to delegate tokens
+	rsp := cli.QueryValidators()
+	valAddr := gjson.Get(rsp, "validators.#.operator_address").Array()[0].String()
+
+	t.Log("Waiting for block")
+	sut.AwaitNextBlock(t)
+
+	// stake tokens
+	cli.Stake(valAddr, "10000stake", "--from="+account1Addr, "--fees=1stake")
+
+	t.Log("Waiting for block")
+	sut.AwaitNextBlock(t)
+
+	t.Log(cli.QueryBalance(account1Addr, "stake"))
+	assert.Equal(t, int64(99989999), cli.QueryBalance(account1Addr, "stake"))
+
+	rsp = cli.CustomQuery("q", "staking", "delegation", account1Addr, valAddr)
+	assert.Equal(t, "10000", gjson.Get(rsp, "balance.amount").String())
+	assert.Equal(t, "stake", gjson.Get(rsp, "balance.denom").String())
+
+	// unstake tokens
+	cli.Unstake(valAddr, "5000stake", "--from="+account1Addr, "--fees=1stake")
+
+	t.Log("Waiting for block")
+	sut.AwaitNextBlock(t)
+
+	rsp = cli.CustomQuery("q", "staking", "delegation", account1Addr, valAddr)
+	assert.Equal(t, "5000", gjson.Get(rsp, "balance.amount").String())
+	assert.Equal(t, "stake", gjson.Get(rsp, "balance.denom").String())
+
+	rsp = cli.CustomQuery("q", "staking", "unbonding-delegation", account1Addr, valAddr)
+	assert.Equal(t, "5000", gjson.Get(rsp, "entries.#.balance").Array()[0].String())
+}
+
 func getGenesisBalance(raw []byte, addr string) sdk.Coins {
 	var r []sdk.Coin
 	balances := gjson.GetBytes(raw, fmt.Sprintf(`app_state.bank.balances.#[address==%q]#.coins`, addr)).Array()
