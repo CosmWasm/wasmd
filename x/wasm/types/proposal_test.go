@@ -340,6 +340,12 @@ func TestValidateInstantiateContract2Proposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
+		"untrimmed label ": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Label = "    label   "
+			}),
+			expErr: true,
+		},
 		"init funds negative": {
 			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
 				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
