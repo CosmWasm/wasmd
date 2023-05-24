@@ -142,7 +142,7 @@ func UpdateInstantiateConfigCmd() *cobra.Command {
 			}
 
 			msg := types.MsgUpdateInstantiateConfig{
-				Sender:                   string(clientCtx.GetFromAddress()),
+				Sender:                   clientCtx.GetFromAddress().String(),
 				CodeID:                   codeID,
 				NewInstantiatePermission: perm,
 			}
