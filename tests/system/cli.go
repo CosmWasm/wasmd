@@ -256,28 +256,6 @@ func (c WasmdCli) WasmInstantiate(codeID int, initMsg string, args ...string) st
 	return addr
 }
 
-// Stake  delegates amount to given validator
-func (c WasmdCli) Stake(validatorAddr, amount string, args ...string) {
-	cmd := append([]string{"tx", "staking", "delegate", validatorAddr, amount}, args...)
-	rsp := c.CustomCommand(cmd...)
-
-	RequireTxSuccess(c.t, rsp)
-}
-
-// Unstake unbonds amount from given validator
-func (c WasmdCli) Unstake(validatorAddr, amount string, args ...string) {
-	cmd := append([]string{"tx", "staking", "unbond", validatorAddr, amount}, args...)
-	rsp := c.CustomCommand(cmd...)
-
-	RequireTxSuccess(c.t, rsp)
-}
-
-// QueryValidators queries all validators. Returns json response
-func (c WasmdCli) QueryValidators(args ...string) string {
-	cmd := append([]string{"q", "staking", "validators"}, args...)
-	return c.CustomQuery(cmd...)
-}
-
 // QuerySmart run smart contract query
 func (c WasmdCli) QuerySmart(contractAddr, msg string, args ...string) string {
 	cmd := append([]string{"q", "wasm", "contract-state", "smart", contractAddr, msg}, args...)

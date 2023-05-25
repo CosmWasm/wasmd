@@ -9,15 +9,16 @@ fi
 
 tag="$1"
 
-for contract in hackatom ; do
+for contract in hackatom reflect; do
   url="https://github.com/CosmWasm/cosmwasm/releases/download/$tag/${contract}.wasm"
   echo "Downloading $url ..."
   wget -O "${contract}.wasm" "$url"
+
+  # create the zip variant
+  gzip -k "${contract}.wasm"
+  mv "${contract}.wasm.gz" "${contract}.wasm.gzip"
+  rm -f "${contract}.wasm"
 done
 
-# create the zip variant
-gzip -k hackatom.wasm
-mv hackatom.wasm.gz hackatom.wasm.gzip
-
-rm -f version.txt hackatom.wasm
+rm -f version.txt
 echo "$tag" >version.txt
