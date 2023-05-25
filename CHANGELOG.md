@@ -4,10 +4,15 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.0...HEAD)
 
-## [v0.40.0](https://github.com/CosmWasm/wasmd/tree/v0.40.0) (2023-05-2x)
+## [v0.40.0](https://github.com/CosmWasm/wasmd/tree/v0.40.0) (2023-05-25)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.32.0...v0.40.0)
 
+Wasmd 0.40 has a large dependency upgrade of the Cosmos SDK version from 0.45 to 0.47. Please read notable changes and migration notes
+below to learn more!
+
+- Bump IBC-Go to v7.0.1 to include the fix for the huckleberry security advisory.[\#1418](https://github.com/CosmWasm/wasmd/pull/1418)
+- Fix cli update-instantiate-config command [/#1415](https://github.com/CosmWasm/wasmd/pull/1415)
 - Import export simulation test for `x/wasm` is missing [\#1372](https://github.com/CosmWasm/wasmd/issues/1372)
 - Better tracking of CosmWasm capabilities [\#1341](https://github.com/CosmWasm/wasmd/issues/1341)
 - Rename `lastIDKey` key [\#1182](https://github.com/CosmWasm/wasmd/issues/1182)
@@ -27,8 +32,9 @@
 
 ### Notable changes:
 - If you are not coming from v0.32.0, please see the "Notables changes" below, first. Especially about CometBFT.
-- SDK 47 support is a big step from the SDK 45 version supported before. Make sure to read the upgrade guides for the SDK
-  and IBC-Go v7 before applying any changes. Links below. 
+- IBC-Go is a new major version including the "hucklebery" security fix. See [v7.0.1](https://github.com/cosmos/ibc-go/releases/tag/v7.0.1).
+- SDK 47 support is a big step from the SDK 45 version supported before. Make sure to read the upgrade guide for the SDK
+  before applying any changes. Links below. 
 - Some advice from working with SDK 47 that may affect you, too:    
   - The SDK version includes some key store migration for the CLI. Make sure you backup your private keys before 
     testing this! You can not switch back to v0.45 afaik
@@ -44,7 +50,7 @@
   - CLI: `--broadcast-mode block` was removed. You need to query the result for a TX with `wasmd q tx <hash>` instead
 
 ### Migration notes:
-- This release contains a [state migration](./x/wasm/migrations/v3) for the wasmd module that stores 
+- This release contains a [state migration](./x/wasm/migrations/v2) for the wasmd module that stores 
   the params in the module store.
 - SDK v0.47 comes with a lot of api/state braking changes to previous versions. Please see their [upgrade guide](https://github.com/cosmos/cosmos-sdk/blob/main/UPGRADING.md#v047x)
   which contains a lot of helpful details.
