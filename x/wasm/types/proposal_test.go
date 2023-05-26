@@ -1139,3 +1139,100 @@ func TestProposalJsonSignBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestProposalCodeIDs(t *testing.T) {
+	specs := map[string]struct {
+		src    govtypes.Content
+		expErr bool
+	}{
+
+		"Pin empty code id list": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{},
+			},
+			expErr: true,
+		},
+		"Pin code id is 0": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{0},
+			},
+			expErr: true,
+		},
+		"Pin duplicate code id": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{2, 2},
+			},
+			expErr: true,
+		},
+		"Unpin empty code id list": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{},
+			},
+			expErr: true,
+		},
+		"Unpin code id is 0": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{0},
+			},
+			expErr: true,
+		},
+		"Unpin duplicate code id": {
+			src: &PinCodesProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				CodeIDs:     []uint64{2, 2},
+			},
+			expErr: true,
+		},
+		"Update empty code id list": {
+			src: &UpdateInstantiateConfigProposal{
+				Title:               "Foo",
+				Description:         "Bar",
+				AccessConfigUpdates: make([]AccessConfigUpdate, 0),
+			},
+			expErr: true,
+		},
+		"Update code id is 0": {
+			src: &UpdateInstantiateConfigProposal{
+				Title:       "Foo",
+				Description: "Bar",
+				AccessConfigUpdates: []AccessConfigUpdate{
+					{CodeID: 0, InstantiatePermission: AllowNobody},
+				},
+			},
+			expErr: true,
+		},
+		"Update duplicate code id": {
+			src: &UpdateInstantiateConfigProposal{
+				Title:       "tittle",
+				Description: "description",
+				AccessConfigUpdates: []AccessConfigUpdate{
+					{CodeID: 1, InstantiatePermission: AllowNobody},
+					{CodeID: 1, InstantiatePermission: AllowEverybody},
+				},
+			},
+			expErr: true,
+		},
+	}
+
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

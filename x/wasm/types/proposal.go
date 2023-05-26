@@ -849,8 +849,8 @@ func (p PinCodesProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if len(p.CodeIDs) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code ids")
+	if err := validateCodeIDs(p.CodeIDs); err != nil {
+		return err
 	}
 	return nil
 }
@@ -893,8 +893,8 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 	if err := validateProposalCommons(p.Title, p.Description); err != nil {
 		return err
 	}
-	if len(p.CodeIDs) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code ids")
+	if err := validateCodeIDs(p.CodeIDs); err != nil {
+		return err
 	}
 	return nil
 }
@@ -970,6 +970,9 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 		if found {
 			return sdkerrors.Wrapf(ErrDuplicate, "duplicate code: %d", codeUpdate.CodeID)
 		}
+		if codeUpdate.CodeID == 0 {
+			return ErrInvalid.Wrap("0 is not accepted")
+		}
 		if err := codeUpdate.InstantiatePermission.ValidateBasic(); err != nil {
 			return sdkerrors.Wrap(err, "instantiate permission")
 		}
@@ -993,4 +996,21 @@ func (c AccessConfigUpdate) String() string {
   CodeID:       %d
   AccessConfig: %v
 `, c.CodeID, c.InstantiatePermission)
+}
+func validateCodeIDs(codeIDs []uint64) error {
+	if len(codeIDs) == 0 {
+		return sdkerrors.Wrap(ErrEmpty, "code ids")
+	}
+	for i, num1 := range codeIDs {
+		if num1 == 0 {
+			return ErrInvalid.Wrap("0 is not accepted")
+
+		}
+		for j, num2 := range codeIDs {
+			if i != j && num1 == num2 {
+				return sdkerrors.Wrapf(ErrDuplicate, "duplicate id =%d", num1)
+			}
+		}
+	}
+	return nil
 }
