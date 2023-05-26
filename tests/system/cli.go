@@ -40,6 +40,7 @@ type WasmdCli struct {
 	amino          *codec.LegacyAmino
 	assertErrorFn  RunErrorAssert
 	awaitNextBlock awaitNextBlock
+	expTXCommitted bool
 }
 
 // NewWasmdCLI constructor
@@ -67,6 +68,7 @@ func NewWasmdCLIx(
 		assertErrorFn:  require.NoError,
 		awaitNextBlock: awaiter,
 		fees:           fees,
+		expTXCommitted: true,
 	}
 }
 
@@ -78,29 +80,36 @@ func (c WasmdCli) WithRunErrorsIgnored() WasmdCli {
 // WithRunErrorMatcher assert function to ensure run command error value
 func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
 	return WasmdCli{
-		t:             c.t,
-		nodeAddress:   c.nodeAddress,
-		chainID:       c.chainID,
-		homeDir:       c.homeDir,
-		Debug:         c.Debug,
-		amino:         c.amino,
-		assertErrorFn: f,
+		t:              c.t,
+		nodeAddress:    c.nodeAddress,
+		chainID:        c.chainID,
+		homeDir:        c.homeDir,
+		Debug:          c.Debug,
+		amino:          c.amino,
+		assertErrorFn:  f,
+		awaitNextBlock: c.awaitNextBlock,
+		fees:           c.fees,
+		expTXCommitted: c.expTXCommitted,
 	}
 }
 
 func (c WasmdCli) WithNodeAddress(addr string) WasmdCli {
 	return WasmdCli{
-		t:             c.t,
-		nodeAddress:   addr,
-		chainID:       c.chainID,
-		homeDir:       c.homeDir,
-		Debug:         c.Debug,
-		amino:         c.amino,
-		assertErrorFn: c.assertErrorFn,
+		t:              c.t,
+		nodeAddress:    addr,
+		chainID:        c.chainID,
+		homeDir:        c.homeDir,
+		Debug:          c.Debug,
+		amino:          c.amino,
+		assertErrorFn:  c.assertErrorFn,
+		awaitNextBlock: c.awaitNextBlock,
+		fees:           c.fees,
+		expTXCommitted: c.expTXCommitted,
 	}
 }
 
-// CustomCommand main entry for excutiong wasmd cli commands. Method blocks until tx is committed.
+// CustomCommand main entry for executing wasmd cli commands.
+// When configured, method blocks until tx is committed.
 func (c WasmdCli) CustomCommand(args ...string) string {
 	if c.fees != "" && !slices.ContainsFunc(args, func(s string) bool {
 		return strings.HasPrefix(s, "--fees")
@@ -108,23 +117,26 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 		args = append(args, "--fees="+c.fees) // add default fee
 	}
 	args = c.withTXFlags(args...)
-	return c.awaitTxCommitted(c.run(args))
+	rsp, committed := c.awaitTxCommitted(c.run(args))
+	c.t.Logf("tx committed: %v", committed)
+	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %", c.expTXCommitted)
+	return rsp
 }
 
 // wait for tx committed on chain
-func (c WasmdCli) awaitTxCommitted(got string, timeout ...time.Duration) string {
-	RequireTxSuccess(c.t, got)
-	txHash := gjson.Get(got, "txhash")
+func (c WasmdCli) awaitTxCommitted(submitResp string, timeout ...time.Duration) (string, bool) {
+	RequireTxSuccess(c.t, submitResp)
+	txHash := gjson.Get(submitResp, "txhash")
 	require.True(c.t, txHash.Exists())
 	var txResult string
-	for {
+	for i := 0; i < 3; i++ { // max blocks to wait for a commit
 		txResult = c.WithRunErrorsIgnored().CustomQuery("q", "tx", txHash.String())
 		if gjson.Get(txResult, "code").Exists() {
-			break
+			return txResult, true
 		}
 		c.awaitNextBlock(c.t, timeout...)
 	}
-	return txResult
+	return "", false
 }
 
 // Keys wasmd keys CLI command
@@ -335,7 +347,7 @@ func parseResultCode(t *testing.T, got string) (int64, string) {
 }
 
 var (
-	// ErrOutOfGasMatcher requires error with out of gas message
+	// ErrOutOfGasMatcher requires error with "out of gas" message
 	ErrOutOfGasMatcher RunErrorAssert = func(t require.TestingT, err error, args ...interface{}) {
 		const oogMsg = "out of gas"
 		expErrWithMsg(t, err, args, oogMsg)
