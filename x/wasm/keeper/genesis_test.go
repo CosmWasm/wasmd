@@ -495,8 +495,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
         "code_hash": %q,
         "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
         "instantiate_config": {
-          "permission": "OnlyAddress",
-          "address": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"
+          "permission": "AnyOfAddresses",
+          "addresses": ["cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"]
         }
       },
       "code_bytes": %q
@@ -575,8 +575,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
 		InstantiateConfig: types.AccessConfig{
-			Permission: types.AccessTypeOnlyAddress,
-			Address:    codeCreatorAddr,
+			Permission: types.AccessTypeAnyOfAddresses,
+			Addresses:  []string{codeCreatorAddr},
 		},
 	}
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)

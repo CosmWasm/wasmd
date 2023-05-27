@@ -115,9 +115,9 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 			srcPermission: types.AccessTypeNobody,
 			expInstConf:   types.AllowNobody,
 		},
-		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress,
-			expInstConf:   types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: myAddr.String()},
+		"anyAddress with matching address": {
+			srcPermission: types.AccessTypeAnyOfAddresses,
+			expInstConf:   types.AccessConfig{Permission: types.AccessTypeAnyOfAddresses, Addresses: []string{myAddr.String()}},
 		},
 	}
 	for msg, spec := range specs {
@@ -165,13 +165,13 @@ func TestCreateWithParamPermissions(t *testing.T) {
 			chainUpload: types.AllowNobody,
 			expError:    sdkerrors.ErrUnauthorized,
 		},
-		"onlyAddress with matching address": {
+		"anyAddress with matching address": {
 			policy:      DefaultAuthorizationPolicy{},
-			chainUpload: types.AccessTypeOnlyAddress.With(creator),
+			chainUpload: types.AccessTypeAnyOfAddresses.With(creator),
 		},
-		"onlyAddress with non matching address": {
+		"anyAddress with non matching address": {
 			policy:      DefaultAuthorizationPolicy{},
-			chainUpload: types.AccessTypeOnlyAddress.With(otherAddr),
+			chainUpload: types.AccessTypeAnyOfAddresses.With(otherAddr),
 			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"gov: always allowed": {
@@ -206,8 +206,8 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	other := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	onlyCreator := types.AccessTypeOnlyAddress.With(creator)
-	onlyOther := types.AccessTypeOnlyAddress.With(other)
+	onlyCreator := types.AccessTypeAnyOfAddresses.With(creator)
+	onlyOther := types.AccessTypeAnyOfAddresses.With(other)
 
 	specs := map[string]struct {
 		defaultPermssion    types.AccessType
@@ -243,17 +243,17 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
 		},
 		"only defaults to code creator": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: nil,
 			grantedPermission:   onlyCreator,
 		},
 		"can explicitly set to code creator": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"cannot override which address in only": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyOther,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
@@ -530,13 +530,13 @@ func TestInstantiateWithPermissions(t *testing.T) {
 			srcActor:      myAddr,
 			expError:      sdkerrors.ErrUnauthorized,
 		},
-		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(myAddr),
+		"anyAddress with matching address": {
+			srcPermission: types.AccessTypeAnyOfAddresses.With(myAddr),
 			srcActor:      myAddr,
 		},
-		"onlyAddress with non matching address": {
+		"anyAddress with non matching address": {
 			srcActor:      myAddr,
-			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
+			srcPermission: types.AccessTypeAnyOfAddresses.With(otherAddr),
 			expError:      sdkerrors.ErrUnauthorized,
 		},
 	}
@@ -2110,17 +2110,6 @@ func TestSetAccessConfig(t *testing.T) {
 			expEvts: map[string]string{
 				"code_id":         "1",
 				"code_permission": "Nobody",
-			},
-		},
-		"gov with new permissions > chain permissions": {
-			authz:           GovAuthorizationPolicy{},
-			chainPermission: types.AccessTypeNobody,
-			newConfig:       types.AccessTypeOnlyAddress.With(creatorAddr),
-			caller:          creatorAddr,
-			expEvts: map[string]string{
-				"code_id":              "1",
-				"code_permission":      "OnlyAddress",
-				"authorized_addresses": creatorAddr.String(),
 			},
 		},
 		"gov with new permissions > chain permissions - multiple addresses": {
