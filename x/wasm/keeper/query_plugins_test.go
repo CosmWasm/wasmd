@@ -397,7 +397,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 			},
 		},
 	}
-	assert.Equal(t, exp, got)
+	assert.Equal(t, exp, got.Metadata)
 }
 
 func TestBankQuerierAllMetadata(t *testing.T) {

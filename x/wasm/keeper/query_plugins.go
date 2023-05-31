@@ -220,6 +220,7 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			}
 			res := wasmvmtypes.AllDenomMetadataResponse{
 				Metadata: ConvertSdkDenomMetadatasToWasmDenomMetadatas(bankQueryRes.Metadatas),
+				NextKey:  bankQueryRes.Pagination.NextKey,
 			}
 			return json.Marshal(res)
 		}
@@ -610,11 +611,9 @@ func ConvertToDenomsMetadataRequest(wasmRequest *wasmvmtypes.AllDenomMetadataQue
 	ret := &banktypes.QueryDenomsMetadataRequest{}
 	if wasmRequest.Pagination != nil {
 		ret.Pagination = &query.PageRequest{
-			Key:        wasmRequest.Pagination.Key,
-			Offset:     wasmRequest.Pagination.Offset,
-			Limit:      wasmRequest.Pagination.Limit,
-			CountTotal: wasmRequest.Pagination.CountTotal,
-			Reverse:    wasmRequest.Pagination.Reverse,
+			Key:     wasmRequest.Pagination.Key,
+			Limit:   wasmRequest.Pagination.Limit,
+			Reverse: wasmRequest.Pagination.Reverse,
 		}
 	}
 	return ret
