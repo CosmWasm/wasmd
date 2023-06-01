@@ -92,6 +92,9 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	m.keeper.IterateLegacyContractInfo(ctx, func(contractInfo legacytypes.ContractInfo) bool {
 
 		contractAddress := sdk.MustAccAddressFromBech32(contractInfo.Address)
+
+		ctx.Logger().Info(fmt.Sprintf("Migrating contract address: %s", contractAddress.String()))
+
 		creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
 
 		newContract := m.migrateAbsoluteTx(ctx, contractInfo)
@@ -123,7 +126,7 @@ func (m Migrator) Migrate2to2(ctx sdk.Context) error {
 		} else {
 			admin = sdk.MustAccAddressFromBech32(contractInfo.Creator)
 		}
-		
+
 		newContract := types.NewContractInfo(
 			contractInfo.CodeID,
 			sdk.MustAccAddressFromBech32(contractInfo.Creator),

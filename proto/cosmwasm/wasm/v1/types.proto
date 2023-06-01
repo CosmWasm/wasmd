@@ -89,6 +89,7 @@ message ContractInfo {
 }
 
 // ContractInfoRebel2 stores a WASM contract instance without label
+// TODO: Removed this on v0.30.0-terra
 message ContractInfoRebel2 {
   option (gogoproto.equal) = true;
 
