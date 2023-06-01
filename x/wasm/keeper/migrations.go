@@ -113,36 +113,7 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	return nil
 }
 
-// Migrate2to2a migrates from version 2 to 2. This is not a consensus
-// version migration. We need softfork for rebel-2 in order to introduce
-// label to contracts. also sets admin = creator if admin == ""
-func (m Migrator) Migrate2to2(ctx sdk.Context) error {
-
-	m.keeper.IterateContractInfoRebel2(ctx, func(addr sdk.AccAddress, contractInfo types.ContractInfoRebel2) bool {
-
-		admin := sdk.AccAddress{}
-		if contractInfo.Admin != "" {
-			admin = sdk.MustAccAddressFromBech32(contractInfo.Admin)
-		} else {
-			admin = sdk.MustAccAddressFromBech32(contractInfo.Creator)
-		}
-
-		newContract := types.NewContractInfo(
-			contractInfo.CodeID,
-			sdk.MustAccAddressFromBech32(contractInfo.Creator),
-			admin,
-			addr.String(),
-			contractInfo.Created,
-		)
-		m.keeper.storeContractInfo(ctx, addr, &newContract)
-
-		return false
-	})
-
-	return nil
-}
-
-// Migrate AbsoluteTxPosition (Testing needed)
+// Migrate AbsoluteTxPosition
 // I am afraid that setting all contracts at one absolute tx position will break query
 func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.ContractInfo) types.ContractInfo {
 	createdAt := types.NewAbsoluteTxPosition(ctx)
@@ -150,7 +121,7 @@ func (m Migrator) migrateAbsoluteTx(ctx sdk.Context, contractInfo legacytypes.Co
 	creatorAddr := sdk.MustAccAddressFromBech32(contractInfo.Creator)
 	// admin field can be null in legacy contract
 	// admin will be set to creator if admin is ""
-	admin := sdk.AccAddress{}
+	var admin sdk.AccAddress
 	if contractInfo.Admin != "" {
 		admin = sdk.MustAccAddressFromBech32(contractInfo.Admin)
 	} else {

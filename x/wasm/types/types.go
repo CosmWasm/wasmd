@@ -63,19 +63,6 @@ func NewContractInfo(codeID uint64, creator, admin sdk.AccAddress, label string,
 	}
 }
 
-func NewContractInfoRebel2(codeID uint64, creator, admin sdk.AccAddress, createdAt *AbsoluteTxPosition) ContractInfoRebel2 {
-	var adminAddr string
-	if !admin.Empty() {
-		adminAddr = admin.String()
-	}
-	return ContractInfoRebel2{
-		CodeID:  codeID,
-		Creator: creator.String(),
-		Admin:   adminAddr,
-		Created: createdAt,
-	}
-}
-
 // validatable is an optional interface that can be implemented by an ContractInfoExtension to enable validation
 type validatable interface {
 	ValidateBasic() error
@@ -99,7 +86,7 @@ func (c *ContractInfo) ValidateBasic() error {
 	if err := ValidateLabel(c.Label); err != nil {
 		return sdkerrors.Wrap(err, "label")
 	}
-	
+
 	return nil
 
 }

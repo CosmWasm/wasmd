@@ -15,13 +15,6 @@ func (k Keeper) SetLegacyContractInfo(ctx sdk.Context, contractAddress sdk.AccAd
 	store.Set(types.GetContractAddressKey(contractAddress), bz)
 }
 
-// SetContractInfo stores ContractInfo for the given contractAddress
-func (k Keeper) SetContractInfoRebel2(ctx sdk.Context, contractAddress sdk.AccAddress, contractInfo types.ContractInfoRebel2) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&contractInfo)
-	store.Set(types.GetContractAddressKey(contractAddress), bz)
-}
-
 // SetLegacyCodeInfo stores code info in legacy store
 func (k Keeper) SetLegacyCodeInfo(ctx sdk.Context, id uint64, codeInfo legacytypes.CodeInfo) {
 	store := ctx.KVStore(k.storeKey)
@@ -60,20 +53,3 @@ func (k Keeper) IterateLegacyCodeInfo(ctx sdk.Context, cb func(legacytypes.CodeI
 		}
 	}
 }
-
-//  IterateContractInfoRebel2 iterates all contract info in rebel-2 store after v4 upgrade
-func (k Keeper) IterateContractInfoRebel2(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfoRebel2) bool) {
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.ContractKeyPrefix)
-	iter := prefixStore.Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var contract types.ContractInfoRebel2
-		k.cdc.MustUnmarshal(iter.Value(), &contract)
-		// cb returns true to stop early
-		if cb(iter.Key()[1:], contract) {
-			break
-		}
-	}
-}
-

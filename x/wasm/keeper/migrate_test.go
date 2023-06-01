@@ -50,31 +50,8 @@ func TestMigrate1To2(t *testing.T) {
 	migrator := NewMigrator(*wasmKeeper)
 	err := migrator.Migrate1to2(ctx)
 	require.NoError(t, err)
-	
+
 	// label must equal address and no empty admin
-	wasmKeeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
-		require.Equal(t, info.Label, addr.String())
-		require.NotEqual(t, info.Admin, "")
-		return false
-	})
-}
-
-// integration testing of smart contract
-func TestMigrate2To2(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	wasmKeeper := keepers.WasmKeeper
-
-	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
-	creator := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
-	keepers.Faucet.Fund(ctx, creator, deposit...)
-	newContractRebel2(wasmKeeper, ctx, creator, t)
-
-	// migrator
-	migrator := NewMigrator(*wasmKeeper)
-	err := migrator.Migrate2to2(ctx)
-	require.NoError(t, err)
-	
-	// label must equal address
 	wasmKeeper.IterateContractInfo(ctx, func(addr sdk.AccAddress, info types.ContractInfo) bool {
 		require.Equal(t, info.Label, addr.String())
 		require.NotEqual(t, info.Admin, "")
@@ -137,29 +114,13 @@ func getFundedAccount(ctx sdk.Context, faucet *TestFaucet) sdk.AccAddress {
 	return creator
 }
 
-func newContractRebel2(wasmkeeper *Keeper, ctx sdk.Context, creator sdk.AccAddress, t *testing.T) types.ContractInfoRebel2 {
-	t.Helper()
-	
-	createdAt := types.NewAbsoluteTxPosition(ctx)
-	contractAddress := RandomAccountAddress(t)
-	contract := types.NewContractInfoRebel2(1, contractAddress, sdk.AccAddress{}, createdAt)
-	wasmkeeper.SetContractInfoRebel2(ctx, contractAddress, contract)
-	
-	createdAt = types.NewAbsoluteTxPosition(ctx)
-	contractAddress = RandomAccountAddress(t)
-	contract = types.NewContractInfoRebel2(2, contractAddress, creator, createdAt)
-	wasmkeeper.SetContractInfoRebel2(ctx, contractAddress, contract)
-
-	return contract
-}
-
 func newLegacyContract(wasmkeeper *Keeper, ctx sdk.Context, creator sdk.AccAddress, t *testing.T) legacytypes.ContractInfo {
 	t.Helper()
 
 	contractAddress := RandomAccountAddress(t)
 	contract := legacytypes.NewContractInfo(1, contractAddress, creator, creator, []byte("init"))
 	wasmkeeper.SetLegacyContractInfo(ctx, contractAddress, contract)
-	
+
 	contractAddress = RandomAccountAddress(t)
 	contract = legacytypes.NewContractInfo(2, contractAddress, creator, sdk.AccAddress{}, []byte("init"))
 	wasmkeeper.SetLegacyContractInfo(ctx, contractAddress, contract)
