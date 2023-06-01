@@ -17,7 +17,7 @@ type decoratedKeeper interface {
 		codeID uint64,
 		creator, admin sdk.AccAddress,
 		initMsg []byte,
-		// label string,
+		label string,
 		deposit sdk.Coins,
 		addressGenerator AddressGenerator,
 		authZ AuthorizationPolicy,
@@ -60,10 +60,10 @@ func (p PermissionedKeeper) Instantiate(
 	codeID uint64,
 	creator, admin sdk.AccAddress,
 	initMsg []byte,
-	// label string,
+	label string,
 	deposit sdk.Coins,
 ) (sdk.AccAddress, []byte, error) {
-	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg /*label,*/, deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
+	return p.nested.instantiate(ctx, codeID, creator, admin, initMsg, label, deposit, p.nested.ClassicAddressGenerator(), p.authZPolicy)
 }
 
 // Instantiate2 creates an instance of a WASM contract using the predictable address generator
@@ -72,7 +72,7 @@ func (p PermissionedKeeper) Instantiate2(
 	codeID uint64,
 	creator, admin sdk.AccAddress,
 	initMsg []byte,
-	// label string,
+	label string,
 	deposit sdk.Coins,
 	salt []byte,
 	fixMsg bool,
@@ -83,7 +83,7 @@ func (p PermissionedKeeper) Instantiate2(
 		creator,
 		admin,
 		initMsg,
-		// label,
+		label,
 		deposit,
 		PredicableAddressGenerator(creator, salt, initMsg, fixMsg),
 		p.authZPolicy,

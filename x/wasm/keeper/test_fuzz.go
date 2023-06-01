@@ -32,7 +32,7 @@ func FuzzContractInfo(m *types.ContractInfo, c fuzz.Continue) {
 	m.CodeID = c.RandUint64()
 	FuzzAddrString(&m.Creator, c)
 	FuzzAddrString(&m.Admin, c)
-	// m.Label = c.RandString()
+	m.Label = c.RandString()
 	c.Fuzz(&m.Created)
 }
 
