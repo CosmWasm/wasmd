@@ -141,7 +141,7 @@ func parseVerificationFlags(wasm []byte, flags *flag.FlagSet) (string, string, [
 
 func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
+		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -169,6 +169,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 				RunAs:       runAs,
 				Admin:       src.Admin,
 				CodeID:      src.CodeID,
+				Label:       src.Label,
 				Msg:         src.Msg,
 				Funds:       src.Funds,
 			}
@@ -186,6 +187,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
@@ -199,7 +201,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 
 func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "store-instantiate [wasm file] [json_encoded_init_args] --title [text] --description [text] --run-as [address]" +
+		Use: "store-instantiate [wasm file] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address]" +
 			"--unpin-code [unpin_code,optional] --source [source,optional] --builder [builder,optional] --code-hash [code_hash,optional] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit and instantiate a wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
@@ -239,6 +241,13 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("amount: %s", err)
 			}
+			label, err := cmd.Flags().GetString(flagLabel)
+			if err != nil {
+				return fmt.Errorf("label: %s", err)
+			}
+			if label == "" {
+				return errors.New("label is required on all contracts")
+			}
 			adminStr, err := cmd.Flags().GetString(flagAdmin)
 			if err != nil {
 				return fmt.Errorf("admin: %s", err)
@@ -267,6 +276,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				Builder:               builder,
 				CodeHash:              codeHash,
 				Admin:                 adminStr,
+				Label:                 label,
 				Msg:                   []byte(args[1]),
 				Funds:                 amount,
 			}
@@ -294,6 +304,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 	cmd.Flags().StringSlice(flagInstantiateByAnyOfAddress, []string{}, "Any of the addresses can instantiate a contract from the code, optional")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
+	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 

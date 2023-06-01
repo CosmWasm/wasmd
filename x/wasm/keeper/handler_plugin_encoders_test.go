@@ -182,6 +182,7 @@ func TestEncoding(t *testing.T) {
 				&types.MsgInstantiateContract{
 					Sender: addr1.String(),
 					CodeID: 7,
+					Label:  "myLabel",
 					Msg:    jsonMsg,
 					Funds:  sdk.NewCoins(sdk.NewInt64Coin("eth", 123)),
 					Admin:  addr2.String(),

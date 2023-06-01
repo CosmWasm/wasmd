@@ -196,7 +196,7 @@ func TestGenesisContractInfoMarshalUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 	myExtension.TotalDeposit = nil
 
-	src := NewContractInfo(1, myAddr, myOtherAddr, &anyPos)
+	src := NewContractInfo(1, myAddr, myOtherAddr, "bar", &anyPos)
 	require.NoError(t, err)
 
 	interfaceRegistry := types.NewInterfaceRegistry()

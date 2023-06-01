@@ -231,7 +231,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 		sdkMsg := types.MsgInstantiateContract{
 			Sender: sender.String(),
 			CodeID: msg.Instantiate.CodeID,
-			// Label:  msg.Instantiate.Label,
+			Label:  msg.Instantiate.Label,
 			Msg:   msg.Instantiate.Msg,
 			Admin: msg.Instantiate.Admin,
 			Funds: coins,

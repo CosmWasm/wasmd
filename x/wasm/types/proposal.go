@@ -181,10 +181,11 @@ func NewInstantiateContractProposal(
 	runAs string,
 	admin string,
 	codeID uint64,
+	label string,
 	msg RawContractMessage,
 	funds sdk.Coins,
 ) *InstantiateContractProposal {
-	return &InstantiateContractProposal{title, description, runAs, admin, codeID, msg, funds}
+	return &InstantiateContractProposal{title, description, runAs, admin, codeID, label, msg, funds}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -214,6 +215,10 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
+	if err := ValidateLabel(p.Label); err != nil {
+		return err
+	}
+
 	if !p.Funds.IsValid() {
 		return sdkerrors.ErrInvalidCoins
 	}
@@ -237,9 +242,10 @@ func (p InstantiateContractProposal) String() string {
   Run as:      %s
   Admin:       %s
   Code id:     %d
+  Label:       %s
   Msg:         %q
   Funds:       %s
-`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Msg, p.Funds)
+`, p.Title, p.Description, p.RunAs, p.Admin, p.CodeID, p.Label, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the init message
@@ -250,6 +256,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		RunAs       string    `yaml:"run_as"`
 		Admin       string    `yaml:"admin"`
 		CodeID      uint64    `yaml:"code_id"`
+		Label       string    `yaml:"label"`
 		Msg         string    `yaml:"msg"`
 		Funds       sdk.Coins `yaml:"funds"`
 	}{
@@ -258,6 +265,7 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		RunAs:       p.RunAs,
 		Admin:       p.Admin,
 		CodeID:      p.CodeID,
+		Label:       p.Label,
 		Msg:         string(p.Msg),
 		Funds:       p.Funds,
 	}, nil
@@ -274,6 +282,7 @@ func NewStoreAndInstantiateContractProposal(
 	permission *AccessConfig,
 	unpinCode bool,
 	admin string,
+	label string,
 	msg RawContractMessage,
 	funds sdk.Coins,
 ) *StoreAndInstantiateContractProposal {
@@ -288,6 +297,7 @@ func NewStoreAndInstantiateContractProposal(
 		InstantiatePermission: permission,
 		UnpinCode:             unpinCode,
 		Admin:                 admin,
+		Label:                 label,
 		Msg:                   msg,
 		Funds:                 funds,
 	}
@@ -330,6 +340,10 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		}
 	}
 
+	if err := ValidateLabel(p.Label); err != nil {
+		return err
+	}
+
 	if !p.Funds.IsValid() {
 		return sdkerrors.ErrInvalidCoins
 	}
@@ -358,9 +372,10 @@ func (p StoreAndInstantiateContractProposal) String() string {
   Instantiate permission: %s
   Unpin code:  %t  
   Admin:       %s
+  Label:       %s
   Msg:         %q
   Funds:       %s
-`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.CodeHash, p.InstantiatePermission, p.UnpinCode, p.Admin, p.Msg, p.Funds)
+`, p.Title, p.Description, p.RunAs, p.WASMByteCode, p.Source, p.Builder, p.CodeHash, p.InstantiatePermission, p.UnpinCode, p.Admin, p.Label, p.Msg, p.Funds)
 }
 
 // MarshalYAML pretty prints the wasm byte code and the init message
@@ -376,6 +391,7 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		InstantiatePermission *AccessConfig `yaml:"instantiate_permission"`
 		UnpinCode             bool          `yaml:"unpin_code"`
 		Admin                 string        `yaml:"admin"`
+		Label                 string        `yaml:"label"`
 		Msg                   string        `yaml:"msg"`
 		Funds                 sdk.Coins     `yaml:"funds"`
 	}{
@@ -386,6 +402,7 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 		InstantiatePermission: p.InstantiatePermission,
 		UnpinCode:             p.UnpinCode,
 		Admin:                 p.Admin,
+		Label:                 p.Label,
 		Source:                p.Source,
 		Builder:               p.Builder,
 		CodeHash:              hex.EncodeToString(p.CodeHash),

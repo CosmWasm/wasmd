@@ -99,7 +99,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 		}
 	}
 
-	_, data, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.Msg, p.Funds)
+	_, data, err := k.Instantiate(ctx, p.CodeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.Contract
 		}
 	}
 
-	_, data, err := k.Instantiate(ctx, codeID, runAsAddr, adminAddr, p.Msg, p.Funds)
+	_, data, err := k.Instantiate(ctx, codeID, runAsAddr, adminAddr, p.Msg, p.Label, p.Funds)
 	if err != nil {
 		return err
 	}

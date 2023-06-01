@@ -24,7 +24,6 @@ const (
 
 // nolint
 var (
-
 	// Compatible key with old
 	KeyLastCodeID                                  = []byte{0x01}
 	KeyLastInstanceID                              = []byte{0x02}

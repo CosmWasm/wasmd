@@ -82,7 +82,25 @@ message ContractInfo {
   // Admin is an optional address that can execute migrations
   string admin = 3;
   // Label is optional metadata to be stored with a contract instance.
-  // string label = 4;
+  string label = 4;
+  // Created Tx position when the contract was instantiated.
+  AbsoluteTxPosition created = 5;
+  string ibc_port_id = 6 [ (gogoproto.customname) = "IBCPortID" ];
+}
+
+// ContractInfoRebel2 stores a WASM contract instance without label
+// TODO: Removed this on v0.30.0-terra
+message ContractInfoRebel2 {
+  option (gogoproto.equal) = true;
+
+  // CodeID is the reference to the stored Wasm code
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // Creator address who initially instantiated the contract
+  string creator = 2;
+  // Admin is an optional address that can execute migrations
+  string admin = 3;
+  // missing label on rebel-2 after v4 upgrade
+  reserved 4;
   // Created Tx position when the contract was instantiated.
   AbsoluteTxPosition created = 5;
   string ibc_port_id = 6 [ (gogoproto.customname) = "IBCPortID" ];

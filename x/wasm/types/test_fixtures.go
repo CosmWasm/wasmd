@@ -115,6 +115,7 @@ func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
 	fixture := ContractInfo{
 		CodeID:  1,
 		Creator: anyAddress,
+		Label:   "any",
 		Created: &AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
 	}
 
@@ -164,6 +165,7 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 		Sender: anyAddress,
 		Admin:  anyAddress,
 		CodeID: 1,
+		Label:  "testing",
 		Msg:    []byte(`{"foo":"bar"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
@@ -244,6 +246,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 		RunAs:       anyAddress,
 		Admin:       anyAddress,
 		CodeID:      1,
+		Label:       "testing",
 		Msg:         initMsgBz,
 		Funds:       nil,
 	}
@@ -287,6 +290,7 @@ func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInst
 		Builder:      "cosmwasm/workspace-optimizer:v0.12.9",
 		CodeHash:     codeHash,
 		Admin:        anyAddress,
+		Label:        "testing",
 		Msg:          initMsgBz,
 		Funds:        nil,
 	}

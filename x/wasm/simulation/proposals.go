@@ -109,6 +109,7 @@ func SimulateInstantiateContractProposal(bk BankKeeper, wasmKeeper WasmKeeper, c
 			simAccount.Address.String(),
 			adminAccount.Address.String(),
 			codeID,
+			simtypes.RandStringOfLength(r, 10),
 			[]byte(`{}`),
 			sdk.Coins{},
 		)
