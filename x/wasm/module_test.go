@@ -175,6 +175,7 @@ func TestHandleInstantiate(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  nil,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -234,6 +235,7 @@ func TestHandleExecute(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)
@@ -368,6 +370,7 @@ func TestHandleExecuteEscrow(t *testing.T) {
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
 		Funds:  deposit,
+		Label:  "testing",
 	}
 	res, err = h(data.ctx, &initCmd)
 	require.NoError(t, err)

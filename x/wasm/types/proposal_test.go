@@ -248,6 +248,12 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
+		"label empty": {
+			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
+				p.Label = ""
+			}),
+			expErr: true,
+		},
 		"init funds negative": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
 				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
@@ -378,6 +384,12 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 		"admin invalid": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
 				p.Admin = invalidAddress
+			}),
+			expErr: true,
+		},
+		"label empty": {
+			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
+				p.Label = ""
 			}),
 			expErr: true,
 		},
@@ -700,6 +712,7 @@ func TestProposalStrings(t *testing.T) {
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Code id:     1
+  Label:       testing
   Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
   Funds:       1foo,2bar
 `,
@@ -712,6 +725,7 @@ func TestProposalStrings(t *testing.T) {
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Admin:       cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Code id:     1
+  Label:       testing
   Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
   Funds:       
 `,
@@ -724,6 +738,7 @@ func TestProposalStrings(t *testing.T) {
   Run as:      cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
   Admin:       
   Code id:     1
+  Label:       testing
   Msg:         "{\"verifier\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\",\"beneficiary\":\"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4\"}"
   Funds:       
 `,
@@ -815,6 +830,7 @@ description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 code_id: 1
+label: testing
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
 funds:
 - denom: foo
@@ -830,6 +846,7 @@ description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 admin: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 code_id: 1
+label: testing
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
 funds: []
 `,
@@ -841,6 +858,7 @@ description: Bar
 run_as: cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4
 admin: ""
 code_id: 1
+label: testing
 msg: '{"verifier":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4","beneficiary":"cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"}'
 funds: []
 `,
@@ -946,6 +964,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 	"code_id": 1,
 	"funds": [{"denom": "ALX", "amount": "2"},{"denom": "BLX","amount": "3"}],
 	"msg": {},
+	"label": "testing",
 	"run_as": "myRunAsAddress"
 }`,
 			got: &InstantiateContractProposal{},
@@ -955,6 +974,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 				RunAs:       "myRunAsAddress",
 				Admin:       "myAdminAddress",
 				CodeID:      1,
+				Label:       "testing",
 				Msg:         []byte("{}"),
 				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdk.NewInt(2)), sdk.NewCoin("BLX", sdk.NewInt(3))),
 			},
