@@ -2,7 +2,33 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.2...HEAD)
+
+## [v0.40.2](https://github.com/CosmWasm/wasmd/tree/v0.40.2) (2023-06-09)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.1...v0.40.2)
+
+This patch release includes only the cosmos-sdk upgrade to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3).
+It solves [barberry](https://forum.cosmos.network/t/cosmos-sdk-security-advisory-barberry/10825) security vulnerability.
+
+### Notable changes:
+- Upgrade cosmos-sdk to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3)
+
+### Migration notes:
+- This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
+
+## [v0.40.1](https://github.com/CosmWasm/wasmd/tree/v0.40.1) (2023-06-06)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.0...v0.40.1)
+
+This patch release includes only the wasmvm upgrade to [v1.2.4](https://github.com/CosmWasm/wasmvm/releases/tag/v1.2.4).
+It solves some incompatibility problems by improving cache invalidation. See [\#426](https://github.com/CosmWasm/wasmvm/issues/426)
+
+### Notable changes:
+- Upgrade wasmvm to v1.2.4. [\#1430](https://github.com/CosmWasm/wasmd/issues/1430)
+
+### Migration notes:
+- This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
 
 ## [v0.40.0](https://github.com/CosmWasm/wasmd/tree/v0.40.0) (2023-05-25)
 
