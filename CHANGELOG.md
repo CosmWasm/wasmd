@@ -2,7 +2,20 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.1...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.2...HEAD)
+
+## [v0.40.2](https://github.com/CosmWasm/wasmd/tree/v0.40.2) (2023-06-09)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.1...v0.40.2)
+
+This patch release includes only the cosmos-sdk upgrade to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3).
+It solves [barberry](https://forum.cosmos.network/t/cosmos-sdk-security-advisory-barberry/10825) security vulnerability.
+
+### Notable changes:
+- Upgrade cosmos-sdk to [v0.47.3](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.3)
+
+### Migration notes:
+- This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
 
 ## [v0.40.1](https://github.com/CosmWasm/wasmd/tree/v0.40.1) (2023-06-06)
 
