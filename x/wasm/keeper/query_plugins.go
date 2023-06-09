@@ -612,7 +612,7 @@ func ConvertToDenomsMetadataRequest(wasmRequest *wasmvmtypes.AllDenomMetadataQue
 	if wasmRequest.Pagination != nil {
 		ret.Pagination = &query.PageRequest{
 			Key:     wasmRequest.Pagination.Key,
-			Limit:   wasmRequest.Pagination.Limit,
+			Limit:   uint64(wasmRequest.Pagination.Limit),
 			Reverse: wasmRequest.Pagination.Reverse,
 		}
 	}
