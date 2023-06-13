@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
@@ -46,8 +47,8 @@ func (a ContractExecutionAuthorization) NewAuthz(g []ContractGrant) authztypes.A
 }
 
 // Accept implements Authorization.Accept.
-func (a *ContractExecutionAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	return AcceptGrantedMessage[*MsgExecuteContract](ctx, a.Grants, msg, a)
+func (a *ContractExecutionAuthorization) Accept(goCtx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return AcceptGrantedMessage[*MsgExecuteContract](sdk.UnwrapSDKContext(goCtx), a.Grants, msg, a)
 }
 
 // ValidateBasic implements Authorization.ValidateBasic.
@@ -78,8 +79,8 @@ func (a ContractMigrationAuthorization) MsgTypeURL() string {
 }
 
 // Accept implements Authorization.Accept.
-func (a *ContractMigrationAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	return AcceptGrantedMessage[*MsgMigrateContract](ctx, a.Grants, msg, a)
+func (a *ContractMigrationAuthorization) Accept(goCtx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	return AcceptGrantedMessage[*MsgMigrateContract](sdk.UnwrapSDKContext(goCtx), a.Grants, msg, a)
 }
 
 // NewAuthz factory method to create an Authorization with updated grants

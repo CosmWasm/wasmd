@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
@@ -95,7 +97,7 @@ func mustSubmitAndExecuteLegacyProposal(t *testing.T, ctx sdk.Context, content v
 	contentMsg, err := submitLegacyProposal(t, ctx.WithEventManager(sdk.NewEventManager()), content, myActorAddress, govAuthority, msgServer)
 	require.NoError(t, err)
 
-	_, err = msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+	_, err = msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 	require.NoError(t, err)
 }
 
@@ -112,11 +114,12 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 		"",
 		"my title",
 		"my description",
+		false,
 	)
 	require.NoError(t, err)
 
 	// when stored
-	_, err = msgServer.SubmitProposal(sdk.WrapSDKContext(ctx), proposal)
+	_, err = msgServer.SubmitProposal(ctx, proposal)
 	return contentMsg, err
 }
 
@@ -466,7 +469,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 
 	releaseMsg := struct {
 		Release struct{} `json:"release"`
@@ -491,7 +494,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 
 	// try again with the proper run-as
 	src := &types.ExecuteContractProposal{ //nolint:staticcheck // testing deprecated function
@@ -509,7 +512,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// balance should be empty (proper release)
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(0))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(0))
 }
 
 func TestSudoProposal(t *testing.T) {
@@ -522,9 +525,9 @@ func TestSudoProposal(t *testing.T) {
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(0))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(0))
 
 	type StealMsg struct {
 		Recipient string     `json:"recipient"`
@@ -554,9 +557,9 @@ func TestSudoProposal(t *testing.T) {
 
 	// balance should be empty (and verifier richer)
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(25))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(25))
 	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(75))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(75))
 }
 
 func TestAdminProposals(t *testing.T) {
@@ -728,7 +731,7 @@ func TestPinCodesProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then
@@ -818,7 +821,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then
@@ -913,7 +916,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then

@@ -5,7 +5,9 @@ package keeper
 import (
 	"path/filepath"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/collections"
+
+	corestoretypes "cosmossdk.io/core/store"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,7 +19,7 @@ import (
 // If customEncoders is non-nil, we can use this to override some of the message handler, especially custom
 func NewKeeper(
 	cdc codec.Codec,
-	storeKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	stakingKeeper types.StakingKeeper,
@@ -35,8 +37,9 @@ func NewKeeper(
 	authority string,
 	opts ...Option,
 ) Keeper {
+	sb := collections.NewSchemaBuilder(storeService)
 	keeper := &Keeper{
-		storeKey:             storeKey,
+		storeService:         storeService,
 		cdc:                  cdc,
 		wasmVM:               nil,
 		accountKeeper:        accountKeeper,
@@ -49,6 +52,7 @@ func NewKeeper(
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
+		params:               collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionInstantiate: {},
 		},

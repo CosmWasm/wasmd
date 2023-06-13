@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/app"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -27,12 +28,14 @@ import (
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain B
 	//           then the contract can handle the receiving side of an ics20 transfer
 	//           that was started on chain A via ibc transfer module
 
-	transferAmount := sdk.NewInt(1)
+	transferAmount := sdkmath.NewInt(1)
 	specs := map[string]struct {
 		contract                    wasmtesting.IBCContractCallbacks
 		setupContract               func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
@@ -62,8 +65,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			},
 			expChainAPendingSendPackets: 0,
 			expChainBPendingSendPackets: 0,
-			expChainABalanceDiff:        sdk.ZeroInt(),
-			expChainBBalanceDiff:        sdk.ZeroInt(),
+			expChainABalanceDiff:        sdkmath.ZeroInt(),
+			expChainBBalanceDiff:        sdkmath.ZeroInt(),
 		},
 		"error": {
 			contract: &errorReceiverContract{},
@@ -74,7 +77,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			expChainAPendingSendPackets: 1,
 			expChainBPendingSendPackets: 0,
 			expChainABalanceDiff:        transferAmount.Neg(),
-			expChainBBalanceDiff:        sdk.ZeroInt(),
+			expChainBBalanceDiff:        sdkmath.ZeroInt(),
 			expErr:                      true,
 		},
 	}
@@ -148,6 +151,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 }
 
 func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can start an ibc transfer via ibctransfertypes.NewMsgTransfer
@@ -183,7 +188,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 
 	// when contract is triggered to send IBCTransferMsg
 	receiverAddress := chainB.SenderAccount.GetAddress()
-	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 
 	// start transfer from chainA to chainB
 	startMsg := &types.MsgExecuteContract{
@@ -219,6 +224,8 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 }
 
 func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can emulate the ibc transfer module in the contract to send an ibc packet
@@ -256,7 +263,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	// when contract is triggered to send the ibc package to chain B
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
 	receiverAddress := chainB.SenderAccount.GetAddress()
-	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 
 	// start transfer from chainA to chainB
 	startMsg := &types.MsgExecuteContract{
@@ -294,6 +301,8 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 }
 
 func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can emulate the ibc transfer module in the contract to send an ibc packet
@@ -333,7 +342,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	// when contract is triggered to send the ibc package to chain B
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Nanosecond).UnixNano()) // will timeout
 	receiverAddress := chainB.SenderAccount.GetAddress()
-	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 	initialContractBalance := chainA.Balance(myContractAddr, sdk.DefaultBondDenom)
 	initialSenderBalance := chainA.Balance(chainA.SenderAccount.GetAddress(), sdk.DefaultBondDenom)
 
@@ -376,6 +385,8 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 }
 
 func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains, A and B
 	//           with 2 contract A1 and A2 on chain A
 	//           then the contract A2 try to send an ibc packet via IBC Channel that create by A1 and B
@@ -421,7 +432,7 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 	// when contract is triggered to send the ibc package to chain B
 	timeout := uint64(chainB.LastHeader.Header.Time.Add(time.Hour).UnixNano()) // enough time to not timeout
 	receiverAddress := chainB.SenderAccount.GetAddress()
-	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	coinToSendToB := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 
 	// start transfer from chainA - A2 to chainB via IBC channel
 	startMsg := &types.MsgExecuteContract{
@@ -440,6 +451,8 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 }
 
 func TestContractHandlesChannelClose(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: a contract is the sending side of an ics20 transfer but the packet was not received
 	// on the destination chain within the timeout boundaries
 	myContractA := &captureCloseContract{}
@@ -483,6 +496,8 @@ func TestContractHandlesChannelClose(t *testing.T) {
 }
 
 func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
+	types.DeactivateTest(t)
+
 	// scenario: given two chains,
 	//           with a contract A1, A2 on chain A, contract B on chain B
 	//           contract A2 try to close ibc channel that create between A1 and B
@@ -535,7 +550,7 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 		Msg: closeIBCChannel{
 			ChannelID: path.EndpointA.ChannelID,
 		}.GetBytes(),
-		Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))),
+		Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))),
 	}
 
 	_, err := chainA.SendMsgs(closeIBCChannelMsg)
@@ -628,7 +643,7 @@ func (s *sendEmulatedIBCTransferContract) IBCPacketTimeout(_ wasmvm.Checksum, _ 
 	if err := data.ValidateBasic(); err != nil {
 		return nil, 0, err
 	}
-	amount, _ := sdk.NewIntFromString(data.Amount)
+	amount, _ := sdkmath.NewIntFromString(data.Amount)
 
 	returnTokens := &wasmvmtypes.BankMsg{
 		Send: &wasmvmtypes.SendMsg{

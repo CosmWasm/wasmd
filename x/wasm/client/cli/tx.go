@@ -45,6 +45,7 @@ const (
 	flagAllowAllMsgs              = "allow-all-messages"
 	flagNoTokenTransfer           = "no-token-transfer" //nolint:gosec
 	flagAuthority                 = "authority"
+	flagExpedite                  = "expedite"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -88,9 +89,6 @@ func StoreCodeCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 		SilenceUsage: true,
@@ -129,7 +127,7 @@ func parseStoreCodeArgs(file string, sender string, flags *flag.FlagSet) (types.
 		WASMByteCode:          wasm,
 		InstantiatePermission: perm,
 	}
-	return msg, nil
+	return msg, msg.ValidateBasic()
 }
 
 func parseAccessConfigFlags(flags *flag.FlagSet) (*types.AccessConfig, error) {
@@ -215,9 +213,6 @@ $ %s tx wasm instantiate 1 '{"foo":"bar"}' --admin="$(%s keys show mykey -a)" \
 			if err != nil {
 				return err
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 		SilenceUsage: true,
@@ -275,9 +270,6 @@ $ %s tx wasm instantiate2 1 '{"foo":"bar"}' $(echo -n "testing" | xxd -ps) --adm
 				Funds:  data.Funds,
 				Salt:   salt,
 				FixMsg: fixMsg,
-			}
-			if err := msg.ValidateBasic(); err != nil {
-				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -360,7 +352,7 @@ func parseInstantiateArgs(rawCodeID, initMsg string, kr keyring.Keyring, sender 
 		Msg:    []byte(initMsg),
 		Admin:  adminStr,
 	}
-	return &msg, nil
+	return &msg, msg.ValidateBasic()
 }
 
 // ExecuteContractCmd will instantiate a contract from previously uploaded code.
@@ -378,9 +370,6 @@ func ExecuteContractCmd() *cobra.Command {
 
 			msg, err := parseExecuteArgs(args[0], args[1], clientCtx.GetFromAddress(), cmd.Flags())
 			if err != nil {
-				return err
-			}
-			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

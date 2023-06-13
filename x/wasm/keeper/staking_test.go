@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -12,7 +14,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
@@ -23,11 +24,11 @@ import (
 )
 
 type StakingInitMsg struct {
-	Name      string         `json:"name"`
-	Symbol    string         `json:"symbol"`
-	Decimals  uint8          `json:"decimals"`
-	Validator sdk.ValAddress `json:"validator"`
-	ExitTax   sdk.Dec        `json:"exit_tax"`
+	Name      string            `json:"name"`
+	Symbol    string            `json:"symbol"`
+	Decimals  uint8             `json:"decimals"`
+	Validator sdk.ValAddress    `json:"validator"`
+	ExitTax   sdkmath.LegacyDec `json:"exit_tax"`
 	// MinWithdrawal is uint128 encoded as a string (use math.Int?)
 	MinWithdrawl string `json:"min_withdrawal"`
 }
@@ -80,12 +81,12 @@ type TokenInfoResponse struct {
 }
 
 type InvestmentResponse struct {
-	TokenSupply  string         `json:"token_supply"`
-	StakedTokens sdk.Coin       `json:"staked_tokens"`
-	NominalValue sdk.Dec        `json:"nominal_value"`
-	Owner        sdk.AccAddress `json:"owner"`
-	Validator    sdk.ValAddress `json:"validator"`
-	ExitTax      sdk.Dec        `json:"exit_tax"`
+	TokenSupply  string            `json:"token_supply"`
+	StakedTokens sdk.Coin          `json:"staked_tokens"`
+	NominalValue sdkmath.LegacyDec `json:"nominal_value"`
+	Owner        sdk.AccAddress    `json:"owner"`
+	Validator    sdk.ValAddress    `json:"validator"`
+	ExitTax      sdkmath.LegacyDec `json:"exit_tax"`
 	// MinWithdrawl is uint128 encoded as a string (use math.Int?)
 	MinWithdrawl string `json:"min_withdrawal"`
 }
@@ -96,9 +97,9 @@ func TestInitializeStaking(t *testing.T) {
 
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1234567))
 	ctx = nextBlock(ctx, stakingKeeper)
-	v, found := stakingKeeper.GetValidator(ctx, valAddr)
-	assert.True(t, found)
-	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1234567))
+	v, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, v.GetDelegatorShares(), sdkmath.LegacyNewDec(1234567))
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
@@ -116,7 +117,7 @@ func TestInitializeStaking(t *testing.T) {
 		Symbol:       "DRV",
 		Decimals:     0,
 		Validator:    valAddr,
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
+		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
 		MinWithdrawl: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
@@ -136,7 +137,7 @@ func TestInitializeStaking(t *testing.T) {
 		Symbol:       "MISS",
 		Decimals:     0,
 		Validator:    sdk.ValAddress(bob),
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
+		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
 		MinWithdrawl: "100",
 	}
 	badBz, err := json.Marshal(&badInitMsg)
@@ -147,7 +148,7 @@ func TestInitializeStaking(t *testing.T) {
 
 	// no changes to bonding shares
 	val, _ := stakingKeeper.GetValidator(ctx, valAddr)
-	assert.Equal(t, val.GetDelegatorShares(), sdk.NewDec(1234567))
+	assert.Equal(t, val.GetDelegatorShares(), sdkmath.LegacyNewDec(1234567))
 }
 
 type initInfo struct {
@@ -172,9 +173,9 @@ func initializeStaking(t *testing.T) initInfo {
 	valAddr := addValidator(t, ctx, stakingKeeper, k.Faucet, sdk.NewInt64Coin("stake", 1000000))
 	ctx = nextBlock(ctx, stakingKeeper)
 
-	v, found := stakingKeeper.GetValidator(ctx, valAddr)
-	assert.True(t, found)
-	assert.Equal(t, v.GetDelegatorShares(), sdk.NewDec(1000000))
+	v, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, v.GetDelegatorShares(), sdkmath.LegacyNewDec(1000000))
 	assert.Equal(t, v.Status, stakingtypes.Bonded)
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000), sdk.NewInt64Coin("stake", 500000))
@@ -193,7 +194,7 @@ func initializeStaking(t *testing.T) initInfo {
 		Symbol:       "DRV",
 		Decimals:     0,
 		Validator:    valAddr,
-		ExitTax:      sdk.MustNewDecFromStr("0.10"),
+		ExitTax:      sdkmath.LegacyMustNewDecFromStr("0.10"),
 		MinWithdrawl: "100",
 	}
 	initBz, err := json.Marshal(&initMsg)
@@ -224,8 +225,8 @@ func TestBonding(t *testing.T) {
 	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
-	require.True(t, found)
+	val, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
 	initPower := val.GetDelegatorShares()
 
 	// bob has 160k, putting 80k into the contract
@@ -253,12 +254,12 @@ func TestBonding(t *testing.T) {
 	// make sure the proper number of tokens have been bonded
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
-	assert.Equal(t, sdk.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
+	assert.Equal(t, sdkmath.NewInt(80000), finalPower.Sub(initPower).TruncateInt())
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
-	require.True(t, found)
-	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("80000"))
+	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("80000"))
 
 	// check we have the desired balance
 	assertBalance(t, ctx, keeper, contractAddr, bob, "80000")
@@ -272,8 +273,8 @@ func TestUnbonding(t *testing.T) {
 	keeper, stakingKeeper, accKeeper, bankKeeper := initInfo.wasmKeeper, initInfo.stakingKeeper, initInfo.accKeeper, initInfo.bankKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
-	require.True(t, found)
+	val, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
 	initPower := val.GetDelegatorShares()
 
 	// bob has 160k, putting 80k into the contract
@@ -311,16 +312,16 @@ func TestUnbonding(t *testing.T) {
 	// make sure the proper number of tokens have been bonded (80k - 27k = 53k)
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
-	assert.Equal(t, sdk.NewInt(53000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
+	assert.Equal(t, sdkmath.NewInt(53000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
-	require.True(t, found)
-	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("53000"))
+	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("53000"))
 
 	// check there is unbonding in progress
-	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
-	require.True(t, found)
+	un, err := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(un.Entries))
 	assert.Equal(t, "27000", un.Entries[0].Balance.String())
 
@@ -338,10 +339,10 @@ func TestReinvest(t *testing.T) {
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
-	require.True(t, found)
+	val, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
 	initPower := val.GetDelegatorShares()
-	assert.Equal(t, val.Tokens, sdk.NewInt(1000000), "%s", val.Tokens)
+	assert.Equal(t, val.Tokens, sdkmath.NewInt(1000000), "%s", val.Tokens)
 
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
@@ -378,19 +379,19 @@ func TestReinvest(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, bob, funds)
 
 	// check the delegation itself
-	d, found := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
-	require.True(t, found)
+	d, err := stakingKeeper.GetDelegation(ctx, contractAddr, valAddr)
+	require.NoError(t, err)
 	// we started with 200k and added 36k
-	assert.Equal(t, d.Shares, sdk.MustNewDecFromStr("236000"))
+	assert.Equal(t, d.Shares, sdkmath.LegacyMustNewDecFromStr("236000"))
 
 	// make sure the proper number of tokens have been bonded (80k + 40k = 120k)
 	val, _ = stakingKeeper.GetValidator(ctx, valAddr)
 	finalPower := val.GetDelegatorShares()
-	assert.Equal(t, sdk.NewInt(236000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
+	assert.Equal(t, sdkmath.NewInt(236000), finalPower.Sub(initPower).TruncateInt(), finalPower.String())
 
 	// check there is no unbonding in progress
-	un, found := stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
-	assert.False(t, found, "%#v", un)
+	_, err = stakingKeeper.GetUnbondingDelegation(ctx, contractAddr, valAddr)
+	require.ErrorIs(t, stakingtypes.ErrNoUnbondingDelegation, err)
 
 	// check we have the desired balance
 	assertBalance(t, ctx, keeper, contractAddr, bob, "200000")
@@ -407,9 +408,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
-	require.True(t, found)
-	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
+	val, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, sdkmath.NewInt(1000000), val.Tokens)
 
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
@@ -432,7 +433,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
-	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	origReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.NoError(t, err)
 
 	// STEP 2: Prepare the mask contract
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
@@ -573,7 +575,8 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo2.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
-	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	finalReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.NoError(t, err)
 	require.Equal(t, origReward, finalReward)
 }
 
@@ -585,9 +588,9 @@ func TestQueryStakingPlugin(t *testing.T) {
 	distKeeper := initInfo.distKeeper
 
 	// initial checks of bonding state
-	val, found := stakingKeeper.GetValidator(ctx, valAddr)
-	require.True(t, found)
-	assert.Equal(t, sdk.NewInt(1000000), val.Tokens)
+	val, err := stakingKeeper.GetValidator(ctx, valAddr)
+	require.NoError(t, err)
+	assert.Equal(t, sdkmath.NewInt(1000000), val.Tokens)
 
 	// full is 2x funds, 1x goes to the contract, other stays on his wallet
 	full := sdk.NewCoins(sdk.NewInt64Coin("stake", 400000))
@@ -610,7 +613,8 @@ func TestQueryStakingPlugin(t *testing.T) {
 	setValidatorRewards(ctx, stakingKeeper, distKeeper, valAddr, "240000")
 
 	// see what the current rewards are
-	origReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	origReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.NoError(t, err)
 
 	// Step 2: Try out the query plugins
 	query := wasmvmtypes.StakingQuery{
@@ -639,8 +643,22 @@ func TestQueryStakingPlugin(t *testing.T) {
 	require.Equal(t, wasmvmtypes.NewCoin(36000, "stake"), delInfo.AccumulatedRewards[0])
 
 	// ensure rewards did not change when querying (neither amount nor period)
-	finalReward := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	finalReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
+	require.NoError(t, err)
 	require.Equal(t, origReward, finalReward)
+
+	// with empty delegation (regression to ensure api stability)
+	query = wasmvmtypes.StakingQuery{
+		Delegation: &wasmvmtypes.DelegationQuery{
+			Delegator: RandomBech32AccountAddress(t),
+			Validator: valAddr.String(),
+		},
+	}
+	raw, err = StakingQuerier(stakingKeeper, distributionkeeper.NewQuerier(distKeeper))(ctx, &query)
+	require.NoError(t, err)
+	var res2 wasmvmtypes.DelegationResponse
+	mustParse(t, raw, &res2)
+	assert.Empty(t, res2.Delegation)
 }
 
 // adds a few validators and returns a list of validators that are registered
@@ -649,7 +667,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
-	addr := sdk.ValAddress(pubKey.Address())
+	valAddr := sdk.ValAddress(owner)
 
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
@@ -658,34 +676,39 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 			Moniker: "Validator power",
 		},
 		Commission: stakingtypes.CommissionRates{
-			Rate:          sdk.MustNewDecFromStr("0.1"),
-			MaxRate:       sdk.MustNewDecFromStr("0.2"),
-			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+			Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
+			MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
+			MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
 		},
-		MinSelfDelegation: sdk.OneInt(),
+		MinSelfDelegation: sdkmath.OneInt(),
 		DelegatorAddress:  owner.String(),
-		ValidatorAddress:  addr.String(),
+		ValidatorAddress:  valAddr.String(),
 		Pubkey:            pkAny,
 		Value:             value,
 	}
-	_, err = stakingkeeper.NewMsgServerImpl(stakingKeeper).CreateValidator(sdk.WrapSDKContext(ctx), msg)
+	_, err = stakingkeeper.NewMsgServerImpl(stakingKeeper).CreateValidator(ctx, msg)
 	require.NoError(t, err)
-	return addr
+	return valAddr
 }
 
 // this will commit the current set, update the block height and set historic info
 // basically, letting two blocks pass
 func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context {
-	staking.EndBlocker(ctx, stakingKeeper)
+	if _, err := stakingKeeper.EndBlocker(ctx); err != nil {
+		panic(err)
+	}
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	staking.BeginBlocker(ctx, stakingKeeper)
+	stakingKeeper.BeginBlocker(ctx)
 	return ctx
 }
 
 func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, distKeeper distributionkeeper.Keeper, valAddr sdk.ValAddress, reward string) {
 	// allocate some rewards
-	vali := stakingKeeper.Validator(ctx, valAddr)
-	amount, err := sdk.NewDecFromStr(reward)
+	vali, err := stakingKeeper.Validator(ctx, valAddr)
+	if err != nil {
+		panic(err)
+	}
+	amount, err := sdkmath.LegacyNewDecFromStr(reward)
 	if err != nil {
 		panic(err)
 	}

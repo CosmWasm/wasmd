@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/cosmos/gogoproto/proto"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -23,18 +26,18 @@ func InstantiateReflectContract(t *testing.T, chain *ibctesting.TestChain) sdk.A
 }
 
 // MustExecViaReflectContract submit execute message to send payload to reflect contract
-func MustExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) *sdk.Result {
+func MustExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) *abci.ExecTxResult {
 	rsp, err := ExecViaReflectContract(t, chain, contractAddr, msgs)
 	require.NoError(t, err)
 	return rsp
 }
 
 type sdkMessageType interface {
-	codec.ProtoMarshaler
+	proto.Message
 	sdk.Msg
 }
 
-func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...T) *sdk.Result {
+func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...T) *abci.ExecTxResult {
 	vmMsgs := make([]wasmvmtypes.CosmosMsg, len(msgs))
 	for i, m := range msgs {
 		bz, err := chain.Codec.Marshal(m)
@@ -52,7 +55,7 @@ func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *i
 }
 
 // ExecViaReflectContract submit execute message to send payload to reflect contract
-func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) (*sdk.Result, error) {
+func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) (*abci.ExecTxResult, error) {
 	require.NotEmpty(t, msgs)
 	reflectSend := testdata.ReflectHandleMsg{
 		Reflect: &testdata.ReflectPayload{Msgs: msgs},

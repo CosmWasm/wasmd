@@ -3,9 +3,11 @@ package types
 import (
 	"testing"
 
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/iavl"
+	"cosmossdk.io/log"
+
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/iavl"
+	dbm "github.com/cosmos/cosmos-db"
 	iavl2 "github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 )
@@ -15,8 +17,7 @@ import (
 // and designed to ensure the IAVL store handles bounds the same way as the mock storage we use in Rust contract tests
 func TestIavlRangeBounds(t *testing.T) {
 	memdb := dbm.NewMemDB()
-	tree, err := iavl2.NewMutableTree(memdb, 50, false)
-	require.NoError(t, err)
+	tree := iavl2.NewMutableTree(memdb, 50, false, log.NewTestLogger(t))
 	kvstore := iavl.UnsafeNewStore(tree)
 
 	// values to compare with

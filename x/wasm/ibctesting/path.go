@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 )
 
 // Path contains two endpoints representing two chains connected over IBC
@@ -54,7 +53,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ParseAckFromEvents(res.GetEvents())
 		if err != nil {
 			return err
 		}
@@ -77,7 +76,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ParseAckFromEvents(res.GetEvents())
 		if err != nil {
 			return err
 		}

@@ -3,9 +3,12 @@ package v3
 import (
 	"encoding/binary"
 
+	corestoretypes "cosmossdk.io/core/store"
+
+	"github.com/cosmos/cosmos-sdk/runtime"
+
+	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -31,10 +34,13 @@ func NewMigrator(k wasmKeeper, fn StoreCodeInfoFn) Migrator {
 }
 
 // Migrate3to4 migrates from version 3 to 4.
-func (m Migrator) Migrate3to4(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
+func (m Migrator) Migrate3to4(ctx sdk.Context, storeService corestoretypes.KVStoreService, cdc codec.BinaryCodec) error {
 	var legacyParams Params
-	store := ctx.KVStore(storeKey)
-	bz := store.Get(types.ParamsKey)
+	store := storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.ParamsKey)
+	if err != nil {
+		return err
+	}
 	if bz != nil {
 		cdc.MustUnmarshal(bz, &legacyParams)
 
@@ -53,7 +59,7 @@ func (m Migrator) Migrate3to4(ctx sdk.Context, storeKey storetypes.StoreKey, cdc
 		}
 	}
 
-	prefixStore := prefix.NewStore(store, types.CodeKeyPrefix)
+	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(store), types.CodeKeyPrefix)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 

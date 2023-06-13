@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +20,7 @@ import (
 
 func TestInstantiate2(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	parentCtx = parentCtx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	parentCtx = parentCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	otherExample := StoreReflectContract(t, parentCtx, keepers)

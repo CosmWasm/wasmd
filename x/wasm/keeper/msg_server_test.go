@@ -3,9 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/store"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 
@@ -21,7 +23,9 @@ func TestSelectAuthorizationPolicy(t *testing.T) {
 		},
 		authority: myGovAuthority.String(),
 	}}
-	ctx := sdk.NewContext(store.NewCommitMultiStore(nil), tmproto.Header{}, false, log.NewNopLogger())
+
+	ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	ctx := sdk.NewContext(ms, tmproto.Header{}, false, log.NewNopLogger())
 
 	specs := map[string]struct {
 		ctx   sdk.Context
