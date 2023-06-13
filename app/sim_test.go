@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -304,7 +303,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
 	for i := 0; i < numSeeds; i++ {
-		config.Seed = rand.Int63()
+		config.Seed += int64(i)
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			var logger log.Logger

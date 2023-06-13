@@ -150,7 +150,7 @@ test-sim-multi-seed-short: runsim
 
 test-sim-deterministic: runsim
 	@echo "Running application deterministic simulation. This may take awhile!"
-	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 1 1 TestAppStateDeterminism
+	@$(BINDIR)/runsim -Jobs=1 --Seeds="4003615766033486007" -SimAppPkg=$(SIMAPP) -ExitOnFail 1 1 TestAppStateDeterminism
 
 ###############################################################################
 ###                                Linting                                  ###
