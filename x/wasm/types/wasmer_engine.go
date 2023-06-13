@@ -4,7 +4,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	storetypes "cosmossdk.io/store/types"
 )
 
 // DefaultMaxQueryStackSize maximum size of the stack of contract instances doing queries
@@ -262,11 +262,11 @@ var _ wasmvm.KVStore = &StoreAdapter{}
 
 // StoreAdapter adapter to bridge SDK store impl to wasmvm
 type StoreAdapter struct {
-	parent sdk.KVStore
+	parent storetypes.KVStore
 }
 
 // NewStoreAdapter constructor
-func NewStoreAdapter(s sdk.KVStore) *StoreAdapter {
+func NewStoreAdapter(s storetypes.KVStore) *StoreAdapter {
 	if s == nil {
 		panic("store must not be nil")
 	}

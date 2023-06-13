@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,7 +63,9 @@ func TestSnapshotter(t *testing.T) {
 				srcCodeIDToChecksum[codeID] = checksum
 			}
 			// create snapshot
-			srcWasmApp.Commit()
+			_, err := srcWasmApp.Commit()
+			require.NoError(t, err)
+
 			snapshotHeight := uint64(srcWasmApp.LastBlockHeight())
 			snapshot, err := srcWasmApp.SnapshotManager().Create(snapshotHeight)
 			require.NoError(t, err)
@@ -111,14 +115,13 @@ func TestSnapshotter(t *testing.T) {
 }
 
 func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
-	t.Helper()
 	senderPrivKey := ed25519.GenPrivKey()
-	pubKey, err := cryptocodec.ToTmPubKeyInterface(senderPrivKey.PubKey())
+	pubKey, err := cryptocodec.ToCmtPubKeyInterface(senderPrivKey.PubKey())
 	require.NoError(t, err)
 
 	senderAddr := senderPrivKey.PubKey().Address().Bytes()
 	acc := authtypes.NewBaseAccount(senderAddr, senderPrivKey.PubKey(), 0, 0)
-	amount, ok := sdk.NewIntFromString("10000000000000000000")
+	amount, ok := sdkmath.NewIntFromString("10000000000000000000")
 	require.True(t, ok)
 
 	balance := banktypes.Balance{

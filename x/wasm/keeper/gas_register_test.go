@@ -8,8 +8,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -18,18 +17,18 @@ func TestCompileCosts(t *testing.T) {
 	specs := map[string]struct {
 		srcLen    int
 		srcConfig WasmGasRegisterConfig
-		exp       sdk.Gas
+		exp       storetypes.Gas
 		expPanic  bool
 	}{
 		"one byte": {
 			srcLen:    1,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(3), // DefaultCompileCost
+			exp:       storetypes.Gas(3), // DefaultCompileCost
 		},
 		"zero byte": {
 			srcLen:    0,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(0),
+			exp:       storetypes.Gas(0),
 		},
 		"negative len": {
 			srcLen:    -1,
@@ -56,7 +55,7 @@ func TestNewContractInstanceCosts(t *testing.T) {
 		srcLen    int
 		srcConfig WasmGasRegisterConfig
 		pinned    bool
-		exp       sdk.Gas
+		exp       storetypes.Gas
 		expPanic  bool
 	}{
 		"small msg - pinned": {
@@ -69,13 +68,13 @@ func TestNewContractInstanceCosts(t *testing.T) {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       DefaultContractMessageDataCost * sdk.Gas(math.MaxUint32),
+			exp:       DefaultContractMessageDataCost * storetypes.Gas(math.MaxUint32),
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
 			pinned:    true,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(0),
+			exp:       storetypes.Gas(0),
 		},
 		"small msg - unpinned": {
 			srcLen:    1,
@@ -119,7 +118,7 @@ func TestContractInstanceCosts(t *testing.T) {
 		srcLen    int
 		srcConfig WasmGasRegisterConfig
 		pinned    bool
-		exp       sdk.Gas
+		exp       storetypes.Gas
 		expPanic  bool
 	}{
 		"small msg - pinned": {
@@ -138,7 +137,7 @@ func TestContractInstanceCosts(t *testing.T) {
 			srcLen:    0,
 			pinned:    true,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(0),
+			exp:       storetypes.Gas(0),
 		},
 		"small msg - unpinned": {
 			srcLen:    1,
@@ -181,7 +180,7 @@ func TestReplyCost(t *testing.T) {
 		src       wasmvmtypes.Reply
 		srcConfig WasmGasRegisterConfig
 		pinned    bool
-		exp       sdk.Gas
+		exp       storetypes.Gas
 		expPanic  bool
 	}{
 		"subcall response with events and data - pinned": {
@@ -326,7 +325,7 @@ func TestEventCosts(t *testing.T) {
 	specs := map[string]struct {
 		srcAttrs  []wasmvmtypes.EventAttribute
 		srcEvents wasmvmtypes.Events
-		expGas    sdk.Gas
+		expGas    storetypes.Gas
 	}{
 		"empty events": {
 			srcEvents: make([]wasmvmtypes.Event, 1),
@@ -437,7 +436,7 @@ func TestFromWasmVMGasConversion(t *testing.T) {
 func TestUncompressCosts(t *testing.T) {
 	specs := map[string]struct {
 		lenIn    int
-		exp      sdk.Gas
+		exp      storetypes.Gas
 		expPanic bool
 	}{
 		"0": {

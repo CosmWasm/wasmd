@@ -4,6 +4,7 @@ package cosmwasm.wasm.v1;
 import "gogoproto/gogo.proto";
 import "cosmwasm/wasm/v1/types.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 
@@ -40,7 +41,8 @@ message Code {
 
 // Contract struct encompasses ContractAddress, ContractInfo, and ContractState
 message Contract {
-  string contract_address = 1;
+  string contract_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ContractInfo contract_info = 2
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
   repeated Model contract_state = 3

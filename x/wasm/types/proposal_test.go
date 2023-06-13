@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -252,13 +254,13 @@ func TestValidateInstantiateContractProposal(t *testing.T) {
 		},
 		"init funds negative": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(-1)}}
 			}),
 			expErr: true,
 		},
 		"init funds with duplicates": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(1)}, {Denom: "foo", Amount: sdkmath.NewInt(2)}}
 			}),
 			expErr: true,
 		},
@@ -349,13 +351,13 @@ func TestValidateInstantiateContract2Proposal(t *testing.T) {
 		},
 		"init funds negative": {
 			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(-1)}}
 			}),
 			expErr: true,
 		},
 		"init funds with duplicates": {
 			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(1)}, {Denom: "foo", Amount: sdkmath.NewInt(2)}}
 			}),
 			expErr: true,
 		},
@@ -491,13 +493,13 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 		},
 		"init funds negative": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(-1)}}
 			}),
 			expErr: true,
 		},
 		"init funds with duplicates": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "foo", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(1)}, {Denom: "foo", Amount: sdkmath.NewInt(2)}}
 			}),
 			expErr: true,
 		},
@@ -792,7 +794,7 @@ func TestProposalStrings(t *testing.T) {
 		},
 		"instantiate contract": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(1)}, {Denom: "bar", Amount: sdkmath.NewInt(2)}}
 			}),
 			exp: `Instantiate Code Proposal:
   Title:       Foo
@@ -911,7 +913,7 @@ code_hash: 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
 		},
 		"instantiate contract": {
 			src: InstantiateContractProposalFixture(func(p *InstantiateContractProposal) {
-				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(1)}, {Denom: "bar", Amount: sdk.NewInt(2)}}
+				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdkmath.NewInt(1)}, {Denom: "bar", Amount: sdkmath.NewInt(2)}}
 			}),
 			exp: `title: Foo
 description: Bar
@@ -1064,7 +1066,7 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 				CodeID:      1,
 				Label:       "testing",
 				Msg:         []byte("{}"),
-				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdk.NewInt(2)), sdk.NewCoin("BLX", sdk.NewInt(3))),
+				Funds:       sdk.NewCoins(sdk.NewCoin("ALX", sdkmath.NewInt(2)), sdk.NewCoin("BLX", sdkmath.NewInt(3))),
 			},
 		},
 		"migrate ": {
@@ -1091,40 +1093,6 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(spec.src), spec.got))
 			assert.Equal(t, spec.exp, spec.got)
-		})
-	}
-}
-
-func TestProposalJsonSignBytes(t *testing.T) {
-	const myInnerMsg = `{"foo":"bar"}`
-	specs := map[string]struct {
-		src v1beta1.Content
-		exp string
-	}{
-		"instantiate contract": {
-			src: &InstantiateContractProposal{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/InstantiateContractProposal","value":{"funds":[],"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
-		},
-		"migrate contract": {
-			src: &MigrateContractProposal{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/MigrateContractProposal","value":{"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			msg, err := v1beta1.NewMsgSubmitProposal(spec.src, sdk.NewCoins(), []byte{})
-			require.NoError(t, err)
-
-			bz := msg.GetSignBytes()
-			assert.JSONEq(t, spec.exp, string(bz), "exp %s\n got: %s\n", spec.exp, string(bz))
 		})
 	}
 }

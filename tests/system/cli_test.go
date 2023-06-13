@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func TestUnsafeResetAll(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	sut.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
+	sut.ForEachNodeExecAndWait(t, []string{"comet", "unsafe-reset-all"})
 
 	// then
 	sut.withEachNodeHome(func(i int, home string) {
@@ -94,7 +95,7 @@ func TestVestingAccounts(t *testing.T) {
 	assert.Equal(t, myStartTimestamp, accounts[0].Get("start_time").Int())
 
 	// check accounts have some balances
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))), GetGenesisBalance([]byte(raw), vest1Addr))
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000001))), GetGenesisBalance([]byte(raw), vest2Addr))
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(200000002))), GetGenesisBalance([]byte(raw), vest3Addr))
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(100000000))), GetGenesisBalance([]byte(raw), vest1Addr))
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(100000001))), GetGenesisBalance([]byte(raw), vest2Addr))
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewInt(200000002))), GetGenesisBalance([]byte(raw), vest3Addr))
 }

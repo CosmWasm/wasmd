@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -55,7 +54,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ParseAckFromEvents(res.GetEvents())
 		if err != nil {
 			return err
 		}
@@ -78,7 +77,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ParseAckFromEvents(res.GetEvents())
 		if err != nil {
 			return err
 		}

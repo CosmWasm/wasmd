@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -97,7 +99,7 @@ func mustSubmitAndExecuteLegacyProposal(t *testing.T, ctx sdk.Context, content v
 	contentMsg, err := submitLegacyProposal(t, ctx.WithEventManager(sdk.NewEventManager()), content, myActorAddress, govAuthority, msgServer)
 	require.NoError(t, err)
 
-	_, err = msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+	_, err = msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 	require.NoError(t, err)
 }
 
@@ -114,11 +116,12 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 		"",
 		"my title",
 		"my description",
+		false,
 	)
 	require.NoError(t, err)
 
 	// when stored
-	_, err = msgServer.SubmitProposal(sdk.WrapSDKContext(ctx), proposal)
+	_, err = msgServer.SubmitProposal(ctx, proposal)
 	return contentMsg, err
 }
 
@@ -290,7 +293,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 			require.NoError(t, gotErr)
 			// and when
 			em := sdk.NewEventManager()
-			_, err = msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx.WithEventManager(em)), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err = msgServer.ExecLegacyContent(ctx.WithEventManager(em), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			// then
 			require.NoError(t, err)
 			contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
@@ -468,7 +471,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 
 	releaseMsg := struct {
 		Release struct{} `json:"release"`
@@ -493,7 +496,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// balance should not change
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 
 	// try again with the proper run-as
 	src := &types.ExecuteContractProposal{ //nolint:staticcheck // testing deprecated function
@@ -511,7 +514,7 @@ func TestExecuteProposal(t *testing.T) {
 
 	// balance should be empty (proper release)
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(0))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(0))
 }
 
 func TestSudoProposal(t *testing.T) {
@@ -524,9 +527,9 @@ func TestSudoProposal(t *testing.T) {
 
 	// check balance
 	bal := bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(100))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(100))
 	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(0))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(0))
 
 	type StealMsg struct {
 		Recipient string     `json:"recipient"`
@@ -556,9 +559,9 @@ func TestSudoProposal(t *testing.T) {
 
 	// balance should be empty (and verifier richer)
 	bal = bankKeeper.GetBalance(ctx, contractAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(25))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(25))
 	bal = bankKeeper.GetBalance(ctx, anyAddr, "denom")
-	require.Equal(t, bal.Amount, sdk.NewInt(75))
+	require.Equal(t, bal.Amount, sdkmath.NewInt(75))
 }
 
 func TestAdminProposals(t *testing.T) {
@@ -730,7 +733,7 @@ func TestPinCodesProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then
@@ -820,7 +823,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then
@@ -915,7 +918,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 			require.NoError(t, gotErr)
 
 			// and proposal execute
-			_, err := msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err := msgServer.ExecLegacyContent(ctx, v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			require.NoError(t, err)
 
 			// then

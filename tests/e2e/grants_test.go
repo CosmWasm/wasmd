@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -41,11 +42,11 @@ func TestGrants(t *testing.T) {
 	otherPrivKey := secp256k1.GenPrivKey()
 	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
 
-	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
-	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
-	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+	chain.Fund(granteeAddr, sdkmath.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdkmath.NewInt(1_000_000))
+	assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 
-	myAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2_000_000))
+	myAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2_000_000))
 
 	specs := map[string]struct {
 		limit          types.ContractAuthzLimitX
@@ -63,14 +64,14 @@ func TestGrants(t *testing.T) {
 		"exceed limits": {
 			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAllowAllMessagesFilter(),
-			transferAmount: myAmount.Add(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+			transferAmount: myAmount.Add(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},
 		"not match filter": {
 			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAcceptedMessageKeysFilter("foo"),
-			transferAmount: sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt()),
+			transferAmount: sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt()),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},
@@ -108,13 +109,13 @@ func TestGrants(t *testing.T) {
 
 			// then
 			if spec.expErr != nil {
-				require.True(t, spec.expErr.Is(gotErr))
-				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+				require.ErrorContains(t, gotErr, fmt.Sprintf("%s/%d:", spec.expErr.Codespace(), spec.expErr.ABCICode()))
+				assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+			assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 			assert.Equal(t, granterStartBalance.Sub(spec.transferAmount.Amount), chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 		})
 	}
