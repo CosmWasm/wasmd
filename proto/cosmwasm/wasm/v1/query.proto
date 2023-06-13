@@ -6,6 +6,7 @@ import "cosmwasm/wasm/v1/types.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -77,7 +78,7 @@ service Query {
 // method
 message QueryContractInfoRequest {
   // address is the address of the contract to query
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 // QueryContractInfoResponse is the response type for the Query/ContractInfo RPC
 // method
@@ -85,7 +86,7 @@ message QueryContractInfoResponse {
   option (gogoproto.equal) = true;
 
   // address is the address of the contract
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   ContractInfo contract_info = 2 [
     (gogoproto.embed) = true,
     (gogoproto.nullable) = false,
@@ -98,7 +99,7 @@ message QueryContractInfoResponse {
 // RPC method
 message QueryContractHistoryRequest {
   // address is the address of the contract to query
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -124,7 +125,8 @@ message QueryContractsByCodeRequest {
 // Query/ContractsByCode RPC method
 message QueryContractsByCodeResponse {
   // contracts are a set of contract addresses
-  repeated string contracts = 1;
+  repeated string contracts = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -134,7 +136,7 @@ message QueryContractsByCodeResponse {
 // Query/AllContractState RPC method
 message QueryAllContractStateRequest {
   // address is the address of the contract
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -152,7 +154,7 @@ message QueryAllContractStateResponse {
 // Query/RawContractState RPC method
 message QueryRawContractStateRequest {
   // address is the address of the contract
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes query_data = 2;
 }
 
@@ -167,7 +169,7 @@ message QueryRawContractStateResponse {
 // Query/SmartContractState RPC method
 message QuerySmartContractStateRequest {
   // address is the address of the contract
-  string address = 1;
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // QueryData contains the query data passed to the contract
   bytes query_data = 2 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
@@ -192,7 +194,7 @@ message CodeInfoResponse {
     (gogoproto.customname) = "CodeID",
     (gogoproto.jsontag) = "id"
   ]; // id for legacy support
-  string creator = 2;
+  string creator = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bytes data_hash = 3
       [ (gogoproto.casttype) =
             "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
@@ -253,7 +255,7 @@ message QueryParamsResponse {
 // Query/ContractsByCreator RPC method.
 message QueryContractsByCreatorRequest {
   // CreatorAddress is the address of contract creator
-  string creator_address = 1;
+  string creator_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -262,7 +264,8 @@ message QueryContractsByCreatorRequest {
 // Query/ContractsByCreator RPC method.
 message QueryContractsByCreatorResponse {
   // ContractAddresses result set
-  repeated string contract_addresses = 1;
+  repeated string contract_addresses = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

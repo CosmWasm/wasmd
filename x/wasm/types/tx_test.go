@@ -8,8 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const (
@@ -137,7 +138,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 				CodeID: firstCodeID,
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
-				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -148,7 +149,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 			},
 			valid: false,
 		},
@@ -247,7 +248,7 @@ func TestInstantiateContract2Validation(t *testing.T) {
 				CodeID: firstCodeID,
 				Label:  strings.Repeat("a", MaxLabelSize),
 				Msg:    []byte(`{"some": "data"}`),
-				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 				Salt:   bytes.Repeat([]byte{0}, MaxSaltSize),
 				FixMsg: true,
 			},
@@ -260,7 +261,7 @@ func TestInstantiateContract2Validation(t *testing.T) {
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 				Salt:  []byte{0},
 			},
 			valid: false,
@@ -341,7 +342,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -380,7 +381,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-1)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-1)}},
 			},
 			valid: false,
 		},
@@ -389,7 +390,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(1)}},
 			},
 			valid: false,
 		},
@@ -619,45 +620,6 @@ func TestMsgMigrateContract(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-		})
-	}
-}
-
-func TestMsgJsonSignBytes(t *testing.T) {
-	const myInnerMsg = `{"foo":"bar"}`
-	specs := map[string]struct {
-		src legacytx.LegacyMsg
-		exp string
-	}{
-		"MsgInstantiateContract": {
-			src: &MsgInstantiateContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgInstantiateContract",
-	"value": {"msg": {"foo":"bar"}, "funds":[]}
-}`,
-		},
-		"MsgExecuteContract": {
-			src: &MsgExecuteContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgExecuteContract",
-	"value": {"msg": {"foo":"bar"}, "funds":[]}
-}`,
-		},
-		"MsgMigrateContract": {
-			src: &MsgMigrateContract{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"wasm/MsgMigrateContract",
-	"value": {"msg": {"foo":"bar"}}
-}`,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			bz := spec.src.GetSignBytes()
-			assert.JSONEq(t, spec.exp, string(bz), "raw: %s", string(bz))
 		})
 	}
 }
@@ -1120,7 +1082,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				Authority:             goodAddress,
 				Label:                 "foo",
 				Msg:                   []byte(`{"some": "data"}`),
-				Funds:                 sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:                 sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 				WASMByteCode:          []byte("foo"),
 				InstantiatePermission: &AllowEverybody,
 				UnpinCode:             true,
@@ -1171,7 +1133,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				Label:     "foo",
 				Msg:       []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds:        sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds:        sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 				WASMByteCode: []byte("foo"),
 			},
 			valid: false,

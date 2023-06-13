@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -96,7 +98,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 		filter         ContractAuthzFilterX
 		src            RawContractMessage
 		exp            bool
-		expGasConsumed sdk.Gas
+		expGasConsumed storetypes.Gas
 		expErr         bool
 	}{
 		"allow all - accepts json obj": {
@@ -118,25 +120,25 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 			filter:         NewAcceptedMessageKeysFilter("foo"),
 			src:            []byte(`{"foo": "bar"}`),
 			exp:            true,
-			expGasConsumed: sdk.Gas(len(`{"foo": "bar"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"foo": "bar"}`)),
 		},
 		"allowed key - multiple": {
 			filter:         NewAcceptedMessageKeysFilter("foo", "other"),
 			src:            []byte(`{"other": "value"}`),
 			exp:            true,
-			expGasConsumed: sdk.Gas(len(`{"other": "value"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"other": "value"}`)),
 		},
 		"allowed key - non accepted key": {
 			filter:         NewAcceptedMessageKeysFilter("foo"),
 			src:            []byte(`{"bar": "value"}`),
 			exp:            false,
-			expGasConsumed: sdk.Gas(len(`{"bar": "value"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"bar": "value"}`)),
 		},
 		"allowed key - unsupported array msg": {
 			filter:         NewAcceptedMessageKeysFilter("foo", "other"),
 			src:            []byte(`[{"foo":"bar"}]`),
 			expErr:         false,
-			expGasConsumed: sdk.Gas(len(`[{"foo":"bar"}]`)),
+			expGasConsumed: storetypes.Gas(len(`[{"foo":"bar"}]`)),
 		},
 		"allowed key - invalid msg": {
 			filter: NewAcceptedMessageKeysFilter("foo", "other"),
@@ -176,7 +178,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gm := sdk.NewGasMeter(1_000_000)
+			gm := storetypes.NewGasMeter(1_000_000)
 			allowed, gotErr := spec.filter.Accept(sdk.Context{}.WithGasMeter(gm), spec.src)
 
 			// then
@@ -192,7 +194,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 }
 
 func TestContractAuthzLimitValidate(t *testing.T) {
-	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
+	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
 	specs := map[string]struct {
 		src    ContractAuthzLimitX
 		expErr bool
@@ -219,11 +221,11 @@ func TestContractAuthzLimitValidate(t *testing.T) {
 			expErr: true,
 		},
 		"max funds - contains empty value": {
-			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdk.ZeroInt())}.Sort()},
+			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdkmath.ZeroInt())}.Sort()},
 			expErr: true,
 		},
 		"max funds - unsorted": {
-			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdk.OneInt())}},
+			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdkmath.OneInt())}},
 			expErr: true,
 		},
 		"combined": {
@@ -259,8 +261,8 @@ func TestContractAuthzLimitValidate(t *testing.T) {
 }
 
 func TestContractAuthzLimitAccept(t *testing.T) {
-	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
-	otherToken := sdk.NewCoin("other", sdk.OneInt())
+	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
+	otherToken := sdk.NewCoin("other", sdkmath.OneInt())
 	specs := map[string]struct {
 		limit  ContractAuthzLimitX
 		src    AuthzableWasmMsg
@@ -279,7 +281,7 @@ func TestContractAuthzLimitAccept(t *testing.T) {
 		},
 		"max calls - accepted with zero fund set": {
 			limit: NewMaxCallsLimit(1),
-			src:   &MsgExecuteContract{Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.ZeroInt()))},
+			src:   &MsgExecuteContract{Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.ZeroInt()))},
 			exp:   &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true},
 		},
 		"max calls - rejected with some fund transfer": {
@@ -398,20 +400,17 @@ func TestValidateContractGrant(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 		},
 		"invalid address": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant([]byte{}, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
 		},
 		"invalid limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
@@ -419,14 +418,12 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"invalid filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 			},
 			expErr: true,
 		},
 		"empty limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = nil
 				return r
@@ -436,7 +433,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"empty filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = nil
 				return r
@@ -445,7 +441,6 @@ func TestValidateContractGrant(t *testing.T) {
 		},
 		"wrong limit type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = r.Filter
 				return r
@@ -455,7 +450,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"wrong filter type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = r.Limit
 				return r
@@ -488,52 +482,44 @@ func TestValidateContractAuthorization(t *testing.T) {
 	}{
 		"contract execution": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant)
 			},
 		},
 		"contract execution - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract execution - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract execution - empty grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization()
 			},
 			expErr: true,
 		},
 		"contract migration": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant)
 			},
 		},
 		"contract migration - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract migration - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract migration - empty grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization()
 			},
 			expErr: true,
@@ -573,7 +559,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 			},
 		},
 		"accepted and not updated - limit not touched": {
-			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())), NewAllowAllMessagesFilter())),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
@@ -608,21 +594,21 @@ func TestAcceptGrantedMessage(t *testing.T) {
 		"accepted and updated - multi, one updated": {
 			auth: NewContractExecutionAuthorization(
 				mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
-				mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
-				mustGrant(myContractAddr, NewCombinedLimit(2, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("foo")),
+				mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+				mustGrant(myContractAddr, NewCombinedLimit(2, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("foo")),
 			),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{
 				Accept: true,
 				Updated: NewContractExecutionAuthorization(
 					mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
-					mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
-					mustGrant(myContractAddr, NewCombinedLimit(1, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))), NewAcceptedMessageKeysFilter("foo")),
+					mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+					mustGrant(myContractAddr, NewCombinedLimit(1, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1))), NewAcceptedMessageKeysFilter("foo")),
 				),
 			},
 		},
@@ -641,17 +627,17 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
 		"not accepted - funds exceeds limit": {
-			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())), NewAllowAllMessagesFilter())),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
@@ -661,7 +647,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
@@ -726,7 +712,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter())
 			gotResult, gotErr := spec.auth.Accept(ctx, spec.msg)
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)
@@ -915,7 +901,7 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter())
 			gotResult, gotErr := spec.auth.Accept(ctx, spec.msg)
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)

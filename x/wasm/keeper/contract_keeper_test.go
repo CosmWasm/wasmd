@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	storetypes "cosmossdk.io/store/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -18,7 +20,7 @@ import (
 
 func TestInstantiate2(t *testing.T) {
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	parentCtx = parentCtx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	parentCtx = parentCtx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	example := StoreHackatomExampleContract(t, parentCtx, keepers)
 	otherExample := StoreReflectContract(t, parentCtx, keepers)
@@ -37,7 +39,6 @@ func TestInstantiate2(t *testing.T) {
 	)
 	// create instances for duplicate checks
 	exampleContract := func(t *testing.T, ctx sdk.Context, fixMsg bool) {
-		t.Helper()
 		_, _, err := keepers.ContractKeeper.Instantiate2(
 			ctx,
 			example.CodeID,
@@ -52,11 +53,9 @@ func TestInstantiate2(t *testing.T) {
 		require.NoError(t, err)
 	}
 	exampleWithFixMsg := func(t *testing.T, ctx sdk.Context) {
-		t.Helper()
 		exampleContract(t, ctx, true)
 	}
 	exampleWithoutFixMsg := func(t *testing.T, ctx sdk.Context) {
-		t.Helper()
 		exampleContract(t, ctx, false)
 	}
 	specs := map[string]struct {

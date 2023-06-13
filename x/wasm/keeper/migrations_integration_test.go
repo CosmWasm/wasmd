@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -34,7 +34,15 @@ func TestModuleMigrations(t *testing.T) {
 					CodeUploadAccess:             types.AllowNobody,
 					InstantiateDefaultPermission: types.AccessTypeNobody,
 				}
+
+				// upgrade code shipped with v0.40
+				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
 				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				keyTable := types.ParamKeyTable()
+				if !sp.HasKeyTable() {
+					sp.WithKeyTable(keyTable)
+				}
+
 				sp.SetParamSet(ctx, &params)
 			},
 			exp: types.Params{
@@ -50,12 +58,13 @@ func TestModuleMigrations(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
+			ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
 			spec.setup(ctx)
 
-			fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+			fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+			require.NoError(t, err)
 			fromVM[types.ModuleName] = spec.startVersion
-			_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+			_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 			require.NoError(t, err)
 
 			// when
@@ -82,7 +91,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 
-	ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
+	ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
 
 	// any address permission
 	code1, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
@@ -96,7 +105,8 @@ func TestAccessConfigMigrations(t *testing.T) {
 	code3, err := storeCode(ctx, wasmApp, types.AllowNobody)
 	require.NoError(t, err)
 
-	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	require.NoError(t, err)
 	fromVM[types.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
 	_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 	require.NoError(t, err)

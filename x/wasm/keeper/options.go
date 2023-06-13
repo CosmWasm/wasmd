@@ -6,7 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -162,7 +162,7 @@ func WithMaxQueryStackSize(m uint32) Option {
 // when they exist for an address on contract instantiation.
 //
 // Values should be references and contain the `*authtypes.BaseAccount` as default bank account type.
-func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI) Option {
+func WithAcceptedAccountTypesOnContractInstantiation(accts ...sdk.AccountI) Option {
 	m := asTypeMap(accts)
 	return optsFn(func(k *Keeper) {
 		k.acceptedAccountTypes = m
@@ -183,7 +183,7 @@ func WitGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Opt
 	})
 }
 
-func asTypeMap(accts []authtypes.AccountI) map[reflect.Type]struct{} {
+func asTypeMap(accts []sdk.AccountI) map[reflect.Type]struct{} {
 	m := make(map[reflect.Type]struct{}, len(accts))
 	for _, a := range accts {
 		if a == nil {
