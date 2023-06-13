@@ -5,10 +5,10 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

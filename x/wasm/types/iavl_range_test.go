@@ -3,9 +3,9 @@ package types
 import (
 	"testing"
 
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/iavl"
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/iavl"
 	iavl2 "github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 )

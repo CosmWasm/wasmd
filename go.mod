@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.4
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
-	github.com/cosmos/cosmos-sdk v0.47.3
+	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v0.20.0
@@ -32,11 +32,16 @@ require (
 )
 
 require (
-	cosmossdk.io/api v0.3.1
-	cosmossdk.io/core v0.5.1
-	cosmossdk.io/errors v1.0.0-beta.7
+	cosmossdk.io/api v0.4.2
+	cosmossdk.io/collections v0.2.0
+	cosmossdk.io/core v0.8.0
+	cosmossdk.io/depinject v1.0.0-alpha.3
+	cosmossdk.io/errors v1.0.0-beta.7.0.20230524212735-6cabb6aa5741
+	cosmossdk.io/log v1.1.0
 	cosmossdk.io/math v1.0.1
-	cosmossdk.io/tools/rosetta v0.2.1
+	cosmossdk.io/store v0.1.0-alpha.1.0.20230606190835-3e18f4088b2c
+	cosmossdk.io/x/nft v0.50.0-alpha.0
+	cosmossdk.io/x/tx v0.8.0
 	github.com/cometbft/cometbft v0.37.1
 	github.com/cometbft/cometbft-db v0.7.0
 	github.com/spf13/viper v1.16.0
@@ -183,4 +188,12 @@ replace (
 
 	// pin version! 126854af5e6d has issues with the store so that queries fail
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+
+	// temporary redirect
+	// todo: this must not go to main branch
+	// link to sdk modules that are not tagged
+	cosmossdk.io/x/nft => ../../cosmos/cosmos-sdk/x/nft
+	cosmossdk.io/x/upgrade => ../../cosmos/cosmos-sdk/x/upgrade
+	// link ibc-go to notionals fork until upgraded
+	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 527955c2a9c0
 )
