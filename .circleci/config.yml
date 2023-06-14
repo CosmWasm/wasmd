@@ -95,6 +95,20 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
+  
+  test-system:
+    executor: golang
+    parallelism: 1
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Build and run system tests
+          command: make test-system
 
   benchmark:
     executor: golang
@@ -230,6 +244,9 @@ workflows:
           requires:
             - setup-dependencies
       - upload-coverage:
+          requires:
+            - test-cover
+      - test-system:
           requires:
             - test-cover
       - benchmark:

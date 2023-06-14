@@ -35,6 +35,7 @@ import (
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -157,6 +158,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
