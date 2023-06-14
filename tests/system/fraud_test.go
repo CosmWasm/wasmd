@@ -41,22 +41,28 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 			cli := NewWasmdCLI(t, sut, verbose)
 			execMsg := `{"message_loop":{}}`
 			fees := "1stake"
-			if spec.gas != "auto" {
-				x, ok := sdkmath.NewIntFromString(spec.gas)
-				require.True(t, ok)
-				const defaultTestnetFee = "0.000006"
-				minFee, err := sdkmath.LegacyNewDecFromStr(defaultTestnetFee)
-				require.NoError(t, err)
-				fees = fmt.Sprintf("%sstake", minFee.Mul(sdkmath.LegacyNewDecFromInt(x)).RoundInt().String())
+			gas := spec.gas
+			if gas != "auto" {
+				fees = calcMinFeeRequired(t, gas)
 			}
 			for _, n := range sut.AllNodes(t) {
 				clix := cli.WithRunErrorMatcher(spec.expErrMatcher).WithNodeAddress(n.RPCAddr())
 				clix.expTXCommitted = false
-				clix.WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas="+spec.gas, "--broadcast-mode=sync", "--fees="+fees)
+				clix.WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas="+gas, "--broadcast-mode=sync", "--fees="+fees)
 			}
 			sut.AwaitNextBlock(t)
 		})
 	}
+}
+
+// with default gas factor and token
+func calcMinFeeRequired(t *testing.T, gas string) string {
+	x, ok := sdkmath.NewIntFromString(gas)
+	require.True(t, ok)
+	const defaultTestnetFee = "0.000006"
+	minFee, err := sdkmath.LegacyNewDecFromStr(defaultTestnetFee)
+	require.NoError(t, err)
+	return fmt.Sprintf("%sstake", minFee.Mul(sdkmath.LegacyNewDecFromInt(x)).RoundInt().String())
 }
 
 func TestRecursiveSmartQuery(t *testing.T) {

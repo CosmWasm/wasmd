@@ -117,9 +117,9 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 		args = append(args, "--fees="+c.fees) // add default fee
 	}
 	args = c.withTXFlags(args...)
-	rsp, committed := c.awaitTxCommitted(c.run(args))
+	rsp, committed := c.awaitTxCommitted(c.run(args), defaultWaitTime)
 	c.t.Logf("tx committed: %v", committed)
-	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %", c.expTXCommitted)
+	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %v", c.expTXCommitted)
 	return rsp
 }
 
@@ -131,7 +131,10 @@ func (c WasmdCli) awaitTxCommitted(submitResp string, timeout ...time.Duration) 
 	var txResult string
 	for i := 0; i < 3; i++ { // max blocks to wait for a commit
 		txResult = c.WithRunErrorsIgnored().CustomQuery("q", "tx", txHash.String())
-		if gjson.Get(txResult, "code").Exists() {
+		if code := gjson.Get(txResult, "code"); code.Exists() {
+			if code.Int() != 0 { // 0 = success code
+				c.t.Logf("+++ got error response code: %s\n", txResult)
+			}
 			return txResult, true
 		}
 		c.awaitNextBlock(c.t, timeout...)
