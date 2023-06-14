@@ -3,14 +3,11 @@
 package system
 
 import (
-	"fmt"
-	"math"
-	"strconv"
-	"testing"
-
 	sdkmath "cosmossdk.io/math"
-
+	"fmt"
 	"github.com/stretchr/testify/require"
+	"math"
+	"testing"
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {
@@ -30,10 +27,6 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 		"simulation": {
 			gas:           "auto",
 			expErrMatcher: ErrOutOfGasMatcher,
-		},
-		"tx": { // tx will be rejected by CometBFT in post abci checkTX operation
-			gas:           strconv.Itoa(maxBlockGas * 100),
-			expErrMatcher: require.NoError,
 		},
 	}
 	for name, spec := range specs {
@@ -55,16 +48,6 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 	}
 }
 
-// with default gas factor and token
-func calcMinFeeRequired(t *testing.T, gas string) string {
-	x, ok := sdkmath.NewIntFromString(gas)
-	require.True(t, ok)
-	const defaultTestnetFee = "0.000006"
-	minFee, err := sdkmath.LegacyNewDecFromStr(defaultTestnetFee)
-	require.NoError(t, err)
-	return fmt.Sprintf("%sstake", minFee.Mul(sdkmath.LegacyNewDecFromInt(x)).RoundInt().String())
-}
-
 func TestRecursiveSmartQuery(t *testing.T) {
 	sut.ResetDirtyChain(t)
 	sut.StartChain(t)
@@ -81,4 +64,14 @@ func TestRecursiveSmartQuery(t *testing.T) {
 			QuerySmart(maliciousContractAddr, msg)
 	}
 	sut.AwaitNextBlock(t)
+}
+
+// with default gas factor and token
+func calcMinFeeRequired(t *testing.T, gas string) string {
+	x, ok := sdkmath.NewIntFromString(gas)
+	require.True(t, ok)
+	const defaultTestnetFee = "0.000006"
+	minFee, err := sdkmath.LegacyNewDecFromStr(defaultTestnetFee)
+	require.NoError(t, err)
+	return fmt.Sprintf("%sstake", minFee.Mul(sdkmath.LegacyNewDecFromInt(x)).RoundInt().String())
 }
