@@ -3,17 +3,16 @@
 package system
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"math"
-	"strconv"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"math"
+	"testing"
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {
-	t.Skip()
-	sut.ResetDirtyChain(t)
+	const maxBlockGas = 2_000_000
+	sut.ModifyGenesisJSON(t, SetConsensusMaxGas(t, maxBlockGas))
 	sut.StartChain(t)
 	cli := NewWasmdCLI(t, sut, verbose)
 
@@ -29,18 +28,20 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 			gas:           "auto",
 			expErrMatcher: ErrOutOfGasMatcher,
 		},
-		"tx": { // tx will be rejected by Tendermint in post abci checkTX operation
-			gas:           strconv.Itoa(math.MaxInt64),
-			expErrMatcher: ErrTimeoutMatcher,
-		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			cli := NewWasmdCLI(t, sut, verbose)
 			execMsg := `{"message_loop":{}}`
+			fees := "1stake"
+			gas := spec.gas
+			if gas != "auto" {
+				fees = calcMinFeeRequired(t, gas)
+			}
 			for _, n := range sut.AllNodes(t) {
-				cli.WithRunErrorMatcher(spec.expErrMatcher).WithNodeAddress(n.RPCAddr()).
-					WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas="+spec.gas, "--broadcast-mode=sync", "--fees=1stake")
+				clix := cli.WithRunErrorMatcher(spec.expErrMatcher).WithNodeAddress(n.RPCAddr())
+				clix.expTXCommitted = false
+				clix.WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas="+gas, "--broadcast-mode=sync", "--fees="+fees)
 			}
 			sut.AwaitNextBlock(t)
 		})
@@ -63,4 +64,14 @@ func TestRecursiveSmartQuery(t *testing.T) {
 			QuerySmart(maliciousContractAddr, msg)
 	}
 	sut.AwaitNextBlock(t)
+}
+
+// with default gas factor and token
+func calcMinFeeRequired(t *testing.T, gas string) string {
+	x, ok := sdkmath.NewIntFromString(gas)
+	require.True(t, ok)
+	const defaultTestnetFee = "0.000006"
+	minFee, err := sdkmath.LegacyNewDecFromStr(defaultTestnetFee)
+	require.NoError(t, err)
+	return fmt.Sprintf("%sstake", minFee.Mul(sdkmath.LegacyNewDecFromInt(x)).RoundInt().String())
 }
