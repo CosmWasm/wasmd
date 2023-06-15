@@ -3,11 +3,13 @@
 package system
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {
@@ -22,7 +24,7 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 
 	specs := map[string]struct {
 		gas           string
-		expErrMatcher func(t require.TestingT, err error, msgAndArgs ...interface{})
+		expErrMatcher RunErrorAssert
 	}{
 		"simulation": {
 			gas:           "auto",

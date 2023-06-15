@@ -9,15 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/exp/slices"
-
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+	"golang.org/x/exp/slices"
 
 	"github.com/CosmWasm/wasmd/app"
 )
@@ -26,7 +25,7 @@ type (
 	// blocks until next block is minted
 	awaitNextBlock func(t *testing.T, timeout ...time.Duration) int64
 	// RunErrorAssert is custom type that is satisfies by testify matchers as well
-	RunErrorAssert func(t require.TestingT, err error, msgAndArgs ...interface{})
+	RunErrorAssert func(t assert.TestingT, err error, msgAndArgs ...interface{}) (ok bool)
 )
 
 // WasmdCli wraps the command line interface
@@ -65,7 +64,7 @@ func NewWasmdCLIx(
 		homeDir:        homeDir,
 		Debug:          debug,
 		amino:          app.MakeEncodingConfig().Amino,
-		assertErrorFn:  require.NoError,
+		assertErrorFn:  assert.NoError,
 		awaitNextBlock: awaiter,
 		fees:           fees,
 		expTXCommitted: true,
@@ -74,7 +73,9 @@ func NewWasmdCLIx(
 
 // WithRunErrorsIgnored does not fail on any error
 func (c WasmdCli) WithRunErrorsIgnored() WasmdCli {
-	return c.WithRunErrorMatcher(func(t require.TestingT, err error, msgAndArgs ...interface{}) {})
+	return c.WithRunErrorMatcher(func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+		return true
+	})
 }
 
 // WithRunErrorMatcher assert function to ensure run command error value
@@ -117,7 +118,11 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 		args = append(args, "--fees="+c.fees) // add default fee
 	}
 	args = c.withTXFlags(args...)
-	rsp, committed := c.awaitTxCommitted(c.run(args), defaultWaitTime)
+	execOutput, ok := c.run(args)
+	if !ok {
+		return execOutput
+	}
+	rsp, committed := c.awaitTxCommitted(execOutput, defaultWaitTime)
 	c.t.Logf("tx committed: %v", committed)
 	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %v", c.expTXCommitted)
 	return rsp
@@ -145,17 +150,20 @@ func (c WasmdCli) awaitTxCommitted(submitResp string, timeout ...time.Duration) 
 // Keys wasmd keys CLI command
 func (c WasmdCli) Keys(args ...string) string {
 	args = c.withKeyringFlags(args...)
-	return c.run(args)
+	out, _ := c.run(args)
+	return out
 }
 
 // CustomQuery main entrypoint for wasmd CLI queries
 func (c WasmdCli) CustomQuery(args ...string) string {
 	args = c.withQueryFlags(args...)
-	return c.run(args)
+	out, _ := c.run(args)
+	return out
 }
 
 // execute shell command
-func (c WasmdCli) run(args []string) string {
+func (c WasmdCli) run(args []string) (output string, ok bool) {
+	// todo assert error???
 	if c.Debug {
 		c.t.Logf("+++ running `wasmd %s`", strings.Join(args, " "))
 	}
@@ -169,8 +177,8 @@ func (c WasmdCli) run(args []string) string {
 		cmd.Dir = workDir
 		return cmd.CombinedOutput()
 	}()
-	c.assertErrorFn(c.t, gotErr, string(gotOut))
-	return string(gotOut)
+	ok = c.assertErrorFn(c.t, gotErr, string(gotOut))
+	return string(gotOut), ok
 }
 
 func (c WasmdCli) withQueryFlags(args ...string) []string {
@@ -217,7 +225,7 @@ func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) st
 // AddKey add key to default keyring. Returns address
 func (c WasmdCli) AddKey(name string) string {
 	cmd := c.withKeyringFlags("keys", "add", name, "--no-backup")
-	out := c.run(cmd)
+	out, _ := c.run(cmd)
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr
@@ -226,7 +234,7 @@ func (c WasmdCli) AddKey(name string) string {
 // GetKeyAddr returns address
 func (c WasmdCli) GetKeyAddr(name string) string {
 	cmd := c.withKeyringFlags("keys", "show", name, "-a")
-	out := c.run(cmd)
+	out, _ := c.run(cmd)
 	addr := strings.Trim(out, "\n")
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr
@@ -340,7 +348,7 @@ func RequireTxFailure(t *testing.T, got string, containsMsgs ...string) {
 
 func parseResultCode(t *testing.T, got string) (int64, string) {
 	code := gjson.Get(got, "code")
-	require.True(t, code.Exists(), got)
+	require.True(t, code.Exists(), "got response: %s", got)
 
 	details := got
 	if log := gjson.Get(got, "raw_log"); log.Exists() {
@@ -351,29 +359,31 @@ func parseResultCode(t *testing.T, got string) (int64, string) {
 
 var (
 	// ErrOutOfGasMatcher requires error with "out of gas" message
-	ErrOutOfGasMatcher RunErrorAssert = func(t require.TestingT, err error, args ...interface{}) {
+	ErrOutOfGasMatcher RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
 		const oogMsg = "out of gas"
-		expErrWithMsg(t, err, args, oogMsg)
+		return expErrWithMsg(t, err, args, oogMsg)
 	}
 	// ErrTimeoutMatcher requires time out message
-	ErrTimeoutMatcher RunErrorAssert = func(t require.TestingT, err error, args ...interface{}) {
+	ErrTimeoutMatcher RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
 		const expMsg = "timed out waiting for tx to be included in a block"
-		expErrWithMsg(t, err, args, expMsg)
+		return expErrWithMsg(t, err, args, expMsg)
 	}
 	// ErrPostFailedMatcher requires post failed
-	ErrPostFailedMatcher RunErrorAssert = func(t require.TestingT, err error, args ...interface{}) {
+	ErrPostFailedMatcher RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
 		const expMsg = "post failed"
-		expErrWithMsg(t, err, args, expMsg)
+		return expErrWithMsg(t, err, args, expMsg)
 	}
 	// ErrInvalidQuery requires smart query request failed
-	ErrInvalidQuery RunErrorAssert = func(t require.TestingT, err error, args ...interface{}) {
+	ErrInvalidQuery RunErrorAssert = func(t assert.TestingT, err error, args ...interface{}) bool {
 		const expMsg = "query wasm contract failed"
-		expErrWithMsg(t, err, args, expMsg)
+		return expErrWithMsg(t, err, args, expMsg)
 	}
 )
 
-func expErrWithMsg(t require.TestingT, err error, args []interface{}, expMsg string) {
-	require.Error(t, err, args)
+func expErrWithMsg(t assert.TestingT, err error, args []interface{}, expMsg string) bool {
+	if ok := assert.Error(t, err, args); !ok {
+		return false
+	}
 	var found bool
 	for _, v := range args {
 		if strings.Contains(fmt.Sprintf("%s", v), expMsg) {
@@ -381,5 +391,6 @@ func expErrWithMsg(t require.TestingT, err error, args []interface{}, expMsg str
 			break
 		}
 	}
-	require.True(t, found, "expected %q but got: %s", expMsg, args)
+	assert.True(t, found, "expected %q but got: %s", expMsg, args)
+	return false // always abort
 }
