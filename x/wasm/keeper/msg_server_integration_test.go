@@ -864,29 +864,32 @@ func TestPruneWasmCodes(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		addr    string
-		pinCode bool
-		expErr  bool
+		addr      string
+		pinCode   bool
+		expPruned bool
+		expErr    bool
 	}{
 		"authority can prune unpinned code": {
-			addr:    authority,
-			pinCode: false,
-			expErr:  false,
+			addr:      authority,
+			pinCode:   false,
+			expPruned: true,
 		},
 		"authority cannot prune pinned code": {
-			addr:    authority,
-			pinCode: true,
-			expErr:  true,
+			addr:      authority,
+			pinCode:   true,
+			expPruned: false,
 		},
 		"other address cannot prune unpinned code": {
-			addr:    myAddress.String(),
-			pinCode: false,
-			expErr:  true,
+			addr:      myAddress.String(),
+			pinCode:   false,
+			expPruned: false,
+			expErr:    true,
 		},
 		"other address cannot prune pinned code": {
-			addr:    myAddress.String(),
-			pinCode: true,
-			expErr:  true,
+			addr:      myAddress.String(),
+			pinCode:   true,
+			expPruned: false,
+			expErr:    true,
 		},
 	}
 	for name, spec := range specs {
@@ -925,10 +928,14 @@ func TestPruneWasmCodes(t *testing.T) {
 			// then
 			if spec.expErr {
 				require.Error(t, err)
-				assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
 			} else {
 				require.NoError(t, err)
+			}
+
+			if spec.expPruned {
 				assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
+			} else {
+				assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
 			}
 		})
 	}

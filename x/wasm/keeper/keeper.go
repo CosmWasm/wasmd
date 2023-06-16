@@ -1223,7 +1223,7 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeIDs []uint64) error {
 	for _, c := range codeIDs {
 		if k.IsPinnedCode(ctx, c) {
-			return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("code %d is pinned", c))
+			continue
 		}
 		k.deleteCodeInfo(ctx, c)
 	}
