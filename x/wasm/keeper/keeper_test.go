@@ -14,6 +14,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	storetypes "cosmossdk.io/store/types"
 	stypes "cosmossdk.io/store/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -316,7 +317,7 @@ func TestCreateWithSimulation(t *testing.T) {
 
 	// then try to create it in non-simulation mode (should not fail)
 	ctx, keepers = CreateTestInput(t, false, AvailableCapabilities)
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(10_000_000))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(10_000_000))
 	creator = keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	contractID, _, err = keepers.ContractKeeper.Create(ctx, creator, hackatomWasm, nil)
 
@@ -383,12 +384,12 @@ func TestCreateWithBrokenGzippedPayload(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/broken_crc.gzip")
 	require.NoError(t, err, "reading gzipped WASM code")
 
-	gm := sdk.NewInfiniteGasMeter()
+	gm := storetypes.NewInfiniteGasMeter()
 	codeID, checksum, err := keeper.Create(ctx.WithGasMeter(gm), creator, wasmCode, nil)
 	require.Error(t, err)
 	assert.Empty(t, codeID)
 	assert.Empty(t, checksum)
-	assert.GreaterOrEqual(t, gm.GasConsumed(), sdk.Gas(121384)) // 809232 * 0.15 (default uncompress costs) = 121384
+	assert.GreaterOrEqual(t, gm.GasConsumed(), storetypes.Gas(121384)) // 809232 * 0.15 (default uncompress costs) = 121384
 }
 
 func TestInstantiate(t *testing.T) {
@@ -570,11 +571,11 @@ func TestInstantiateWithAccounts(t *testing.T) {
 
 	specs := map[string]struct {
 		option      Option
-		account     authtypes.AccountI
+		account     sdk.AccountI
 		initBalance sdk.Coin
 		deposit     sdk.Coins
 		expErr      error
-		expAccount  authtypes.AccountI
+		expAccount  sdk.AccountI
 		expBalance  sdk.Coins
 	}{
 		"unused BaseAccount exists": {
@@ -645,7 +646,7 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expBalance: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(1_001))),
 		},
 		"pruning account fails": {
-			option: WithAccountPruner(wasmtesting.AccountPrunerMock{CleanupExistingAccountFn: func(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error) {
+			option: WithAccountPruner(wasmtesting.AccountPrunerMock{CleanupExistingAccountFn: func(ctx sdk.Context, existingAccount sdk.AccountI) (handled bool, err error) {
 				return false, types.ErrUnsupportedForContract.Wrap("testing")
 			}}),
 			account: vestingtypes.NewDelayedVestingAccount(
@@ -1044,7 +1045,7 @@ func TestExecuteWithCpuLoop(t *testing.T) {
 
 	// make sure we set a limit before calling
 	var gasLimit uint64 = 400_000
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 	// ensure we get an out of gas panic
@@ -1087,7 +1088,7 @@ func TestExecuteWithStorageLoop(t *testing.T) {
 
 	// make sure we set a limit before calling
 	var gasLimit uint64 = 400_002
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(gasLimit))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasLimit))
 	require.Equal(t, uint64(0), ctx.GasMeter().GasConsumed())
 
 	// ensure we get an out of gas panic
@@ -1854,7 +1855,7 @@ func TestPinnedContractLoops(t *testing.T) {
 			},
 		}, 0, nil
 	}
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(20000))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(20000))
 	require.PanicsWithValue(t, sdk.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
 		_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), anyMsg, nil)
 		require.NoError(t, err)
@@ -2191,18 +2192,18 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	require.NotNil(t, myVestingAccount)
 
 	specs := map[string]struct {
-		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
+		setupAcc    func(t *testing.T, ctx sdk.Context) sdk.AccountI
 		expBalances sdk.Coins
 		expHandled  bool
 		expErr      *errorsmod.Error
 	}{
 		"vesting account - all removed": {
-			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
+			setupAcc:    func(t *testing.T, ctx sdk.Context) sdk.AccountI { return myVestingAccount },
 			expBalances: sdk.NewCoins(),
 			expHandled:  true,
 		},
 		"vesting account with other tokens - only original denoms removed": {
-			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+			setupAcc: func(t *testing.T, ctx sdk.Context) sdk.AccountI {
 				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
 				return myVestingAccount
 			},
@@ -2210,7 +2211,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 			expHandled:  true,
 		},
 		"non vesting account - not handled": {
-			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+			setupAcc: func(t *testing.T, ctx sdk.Context) sdk.AccountI {
 				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
 			},
 			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),
@@ -2225,7 +2226,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 			keepers.AccountKeeper.SetAccount(ctx, keepers.AccountKeeper.NewAccountWithAddress(ctx, vestingAddr))
 
 			// when
-			noGasCtx := ctx.WithGasMeter(sdk.NewGasMeter(0)) // should not use callers gas
+			noGasCtx := ctx.WithGasMeter(storetypes.NewGasMeter(0)) // should not use callers gas
 			gotHandled, gotErr := NewVestingCoinBurner(keepers.BankKeeper).CleanupExistingAccount(noGasCtx, existingAccount)
 			// then
 			if spec.expErr != nil {

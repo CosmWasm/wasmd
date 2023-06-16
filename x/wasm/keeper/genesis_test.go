@@ -556,7 +556,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, importState.ValidateBasic(), genesisStr)
 
-	ctx = ctx.WithBlockHeight(0).WithGasMeter(sdk.NewInfiniteGasMeter())
+	ctx = ctx.WithBlockHeight(0).WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	// when
 	_, err = InitGenesis(ctx, keeper, importState)

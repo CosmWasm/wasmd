@@ -662,7 +662,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 			MaxRate:       sdk.MustNewDecFromStr("0.2"),
 			MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
 		},
-		MinSelfDelegation: sdk.OneInt(),
+		MinSelfDelegation: sdkmath.OneInt(),
 		DelegatorAddress:  owner.String(),
 		ValidatorAddress:  addr.String(),
 		Pubkey:            pkAny,

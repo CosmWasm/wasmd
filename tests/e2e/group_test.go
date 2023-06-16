@@ -4,8 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestGroupWithContract(t *testing.T) {
@@ -26,7 +26,7 @@ func TestGroupWithContract(t *testing.T) {
 	coord := ibctesting.NewCoordinator(t, 1)
 	chain := coord.GetChain(ibctesting.GetChainID(1))
 	contractAddr := e2e.InstantiateReflectContract(t, chain)
-	chain.Fund(contractAddr, sdk.NewIntFromUint64(1_000_000_000))
+	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 
 	members := []group.MemberRequest{
 		{
@@ -50,11 +50,11 @@ func TestGroupWithContract(t *testing.T) {
 	createRsp := rsp.MsgResponses[0].GetCachedValue().(*group.MsgCreateGroupWithPolicyResponse)
 	groupID, policyAddr := createRsp.GroupId, sdk.MustAccAddressFromBech32(createRsp.GroupPolicyAddress)
 	require.NotEmpty(t, groupID)
-	chain.Fund(policyAddr, sdk.NewIntFromUint64(1_000_000_000))
+	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// and a proposal submitted
 	recipientAddr := sdk.AccAddress(rand.Bytes(address.Len))
 
-	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())))}
+	payload := []sdk.Msg{banktypes.NewMsgSend(policyAddr, recipientAddr, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())))}
 	propMsg, err := group.NewMsgSubmitProposal(policyAddr.String(), []string{contractAddr.String()}, payload, "my proposal", group.Exec_EXEC_TRY, "my title", "my description")
 	require.NoError(t, err)
 
@@ -66,6 +66,6 @@ func TestGroupWithContract(t *testing.T) {
 
 	// and coins received
 	recipientBalance := chain.Balance(recipientAddr, sdk.DefaultBondDenom)
-	expBalanceAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
+	expBalanceAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
 	assert.Equal(t, expBalanceAmount.String(), recipientBalance.String())
 }

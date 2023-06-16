@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"context"
 	"encoding/json"
 	"math/rand"
 	"os"
@@ -47,7 +48,7 @@ type WasmKeeper interface {
 }
 type BankKeeper interface {
 	simulation.BankKeeper
-	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
+	IsSendEnabledCoin(ctx context.Context, coin sdk.Coin) bool
 }
 
 // WeightedOperations returns all the operations from the module with their respective weights

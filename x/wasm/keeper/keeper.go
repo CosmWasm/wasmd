@@ -63,7 +63,7 @@ type AccountPruner interface {
 	// CleanupExistingAccount handles the cleanup process for balances and data of the given account. The persisted account
 	// type is already reset to base account at this stage.
 	// The method returns true when the account address can be reused. Unsupported account types are rejected by returning false
-	CleanupExistingAccount(ctx sdk.Context, existingAccount authtypes.AccountI) (handled bool, err error)
+	CleanupExistingAccount(ctx sdk.Context, existingAccount sdk.AccountI) (handled bool, err error)
 }
 
 // WasmVMResponseHandler is an extension point to handles the response data returned by a contract call.
@@ -1076,17 +1076,17 @@ func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress)
 
 // MultipliedGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
 type MultipliedGasMeter struct {
-	originalMeter sdk.GasMeter
+	originalMeter storetypes.GasMeter
 	GasRegister   GasRegister
 }
 
-func NewMultipliedGasMeter(originalMeter sdk.GasMeter, gr GasRegister) MultipliedGasMeter {
+func NewMultipliedGasMeter(originalMeter storetypes.GasMeter, gr GasRegister) MultipliedGasMeter {
 	return MultipliedGasMeter{originalMeter: originalMeter, GasRegister: gr}
 }
 
 var _ wasmvm.GasMeter = MultipliedGasMeter{}
 
-func (m MultipliedGasMeter) GasConsumed() sdk.Gas {
+func (m MultipliedGasMeter) GasConsumed() storetypes.Gas {
 	return m.GasRegister.ToWasmVMGas(m.originalMeter.GasConsumed())
 }
 
@@ -1109,7 +1109,7 @@ func Querier(k *Keeper) *GrpcQuerier {
 }
 
 // QueryGasLimit returns the gas limit for smart queries.
-func (k Keeper) QueryGasLimit() sdk.Gas {
+func (k Keeper) QueryGasLimit() storetypes.Gas {
 	return k.queryGasLimit
 }
 
@@ -1167,13 +1167,13 @@ func NewVestingCoinBurner(bank types.BankKeeper) VestingCoinBurner {
 
 // CleanupExistingAccount accepts only vesting account types to burns all their original vesting coin balances.
 // Other account types will be rejected and returned as unhandled.
-func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc authtypes.AccountI) (handled bool, err error) {
+func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc sdk.AccountI) (handled bool, err error) {
 	v, ok := existingAcc.(vestingexported.VestingAccount)
 	if !ok {
 		return false, nil
 	}
 
-	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	ctx = ctx.WithGasMeter(storetypes.NewInfiniteGasMeter())
 	coinsToBurn := sdk.NewCoins()
 	for _, orig := range v.GetOriginalVesting() { // focus on the coin denoms that were setup originally; getAllBalances has some issues
 		coinsToBurn = append(coinsToBurn, b.bank.GetBalance(ctx, existingAcc.GetAddress(), orig.Denom))

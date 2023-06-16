@@ -1093,37 +1093,3 @@ func TestUnmarshalContentFromJson(t *testing.T) {
 		})
 	}
 }
-
-func TestProposalJsonSignBytes(t *testing.T) {
-	const myInnerMsg = `{"foo":"bar"}`
-	specs := map[string]struct {
-		src v1beta1.Content
-		exp string
-	}{
-		"instantiate contract": {
-			src: &InstantiateContractProposal{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/InstantiateContractProposal","value":{"funds":[],"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
-		},
-		"migrate contract": {
-			src: &MigrateContractProposal{Msg: RawContractMessage(myInnerMsg)},
-			exp: `
-{
-	"type":"cosmos-sdk/MsgSubmitProposal",
-	"value":{"content":{"type":"wasm/MigrateContractProposal","value":{"msg":{"foo":"bar"}}},"initial_deposit":[]}
-}`,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			msg, err := v1beta1.NewMsgSubmitProposal(spec.src, sdk.NewCoins(), []byte{})
-			require.NoError(t, err)
-
-			bz := msg.GetSignBytes()
-			assert.JSONEq(t, spec.exp, string(bz), "exp %s\n got: %s\n", spec.exp, string(bz))
-		})
-	}
-}

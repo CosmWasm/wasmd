@@ -10,6 +10,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -169,7 +170,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(DefaultInstanceCost)).WithLogger(log.TestingLogger())
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(DefaultInstanceCost)).WithLogger(log.TestingLogger())
 
 	specs := map[string]struct {
 		doInContract func()
@@ -290,7 +291,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	var h int64 = 10
 	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
 		ctx = ctx.WithBlockHeight(height)
-		meter := sdk.NewGasMeter(1000000)
+		meter := storetypes.NewGasMeter(1000000)
 		ctx = ctx.WithGasMeter(meter)
 		ctx = ctx.WithBlockGasMeter(meter)
 		return ctx
@@ -839,7 +840,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	var h int64 = 10
 	setBlock := func(ctx sdk.Context, height int64) sdk.Context {
 		ctx = ctx.WithBlockHeight(height)
-		meter := sdk.NewGasMeter(1000000)
+		meter := storetypes.NewGasMeter(1000000)
 		ctx = ctx.WithGasMeter(meter)
 		ctx = ctx.WithBlockGasMeter(meter)
 		return ctx

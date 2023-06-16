@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.4
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0
+	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0.0.20230615105423-ae3e30a715bd
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v1.0.0-beta.2
@@ -33,17 +33,22 @@ require (
 
 require (
 	cosmossdk.io/api v0.4.2
+	cosmossdk.io/client/v2 v2.0.0-20230615173548-5385116abac4
 	cosmossdk.io/core v0.8.0
 	cosmossdk.io/errors v1.0.0-beta.7.0.20230524212735-6cabb6aa5741
+	cosmossdk.io/log v1.1.0
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1.0.20230606190835-3e18f4088b2c
 	cosmossdk.io/tools/rosetta v0.2.1
+	cosmossdk.io/x/circuit v0.0.0-20230615173548-5385116abac4
 	cosmossdk.io/x/evidence v0.0.0-20230609160955-4ad71e570d16
 	cosmossdk.io/x/feegrant v0.0.0-20230609160955-4ad71e570d16
 	cosmossdk.io/x/nft v0.50.0-alpha.0
+	cosmossdk.io/x/tx v0.8.0
 	cosmossdk.io/x/upgrade v0.0.0-20230609160955-4ad71e570d16
 	github.com/cometbft/cometbft v0.38.0-rc1
 	github.com/cometbft/cometbft-db v0.8.0
+	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc1
 	github.com/spf13/viper v1.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230525234020-1aefcd67740a
@@ -55,12 +60,8 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.30.0 // indirect
-	cosmossdk.io/client/v2 v2.0.0-20230615173548-5385116abac4 // indirect
 	cosmossdk.io/collections v0.2.0 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
-	cosmossdk.io/log v1.1.0 // indirect
-	cosmossdk.io/x/circuit v0.0.0-20230615173548-5385116abac4 // indirect
-	cosmossdk.io/x/tx v0.8.0 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -83,7 +84,6 @@ require (
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
-	github.com/cosmos/cosmos-db v1.0.0 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.0 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
@@ -213,7 +213,7 @@ replace (
 )
 
 replace (
-
+	cosmossdk.io/tools/rosetta => ../../cosmos/cosmos-sdk/tools/rosetta
 	// todo: this must not go to main branch
 	// link to sdk modules that are not tagged
 	cosmossdk.io/x/nft => ../../cosmos/cosmos-sdk/x/nft

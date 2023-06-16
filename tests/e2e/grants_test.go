@@ -6,6 +6,8 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -61,14 +63,14 @@ func TestGrants(t *testing.T) {
 		"exceed limits": {
 			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAllowAllMessagesFilter(),
-			transferAmount: myAmount.Add(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+			transferAmount: myAmount.Add(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},
 		"not match filter": {
 			limit:          types.NewMaxFundsLimit(myAmount),
 			filter:         types.NewAcceptedMessageKeysFilter("foo"),
-			transferAmount: sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt()),
+			transferAmount: sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt()),
 			senderKey:      granteePrivKey,
 			expErr:         sdkerrors.ErrUnauthorized,
 		},

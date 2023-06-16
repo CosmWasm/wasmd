@@ -806,7 +806,7 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 				Denom:  "foo",
 				Amount: "1",
 			},
-			expVal: sdk.NewCoin("foo", sdk.NewIntFromUint64(1)),
+			expVal: sdk.NewCoin("foo", sdkmath.NewIntFromUint64(1)),
 		},
 		"negative amount": {
 			src: wasmvmtypes.Coin{

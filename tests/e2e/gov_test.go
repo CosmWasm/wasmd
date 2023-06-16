@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +27,7 @@ func TestGovVoteByContract(t *testing.T) {
 	coord := ibctesting.NewCoordinator(t, 1)
 	chain := coord.GetChain(ibctesting.GetChainID(1))
 	contractAddr := e2e.InstantiateReflectContract(t, chain)
-	chain.Fund(contractAddr, sdk.NewIntFromUint64(1_000_000_000))
+	chain.Fund(contractAddr, sdkmath.NewIntFromUint64(1_000_000_000))
 	// a contract with a high delegation amount
 	delegateMsg := wasmvmtypes.CosmosMsg{
 		Staking: &wasmvmtypes.StakingMsg{
@@ -87,7 +88,7 @@ func TestGovVoteByContract(t *testing.T) {
 			payloadMsg := &distributiontypes.MsgCommunityPoolSpend{
 				Authority: govAcctAddr.String(),
 				Recipient: recipientAddr.String(),
-				Amount:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Amount:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			}
 			msg, err := v1.NewMsgSubmitProposal(
 				[]sdk.Msg{payloadMsg},
@@ -130,7 +131,7 @@ func TestGovVoteByContract(t *testing.T) {
 				assert.True(t, recipientBalance.IsZero())
 				return
 			}
-			expBalanceAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
+			expBalanceAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
 			assert.Equal(t, expBalanceAmount.String(), recipientBalance.String())
 		})
 	}

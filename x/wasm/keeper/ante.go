@@ -57,11 +57,11 @@ func decodeHeightCounter(bz []byte) (int64, uint32) {
 
 // LimitSimulationGasDecorator ante decorator to limit gas in simulation calls
 type LimitSimulationGasDecorator struct {
-	gasLimit *sdk.Gas
+	gasLimit *storetypes.Gas
 }
 
 // NewLimitSimulationGasDecorator constructor accepts nil value to fallback to block gas limit.
-func NewLimitSimulationGasDecorator(gasLimit *sdk.Gas) *LimitSimulationGasDecorator {
+func NewLimitSimulationGasDecorator(gasLimit *storetypes.Gas) *LimitSimulationGasDecorator {
 	if gasLimit != nil && *gasLimit == 0 {
 		panic("gas limit must not be zero")
 	}
@@ -86,12 +86,12 @@ func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 
 	// apply custom node gas limit
 	if d.gasLimit != nil {
-		return next(ctx.WithGasMeter(sdk.NewGasMeter(*d.gasLimit)), tx, simulate)
+		return next(ctx.WithGasMeter(storetypes.NewGasMeter(*d.gasLimit)), tx, simulate)
 	}
 
 	// default to max block gas when set, to be on the safe side
 	if maxGas := ctx.ConsensusParams().GetBlock().MaxGas; maxGas > 0 {
-		return next(ctx.WithGasMeter(sdk.NewGasMeter(sdk.Gas(maxGas))), tx, simulate)
+		return next(ctx.WithGasMeter(storetypes.NewGasMeter(storetypes.Gas(maxGas))), tx, simulate)
 	}
 	return next(ctx, tx, simulate)
 }

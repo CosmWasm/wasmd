@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -94,7 +95,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 		filter         ContractAuthzFilterX
 		src            RawContractMessage
 		exp            bool
-		expGasConsumed sdk.Gas
+		expGasConsumed storetypes.Gas
 		expErr         bool
 	}{
 		"allow all - accepts json obj": {
@@ -116,25 +117,25 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 			filter:         NewAcceptedMessageKeysFilter("foo"),
 			src:            []byte(`{"foo": "bar"}`),
 			exp:            true,
-			expGasConsumed: sdk.Gas(len(`{"foo": "bar"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"foo": "bar"}`)),
 		},
 		"allowed key - multiple": {
 			filter:         NewAcceptedMessageKeysFilter("foo", "other"),
 			src:            []byte(`{"other": "value"}`),
 			exp:            true,
-			expGasConsumed: sdk.Gas(len(`{"other": "value"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"other": "value"}`)),
 		},
 		"allowed key - non accepted key": {
 			filter:         NewAcceptedMessageKeysFilter("foo"),
 			src:            []byte(`{"bar": "value"}`),
 			exp:            false,
-			expGasConsumed: sdk.Gas(len(`{"bar": "value"}`)),
+			expGasConsumed: storetypes.Gas(len(`{"bar": "value"}`)),
 		},
 		"allowed key - unsupported array msg": {
 			filter:         NewAcceptedMessageKeysFilter("foo", "other"),
 			src:            []byte(`[{"foo":"bar"}]`),
 			expErr:         false,
-			expGasConsumed: sdk.Gas(len(`[{"foo":"bar"}]`)),
+			expGasConsumed: storetypes.Gas(len(`[{"foo":"bar"}]`)),
 		},
 		"allowed key - invalid msg": {
 			filter: NewAcceptedMessageKeysFilter("foo", "other"),
@@ -174,7 +175,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gm := sdk.NewGasMeter(1_000_000)
+			gm := storetypes.NewGasMeter(1_000_000)
 			allowed, gotErr := spec.filter.Accept(sdk.Context{}.WithGasMeter(gm), spec.src)
 
 			// then
@@ -190,7 +191,7 @@ func TestContractAuthzFilterAccept(t *testing.T) {
 }
 
 func TestContractAuthzLimitValidate(t *testing.T) {
-	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
+	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
 	specs := map[string]struct {
 		src    ContractAuthzLimitX
 		expErr bool
@@ -221,7 +222,7 @@ func TestContractAuthzLimitValidate(t *testing.T) {
 			expErr: true,
 		},
 		"max funds - unsorted": {
-			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdk.OneInt())}},
+			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdkmath.OneInt())}},
 			expErr: true,
 		},
 		"combined": {
@@ -257,8 +258,8 @@ func TestContractAuthzLimitValidate(t *testing.T) {
 }
 
 func TestContractAuthzLimitAccept(t *testing.T) {
-	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())
-	otherToken := sdk.NewCoin("other", sdk.OneInt())
+	oneToken := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
+	otherToken := sdk.NewCoin("other", sdkmath.OneInt())
 	specs := map[string]struct {
 		limit  ContractAuthzLimitX
 		src    AuthzableWasmMsg
@@ -555,7 +556,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 			},
 		},
 		"accepted and not updated - limit not touched": {
-			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())), NewAllowAllMessagesFilter())),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
@@ -597,7 +598,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{
 				Accept: true,
@@ -623,12 +624,12 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
 		"not accepted - funds exceeds limit": {
-			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())), NewAllowAllMessagesFilter())),
+			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())), NewAllowAllMessagesFilter())),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
@@ -643,7 +644,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.OneInt())),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},
@@ -708,7 +709,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter())
 			gotResult, gotErr := spec.auth.Accept(ctx, spec.msg)
 			if spec.expErr != nil {
 				require.ErrorIs(t, gotErr, spec.expErr)

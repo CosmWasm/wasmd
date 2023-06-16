@@ -8,9 +8,7 @@ import (
 	"os"
 	"testing"
 	"time"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
@@ -20,6 +18,7 @@ import (
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -41,9 +40,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution"
@@ -67,13 +63,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/ibc-go/modules/capability"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/stretchr/testify/require"
+
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -87,8 +90,8 @@ var moduleBasics = module.NewBasicManager(
 	distribution.AppModuleBasic{},
 	gov.NewAppModuleBasic([]govclient.ProposalHandler{
 		paramsclient.ProposalHandler,
-		//upgradeclient.LegacyProposalHandler,
-		//upgradeclient.LegacyCancelProposalHandler,
+		// upgradeclient.LegacyProposalHandler,
+		// upgradeclient.LegacyCancelProposalHandler,
 	}),
 	params.AppModuleBasic{},
 	crisis.AppModuleBasic{},
@@ -215,7 +218,7 @@ func createTestInput(
 ) (sdk.Context, TestKeepers) {
 	tempDir := t.TempDir()
 
-	keys := sdk.NewKVStoreKeys(
+	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distributiontypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
@@ -251,8 +254,8 @@ func createTestInput(
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
-		keys[paramstypes.StoreKey],
-		tkeys[paramstypes.TStoreKey],
+		 runtime.NewKVStoreService(keys[paramstypes.StoreKey])
+		t runtime.NewKVStoreService(keys[paramstypes..StoreKey])
 	)
 	for _, m := range []string{
 		authtypes.ModuleName,
@@ -323,7 +326,7 @@ func createTestInput(
 	}
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
-		keys[authtypes.StoreKey],   // target store
+		 runtime.NewKVStoreService(keys[authtypes.StoreKey])   // target store
 		authtypes.ProtoBaseAccount, // prototype
 		maccPerms,
 		sdk.Bech32MainPrefix,
@@ -338,7 +341,7 @@ func createTestInput(
 
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
-		keys[banktypes.StoreKey],
+		 runtime.NewKVStoreService(keys[banktypes.StoreKey])
 		accountKeeper,
 		blockedAddrs,
 		authtypes.NewModuleAddress(banktypes.ModuleName).String(),
@@ -347,7 +350,7 @@ func createTestInput(
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
-		keys[stakingtypes.StoreKey],
+		 runtime.NewKVStoreService(keys[stakingtypes.StoreKey])
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(stakingtypes.ModuleName).String(),
@@ -357,7 +360,7 @@ func createTestInput(
 
 	distKeeper := distributionkeeper.NewKeeper(
 		appCodec,
-		keys[distributiontypes.StoreKey],
+		 runtime.NewKVStoreService(keys[distributiontypes.StoreKey])
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -372,7 +375,7 @@ func createTestInput(
 
 	upgradeKeeper := upgradekeeper.NewKeeper(
 		map[int64]bool{},
-		keys[upgradetypes.StoreKey],
+		 runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
 		appCodec,
 		tempDir,
 		nil,
@@ -389,15 +392,15 @@ func createTestInput(
 
 	capabilityKeeper := capabilitykeeper.NewKeeper(
 		appCodec,
-		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.MemStoreKey],
+		 runtime.NewKVStoreService(keys[capabilitytypes.StoreKey])
+		mem runtime.NewKVStoreService(keys[capabilitytypes.Me.StoreKey])
 	)
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
 
 	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibcexported.StoreKey],
+		 runtime.NewKVStoreService(keys[ibcexported.StoreKey])
 		subspace(ibcexported.ModuleName),
 		stakingKeeper,
 		upgradeKeeper,
@@ -414,7 +417,7 @@ func createTestInput(
 
 	keeper := NewKeeper(
 		appCodec,
-		keys[types.StoreKey],
+		 runtime.NewKVStoreService(keys[types.StoreKey])
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -444,7 +447,7 @@ func createTestInput(
 
 	govKeeper := govkeeper.NewKeeper(
 		appCodec,
-		keys[govtypes.StoreKey],
+		 runtime.NewKVStoreService(keys[govtypes.StoreKey])
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -480,7 +483,7 @@ func createTestInput(
 		Faucet:           faucet,
 		MultiStore:       ms,
 		ScopedWasmKeeper: scopedWasmKeeper,
-		WasmStoreKey:     keys[types.StoreKey],
+		WasmStoreKey:     runtime.NewKVStoreService(keys[types.StoreKey]),
 	}
 	return ctx, keepers
 }

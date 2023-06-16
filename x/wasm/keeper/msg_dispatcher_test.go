@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	storetypes "cosmossdk.io/store/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -170,7 +171,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					ctx.GasMeter().ConsumeGas(sdk.Gas(101), "testing")
+					ctx.GasMeter().ConsumeGas(storetypes.Gas(101), "testing")
 					return nil, [][]byte{[]byte("someData")}, nil
 				},
 			},
@@ -185,7 +186,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
 				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					ctx.GasMeter().ConsumeGas(sdk.Gas(1), "testing")
+					ctx.GasMeter().ConsumeGas(storetypes.Gas(1), "testing")
 					return nil, [][]byte{[]byte("someData")}, nil
 				},
 			},
@@ -391,7 +392,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			var mockStore wasmtesting.MockCommitMultiStore
 			em := sdk.NewEventManager()
 			ctx := sdk.Context{}.WithMultiStore(&mockStore).
-				WithGasMeter(sdk.NewGasMeter(100)).
+				WithGasMeter(storetypes.NewGasMeter(100)).
 				WithEventManager(em).WithLogger(log.TestingLogger())
 			d := NewMessageDispatcher(spec.msgHandler, spec.replyer)
 

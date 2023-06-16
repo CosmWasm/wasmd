@@ -112,12 +112,12 @@ func TestCountTxDecorator(t *testing.T) {
 
 func TestLimitSimulationGasDecorator(t *testing.T) {
 	var (
-		hundred sdk.Gas = 100
-		zero    sdk.Gas = 0
+		hundred storetypes.Gas = 100
+		zero    storetypes.Gas = 0
 	)
 	specs := map[string]struct {
-		customLimit *sdk.Gas
-		consumeGas  sdk.Gas
+		customLimit *storetypes.Gas
+		consumeGas  storetypes.Gas
 		maxBlockGas int64
 		simulation  bool
 		expErr      interface{}
@@ -161,7 +161,7 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
-				WithGasMeter(sdk.NewInfiniteGasMeter()).
+				WithGasMeter(storetypes.NewInfiniteGasMeter()).
 				WithConsensusParams(&tmproto.ConsensusParams{
 					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas},
 				})
@@ -181,7 +181,7 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 	}
 }
 
-func consumeGasAnteHandler(gasToConsume sdk.Gas) sdk.AnteHandler {
+func consumeGasAnteHandler(gasToConsume storetypes.Gas) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 		ctx.GasMeter().ConsumeGas(gasToConsume, "testing")
 		return ctx, nil
