@@ -853,3 +853,83 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestPruneWasmCodes(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	var (
+		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		addr    string
+		pinCode bool
+		expErr  bool
+	}{
+		"authority can prune unpinned code": {
+			addr:    authority,
+			pinCode: false,
+			expErr:  false,
+		},
+		"authority cannot prune pinned code": {
+			addr:    authority,
+			pinCode: true,
+			expErr:  true,
+		},
+		"other address cannot prune unpinned code": {
+			addr:    myAddress.String(),
+			pinCode: false,
+			expErr:  true,
+		},
+		"other address cannot prune pinned code": {
+			addr:    myAddress.String(),
+			pinCode: true,
+			expErr:  true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			_, _, sender := testdata.KeyTestPubAddr()
+			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+				m.WASMByteCode = wasmContract
+				m.Sender = sender.String()
+			})
+
+			// store code
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var result types.MsgStoreCodeResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+			if spec.pinCode {
+				// pin code
+				msgPin := &types.MsgPinCodes{
+					Authority: authority,
+					CodeIDs:   []uint64{result.CodeID},
+				}
+				_, err = wasmApp.MsgServiceRouter().Handler(msgPin)(ctx, msgPin)
+				require.NoError(t, err)
+				assert.True(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
+			}
+
+			// when
+			msgPruneCodes := &types.MsgPruneWasmCodes{
+				Authority: spec.addr,
+				CodeIDs:   []uint64{result.CodeID},
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
+
+			// then
+			if spec.expErr {
+				require.Error(t, err)
+				assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
+			} else {
+				require.NoError(t, err)
+				assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
+			}
+		})
+	}
+}

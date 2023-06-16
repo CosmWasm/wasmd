@@ -802,6 +802,52 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 	return cmd
 }
 
+func ProposalPruneWasmCodesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "prune-wasm-codes [code-ids] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a prune wasm codes proposal for pruning codes in the system",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			codeIds, err := parsePinCodesArgs(args)
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgPruneWasmCodes{
+				Authority: authority,
+				CodeIDs:   codeIds,
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
 func addCommonProposalFlags(cmd *cobra.Command) {
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")

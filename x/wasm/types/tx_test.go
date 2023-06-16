@@ -834,9 +834,7 @@ func TestMsgPinCodesValidation(t *testing.T) {
 }
 
 func TestMsgUnpinCodesValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
+	badAddress := "012345"
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
@@ -1126,6 +1124,53 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
+		})
+	}
+}
+
+func TestMsgPruneWasmCodesValidation(t *testing.T) {
+	badAddress := "012345"
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgPruneWasmCodes
+		expErr bool
+	}{
+		"all good": {
+			src: MsgPruneWasmCodes{
+				Authority: goodAddress,
+				CodeIDs:   []uint64{1},
+			},
+		},
+		"bad authority": {
+			src: MsgPruneWasmCodes{
+				Authority: badAddress,
+				CodeIDs:   []uint64{1},
+			},
+			expErr: true,
+		},
+		"empty authority": {
+			src: MsgPruneWasmCodes{
+				CodeIDs: []uint64{1},
+			},
+			expErr: true,
+		},
+		"empty code ids": {
+			src: MsgPruneWasmCodes{
+				Authority: goodAddress,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

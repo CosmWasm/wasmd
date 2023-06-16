@@ -94,6 +94,8 @@
     - [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse)
     - [MsgPinCodes](#cosmwasm.wasm.v1.MsgPinCodes)
     - [MsgPinCodesResponse](#cosmwasm.wasm.v1.MsgPinCodesResponse)
+    - [MsgPruneWasmCodes](#cosmwasm.wasm.v1.MsgPruneWasmCodes)
+    - [MsgPruneWasmCodesResponse](#cosmwasm.wasm.v1.MsgPruneWasmCodesResponse)
     - [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract)
     - [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse)
     - [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode)
@@ -1532,6 +1534,33 @@ Since: 0.40
 
 
 
+<a name="cosmwasm.wasm.v1.MsgPruneWasmCodes"></a>
+
+### MsgPruneWasmCodes
+MsgPruneWasmCodes is the MsgPruneWasmCodes request type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
+| `code_ids` | [uint64](#uint64) | repeated | CodeIDs references the WASM codes |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgPruneWasmCodesResponse"></a>
+
+### MsgPruneWasmCodesResponse
+MsgPruneWasmCodesResponse defines the response structure for executing a
+MsgPruneWasmCodes message.
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.MsgStoreAndInstantiateContract"></a>
 
 ### MsgStoreAndInstantiateContract
@@ -1803,6 +1832,7 @@ Since: 0.40 | |
 | `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract defines a governance operation for storing and instantiating the contract. The authority is defined in the keeper.
 
 Since: 0.40 | |
+| `PruneWasmCodes` | [MsgPruneWasmCodes](#cosmwasm.wasm.v1.MsgPruneWasmCodes) | [MsgPruneWasmCodesResponse](#cosmwasm.wasm.v1.MsgPruneWasmCodesResponse) | PruneWasmCodes defines a governance operation for pruning a set of code ids in the system. The authority is defined in the keeper. | |
 
  <!-- end services -->
 

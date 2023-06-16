@@ -209,6 +209,11 @@ func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.Cod
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshal(&codeInfo))
 }
 
+func (k Keeper) deleteCodeInfo(ctx sdk.Context, codeID uint64) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.GetCodeKey(codeID))
+}
+
 func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
 	if ioutils.IsGzip(wasmCode) {
 		var err error
@@ -1212,4 +1217,15 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 		result = rsp
 	}
 	return result, nil
+}
+
+// PruneWasmCodes deletes code info for unpinned codes.
+func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeIDs []uint64) error {
+	for _, c := range codeIDs {
+		if k.IsPinnedCode(ctx, c) {
+			return errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("code %d is pinned", c))
+		}
+		k.deleteCodeInfo(ctx, c)
+	}
+	return nil
 }

@@ -363,3 +363,22 @@ func (m msgServer) selectAuthorizationPolicy(actor string) AuthorizationPolicy {
 	}
 	return DefaultAuthorizationPolicy{}
 }
+
+// PruneWasmCodes prunes a set of codeIDs in the system.
+func (m msgServer) PruneWasmCodes(goCtx context.Context, req *types.MsgPruneWasmCodes) (*types.MsgPruneWasmCodesResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+	authority := m.keeper.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	err := m.keeper.PruneWasmCodes(ctx, req.CodeIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgPruneWasmCodesResponse{}, nil
+}

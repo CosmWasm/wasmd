@@ -615,3 +615,33 @@ func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 	}
 	return nil
 }
+
+func (msg MsgPruneWasmCodes) Route() string {
+	return RouterKey
+}
+
+func (msg MsgPruneWasmCodes) Type() string {
+	return "prune-wasm-codes"
+}
+
+func (msg MsgPruneWasmCodes) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgPruneWasmCodes) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgPruneWasmCodes) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+	if len(msg.CodeIDs) == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
+	}
+	return nil
+}
