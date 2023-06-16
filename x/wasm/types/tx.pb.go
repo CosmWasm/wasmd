@@ -1566,7 +1566,7 @@ type MsgClient interface {
 	// Since: 0.40
 	StoreAndInstantiateContract(ctx context.Context, in *MsgStoreAndInstantiateContract, opts ...grpc.CallOption) (*MsgStoreAndInstantiateContractResponse, error)
 	// PruneWasmCodes defines a governance operation for pruning a set of
-	// code ids in the system. The authority is defined in the keeper.
+	// unpinned code ids in the system. The authority is defined in the keeper.
 	PruneWasmCodes(ctx context.Context, in *MsgPruneWasmCodes, opts ...grpc.CallOption) (*MsgPruneWasmCodesResponse, error)
 }
 
@@ -1750,7 +1750,7 @@ type MsgServer interface {
 	// Since: 0.40
 	StoreAndInstantiateContract(context.Context, *MsgStoreAndInstantiateContract) (*MsgStoreAndInstantiateContractResponse, error)
 	// PruneWasmCodes defines a governance operation for pruning a set of
-	// code ids in the system. The authority is defined in the keeper.
+	// unpinned code ids in the system. The authority is defined in the keeper.
 	PruneWasmCodes(context.Context, *MsgPruneWasmCodes) (*MsgPruneWasmCodesResponse, error)
 }
 

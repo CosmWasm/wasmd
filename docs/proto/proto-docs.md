@@ -1832,7 +1832,7 @@ Since: 0.40 | |
 | `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract defines a governance operation for storing and instantiating the contract. The authority is defined in the keeper.
 
 Since: 0.40 | |
-| `PruneWasmCodes` | [MsgPruneWasmCodes](#cosmwasm.wasm.v1.MsgPruneWasmCodes) | [MsgPruneWasmCodesResponse](#cosmwasm.wasm.v1.MsgPruneWasmCodesResponse) | PruneWasmCodes defines a governance operation for pruning a set of code ids in the system. The authority is defined in the keeper. | |
+| `PruneWasmCodes` | [MsgPruneWasmCodes](#cosmwasm.wasm.v1.MsgPruneWasmCodes) | [MsgPruneWasmCodesResponse](#cosmwasm.wasm.v1.MsgPruneWasmCodesResponse) | PruneWasmCodes defines a governance operation for pruning a set of unpinned code ids in the system. The authority is defined in the keeper. | |
 
  <!-- end services -->
 

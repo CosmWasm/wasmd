@@ -61,7 +61,7 @@ service Msg {
   rpc StoreAndInstantiateContract(MsgStoreAndInstantiateContract)
       returns (MsgStoreAndInstantiateContractResponse);
   // PruneWasmCodes defines a governance operation for pruning a set of
-  // code ids in the system. The authority is defined in the keeper.
+  // unpinned code ids in the system. The authority is defined in the keeper.
   rpc PruneWasmCodes(MsgPruneWasmCodes) returns (MsgPruneWasmCodesResponse);
 }
 

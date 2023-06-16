@@ -805,7 +805,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 func ProposalPruneWasmCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prune-wasm-codes [code-ids] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a prune wasm codes proposal for pruning codes in the system",
+		Short: "Submit a prune wasm codes proposal for pruning unpinned codes in the system",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)

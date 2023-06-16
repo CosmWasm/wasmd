@@ -364,7 +364,7 @@ func (m msgServer) selectAuthorizationPolicy(actor string) AuthorizationPolicy {
 	return DefaultAuthorizationPolicy{}
 }
 
-// PruneWasmCodes prunes a set of codeIDs in the system.
+// PruneWasmCodes prunes a set of unpinned code ids in the system.
 func (m msgServer) PruneWasmCodes(goCtx context.Context, req *types.MsgPruneWasmCodes) (*types.MsgPruneWasmCodesResponse, error) {
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
