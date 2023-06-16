@@ -1225,6 +1225,12 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeIDs []uint64) error {
 		if k.IsPinnedCode(ctx, c) {
 			continue
 		}
+
+		info := k.GetCodeInfo(ctx, c)
+		if info == nil {
+			return types.ErrNoSuchCodeFn(c).Wrapf("code id %d", c)
+		}
+		k.wasmVM.RemoveCode(info.CodeHash)
 		k.deleteCodeInfo(ctx, c)
 	}
 	return nil

@@ -36,6 +36,7 @@ type MockWasmer struct {
 	IBCPacketTimeoutFn  func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error)
 	PinFn               func(checksum wasmvm.Checksum) error
 	UnpinFn             func(checksum wasmvm.Checksum) error
+	RemoveCodeFn        func(checksum wasmvm.Checksum) error
 	GetMetricsFn        func() (*wasmvmtypes.Metrics, error)
 }
 
@@ -163,6 +164,13 @@ func (m *MockWasmer) Unpin(checksum wasmvm.Checksum) error {
 		panic("not supposed to be called!")
 	}
 	return m.UnpinFn(checksum)
+}
+
+func (m *MockWasmer) RemoveCode(checksum wasmvm.Checksum) error {
+	if m.UnpinFn == nil {
+		panic("not supposed to be called!")
+	}
+	return m.RemoveCodeFn(checksum)
 }
 
 func (m *MockWasmer) GetMetrics() (*wasmvmtypes.Metrics, error) {
