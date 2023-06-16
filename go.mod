@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.4
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0.0.20230615105423-ae3e30a715bd
+	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v1.0.0-beta.2

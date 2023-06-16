@@ -4,21 +4,20 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestCountTxDecorator(t *testing.T) {
-	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
+	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
@@ -90,7 +89,7 @@ func TestCountTxDecorator(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx := sdk.NewContext(ms.CacheMultiStore(), tmproto.Header{
+			ctx := sdk.NewContext(ms.CacheMultiStore(), cmtproto.Header{
 				Height: myCurrentBlockHeight,
 				Time:   time.Date(2021, time.September, 27, 12, 0, 0, 0, time.UTC),
 			}, false, log.NewNopLogger())
@@ -127,13 +126,13 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			consumeGas:  hundred + 1,
 			maxBlockGas: -1,
 			simulation:  true,
-			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+			expErr:      storetypes.ErrorOutOfGas{Descriptor: "testing"},
 		},
 		"block limit set": {
 			maxBlockGas: 100,
 			consumeGas:  hundred + 1,
 			simulation:  true,
-			expErr:      sdk.ErrorOutOfGas{Descriptor: "testing"},
+			expErr:      storetypes.ErrorOutOfGas{Descriptor: "testing"},
 		},
 		"no limits set": {
 			maxBlockGas: -1,
@@ -162,8 +161,8 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
 				WithGasMeter(storetypes.NewInfiniteGasMeter()).
-				WithConsensusParams(&tmproto.ConsensusParams{
-					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas},
+				WithConsensusParams(&cmtproto.ConsensusParams{
+					Block: &cmtproto.BlockParams{MaxGas: spec.maxBlockGas},
 				})
 			// when
 			if spec.expErr != nil {

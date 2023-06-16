@@ -2,9 +2,14 @@ package keeper
 
 import (
 	"bytes"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"os"
 	"testing"
 	"time"
@@ -16,10 +21,8 @@ import (
 	evidencetypes "cosmossdk.io/x/evidence/types"
 	"cosmossdk.io/x/feegrant"
 	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-
-	dbm "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/libs/log"
@@ -50,14 +53,12 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -77,7 +78,6 @@ import (
 
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -191,7 +191,7 @@ type TestKeepers struct {
 	Router           MessageRouter
 	EncodingConfig   wasmappparams.EncodingConfig
 	Faucet           *TestFaucet
-	MultiStore       sdk.CommitMultiStore
+	MultiStore       storetypes.CommitMultiStore
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper
 	WasmStoreKey     *storetypes.KVStoreKey
 }
@@ -230,12 +230,12 @@ func createTestInput(
 	for _, v := range keys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeIAVL, db)
 	}
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
 	for _, v := range tkeys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeTransient, db)
 	}
 
-	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	for _, v := range memKeys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeMemory, db)
 	}
@@ -254,8 +254,8 @@ func createTestInput(
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
 		legacyAmino,
-		 runtime.NewKVStoreService(keys[paramstypes.StoreKey])
-		t runtime.NewKVStoreService(keys[paramstypes..StoreKey])
+		 keys[paramstypes.StoreKey],
+		 tkeys[paramstypes.StoreKey],
 	)
 	for _, m := range []string{
 		authtypes.ModuleName,
@@ -326,7 +326,7 @@ func createTestInput(
 	}
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
-		 runtime.NewKVStoreService(keys[authtypes.StoreKey])   // target store
+		 runtime.NewKVStoreService(keys[authtypes.StoreKey]) ,
 		authtypes.ProtoBaseAccount, // prototype
 		maccPerms,
 		sdk.Bech32MainPrefix,
@@ -341,7 +341,7 @@ func createTestInput(
 
 	bankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
-		 runtime.NewKVStoreService(keys[banktypes.StoreKey])
+		 runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		accountKeeper,
 		blockedAddrs,
 		authtypes.NewModuleAddress(banktypes.ModuleName).String(),
@@ -350,7 +350,7 @@ func createTestInput(
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
-		 runtime.NewKVStoreService(keys[stakingtypes.StoreKey])
+		 runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		accountKeeper,
 		bankKeeper,
 		authtypes.NewModuleAddress(stakingtypes.ModuleName).String(),
@@ -360,7 +360,7 @@ func createTestInput(
 
 	distKeeper := distributionkeeper.NewKeeper(
 		appCodec,
-		 runtime.NewKVStoreService(keys[distributiontypes.StoreKey])
+		 runtime.NewKVStoreService(keys[distributiontypes.StoreKey]),
 		accountKeeper,
 		bankKeeper,
 		stakingKeeper,
@@ -375,7 +375,7 @@ func createTestInput(
 
 	upgradeKeeper := upgradekeeper.NewKeeper(
 		map[int64]bool{},
-		 runtime.NewKVStoreService(keys[upgradetypes.StoreKey])
+		 runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
 		appCodec,
 		tempDir,
 		nil,
@@ -393,7 +393,7 @@ func createTestInput(
 	capabilityKeeper := capabilitykeeper.NewKeeper(
 		appCodec,
 		 runtime.NewKVStoreService(keys[capabilitytypes.StoreKey])
-		mem runtime.NewKVStoreService(keys[capabilitytypes.Me.StoreKey])
+		 memKeys[capabilitytypes.StoreKey])
 	)
 	scopedIBCKeeper := capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedWasmKeeper := capabilityKeeper.ScopeToModule(types.ModuleName)
