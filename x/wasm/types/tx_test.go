@@ -2,12 +2,12 @@ package types
 
 import (
 	"bytes"
-	"strings"
-	"testing"
-
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"strings"
+	"testing"
 )
 
 const firstCodeID = 1
@@ -138,7 +138,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 				CodeID: firstCodeID,
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
-				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -149,7 +149,7 @@ func TestInstantiateContractValidation(t *testing.T) {
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 			},
 			valid: false,
 		},
@@ -251,7 +251,7 @@ func TestInstantiateContract2Validation(t *testing.T) {
 				CodeID: firstCodeID,
 				Label:  strings.Repeat("a", MaxLabelSize),
 				Msg:    []byte(`{"some": "data"}`),
-				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:  sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 				Salt:   bytes.Repeat([]byte{0}, MaxSaltSize),
 				FixMsg: true,
 			},
@@ -264,7 +264,7 @@ func TestInstantiateContract2Validation(t *testing.T) {
 				Label:  "foo",
 				Msg:    []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds: sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 				Salt:  []byte{0},
 			},
 			valid: false,
@@ -348,7 +348,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 			},
 			valid: true,
 		},
@@ -387,7 +387,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-1)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-1)}},
 			},
 			valid: false,
 		},
@@ -396,7 +396,7 @@ func TestExecuteContractValidation(t *testing.T) {
 				Sender:   goodAddress,
 				Contract: goodAddress,
 				Msg:      []byte(`{"some": "data"}`),
-				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(1)}},
+				Funds:    sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(1)}, sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(1)}},
 			},
 			valid: false,
 		},
@@ -993,7 +993,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				Authority:             goodAddress,
 				Label:                 "foo",
 				Msg:                   []byte(`{"some": "data"}`),
-				Funds:                 sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(200)}},
+				Funds:                 sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(200)}},
 				WASMByteCode:          []byte("foo"),
 				InstantiatePermission: &AllowEverybody,
 				UnpinCode:             true,
@@ -1044,7 +1044,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				Label:     "foo",
 				Msg:       []byte(`{"some": "data"}`),
 				// we cannot use sdk.NewCoin() constructors as they panic on creating invalid data (before we can test)
-				Funds:        sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdk.NewInt(-200)}},
+				Funds:        sdk.Coins{sdk.Coin{Denom: "foobar", Amount: sdkmath.NewInt(-200)}},
 				WASMByteCode: []byte("foo"),
 			},
 			valid: false,

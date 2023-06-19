@@ -1,18 +1,21 @@
 package keeper_test
 
 import (
+	"context"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
+	storemetrics "cosmossdk.io/store/metrics"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	dbm "github.com/cometbft/cometbft-db"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -25,7 +28,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -333,8 +335,8 @@ func TestIBCQuerier(t *testing.T) {
 }
 
 func TestBankQuerierBalance(t *testing.T) {
-	mock := bankKeeperMock{GetBalanceFn: func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
-		return sdk.NewCoin(denom, sdk.NewInt(1))
+	mock := bankKeeperMock{GetBalanceFn: func(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+		return sdk.NewCoin(denom, sdkmath.NewInt(1))
 	}}
 
 	ctx := sdk.Context{}
@@ -556,7 +558,8 @@ func TestQueryErrors(t *testing.T) {
 			mock := keeper.WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 				return nil, spec.src
 			})
-			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB()))
+			ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithMultiStore(ms)
 			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, keeper.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
@@ -570,7 +573,7 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
 	require.NoError(t, err)
 
-	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
+	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdkmath.NewInt(1_000_000))
 	accepted := keeper.AcceptedStargateQueries{
 		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
 		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
@@ -674,26 +677,26 @@ func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.
 }
 
 type bankKeeperMock struct {
-	GetSupplyFn      func(ctx sdk.Context, denom string) sdk.Coin
-	GetBalanceFn     func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetAllBalancesFn func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetSupplyFn      func(ctx context.Context, denom string) sdk.Coin
+	GetBalanceFn     func(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalancesFn func(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 }
 
-func (m bankKeeperMock) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
+func (m bankKeeperMock) GetSupply(ctx context.Context, denom string) sdk.Coin {
 	if m.GetSupplyFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetSupplyFn(ctx, denom)
 }
 
-func (m bankKeeperMock) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+func (m bankKeeperMock) GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	if m.GetBalanceFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetBalanceFn(ctx, addr, denom)
 }
 
-func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins {
+func (m bankKeeperMock) GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
 	if m.GetAllBalancesFn == nil {
 		panic("not expected to be called")
 	}
@@ -715,7 +718,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			originalResponse:    "0a090a036261721202333012050a03666f6f",
 			protoResponseStruct: &banktypes.QueryAllBalancesResponse{},
 			expectedProtoResponse: &banktypes.QueryAllBalancesResponse{
-				Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+				Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
 				Pagination: &query.PageResponse{
 					NextKey: []byte("foo"),
 				},
@@ -756,7 +759,7 @@ func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
 
 	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
 	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
-		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdk.NewInt(30))),
+		Balances: sdk.NewCoins(sdk.NewCoin("bar", sdkmath.NewInt(30))),
 		Pagination: &query.PageResponse{
 			NextKey: []byte("foo"),
 		},

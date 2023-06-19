@@ -59,7 +59,7 @@ func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr
 	defer func() {
 		if r := recover(); r != nil {
 			// if it's not an OutOfGas error, raise it again
-			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+			if _, ok := r.(storetypes.ErrorOutOfGas); !ok {
 				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
 				moduleLogger(ctx).Info("SubMsg rethrowing panic: %#v", r)
 				panic(r)

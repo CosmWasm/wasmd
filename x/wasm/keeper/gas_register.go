@@ -2,12 +2,11 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -224,7 +223,7 @@ func (g WasmGasRegister) eventAttributeCosts(attrs []wasmvmtypes.EventAttribute,
 	r := sdkmath.NewIntFromUint64(g.c.EventAttributeDataCost).Mul(sdkmath.NewIntFromUint64(storedBytes)).
 		Add(sdkmath.NewIntFromUint64(g.c.EventPerAttributeCost).Mul(sdkmath.NewIntFromUint64(uint64(len(attrs)))))
 	if !r.IsUint64() {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
+		panic(storetypes.ErrorOutOfGas{Descriptor: "overflow"})
 	}
 	return r.Uint64(), freeTier
 }
@@ -242,7 +241,7 @@ func calcWithFreeTier(storedBytes uint64, freeTier uint64) (uint64, uint64) {
 func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	x := source * g.c.GasMultiplier
 	if x < source {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
+		panic(storetypes.ErrorOutOfGas{Descriptor: "overflow"})
 	}
 	return x
 }

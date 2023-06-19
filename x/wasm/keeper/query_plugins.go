@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -313,7 +314,7 @@ func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter G
 			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
-		res, err := route(ctx, abci.RequestQuery{
+		res, err := route(ctx, &abci.RequestQuery{
 			Data: request.Data,
 			Path: request.Path,
 		})
@@ -493,7 +494,7 @@ func getAccumulatedRewards(ctx sdk.Context, distKeeper types.DistributionKeeper,
 		ValidatorAddress: delegation.ValidatorAddress,
 	}
 	cache, _ := ctx.CacheContext()
-	qres, err := distKeeper.DelegationRewards(sdk.WrapSDKContext(cache), &params)
+	qres, err := distKeeper.DelegationRewards(cache, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +589,7 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 // ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
 // This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
 // being able to use response directly by json marshalling, which is supported in cosmwasm.
-func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse codec.ProtoMarshaler, bz []byte) ([]byte, error) {
+func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse proto.Message, bz []byte) ([]byte, error) {
 	// unmarshal binary into stargate response data structure
 	err := cdc.Unmarshal(bz, protoResponse)
 	if err != nil {

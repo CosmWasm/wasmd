@@ -1,15 +1,11 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"crypto/sha256"
-	"os"
-	"testing"
-	"time"
-
+	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	"github.com/stretchr/testify/assert"
-
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -17,10 +13,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"os"
+	"testing"
+	"time"
 )
 
 func TestSnapshotter(t *testing.T) {
@@ -61,7 +58,9 @@ func TestSnapshotter(t *testing.T) {
 				srcCodeIDToChecksum[codeID] = checksum
 			}
 			// create snapshot
-			srcWasmApp.Commit()
+			_, err := srcWasmApp.Commit()
+			require.NoError(t, err)
+
 			snapshotHeight := uint64(srcWasmApp.LastBlockHeight())
 			snapshot, err := srcWasmApp.SnapshotManager().Create(snapshotHeight)
 			require.NoError(t, err)
@@ -104,12 +103,12 @@ func TestSnapshotter(t *testing.T) {
 
 func newWasmExampleApp(t *testing.T) (*app.WasmApp, sdk.AccAddress) {
 	senderPrivKey := ed25519.GenPrivKey()
-	pubKey, err := cryptocodec.ToTmPubKeyInterface(senderPrivKey.PubKey())
+	pubKey, err := cryptocodec.ToCmtPubKeyInterface(senderPrivKey.PubKey())
 	require.NoError(t, err)
 
 	senderAddr := senderPrivKey.PubKey().Address().Bytes()
 	acc := authtypes.NewBaseAccount(senderAddr, senderPrivKey.PubKey(), 0, 0)
-	amount, ok := sdk.NewIntFromString("10000000000000000000")
+	amount, ok := sdkmath.NewIntFromString("10000000000000000000")
 	require.True(t, ok)
 
 	balance := banktypes.Balance{

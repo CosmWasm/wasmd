@@ -308,7 +308,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				if tc.isOutOfGasPanic {
 					r := recover()
 					require.NotNil(t, r, "expected panic")
-					if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+					if _, ok := r.(storetypes.ErrorOutOfGas); !ok {
 						t.Fatalf("Expected OutOfGas panic, got: %#v\n", r)
 					}
 				}
@@ -361,7 +361,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 		Bank: nilEncoder,
 	}
 
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(nil, customEncoders)))
+	ctx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageHandler(NewSDKMessageHandler(MakeTestCodec(t), nil, customEncoders)))
 	keeper := keepers.WasmKeeper
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))

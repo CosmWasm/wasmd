@@ -1,14 +1,14 @@
 package keeper
 
 import (
-	"encoding/json"
-	"testing"
-
 	errorsmod "cosmossdk.io/errors"
-
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
+	"encoding/json"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,9 +18,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
 )
 
 func TestMessageHandlerChainDispatch(t *testing.T) {
@@ -205,7 +203,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 
 			// when
 			ctx := sdk.Context{}
-			h := NewSDKMessageHandler(spec.srcRoute, MessageEncoders{Custom: spec.srcEncoder})
+			h := NewSDKMessageHandler(MakeTestCodec(t), spec.srcRoute, MessageEncoders{Custom: spec.srcEncoder})
 			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
 
 			// then
@@ -225,7 +223,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 
 func TestIBCRawPacketHandler(t *testing.T) {
 	ibcPort := "contractsIBCPort"
-	ctx := sdk.Context{}.WithLogger(log.TestingLogger())
+	ctx := sdk.Context{}.WithLogger(log.NewTestLogger(t))
 
 	type CapturedPacket struct {
 		sourcePort       string
@@ -334,12 +332,12 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	// picks the message in the default handler chain
 	ctx, keepers := CreateDefaultTestInput(t)
 	// set some supply
-	keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoin("denom", sdk.NewInt(10_000_000)))
+	keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoin("denom", sdkmath.NewInt(10_000_000)))
 	k := keepers.WasmKeeper
 
 	example := InstantiateHackatomExampleContract(t, ctx, keepers) // with deposit of 100 stake
 
-	before, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+	before, err := keepers.BankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -405,10 +403,10 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			require.NoError(t, err)
 
 			// and total supply reduced by burned amount
-			after, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
+			after, err := keepers.BankKeeper.TotalSupply(ctx, &banktypes.QueryTotalSupplyRequest{})
 			require.NoError(t, err)
 			diff := before.Supply.Sub(after.Supply...)
-			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
+			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(100))), diff)
 		})
 	}
 

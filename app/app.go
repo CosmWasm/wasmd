@@ -320,7 +320,7 @@ func NewWasmApp(
 	wasmOpts []wasm.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
-	interfaceRegistry, _ := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
+	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
 		SigningOptions: signing.Options{
 			AddressCodec: address.Bech32Codec{
@@ -331,6 +331,9 @@ func NewWasmApp(
 			},
 		},
 	})
+	if err != nil {
+		panic(err)
+	}
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	txConfig := tx.NewTxConfig(appCodec, tx.DefaultSignModes)
@@ -421,7 +424,7 @@ func NewWasmApp(
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
 		appCodec,
 		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.StoreKey],
+		memKeys[capabilitytypes.MemStoreKey],
 	)
 
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
@@ -437,7 +440,7 @@ func NewWasmApp(
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
 		authtypes.ProtoBaseAccount,
 		maccPerms,
-		Bech32Prefix,
+		sdk.GetConfig().GetBech32AccountAddrPrefix(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
@@ -450,7 +453,8 @@ func NewWasmApp(
 	)
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
+		keys[stakingtypes.StoreKey],
+		//runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -523,7 +527,8 @@ func NewWasmApp(
 		groupConfig.MaxMetadataLen = 1000
 	*/
 	app.GroupKeeper = groupkeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[group.StoreKey]),
+		keys[group.StoreKey],
+		//runtime.NewKVStoreService(keys[group.StoreKey]),
 		appCodec,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
@@ -582,9 +587,6 @@ func NewWasmApp(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	// Set legacy router for backwards compatibility with gov v1beta1
-	govKeeper.SetLegacyRouter(govRouter)
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(

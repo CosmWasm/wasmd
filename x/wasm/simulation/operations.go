@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -53,7 +52,7 @@ type BankKeeper interface {
 
 // WeightedOperations returns all the operations from the module with their respective weights
 func WeightedOperations(
-	simstate *module.SimulationState,
+	appParams simtypes.AppParams,
 	ak types.AccountKeeper,
 	bk BankKeeper,
 	wasmKeeper WasmKeeper,
@@ -67,42 +66,27 @@ func WeightedOperations(
 		weightMsgMigrateContract     int
 		wasmContractPath             string
 	)
-
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgStoreCode, &weightMsgStoreCode, nil,
-		func(_ *rand.Rand) {
-			weightMsgStoreCode = params.DefaultWeightMsgStoreCode
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil,
-		func(_ *rand.Rand) {
-			weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil,
-		func(_ *rand.Rand) {
-			weightMsgExecuteContract = params.DefaultWeightMsgExecuteContract
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil,
-		func(_ *rand.Rand) {
-			weightMsgUpdateAdmin = params.DefaultWeightMsgUpdateAdmin
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil,
-		func(_ *rand.Rand) {
-			weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil,
-		func(_ *rand.Rand) {
-			weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
-		},
-	)
-	simstate.AppParams.GetOrGenerate(simstate.Cdc, OpReflectContractPath, &wasmContractPath, nil,
-		func(_ *rand.Rand) {
-			wasmContractPath = ""
-		},
-	)
+	appParams.GetOrGenerate(OpWeightMsgStoreCode, &weightMsgStoreCode, nil, func(_ *rand.Rand) {
+		weightMsgStoreCode = params.DefaultWeightMsgStoreCode
+	})
+	appParams.GetOrGenerate(OpWeightMsgInstantiateContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
+		weightMsgInstantiateContract = params.DefaultWeightMsgInstantiateContract
+	})
+	appParams.GetOrGenerate(OpWeightMsgExecuteContract, &weightMsgInstantiateContract, nil, func(_ *rand.Rand) {
+		weightMsgExecuteContract = params.DefaultWeightMsgExecuteContract
+	})
+	appParams.GetOrGenerate(OpWeightMsgUpdateAdmin, &weightMsgUpdateAdmin, nil, func(_ *rand.Rand) {
+		weightMsgUpdateAdmin = params.DefaultWeightMsgUpdateAdmin
+	})
+	appParams.GetOrGenerate(OpWeightMsgClearAdmin, &weightMsgClearAdmin, nil, func(_ *rand.Rand) {
+		weightMsgClearAdmin = params.DefaultWeightMsgClearAdmin
+	})
+	appParams.GetOrGenerate(OpWeightMsgMigrateContract, &weightMsgMigrateContract, nil, func(_ *rand.Rand) {
+		weightMsgMigrateContract = params.DefaultWeightMsgMigrateContract
+	})
+	appParams.GetOrGenerate(OpReflectContractPath, &wasmContractPath, nil, func(_ *rand.Rand) {
+		wasmContractPath = ""
+	})
 
 	var wasmBz []byte
 	if wasmContractPath == "" {
@@ -497,7 +481,6 @@ func BuildOperationInput(
 		TxGen:           txConfig,
 		Cdc:             nil,
 		Msg:             msg,
-		MsgType:         msg.Type(),
 		Context:         ctx,
 		SimAccount:      simAccount,
 		AccountKeeper:   ak,

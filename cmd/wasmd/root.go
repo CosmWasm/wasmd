@@ -1,14 +1,17 @@
 package main
 
 import (
-	"errors"
-	"io"
-	"os"
-
+	"cosmossdk.io/log"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
-	dbm "github.com/cometbft/cometbft-db"
-	tmcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/log"
+	"errors"
+	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	cmtcfg "github.com/cometbft/cometbft/config"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -16,12 +19,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/snapshot"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
@@ -29,30 +39,27 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/app/params"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"io"
+	"os"
 )
 
 // NewRootCmd creates a new root command for wasmd. It is called once in the
 // main function.
-func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
-	encodingConfig := app.MakeEncodingConfig()
-
+func NewRootCmd() *cobra.Command {
 	cfg := sdk.GetConfig()
 	cfg.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
 	cfg.SetBech32PrefixForValidator(app.Bech32PrefixValAddr, app.Bech32PrefixValPub)
 	cfg.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
 	cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
 	cfg.Seal()
+	encodingConfig := app.MakeEncodingConfig()
+	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
+	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
+	tempApp := app.NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(tempDir()), []wasm.Option{})
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-		WithTxConfig(encodingConfig.TxConfig).
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
@@ -67,6 +74,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
+			initClientCtx = initClientCtx.WithCmdContext(cmd.Context())
 			initClientCtx, err := client.ReadPersistentCommandFlags(initClientCtx, cmd.Flags())
 			if err != nil {
 				return err
@@ -77,26 +85,46 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
+			// This needs to go after ReadFromClientConfig, as that function
+			// sets the RPC client needed for SIGN_MODE_TEXTUAL.
+			enabledSignModes := append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL)
+			txConfigOpts := tx.ConfigOptions{
+				EnabledSignModes:           enabledSignModes,
+				TextualCoinMetadataQueryFn: txmodule.NewGRPCCoinMetadataQueryFn(initClientCtx),
+			}
+			txConfigWithTextual, err := tx.NewTxConfigWithOptions(
+				codec.NewProtoCodec(encodingConfig.InterfaceRegistry),
+				txConfigOpts,
+			)
+			if err != nil {
+				return err
+			}
+			initClientCtx = initClientCtx.WithTxConfig(txConfigWithTextual)
+
 			if err := client.SetCmdClientContextHandler(initClientCtx, cmd); err != nil {
 				return err
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
-			customTMConfig := initTendermintConfig()
+			customCMTConfig := initCometBFTConfig()
 
-			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
+			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customCMTConfig)
 		},
 	}
 
-	initRootCmd(rootCmd, encodingConfig)
+	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager)
 
-	return rootCmd, encodingConfig
+	if err := tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd); err != nil {
+		panic(err)
+	}
+
+	return rootCmd
 }
 
-// initTendermintConfig helps to override default Tendermint Config values.
-// return tmcfg.DefaultConfig if no custom configuration is required for the application.
-func initTendermintConfig() *tmcfg.Config {
-	cfg := tmcfg.DefaultConfig()
+// initCometBFTConfig helps to override default CometBFT Config values.
+// return cmtcfg.DefaultConfig if no custom configuration is required for the application.
+func initCometBFTConfig() *cmtcfg.Config {
+	cfg := cmtcfg.DefaultConfig()
 
 	// these values put a higher strain on node memory
 	// cfg.P2P.MaxNumInboundPeers = 100
@@ -145,13 +173,17 @@ func initAppConfig() (string, interface{}) {
 	return customAppTemplate, customAppConfig
 }
 
-func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
+func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig, basicManager module.BasicManager) {
+	cfg := sdk.GetConfig()
+	cfg.Seal()
+
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		// testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		//NewTestnetCmd(basicManager, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
-		config.Cmd(),
-		pruning.PruningCmd(newApp),
+		confixcmd.ConfigCommand(),
+		pruning.Cmd(newApp),
+		snapshot.Cmd(newApp),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
@@ -159,9 +191,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
-		genesisCommand(encodingConfig),
-		queryCommand(),
+		genesisCommand(encodingConfig, basicManager),
 		txCommand(),
+		queryCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
 	// add rosetta
@@ -174,8 +206,8 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 }
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
-func genesisCommand(encodingConfig params.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {
-	cmd := genutilcli.GenesisCoreCommand(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome)
+func genesisCommand(encodingConfig params.EncodingConfig, basicManager module.BasicManager, cmds ...*cobra.Command) *cobra.Command {
+	cmd := genutilcli.Commands(encodingConfig.TxConfig, basicManager, app.DefaultNodeHome)
 
 	for _, subCmd := range cmds {
 		cmd.AddCommand(subCmd)
@@ -194,14 +226,12 @@ func queryCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
+		server.QueryBlockCmd(),
 		authcmd.QueryTxsByEventsCmd(),
+		server.QueryBlocksCmd(),
 		authcmd.QueryTxCmd(),
 	)
-
-	app.ModuleBasics.AddQueryCommands(cmd)
 
 	return cmd
 }
@@ -226,8 +256,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetDecodeCommand(),
 		authcmd.GetAuxToFeeCommand(),
 	)
-
-	app.ModuleBasics.AddTxCommands(cmd)
 
 	return cmd
 }
@@ -267,6 +295,8 @@ func appExport(
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	var wasmApp *app.WasmApp
+	// this check is necessary as we use the flag in x/upgrade.
+	// we can exit more gracefully by checking the flag here.
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
 		return servertypes.ExportedApp{}, errors.New("application home is not set")
@@ -299,4 +329,14 @@ func appExport(
 	}
 
 	return wasmApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+var tempDir = func() string {
+	dir, err := os.MkdirTemp("", "wasmd")
+	if err != nil {
+		panic("failed to create temp dir: " + err.Error())
+	}
+	defer os.RemoveAll(dir)
+
+	return dir
 }

@@ -591,8 +591,8 @@ func TestAcceptGrantedMessage(t *testing.T) {
 		"accepted and updated - multi, one updated": {
 			auth: NewContractExecutionAuthorization(
 				mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
-				mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
-				mustGrant(myContractAddr, NewCombinedLimit(2, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("foo")),
+				mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+				mustGrant(myContractAddr, NewCombinedLimit(2, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("foo")),
 			),
 			msg: &MsgExecuteContract{
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
@@ -604,8 +604,8 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Accept: true,
 				Updated: NewContractExecutionAuthorization(
 					mustGrant(otherContractAddr, NewMaxCallsLimit(1), NewAllowAllMessagesFilter()),
-					mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
-					mustGrant(myContractAddr, NewCombinedLimit(1, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1))), NewAcceptedMessageKeysFilter("foo")),
+					mustGrant(myContractAddr, NewMaxFundsLimit(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))), NewAcceptedMessageKeysFilter("bar")),
+					mustGrant(myContractAddr, NewCombinedLimit(1, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1))), NewAcceptedMessageKeysFilter("foo")),
 				),
 			},
 		},
@@ -634,7 +634,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				Contract: myContractAddr.String(),
 				Msg:      []byte(`{"foo":"bar"}`),
-				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2))),
+				Funds:    sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2))),
 			},
 			expResult: authztypes.AcceptResponse{Accept: false},
 		},

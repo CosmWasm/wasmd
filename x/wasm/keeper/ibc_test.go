@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -24,9 +25,10 @@ func TestBindingPortForIBCContractOnInstantiate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "wasm", owner)
 
-	initMsgBz := IBCReflectInitMsg{
+	initMsgBz, err := json.Marshal(IBCReflectInitMsg{
 		ReflectCodeID: example.ReflectCodeID,
-	}.GetBytes(t)
+	})
+	require.NoError(t, err)
 
 	// create a second contract should give yet another portID (and different address)
 	creator := RandomAccountAddress(t)

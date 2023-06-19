@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	storemetrics "cosmossdk.io/store/metrics"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -16,10 +17,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/store"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -628,10 +629,10 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	require.NoError(t, err)
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
-	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
+	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 

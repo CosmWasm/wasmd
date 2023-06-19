@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	storemetrics "cosmossdk.io/store/metrics"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 func TestCountTxDecorator(t *testing.T) {
 	keyWasm := storetypes.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
-	ms := store.NewCommitMultiStore(db)
+	ms := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100
@@ -161,7 +162,7 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
 				WithGasMeter(storetypes.NewInfiniteGasMeter()).
-				WithConsensusParams(&cmtproto.ConsensusParams{
+				WithConsensusParams(cmtproto.ConsensusParams{
 					Block: &cmtproto.BlockParams{MaxGas: spec.maxBlockGas},
 				})
 			// when

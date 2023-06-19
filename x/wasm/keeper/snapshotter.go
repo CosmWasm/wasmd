@@ -1,15 +1,14 @@
 package keeper
 
 import (
+	storetypes "cosmossdk.io/store/types"
 	"encoding/hex"
 	"io"
-
 	errorsmod "cosmossdk.io/errors"
 	snapshot "cosmossdk.io/store/snapshots/types"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -21,10 +20,10 @@ const SnapshotFormat = 1
 
 type WasmSnapshotter struct {
 	wasm *Keeper
-	cms  sdk.MultiStore
+	cms  storetypes.MultiStore
 }
 
-func NewWasmSnapshotter(cms sdk.MultiStore, wasm *Keeper) *WasmSnapshotter {
+func NewWasmSnapshotter(cms storetypes.MultiStore, wasm *Keeper) *WasmSnapshotter {
 	return &WasmSnapshotter{
 		wasm: wasm,
 		cms:  cms,

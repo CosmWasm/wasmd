@@ -189,7 +189,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 
 			querier := NewGrpcQuerier(keeper.cdc, keeper.storeKey, keeper, tc.gasLimit)
 			req := &types.QuerySmartContractStateRequest{Address: contractAddr.String(), QueryData: msg}
-			_, gotErr := querier.SmartContractState(sdk.WrapSDKContext(ctx), req)
+			_, gotErr := querier.SmartContractState(ctx, req)
 			if tc.expOutOfGas {
 				require.Error(t, gotErr, sdkerrors.ErrOutOfGas)
 				return

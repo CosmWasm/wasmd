@@ -48,7 +48,9 @@ func TestGovVoteByContract(t *testing.T) {
 	communityPoolBalance := chain.Balance(accountKeeper.GetModuleAccount(chain.GetContext(), distributiontypes.ModuleName).GetAddress(), sdk.DefaultBondDenom)
 	require.False(t, communityPoolBalance.IsZero())
 
-	initialDeposit := govKeeper.GetParams(chain.GetContext()).MinDeposit
+	gParams, err := govKeeper.Params.Get(chain.GetContext())
+	require.NoError(t, err)
+	initialDeposit := gParams.MinDeposit
 	govAcctAddr := govKeeper.GetGovernanceAccount(chain.GetContext()).GetAddress()
 
 	specs := map[string]struct {
@@ -97,6 +99,7 @@ func TestGovVoteByContract(t *testing.T) {
 				"",
 				"my proposal",
 				"testing",
+				false,
 			)
 			require.NoError(t, err)
 			rsp, gotErr := chain.SendMsgs(msg)
@@ -120,8 +123,8 @@ func TestGovVoteByContract(t *testing.T) {
 			e2e.MustExecViaReflectContract(t, chain, contractAddr, voteMsg)
 
 			// then proposal executed after voting period
-			proposal, ok := govKeeper.GetProposal(chain.GetContext(), propID)
-			require.True(t, ok)
+			proposal, err := govKeeper.Proposals.Get(sdk.WrapSDKContext(chain.GetContext()), propID)
+			require.NoError(t, err)
 			coord.IncrementTimeBy(proposal.VotingEndTime.Sub(chain.GetContext().BlockTime()) + time.Minute)
 			coord.CommitBlock(chain)
 

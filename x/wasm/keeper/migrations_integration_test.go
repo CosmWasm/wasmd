@@ -6,7 +6,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/assert"
@@ -51,12 +50,13 @@ func TestModuleMigrations(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
+			ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
 			spec.setup(ctx)
 
-			fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+			fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+			require.NoError(t, err)
 			fromVM[wasm.ModuleName] = spec.startVersion
-			_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+			_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 			require.NoError(t, err)
 
 			// when
@@ -83,7 +83,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
 	}
 
-	ctx, _ := wasmApp.BaseApp.NewContext(false, tmproto.Header{}).CacheContext()
+	ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
 
 	// any address permission
 	code1, err := storeCode(ctx, wasmApp, types.AccessTypeAnyOfAddresses.With(address))
@@ -97,7 +97,8 @@ func TestAccessConfigMigrations(t *testing.T) {
 	code3, err := storeCode(ctx, wasmApp, types.AllowNobody)
 	require.NoError(t, err)
 
-	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	require.NoError(t, err)
 	fromVM[wasm.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
 	_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 	require.NoError(t, err)

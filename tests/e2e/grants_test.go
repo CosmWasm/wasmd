@@ -41,11 +41,11 @@ func TestGrants(t *testing.T) {
 	otherPrivKey := secp256k1.GenPrivKey()
 	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
 
-	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
-	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
-	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+	chain.Fund(granteeAddr, sdkmath.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdkmath.NewInt(1_000_000))
+	assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 
-	myAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(2_000_000))
+	myAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(2_000_000))
 
 	specs := map[string]struct {
 		limit          types.ContractAuthzLimitX
@@ -109,12 +109,12 @@ func TestGrants(t *testing.T) {
 			// then
 			if spec.expErr != nil {
 				require.True(t, spec.expErr.Is(gotErr))
-				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+				assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+			assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 			assert.Equal(t, granterStartBalance.Sub(spec.transferAmount.Amount), chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 		})
 	}

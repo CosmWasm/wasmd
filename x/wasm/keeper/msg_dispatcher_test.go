@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -393,7 +393,7 @@ func TestDispatchSubmessages(t *testing.T) {
 			em := sdk.NewEventManager()
 			ctx := sdk.Context{}.WithMultiStore(&mockStore).
 				WithGasMeter(storetypes.NewGasMeter(100)).
-				WithEventManager(em).WithLogger(log.TestingLogger())
+				WithEventManager(em).WithLogger(log.NewTestLogger(t))
 			d := NewMessageDispatcher(spec.msgHandler, spec.replyer)
 
 			// run the test

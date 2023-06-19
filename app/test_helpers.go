@@ -1,25 +1,19 @@
 package app
 
 import (
-	"encoding/json"
-	"fmt"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
-
-	"cosmossdk.io/math"
-
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	"cosmossdk.io/store/snapshots"
 	snapshottypes "cosmossdk.io/store/snapshots/types"
-	dbm "github.com/cometbft/cometbft-db"
+	"encoding/json"
+	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmttypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -40,9 +34,11 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
 )
 
 // SetupOptions defines arguments that are passed into `WasmApp` constructor.
@@ -82,35 +78,35 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 	pubKey, err := privVal.GetPubKey()
 	require.NoError(t, err)
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 	}
 
 	app := NewWasmApp(options.Logger, options.DB, nil, true, wasmtypes.EnableAllProposals, options.AppOpts, options.WasmOpts)
-	genesisState := NewDefaultGenesisState(app.appCodec)
+	genesisState := app.DefaultGenesis()
 	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 	require.NoError(t, err)
 
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
-		stateBytes, err := tmjson.MarshalIndent(genesisState, "", " ")
+		stateBytes, err := cmtjson.MarshalIndent(genesisState, "", " ")
 		require.NoError(t, err)
 
 		// Initialize the chain
-		app.InitChain(
-			abci.RequestInitChain{
+		_, err =app.InitChain(
+			&abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: simtestutil.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
-			},
-		)
+			})
+		require.NoError(t, err)
 	}
 
 	return app
@@ -125,15 +121,15 @@ func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
 	require.NoError(t, err)
 
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 	}
 	chainID := "testing"
 	app := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, chainID, opts, balance)
@@ -145,7 +141,14 @@ func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
-func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
+func SetupWithGenesisValSet(
+	t *testing.T,
+	valSet *cmttypes.ValidatorSet,
+	genAccs []authtypes.GenesisAccount,
+	chainID string,
+	opts []wasm.Option,
+	balances ...banktypes.Balance,
+) *WasmApp {
 	t.Helper()
 
 	app, genesisState := setup(t, chainID, true, 5, opts...)
@@ -158,24 +161,22 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simtestutil.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
-	app.InitChain(
-		abci.RequestInitChain{
+	_ , err = app.InitChain(&abci.RequestInitChain{
 			ChainId:         chainID,
+			Time:            time.Now().UTC(),
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: consensusParams,
+			InitialHeight:   app.LastBlockHeight() + 1,
 			AppStateBytes:   stateBytes,
-		},
-	)
-	// commit genesis changes
-	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
-		ChainID:            chainID,
+		})
+	require.NoError(t, err)
+
+	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height:             app.LastBlockHeight() + 1,
-		AppHash:            app.LastCommitID().Hash,
-		Time:               time.Now().UTC(),
-		ValidatorsHash:     valSet.Hash(),
+		Hash:               app.LastCommitID().Hash,
 		NextValidatorsHash: valSet.Hash(),
-	}})
+	})
+	require.NoError(t, err)
 
 	return app
 }
@@ -196,8 +197,8 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 	require.NoError(t, err)
 
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
@@ -205,11 +206,11 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 	balances := []banktypes.Balance{
 		{
 			Address: acc.GetAddress().String(),
-			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 		},
 	}
 
-	genesisState := NewDefaultGenesisState(app.appCodec)
+	genesisState := app.DefaultGenesis()
 	genesisState, err = GenesisStateWithValSet(app.AppCodec(), genesisState, valSet, []authtypes.GenesisAccount{acc}, balances...)
 	require.NoError(t, err)
 
@@ -218,11 +219,11 @@ func GenesisStateWithSingleValidator(t *testing.T, app *WasmApp) GenesisState {
 
 // AddTestAddrsIncremental constructs and returns accNum amount of accounts with an
 // initial balance of accAmt in random order
-func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt math.Int) []sdk.AccAddress {
+func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int) []sdk.AccAddress {
 	return addTestAddrs(app, ctx, accNum, accAmt, simtestutil.CreateIncrementalAccounts)
 }
 
-func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt math.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
+func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
 
 	initCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), accAmt))
@@ -277,7 +278,7 @@ func NewTestNetworkFixture() network.TestFixture {
 
 	return network.TestFixture{
 		AppConstructor: appCtr,
-		GenesisState:   NewDefaultGenesisState(app.AppCodec()),
+		GenesisState:   app.DefaultGenesis(),
 		EncodingConfig: testutil.TestEncodingConfig{
 			InterfaceRegistry: app.InterfaceRegistry(),
 			Codec:             app.AppCodec(),
@@ -289,9 +290,14 @@ func NewTestNetworkFixture() network.TestFixture {
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
-	chainID string, accNums, accSeqs []uint64, priv ...cryptotypes.PrivKey,
-) (storetypes.GasInfo, *sdk.Result, error) {
+	t *testing.T,
+	txCfg client.TxConfig,
+	app *bam.BaseApp,
+	msgs []sdk.Msg,
+	chainID string,
+	accNums, accSeqs []uint64,
+	priv ...cryptotypes.PrivKey,
+) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
@@ -319,7 +325,7 @@ func SignAndDeliverWithoutCommit(
 func GenesisStateWithValSet(
 	codec codec.Codec,
 	genesisState map[string]json.RawMessage,
-	valSet *tmtypes.ValidatorSet,
+	valSet *cmttypes.ValidatorSet,
 	genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (map[string]json.RawMessage, error) {
@@ -349,15 +355,15 @@ func GenesisStateWithValSet(
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            bondAmt,
-			DelegatorShares:   math.LegacyOneDec(),
+			DelegatorShares:    sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-			MinSelfDelegation: math.ZeroInt(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(),  sdkmath.LegacyZeroDec(),  sdkmath.LegacyZeroDec()),
+			MinSelfDelegation:  sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(),  sdkmath.LegacyOneDec()))
 	}
 
 	// set validators and delegations

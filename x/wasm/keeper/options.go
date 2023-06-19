@@ -2,12 +2,10 @@ package keeper
 
 import (
 	"fmt"
-	"reflect"
-
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"reflect"
 )
 
 type optsFn func(*Keeper)

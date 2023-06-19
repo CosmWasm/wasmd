@@ -29,9 +29,6 @@ func MigrateContractCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := msg.ValidateBasic(); err != nil {
-				return nil
-			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 		SilenceUsage: true,
@@ -55,7 +52,7 @@ func parseMigrateContractArgs(args []string, sender string) (types.MsgMigrateCon
 		CodeID:   codeID,
 		Msg:      []byte(migrateMsg),
 	}
-	return msg, nil
+	return msg, msg.ValidateBasic()
 }
 
 // UpdateContractAdminCmd sets an new admin for a contract
@@ -71,8 +68,8 @@ func UpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			msg := parseUpdateContractAdminArgs(args, clientCtx.GetFromAddress().String())
-			if err := msg.ValidateBasic(); err != nil {
+			msg, err := parseUpdateContractAdminArgs(args, clientCtx.GetFromAddress().String())
+			if err != nil {
 				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -83,13 +80,13 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, sender string) types.MsgUpdateAdmin {
+func parseUpdateContractAdminArgs(args []string, sender string) (types.MsgUpdateAdmin, error) {
 	msg := types.MsgUpdateAdmin{
 		Sender:   sender,
 		Contract: args[0],
 		NewAdmin: args[1],
 	}
-	return msg
+	return msg, msg.ValidateBasic()
 }
 
 // ClearContractAdminCmd clears an admin for a contract

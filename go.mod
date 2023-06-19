@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.4
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0
+	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0.0.20230615105423-ae3e30a715bd
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v1.0.0-beta.2
@@ -18,8 +18,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.15.1
-	github.com/rakyll/statik v0.1.7 // indirect
+	github.com/prometheus/client_golang v1.16.0
 	github.com/snikch/goodman v0.0.0-20171125024755-10e37e294daa
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.7.0
@@ -39,6 +38,7 @@ require (
 	cosmossdk.io/log v1.1.0
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1.0.20230606190835-3e18f4088b2c
+	cosmossdk.io/tools/confix v0.0.0-20230613133644-0a778132a60f
 	cosmossdk.io/tools/rosetta v0.2.1
 	cosmossdk.io/x/circuit v0.0.0-20230615173548-5385116abac4
 	cosmossdk.io/x/evidence v0.0.0-20230609160955-4ad71e570d16
@@ -46,8 +46,7 @@ require (
 	cosmossdk.io/x/nft v0.50.0-alpha.0
 	cosmossdk.io/x/tx v0.8.0
 	cosmossdk.io/x/upgrade v0.0.0-20230609160955-4ad71e570d16
-	github.com/cometbft/cometbft v0.38.0-rc1
-	github.com/cometbft/cometbft-db v0.8.0
+	github.com/cometbft/cometbft v0.38.0-rc1.0.20230616160951-13dc04fb4de8
 	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc1
 	github.com/spf13/viper v1.16.0
@@ -83,10 +82,13 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20230606202032-d96868fd481e // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
+	github.com/cometbft/cometbft-db v0.8.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.0 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
+	github.com/creachadair/atomicfile v0.3.1 // indirect
+	github.com/creachadair/tomledit v0.0.24 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
@@ -213,6 +215,7 @@ replace (
 )
 
 replace (
+	cosmossdk.io/tools/confix => ../../cosmos/cosmos-sdk/tools/confix
 	cosmossdk.io/tools/rosetta => ../../cosmos/cosmos-sdk/tools/rosetta
 	// todo: this must not go to main branch
 	// link to sdk modules that are not tagged
@@ -221,5 +224,5 @@ replace (
 	// temporary redirects
 	// link ibc-go to notionals fork until upgraded
 	github.com/cosmos/ibc-go/modules/capability => github.com/notional-labs/ibc-go/modules/capability v0.0.0-20230616092119-6e16d6223af4
-	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230616092119-6e16d6223af4
+	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230619125955-e857029fe4b0
 )

@@ -3,6 +3,7 @@ package ibctesting
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -103,11 +104,11 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 		return err
 	}
 
-	// TODO: what is the query?
-	res := chain.App.Query(abci.RequestQuery{
+	res, err := chain.App.Query(context.TODO(), &abci.RequestQuery{
 		Path: "/cosmwasm.wasm.v1.Query/SmartContractState",
 		Data: reqBin,
 	})
+	require.NoError(chain.t, err)
 
 	if res.Code != 0 {
 		return fmt.Errorf("query failed: (%d) %s", res.Code, res.Log)

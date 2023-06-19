@@ -3,11 +3,9 @@ package keeper
 import (
 	"os"
 	"testing"
-
-	dbm "github.com/cometbft/cometbft-db"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
