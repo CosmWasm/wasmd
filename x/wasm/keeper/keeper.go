@@ -1219,19 +1219,38 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 	return result, nil
 }
 
-// PruneWasmCodes deletes code info for unpinned codes.
-func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeIDs []uint64) error {
-	for _, c := range codeIDs {
-		if k.IsPinnedCode(ctx, c) {
+// PruneWasmCodes deletes code info for unpinned codes smaller than given code id.
+func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeID uint64) error {
+	pinnedCodesHash := make(map[string]struct{}, 0)
+	unpinnedCodes := make([]uint64, 0)
+
+	for c := uint64(1); c < codeID; c++ {
+		info := k.GetCodeInfo(ctx, c)
+		if info == nil {
 			continue
 		}
 
-		info := k.GetCodeInfo(ctx, c)
-		if info == nil {
-			return types.ErrNoSuchCodeFn(c).Wrapf("code id %d", c)
+		if k.IsPinnedCode(ctx, c) {
+			pinnedCodesHash[string(info.CodeHash)] = struct{}{}
+			continue
 		}
-		k.wasmVM.RemoveCode(info.CodeHash)
-		k.deleteCodeInfo(ctx, c)
+		unpinnedCodes = append(unpinnedCodes, c)
+	}
+
+	for _, code := range unpinnedCodes {
+		info := k.GetCodeInfo(ctx, code)
+		if info == nil {
+			continue
+		}
+
+		if _, found := pinnedCodesHash[string(info.CodeHash)]; found {
+			continue
+		}
+
+		if err := k.wasmVM.RemoveCode(info.CodeHash); err != nil {
+			continue
+		}
+		k.deleteCodeInfo(ctx, code)
 	}
 	return nil
 }

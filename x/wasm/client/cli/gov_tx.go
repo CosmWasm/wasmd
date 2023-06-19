@@ -804,9 +804,9 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 
 func ProposalPruneWasmCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prune-wasm-codes [code-ids] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a prune wasm codes proposal for pruning unpinned codes in the system",
-		Args:  cobra.MinimumNArgs(1),
+		Use:   "prune-wasm-codes [latest-code-id] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a prune wasm codes proposal for pruning unpinned wasm codes smaller than latest-code-id",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
@@ -821,14 +821,14 @@ func ProposalPruneWasmCodesCmd() *cobra.Command {
 				return errors.New("authority address is required")
 			}
 
-			codeIds, err := parsePinCodesArgs(args)
+			codeID, err := strconv.ParseUint(args[1], 10, 64)
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid code ID: %s", err)
 			}
 
 			msg := types.MsgPruneWasmCodes{
-				Authority: authority,
-				CodeIDs:   codeIds,
+				Authority:    authority,
+				LatestCodeID: codeID,
 			}
 
 			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)

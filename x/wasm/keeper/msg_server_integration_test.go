@@ -920,8 +920,8 @@ func TestPruneWasmCodes(t *testing.T) {
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
-				Authority: spec.addr,
-				CodeIDs:   []uint64{result.CodeID},
+				Authority:    spec.addr,
+				LatestCodeID: result.CodeID,
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
 

@@ -400,11 +400,9 @@ message MsgPruneWasmCodes {
 
   // Authority is the address of the governance account.
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // CodeIDs references the WASM codes
-  repeated uint64 code_ids = 2 [
-    (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags) = "yaml:\"code_ids\""
-  ];
+  // LatestCodeID references the upper limit until unpinned
+  // code ids will be pruned
+  uint64 latest_code_id = 2 [ (gogoproto.customname) = "LatestCodeID" ];
 }
 
 // MsgPruneWasmCodesResponse defines the response structure for executing a
