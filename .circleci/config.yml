@@ -138,7 +138,7 @@ jobs:
       - run:
           name: Run simulations
           command: |
-            make test-sim-multi-seed-short test-sim-import-export test-sim-deterministic
+            make test-sim-deterministic test-sim-multi-seed-short test-sim-import-export
       - store_artifacts:
           path: /tmp
 
