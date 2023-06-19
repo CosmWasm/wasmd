@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cometbft/cometbft/libs/rand"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -52,8 +54,8 @@ func TestUncompress(t *testing.T) {
 			src:      asGzip(bytes.Repeat([]byte{0x1}, maxSize+1)),
 			expError: types.ErrLimit,
 		},
-		"handle other big gzip output": {
-			src:      asGzip(bytes.Repeat([]byte{0x1}, 2*maxSize)),
+		"handle big gzip archive": {
+			src:      asGzip(rand.Bytes(2 * maxSize)),
 			expError: types.ErrLimit,
 		},
 	}

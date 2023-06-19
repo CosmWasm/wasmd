@@ -5,33 +5,34 @@ import (
 	"encoding/binary"
 	"runtime/debug"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var _ types.QueryServer = &grpcQuerier{}
+var _ types.QueryServer = &GrpcQuerier{}
 
-type grpcQuerier struct {
+type GrpcQuerier struct {
 	cdc           codec.Codec
-	storeKey      sdk.StoreKey
+	storeKey      storetypes.StoreKey
 	keeper        types.ViewKeeper
 	queryGasLimit sdk.Gas
 }
 
 // NewGrpcQuerier constructor
-func NewGrpcQuerier(cdc codec.Codec, storeKey sdk.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *grpcQuerier { //nolint:revive
-	return &grpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
+func NewGrpcQuerier(cdc codec.Codec, storeKey storetypes.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *GrpcQuerier {
+	return &GrpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
-func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
+func (q GrpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInfoRequest) (*types.QueryContractInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -44,12 +45,13 @@ func (q grpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	return rsp, nil
 }
 
-func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContractHistoryRequest) (*types.QueryContractHistoryResponse, error) {
+func (q GrpcQuerier) ContractHistory(c context.Context, req *types.QueryContractHistoryRequest) (*types.QueryContractHistoryResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -82,12 +84,12 @@ func (q grpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 }
 
 // ContractsByCode lists all smart contracts for a code id
-func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContractsByCodeRequest) (*types.QueryContractsByCodeResponse, error) {
+func (q GrpcQuerier) ContractsByCode(c context.Context, req *types.QueryContractsByCodeRequest) (*types.QueryContractsByCodeResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]string, 0)
@@ -109,7 +111,7 @@ func (q grpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 	}, nil
 }
 
-func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllContractStateRequest) (*types.QueryAllContractStateResponse, error) {
+func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllContractStateRequest) (*types.QueryAllContractStateResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -119,7 +121,8 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 
 	r := make([]types.Model, 0)
@@ -142,7 +145,7 @@ func (q grpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}, nil
 }
 
-func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawContractStateRequest) (*types.QueryRawContractStateResponse, error) {
+func (q GrpcQuerier) RawContractState(c context.Context, req *types.QueryRawContractStateRequest) (*types.QueryRawContractStateResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -154,13 +157,14 @@ func (q grpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 	}
 
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	rsp := q.keeper.QueryRaw(ctx, contractAddr, req.QueryData)
 	return &types.QueryRawContractStateResponse{Data: rsp}, nil
 }
 
-func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
+func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmartContractStateRequest) (rsp *types.QuerySmartContractStateResponse, err error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -177,7 +181,7 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				err = sdkerrors.Wrapf(sdkerrors.ErrOutOfGas,
+				err = errorsmod.Wrapf(sdkerrors.ErrOutOfGas,
 					"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
 					rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
 				)
@@ -198,24 +202,25 @@ func (q grpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	case err != nil:
 		return nil, err
 	case bz == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+			Wrapf("address %s", contractAddr.String())
 	}
 	return &types.QuerySmartContractStateResponse{Data: bz}, nil
 }
 
-func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*types.QueryCodeResponse, error) {
+func (q GrpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*types.QueryCodeResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, sdkerrors.Wrap(types.ErrInvalid, "code id")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
 	}
 	rsp, err := queryCode(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
 	switch {
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
 	}
 	return &types.QueryCodeResponse{
 		CodeInfoResponse: rsp.CodeInfoResponse,
@@ -223,7 +228,7 @@ func (q grpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 	}, nil
 }
 
-func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*types.QueryCodesResponse, error) {
+func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*types.QueryCodesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -254,7 +259,8 @@ func (q grpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
-		return nil, types.ErrNotFound
+		return nil, types.ErrNoSuchContractFn(addr.String()).
+			Wrapf("address %s", addr.String())
 	}
 	return &types.QueryContractInfoResponse{
 		Address:      addr.String(),
@@ -280,13 +286,13 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 
 	code, err := keeper.GetByteCode(ctx, codeID)
 	if err != nil {
-		return nil, sdkerrors.Wrap(err, "loading wasm code")
+		return nil, errorsmod.Wrap(err, "loading wasm code")
 	}
 
 	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil
 }
 
-func (q grpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesRequest) (*types.QueryPinnedCodesResponse, error) {
+func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesRequest) (*types.QueryPinnedCodesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -310,13 +316,13 @@ func (q grpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 }
 
 // Params returns params of the module.
-func (q grpcQuerier) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q GrpcQuerier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	params := q.keeper.GetParams(ctx)
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-func (q grpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContractsByCreatorRequest) (*types.QueryContractsByCreatorResponse, error) {
+func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContractsByCreatorRequest) (*types.QueryContractsByCreatorResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}

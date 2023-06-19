@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,6 +25,15 @@ func TestConstructorOptions(t *testing.T) {
 	}{
 		"wasm engine": {
 			srcOpt: WithWasmEngine(&wasmtesting.MockWasmer{}),
+			verify: func(t *testing.T, k Keeper) {
+				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
+			},
+		},
+		"decorate wasmvm": {
+			srcOpt: WithWasmEngineDecorator(func(old types.WasmerEngine) types.WasmerEngine {
+				require.IsType(t, &wasmvm.VM{}, old)
+				return &wasmtesting.MockWasmer{}
+			}),
 			verify: func(t *testing.T, k Keeper) {
 				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
 			},
@@ -74,7 +83,7 @@ func TestConstructorOptions(t *testing.T) {
 		"api costs": {
 			srcOpt: WithAPICosts(1, 2),
 			verify: func(t *testing.T, k Keeper) {
-				t.Cleanup(setApiDefaults)
+				t.Cleanup(setAPIDefaults)
 				assert.Equal(t, uint64(1), costHumanize)
 				assert.Equal(t, uint64(2), costCanonical)
 			},
@@ -104,13 +113,13 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, spec.srcOpt)
+			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
 			spec.verify(t, k)
 		})
 	}
 }
 
-func setApiDefaults() {
+func setAPIDefaults() {
 	costHumanize = DefaultGasCostHumanAddress * DefaultGasMultiplier
 	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
 }

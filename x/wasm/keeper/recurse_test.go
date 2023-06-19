@@ -38,7 +38,7 @@ type recurseResponse struct {
 // number os wasm queries called from a contract
 var totalWasmQueryCounter int
 
-func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
+func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
 	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
 		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++
@@ -48,7 +48,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, creator sdk.Acc
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithQueryHandlerDecorator(countingQuerierDec))
 	keeper = keepers.WasmKeeper
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
-	return exampleContract.Contract, exampleContract.CreatorAddr, ctx, keeper
+	return exampleContract.Contract, ctx, keeper
 }
 
 func TestGasCostOnQuery(t *testing.T) {
@@ -103,7 +103,7 @@ func TestGasCostOnQuery(t *testing.T) {
 		},
 	}
 
-	contractAddr, _, ctx, keeper := initRecurseContract(t)
+	contractAddr, ctx, keeper := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 		},
 	}
 
-	contractAddr, _, ctx, keeper := initRecurseContract(t)
+	contractAddr, ctx, keeper := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -265,7 +265,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 		},
 	}
 
-	contractAddr, _, ctx, keeper := initRecurseContract(t)
+	contractAddr, ctx, keeper := initRecurseContract(t)
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

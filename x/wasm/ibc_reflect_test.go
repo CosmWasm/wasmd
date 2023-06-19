@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/require"
@@ -25,8 +25,8 @@ func TestIBCReflectContract(t *testing.T) {
 
 	var (
 		coordinator = wasmibctesting.NewCoordinator(t, 2)
-		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(0))
-		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(1))
+		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
+		chainB      = coordinator.GetChain(wasmibctesting.GetChainID(2))
 	)
 	coordinator.CommitBlock(chainA, chainB)
 

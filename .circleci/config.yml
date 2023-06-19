@@ -124,9 +124,7 @@ jobs:
       - run:
           name: Run simulations
           command: |
-            make test-sim-multi-seed-short
-      - store_artifacts:
-          path: /tmp
+            make test-sim-multi-seed-short test-sim-import-export test-sim-deterministic
 
   upload-coverage:
     executor: golang
@@ -156,8 +154,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker:
-          # >= v20.10 https://wiki.alpinelinux.org/wiki/Release_Notes_for_Alpine_3.14.0#faccessat2
-          version: 20.10.11
+          version: 20.10.18
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .

@@ -4,18 +4,16 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper"
-
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -23,7 +21,7 @@ func TestCountTxDecorator(t *testing.T) {
 	keyWasm := sdk.NewKVStoreKey(types.StoreKey)
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
-	ms.MountStoreWithDB(keyWasm, sdk.StoreTypeIAVL, db)
+	ms.MountStoreWithDB(keyWasm, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, ms.LoadLatestVersion())
 	const myCurrentBlockHeight = 100
 
@@ -164,19 +162,21 @@ func TestLimitSimulationGasDecorator(t *testing.T) {
 			nextAnte := consumeGasAnteHandler(spec.consumeGas)
 			ctx := sdk.Context{}.
 				WithGasMeter(sdk.NewInfiniteGasMeter()).
-				WithConsensusParams(&abci.ConsensusParams{
-					Block: &abci.BlockParams{MaxGas: spec.maxBlockGas},
+				WithConsensusParams(&tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{MaxGas: spec.maxBlockGas},
 				})
 			// when
 			if spec.expErr != nil {
 				require.PanicsWithValue(t, spec.expErr, func() {
 					ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-					ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+					_, err := ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+					require.NoError(t, err)
 				})
 				return
 			}
 			ante := keeper.NewLimitSimulationGasDecorator(spec.customLimit)
-			ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+			_, err := ante.AnteHandle(ctx, nil, spec.simulation, nextAnte)
+			require.NoError(t, err)
 		})
 	}
 }

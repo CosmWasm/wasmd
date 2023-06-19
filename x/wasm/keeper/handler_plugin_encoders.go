@@ -4,17 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -103,12 +105,12 @@ func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, co
 	case msg.Gov != nil:
 		return EncodeGovMsg(contractAddr, msg.Gov)
 	}
-	return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Wasm")
+	return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Wasm")
 }
 
 func EncodeBankMsg(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error) {
 	if msg.Send == nil {
-		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Bank")
+		return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Bank")
 	}
 	if len(msg.Send.Amount) == 0 {
 		return nil, nil
@@ -125,8 +127,8 @@ func EncodeBankMsg(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, 
 	return []sdk.Msg{&sdkMsg}, nil
 }
 
-func NoCustomMsg(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error) {
-	return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "custom variant not supported")
+func NoCustomMsg(_ sdk.AccAddress, _ json.RawMessage) ([]sdk.Msg, error) {
+	return nil, errorsmod.Wrap(types.ErrUnknownMsg, "custom variant not supported")
 }
 
 func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error) {
@@ -144,7 +146,7 @@ func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionM
 		}
 		return []sdk.Msg{&withdrawMsg}, nil
 	default:
-		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Distribution")
+		return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Distribution")
 	}
 }
 
@@ -186,22 +188,22 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 		}
 		return []sdk.Msg{&sdkMsg}, nil
 	default:
-		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Staking")
+		return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Staking")
 	}
 }
 
 func EncodeStargateMsg(unpacker codectypes.AnyUnpacker) StargateEncoder {
 	return func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error) {
-		any := codectypes.Any{
+		codecAny := codectypes.Any{
 			TypeUrl: msg.TypeURL,
 			Value:   msg.Value,
 		}
 		var sdkMsg sdk.Msg
-		if err := unpacker.UnpackAny(&any, &sdkMsg); err != nil {
-			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
+		if err := unpacker.UnpackAny(&codecAny, &sdkMsg); err != nil {
+			return nil, errorsmod.Wrap(types.ErrInvalidMsg, fmt.Sprintf("Cannot unpack proto message with type URL: %s", msg.TypeURL))
 		}
 		if err := codectypes.UnpackInterfaces(sdkMsg, unpacker); err != nil {
-			return nil, sdkerrors.Wrap(types.ErrInvalidMsg, fmt.Sprintf("UnpackInterfaces inside msg: %s", err))
+			return nil, errorsmod.Wrap(types.ErrInvalidMsg, fmt.Sprintf("UnpackInterfaces inside msg: %s", err))
 		}
 		return []sdk.Msg{sdkMsg}, nil
 	}
@@ -277,7 +279,7 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 		}
 		return []sdk.Msg{&sdkMsg}, nil
 	default:
-		return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Wasm")
+		return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of Wasm")
 	}
 }
 
@@ -293,7 +295,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 		case msg.Transfer != nil:
 			amount, err := ConvertWasmCoinToSdkCoin(msg.Transfer.Amount)
 			if err != nil {
-				return nil, sdkerrors.Wrap(err, "amount")
+				return nil, errorsmod.Wrap(err, "amount")
 			}
 			msg := &ibctransfertypes.MsgTransfer{
 				SourcePort:       portSource.GetPort(ctx),
@@ -306,7 +308,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 			}
 			return []sdk.Msg{msg}, nil
 		default:
-			return nil, sdkerrors.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
+			return nil, errorsmod.Wrap(types.ErrUnknownMsg, "unknown variant of IBC")
 		}
 	}
 }
@@ -316,24 +318,24 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 	case msg.Vote != nil:
 		voteOption, err := convertVoteOption(msg.Vote.Vote)
 		if err != nil {
-			return nil, sdkerrors.Wrap(err, "vote option")
+			return nil, errorsmod.Wrap(err, "vote option")
 		}
-		m := govtypes.NewMsgVote(sender, msg.Vote.ProposalId, voteOption)
+		m := v1.NewMsgVote(sender, msg.Vote.ProposalId, voteOption, "")
 		return []sdk.Msg{m}, nil
 	case msg.VoteWeighted != nil:
-		opts := make([]govtypes.WeightedVoteOption, len(msg.VoteWeighted.Options))
+		opts := make([]*v1.WeightedVoteOption, len(msg.VoteWeighted.Options))
 		for i, v := range msg.VoteWeighted.Options {
 			weight, err := sdk.NewDecFromStr(v.Weight)
 			if err != nil {
-				return nil, sdkerrors.Wrapf(err, "weight for vote %d", i+1)
+				return nil, errorsmod.Wrapf(err, "weight for vote %d", i+1)
 			}
 			voteOption, err := convertVoteOption(v.Option)
 			if err != nil {
-				return nil, sdkerrors.Wrap(err, "vote option")
+				return nil, errorsmod.Wrap(err, "vote option")
 			}
-			opts[i] = govtypes.WeightedVoteOption{Option: voteOption, Weight: weight}
+			opts[i] = &v1.WeightedVoteOption{Option: voteOption, Weight: weight.String()}
 		}
-		m := govtypes.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts)
+		m := v1.NewMsgVoteWeighted(sender, msg.VoteWeighted.ProposalId, opts, "")
 		return []sdk.Msg{m}, nil
 
 	default:
@@ -341,19 +343,19 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 	}
 }
 
-func convertVoteOption(s interface{}) (govtypes.VoteOption, error) {
-	var option govtypes.VoteOption
+func convertVoteOption(s interface{}) (v1.VoteOption, error) {
+	var option v1.VoteOption
 	switch s {
 	case wasmvmtypes.Yes:
-		option = govtypes.OptionYes
+		option = v1.OptionYes
 	case wasmvmtypes.No:
-		option = govtypes.OptionNo
+		option = v1.OptionNo
 	case wasmvmtypes.NoWithVeto:
-		option = govtypes.OptionNoWithVeto
+		option = v1.OptionNoWithVeto
 	case wasmvmtypes.Abstain:
-		option = govtypes.OptionAbstain
+		option = v1.OptionAbstain
 	default:
-		return govtypes.OptionEmpty, types.ErrInvalid
+		return v1.OptionEmpty, types.ErrInvalid
 	}
 	return option, nil
 }
@@ -383,7 +385,7 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 func ConvertWasmCoinToSdkCoin(coin wasmvmtypes.Coin) (sdk.Coin, error) {
 	amount, ok := sdk.NewIntFromString(coin.Amount)
 	if !ok {
-		return sdk.Coin{}, sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
+		return sdk.Coin{}, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)
 	}
 	r := sdk.Coin{
 		Denom:  coin.Denom,

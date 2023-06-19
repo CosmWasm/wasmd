@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -18,7 +19,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -53,7 +53,7 @@ func GenesisStoreCodeCmd(defaultNodeHome string, genesisMutator GenesisMutator) 
 				return err
 			}
 
-			msg, err := parseStoreCodeArgs(args[0], senderAddr, cmd.Flags())
+			msg, err := parseStoreCodeArgs(args[0], senderAddr.String(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func GenesisInstantiateContractCmd(defaultNodeHome string, genesisMutator Genesi
 				return err
 			}
 
-			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, senderAddr, cmd.Flags())
+			msg, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, senderAddr.String(), cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -487,8 +487,13 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 	}
 
 	homeDir := client.GetClientContextFromCmd(cmd).HomeDir
+	clientCtx, err := client.GetClientTxContext(cmd)
+	if err != nil {
+		return nil, err
+	}
+
 	// attempt to lookup address from Keybase if no address was provided
-	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf)
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, inBuf, clientCtx.Codec)
 	if err != nil {
 		return nil, err
 	}
@@ -497,5 +502,5 @@ func getActorAddress(cmd *cobra.Command) (sdk.AccAddress, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get address from Keybase: %w", err)
 	}
-	return info.GetAddress(), nil
+	return info.GetAddress()
 }
