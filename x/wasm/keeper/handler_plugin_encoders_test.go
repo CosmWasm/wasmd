@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	"testing"
+
 	sdkmath "cosmossdk.io/math"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +18,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestEncoding(t *testing.T) {
@@ -129,7 +131,7 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			expError:   false, // addresses are checked in the handler
+			expError: false, // addresses are checked in the handler
 			output: []sdk.Msg{
 				&banktypes.MsgSend{
 					FromAddress: addr1.String(),
@@ -299,7 +301,7 @@ func TestEncoding(t *testing.T) {
 					},
 				},
 			},
-			expError:   false, // fails in the handler
+			expError: false, // fails in the handler
 			output: []sdk.Msg{
 				&stakingtypes.MsgDelegate{
 					DelegatorAddress: addr1.String(),

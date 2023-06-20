@@ -2,11 +2,13 @@ package ibctesting
 
 import (
 	"context"
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
+
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -328,9 +330,10 @@ func (chain *TestChain) NextBlock() {
 		Time:   chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time or future time?
 	})
 	require.NoError(chain.t, err)
-	chain.NextBlockXXX(res)
+	chain.nextBlockX(res)
 }
-func (chain *TestChain) NextBlockXXX(res *abci.ResponseFinalizeBlock) {
+
+func (chain *TestChain) nextBlockX(res *abci.ResponseFinalizeBlock) {
 	_, err := chain.App.Commit()
 	require.NoError(chain.t, err)
 
@@ -370,7 +373,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, r, _, err := app.SignAndDeliverWithoutCommit(
+	_, txResp, blockResp, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -381,13 +384,12 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		chain.CurrentHeader.GetTime(),
 		chain.SenderPrivKey,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	// NextBlock calls app.Commit()
-	chain.NextBlock()
+	chain.nextBlockX(blockResp)
 
 	// increment sequence for successful transaction execution
 	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
@@ -395,11 +397,11 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		return nil, err
 	}
 
-	chain.CaptureIBCEvents(r)
+	chain.CaptureIBCEvents(txResp)
 
 	chain.Coordinator.IncrementTime()
 
-	return r, nil
+	return txResp, nil
 }
 
 func (chain *TestChain) CaptureIBCEvents(r *sdk.Result) {

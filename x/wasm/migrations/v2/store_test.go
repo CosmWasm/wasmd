@@ -1,12 +1,14 @@
 package v2_test
 
 import (
-	storetypes "cosmossdk.io/store/types"
 	"testing"
-	"github.com/stretchr/testify/require"
+
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"

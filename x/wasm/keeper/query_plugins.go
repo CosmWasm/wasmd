@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/golang/protobuf/proto"
 
 	errorsmod "cosmossdk.io/errors"

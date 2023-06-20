@@ -195,7 +195,6 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	return cdc.MustMarshalJSON(gs)
 }
 
-
 // ____________________________________________________________________________
 
 // AppModuleSimulation functions

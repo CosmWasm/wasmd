@@ -1,14 +1,17 @@
 package keeper
 
 import (
-	storetypes "cosmossdk.io/store/types"
 	"encoding/hex"
 	"io"
+
 	errorsmod "cosmossdk.io/errors"
-	snapshot "cosmossdk.io/store/snapshots/types"
 	"cosmossdk.io/log"
+	snapshot "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
+
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )

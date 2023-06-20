@@ -1,10 +1,12 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"os"
+	"testing"
+
+	sdkmath "cosmossdk.io/math"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -16,8 +18,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type StakingInitMsg struct {

@@ -43,7 +43,7 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	)
 
 	// SignAndDeliverWithoutCommit calls app.Commit()
-	chain.NextBlockXXX(xxx)
+	chain.nextBlockX(xxx)
 	chain.Coordinator.IncrementTime()
 	if err != nil {
 		return r, err

@@ -2,11 +2,13 @@ package types
 
 import (
 	"bytes"
-	sdkmath "cosmossdk.io/math"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"math/rand"
+
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

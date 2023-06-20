@@ -1,14 +1,16 @@
 package app
 
 import (
-	"cosmossdk.io/x/feegrant"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"runtime/debug"
 	"strings"
 	"testing"
+
+	"cosmossdk.io/x/feegrant"
+
+	"github.com/spf13/viper"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"

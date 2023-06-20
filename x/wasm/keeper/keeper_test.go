@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	sdkmath "cosmossdk.io/math"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"

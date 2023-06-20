@@ -2,10 +2,12 @@ package types
 
 import (
 	"bytes"
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"strings"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"

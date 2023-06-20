@@ -2,12 +2,13 @@ package e2e
 
 import (
 	"bytes"
-	sdkmath "cosmossdk.io/math"
 	"encoding/base64"
 	"fmt"
-	"github.com/CosmWasm/wasmd/app"
-	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"testing"
+	"time"
+
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
@@ -17,8 +18,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
+
+	"github.com/CosmWasm/wasmd/app"
+	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestIBCFeesTransfer(t *testing.T) {

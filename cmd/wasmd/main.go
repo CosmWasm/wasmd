@@ -1,10 +1,12 @@
 package main
 
 import (
-	"cosmossdk.io/log"
-	"github.com/CosmWasm/wasmd/app"
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"os"
+
+	"cosmossdk.io/log"
+	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+
+	"github.com/CosmWasm/wasmd/app"
 )
 
 func main() {

@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	storemetrics "cosmossdk.io/store/metrics"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	storemetrics "cosmossdk.io/store/metrics"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 

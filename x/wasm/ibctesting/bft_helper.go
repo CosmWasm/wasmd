@@ -2,9 +2,10 @@ package ibctesting
 
 import (
 	"fmt"
+	"time"
+
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
-	"time"
 )
 
 // MakeExtCommit
@@ -18,7 +19,6 @@ func MakeExtCommit(
 	now time.Time,
 	extEnabled bool,
 ) (*cmttypes.ExtendedCommit, error) {
-
 	// all sign
 	for i := 0; i < len(validators); i++ {
 		pubKey, err := validators[i].GetPubKey()
