@@ -854,7 +854,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 	}
 }
 
-func TestPruneWasmCodes(t *testing.T) {
+func TestPruneWasmCodesAuth(t *testing.T) {
 	wasmApp := app.Setup(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -894,36 +894,14 @@ func TestPruneWasmCodes(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			// setup
-			_, _, sender := testdata.KeyTestPubAddr()
-			msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
-				m.WASMByteCode = wasmContract
-				m.Sender = sender.String()
-			})
-
-			// store code
-			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
-			require.NoError(t, err)
-			var result types.MsgStoreCodeResponse
-			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
-
-			if spec.pinCode {
-				// pin code
-				msgPin := &types.MsgPinCodes{
-					Authority: authority,
-					CodeIDs:   []uint64{result.CodeID},
-				}
-				_, err = wasmApp.MsgServiceRouter().Handler(msgPin)(ctx, msgPin)
-				require.NoError(t, err)
-				assert.True(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
-			}
+			codeID := setupWasmCode(t, authority, ctx, wasmApp, wasmContract, spec.pinCode)
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
 				Authority:    spec.addr,
-				LatestCodeID: result.CodeID,
+				LatestCodeID: 5,
 			}
-			_, err = wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
+			_, err := wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
 
 			// then
 			if spec.expErr {
@@ -933,10 +911,128 @@ func TestPruneWasmCodes(t *testing.T) {
 			}
 
 			if spec.expPruned {
-				assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
+				assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
 			} else {
-				assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, result.CodeID))
+				assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
 			}
 		})
+	}
+}
+
+func TestPruneWasmCodes(t *testing.T) {
+	specs := map[string]struct {
+		wasmCode1  []byte
+		wasmCode2  []byte
+		pinCode1   bool
+		pinCode2   bool
+		expPruned1 bool
+		expPruned2 bool
+	}{
+		"duplicate codes - both pinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  wasmContract,
+			pinCode1:   true,
+			pinCode2:   true,
+			expPruned1: false,
+			expPruned2: false,
+		},
+		"duplicate codes - only one pinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  wasmContract,
+			pinCode1:   true,
+			pinCode2:   false,
+			expPruned1: false,
+			expPruned2: false,
+		},
+		"duplicate codes - both unpinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  wasmContract,
+			pinCode1:   false,
+			pinCode2:   false,
+			expPruned1: true,
+			expPruned2: true,
+		},
+		"different codes - both pinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  hackatomContract,
+			pinCode1:   true,
+			pinCode2:   true,
+			expPruned1: false,
+			expPruned2: false,
+		},
+		"different codes - only one pinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  hackatomContract,
+			pinCode1:   true,
+			pinCode2:   false,
+			expPruned1: false,
+			expPruned2: true,
+		},
+		"different codes - both unpinned": {
+			wasmCode1:  wasmContract,
+			wasmCode2:  hackatomContract,
+			pinCode1:   false,
+			pinCode2:   false,
+			expPruned1: true,
+			expPruned2: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			wasmApp := app.Setup(t)
+			ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
+			authority := wasmApp.WasmKeeper.GetAuthority()
+
+			code1 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode1, spec.pinCode1)
+			code2 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode2, spec.pinCode2)
+
+			// when
+			msgPruneCodes := &types.MsgPruneWasmCodes{
+				Authority:    authority,
+				LatestCodeID: 5,
+			}
+			_, err := wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
+
+			// then
+			require.NoError(t, err)
+
+			assertPruning(t, ctx, wasmApp, code1, spec.expPruned1)
+			assertPruning(t, ctx, wasmApp, code2, spec.expPruned2)
+		})
+	}
+}
+
+func setupWasmCode(t *testing.T, authority string, ctx sdk.Context, wasmApp *app.WasmApp, wasmCode []byte, pin bool) uint64 {
+	// setup
+	_, _, sender := testdata.KeyTestPubAddr()
+	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
+		m.WASMByteCode = wasmCode
+		m.Sender = sender.String()
+	})
+
+	// store code
+	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+	require.NoError(t, err)
+	var result types.MsgStoreCodeResponse
+	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+
+	if pin {
+		// pin code
+		msgPin := &types.MsgPinCodes{
+			Authority: authority,
+			CodeIDs:   []uint64{result.CodeID},
+		}
+		_, err = wasmApp.MsgServiceRouter().Handler(msgPin)(ctx, msgPin)
+		require.NoError(t, err)
+		assert.True(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
+	}
+	return result.CodeID
+}
+
+func assertPruning(t *testing.T, ctx sdk.Context, wasmApp *app.WasmApp, codeID uint64, pruned bool) {
+	if pruned {
+		assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
+	} else {
+		assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
 	}
 }

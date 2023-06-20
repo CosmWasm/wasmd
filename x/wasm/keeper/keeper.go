@@ -1231,7 +1231,7 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeID uint64) error {
 		}
 
 		if k.IsPinnedCode(ctx, c) {
-			pinnedCodesHash[string(info.CodeHash)] = struct{}{}
+			pinnedCodesHash[hex.Dump(info.CodeHash)] = struct{}{}
 			continue
 		}
 		unpinnedCodes = append(unpinnedCodes, c)
@@ -1243,14 +1243,12 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeID uint64) error {
 			continue
 		}
 
-		if _, found := pinnedCodesHash[string(info.CodeHash)]; found {
+		if _, found := pinnedCodesHash[hex.Dump(info.CodeHash)]; found {
 			continue
 		}
 
-		if err := k.wasmVM.RemoveCode(info.CodeHash); err != nil {
-			continue
-		}
 		k.deleteCodeInfo(ctx, code)
+		_ = k.wasmVM.RemoveCode(info.CodeHash)
 	}
 	return nil
 }
