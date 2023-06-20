@@ -117,15 +117,24 @@ func (coord *Coordinator) CreateConnections(path *Path) {
 	err := path.EndpointA.ConnOpenInit()
 	require.NoError(coord.t, err)
 
+	coord.UpdateTime() // todo (Alex): revisit this. Not sure if this is the right way to sync the times, now
+	coord.CommitBlock(path.EndpointB.Chain)
 	err = path.EndpointB.ConnOpenTry()
 	require.NoError(coord.t, err)
 
+	coord.UpdateTime()
+	coord.CommitBlock(path.EndpointA.Chain)
 	err = path.EndpointA.ConnOpenAck()
 	require.NoError(coord.t, err)
 
+
+	coord.UpdateTime()
+	coord.CommitBlock(path.EndpointB.Chain)
 	err = path.EndpointB.ConnOpenConfirm()
 	require.NoError(coord.t, err)
 
+	coord.UpdateTime()
+	coord.CommitBlock(path.EndpointA.Chain)
 	// ensure counterparty is up to date
 	err = path.EndpointA.UpdateClient()
 	require.NoError(coord.t, err)

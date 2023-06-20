@@ -62,7 +62,9 @@ type SenderAccount struct {
 type ChainApp interface {
 	servertypes.ABCI
 	AppCodec() codec.Codec
-	NewContext(isCheckTx bool) sdk.Context
+	GetContextForFinalizeBlock(txBytes []byte) sdk.Context
+	NewContextLegacy(isCheckTx bool, header cmtproto.Header) sdk.Context
+	NewUncachedContext(isCheckTx bool, header cmtproto.Header) sdk.Context
 	LastBlockHeight() int64
 	LastCommitID() storetypes.CommitID
 	GetBaseApp() *baseapp.BaseApp
@@ -236,7 +238,7 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAp
 
 // GetContext returns the current context for the application.
 func (chain *TestChain) GetContext() sdk.Context {
-	return chain.App.NewContext(false)
+	return chain.App.NewUncachedContext(false, chain.CurrentHeader)
 }
 
 // QueryProof performs an abci query with the given key and returns the proto encoded merkle proof
@@ -321,9 +323,15 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 // returned on block `n` to the validators of block `n+2`.
 // It updates the current header with the new block created before returning.
 func (chain *TestChain) NextBlock() {
-	res, err := chain.App.FinalizeBlock(&abci.RequestFinalizeBlock{Height: chain.App.LastBlockHeight() + 1, Time: chain.CurrentHeader.Time})
+	res, err := chain.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: chain.CurrentHeader.Height,
+		Time:   chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time or future time?
+	})
 	require.NoError(chain.t, err)
-	_, err = chain.App.Commit()
+	chain.NextBlockXXX(res)
+}
+func (chain *TestChain) NextBlockXXX(res *abci.ResponseFinalizeBlock) {
+	_, err := chain.App.Commit()
 	require.NoError(chain.t, err)
 
 	// set the last header to the current header
@@ -361,7 +369,18 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
-	_, r, err := app.SignAndDeliverWithoutCommit(chain.t, chain.TxConfig, chain.App.GetBaseApp(), msgs, chain.ChainID, []uint64{chain.SenderAccount.GetAccountNumber()}, []uint64{chain.SenderAccount.GetSequence()}, chain.SenderPrivKey)
+
+	_, r, _, err := app.SignAndDeliverWithoutCommit(
+		chain.t,
+		chain.TxConfig,
+		chain.App.GetBaseApp(),
+		msgs,
+		chain.ChainID,
+		[]uint64{chain.SenderAccount.GetAccountNumber()},
+		[]uint64{chain.SenderAccount.GetSequence()},
+		chain.CurrentHeader.GetTime(),
+		chain.SenderPrivKey,
+	)
 
 	if err != nil {
 		return nil, err
@@ -376,9 +395,9 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		return nil, err
 	}
 
-	chain.Coordinator.IncrementTime()
-
 	chain.CaptureIBCEvents(r)
+
+	chain.Coordinator.IncrementTime()
 
 	return r, nil
 }
@@ -492,7 +511,16 @@ func (chain *TestChain) ExpireClient(amount time.Duration) {
 // CurrentCmtClientHeader creates a TM header using the current header parameters
 // on the chain. The trusted fields in the header are set to nil.
 func (chain *TestChain) CurrentCmtClientHeader() *ibctm.Header {
-	return chain.CreateCmtClientHeader(chain.ChainID, chain.CurrentHeader.Height, clienttypes.Height{}, chain.CurrentHeader.Time, chain.Vals, chain.NextVals, nil, chain.Signers)
+	return chain.CreateCmtClientHeader(
+		chain.ChainID,
+		chain.CurrentHeader.Height,
+		clienttypes.Height{},
+		chain.CurrentHeader.Time,
+		chain.Vals,
+		chain.NextVals,
+		nil,
+		chain.Signers,
+	)
 }
 
 // CreateCmtClientHeader creates a TM header to update the TM client. Args are passed in to allow
@@ -534,7 +562,6 @@ func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64,
 	for i, v := range cmtValSet.Validators {                               //nolint:staticcheck
 		signerArr[i] = signers[v.Address.String()]
 	}
-	cmttypes.MakeExtCommit()
 	extCommit, err := MakeExtCommit(blockID, blockHeight, 1, voteSet, signerArr, timestamp, false)
 	require.NoError(chain.t, err)
 
@@ -641,106 +668,4 @@ func (chain *TestChain) Balance(acc sdk.AccAddress, denom string) sdk.Coin {
 
 func (chain *TestChain) AllBalances(acc sdk.AccAddress) sdk.Coins {
 	return chain.App.GetBankKeeper().GetAllBalances(chain.GetContext(), acc)
-}
-
-func MakeExtCommit(
-	blockID cmttypes.BlockID,
-	height int64,
-	round int32,
-	voteSet *cmttypes.VoteSet,
-	validators []cmttypes.PrivValidator,
-	now time.Time,
-	extEnabled bool,
-) (*cmttypes.ExtendedCommit, error) {
-
-	// all sign
-	for i := 0; i < len(validators); i++ {
-		pubKey, err := validators[i].GetPubKey()
-		if err != nil {
-			return nil, fmt.Errorf("can't get pubkey: %w", err)
-		}
-		vote := &cmttypes.Vote{
-			ValidatorAddress: pubKey.Address(),
-			ValidatorIndex:   int32(i),
-			Height:           height,
-			Round:            round,
-			Type:             cmtproto.PrecommitType,
-			BlockID:          blockID,
-			Timestamp:        now,
-		}
-		if extEnabled {
-			vote.Extension = []byte(`my-vote-extension`)
-		}
-		_, err = signAddVote(validators[i], vote, voteSet, extEnabled)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var enableHeight int64
-	if extEnabled {
-		enableHeight = height
-	}
-
-	return voteSet.MakeExtendedCommit(cmttypes.ABCIParams{VoteExtensionsEnableHeight: enableHeight}), nil
-}
-
-func signAddVote(privVal cmttypes.PrivValidator, vote *cmttypes.Vote, voteSet *cmttypes.VoteSet, extEnabled bool) (bool, error) {
-	//if vote.Type != voteSet.signedMsgType {
-	//	return false, fmt.Errorf("vote and voteset are of different types; %d != %d", vote.Type, voteSet.signedMsgType)
-	//}
-	if _, err := SignAndCheckVote(vote, privVal, voteSet.ChainID(), extEnabled && (vote.Type == cmtproto.PrecommitType)); err != nil {
-		return false, err
-	}
-	return voteSet.AddVote(vote)
-}
-
-func SignAndCheckVote(
-	vote *cmttypes.Vote,
-	privVal cmttypes.PrivValidator,
-	chainID string,
-	extensionsEnabled bool,
-) (bool, error) {
-	v := vote.ToProto()
-	if err := privVal.SignVote(chainID, v); err != nil {
-		// Failing to sign a vote has always been a recoverable error, this function keeps it that way
-		return true, err // true = recoverable
-	}
-	vote.Signature = v.Signature
-
-	isPrecommit := vote.Type == cmtproto.PrecommitType
-	if !isPrecommit && extensionsEnabled {
-		// Non-recoverable because the caller passed parameters that don't make sense
-		return false, fmt.Errorf("only Precommit votes may have extensions enabled; vote type: %d", vote.Type)
-	}
-
-	isNil := vote.BlockID.IsZero()
-	extData := len(v.Extension) > 0
-
-	if !extensionsEnabled && extData ||
-		extensionsEnabled && !extData {
-		return false, fmt.Errorf(
-			"extensions must be present IFF vote is a non-nil Precommit; present %t, vote type %d, is nil %t",
-			extData,
-			vote.Type,
-			isNil,
-		)
-	}
-	//if !extensionsEnabled && extData && (!isPrecommit || isNil) {
-	//	// Non-recoverable because the vote is malformed
-	//	return false, fmt.Errorf(
-	//		"extensions must be present IFF vote is a non-nil Precommit; present %t, vote type %d, is nil %t",
-	//		extData,
-	//		vote.Type,
-	//		isNil,
-	//	)
-	//}
-
-	vote.ExtensionSignature = nil
-	if extensionsEnabled {
-		vote.ExtensionSignature = v.ExtensionSignature
-	}
-	vote.Timestamp = v.Timestamp
-
-	return true, nil
 }

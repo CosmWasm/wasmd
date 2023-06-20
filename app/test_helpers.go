@@ -100,7 +100,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 		require.NoError(t, err)
 
 		// Initialize the chain
-		_, err =app.InitChain(
+		_, err = app.InitChain(
 			&abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: simtestutil.DefaultConsensusParams,
@@ -161,14 +161,14 @@ func SetupWithGenesisValSet(
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simtestutil.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simtestutil.DefaultGenTxGas
-	_ , err = app.InitChain(&abci.RequestInitChain{
-			ChainId:         chainID,
-			Time:            time.Now().UTC(),
-			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: consensusParams,
-			InitialHeight:   app.LastBlockHeight() + 1,
-			AppStateBytes:   stateBytes,
-		})
+	_, err = app.InitChain(&abci.RequestInitChain{
+		ChainId:         chainID,
+		Time:            time.Now().UTC(),
+		Validators:      []abci.ValidatorUpdate{},
+		ConsensusParams: consensusParams,
+		InitialHeight:   app.LastBlockHeight() + 1,
+		AppStateBytes:   stateBytes,
+	})
 	require.NoError(t, err)
 
 	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
@@ -289,15 +289,7 @@ func NewTestNetworkFixture() network.TestFixture {
 }
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(
-	t *testing.T,
-	txCfg client.TxConfig,
-	app *bam.BaseApp,
-	msgs []sdk.Msg,
-	chainID string,
-	accNums, accSeqs []uint64,
-	priv ...cryptotypes.PrivKey,
-) (sdk.GasInfo, *sdk.Result, error) {
+func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey, ) (sdk.GasInfo, *sdk.Result, *abci.ResponseFinalizeBlock, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
@@ -311,13 +303,23 @@ func SignAndDeliverWithoutCommit(
 	)
 	require.NoError(t, err)
 
-	// Simulate a sending a transaction and committing a block
-	// app.BeginBlock(abci.RequestBeginBlock{Header: header})
-	gInfo, res, err := app.SimDeliver(txCfg.TxEncoder(), tx)
-	// app.EndBlock(abci.RequestEndBlock{})
-	// app.Commit()
+	bz, err := txCfg.TxEncoder()(tx)
+	require.NoError(t, err)
 
-	return gInfo, res, err
+	gas, result, err := app.Simulate(bz)
+	if err != nil {
+		return gas, nil, nil, err
+	}
+
+	xxx, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: app.LastBlockHeight() + 1,
+		Time:   blockTime,
+		Txs:    [][]byte{bz},
+	})
+	if err != nil {
+		return sdk.GasInfo{}, nil, nil, err
+	}
+	return gas, result, xxx, err
 }
 
 // GenesisStateWithValSet returns a new genesis state with the validator set
@@ -355,15 +357,15 @@ func GenesisStateWithValSet(
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            bondAmt,
-			DelegatorShares:    sdkmath.LegacyOneDec(),
+			DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(),  sdkmath.LegacyZeroDec(),  sdkmath.LegacyZeroDec()),
-			MinSelfDelegation:  sdkmath.ZeroInt(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
+			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(),  sdkmath.LegacyOneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdkmath.LegacyOneDec()))
 	}
 
 	// set validators and delegations
