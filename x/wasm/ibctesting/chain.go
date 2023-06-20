@@ -49,7 +49,6 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/types"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -145,7 +144,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, 
 	)
 
 	for i := 0; i < validatorsPerChain; i++ {
-		privVal := mock.NewPV()
+		_, privVal := cmttypes.RandValidator(false, 100)
 		pubKey, err := privVal.GetPubKey()
 		require.NoError(t, err)
 		validators = append(validators, cmttypes.NewValidator(pubKey, 1))
@@ -556,7 +555,7 @@ func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64,
 
 	hhash := cmtHeader.Hash()
 	blockID := MakeBlockID(hhash, 3, tmhash.Sum([]byte("part_set")))
-	voteSet := cmttypes.NewVoteSet(chainID, blockHeight, 1, cmtproto.PrecommitType, cmtValSet)
+	voteSet := cmttypes.NewExtendedVoteSet(chainID, blockHeight, 1, cmtproto.PrecommitType, cmtValSet)
 	// MakeCommit expects a signer array in the same order as the validator array.
 	// Thus we iterate over the ordered validator set and construct a signer array
 	// from the signer map in the same order.
@@ -564,7 +563,7 @@ func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64,
 	for i, v := range cmtValSet.Validators {                               //nolint:staticcheck
 		signerArr[i] = signers[v.Address.String()]
 	}
-	extCommit, err := MakeExtCommit(blockID, blockHeight, 1, voteSet, signerArr, timestamp, false)
+	extCommit, err := cmttypes.MakeExtCommit(blockID, blockHeight, 1, voteSet, signerArr, timestamp, true)
 	require.NoError(chain.t, err)
 
 	signedHeader := &cmtproto.SignedHeader{
