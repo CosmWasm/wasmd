@@ -3,6 +3,8 @@ package v2_test
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/runtime"
+
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,7 +37,7 @@ func TestMigrate(t *testing.T) {
 	store := ctx.KVStore(storeKey)
 
 	legacySubspace := newMockSubspace(types.DefaultParams())
-	require.NoError(t, v2.MigrateStore(ctx, storeKey, legacySubspace, cdc))
+	require.NoError(t, v2.MigrateStore(ctx, runtime.NewKVStoreService(storeKey), legacySubspace, cdc))
 
 	var res types.Params
 	bz := store.Get(types.ParamsKey)

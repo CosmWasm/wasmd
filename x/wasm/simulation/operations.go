@@ -43,7 +43,7 @@ type WasmKeeper interface {
 	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
 	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool)
 	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
-	PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64
+	PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) (uint64, error)
 }
 type BankKeeper interface {
 	simulation.BankKeeper

@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/runtime"
+
 	storemetrics "cosmossdk.io/store/metrics"
 
 	"cosmossdk.io/log"
@@ -101,7 +103,7 @@ func TestCountTxDecorator(t *testing.T) {
 			var anyTx sdk.Tx
 
 			// when
-			ante := keeper.NewCountTXDecorator(keyWasm)
+			ante := keeper.NewCountTXDecorator(runtime.NewKVStoreService(keyWasm))
 			_, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, spec.nextAssertAnte)
 			if spec.expErr {
 				require.Error(t, gotErr)

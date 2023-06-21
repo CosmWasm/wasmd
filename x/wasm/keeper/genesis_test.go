@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/runtime"
+
 	storemetrics "cosmossdk.io/store/metrics"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -85,8 +87,8 @@ func TestGenesisExportImport(t *testing.T) {
 
 		contract.CodeID = codeID
 		contractAddr := wasmKeeper.ClassicAddressGenerator()(srcCtx, codeID, nil)
-		wasmKeeper.storeContractInfo(srcCtx, contractAddr, &contract)
-		wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...)
+		wasmKeeper.mustStoreContractInfo(srcCtx, contractAddr, &contract)
+		require.NoError(t, wasmKeeper.appendToContractHistory(srcCtx, contractAddr, history...))
 		err = wasmKeeper.importContractState(srcCtx, contractAddr, stateModels)
 		require.NoError(t, err)
 	}
@@ -132,13 +134,15 @@ func TestGenesisExportImport(t *testing.T) {
 
 	// compare whole DB
 
-	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
-	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
+	srcIT, err := wasmKeeper.storeService.OpenKVStore(srcCtx).Iterator(nil, nil)
+	require.NoError(t, err)
+	dstIT, err := dstKeeper.storeService.OpenKVStore(dstCtx).Iterator(nil, nil)
+	require.NoError(t, err)
 
 	for i := 0; srcIT.Valid(); i++ {
-		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", wasmKeeper.storeKey.Name(), srcIT.Key())
+		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing", srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-		require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", wasmKeeper.storeKey.Name(), i, srcIT.Key())
+		require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element: %X", i, srcIT.Key())
 		dstIT.Next()
 		srcIT.Next()
 	}
@@ -620,8 +624,12 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
-	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))
-	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
+	id, err := keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), id)
+	id, err = keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(3), id)
 }
 
 func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
@@ -655,7 +663,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 
 	srcKeeper := NewKeeper(
 		encodingConfig.Marshaler,
-		keyWasm,
+		runtime.NewKVStoreService(keyWasm),
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},
 		stakingkeeper.Keeper{},

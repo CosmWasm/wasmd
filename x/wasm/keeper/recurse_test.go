@@ -187,7 +187,7 @@ func TestGasOnExternalQuery(t *testing.T) {
 			recurse := tc.msg
 			msg := buildRecurseQuery(t, recurse)
 
-			querier := NewGrpcQuerier(keeper.cdc, keeper.storeKey, keeper, tc.gasLimit)
+			querier := NewGrpcQuerier(keeper.cdc, keeper.storeService, keeper, tc.gasLimit)
 			req := &types.QuerySmartContractStateRequest{Address: contractAddr.String(), QueryData: msg}
 			_, gotErr := querier.SmartContractState(ctx, req)
 			if tc.expOutOfGas {

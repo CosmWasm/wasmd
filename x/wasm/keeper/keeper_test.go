@@ -1310,21 +1310,22 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 	example := InstantiateHackatomExampleContract(t, ctx, keepers)
 
 	// then assert a second index exists
-	store := ctx.KVStore(keepers.WasmKeeper.storeKey)
+	store := keepers.WasmKeeper.storeService.OpenKVStore(ctx)
 	oldContractInfo := keepers.WasmKeeper.GetContractInfo(ctx, example.Contract)
 	require.NotNil(t, oldContractInfo)
 	createHistoryEntry := types.ContractCodeHistoryEntry{
 		CodeID:  example.CodeID,
 		Updated: types.NewAbsoluteTxPosition(ctx),
 	}
-	exists := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
+	exists, err := store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
+	require.NoError(t, err)
 	require.True(t, exists)
 
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1) // increment for different block
 	// when do migrate
 	newCodeExample := StoreBurnerExampleContract(t, ctx, keepers)
 	migMsgBz := BurnerExampleInitMsg{Payout: example.CreatorAddr}.GetBytes(t)
-	_, err := keepers.ContractKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
+	_, err = keepers.ContractKeeper.Migrate(ctx, example.Contract, example.CreatorAddr, newCodeExample.CodeID, migMsgBz)
 	require.NoError(t, err)
 
 	// then the new index exists
@@ -1332,10 +1333,12 @@ func TestMigrateReplacesTheSecondIndex(t *testing.T) {
 		CodeID:  newCodeExample.CodeID,
 		Updated: types.NewAbsoluteTxPosition(ctx),
 	}
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, migrateHistoryEntry))
+	exists, err = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, migrateHistoryEntry))
+	require.NoError(t, err)
 	require.True(t, exists)
 	// and the old index was removed
-	exists = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
+	exists, err = store.Has(types.GetContractByCreatedSecondaryIndexKey(example.Contract, createHistoryEntry))
+	require.NoError(t, err)
 	require.False(t, exists)
 }
 
@@ -2027,8 +2030,8 @@ func TestQueryIsolation(t *testing.T) {
 				return other.HandleQuery(ctx, caller, request)
 			}
 			// here we write to DB which should not be persisted
-			ctx.KVStore(k.storeKey).Set([]byte(`set_in_query`), []byte(`this_is_allowed`))
-			return nil, nil
+			err := k.storeService.OpenKVStore(ctx).Set([]byte(`set_in_query`), []byte(`this_is_allowed`))
+			return nil, err
 		})
 	}).apply(k)
 
@@ -2043,7 +2046,9 @@ func TestQueryIsolation(t *testing.T) {
 	em := sdk.NewEventManager()
 	_, gotErr := k.reply(ctx.WithEventManager(em), example.Contract, wasmvmtypes.Reply{})
 	require.NoError(t, gotErr)
-	assert.Nil(t, ctx.KVStore(k.storeKey).Get([]byte(`set_in_query`)))
+	got, err := k.storeService.OpenKVStore(ctx).Get([]byte(`set_in_query`))
+	require.NoError(t, err)
+	assert.Nil(t, got)
 }
 
 func TestSetAccessConfig(t *testing.T) {
@@ -2172,7 +2177,7 @@ func TestAppendToContractHistory(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		var entry types.ContractCodeHistoryEntry
 		f.Fuzz(&entry)
-		keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry)
+		require.NoError(t, keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry))
 		orderedEntries = append(orderedEntries, entry)
 	}
 	// when

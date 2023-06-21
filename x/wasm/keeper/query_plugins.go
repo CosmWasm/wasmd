@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -293,7 +293,7 @@ func RejectStargateQuerier() func(ctx sdk.Context, request *wasmvmtypes.Stargate
 // AcceptedStargateQueries define accepted Stargate queries as a map with path as key and response type as value.
 // For example:
 // acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
-type AcceptedStargateQueries map[string]codec.ProtoMarshaler
+type AcceptedStargateQueries map[string]proto.Message
 
 // AcceptListStargateQuerier supports a preconfigured set of stargate queries only.
 // All arguments must be non nil.

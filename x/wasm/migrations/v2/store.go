@@ -1,7 +1,7 @@
 package v2
 
 import (
-	storetypes "cosmossdk.io/store/types"
+	corestoretypes "cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -13,8 +13,8 @@ import (
 // version 3. Specifically, it takes the parameters that are currently stored
 // and managed by the x/params module and stores them directly into the x/wasm
 // module state.
-func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace exported.Subspace, cdc codec.BinaryCodec) error {
-	store := ctx.KVStore(storeKey)
+func MigrateStore(ctx sdk.Context, storeService corestoretypes.KVStoreService, legacySubspace exported.Subspace, cdc codec.BinaryCodec) error {
+	store := storeService.OpenKVStore(ctx)
 	var currParams types.Params
 	legacySubspace.GetParamSet(ctx, &currParams)
 
@@ -27,7 +27,5 @@ func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace 
 		return err
 	}
 
-	store.Set(types.ParamsKey, bz)
-
-	return nil
+	return store.Set(types.ParamsKey, bz)
 }

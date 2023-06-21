@@ -166,7 +166,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	contractAddr := BuildContractAddressClassic(1, 1)
 	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
-	keepers.WasmKeeper.storeContractInfo(ctx, contractAddr, &types.ContractInfo{
+	keepers.WasmKeeper.mustStoreContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
@@ -450,7 +450,7 @@ func TestQueryContractHistory(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 
 			cAddr, _ := sdk.AccAddressFromBech32(myContractBech32Addr)
-			keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...)
+			require.NoError(t, keeper.appendToContractHistory(xCtx, cAddr, spec.srcHistory...))
 
 			// when
 			q := Querier(keeper)
@@ -556,7 +556,7 @@ func TestQueryContractInfo(t *testing.T) {
 	govv1beta1.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
 
 	k := keepers.WasmKeeper
-	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
+	querier := NewGrpcQuerier(k.cdc, k.storeService, k, k.queryGasLimit)
 	myExtension := func(info *types.ContractInfo) {
 		// abuse gov proposal as a random protobuf extension with an Any type
 		myExt, err := govv1beta1.NewProposal(&govv1beta1.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
@@ -596,7 +596,7 @@ func TestQueryContractInfo(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
-			k.storeContractInfo(xCtx, contractAddr, &spec.stored)
+			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored)
 			// when
 			gotRsp, gotErr := querier.ContractInfo(xCtx, spec.src)
 			if spec.expErr {

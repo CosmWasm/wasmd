@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -32,7 +33,7 @@ func MustExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contr
 }
 
 type sdkMessageType interface {
-	codec.ProtoMarshaler
+	proto.Message
 	sdk.Msg
 }
 
