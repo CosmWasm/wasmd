@@ -1,17 +1,32 @@
 package app
 
 import (
-	"github.com/cosmos/cosmos-sdk/std"
+	"testing"
+
+	"cosmossdk.io/log"
+	dbm "github.com/cosmos/cosmos-db"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/CosmWasm/wasmd/app/params"
 )
 
-// MakeEncodingConfig creates a new EncodingConfig with all modules registered
-func MakeEncodingConfig() params.EncodingConfig {
-	encodingConfig := params.MakeEncodingConfig()
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+// MakeEncodingConfig creates a new EncodingConfig with all modules registered. For testing only
+func MakeEncodingConfig(t testing.TB) params.EncodingConfig {
+	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
+	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
+	tempApp := NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(t.TempDir()), []wasm.Option{})
+	return makeEncodingConfig(tempApp)
+}
+
+func makeEncodingConfig(tempApp *WasmApp) params.EncodingConfig {
+	encodingConfig := params.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Marshaler:         tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 	return encodingConfig
 }

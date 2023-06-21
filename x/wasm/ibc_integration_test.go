@@ -60,11 +60,8 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 				appA           = chainA.App.(*app.WasmApp)
 				contractInfo   = appA.WasmKeeper.GetContractInfo(chainA.GetContext(), myContractAddr)
 			)
-			require.Equal(t, chainA.CurrentHeader.GetTime(), chainB.CurrentHeader.GetTime())
 			path := wasmibctesting.NewPath(chainA, chainB)
 			coordinator.SetupClients(path)
-			coordinator.UpdateTime()
-			coordinator.CommitBlock(chainA, chainB)
 			coordinator.CreateConnections(path)
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,

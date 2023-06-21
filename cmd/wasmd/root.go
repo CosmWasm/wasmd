@@ -55,10 +55,15 @@ func NewRootCmd() *cobra.Command {
 	cfg.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
 	cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
 	cfg.Seal()
-	encodingConfig := app.MakeEncodingConfig()
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
 	tempApp := app.NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(tempDir()), []wasm.Option{})
+	encodingConfig := params.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Marshaler:         tempApp.AppCodec(),
+		TxConfig:          tempApp.TxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Marshaler).

@@ -326,13 +326,13 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 func (chain *TestChain) NextBlock() {
 	res, err := chain.App.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: chain.CurrentHeader.Height,
-		Time:   chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time or future time?
+		Time:   chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time
 	})
 	require.NoError(chain.t, err)
-	chain.nextBlockX(res)
+	chain.commitBlock(res)
 }
 
-func (chain *TestChain) nextBlockX(res *abci.ResponseFinalizeBlock) {
+func (chain *TestChain) commitBlock(res *abci.ResponseFinalizeBlock) {
 	_, err := chain.App.Commit()
 	require.NoError(chain.t, err)
 
@@ -368,11 +368,11 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 // SendMsgs delivers a transaction through the application. It updates the senders sequence
 // number and updates the TestChain's headers. It returns the result and error if one
 // occurred.
-func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
+func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, txResp, blockResp, err := app.SignAndDeliverWithoutCommit(
+	_, _, blockResp, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -387,8 +387,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		return nil, err
 	}
 
-	// NextBlock calls app.Commit()
-	chain.nextBlockX(blockResp)
+	chain.commitBlock(blockResp)
 
 	// increment sequence for successful transaction execution
 	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
@@ -396,14 +395,17 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		return nil, err
 	}
 
-	chain.CaptureIBCEvents(txResp)
-
+	// update clocks
 	chain.Coordinator.IncrementTime()
 
-	return txResp, nil
+	require.Len(chain.t, blockResp.TxResults, 1)
+	txResult := blockResp.TxResults[0]
+	chain.CaptureIBCEvents(txResult)
+
+	return txResult, nil
 }
 
-func (chain *TestChain) CaptureIBCEvents(r *sdk.Result) {
+func (chain *TestChain) CaptureIBCEvents(r *abci.ExecTxResult) {
 	toSend := GetSendPackets(r.Events)
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
@@ -472,20 +474,20 @@ func (chain *TestChain) ConstructUpdateCMTClientHeaderWithTrustedHeight(counterp
 		trustedHeight = chain.GetClientState(clientID).GetLatestHeight().(clienttypes.Height)
 	}
 	var (
-		tmTrustedVals *cmttypes.ValidatorSet
-		ok            bool
+		cmtTrustedVals *cmttypes.ValidatorSet
+		ok             bool
 	)
 	// Once we get TrustedHeight from client, we must query the validators from the counterparty chain
 	// If the LatestHeight == LastHeader.Height, then TrustedValidators are current validators
 	// If LatestHeight < LastHeader.Height, we can query the historical validator set from HistoricalInfo
 	if trustedHeight == counterparty.LastHeader.GetHeight() {
-		tmTrustedVals = counterparty.Vals
+		cmtTrustedVals = counterparty.Vals
 	} else {
 		// NOTE: We need to get validators from counterparty at height: trustedHeight+1
 		// since the last trusted validators for a header at height h
 		// is the NextValidators at h+1 committed to in header h by
 		// NextValidatorsHash
-		tmTrustedVals, ok = counterparty.GetValsAtHeight(int64(trustedHeight.RevisionHeight + 1))
+		cmtTrustedVals, ok = counterparty.GetValsAtHeight(int64(trustedHeight.RevisionHeight + 1))
 		if !ok {
 			return nil, errorsmod.Wrapf(ibctm.ErrInvalidHeaderHeight, "could not retrieve trusted validators at trustedHeight: %d", trustedHeight)
 		}
@@ -494,7 +496,7 @@ func (chain *TestChain) ConstructUpdateCMTClientHeaderWithTrustedHeight(counterp
 	// for now assume revision number is 0
 	header.TrustedHeight = trustedHeight
 
-	trustedVals, err := tmTrustedVals.ToProto()
+	trustedVals, err := cmtTrustedVals.ToProto()
 	if err != nil {
 		return nil, err
 	}
@@ -619,7 +621,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.Scope
 		require.NoError(chain.t, err)
 	}
 
-	chain.NextBlock()
+	chain.Coordinator.CommitBlock(chain)
 }
 
 // GetPortCapability returns the port capability for the given portID. The capability must
@@ -645,7 +647,7 @@ func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.Sc
 		require.NoError(chain.t, err)
 	}
 
-	chain.NextBlock()
+	chain.Coordinator.CommitBlock(chain)
 }
 
 // GetChannelCapability returns the channel capability for the given portID and channelID.

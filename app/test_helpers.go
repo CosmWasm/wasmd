@@ -68,7 +68,7 @@ func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, 
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 	app := NewWasmApp(log.NewNopLogger(), db, nil, true, wasmtypes.EnableAllProposals, appOptions, opts, bam.SetChainID(chainID), bam.SetSnapshot(snapshotStore, snapshottypes.SnapshotOptions{KeepRecent: 2}))
 	if withGenesis {
-		return app, NewDefaultGenesisState(app.AppCodec())
+		return app, app.DefaultGenesis()
 	}
 	return app, GenesisState{}
 }

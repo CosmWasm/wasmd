@@ -190,62 +190,21 @@ var (
 	Bech32PrefixConsPub = Bech32Prefix + sdk.PrefixValidator + sdk.PrefixConsensus + sdk.PrefixPublic
 )
 
-var (
-	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
-	// non-dependant module elements, such as codec registration
-	// and genesis verification.
-	ModuleBasics = module.NewBasicManager(
-		auth.AppModuleBasic{},
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
-		distr.AppModuleBasic{},
-		gov.NewAppModuleBasic(
-			[]govclient.ProposalHandler{
-				paramsclient.ProposalHandler,
-				// upgradeclient.LegacyProposalHandler,
-				// upgradeclient.LegacyCancelProposalHandler,
-				ibcclientclient.UpdateClientProposalHandler,
-				ibcclientclient.UpgradeProposalHandler,
-			},
-		),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
-		upgrade.AppModuleBasic{},
-		evidence.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
-		groupmodule.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		nftmodule.AppModuleBasic{},
-		consensus.AppModuleBasic{},
-		// non sdk modules
-		wasm.AppModuleBasic{},
-		ibc.AppModuleBasic{},
-		ibctm.AppModuleBasic{},
-		transfer.AppModuleBasic{},
-		ica.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
-	)
-
-	// module account permissions
-	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		nft.ModuleName:                 nil,
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         nil,
-		icatypes.ModuleName:            nil,
-		wasm.ModuleName:                {authtypes.Burner},
-	}
-)
+// module account permissions
+var maccPerms = map[string][]string{
+	authtypes.FeeCollectorName:     nil,
+	distrtypes.ModuleName:          nil,
+	minttypes.ModuleName:           {authtypes.Minter},
+	stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
+	stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
+	govtypes.ModuleName:            {authtypes.Burner},
+	nft.ModuleName:                 nil,
+	// non sdk modules
+	ibctransfertypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+	ibcfeetypes.ModuleName:      nil,
+	icatypes.ModuleName:         nil,
+	wasm.ModuleName:             {authtypes.Burner},
+}
 
 var (
 	_ runtime.AppI            = (*WasmApp)(nil)
@@ -341,7 +300,6 @@ func NewWasmApp(
 
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
-	ibctm.RegisterInterfaces(interfaceRegistry)
 	// Below we could construct and set an application specific mempool and
 	// ABCI 1.0 PrepareProposal and ProcessProposal handlers. These defaults are
 	// already set in the SDK's BaseApp, this shows an example of how to override
@@ -760,12 +718,15 @@ func NewWasmApp(
 		nftmodule.NewAppModule(appCodec, app.NFTKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
+		// non sdk modules
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
+		ibctm.AppModuleBasic{},
+		// sdk
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
@@ -780,8 +741,12 @@ func NewWasmApp(
 			govtypes.ModuleName: gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
+					// non sdk handlers
+					ibcclientclient.UpdateClientProposalHandler,
+					ibcclientclient.UpgradeProposalHandler,
 				},
 			),
+			ibctm.ModuleName: ibctm.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)

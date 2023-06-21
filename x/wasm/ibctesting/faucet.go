@@ -2,6 +2,7 @@ package ibctesting
 
 import (
 	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -21,7 +22,7 @@ func (chain *TestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 
 // SendNonDefaultSenderMsgs delivers a transaction through the application. It returns the result and error if one
 // occurred.
-func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivKey, msgs ...sdk.Msg) (*sdk.Result, error) {
+func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivKey, msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	require.NotEqual(chain.t, chain.SenderPrivKey, senderPrivKey, "use SendMsgs method")
 
 	// ensure the chain has the latest time
@@ -30,7 +31,7 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	addr := sdk.AccAddress(senderPrivKey.PubKey().Address().Bytes())
 	account := chain.App.GetAccountKeeper().GetAccount(chain.GetContext(), addr)
 	require.NotNil(chain.t, account)
-	_, r, xxx, err := app.SignAndDeliverWithoutCommit(
+	_, _, xxx, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -43,11 +44,11 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	)
 
 	// SignAndDeliverWithoutCommit calls app.Commit()
-	chain.nextBlockX(xxx)
-	chain.Coordinator.IncrementTime()
+	chain.commitBlock(xxx)
 	if err != nil {
-		return r, err
+		return nil, err
 	}
-	chain.CaptureIBCEvents(r)
-	return r, nil
+	txResult := xxx.TxResults[0]
+	chain.CaptureIBCEvents(txResult)
+	return txResult, nil
 }
