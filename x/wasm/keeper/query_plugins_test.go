@@ -398,6 +398,14 @@ func TestBankQuerierMetadata(t *testing.T) {
 		},
 	}
 	assert.Equal(t, exp, got.Metadata)
+
+	_, gotErr2 := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "uatom",
+		},
+	})
+	require.Error(t, gotErr2)
+	assert.Contains(t, gotErr2.Error(), "uatom: not found")
 }
 
 func TestBankQuerierAllMetadata(t *testing.T) {
