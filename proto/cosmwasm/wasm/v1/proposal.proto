@@ -26,7 +26,7 @@ message StoreCodeProposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's environment as sender
-  string run_as = 3;
+  string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 4 [ (gogoproto.customname) = "WASMByteCode" ];
   // Used in v1beta1
@@ -59,9 +59,9 @@ message InstantiateContractProposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's environment as sender
-  string run_as = 3;
+  string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Admin is an optional address that can execute migrations
-  string admin = 4;
+  string admin = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Label is optional metadata to be stored with a constract instance.
@@ -90,9 +90,9 @@ message InstantiateContract2Proposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's enviroment as sender
-  string run_as = 3;
+  string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Admin is an optional address that can execute migrations
-  string admin = 4;
+  string admin = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // CodeID is the reference to the stored WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Label is optional metadata to be stored with a constract instance.
@@ -128,7 +128,7 @@ message MigrateContractProposal {
   // Note: skipping 3 as this was previously used for unneeded run_as
 
   // Contract is the address of the smart contract
-  string contract = 4;
+  string contract = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // CodeID references the new WASM code
   uint64 code_id = 5 [ (gogoproto.customname) = "CodeID" ];
   // Msg json encoded message to be passed to the contract on migration
@@ -149,7 +149,7 @@ message SudoContractProposal {
   // Description is a human readable text
   string description = 2;
   // Contract is the address of the smart contract
-  string contract = 3;
+  string contract = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Msg json encoded message to be passed to the contract as sudo
   bytes msg = 4 [ (gogoproto.casttype) = "RawContractMessage" ];
 }
@@ -168,9 +168,9 @@ message ExecuteContractProposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's environment as sender
-  string run_as = 3;
+  string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Contract is the address of the smart contract
-  string contract = 4;
+  string contract = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Msg json encoded message to be passed to the contract as execute
   bytes msg = 5 [ (gogoproto.casttype) = "RawContractMessage" ];
   // Funds coins that are transferred to the contract on instantiation
@@ -195,9 +195,9 @@ message UpdateAdminProposal {
   // Description is a human readable text
   string description = 2;
   // NewAdmin address to be set
-  string new_admin = 3 [ (gogoproto.moretags) = "yaml:\"new_admin\"" ];
+  string new_admin = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Contract is the address of the smart contract
-  string contract = 4;
+  string contract = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -214,7 +214,7 @@ message ClearAdminProposal {
   // Description is a human readable text
   string description = 2;
   // Contract is the address of the smart contract
-  string contract = 3;
+  string contract = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 
 // Deprecated: Do not use. Since wasmd v0.40, there is no longer a need for
@@ -227,9 +227,9 @@ message PinCodesProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
-  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+  string title = 1;
   // Description is a human readable text
-  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+  string description = 2;
   // CodeIDs references the new WASM codes
   repeated uint64 code_ids = 3 [
     (gogoproto.customname) = "CodeIDs",
@@ -247,14 +247,11 @@ message UnpinCodesProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
 
   // Title is a short summary
-  string title = 1 [ (gogoproto.moretags) = "yaml:\"title\"" ];
+  string title = 1;
   // Description is a human readable text
-  string description = 2 [ (gogoproto.moretags) = "yaml:\"description\"" ];
+  string description = 2;
   // CodeIDs references the WASM codes
-  repeated uint64 code_ids = 3 [
-    (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags) = "yaml:\"code_ids\""
-  ];
+  repeated uint64 code_ids = 3 [ (gogoproto.customname) = "CodeIDs" ];
 }
 
 // AccessConfigUpdate contains the code id and the access config to be
@@ -300,7 +297,7 @@ message StoreAndInstantiateContractProposal {
   // Description is a human readable text
   string description = 2;
   // RunAs is the address that is passed to the contract's environment as sender
-  string run_as = 3;
+  string run_as = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // WASMByteCode can be raw or gzip compressed
   bytes wasm_byte_code = 4 [ (gogoproto.customname) = "WASMByteCode" ];
   // InstantiatePermission to apply on contract creation, optional
