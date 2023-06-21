@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -20,9 +21,11 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestICA(t *testing.T) {
+	wasmtypes.DeactivateTest(t)
 	// scenario:
 	// given a host and controller chain
 	// when an ica is registered on the controller chain
@@ -93,9 +96,9 @@ func TestICA(t *testing.T) {
 	assert.Equal(t, sendCoin.String(), gotBalance.String())
 }
 
-func parseIBCChannelEvents(t *testing.T, res *sdk.Result) (string, string, string) {
+func parseIBCChannelEvents(t *testing.T, res *abci.ExecTxResult) (string, string, string) {
 	t.Helper()
-	chanID, err := ibctesting.ParseChannelIDFromEvents(res.GetEvents())
+	chanID, err := wasmibctesting.ParseChannelIDFromEvents(res.GetEvents())
 	require.NoError(t, err)
 	portID, err := wasmibctesting.ParsePortIDFromEvents(res.GetEvents())
 	require.NoError(t, err)

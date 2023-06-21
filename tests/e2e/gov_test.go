@@ -104,9 +104,9 @@ func TestGovVoteByContract(t *testing.T) {
 			require.NoError(t, err)
 			rsp, gotErr := chain.SendMsgs(msg)
 			require.NoError(t, gotErr)
-			require.Len(t, rsp.MsgResponses, 1)
-			got, ok := rsp.MsgResponses[0].GetCachedValue().(*v1.MsgSubmitProposalResponse)
-			require.True(t, ok)
+			var got v1.MsgSubmitProposalResponse
+			chain.UnwrapExecTXResult(rsp, &got)
+
 			propID := got.ProposalId
 
 			// with other delegators voted yes

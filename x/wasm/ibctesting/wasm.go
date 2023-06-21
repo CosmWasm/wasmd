@@ -58,15 +58,15 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	require.NoError(chain.t, err)
 
 	var pInstResp types.MsgStoreCodeResponse
-	chain.unwrapExecTXResult(r, &pInstResp)
+	chain.UnwrapExecTXResult(r, &pInstResp)
 
 	require.NotEmpty(chain.t, pInstResp.CodeID)
 	require.NotEmpty(chain.t, pInstResp.Checksum)
 	return pInstResp
 }
 
-// helper to unpack execution result from proto any type
-func (chain *TestChain) unwrapExecTXResult(r *abci.ExecTxResult, target proto.Message) {
+// UnwrapExecTXResult is a helper to unpack execution result from proto any type
+func (chain *TestChain) UnwrapExecTXResult(r *abci.ExecTxResult, target proto.Message) {
 	var wrappedRsp sdk.TxMsgData
 	require.NoError(chain.t, chain.Codec.Unmarshal(r.Data, &wrappedRsp))
 
@@ -89,7 +89,7 @@ func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.A
 	require.NoError(chain.t, err)
 
 	var pExecResp types.MsgInstantiateContractResponse
-	chain.unwrapExecTXResult(r, &pExecResp)
+	chain.UnwrapExecTXResult(r, &pExecResp)
 
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
 	require.NoError(chain.t, err)

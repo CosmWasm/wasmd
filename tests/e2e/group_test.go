@@ -47,7 +47,8 @@ func TestGroupWithContract(t *testing.T) {
 	rsp, err := chain.SendMsgs(msg)
 	require.NoError(t, err)
 
-	createRsp := rsp.MsgResponses[0].GetCachedValue().(*group.MsgCreateGroupWithPolicyResponse)
+	var createRsp group.MsgCreateGroupWithPolicyResponse
+	chain.UnwrapExecTXResult(rsp, &createRsp)
 	groupID, policyAddr := createRsp.GroupId, sdk.MustAccAddressFromBech32(createRsp.GroupPolicyAddress)
 	require.NotEmpty(t, groupID)
 	chain.Fund(policyAddr, sdkmath.NewIntFromUint64(1_000_000_000))
@@ -59,9 +60,11 @@ func TestGroupWithContract(t *testing.T) {
 	require.NoError(t, err)
 
 	rsp = e2e.MustExecViaStargateReflectContract(t, chain, contractAddr, propMsg)
-	bz := rsp.MsgResponses[0].GetCachedValue().(*types.MsgExecuteContractResponse).Data
+	var execRsp types.MsgExecuteContractResponse
+	chain.UnwrapExecTXResult(rsp, &execRsp)
+
 	var groupRsp group.MsgSubmitProposalResponse
-	require.NoError(t, chain.Codec.Unmarshal(bz, &groupRsp))
+	require.NoError(t, chain.Codec.Unmarshal(execRsp.Data, &groupRsp))
 	// require.NotEmpty(t, groupRsp.ProposalId)
 
 	// and coins received

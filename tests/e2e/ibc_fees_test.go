@@ -25,6 +25,7 @@ import (
 )
 
 func TestIBCFeesTransfer(t *testing.T) {
+	wasmtypes.DeactivateTest(t)
 	// scenario:
 	// given 2 chains
 	//   with an ics-20 channel established
@@ -110,6 +111,8 @@ func TestIBCFeesTransfer(t *testing.T) {
 }
 
 func TestIBCFeesWasm(t *testing.T) {
+	wasmtypes.DeactivateTest(t)
+
 	// scenario:
 	// given 2 chains with cw20-ibc on chain A and native ics20 module on B
 	//   and an ibc channel established

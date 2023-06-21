@@ -13,6 +13,8 @@ option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the wasm Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // StoreCode to submit Wasm code to the system
   rpc StoreCode(MsgStoreCode) returns (MsgStoreCodeResponse);
   //  InstantiateContract creates a new smart contract instance for the given

@@ -34,7 +34,15 @@ func TestModuleMigrations(t *testing.T) {
 					CodeUploadAccess:             types.AllowNobody,
 					InstantiateDefaultPermission: types.AccessTypeNobody,
 				}
+
+				// upgrade code shipped with v0.40
+				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
 				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				keyTable := types.ParamKeyTable()
+				if !sp.HasKeyTable() {
+					sp.WithKeyTable(keyTable)
+				}
+
 				sp.SetParamSet(ctx, &params)
 			},
 			exp: types.Params{

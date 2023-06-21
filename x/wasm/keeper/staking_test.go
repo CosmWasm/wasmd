@@ -654,7 +654,7 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
-	addr := sdk.ValAddress(pubKey.Address())
+	valAddr := sdk.ValAddress(owner)
 
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	require.NoError(t, err)
@@ -669,13 +669,13 @@ func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Ke
 		},
 		MinSelfDelegation: sdkmath.OneInt(),
 		DelegatorAddress:  owner.String(),
-		ValidatorAddress:  addr.String(),
+		ValidatorAddress:  valAddr.String(),
 		Pubkey:            pkAny,
 		Value:             value,
 	}
 	_, err = stakingkeeper.NewMsgServerImpl(stakingKeeper).CreateValidator(ctx, msg)
 	require.NoError(t, err)
-	return addr
+	return valAddr
 }
 
 // this will commit the current set, update the block height and set historic info

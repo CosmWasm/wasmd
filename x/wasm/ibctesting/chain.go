@@ -369,6 +369,32 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 // number and updates the TestChain's headers. It returns the result and error if one
 // occurred.
 func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
+	rsp, err := chain.sendWithSigner(chain.SenderPrivKey, chain.SenderAccount, msgs...)
+	if err != nil {
+		return nil, err
+	}
+	// increment sequence for successful transaction execution
+	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+	require.NoError(chain.t, err)
+	return rsp, nil
+}
+
+// SendNonDefaultSenderMsgs is the same as SendMsgs but with a custom signer/account
+func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivKey, msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
+	require.NotEqual(chain.t, chain.SenderPrivKey, senderPrivKey, "use SendMsgs method")
+
+	addr := sdk.AccAddress(senderPrivKey.PubKey().Address().Bytes())
+	account := chain.App.GetAccountKeeper().GetAccount(chain.GetContext(), addr)
+	require.NotNil(chain.t, account)
+	return chain.sendWithSigner(senderPrivKey, account, msgs...)
+}
+
+// sendWithSigner is a generic helper to send messages
+func (chain *TestChain) sendWithSigner(
+	senderPrivKey cryptotypes.PrivKey,
+	senderAccount sdk.AccountI,
+	msgs ...sdk.Msg,
+) (*abci.ExecTxResult, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
@@ -378,22 +404,16 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 		chain.App.GetBaseApp(),
 		msgs,
 		chain.ChainID,
-		[]uint64{chain.SenderAccount.GetAccountNumber()},
-		[]uint64{chain.SenderAccount.GetSequence()},
+		[]uint64{senderAccount.GetAccountNumber()},
+		[]uint64{senderAccount.GetSequence()},
 		chain.CurrentHeader.GetTime(),
-		chain.SenderPrivKey,
+		senderPrivKey,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	chain.commitBlock(blockResp)
-
-	// increment sequence for successful transaction execution
-	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
-	if err != nil {
-		return nil, err
-	}
 
 	// update clocks
 	chain.Coordinator.IncrementTime()

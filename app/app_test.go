@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	dbm "github.com/cosmos/cosmos-db"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,7 +26,14 @@ func TestWasmdExport(t *testing.T) {
 		DB:      db,
 		AppOpts: simtestutil.NewAppOptionsWithFlagHome(t.TempDir()),
 	})
-	_, err := gapp.Commit()
+
+	// finalize block so we have CheckTx state set
+	_, err := gapp.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: 1,
+	})
+	require.NoError(t, err)
+
+	_, err = gapp.Commit()
 	require.NoError(t, err)
 
 	// Making a new app object with the db, so that initchain hasn't been called
