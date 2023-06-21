@@ -190,10 +190,10 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
+	codeID = k.mustAutoIncrementID(ctx, types.KeyLastCodeID)
 	k.Logger(ctx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
-	k.storeCodeInfo(ctx, codeID, codeInfo)
+	k.mustStoreCodeInfo(ctx, codeID, codeInfo)
 
 	evt := sdk.NewEvent(
 		types.EventTypeStoreCode,
@@ -208,7 +208,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	return codeID, checksum, nil
 }
 
-func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
+func (k Keeper) mustStoreCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo) {
 	store := k.storeService.OpenKVStore(ctx)
 	// 0x01 | codeID (uint64) -> ContractInfo
 	err := store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshal(&codeInfo))
@@ -1023,7 +1023,7 @@ func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAd
 	}
 
 	info.InstantiateConfig = newConfig
-	k.storeCodeInfo(ctx, codeID, *info)
+	k.mustStoreCodeInfo(ctx, codeID, *info)
 	evt := sdk.NewEvent(
 		types.EventTypeUpdateCodeAccessConfig,
 		sdk.NewAttribute(types.AttributeKeyCodePermission, newConfig.Permission.String()),
@@ -1087,7 +1087,7 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	}
 }
 
-func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) mustAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	store := k.storeService.OpenKVStore(ctx)
 	bz, err := store.Get(lastIDKey)
 	if err != nil {

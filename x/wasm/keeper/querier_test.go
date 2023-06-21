@@ -165,7 +165,7 @@ func TestQuerySmartContractState(t *testing.T) {
 func TestQuerySmartContractPanics(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	contractAddr := BuildContractAddressClassic(1, 1)
-	keepers.WasmKeeper.storeCodeInfo(ctx, 1, types.CodeInfo{})
+	keepers.WasmKeeper.mustStoreCodeInfo(ctx, 1, types.CodeInfo{})
 	keepers.WasmKeeper.mustStoreContractInfo(ctx, contractAddr, &types.ContractInfo{
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),

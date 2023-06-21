@@ -2152,7 +2152,7 @@ func TestSetAccessConfig(t *testing.T) {
 			err := k.SetParams(ctx, newParams)
 			require.NoError(t, err)
 
-			k.storeCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
+			k.mustStoreCodeInfo(ctx, codeID, types.NewCodeInfo(nil, creatorAddr, types.AllowNobody))
 			// when
 			gotErr := k.setAccessConfig(ctx, codeID, spec.caller, spec.newConfig, spec.authz)
 			if spec.expErr {
