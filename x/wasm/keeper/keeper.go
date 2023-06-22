@@ -1225,9 +1225,8 @@ func (k Keeper) iteratePinnedCodes(ctx sdk.Context, cb func(codeID uint64) bool)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
-	l := len(types.PinnedCodeIndexPrefix)
 	for ; iter.Valid(); iter.Next() {
-		codeID := sdk.BigEndianToUint64(iter.Key()[l:])
+		codeID := sdk.BigEndianToUint64(iter.Key())
 		if cb(codeID) {
 			return
 		}
