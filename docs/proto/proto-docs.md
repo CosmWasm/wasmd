@@ -1543,7 +1543,7 @@ MsgPruneWasmCodes is the MsgPruneWasmCodes request type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `authority` | [string](#string) |  | Authority is the address of the governance account. |
-| `latest_code_id` | [uint64](#uint64) |  | LatestCodeID references the greater limit until unpinned code ids will be pruned |
+| `latest_code_id` | [uint64](#uint64) |  | LatestCodeID is the upper limit so that all unpinned code ids code ids <= than latestCodeID will be pruned |
 
 
 

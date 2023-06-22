@@ -1293,8 +1293,8 @@ var xxx_messageInfo_MsgStoreAndInstantiateContractResponse proto.InternalMessage
 type MsgPruneWasmCodes struct {
 	// Authority is the address of the governance account.
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// LatestCodeID references the greater limit until unpinned
-	// code ids will be pruned
+	// LatestCodeID is the upper limit so that all unpinned code ids
+	// code ids <= than latestCodeID will be pruned
 	LatestCodeID uint64 `protobuf:"varint,2,opt,name=latest_code_id,json=latestCodeId,proto3" json:"latest_code_id,omitempty"`
 }
 

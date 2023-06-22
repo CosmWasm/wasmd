@@ -1219,36 +1219,61 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 	return result, nil
 }
 
-// PruneWasmCodes deletes code info for unpinned codes smaller than given code id.
-func (k Keeper) PruneWasmCodes(ctx sdk.Context, codeID uint64) error {
-	pinnedCodesHash := make(map[string]struct{}, 0)
-	unpinnedCodes := make([]uint64, 0)
+// iteratePinnedCodes iterates over all pinned code ids in ascending order
+func (k Keeper) iteratePinnedCodes(ctx sdk.Context, cb func(codeID uint64) bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PinnedCodeIndexPrefix)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
 
-	for c := uint64(1); c < codeID; c++ {
-		info := k.GetCodeInfo(ctx, c)
-		if info == nil {
-			continue
+	l := len(types.PinnedCodeIndexPrefix)
+	for ; iter.Valid(); iter.Next() {
+		codeID := sdk.BigEndianToUint64(iter.Key()[l:])
+		if cb(codeID) {
+			return
 		}
-
-		if k.IsPinnedCode(ctx, c) {
-			pinnedCodesHash[hex.Dump(info.CodeHash)] = struct{}{}
-			continue
-		}
-		unpinnedCodes = append(unpinnedCodes, c)
 	}
+}
 
-	for _, code := range unpinnedCodes {
-		info := k.GetCodeInfo(ctx, code)
-		if info == nil {
-			continue
+// PruneWasmCodes deletes code info for unpinned codes <= than latestCodeID
+func (k Keeper) PruneWasmCodes(ctx sdk.Context, latestCodeID uint64) error {
+	usedCodeIds := make(map[uint64]struct{}, 0)
+	usedChecksums := make(map[string]bool, 0)
+
+	// collect code ids used by contracts
+	k.IterateContractInfo(ctx, func(_ sdk.AccAddress, info types.ContractInfo) bool {
+		usedCodeIds[info.CodeID] = struct{}{}
+		return false
+	})
+
+	// collect pinned code ids
+	k.iteratePinnedCodes(ctx, func(codeID uint64) bool {
+		usedCodeIds[codeID] = struct{}{}
+		return false
+	})
+
+	// check if instances are used only by unpinned code ids <= latestCodeID
+	k.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
+		if _, ok := usedCodeIds[codeID]; !ok && codeID <= latestCodeID {
+			usedChecksums[string(info.CodeHash)] = false
+			return false
 		}
+		usedChecksums[string(info.CodeHash)] = true
+		return false
+	})
 
-		if _, found := pinnedCodesHash[hex.Dump(info.CodeHash)]; found {
-			continue
+	// delete all unpinned code ids <= latestCodeID and all the
+	// instances used only by unpinned code ids <= latestCodeID
+	k.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
+		if _, ok := usedCodeIds[codeID]; !ok && codeID <= latestCodeID {
+			k.deleteCodeInfo(ctx, codeID)
+			if !usedChecksums[string(info.CodeHash)] {
+				if err := k.wasmVM.RemoveCode(info.CodeHash); err != nil {
+					k.Logger(ctx).Error("failed to delete wasm file on disk", "checksum", info.CodeHash)
+				}
+			}
 		}
+		return false
+	})
 
-		k.deleteCodeInfo(ctx, code)
-		_ = k.wasmVM.RemoveCode(info.CodeHash)
-	}
 	return nil
 }
