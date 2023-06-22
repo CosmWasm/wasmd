@@ -453,6 +453,40 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 	assert.Equal(t, exp, got)
 }
 
+func TestBankQuerierAllMetadataPagination(t *testing.T) {
+	var requestedPagination *query.PageRequest
+	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+		// t.Log("test")
+		// t.Log(req == nil)
+		requestedPagination = req.Pagination
+		return &banktypes.QueryDenomsMetadataResponse{
+			Metadatas: []banktypes.Metadata{},
+			Pagination: &query.PageResponse{
+				NextKey: nil,
+			},
+		}, nil
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	pagination := &wasmvmtypes.PageRequest{
+		Key:   []byte("key"),
+		Limit: 10,
+	}
+	_, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{
+			Pagination: &wasmvmtypes.PageRequest{
+				Key:   []byte("key"),
+				Limit: 10,
+			},
+		},
+	})
+	require.NoError(t, gotErr)
+	require.Equal(t, requestedPagination.Key, pagination.Key)
+	require.Equal(t, requestedPagination.Limit, uint64(pagination.Limit))
+	require.Equal(t, requestedPagination.Reverse, pagination.Reverse)
+}
+
 func TestContractInfoWasmQuerier(t *testing.T) {
 	myValidContractAddr := keeper.RandomBech32AccountAddress(t)
 	myCreatorAddr := keeper.RandomBech32AccountAddress(t)
