@@ -1219,6 +1219,11 @@ func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAd
 	return result, nil
 }
 
+// GetByteCodeByChecksum queries the wasm code by checksum
+func (k Keeper) GetByteCodeByChecksum(ctx sdk.Context, checksum wasmvm.Checksum) ([]byte, error) {
+	return k.wasmVM.GetCode(checksum)
+}
+
 // iteratePinnedCodes iterates over all pinned code ids in ascending order
 func (k Keeper) iteratePinnedCodes(ctx sdk.Context, cb func(codeID uint64) bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PinnedCodeIndexPrefix)
@@ -1253,7 +1258,9 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, latestCodeID uint64) error {
 	// check if instances are used only by unpinned code ids <= latestCodeID
 	k.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
 		if _, ok := usedCodeIds[codeID]; !ok && codeID <= latestCodeID {
-			usedChecksums[string(info.CodeHash)] = false
+			if _, found := usedChecksums[string(info.CodeHash)]; !found {
+				usedChecksums[string(info.CodeHash)] = false
+			}
 			return false
 		}
 		usedChecksums[string(info.CodeHash)] = true

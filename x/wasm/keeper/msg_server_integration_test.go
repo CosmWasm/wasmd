@@ -894,7 +894,7 @@ func TestPruneWasmCodesAuth(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			codeID := setupWasmCode(t, authority, ctx, wasmApp, wasmContract, spec.pinCode)
+			codeID, _ := setupWasmCode(t, authority, ctx, wasmApp, wasmContract, spec.pinCode)
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
@@ -921,60 +921,74 @@ func TestPruneWasmCodesAuth(t *testing.T) {
 
 func TestPruneWasmCodes(t *testing.T) {
 	specs := map[string]struct {
-		wasmCode1  []byte
-		wasmCode2  []byte
-		pinCode1   bool
-		pinCode2   bool
-		expPruned1 bool
-		expPruned2 bool
+		wasmCode1          []byte
+		wasmCode2          []byte
+		pinCode1           bool
+		pinCode2           bool
+		expPrunedCodeInfo1 bool
+		expPrunedCodeInfo2 bool
+		expPrunedWasmCode1 bool
+		expPrunedWasmCode2 bool
 	}{
 		"duplicate codes - both pinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  wasmContract,
-			pinCode1:   true,
-			pinCode2:   true,
-			expPruned1: false,
-			expPruned2: false,
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           true,
+			pinCode2:           true,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
 		},
 		"duplicate codes - only one pinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  wasmContract,
-			pinCode1:   true,
-			pinCode2:   false,
-			expPruned1: false,
-			expPruned2: true,
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           true,
+			pinCode2:           false,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: true,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
 		},
 		"duplicate codes - both unpinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  wasmContract,
-			pinCode1:   false,
-			pinCode2:   false,
-			expPruned1: true,
-			expPruned2: true,
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           false,
+			pinCode2:           false,
+			expPrunedCodeInfo1: true,
+			expPrunedCodeInfo2: true,
+			expPrunedWasmCode1: true,
+			expPrunedWasmCode2: true,
 		},
 		"different codes - both pinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  hackatomContract,
-			pinCode1:   true,
-			pinCode2:   true,
-			expPruned1: false,
-			expPruned2: false,
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           true,
+			pinCode2:           true,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
 		},
 		"different codes - only one pinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  hackatomContract,
-			pinCode1:   true,
-			pinCode2:   false,
-			expPruned1: false,
-			expPruned2: true,
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           true,
+			pinCode2:           false,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: true,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: true,
 		},
 		"different codes - both unpinned": {
-			wasmCode1:  wasmContract,
-			wasmCode2:  hackatomContract,
-			pinCode1:   false,
-			pinCode2:   false,
-			expPruned1: true,
-			expPruned2: true,
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           false,
+			pinCode2:           false,
+			expPrunedCodeInfo1: true,
+			expPrunedCodeInfo2: true,
+			expPrunedWasmCode1: true,
+			expPrunedWasmCode2: true,
 		},
 	}
 	for name, spec := range specs {
@@ -983,8 +997,8 @@ func TestPruneWasmCodes(t *testing.T) {
 			ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 			authority := wasmApp.WasmKeeper.GetAuthority()
 
-			code1 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode1, spec.pinCode1)
-			code2 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode2, spec.pinCode2)
+			code1, checksum1 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode1, spec.pinCode1)
+			code2, checksum2 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode2, spec.pinCode2)
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
@@ -996,13 +1010,16 @@ func TestPruneWasmCodes(t *testing.T) {
 			// then
 			require.NoError(t, err)
 
-			assertPruning(t, ctx, wasmApp, code1, spec.expPruned1)
-			assertPruning(t, ctx, wasmApp, code2, spec.expPruned2)
+			assertCodeInfoPruning(t, ctx, wasmApp, code1, spec.expPrunedCodeInfo1)
+			assertWasmCodePruning(t, ctx, wasmApp, checksum1, spec.expPrunedWasmCode1)
+
+			assertCodeInfoPruning(t, ctx, wasmApp, code2, spec.expPrunedCodeInfo2)
+			assertWasmCodePruning(t, ctx, wasmApp, checksum2, spec.expPrunedWasmCode2)
 		})
 	}
 }
 
-func setupWasmCode(t *testing.T, authority string, ctx sdk.Context, wasmApp *app.WasmApp, wasmCode []byte, pin bool) uint64 {
+func setupWasmCode(t *testing.T, authority string, ctx sdk.Context, wasmApp *app.WasmApp, wasmCode []byte, pin bool) (uint64, []byte) {
 	// setup
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
@@ -1026,13 +1043,24 @@ func setupWasmCode(t *testing.T, authority string, ctx sdk.Context, wasmApp *app
 		require.NoError(t, err)
 		assert.True(t, wasmApp.WasmKeeper.IsPinnedCode(ctx, result.CodeID))
 	}
-	return result.CodeID
+	return result.CodeID, result.Checksum
 }
 
-func assertPruning(t *testing.T, ctx sdk.Context, wasmApp *app.WasmApp, codeID uint64, pruned bool) {
+func assertCodeInfoPruning(t *testing.T, ctx sdk.Context, wasmApp *app.WasmApp, codeID uint64, pruned bool) {
 	if pruned {
 		assert.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
 	} else {
 		assert.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, codeID))
+	}
+}
+
+func assertWasmCodePruning(t *testing.T, ctx sdk.Context, wasmApp *app.WasmApp, checksum []byte, pruned bool) {
+	wasmCode, err := wasmApp.WasmKeeper.GetByteCodeByChecksum(ctx, checksum)
+	if pruned {
+		assert.Nil(t, wasmCode)
+		assert.Error(t, err)
+	} else {
+		assert.NotNil(t, wasmCode)
+		assert.NoError(t, err)
 	}
 }
