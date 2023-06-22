@@ -386,7 +386,7 @@ func TestEncoding(t *testing.T) {
 		"distribution fund community pool": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
-				Distribution: &wasmvmtypes.DistributionMsg {
+				Distribution: &wasmvmtypes.DistributionMsg{
 					FundCommunityPool: &wasmvmtypes.FundCommunityPoolMsg{
 						Amount: wasmvmtypes.Coins{
 							wasmvmtypes.NewCoin(200, "stones"),

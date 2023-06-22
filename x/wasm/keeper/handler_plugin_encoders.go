@@ -146,13 +146,13 @@ func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionM
 		}
 		return []sdk.Msg{&withdrawMsg}, nil
 	case msg.FundCommunityPool != nil:
-		amt,  err := ConvertWasmCoinsToSdkCoins(msg.FundCommunityPool.Amount)
+		amt, err := ConvertWasmCoinsToSdkCoins(msg.FundCommunityPool.Amount)
 		if err != nil {
 			return nil, err
 		}
 		fundMsg := distributiontypes.MsgFundCommunityPool{
 			Depositor: sender.String(),
-			Amount: amt,
+			Amount:    amt,
 		}
 		return []sdk.Msg{&fundMsg}, nil
 	default:
