@@ -942,7 +942,7 @@ func TestPruneWasmCodes(t *testing.T) {
 			pinCode1:   true,
 			pinCode2:   false,
 			expPruned1: false,
-			expPruned2: false,
+			expPruned2: true,
 		},
 		"duplicate codes - both unpinned": {
 			wasmCode1:  wasmContract,
