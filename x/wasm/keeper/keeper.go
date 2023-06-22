@@ -12,18 +12,17 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
-
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -107,6 +106,7 @@ type Keeper struct {
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
+	params               collections.Item[types.Params]
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
@@ -122,31 +122,16 @@ func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 
 // GetParams returns the total set of wasm parameters.
 func (k Keeper) GetParams(ctx sdk.Context) types.Params {
-	var params types.Params
-	bz, err := k.storeService.OpenKVStore(ctx).Get(types.ParamsKey)
+	p, err := k.params.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
-	if bz == nil {
-		return params
-	}
-
-	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	return p
 }
 
 // SetParams sets all wasm parameters.
 func (k Keeper) SetParams(ctx sdk.Context, ps types.Params) error {
-	if err := ps.ValidateBasic(); err != nil {
-		return err
-	}
-
-	store := k.storeService.OpenKVStore(ctx)
-	bz, err := k.cdc.Marshal(&ps)
-	if err != nil {
-		return err
-	}
-	return store.Set(types.ParamsKey, bz)
+	return k.params.Set(ctx, ps)
 }
 
 // GetAuthority returns the x/wasm module's authority.

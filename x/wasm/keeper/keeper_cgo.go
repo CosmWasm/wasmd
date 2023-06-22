@@ -5,6 +5,8 @@ package keeper
 import (
 	"path/filepath"
 
+	"cosmossdk.io/collections"
+
 	corestoretypes "cosmossdk.io/core/store"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -40,6 +42,7 @@ func NewKeeper(
 		panic(err)
 	}
 
+	sb := collections.NewSchemaBuilder(storeService)
 	keeper := &Keeper{
 		storeService:         storeService,
 		cdc:                  cdc,
@@ -54,6 +57,7 @@ func NewKeeper(
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
+		params:               collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		authority:            authority,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)

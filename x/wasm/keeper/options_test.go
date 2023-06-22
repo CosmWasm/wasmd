@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	storetypes "cosmossdk.io/store/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
-
+	"github.com/cosmos/cosmos-sdk/runtime"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -19,6 +20,9 @@ import (
 )
 
 func TestConstructorOptions(t *testing.T) {
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	codec := MakeEncodingConfig(t).Marshaler
+
 	specs := map[string]struct {
 		srcOpt Option
 		verify func(*testing.T, Keeper)
@@ -113,7 +117,8 @@ func TestConstructorOptions(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
+			k := NewKeeper(codec, runtime.NewKVStoreService(storeKey), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", spec.srcOpt)
+
 			spec.verify(t, k)
 		})
 	}
