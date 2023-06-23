@@ -130,6 +130,8 @@ require (
 )
 
 replace (
+	//This replace is for backported FundCommunityPoolMsg in wasmvm
+	github.com/CosmWasm/wasmvm => github.com/classic-terra/wasmvm v1.1.1-terra.0
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
