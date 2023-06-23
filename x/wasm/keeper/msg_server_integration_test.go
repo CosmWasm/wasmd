@@ -933,146 +933,94 @@ func TestPruneWasmCodesErrors(t *testing.T) {
 
 func TestPruneWasmCodes(t *testing.T) {
 	specs := map[string]struct {
-		wasmCode1          []byte
-		wasmCode2          []byte
-		pinCode1           bool
-		pinCode2           bool
-		expPrunedCodeInfo1 bool
-		expPrunedCodeInfo2 bool
-		expPrunedWasmCode1 bool
-		expPrunedWasmCode2 bool
+		wasmCodes          [][]byte
+		pinCodes           []bool
+		expPrunedCodeInfos []bool
+		expPrunedWasmCodes []bool
 		maxCodeID          uint64
 	}{
 		"duplicate codes - both pinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           true,
-			pinCode2:           true,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{true, true},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          2,
 		},
 		"duplicate codes - only one pinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           true,
-			pinCode2:           false,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: true,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{true, false},
+			expPrunedCodeInfos: []bool{false, true},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          2,
 		},
 		"duplicate codes - both unpinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           false,
-			pinCode2:           false,
-			expPrunedCodeInfo1: true,
-			expPrunedCodeInfo2: true,
-			expPrunedWasmCode1: true,
-			expPrunedWasmCode2: true,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{false, false},
+			expPrunedCodeInfos: []bool{true, true},
+			expPrunedWasmCodes: []bool{true, true},
 			maxCodeID:          2,
 		},
 		"different codes - both pinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           true,
-			pinCode2:           true,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{true, true},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          2,
 		},
 		"different codes - only one pinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           true,
-			pinCode2:           false,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: true,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: true,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{true, false},
+			expPrunedCodeInfos: []bool{false, true},
+			expPrunedWasmCodes: []bool{false, true},
 			maxCodeID:          2,
 		},
 		"different codes - both unpinned - max code id 2": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           false,
-			pinCode2:           false,
-			expPrunedCodeInfo1: true,
-			expPrunedCodeInfo2: true,
-			expPrunedWasmCode1: true,
-			expPrunedWasmCode2: true,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{false, false},
+			expPrunedCodeInfos: []bool{true, true},
+			expPrunedWasmCodes: []bool{true, true},
 			maxCodeID:          2,
 		},
 		"duplicate codes - both pinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           true,
-			pinCode2:           true,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{true, true},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          1,
 		},
 		"duplicate codes - only one pinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           true,
-			pinCode2:           false,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{true, false},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          1,
 		},
 		"duplicate codes - both unpinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          wasmContract,
-			pinCode1:           false,
-			pinCode2:           false,
-			expPrunedCodeInfo1: true,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, wasmContract},
+			pinCodes:           []bool{false, false},
+			expPrunedCodeInfos: []bool{true, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          1,
 		},
 		"different codes - both pinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           true,
-			pinCode2:           true,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{true, true},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          1,
 		},
 		"different codes - only one pinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           true,
-			pinCode2:           false,
-			expPrunedCodeInfo1: false,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: false,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{true, false},
+			expPrunedCodeInfos: []bool{false, false},
+			expPrunedWasmCodes: []bool{false, false},
 			maxCodeID:          1,
 		},
 		"different codes - both unpinned - max code id 1": {
-			wasmCode1:          wasmContract,
-			wasmCode2:          hackatomContract,
-			pinCode1:           false,
-			pinCode2:           false,
-			expPrunedCodeInfo1: true,
-			expPrunedCodeInfo2: false,
-			expPrunedWasmCode1: true,
-			expPrunedWasmCode2: false,
+			wasmCodes:          [][]byte{wasmContract, hackatomContract},
+			pinCodes:           []bool{false, false},
+			expPrunedCodeInfos: []bool{true, false},
+			expPrunedWasmCodes: []bool{true, false},
 			maxCodeID:          1,
 		},
 	}
@@ -1082,8 +1030,8 @@ func TestPruneWasmCodes(t *testing.T) {
 			ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 			authority := wasmApp.WasmKeeper.GetAuthority()
 
-			code1, checksum1 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode1, spec.pinCode1)
-			code2, checksum2 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCode2, spec.pinCode2)
+			code1, checksum1 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCodes[0], spec.pinCodes[0])
+			code2, checksum2 := setupWasmCode(t, authority, ctx, wasmApp, spec.wasmCodes[1], spec.pinCodes[1])
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
@@ -1095,11 +1043,11 @@ func TestPruneWasmCodes(t *testing.T) {
 			// then
 			require.NoError(t, err)
 
-			assertCodeInfoPruning(t, ctx, wasmApp, code1, spec.expPrunedCodeInfo1)
-			assertWasmCodePruning(t, ctx, wasmApp, checksum1, spec.expPrunedWasmCode1)
+			assertCodeInfoPruning(t, ctx, wasmApp, code1, spec.expPrunedCodeInfos[0])
+			assertWasmCodePruning(t, ctx, wasmApp, checksum1, spec.expPrunedWasmCodes[0])
 
-			assertCodeInfoPruning(t, ctx, wasmApp, code2, spec.expPrunedCodeInfo2)
-			assertWasmCodePruning(t, ctx, wasmApp, checksum2, spec.expPrunedWasmCode2)
+			assertCodeInfoPruning(t, ctx, wasmApp, code2, spec.expPrunedCodeInfos[1])
+			assertWasmCodePruning(t, ctx, wasmApp, checksum2, spec.expPrunedWasmCodes[1])
 		})
 	}
 }
