@@ -454,11 +454,9 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 }
 
 func TestBankQuerierAllMetadataPagination(t *testing.T) {
-	var requestedPagination *query.PageRequest
+	var capturedPagination *query.PageRequest
 	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
-		// t.Log("test")
-		// t.Log(req == nil)
-		requestedPagination = req.Pagination
+		capturedPagination = req.Pagination
 		return &banktypes.QueryDenomsMetadataResponse{
 			Metadatas: []banktypes.Metadata{},
 			Pagination: &query.PageResponse{
@@ -469,10 +467,6 @@ func TestBankQuerierAllMetadataPagination(t *testing.T) {
 
 	ctx := sdk.Context{}
 	q := keeper.BankQuerier(mock)
-	pagination := &wasmvmtypes.PageRequest{
-		Key:   []byte("key"),
-		Limit: 10,
-	}
 	_, gotErr := q(ctx, &wasmvmtypes.BankQuery{
 		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{
 			Pagination: &wasmvmtypes.PageRequest{
@@ -482,9 +476,11 @@ func TestBankQuerierAllMetadataPagination(t *testing.T) {
 		},
 	})
 	require.NoError(t, gotErr)
-	require.Equal(t, requestedPagination.Key, pagination.Key)
-	require.Equal(t, requestedPagination.Limit, uint64(pagination.Limit))
-	require.Equal(t, requestedPagination.Reverse, pagination.Reverse)
+	exp := &query.PageRequest{
+		Key:   []byte("key"),
+		Limit: 10,
+	}
+	assert.Equal(t, exp, capturedPagination)
 }
 
 func TestContractInfoWasmQuerier(t *testing.T) {
