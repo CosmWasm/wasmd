@@ -854,7 +854,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 	}
 }
 
-func TestPruneWasmCodesAuth(t *testing.T) {
+func TestPruneWasmCodesAuthority(t *testing.T) {
 	wasmApp := app.Setup(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -898,8 +898,8 @@ func TestPruneWasmCodesAuth(t *testing.T) {
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
-				Authority:    spec.addr,
-				LatestCodeID: 5,
+				Authority: spec.addr,
+				MaxCodeID: 5,
 			}
 			_, err := wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
 
@@ -929,8 +929,9 @@ func TestPruneWasmCodes(t *testing.T) {
 		expPrunedCodeInfo2 bool
 		expPrunedWasmCode1 bool
 		expPrunedWasmCode2 bool
+		maxCodeID          uint64
 	}{
-		"duplicate codes - both pinned": {
+		"duplicate codes - both pinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          wasmContract,
 			pinCode1:           true,
@@ -939,8 +940,9 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: false,
 			expPrunedWasmCode1: false,
 			expPrunedWasmCode2: false,
+			maxCodeID:          2,
 		},
-		"duplicate codes - only one pinned": {
+		"duplicate codes - only one pinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          wasmContract,
 			pinCode1:           true,
@@ -949,8 +951,9 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: true,
 			expPrunedWasmCode1: false,
 			expPrunedWasmCode2: false,
+			maxCodeID:          2,
 		},
-		"duplicate codes - both unpinned": {
+		"duplicate codes - both unpinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          wasmContract,
 			pinCode1:           false,
@@ -959,8 +962,9 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: true,
 			expPrunedWasmCode1: true,
 			expPrunedWasmCode2: true,
+			maxCodeID:          2,
 		},
-		"different codes - both pinned": {
+		"different codes - both pinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          hackatomContract,
 			pinCode1:           true,
@@ -969,8 +973,9 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: false,
 			expPrunedWasmCode1: false,
 			expPrunedWasmCode2: false,
+			maxCodeID:          2,
 		},
-		"different codes - only one pinned": {
+		"different codes - only one pinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          hackatomContract,
 			pinCode1:           true,
@@ -979,8 +984,9 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: true,
 			expPrunedWasmCode1: false,
 			expPrunedWasmCode2: true,
+			maxCodeID:          2,
 		},
-		"different codes - both unpinned": {
+		"different codes - both unpinned - max code id 2": {
 			wasmCode1:          wasmContract,
 			wasmCode2:          hackatomContract,
 			pinCode1:           false,
@@ -989,6 +995,73 @@ func TestPruneWasmCodes(t *testing.T) {
 			expPrunedCodeInfo2: true,
 			expPrunedWasmCode1: true,
 			expPrunedWasmCode2: true,
+			maxCodeID:          2,
+		},
+		"duplicate codes - both pinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           true,
+			pinCode2:           true,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
+		},
+		"duplicate codes - only one pinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           true,
+			pinCode2:           false,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
+		},
+		"duplicate codes - both unpinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          wasmContract,
+			pinCode1:           false,
+			pinCode2:           false,
+			expPrunedCodeInfo1: true,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
+		},
+		"different codes - both pinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           true,
+			pinCode2:           true,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
+		},
+		"different codes - only one pinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           true,
+			pinCode2:           false,
+			expPrunedCodeInfo1: false,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: false,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
+		},
+		"different codes - both unpinned - max code id 1": {
+			wasmCode1:          wasmContract,
+			wasmCode2:          hackatomContract,
+			pinCode1:           false,
+			pinCode2:           false,
+			expPrunedCodeInfo1: true,
+			expPrunedCodeInfo2: false,
+			expPrunedWasmCode1: true,
+			expPrunedWasmCode2: false,
+			maxCodeID:          1,
 		},
 	}
 	for name, spec := range specs {
@@ -1002,8 +1075,8 @@ func TestPruneWasmCodes(t *testing.T) {
 
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
-				Authority:    authority,
-				LatestCodeID: 5,
+				Authority: authority,
+				MaxCodeID: spec.maxCodeID,
 			}
 			_, err := wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
 

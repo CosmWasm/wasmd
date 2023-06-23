@@ -640,8 +640,8 @@ func (msg MsgPruneWasmCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
 		return errorsmod.Wrap(err, "authority")
 	}
-	if msg.LatestCodeID == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "latest code id is required")
+	if msg.MaxCodeID == 0 {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "max code id is required")
 	}
 	return nil
 }

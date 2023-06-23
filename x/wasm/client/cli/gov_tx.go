@@ -804,8 +804,8 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 
 func ProposalPruneWasmCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prune-wasm-codes [latest-code-id] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a prune wasm codes proposal for pruning unpinned wasm codes smaller than latest-code-id",
+		Use:   "prune-wasm-codes [max-code-id] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a prune wasm codes proposal for pruning unpinned wasm codes smaller than max-code-id",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
@@ -827,8 +827,8 @@ func ProposalPruneWasmCodesCmd() *cobra.Command {
 			}
 
 			msg := types.MsgPruneWasmCodes{
-				Authority:    authority,
-				LatestCodeID: codeID,
+				Authority: authority,
+				MaxCodeID: codeID,
 			}
 
 			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)

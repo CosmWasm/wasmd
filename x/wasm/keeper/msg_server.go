@@ -364,7 +364,7 @@ func (m msgServer) selectAuthorizationPolicy(actor string) AuthorizationPolicy {
 	return DefaultAuthorizationPolicy{}
 }
 
-// PruneWasmCodes prunes unpinned code ids smaller than given code id.
+// PruneWasmCodes prunes unpinned code ids smaller than max code id.
 func (m msgServer) PruneWasmCodes(goCtx context.Context, req *types.MsgPruneWasmCodes) (*types.MsgPruneWasmCodesResponse, error) {
 	if err := req.ValidateBasic(); err != nil {
 		return nil, err
@@ -375,7 +375,7 @@ func (m msgServer) PruneWasmCodes(goCtx context.Context, req *types.MsgPruneWasm
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	err := m.keeper.PruneWasmCodes(ctx, req.LatestCodeID)
+	err := m.keeper.PruneWasmCodes(ctx, req.MaxCodeID)
 	if err != nil {
 		return nil, err
 	}

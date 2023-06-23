@@ -1139,20 +1139,20 @@ func TestMsgPruneWasmCodesValidation(t *testing.T) {
 	}{
 		"all good": {
 			src: MsgPruneWasmCodes{
-				Authority:    goodAddress,
-				LatestCodeID: 5,
+				Authority: goodAddress,
+				MaxCodeID: 5,
 			},
 		},
 		"bad authority": {
 			src: MsgPruneWasmCodes{
-				Authority:    badAddress,
-				LatestCodeID: 5,
+				Authority: badAddress,
+				MaxCodeID: 5,
 			},
 			expErr: true,
 		},
 		"empty authority": {
 			src: MsgPruneWasmCodes{
-				LatestCodeID: 5,
+				MaxCodeID: 5,
 			},
 			expErr: true,
 		},

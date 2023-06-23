@@ -1238,10 +1238,10 @@ func (k Keeper) iteratePinnedCodes(ctx sdk.Context, cb func(codeID uint64) bool)
 	}
 }
 
-// PruneWasmCodes deletes code info for unpinned codes <= than latestCodeID
-func (k Keeper) PruneWasmCodes(ctx sdk.Context, latestCodeID uint64) error {
-	usedCodeIds := make(map[uint64]struct{}, 0)
-	usedChecksums := make(map[string]bool, 0)
+// PruneWasmCodes deletes code info for unpinned codes <= than maxCodeID
+func (k Keeper) PruneWasmCodes(ctx sdk.Context, maxCodeID uint64) error {
+	usedCodeIds := make(map[uint64]struct{})
+	usedChecksums := make(map[string]bool)
 
 	// collect code ids used by contracts
 	k.IterateContractInfo(ctx, func(_ sdk.AccAddress, info types.ContractInfo) bool {
@@ -1255,10 +1255,10 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, latestCodeID uint64) error {
 		return false
 	})
 
-	// check if instances are used only by unpinned code ids <= latestCodeID
+	// check if instances are used only by unpinned code ids <= maxCodeID
 	k.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
-		if _, ok := usedCodeIds[codeID]; !ok && codeID <= latestCodeID {
-			if _, found := usedChecksums[string(info.CodeHash)]; !found {
+		if _, ok := usedCodeIds[codeID]; !ok && codeID <= maxCodeID {
+			if !usedChecksums[string(info.CodeHash)] {
 				usedChecksums[string(info.CodeHash)] = false
 			}
 			return false
@@ -1267,19 +1267,28 @@ func (k Keeper) PruneWasmCodes(ctx sdk.Context, latestCodeID uint64) error {
 		return false
 	})
 
-	// delete all unpinned code ids <= latestCodeID and all the
-	// instances used only by unpinned code ids <= latestCodeID
+	var (
+		deletedCodeInfoCounter int
+		deletedWasmFileCounter int
+	)
+	// delete all unpinned code ids <= maxCodeID and all the
+	// instances used only by unpinned code ids <= maxCodeID
 	k.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
-		if _, ok := usedCodeIds[codeID]; !ok && codeID <= latestCodeID {
+		if _, ok := usedCodeIds[codeID]; !ok && codeID <= maxCodeID {
 			k.deleteCodeInfo(ctx, codeID)
+			deletedCodeInfoCounter++
 			if !usedChecksums[string(info.CodeHash)] {
 				if err := k.wasmVM.RemoveCode(info.CodeHash); err != nil {
 					k.Logger(ctx).Error("failed to delete wasm file on disk", "checksum", info.CodeHash)
+				} else {
+					deletedWasmFileCounter++
 				}
 			}
 		}
 		return false
 	})
+	k.Logger(ctx).Info("deleted unused wasm files", "total", deletedWasmFileCounter)
+	k.Logger(ctx).Info("deleted unused code infos", "total", deletedCodeInfoCounter)
 
 	return nil
 }
