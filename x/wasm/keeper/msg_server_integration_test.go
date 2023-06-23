@@ -854,7 +854,7 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 	}
 }
 
-func TestPruneWasmCodesAuthority(t *testing.T) {
+func TestPruneWasmCodesErrors(t *testing.T) {
 	wasmApp := app.Setup(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -866,28 +866,40 @@ func TestPruneWasmCodesAuthority(t *testing.T) {
 	specs := map[string]struct {
 		addr      string
 		pinCode   bool
+		maxCodeID uint64
 		expPruned bool
 		expErr    bool
 	}{
 		"authority can prune unpinned code": {
 			addr:      authority,
 			pinCode:   false,
+			maxCodeID: 5,
 			expPruned: true,
 		},
 		"authority cannot prune pinned code": {
 			addr:      authority,
 			pinCode:   true,
+			maxCodeID: 5,
 			expPruned: false,
 		},
 		"other address cannot prune unpinned code": {
 			addr:      myAddress.String(),
 			pinCode:   false,
+			maxCodeID: 5,
 			expPruned: false,
 			expErr:    true,
 		},
 		"other address cannot prune pinned code": {
 			addr:      myAddress.String(),
 			pinCode:   true,
+			maxCodeID: 5,
+			expPruned: false,
+			expErr:    true,
+		},
+		"invalid maxCodeID": {
+			addr:      authority,
+			pinCode:   false,
+			maxCodeID: 0,
 			expPruned: false,
 			expErr:    true,
 		},
@@ -899,7 +911,7 @@ func TestPruneWasmCodesAuthority(t *testing.T) {
 			// when
 			msgPruneCodes := &types.MsgPruneWasmCodes{
 				Authority: spec.addr,
-				MaxCodeID: 5,
+				MaxCodeID: spec.maxCodeID,
 			}
 			_, err := wasmApp.MsgServiceRouter().Handler(msgPruneCodes)(ctx, msgPruneCodes)
 
