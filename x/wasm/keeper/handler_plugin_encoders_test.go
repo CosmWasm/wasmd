@@ -356,8 +356,8 @@ func TestEncoding(t *testing.T) {
 				Distribution: &wasmvmtypes.DistributionMsg{
 					FundCommunityPool: &wasmvmtypes.FundCommunityPoolMsg{
 						Amount: wasmvmtypes.Coins{
-							wasmvmtypes.NewCoin(200, "stones"),
 							wasmvmtypes.NewCoin(200, "feathers"),
+							wasmvmtypes.NewCoin(200, "stones"),
 						},
 					},
 				},
