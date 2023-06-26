@@ -33,6 +33,7 @@ require (
 require (
 	cosmossdk.io/api v0.4.2
 	cosmossdk.io/client/v2 v2.0.0-20230615173548-5385116abac4
+	cosmossdk.io/collections v0.2.0
 	cosmossdk.io/core v0.8.0
 	cosmossdk.io/errors v1.0.0-beta.7.0.20230524212735-6cabb6aa5741
 	cosmossdk.io/log v1.1.0
@@ -59,7 +60,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.30.0 // indirect
-	cosmossdk.io/collections v0.2.0 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -223,6 +223,6 @@ replace (
 	cosmossdk.io/x/upgrade => ../../cosmos/cosmos-sdk/x/upgrade
 	// temporary redirects
 	// link ibc-go to notionals fork until upgraded
-	github.com/cosmos/ibc-go/modules/capability => github.com/notional-labs/ibc-go/modules/capability v0.0.0-20230616092119-6e16d6223af4
-	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230619125955-e857029fe4b0
+	github.com/cosmos/ibc-go/modules/capability => github.com/notional-labs/ibc-go/modules/capability v0.0.0-20230623191109-7ff3d4cca0a0
+	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230623191109-7ff3d4cca0a0
 )
