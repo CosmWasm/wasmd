@@ -8,7 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
 )
 
 // BenchmarkVerification benchmarks secp256k1 verification which is 1000 gas based on cpu time.
@@ -98,5 +100,28 @@ func BenchmarkCompilation(b *testing.B) {
 				_ = StoreExampleContract(b, ctx, keepers, spec.wasmFile)
 			}
 		})
+	}
+}
+
+// Calculate the time it takes to prune about 100k wasm codes
+func BenchmarkPruningWasmCodes(b *testing.B) {
+	mockWasmVM := wasmtesting.MockWasmer{
+		RemoveCodeFn: func(checksum wasmvm.Checksum) error {
+			return nil
+		},
+	}
+	wasmtesting.MakeInstantiable(&mockWasmVM)
+	ctx, keepers := CreateTestInput(b, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
+
+	for i := 0; i < 100000; i++ {
+		contract := StoreRandomContract(b, ctx, keepers, &mockWasmVM)
+		if i%10 == 0 {
+			keepers.ContractKeeper.PinCode(ctx, contract.CodeID)
+		}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		keepers.WasmKeeper.PruneWasmCodes(ctx, 100000)
 	}
 }

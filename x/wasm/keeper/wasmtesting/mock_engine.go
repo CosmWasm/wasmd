@@ -167,7 +167,7 @@ func (m *MockWasmer) Unpin(checksum wasmvm.Checksum) error {
 }
 
 func (m *MockWasmer) RemoveCode(checksum wasmvm.Checksum) error {
-	if m.UnpinFn == nil {
+	if m.RemoveCodeFn == nil {
 		panic("not supposed to be called!")
 	}
 	return m.RemoveCodeFn(checksum)
