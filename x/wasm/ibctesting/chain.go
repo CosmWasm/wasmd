@@ -398,7 +398,7 @@ func (chain *TestChain) sendWithSigner(
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, _, blockResp, err := app.SignAndDeliverWithoutCommit(
+	blockResp, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -422,6 +422,9 @@ func (chain *TestChain) sendWithSigner(
 	txResult := blockResp.TxResults[0]
 	chain.CaptureIBCEvents(txResult)
 
+	if txResult.Code != 0 {
+		return txResult, fmt.Errorf("%s/%d: %q", txResult.Codespace, txResult.Code, txResult.Log)
+	}
 	return txResult, nil
 }
 

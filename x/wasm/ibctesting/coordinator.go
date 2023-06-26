@@ -116,8 +116,6 @@ func (coord *Coordinator) SetupConnections(path *Path) {
 func (coord *Coordinator) CreateConnections(path *Path) {
 	err := path.EndpointA.ConnOpenInit()
 	require.NoError(coord.t, err)
-	coord.UpdateTimeForChain(path.EndpointB.Chain)
-	coord.CommitNBlocks(path.EndpointB.Chain, 1)
 
 	err = path.EndpointB.ConnOpenTry()
 	require.NoError(coord.t, err)

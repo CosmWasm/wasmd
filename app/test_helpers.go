@@ -292,7 +292,7 @@ func NewTestNetworkFixture() network.TestFixture {
 }
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
-func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (sdk.GasInfo, *sdk.Result, *abci.ResponseFinalizeBlock, error) {
+func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, chainID string, accNums, accSeqs []uint64, blockTime time.Time, priv ...cryptotypes.PrivKey) (*abci.ResponseFinalizeBlock, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
@@ -309,20 +309,11 @@ func SignAndDeliverWithoutCommit(t *testing.T, txCfg client.TxConfig, app *bam.B
 	bz, err := txCfg.TxEncoder()(tx)
 	require.NoError(t, err)
 
-	gas, result, err := app.Simulate(bz)
-	if err != nil {
-		return gas, nil, nil, err
-	}
-
-	xxx, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+	return app.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height: app.LastBlockHeight() + 1,
 		Time:   blockTime,
 		Txs:    [][]byte{bz},
 	})
-	if err != nil {
-		return sdk.GasInfo{}, nil, nil, err
-	}
-	return gas, result, xxx, err
 }
 
 // GenesisStateWithValSet returns a new genesis state with the validator set
