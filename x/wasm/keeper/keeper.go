@@ -623,8 +623,11 @@ func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAdd
 	iter := prefixStore.ReverseIterator(nil, nil)
 	defer iter.Close()
 
-	if iter.Valid() {
-		pos = sdk.BigEndianToUint64(iter.Key())
+	for ; iter.Valid(); iter.Next() {
+		if len(iter.Key()) == 8 { // add extra safety in a mixed contract length environment
+			pos = sdk.BigEndianToUint64(iter.Key())
+			break
+		}
 	}
 	// then store with incrementing position
 	for _, e := range newEntries {
@@ -641,6 +644,10 @@ func (k Keeper) GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
+		if len(iter.Key()) != 8 { // add extra safety in a mixed contract length environment
+			continue
+		}
+
 		var e types.ContractCodeHistoryEntry
 		k.cdc.MustUnmarshal(iter.Value(), &e)
 		r = append(r, e)
@@ -655,12 +662,14 @@ func (k Keeper) getLastContractHistoryEntry(ctx sdk.Context, contractAddr sdk.Ac
 	defer iter.Close()
 
 	var r types.ContractCodeHistoryEntry
-	if !iter.Valid() {
-		// all contracts have a history
-		panic(fmt.Sprintf("no history for %s", contractAddr.String()))
+	for ; iter.Valid(); iter.Next() {
+		if len(iter.Key()) == 8 { // add extra safety in a mixed contract length environment
+			k.cdc.MustUnmarshal(iter.Value(), &r)
+			return r
+		}
 	}
-	k.cdc.MustUnmarshal(iter.Value(), &r)
-	return r
+	// all contracts have a history
+	panic(fmt.Sprintf("no history for %s", contractAddr.String()))
 }
 
 // QuerySmart queries the smart contract itself.
