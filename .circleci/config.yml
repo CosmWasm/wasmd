@@ -108,7 +108,7 @@ jobs:
           name: Benchmarks for gas calculations
           command: |
             cd ./x/wasm/keeper
-            go test -bench .
+            go test -timeout 30m -bench .
       - run:
           name: Benchmarks to compare with native modules
           command: |
