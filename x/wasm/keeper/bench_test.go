@@ -6,7 +6,9 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -105,20 +107,134 @@ func BenchmarkCompilation(b *testing.B) {
 
 // Calculate the time it takes to prune about 100k wasm codes
 func BenchmarkPruningWasmCodes(b *testing.B) {
-	mockWasmVM := wasmtesting.MockWasmer{
-		RemoveCodeFn: func(checksum wasmvm.Checksum) error {
-			return nil
+	specs := map[string]struct {
+		db             func() dbm.DB
+		setupContracts func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine)
+	}{
+		"100k codes unpinned - memory db": {
+			db: func() dbm.DB { return dbm.NewMemDB() },
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					_ = StoreRandomContract(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes unpinned - level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					_ = StoreRandomContract(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 20% instantiated - memory db": {
+			db: func() dbm.DB { return dbm.NewMemDB() },
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%5 == 0 {
+						_ = SeedNewContractInstance(b, ctx, keepers, mock)
+						continue
+					}
+					_ = StoreRandomContract(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 20% instantiated - level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%5 == 0 {
+						_ = SeedNewContractInstance(b, ctx, keepers, mock)
+						continue
+					}
+					_ = StoreRandomContract(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 50% instantiated - memory db": {
+			db: func() dbm.DB { return dbm.NewMemDB() },
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%2 == 0 {
+						_ = StoreRandomContract(b, ctx, keepers, mock)
+						continue
+					}
+					_ = SeedNewContractInstance(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 50% instantiated - level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%2 == 0 {
+						_ = StoreRandomContract(b, ctx, keepers, mock)
+						continue
+					}
+					_ = SeedNewContractInstance(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 80% instantiated - memory db": {
+			db: func() dbm.DB { return dbm.NewMemDB() },
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%5 == 0 {
+						_ = StoreRandomContract(b, ctx, keepers, mock)
+						continue
+					}
+					_ = SeedNewContractInstance(b, ctx, keepers, mock)
+				}
+			},
+		},
+		"100k codes - 80% instantiated - level db": {
+			db: func() dbm.DB {
+				levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
+				require.NoError(b, err)
+				return levelDB
+			},
+			setupContracts: func(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) {
+				for i := 0; i < 100000; i++ {
+					if i%5 == 0 {
+						_ = StoreRandomContract(b, ctx, keepers, mock)
+						continue
+					}
+					_ = SeedNewContractInstance(b, ctx, keepers, mock)
+				}
+			},
 		},
 	}
-	wasmtesting.MakeInstantiable(&mockWasmVM)
-	ctx, keepers := CreateTestInput(b, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 
-	for i := 0; i < 100000; i++ {
-		_ = StoreRandomContract(b, ctx, keepers, &mockWasmVM)
-	}
+	for name, spec := range specs {
+		b.Run(name, func(b *testing.B) {
+			mockWasmVM := wasmtesting.MockWasmer{
+				RemoveCodeFn: func(checksum wasmvm.Checksum) error {
+					return nil
+				},
+			}
+			wasmtesting.MakeInstantiable(&mockWasmVM)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = keepers.WasmKeeper.PruneWasmCodes(ctx, 100000)
+			wasmConfig := types.WasmConfig{MemoryCacheSize: 0}
+			ctx, keepers := createTestInput(b, false, AvailableCapabilities, wasmConfig, spec.db(), WithWasmEngine(&mockWasmVM))
+
+			spec.setupContracts(b, ctx, keepers, &mockWasmVM)
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_ = keepers.WasmKeeper.PruneWasmCodes(ctx, 100000)
+			}
+		})
 	}
 }
