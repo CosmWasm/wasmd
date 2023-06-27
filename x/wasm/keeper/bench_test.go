@@ -114,14 +114,11 @@ func BenchmarkPruningWasmCodes(b *testing.B) {
 	ctx, keepers := CreateTestInput(b, false, AvailableCapabilities, WithWasmEngine(&mockWasmVM))
 
 	for i := 0; i < 100000; i++ {
-		contract := StoreRandomContract(b, ctx, keepers, &mockWasmVM)
-		if i%10 == 0 {
-			keepers.ContractKeeper.PinCode(ctx, contract.CodeID)
-		}
+		_ = StoreRandomContract(b, ctx, keepers, &mockWasmVM)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		keepers.WasmKeeper.PruneWasmCodes(ctx, 100000)
+		_ = keepers.WasmKeeper.PruneWasmCodes(ctx, 100000)
 	}
 }
