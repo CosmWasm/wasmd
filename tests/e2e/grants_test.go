@@ -108,7 +108,7 @@ func TestGrants(t *testing.T) {
 
 			// then
 			if spec.expErr != nil {
-				require.True(t, spec.expErr.Is(gotErr))
+				require.ErrorContains(t, gotErr, fmt.Sprintf("%s/%d:", spec.expErr.Codespace(), spec.expErr.ABCICode()))
 				assert.Equal(t, sdkmath.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return

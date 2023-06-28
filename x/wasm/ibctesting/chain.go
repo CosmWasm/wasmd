@@ -369,10 +369,9 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 // number and updates the TestChain's headers. It returns the result and error if one
 // occurred.
 func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
-	rsp, err := chain.sendWithSigner(chain.SenderPrivKey, chain.SenderAccount, msgs...)
-	// increment sequence for successful or failed transaction execution
+	rsp, gotErr := chain.sendWithSigner(chain.SenderPrivKey, chain.SenderAccount, msgs...)
 	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
-	return rsp, err
+	return rsp, gotErr
 }
 
 // SendNonDefaultSenderMsgs is the same as SendMsgs but with a custom signer/account
@@ -407,9 +406,6 @@ func (chain *TestChain) sendWithSigner(
 	)
 
 	chain.commitBlock(blockResp)
-
-	// increment sequence for successful and failed transaction execution
-	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
 	chain.Coordinator.IncrementTime()
 
 	if gotErr != nil {
