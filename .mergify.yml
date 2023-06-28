@@ -20,3 +20,11 @@ pull_request_rules:
       backport:
         branches:
           - releases/v0.3x
+  - name: backport patches to sdk50 development branch
+    conditions:
+      - base=main
+      - label=backport/dev-sdk50
+    actions:
+      backport:
+        branches:
+          - develop_sdk50
