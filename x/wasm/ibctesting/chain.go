@@ -370,13 +370,9 @@ func (chain *TestChain) sendMsgs(msgs ...sdk.Msg) error {
 // occurred.
 func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*abci.ExecTxResult, error) {
 	rsp, err := chain.sendWithSigner(chain.SenderPrivKey, chain.SenderAccount, msgs...)
-	if err != nil {
-		return nil, err
-	}
-	// increment sequence for successful transaction execution
-	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
-	require.NoError(chain.t, err)
-	return rsp, nil
+	// increment sequence for successful or failed transaction execution
+	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
+	return rsp, err
 }
 
 // SendNonDefaultSenderMsgs is the same as SendMsgs but with a custom signer/account
@@ -398,7 +394,7 @@ func (chain *TestChain) sendWithSigner(
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	blockResp, err := app.SignAndDeliverWithoutCommit(
+	blockResp, gotErr := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -409,22 +405,24 @@ func (chain *TestChain) sendWithSigner(
 		chain.CurrentHeader.GetTime(),
 		senderPrivKey,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	chain.commitBlock(blockResp)
 
-	// update clocks
+	// increment sequence for successful and failed transaction execution
+	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
 	chain.Coordinator.IncrementTime()
+
+	if gotErr != nil {
+		return nil, gotErr
+	}
 
 	require.Len(chain.t, blockResp.TxResults, 1)
 	txResult := blockResp.TxResults[0]
-	chain.CaptureIBCEvents(txResult)
-
 	if txResult.Code != 0 {
 		return txResult, fmt.Errorf("%s/%d: %q", txResult.Codespace, txResult.Code, txResult.Log)
 	}
+
+	chain.CaptureIBCEvents(txResult)
 	return txResult, nil
 }
 
