@@ -358,7 +358,7 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
 
-	_, r, err := app.SignAndDeliverWithoutCommit(
+	_, r, gotErr := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
@@ -369,20 +369,17 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		[]uint64{chain.SenderAccount.GetSequence()},
 		chain.SenderPrivKey,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	// NextBlock calls app.Commit()
 	chain.NextBlock()
 
-	// increment sequence for successful transaction execution
-	err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
-	if err != nil {
-		return nil, err
-	}
-
+	// increment sequence for successful and failed transaction execution
+	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
 	chain.Coordinator.IncrementTime()
+
+	if gotErr != nil {
+		return nil, gotErr
+	}
 
 	chain.CaptureIBCEvents(r)
 
