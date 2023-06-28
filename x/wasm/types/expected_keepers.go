@@ -7,9 +7,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
@@ -74,7 +74,7 @@ type StakingKeeper interface {
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
-	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
+	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilityibctypes.Capability) error
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 	IterateChannels(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
 	SetChannel(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
@@ -93,7 +93,7 @@ type ICS4Wrapper interface {
 	// is returned if one occurs.
 	SendPacket(
 		ctx sdk.Context,
-		channelCap *capabilitytypes.Capability,
+		channelCap *capabilityibctypes.Capability,
 		sourcePort string,
 		sourceChannel string,
 		timeoutHeight clienttypes.Height,
@@ -114,13 +114,13 @@ type ConnectionKeeper interface {
 
 // PortKeeper defines the expected IBC port keeper
 type PortKeeper interface {
-	BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability
+	BindPort(ctx sdk.Context, portID string) *capabilityibctypes.Capability
 }
 
 type CapabilityKeeper interface {
-	GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
-	AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool
+	GetCapability(ctx sdk.Context, name string) (*capabilityibctypes.Capability, bool)
+	ClaimCapability(ctx sdk.Context, cap *capabilityibctypes.Capability, name string) error
+	AuthenticateCapability(ctx sdk.Context, capability *capabilityibctypes.Capability, name string) bool
 }
 
 // ICS20TransferPortSource is a subset of the ibc transfer keeper.
