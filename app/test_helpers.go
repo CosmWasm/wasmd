@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-
 	"cosmossdk.io/math"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -40,6 +38,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 

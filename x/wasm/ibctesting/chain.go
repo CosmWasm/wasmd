@@ -315,10 +315,10 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 // of the next block being created. This follows the Tendermint protocol of applying valset changes
 // returned on block `n` to the validators of block `n+2`.
 // It calls BeginBlock with the new block created before returning.
-func (chain *TestChain) NextBlock() {
+func (chain *TestChain) NextBlock() abci.ResponseEndBlock {
 	res := chain.App.EndBlock(abci.RequestEndBlock{Height: chain.CurrentHeader.Height})
-
 	chain.App.Commit()
+	chain.CaptureIBCEvents(res.Events)
 
 	// set the last header to the current header
 	// use nil trusted fields
@@ -355,6 +355,7 @@ func (chain *TestChain) NextBlock() {
 			Votes: votes,
 		},
 	})
+	return res
 }
 
 // sendMsgs delivers a transaction through the application without returning the result.
@@ -392,13 +393,13 @@ func (chain *TestChain) SendMsgs(msgs ...sdk.Msg) (*sdk.Result, error) {
 		return nil, gotErr
 	}
 
-	chain.CaptureIBCEvents(r)
+	chain.CaptureIBCEvents(r.Events)
 
 	return r, nil
 }
 
-func (chain *TestChain) CaptureIBCEvents(r *sdk.Result) {
-	toSend := GetSendPackets(r.Events)
+func (chain *TestChain) CaptureIBCEvents(evts []abci.Event) {
+	toSend := GetSendPackets(evts)
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
 		chain.PendingSendPackets = append(chain.PendingSendPackets, toSend...)
