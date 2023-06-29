@@ -23,6 +23,51 @@ func TestUncompress(t *testing.T) {
 	wasmGzipped, err := os.ReadFile("../keeper/testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
+	specs := map[string]struct {
+		src       []byte
+		expError  error
+		expResult []byte
+	}{
+		"handle wasm compressed": {
+			src:       wasmGzipped,
+			expResult: wasmRaw,
+		},
+		"handle gzip identifier only": {
+			src:      gzipIdent,
+			expError: io.ErrUnexpectedEOF,
+		},
+		"handle broken gzip": {
+			src:      append(gzipIdent, byte(0x1)),
+			expError: io.ErrUnexpectedEOF,
+		},
+		"handle incomplete gzip": {
+			src:      wasmGzipped[:len(wasmGzipped)-5],
+			expError: io.ErrUnexpectedEOF,
+		},
+		"handle limit gzip output": {
+			src:       asGzip(bytes.Repeat([]byte{0x1}, 400_000)),
+			expResult: bytes.Repeat([]byte{0x1}, 400_000),
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			r, err := Uncompress(spec.src)
+			require.True(t, errors.Is(spec.expError, err), "exp %v got %+v", spec.expError, err)
+			if spec.expError != nil {
+				return
+			}
+			assert.Equal(t, spec.expResult, r)
+		})
+	}
+}
+
+func TestUncompressWithLimit(t *testing.T) {
+	wasmRaw, err := os.ReadFile("../keeper/testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	wasmGzipped, err := os.ReadFile("../keeper/testdata/hackatom.wasm.gzip")
+	require.NoError(t, err)
+
 	const maxSize = 400_000
 
 	specs := map[string]struct {
@@ -61,7 +106,7 @@ func TestUncompress(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			r, err := Uncompress(spec.src, maxSize)
+			r, err := UncompressWithLimit(spec.src, maxSize)
 			require.True(t, errors.Is(spec.expError, err), "exp %v got %+v", spec.expError, err)
 			if spec.expError != nil {
 				return

@@ -99,7 +99,7 @@ func restoreV1(_ sdk.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")
 	}
-	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
+	wasmCode, err := ioutils.Uncompress(compressedCode)
 	if err != nil {
 		return errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
