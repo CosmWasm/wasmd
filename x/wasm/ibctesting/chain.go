@@ -342,7 +342,19 @@ func (chain *TestChain) NextBlock() {
 		ProposerAddress:    chain.CurrentHeader.ProposerAddress,
 	}
 
-	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
+	votes := make([]abci.VoteInfo, len(chain.Vals.Validators))
+	for i, v := range chain.Vals.Validators {
+		votes[i] = abci.VoteInfo{
+			Validator:       abci.Validator{Address: v.Address, Power: v.VotingPower},
+			SignedLastBlock: true,
+		}
+	}
+	chain.App.BeginBlock(abci.RequestBeginBlock{
+		Header: chain.CurrentHeader,
+		LastCommitInfo: abci.CommitInfo{
+			Votes: votes,
+		},
+	})
 }
 
 // sendMsgs delivers a transaction through the application without returning the result.

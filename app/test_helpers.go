@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+
 	"cosmossdk.io/math"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -168,14 +170,28 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	)
 	// commit genesis changes
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
-		ChainID:            chainID,
-		Height:             app.LastBlockHeight() + 1,
-		AppHash:            app.LastCommitID().Hash,
-		Time:               time.Now().UTC(),
-		ValidatorsHash:     valSet.Hash(),
-		NextValidatorsHash: valSet.Hash(),
-	}})
+
+	votes := make([]abci.VoteInfo, len(valSet.Validators))
+	for i, v := range valSet.Validators {
+		votes[i] = abci.VoteInfo{
+			Validator:       abci.Validator{Address: v.Address, Power: v.VotingPower},
+			SignedLastBlock: true,
+		}
+	}
+
+	app.BeginBlock(abci.RequestBeginBlock{
+		Header: tmproto.Header{
+			ChainID:            chainID,
+			Height:             app.LastBlockHeight() + 1,
+			AppHash:            app.LastCommitID().Hash,
+			Time:               time.Now().UTC(),
+			ValidatorsHash:     valSet.Hash(),
+			NextValidatorsHash: valSet.Hash(),
+		},
+		LastCommitInfo: abci.CommitInfo{
+			Votes: votes,
+		},
+	})
 
 	return app
 }
@@ -363,6 +379,16 @@ func GenesisStateWithValSet(
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
 	genesisState[stakingtypes.ModuleName] = codec.MustMarshalJSON(stakingGenesis)
+
+	signingInfos := make([]slashingtypes.SigningInfo, len(valSet.Validators))
+	for i, val := range valSet.Validators {
+		signingInfos[i] = slashingtypes.SigningInfo{
+			Address:              sdk.ConsAddress(val.Address).String(),
+			ValidatorSigningInfo: slashingtypes.ValidatorSigningInfo{},
+		}
+	}
+	slashingGenesis := slashingtypes.NewGenesisState(slashingtypes.DefaultParams(), signingInfos, nil)
+	genesisState[slashingtypes.ModuleName] = codec.MustMarshalJSON(slashingGenesis)
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
