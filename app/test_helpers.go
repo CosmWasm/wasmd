@@ -289,14 +289,14 @@ func NewTestNetworkFixture() network.TestFixture {
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
+	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins,
 	chainID string, accNums, accSeqs []uint64, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
-		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
+		fees,
 		simtestutil.DefaultGenTxGas,
 		chainID,
 		accNums,
