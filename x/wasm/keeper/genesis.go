@@ -78,9 +78,13 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 	genState.Params = keeper.GetParams(ctx)
 
 	keeper.IterateCodeInfos(ctx, func(codeID uint64, info types.CodeInfo) bool {
-		bytecode, err := keeper.GetByteCode(ctx, codeID)
-		if err != nil {
-			panic(err)
+		var bytecode []byte
+		var err error
+		if len(info.CodeHash) != 0 {
+			bytecode, err = keeper.GetByteCode(ctx, codeID)
+			if err != nil {
+				panic(err)
+			}
 		}
 		genState.Codes = append(genState.Codes, types.Code{
 			CodeID:    codeID,
