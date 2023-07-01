@@ -3,7 +3,7 @@
 package cosmwasm
 
 import (
-	"github.com/CosmWasm/wasmvm/internal/api"
+	"github.com/CosmWasm/wasmd/x/wasm/wasmvm/internal/api"
 )
 
 func libwasmvmVersionImpl() (string, error) {

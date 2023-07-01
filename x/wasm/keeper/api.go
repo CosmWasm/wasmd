@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmd/x/wasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmd/x/wasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

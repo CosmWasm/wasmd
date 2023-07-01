@@ -3,7 +3,7 @@ package cosmwasm
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/wasmvm/types"
 	"github.com/stretchr/testify/require"
 )
 

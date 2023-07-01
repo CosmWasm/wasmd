@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmd/x/wasm/wasmvm"
 )
 
 const (

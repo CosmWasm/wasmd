@@ -128,7 +128,7 @@ func parseVerificationFlags(gzippedWasm []byte, flags *flag.FlagSet) (string, st
 		}
 		// wasm is gzipped in parseStoreCodeArgs
 		// checksum generation will be decoupled here
-		// reference https://github.com/CosmWasm/wasmvm/issues/359
+		// reference https://github.com/CosmWasm/wasmd/x/wasm/wasmvm/issues/359
 		raw, err := ioutils.Uncompress(gzippedWasm, uint64(types.MaxWasmSize))
 		if err != nil {
 			return "", "", nil, fmt.Errorf("invalid zip: %w", err)

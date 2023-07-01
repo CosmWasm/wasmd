@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmd/x/wasm/wasmvm"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -289,7 +289,7 @@ func getExpectedLibwasmVersion() string {
 		panic("can't read build info")
 	}
 	for _, d := range buildInfo.Deps {
-		if d.Path != "github.com/CosmWasm/wasmvm" {
+		if d.Path != "github.com/CosmWasm/wasmd/x/wasm/wasmvm" {
 			continue
 		}
 		if d.Replace != nil {
@@ -301,7 +301,7 @@ func getExpectedLibwasmVersion() string {
 }
 
 // CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
-// of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
+// of the github.com/CosmWasm/wasmd/x/wasm/wasmvm dependency in go.mod. This us useful when dealing with
 // shared libraries that are copied or moved from their default location, e.g. when building the node
 // on one machine and deploying it to other machines.
 //

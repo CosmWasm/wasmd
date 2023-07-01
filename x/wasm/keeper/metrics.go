@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmd/x/wasm/wasmvm/types"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
