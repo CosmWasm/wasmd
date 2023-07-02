@@ -165,7 +165,7 @@ func (e IBCChannels) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that we get [] for empty arrays
 func (e *IBCChannels) UnmarshalJSON(data []byte) error {
 	// make sure we deserialize [] back to null
-	if string(data) == "[]" || string(data) == "null" {
+	if string(data) == "[]" || string(data) == null {
 		return nil
 	}
 	var raw []IBCChannel
@@ -191,7 +191,7 @@ func (e IBCEndpoints) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that we get [] for empty arrays
 func (e *IBCEndpoints) UnmarshalJSON(data []byte) error {
 	// make sure we deserialize [] back to null
-	if string(data) == "[]" || string(data) == "null" {
+	if string(data) == "[]" || string(data) == null {
 		return nil
 	}
 	var raw []IBCEndpoint
@@ -243,7 +243,7 @@ func (v Validators) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that we get [] for empty arrays
 func (v *Validators) UnmarshalJSON(data []byte) error {
 	// make sure we deserialize [] back to null
-	if string(data) == "[]" || string(data) == "null" {
+	if string(data) == "[]" || string(data) == null {
 		return nil
 	}
 	var raw []Validator
@@ -302,7 +302,7 @@ func (d Delegations) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that we get [] for empty arrays
 func (d *Delegations) UnmarshalJSON(data []byte) error {
 	// make sure we deserialize [] back to null
-	if string(data) == "[]" || string(data) == "null" {
+	if string(data) == "[]" || string(data) == null {
 		return nil
 	}
 	var raw []Delegation

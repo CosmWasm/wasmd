@@ -46,15 +46,16 @@ func uninitializedUnmanagedVector() C.UnmanagedVector {
 }
 
 func newUnmanagedVector(data []byte) C.UnmanagedVector {
-	if data == nil {
+	switch {
+	case data == nil:
 		return C.new_unmanaged_vector(cbool(true), cu8_ptr(nil), cusize(0))
-	} else if len(data) == 0 {
+	case len(data) == 0:
 		// in Go, accessing the 0-th element of an empty array triggers a panic. That is why in the case
 		// of an empty `[]byte` we can't get the internal heap pointer to the underlying array as we do
 		// below with `&data[0]`.
 		// https://play.golang.org/p/xvDY3g9OqUk
 		return C.new_unmanaged_vector(cbool(false), cu8_ptr(nil), cusize(0))
-	} else {
+	default:
 		// This will allocate a proper vector with content and return a description of it
 		return C.new_unmanaged_vector(cbool(false), cu8_ptr(unsafe.Pointer(&data[0])), cusize(len(data)))
 	}
@@ -62,7 +63,7 @@ func newUnmanagedVector(data []byte) C.UnmanagedVector {
 
 func copyAndDestroyUnmanagedVector(v C.UnmanagedVector) []byte {
 	var out []byte
-	if v.is_none {
+	if v.is_none { //nolint:gocritic // we can't convert this to a switch statement.  There is a complaint about mismatched types. https://hackmd.io/18jrYUmQTdaEKP4J9q1Klg#
 		out = nil
 	} else if v.cap == cusize(0) {
 		// There is no allocation we can copy

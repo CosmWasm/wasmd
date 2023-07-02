@@ -73,37 +73,37 @@ This Read-Only info is available to every contract:
 //
 // Params are json encoded to a byte slice before passing to the wasm contract.
 type Params struct {
-	Block    BlockInfo    `json:"block"`
-	Message  MessageInfo  `json:"message"`
-	Contract ContractInfo `json:"contract"`
+ Block    BlockInfo    `json:"block"`
+ Message  MessageInfo  `json:"message"`
+ Contract ContractInfo `json:"contract"`
 }
 
 type BlockInfo struct {
-	// block height this transaction is executed
-	Height uint64 `json:"height"`
-	// time in nanoseconds since unix epoch. Uses string to ensure JavaScript compatibility.
-	Time    uint64 `json:"time,string"`
-	ChainID string `json:"chain_id"`
+ // block height this transaction is executed
+ Height uint64 `json:"height"`
+ // time in nanoseconds since unix epoch. Uses string to ensure JavaScript compatibility.
+ Time    uint64 `json:"time,string"`
+ ChainID string `json:"chain_id"`
 }
 
 type MessageInfo struct {
-	// binary encoding of sdk.AccAddress executing the contract
-	Sender HumanAddress `json:"sender"`
-	// amount of funds send to the contract along with this message
-	Funds Coins `json:"funds"`
+ // binary encoding of sdk.AccAddress executing the contract
+ Sender HumanAddress `json:"sender"`
+ // amount of funds send to the contract along with this message
+ Funds Coins `json:"funds"`
 }
 
 type ContractInfo struct {
     // sdk.AccAddress of the contract, to be used when sending messages
     Address string       `json:"address"`
     // current balance of the account controlled by the contract
-	Balance []Coin `json:"send_amount"`
+ Balance []Coin `json:"send_amount"`
 }
 
 // Coin is a string representation of the sdk.Coin type (more portable than sdk.Int)
 type Coin struct {
-	Denom  string `json:"denom"`  // string encoing of decimal value, eg. "12.3456"
-	Amount string `json:"amount"`  // type, eg. "ATOM"
+ Denom  string `json:"denom"`  // string encoing of decimal value, eg. "12.3456"
+ Amount string `json:"amount"`  // type, eg. "ATOM"
 }
 ```
 
@@ -114,12 +114,12 @@ This is the information the contract can return:
 ```go
 // Result defines the return value on a successful
 type Result struct {
-	// Messages comes directly from the contract and is it's request for action
-	Messages []CosmosMsg `json:"msgs"`
-	// base64-encoded bytes to return as ABCI.Data field
-	Data string
-	// attributes for a log event to return over abci interface
-	Attributes []EventAttribute `json:"attributes"`
+ // Messages comes directly from the contract and is it's request for action
+ Messages []CosmosMsg `json:"msgs"`
+ // base64-encoded bytes to return as ABCI.Data field
+ Data string
+ // attributes for a log event to return over abci interface
+ Attributes []EventAttribute `json:"attributes"`
 }
 ```
 
@@ -139,16 +139,16 @@ The following are allowed types for `CosmosMsg` return values. To be expanded la
 // CosmosMsg is an rust enum and only (exactly) one of the fields should be set
 // Should we do a cleaner approach in Go? (type/data?)
 type CosmosMsg struct {
-	Send SendMsg `json:"send"`
-	Contract ContractMsg `json:"contract"`
-	Opaque OpaqueMsg `json:"opaque"`
+ Send SendMsg `json:"send"`
+ Contract ContractMsg `json:"contract"`
+ Opaque OpaqueMsg `json:"opaque"`
 }
 
 // SendMsg contains instructions for a Cosmos-SDK/SendMsg
 // It has a fixed interface here and should be converted into the proper SDK format before dispatching
 type SendMsg struct {
-	ToAddress   string `json:"to_address"`
-	Amount      []Coin `json:"amount"`
+ ToAddress   string `json:"to_address"`
+ Amount      []Coin `json:"amount"`
 }
 
 // ContractMsg is used to call another defined contract on this chain.
@@ -178,11 +178,11 @@ type ContractMsg struct {
 // updates, the client can submit a new proposal in the new format. Since this never comes from the
 // contract itself, we don't need to worry about upgrading.
 type OpaqueMsg struct {
-	// Data is a custom msg that the sdk knows.
-	// Generally the base64-encoded of go-amino binary encoding of an sdk.Msg implementation.
-	// This should never be created by the contract, but allows for blindly passing through
-	// temporary data.
-	Data string `json:"data"`
+ // Data is a custom msg that the sdk knows.
+ // Generally the base64-encoded of go-amino binary encoding of an sdk.Msg implementation.
+ // This should never be created by the contract, but allows for blindly passing through
+ // temporary data.
+ Data string `json:"data"`
 }
 ```
 
@@ -194,8 +194,8 @@ We expose a (sandboxed) `KVStore` to the contract that it can read and write to 
 
 ```go
 type KVStore interface {
-	Get(key []byte) []byte
-	Set(key, value []byte)
+ Get(key []byte) []byte
+ Set(key, value []byte)
 }
 ```
 
@@ -218,35 +218,35 @@ Here are request-model pairs that we can use in queries:
 ```go
 // QueryRequest is an enum. Exactly one field should be non-empty
 type QueryRequest struct {
-	Account AccountRequest `json:"account"`
+ Account AccountRequest `json:"account"`
 }
 
 // QueryModels is an enum. Exactly one field should be non-empty: the same one corresponding to the Request
 type QueryModels struct {
-	Account []AccountModel `json:"account"`
+ Account []AccountModel `json:"account"`
 }
 ```
 
-**Account**
+### Account
 
 ```go
 // AccountRequest asks to read the state of a given account
 type AccountRequest struct {
-	// bech32 encoded sdk.AccAddres
-	Address string `json:"address"`
+ // bech32 encoded sdk.AccAddres
+ Address string `json:"address"`
 }
 
 // AccountModel is a basic description of an account
 // (more fields may be added later, but none should change)
 type AccountModel struct {
-	Address string `json:"address"`
-	Balance []Coin `json:"balance"`
-	// pubkey may be empty
-	PubKey struct {
-		// hex-encoded bytes of the raw public key
-		Data string `json:"data"`
-		// the algorithm of the pubkey, currently "secp256k1", possibly others in the future
-		Algo string `json:"algo"`
-	} `json:"pub_key"`
+ Address string `json:"address"`
+ Balance []Coin `json:"balance"`
+ // pubkey may be empty
+ PubKey struct {
+  // hex-encoded bytes of the raw public key
+  Data string `json:"data"`
+  // the algorithm of the pubkey, currently "secp256k1", possibly others in the future
+  Algo string `json:"algo"`
+ } `json:"pub_key"`
 }
 ```

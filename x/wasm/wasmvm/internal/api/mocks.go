@@ -17,14 +17,17 @@ import (
 
 /** helper constructors **/
 
-const MOCK_CONTRACT_ADDR = "contract"
+const (
+	MOCK_CONTRACT_ADDR = "contract"
+	foobar             = "foobar"
+)
 
 func MockEnv() types.Env {
 	return types.Env{
 		Block: types.BlockInfo{
 			Height:  123,
 			Time:    1578939743_987654321,
-			ChainID: "foobar",
+			ChainID: foobar,
 		},
 		Transaction: &types.TransactionInfo{
 			Index: 4,
@@ -369,7 +372,7 @@ func NewMockAPI() *types.GoAPI {
 }
 
 func TestMockApi(t *testing.T) {
-	human := "foobar"
+	human := foobar
 	canon, cost, err := MockCanonicalAddress(human)
 	require.NoError(t, err)
 	assert.Equal(t, CanonicalLength, len(canon))
@@ -507,20 +510,21 @@ func (q ReflectCustom) Query(request json.RawMessage) ([]byte, error) {
 		return nil, err
 	}
 	var resp CustomResponse
-	if query.Ping != nil {
+	switch {
+	case query.Ping != nil:
 		resp.Msg = "PONG"
-	} else if query.Capitalized != nil {
+	case query.Capitalized != nil:
 		resp.Msg = strings.ToUpper(query.Capitalized.Text)
-	} else {
-		return nil, errors.New("Unsupported query")
+	default:
+		return nil, errors.New("unsupported query")
 	}
 	return json.Marshal(resp)
 }
 
-//************ test code for mocks *************************//
+// ************ test code for mocks ************************* //
 
 func TestBankQuerierAllBalances(t *testing.T) {
-	addr := "foobar"
+	addr := foobar
 	balance := types.Coins{types.NewCoin(12345678, "ATOM"), types.NewCoin(54321, "ETH")}
 	q := DefaultQuerier(addr, balance)
 
@@ -556,7 +560,7 @@ func TestBankQuerierAllBalances(t *testing.T) {
 }
 
 func TestBankQuerierBalance(t *testing.T) {
-	addr := "foobar"
+	addr := foobar
 	balance := types.Coins{types.NewCoin(12345678, "ATOM"), types.NewCoin(54321, "ETH")}
 	q := DefaultQuerier(addr, balance)
 

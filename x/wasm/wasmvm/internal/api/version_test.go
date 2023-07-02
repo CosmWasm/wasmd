@@ -10,5 +10,5 @@ import (
 func TestLibwasmvmVersion(t *testing.T) {
 	version, err := LibwasmvmVersion()
 	require.NoError(t, err)
-	require.Regexp(t, regexp.MustCompile("^([0-9]+)\\.([0-9]+)\\.([0-9]+)(-[a-z0-9.]+)?$"), version)
+	require.Regexp(t, regexp.MustCompile(`^([0-9]+)\.([0-9]+)\.([0-9]+)(-[a-z0-9.]+)?$`), version)
 }

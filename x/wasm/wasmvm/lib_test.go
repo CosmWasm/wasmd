@@ -4,7 +4,6 @@ package cosmwasm
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -29,7 +28,7 @@ const (
 )
 
 func withVM(t *testing.T) *VM {
-	tmpdir, err := ioutil.TempDir("", "wasmvm-testing")
+	tmpdir, err := os.MkdirTemp("", "wasmvm-testing")
 	require.NoError(t, err)
 	vm, err := NewVM(tmpdir, TESTING_CAPABILITIES, TESTING_MEMORY_LIMIT, TESTING_PRINT_DEBUG, TESTING_CACHE_SIZE)
 	require.NoError(t, err)
@@ -42,7 +41,7 @@ func withVM(t *testing.T) *VM {
 }
 
 func createTestContract(t *testing.T, vm *VM, path string) Checksum {
-	wasm, err := ioutil.ReadFile(path)
+	wasm, err := os.ReadFile(path)
 	require.NoError(t, err)
 	checksum, err := vm.StoreCode(wasm)
 	require.NoError(t, err)
@@ -54,7 +53,7 @@ func TestStoreCode(t *testing.T) {
 
 	// Valid hackatom contract
 	{
-		wasm, err := ioutil.ReadFile(HACKATOM_TEST_CONTRACT)
+		wasm, err := os.ReadFile(HACKATOM_TEST_CONTRACT)
 		require.NoError(t, err)
 		_, err = vm.StoreCode(wasm)
 		require.NoError(t, err)
@@ -62,7 +61,7 @@ func TestStoreCode(t *testing.T) {
 
 	// Valid cyberpunk contract
 	{
-		wasm, err := ioutil.ReadFile(CYBERPUNK_TEST_CONTRACT)
+		wasm, err := os.ReadFile(CYBERPUNK_TEST_CONTRACT)
 		require.NoError(t, err)
 		_, err = vm.StoreCode(wasm)
 		require.NoError(t, err)
@@ -103,7 +102,7 @@ func TestStoreCode(t *testing.T) {
 func TestStoreCodeAndGet(t *testing.T) {
 	vm := withVM(t)
 
-	wasm, err := ioutil.ReadFile(HACKATOM_TEST_CONTRACT)
+	wasm, err := os.ReadFile(HACKATOM_TEST_CONTRACT)
 	require.NoError(t, err)
 
 	checksum, err := vm.StoreCode(wasm)
@@ -117,7 +116,7 @@ func TestStoreCodeAndGet(t *testing.T) {
 func TestRemoveCode(t *testing.T) {
 	vm := withVM(t)
 
-	wasm, err := ioutil.ReadFile(HACKATOM_TEST_CONTRACT)
+	wasm, err := os.ReadFile(HACKATOM_TEST_CONTRACT)
 	require.NoError(t, err)
 
 	checksum, err := vm.StoreCode(wasm)

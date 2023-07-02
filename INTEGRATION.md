@@ -1,11 +1,10 @@
 
-
 # Integration
 
 If you want to use Wasm in your own app, here is how you can get this working
-quickly and easily. 
-First start with This [article](https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc) 
-in the "CosmWasm for CTOs" series that gives you a high level view. 
+quickly and easily.
+First start with This [article](https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc)
+in the "CosmWasm for CTOs" series that gives you a high level view.
 Then check to make sure you fit the pre-requisites,
 then integrate the `x/wasm` module as described below, and finally, you
 can add custom messages and queries to your custom Go/SDK modules, exposing
@@ -13,7 +12,7 @@ them to any chain-specific contract.
 
 ## Prerequisites
 
-The pre-requisites of integrating `x/wasm` into your custom app is to be using 
+The pre-requisites of integrating `x/wasm` into your custom app is to be using
 a compatible version of the Cosmos SDK, and to accept some limits to the
 hardware it runs on.
 
@@ -32,14 +31,13 @@ hardware it runs on.
 | v0.22 |  v0.45.0   |
 | v0.21 |  v0.42.x   |
 
-
 We currently only support Intel/AMD64 CPUs and OSX or Linux. For Linux, the standard build
 commands work for `glibc` systems (Ubuntu, Debian, CentOS, etc). If you wish to compile
 for a `muslc` based system (like alpine), you need to compile a static library wasmvm locally
 and compile go with the `muslc` build tag. Or just use the [Dockerfile](./Dockerfile),
 which builds a static go binary in an alpine system.
 
-This limit comes from the Rust dll we use to run the wasm code, which comes 
+This limit comes from the Rust dll we use to run the wasm code, which comes
 from [`wasmvm`](https://github.com/CosmWasm/wasmvm). There are open issues
 for adding [ARM support](https://github.com/CosmWasm/wasmvm/issues/53), and
 adding [Windows support](https://github.com/CosmWasm/wasmvm/issues/28).
@@ -50,10 +48,10 @@ them, please count on the current limits for the near future.
 
 The simplest way to try out CosmWasm is simply to run `wasmd` out of the box,
 and focus on writing, uploading, and using your custom contracts. There is
-plenty that can be done there, and lots to learn. 
+plenty that can be done there, and lots to learn.
 
-Once you are happy with it and want to use a custom Cosmos SDK app, 
-you may consider simply forking `wasmd`. *I highly advise against this*. 
+Once you are happy with it and want to use a custom Cosmos SDK app,
+you may consider simply forking `wasmd`. *I highly advise against this*.
 You should try one of the methods below.
 
 ## Integrating wasmd
@@ -63,14 +61,15 @@ You should try one of the methods below.
 The simplest way to use `wasmd` is just to import `x/wasm` and wire it up
 in `app.go`.  You now have access to the whole module and you custom modules
 running side by side. (But the CosmWasm contracts will only have access
-to `bank` and `staking`... more below on [customization](#Adding-Custom-Hooks)).
+to `bank` and `staking`... more below on [customization](#adding-custom-hooks)).
 
 The requirement here is that you have imported the standard sdk modules
 from the Cosmos SDK, and enabled them in `app.go`. If so, you can just look
 at [`wasmd/app/app.go`](https://github.com/CosmWasm/wasmd/blob/master/app/app.go#)
 for how to do so (just search there for lines with `wasm`).
 
-`wasmd` also comes with 2 custom `ante handlers`: 
+`wasmd` also comes with 2 custom `ante handlers`:
+
 * `CountTXDecorator` adds the TX position in the block into the context and passes it to the contracts
 * `LimitSimulationGasDecorator` prevents an "infinite gas" query
 
@@ -95,7 +94,7 @@ as possible.
 
 If, for example, you have forked the standard SDK libs, you just want to
 change the imports (from eg. `github.com/cosmos/cosmos-sdk/x/bank` to
-`github.com/YOUR/APP/x/bank`), and adjust any calls if there are compiler 
+`github.com/YOUR/APP/x/bank`), and adjust any calls if there are compiler
 errors due to differing APIs (maybe you use Decimals not Ints for currencies?).
 
 By the end of this, you should be able to run the standard CosmWasm contracts
@@ -111,14 +110,14 @@ to trade them on the exchange I wrote as a Go module. Or maybe use them
 to add options to the exchange."
 
 At this point, you need to dig down deeper and see how you can add this
-power without forking either CosmWasm or `wasmd`. 
+power without forking either CosmWasm or `wasmd`.
 
 ### Calling contracts from native code
 
 This is perhaps the easiest part. Let's say your native exchange module
 wants to call into a token that lives as a CosmWasm module. You need to
 pass the `wasm.Keeper` into your `exchange.Keeper`. If you know the format
-for sending messages and querying the contract (exported as json schema 
+for sending messages and querying the contract (exported as json schema
 from each contract), and have a way of configuring addresses of supported
 token contracts, your exchange code can simply call `wasm.Keeper.Execute`
 with a properly formatted message to move funds, or `wasm.Keeper.SmartQuery`
@@ -134,7 +133,7 @@ step is to define a set of Messages and Queries that you want to expose,
 and then add them as `CosmosMsg::Custom` and `QueryRequest::Custom`
 variants. You can see an example of the [bindings for Terra](https://github.com/CosmWasm/terra-contracts/tree/master/packages/bindings).
 
-Once you have those bindings, use them to build a 
+Once you have those bindings, use them to build a
 [simple contact using much of the API](https://github.com/CosmWasm/terra-contracts/tree/master/contracts/maker).
 Don't worry too much about the details, this should be usable, but mainly
 you will want to upload it to your chain and use for integration tests
@@ -166,9 +165,9 @@ please **do not make these changes to `x/wasm`**.
 
 We will add a new module, eg. `x/contracts`, that will contain custom
 bindings between CosmWasm contracts and your native modules. There are two entry points
-for you to use. The first is 
+for you to use. The first is
 [`CustomQuerier`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/query_plugins.go#L35),
-which allows you to handle your custom queries. The second is 
+which allows you to handle your custom queries. The second is
 [`CustomEncoder`](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/handler_plugin.go#L30)
 which allows you to convert the `CosmosMsg::Custom(YourMessage)` types to `[]sdk.Msg` to be dispatched.
 
@@ -179,12 +178,12 @@ This code is responsible to take `json.RawMessage` from the raw bytes serialized
 Go structs. Then take these go structs and properly convert them for your custom SDK modules.
 
 You can look at the implementations for the `staking` module to see how to build these for non-trivial
-cases, including passing in the `Keeper` via a closure. Here we 
+cases, including passing in the `Keeper` via a closure. Here we
 [encode staking messages](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/handler_plugin.go#L114-L192).
 Note that withdraw returns 2 messages, which is an option you can use if needed to translate into native messages.
 When we [handle staking queries](https://github.com/CosmWasm/wasmd/blob/v0.8.0-rc1/x/wasm/internal/keeper/query_plugins.go#L109-L172)
 we take in a `Keeper in the closure` and dispatch the custom `QueryRequest` from the contract to the native `Keeper` interface,
-then encodes a response. When defining the return types, note that for proper parsing in the Rust contract, you 
+then encodes a response. When defining the return types, note that for proper parsing in the Rust contract, you
 should properly name the JSON fields and use the `omitempty` keyword if Rust expects `Option<T>`. You must also use
 `omitempty` and pointers for all fields that correspond to a Rust `enum`, so exactly one field is serialized.
 
@@ -194,9 +193,9 @@ Once you have writen and tested these custom callbacks for your module, you need
 The first step is to write an integration test with a contract compiled with your custom SDK to ensure it works properly,
 then you need to configure this in `app.go`.
 
-For the test cases, you must 
+For the test cases, you must
 [define the supported feature set](https://github.com/CosmWasm/wasmd/blob/ade03a1d39a9b8882e9a1ce80572d39d57bb9bc3/x/wasm/internal/keeper/reflect_test.go#L52)
-to include your custom name (remember `requires_XYZ` above?). Then, when creating `TestInput`, 
+to include your custom name (remember `requires_XYZ` above?). Then, when creating `TestInput`,
 you can [pass in your custom encoder and querier](https://github.com/CosmWasm/wasmd/blob/ade03a1d39a9b8882e9a1ce80572d39d57bb9bc3/x/wasm/internal/keeper/reflect_test.go#L52).
 Run a few tests with your compiled contract, ideally exercising the majority of the interfaces to ensure that all parsing between the contract and
 the SDK is implemented properly.
