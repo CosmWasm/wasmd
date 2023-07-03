@@ -646,6 +646,19 @@ func TestQueryStakingPlugin(t *testing.T) {
 	finalReward, err := distKeeper.GetValidatorCurrentRewards(ctx, valAddr)
 	require.NoError(t, err)
 	require.Equal(t, origReward, finalReward)
+
+	// with empty delegation (regression to ensure api stability)
+	query = wasmvmtypes.StakingQuery{
+		Delegation: &wasmvmtypes.DelegationQuery{
+			Delegator: RandomBech32AccountAddress(t),
+			Validator: valAddr.String(),
+		},
+	}
+	raw, err = StakingQuerier(stakingKeeper, distributionkeeper.NewQuerier(distKeeper))(ctx, &query)
+	require.NoError(t, err)
+	var res2 wasmvmtypes.DelegationResponse
+	mustParse(t, raw, &res2)
+	assert.Empty(t, res2.Delegation)
 }
 
 // adds a few validators and returns a list of validators that are registered
