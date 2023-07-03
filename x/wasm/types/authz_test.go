@@ -218,7 +218,7 @@ func TestContractAuthzLimitValidate(t *testing.T) {
 			expErr: true,
 		},
 		"max funds - contains empty value": {
-			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdk.ZeroInt())}.Sort()},
+			src:    &MaxFundsLimit{Amounts: sdk.Coins{oneToken, sdk.NewCoin("other", sdkmath.ZeroInt())}.Sort()},
 			expErr: true,
 		},
 		"max funds - unsorted": {
@@ -278,7 +278,7 @@ func TestContractAuthzLimitAccept(t *testing.T) {
 		},
 		"max calls - accepted with zero fund set": {
 			limit: NewMaxCallsLimit(1),
-			src:   &MsgExecuteContract{Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.ZeroInt()))},
+			src:   &MsgExecuteContract{Funds: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.ZeroInt()))},
 			exp:   &ContractAuthzLimitAcceptResult{Accepted: true, DeleteLimit: true},
 		},
 		"max calls - rejected with some fund transfer": {

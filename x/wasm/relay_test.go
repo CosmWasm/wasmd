@@ -65,8 +65,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			},
 			expChainAPendingSendPackets: 0,
 			expChainBPendingSendPackets: 0,
-			expChainABalanceDiff:        sdk.ZeroInt(),
-			expChainBBalanceDiff:        sdk.ZeroInt(),
+			expChainABalanceDiff:        sdkmath.ZeroInt(),
+			expChainBBalanceDiff:        sdkmath.ZeroInt(),
 		},
 		"error": {
 			contract: &errorReceiverContract{},
@@ -77,7 +77,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 			expChainAPendingSendPackets: 1,
 			expChainBPendingSendPackets: 0,
 			expChainABalanceDiff:        transferAmount.Neg(),
-			expChainBBalanceDiff:        sdk.ZeroInt(),
+			expChainBBalanceDiff:        sdkmath.ZeroInt(),
 			expErr:                      true,
 		},
 	}

@@ -54,19 +54,19 @@ type DistributionKeeper interface {
 // StakingKeeper defines a subset of methods implemented by the cosmos-sdk staking keeper
 type StakingKeeper interface {
 	// BondDenom - Bondable coin denomination
-	BondDenom(ctx sdk.Context) (res string)
+	BondDenom(ctx context.Context) (string, error)
 	// GetValidator get a single validator
-	GetValidator(ctx sdk.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, found bool)
+	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, err error)
 	// GetBondedValidatorsByPower get the current group of bonded validators sorted by power-rank
-	GetBondedValidatorsByPower(ctx sdk.Context) []stakingtypes.Validator
+	GetBondedValidatorsByPower(ctx context.Context) ([]stakingtypes.Validator, error)
 	// GetAllDelegatorDelegations return all delegations for a delegator
-	GetAllDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress) []stakingtypes.Delegation
+	GetAllDelegatorDelegations(ctx context.Context, delegator sdk.AccAddress) ([]stakingtypes.Delegation, error)
 	// GetDelegation return a specific delegation
-	GetDelegation(ctx sdk.Context,
-		delAddr sdk.AccAddress, valAddr sdk.ValAddress) (delegation stakingtypes.Delegation, found bool)
+	GetDelegation(ctx context.Context,
+		delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error)
 	// HasReceivingRedelegation check if validator is receiving a redelegation
-	HasReceivingRedelegation(ctx sdk.Context,
-		delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) bool
+	HasReceivingRedelegation(ctx context.Context,
+		delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) (bool, error)
 }
 
 // ChannelKeeper defines the expected IBC channel keeper

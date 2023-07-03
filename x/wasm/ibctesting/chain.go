@@ -31,7 +31,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	cmtprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	cmttypes "github.com/cometbft/cometbft/types"
 	tmversion "github.com/cometbft/cometbft/version"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -325,8 +325,9 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 // It updates the current header with the new block created before returning.
 func (chain *TestChain) NextBlock() {
 	res, err := chain.App.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height: chain.CurrentHeader.Height,
-		Time:   chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time
+		Height:             chain.CurrentHeader.Height,
+		Time:               chain.CurrentHeader.GetTime(), // todo (Alex): is this the correct time
+		NextValidatorsHash: chain.NextVals.Hash(),
 	})
 	require.NoError(chain.t, err)
 	chain.commitBlock(res)
@@ -448,11 +449,12 @@ func (chain *TestChain) GetConsensusState(clientID string, height exported.Heigh
 // GetValsAtHeight will return the validator set of the chain at a given height. It will return
 // a success boolean depending on if the validator set exists or not at that height.
 func (chain *TestChain) GetValsAtHeight(height int64) (*cmttypes.ValidatorSet, bool) {
-	histInfo, ok := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
-	if !ok {
+	histInfo, err := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
+	switch {
+	case stakingtypes.ErrNoHistoricalInfo.Is(err):
 		return nil, false
 	}
-
+	require.NoError(chain.t, err)
 	valSet := stakingtypes.Validators(histInfo.Valset)
 
 	vals, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
@@ -556,7 +558,7 @@ func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64,
 	nextValHash := nextVals.Hash()
 
 	cmtHeader := cmttypes.Header{
-		Version:            tmprotoversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
+		Version:            cmtprotoversion.Consensus{Block: tmversion.BlockProtocol, App: 2},
 		ChainID:            chainID,
 		Height:             blockHeight,
 		Time:               timestamp,

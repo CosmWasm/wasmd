@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.2.4
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-alpha.0.0.20230615105423-ae3e30a715bd
+	github.com/cosmos/cosmos-sdk v0.50.0-alpha.1.0.20230630175638-d9c53bfefc1e
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v1.0.0-beta.2
@@ -26,28 +26,28 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	google.golang.org/genproto v0.0.0-20230525234025-438c736192d0 // indirect
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	cosmossdk.io/api v0.4.2
-	cosmossdk.io/client/v2 v2.0.0-20230615173548-5385116abac4
-	cosmossdk.io/collections v0.2.0
-	cosmossdk.io/core v0.8.0
+	cosmossdk.io/api v0.5.0
+	cosmossdk.io/client/v2 v2.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/collections v0.2.1-0.20230620134406-d4f1e88b6531
+	cosmossdk.io/core v0.9.0
 	cosmossdk.io/errors v1.0.0-beta.7.0.20230524212735-6cabb6aa5741
 	cosmossdk.io/log v1.1.0
 	cosmossdk.io/math v1.0.1
-	cosmossdk.io/store v0.1.0-alpha.1.0.20230606190835-3e18f4088b2c
-	cosmossdk.io/tools/confix v0.0.0-20230613133644-0a778132a60f
-	cosmossdk.io/tools/rosetta v0.2.1
-	cosmossdk.io/x/circuit v0.0.0-20230615173548-5385116abac4
-	cosmossdk.io/x/evidence v0.0.0-20230609160955-4ad71e570d16
-	cosmossdk.io/x/feegrant v0.0.0-20230609160955-4ad71e570d16
-	cosmossdk.io/x/nft v0.50.0-alpha.0
+	cosmossdk.io/store v0.1.0-alpha.1.0.20230630152705-9f4a4e416f85
+	cosmossdk.io/tools/confix v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/tools/rosetta v0.2.1-0.20230614114324-f368ed5c62bc
+	cosmossdk.io/x/circuit v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/x/evidence v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/x/feegrant v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/x/nft v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/tx v0.8.0
-	cosmossdk.io/x/upgrade v0.0.0-20230609160955-4ad71e570d16
-	github.com/cometbft/cometbft v0.38.0-rc1.0.20230616160951-13dc04fb4de8
+	cosmossdk.io/x/upgrade v0.0.0-20230630152705-9f4a4e416f85
+	github.com/cometbft/cometbft v0.38.0-rc2
 	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc1
 	github.com/spf13/viper v1.16.0
@@ -56,7 +56,7 @@ require (
 
 require (
 	cloud.google.com/go v0.110.0 // indirect
-	cloud.google.com/go/compute v1.19.0 // indirect
+	cloud.google.com/go/compute v1.19.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/storage v1.30.0 // indirect
@@ -65,7 +65,6 @@ require (
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/DataDog/zstd v1.5.5 // indirect
-	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.224 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
@@ -127,6 +126,7 @@ require (
 	github.com/hashicorp/go-getter v1.7.1 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-metrics v0.5.1 // indirect
 	github.com/hashicorp/go-plugin v1.4.10 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -182,7 +182,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
@@ -192,7 +192,7 @@ require (
 	google.golang.org/api v0.122.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.4.0 // indirect
@@ -215,14 +215,8 @@ replace (
 )
 
 replace (
-	cosmossdk.io/tools/confix => ../../cosmos/cosmos-sdk/tools/confix
-	cosmossdk.io/tools/rosetta => ../../cosmos/cosmos-sdk/tools/rosetta
-	// todo: this must not go to main branch
-	// link to sdk modules that are not tagged
-	cosmossdk.io/x/nft => ../../cosmos/cosmos-sdk/x/nft
-	cosmossdk.io/x/upgrade => ../../cosmos/cosmos-sdk/x/upgrade
 	// temporary redirects
 	// link ibc-go to notionals fork until upgraded
-	github.com/cosmos/ibc-go/modules/capability => github.com/notional-labs/ibc-go/modules/capability v0.0.0-20230623191109-7ff3d4cca0a0
-	github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230623191109-7ff3d4cca0a0
+	github.com/cosmos/ibc-go/modules/capability => /Users/alex/workspace/tmp/notional_ibc-go/modules/capability
+	github.com/cosmos/ibc-go/v7 => /Users/alex/workspace/tmp/notional_ibc-go
 )

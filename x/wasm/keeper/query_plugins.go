@@ -330,14 +330,20 @@ func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter G
 func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKeeper) func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
 		if request.BondedDenom != nil {
-			denom := keeper.BondDenom(ctx)
+			denom, err := keeper.BondDenom(ctx)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "bond denom")
+			}
 			res := wasmvmtypes.BondedDenomResponse{
 				Denom: denom,
 			}
 			return json.Marshal(res)
 		}
 		if request.AllValidators != nil {
-			validators := keeper.GetBondedValidatorsByPower(ctx)
+			validators, err := keeper.GetBondedValidatorsByPower(ctx)
+			if err != nil {
+				return nil, err
+			}
 			// validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmvmtypes.Validator, len(validators))
 			for i, v := range validators {
@@ -358,9 +364,14 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			if err != nil {
 				return nil, err
 			}
-			v, found := keeper.GetValidator(ctx, valAddr)
+
 			res := wasmvmtypes.ValidatorResponse{}
-			if found {
+			v, err := keeper.GetValidator(ctx, valAddr)
+			switch {
+			case stakingtypes.ErrNoValidatorFound.Is(err): // return empty result for backwards compatibility. Changed in SDK 50
+			case err != nil:
+				return nil, err
+			default:
 				res.Validator = &wasmvmtypes.Validator{
 					Address:       v.OperatorAddress,
 					Commission:    v.Commission.Rate.String(),
@@ -375,7 +386,10 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			if err != nil {
 				return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, request.AllDelegations.Delegator)
 			}
-			sdkDels := keeper.GetAllDelegatorDelegations(ctx, delegator)
+			sdkDels, err := keeper.GetAllDelegatorDelegations(ctx, delegator)
+			if err != nil {
+				return nil, err
+			}
 			delegations, err := sdkToDelegations(ctx, keeper, sdkDels)
 			if err != nil {
 				return nil, err
@@ -396,8 +410,12 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			}
 
 			var res wasmvmtypes.DelegationResponse
-			d, found := keeper.GetDelegation(ctx, delegator, validator)
-			if found {
+			d, err := keeper.GetDelegation(ctx, delegator, validator)
+			switch {
+			case stakingtypes.ErrNoDelegation.Is(err): // return empty result for backwards compatibility. Changed in SDK 50
+			case err != nil:
+				return nil, err
+			default:
 				res.Delegation, err = sdkToFullDelegation(ctx, keeper, distKeeper, d)
 				if err != nil {
 					return nil, err
@@ -411,7 +429,10 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 
 func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Delegations, error) {
 	result := make([]wasmvmtypes.Delegation, len(delegations))
-	bondDenom := keeper.BondDenom(ctx)
+	bondDenom, err := keeper.BondDenom(ctx)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "bond denom")
+	}
 
 	for i, d := range delegations {
 		delAddr, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
@@ -425,9 +446,9 @@ func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations [
 
 		// shares to amount logic comes from here:
 		// https://github.com/cosmos/cosmos-sdk/blob/v0.38.3/x/staking/keeper/querier.go#L404
-		val, found := keeper.GetValidator(ctx, valAddr)
-		if !found {
-			return nil, errorsmod.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
+		val, err := keeper.GetValidator(ctx, valAddr)
+		if err != nil { // is stakingtypes.ErrNoValidatorFound
+			return nil, errorsmod.Wrap(err, "can't load validator for delegation")
 		}
 		amount := sdk.NewCoin(bondDenom, val.TokensFromShares(d.Shares).TruncateInt())
 
@@ -449,11 +470,15 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "validator address")
 	}
-	val, found := keeper.GetValidator(ctx, valAddr)
-	if !found {
-		return nil, errorsmod.Wrap(stakingtypes.ErrNoValidatorFound, "can't load validator for delegation")
+	val, err := keeper.GetValidator(ctx, valAddr)
+	if err != nil { // is stakingtypes.ErrNoValidatorFound
+		return nil, errorsmod.Wrap(err, "can't load validator for delegation")
 	}
-	bondDenom := keeper.BondDenom(ctx)
+	bondDenom, err := keeper.BondDenom(ctx)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "bond denom")
+	}
+
 	amount := sdk.NewCoin(bondDenom, val.TokensFromShares(delegation.Shares).TruncateInt())
 
 	delegationCoins := ConvertSdkCoinToWasmCoin(amount)
@@ -464,7 +489,11 @@ func sdkToFullDelegation(ctx sdk.Context, keeper types.StakingKeeper, distKeeper
 	// otherwise, it can redelegate the full amount
 	// (there are cases of partial funds redelegated, but this is a start)
 	redelegateCoins := wasmvmtypes.NewCoin(0, bondDenom)
-	if !keeper.HasReceivingRedelegation(ctx, delAddr, valAddr) {
+	found, err := keeper.HasReceivingRedelegation(ctx, delAddr, valAddr)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
 		redelegateCoins = delegationCoins
 	}
 

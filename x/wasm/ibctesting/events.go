@@ -1,6 +1,7 @@
 package ibctesting
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -69,8 +70,12 @@ func ParsePacketFromEvents(events []abci.Event) (channeltypes.Packet, error) {
 			packet := channeltypes.Packet{}
 			for _, attr := range ev.Attributes {
 				switch attr.Key {
-				case channeltypes.AttributeKeyData: //nolint:staticcheck // DEPRECATED
-					packet.Data = []byte(attr.Value)
+				case channeltypes.AttributeKeyDataHex:
+					bz, err := hex.DecodeString(attr.Value)
+					if err != nil {
+						panic(err)
+					}
+					packet.Data = bz
 
 				case channeltypes.AttributeKeySequence:
 					seq, err := strconv.ParseUint(attr.Value, 10, 64)
@@ -125,8 +130,12 @@ func ParseAckFromEvents(events []abci.Event) ([]byte, error) {
 	for _, ev := range events {
 		if ev.Type == channeltypes.EventTypeWriteAck {
 			for _, attr := range ev.Attributes {
-				if attr.Key == channeltypes.AttributeKeyAck { //nolint:staticcheck // DEPRECATED
-					return []byte(attr.Value), nil
+				if attr.Key == channeltypes.AttributeKeyAckHex {
+					bz, err := hex.DecodeString(attr.Value)
+					if err != nil {
+						panic(err)
+					}
+					return bz, nil
 				}
 			}
 		}
