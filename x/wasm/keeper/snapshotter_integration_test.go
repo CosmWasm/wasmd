@@ -67,6 +67,11 @@ func TestSnapshotter(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, snapshot)
 
+			types.MaxWasmSize = 1
+			t.Cleanup(func() {
+				types.MaxWasmSize = 800 * 1024
+			})
+
 			// when snapshot imported into dest app instance
 			destWasmApp := app.SetupWithEmptyStore(t)
 			require.NoError(t, destWasmApp.SnapshotManager().Restore(*snapshot))

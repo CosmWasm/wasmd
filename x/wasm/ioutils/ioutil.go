@@ -11,22 +11,8 @@ import (
 )
 
 // Uncompress expects a valid gzip source to unpack or fails. See IsGzip
-func Uncompress(gzipSrc []byte) ([]byte, error) {
-	zr, err := gzip.NewReader(bytes.NewReader(gzipSrc))
-	if err != nil {
-		return nil, err
-	}
-	zr.Multistream(false)
-	defer zr.Close()
-
-	bz, err := io.ReadAll(zr)
-	return bz, err
-}
-
-// UncompressWithLimit fails if wasm size exceeds the limit.
-// It expects a valid gzip source to unpack or fails. See IsGzip
-func UncompressWithLimit(gzipSrc []byte, limit uint64) ([]byte, error) {
-	if uint64(len(gzipSrc)) > limit {
+func Uncompress(gzipSrc []byte, limit int64) ([]byte, error) {
+	if int64(len(gzipSrc)) > limit {
 		return nil, types.ErrLimit.Wrapf("max %d bytes", limit)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(gzipSrc))
@@ -35,7 +21,7 @@ func UncompressWithLimit(gzipSrc []byte, limit uint64) ([]byte, error) {
 	}
 	zr.Multistream(false)
 	defer zr.Close()
-	bz, err := io.ReadAll(LimitReader(zr, int64(limit)))
+	bz, err := io.ReadAll(LimitReader(zr, limit))
 	if types.ErrLimit.Is(err) {
 		return nil, errorsmod.Wrapf(err, "max %d bytes", limit)
 	}
