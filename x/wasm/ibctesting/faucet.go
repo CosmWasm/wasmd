@@ -34,8 +34,8 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
-		chain.GetContext().BlockHeader(),
 		msgs,
+		chain.DefaultMsgFees,
 		chain.ChainID,
 		[]uint64{account.GetAccountNumber()},
 		[]uint64{account.GetSequence()},
@@ -48,6 +48,6 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	if err != nil {
 		return r, err
 	}
-	chain.CaptureIBCEvents(r)
+	chain.CaptureIBCEvents(r.Events)
 	return r, nil
 }

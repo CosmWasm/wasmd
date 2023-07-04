@@ -201,7 +201,6 @@ func (coord *Coordinator) CommitBlock(chains ...*TestChain) {
 // CommitNBlocks commits n blocks to state and updates the block height by 1 for each commit.
 func (coord *Coordinator) CommitNBlocks(chain *TestChain, n uint64) {
 	for i := uint64(0); i < n; i++ {
-		chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
 		chain.NextBlock()
 		coord.IncrementTime()
 	}
@@ -254,6 +253,7 @@ func (coord *Coordinator) ChanOpenInitOnBothChains(path *Path) error {
 func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	// get all the packet to relay src->dest
 	src := path.EndpointA
+	require.NoError(coord.t, src.UpdateClient())
 	coord.t.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(src.Chain.PendingSendPackets), len(path.EndpointB.Chain.PendingSendPackets))
 	for i, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
@@ -264,6 +264,7 @@ func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	}
 
 	src = path.EndpointB
+	require.NoError(coord.t, src.UpdateClient())
 	for i, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
 		if err != nil {
@@ -275,17 +276,15 @@ func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 }
 
 // TimeoutPendingPackets returns the package to source chain to let the IBC app revert any operation.
-// from A to A
+// from A to B
 func (coord *Coordinator) TimeoutPendingPackets(path *Path) error {
 	src := path.EndpointA
 	dest := path.EndpointB
 
 	toSend := src.Chain.PendingSendPackets
-	coord.t.Logf("Timeout %d Packets A->A\n", len(toSend))
+	coord.t.Logf("Timeout %d Packets A->B\n", len(toSend))
+	require.NoError(coord.t, src.UpdateClient())
 
-	if err := src.UpdateClient(); err != nil {
-		return err
-	}
 	// Increment time and commit block so that 5 second delay period passes between send and receive
 	coord.IncrementTime()
 	coord.CommitBlock(src.Chain, dest.Chain)
