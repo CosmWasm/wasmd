@@ -30,6 +30,6 @@ type AuthorizationPolicy interface {
 	CanInstantiateContract(c AccessConfig, actor types.AccAddress) bool
 	CanModifyContract(admin, actor types.AccAddress) bool
 	CanModifyCodeAccessConfig(creator, actor types.AccAddress, isSubset bool) bool
-	// SubMessageAuthorizationPolicy returns authorization policy to be used for submessages
+	// SubMessageAuthorizationPolicy returns authorization policy to be used for submessages. Must never be nil
 	SubMessageAuthorizationPolicy(entrypoint AuthorizationPolicyAction) AuthorizationPolicy
 }

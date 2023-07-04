@@ -41,6 +41,9 @@ func QueryStackSize(ctx sdk.Context) (uint32, bool) {
 
 // WithSubMsgAuthzPolicy stores the authorization policy for submessages into the context returned
 func WithSubMsgAuthzPolicy(ctx sdk.Context, policy AuthorizationPolicy) sdk.Context {
+	if policy == nil {
+		panic("policy must not be nil")
+	}
 	return ctx.WithValue(contextKeySubMsgAuthzPolicy, policy)
 }
 
