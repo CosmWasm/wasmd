@@ -131,7 +131,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 	t.Helper()
 	s.Log("Start chain\n")
 	s.ChainStarted = true
-	s.forEachNodesExecAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
+	s.forEachNodesExecAsync(t, append([]string{"start", "--log_level=info"}, xargs...)...)
 
 	s.AwaitNodeUp(t, s.rpcAddr)
 
@@ -572,7 +572,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		fmt.Sprintf("--grpc.address=localhost:%d", 9090+nodeNumber),
 		fmt.Sprintf("--grpc-web.address=localhost:%d", 8090+nodeNumber),
 		"--moniker=" + moniker,
-		"--trace", "--log_level=info",
+		"--log_level=info",
 		"--home", nodePath,
 	}
 	s.Logf("Execute `wasmd %s`\n", strings.Join(args, " "))
