@@ -37,6 +37,7 @@
 - [cosmwasm/wasm/v1/ibc.proto](#cosmwasm/wasm/v1/ibc.proto)
     - [MsgIBCCloseChannel](#cosmwasm.wasm.v1.MsgIBCCloseChannel)
     - [MsgIBCSend](#cosmwasm.wasm.v1.MsgIBCSend)
+    - [MsgIBCSendResponse](#cosmwasm.wasm.v1.MsgIBCSendResponse)
   
 - [cosmwasm/wasm/v1/proposal.proto](#cosmwasm/wasm/v1/proposal.proto)
     - [AccessConfigUpdate](#cosmwasm.wasm.v1.AccessConfigUpdate)
@@ -568,6 +569,21 @@ MsgIBCSend
 | `timeout_height` | [uint64](#uint64) |  | Timeout height relative to the current block height. The timeout is disabled when set to 0. |
 | `timeout_timestamp` | [uint64](#uint64) |  | Timeout timestamp (in nanoseconds) relative to the current block timestamp. The timeout is disabled when set to 0. |
 | `data` | [bytes](#bytes) |  | Data is the payload to transfer. We must not make assumption what format or content is in here. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgIBCSendResponse"></a>
+
+### MsgIBCSendResponse
+MsgIBCSendResponse
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sequence` | [uint64](#uint64) |  | Sequence number of the IBC packet sent |
 
 
 
@@ -1457,7 +1473,7 @@ MsgStoreCode submit Wasm code to the system
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `sender` | [string](#string) |  | Sender is the actor that signed the messages |
 | `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
 | `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
 
