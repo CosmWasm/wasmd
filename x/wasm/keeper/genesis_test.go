@@ -121,6 +121,9 @@ func TestGenesisExportImport(t *testing.T) {
 		return false
 	})
 
+	originalMaxWasmSize := types.MaxWasmSize
+	types.MaxWasmSize = 1
+
 	// re-import
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
@@ -133,6 +136,12 @@ func TestGenesisExportImport(t *testing.T) {
 	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
 	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
 
+	t.Cleanup(func() {
+		types.MaxWasmSize = originalMaxWasmSize
+		srcIT.Close()
+		dstIT.Close()
+	})
+
 	for i := 0; srcIT.Valid(); i++ {
 		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", wasmKeeper.storeKey.Name(), srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
@@ -143,8 +152,6 @@ func TestGenesisExportImport(t *testing.T) {
 	if !assert.False(t, dstIT.Valid()) {
 		t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
 	}
-	srcIT.Close()
-	dstIT.Close()
 }
 
 func TestGenesisInit(t *testing.T) {
