@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/hex"
 	"io"
+	"math"
 
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -102,7 +103,7 @@ func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	if !ioutils.IsGzip(compressedCode) {
 		return types.ErrInvalid.Wrap("not a gzip")
 	}
-	wasmCode, err := ioutils.Uncompress(compressedCode, uint64(types.MaxWasmSize))
+	wasmCode, err := ioutils.Uncompress(compressedCode, math.MaxInt64)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}
