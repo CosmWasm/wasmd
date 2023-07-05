@@ -6,6 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestInitGenesis(t *testing.T) {
@@ -16,7 +19,7 @@ func TestInitGenesis(t *testing.T) {
 	creator := data.faucet.NewFundedRandomAccount(data.ctx, deposit.Add(deposit...)...)
 	fred := data.faucet.NewFundedRandomAccount(data.ctx, topUp...)
 
-	msg := MsgStoreCode{
+	msg := types.MsgStoreCode{
 		Sender:       creator.String(),
 		WASMByteCode: testContract,
 	}
@@ -38,7 +41,7 @@ func TestInitGenesis(t *testing.T) {
 	initMsgBz, err := json.Marshal(initMsg)
 	require.NoError(t, err)
 
-	instMsg := MsgInstantiateContract{
+	instMsg := types.MsgInstantiateContract{
 		Sender: creator.String(),
 		CodeID: firstCodeID,
 		Msg:    initMsgBz,
@@ -50,7 +53,7 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 	contractBech32Addr := parseInitResponse(t, res.Data)
 
-	execMsg := MsgExecuteContract{
+	execMsg := types.MsgExecuteContract{
 		Sender:   fred.String(),
 		Contract: contractBech32Addr,
 		Msg:      []byte(`{"release":{}}`),
@@ -75,14 +78,14 @@ func TestInitGenesis(t *testing.T) {
 	}, data.encConf.Marshaler)
 
 	// export into genstate
-	genState := ExportGenesis(data.ctx, &data.keeper)
+	genState := keeper.ExportGenesis(data.ctx, &data.keeper)
 
 	// create new app to import genstate into
 	newData := setupTest(t)
 	q2 := newData.grpcQueryRouter
 
 	// initialize new app with genstate
-	_, err = InitGenesis(newData.ctx, &newData.keeper, *genState)
+	_, err = keeper.InitGenesis(newData.ctx, &newData.keeper, *genState)
 	require.NoError(t, err)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
