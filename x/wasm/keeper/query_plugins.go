@@ -326,6 +326,9 @@ func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter G
 
 func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKeeper) func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error) {
+		if keeper == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: "Staking is not supported"}
+		}
 		if request.BondedDenom != nil {
 			denom := keeper.BondDenom(ctx)
 			res := wasmvmtypes.BondedDenomResponse{
