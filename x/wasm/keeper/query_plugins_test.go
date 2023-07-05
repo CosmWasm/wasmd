@@ -390,7 +390,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 	exp := wasmvmtypes.DenomMetadata{
 		Name: "Test Token",
 		Base: "utest",
-		DenomUnits: []*wasmvmtypes.DenomUnit{
+		DenomUnits: []wasmvmtypes.DenomUnit{
 			{
 				Denom:    "utest",
 				Exponent: 0,
@@ -441,7 +441,7 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 			{
 				Name: "Test Token",
 				Base: "utest",
-				DenomUnits: []*wasmvmtypes.DenomUnit{
+				DenomUnits: []wasmvmtypes.DenomUnit{
 					{
 						Denom:    "utest",
 						Exponent: 0,

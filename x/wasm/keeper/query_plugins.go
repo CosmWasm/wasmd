@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,8 +18,6 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {
@@ -640,10 +639,10 @@ func ConvertSdkDenomMetadataToWasmDenomMetadata(metadata banktypes.Metadata) was
 	}
 }
 
-func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []*wasmvmtypes.DenomUnit {
-	converted := make([]*wasmvmtypes.DenomUnit, len(denomUnits))
+func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []wasmvmtypes.DenomUnit {
+	converted := make([]wasmvmtypes.DenomUnit, len(denomUnits))
 	for i, u := range denomUnits {
-		converted[i] = &wasmvmtypes.DenomUnit{
+		converted[i] = wasmvmtypes.DenomUnit{
 			Denom:    u.Denom,
 			Exponent: u.Exponent,
 			Aliases:  u.Aliases,
