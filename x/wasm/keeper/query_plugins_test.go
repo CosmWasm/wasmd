@@ -424,7 +424,8 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 
 	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
 		return &banktypes.QueryDenomsMetadataResponse{
-			Metadatas: metadata,
+			Metadatas:  metadata,
+			Pagination: &query.PageResponse{},
 		}, nil
 	}}
 
