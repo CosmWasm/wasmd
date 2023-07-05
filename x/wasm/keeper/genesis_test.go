@@ -121,6 +121,7 @@ func TestGenesisExportImport(t *testing.T) {
 		return false
 	})
 
+	originalMaxWasmSize := types.MaxWasmSize
 	types.MaxWasmSize = 1
 
 	// re-import
@@ -136,7 +137,7 @@ func TestGenesisExportImport(t *testing.T) {
 	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
 
 	t.Cleanup(func() {
-		types.MaxWasmSize = 800 * 1024
+		types.MaxWasmSize = originalMaxWasmSize
 		srcIT.Close()
 		dstIT.Close()
 	})
