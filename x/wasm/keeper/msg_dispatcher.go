@@ -20,6 +20,14 @@ type Messenger interface {
 	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
+var _ Messenger = MessengerFn(nil)
+
+type MessengerFn func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
+
+func (m MessengerFn) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+	return m(ctx, contractAddr, contractIBCPortID, msg)
+}
+
 // replyer is a subset of keeper that can handle replies to submessages
 type replyer interface {
 	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error)

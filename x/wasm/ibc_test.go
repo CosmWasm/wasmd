@@ -169,7 +169,7 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			got := newIBCPacket(spec.src)
+			got := types.AsIBCPacket(spec.src)
 			assert.Equal(t, spec.exp, got)
 		})
 	}

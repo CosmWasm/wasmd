@@ -4,6 +4,8 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/xwasmvm"
 )
 
 // DefaultMaxQueryStackSize maximum size of the stack of contract instances doing queries
@@ -239,6 +241,33 @@ type WasmerEngine interface {
 
 	// GetMetrics some internal metrics for monitoring purposes.
 	GetMetrics() (*wasmvmtypes.Metrics, error)
+
+	// OnIBCPacketAcked adr-8 callback, executed for a registered hook after ibc package acknowledged was processed
+	// todo: should we merge this with timout and just add another flag?
+	OnIBCPacketAcked(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		msg xwasmvm.IBCPacketAckedMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error) // todo: refine proper response type	// OnIBCPacketAcked adr-8 callback, executed for a registered hook after ibc package is acknowledged
+
+	// OnIBCPacketTimedOut adr-8 callback, executed for a registered hook after ibc package timeout was processed
+	OnIBCPacketTimedOut(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		msg xwasmvm.IBCPacketTimedOutMsg,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.IBCBasicResponse, uint64, error) // todo: refine proper response type
 }
 
 var _ wasmvm.KVStore = &StoreAdapter{}
