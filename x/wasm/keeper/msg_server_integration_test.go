@@ -1,12 +1,13 @@
 package keeper_test
 
 import (
-	"crypto/sha256"
 	_ "embed"
 	"encoding/json"
 	"testing"
 	"time"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,12 +43,14 @@ func TestStoreCode(t *testing.T) {
 	var result types.MsgStoreCodeResponse
 	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
 	assert.Equal(t, uint64(1), result.CodeID)
-	expHash := sha256.Sum256(wasmContract)
-	assert.Equal(t, expHash[:], result.Checksum)
+
+	expHash, err := wasmvm.CreateChecksum(wasmContract)
+	require.NoError(t, err)
+	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(result.Checksum))
 	// and
 	info := wasmApp.WasmKeeper.GetCodeInfo(ctx, 1)
 	assert.NotNil(t, info)
-	assert.Equal(t, expHash[:], info.CodeHash)
+	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(info.CodeHash))
 	assert.Equal(t, sender.String(), info.Creator)
 	assert.Equal(t, types.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
