@@ -110,6 +110,16 @@ func TestConstructorOptions(t *testing.T) {
 				assert.Equal(t, VestingCoinBurner{}, k.accountPruner)
 			},
 		},
+		"gov propagation": {
+			srcOpt: WitGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
+			verify: func(t *testing.T, k Keeper) {
+				exp := map[types.AuthorizationPolicyAction]struct{}{
+					types.AuthZActionInstantiate:     {},
+					types.AuthZActionMigrateContract: {},
+				}
+				assert.Equal(t, exp, k.propagateGovAuthorization)
+			},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {

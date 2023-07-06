@@ -161,6 +161,20 @@ func WithAcceptedAccountTypesOnContractInstantiation(accts ...authtypes.AccountI
 	})
 }
 
+// WitGovSubMsgAuthZPropagated overwrites the default gov authorization policy for sub-messages
+func WitGovSubMsgAuthZPropagated(entries ...types.AuthorizationPolicyAction) Option {
+	x := make(map[types.AuthorizationPolicyAction]struct{}, len(entries))
+	for _, e := range entries {
+		x[e] = struct{}{}
+	}
+	if got, exp := len(x), len(entries); got != exp {
+		panic(fmt.Sprintf("duplicates in %#v", entries))
+	}
+	return optsFn(func(k *Keeper) {
+		k.propagateGovAuthorization = x
+	})
+}
+
 func asTypeMap(accts []authtypes.AccountI) map[reflect.Type]struct{} {
 	m := make(map[reflect.Type]struct{}, len(accts))
 	for _, a := range accts {

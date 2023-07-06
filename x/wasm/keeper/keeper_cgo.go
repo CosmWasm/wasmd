@@ -54,7 +54,10 @@ func NewKeeper(
 		gasRegister:          NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
-		authority:            authority,
+		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
+			types.AuthZActionInstantiate: {},
+		},
+		authority: authority,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	for _, o := range opts {
