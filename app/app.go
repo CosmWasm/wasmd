@@ -490,6 +490,7 @@ func NewWasmApp(
 		app.StakingKeeper,
 		app.UpgradeKeeper,
 		scopedIBCKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Register the proposal types
@@ -560,6 +561,7 @@ func NewWasmApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
@@ -572,6 +574,7 @@ func NewWasmApp(
 		app.AccountKeeper,
 		scopedICAHostKeeper,
 		app.MsgServiceRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
@@ -582,6 +585,7 @@ func NewWasmApp(
 		&app.IBCKeeper.PortKeeper,
 		scopedICAControllerKeeper,
 		app.MsgServiceRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	wasmDir := filepath.Join(homePath, "wasm")

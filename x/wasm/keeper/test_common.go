@@ -408,6 +408,7 @@ func createTestInput(
 		stakingKeeper,
 		upgradeKeeper,
 		scopedIBCKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	querier := baseapp.NewGRPCQueryRouter()

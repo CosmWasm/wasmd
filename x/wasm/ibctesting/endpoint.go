@@ -121,7 +121,7 @@ func (endpoint *Endpoint) CreateClient() (err error) {
 		return err
 	}
 
-	endpoint.ClientID, err = ibctesting.ParseClientIDFromEvents(res.GetEvents())
+	endpoint.ClientID, err = ibctesting.ParseClientIDFromEvents(res.GetEvents().ToABCIEvents())
 	require.NoError(endpoint.Chain.t, err)
 
 	return nil
@@ -222,7 +222,7 @@ func (endpoint *Endpoint) ConnOpenInit() error {
 		return err
 	}
 
-	endpoint.ConnectionID, err = ibctesting.ParseConnectionIDFromEvents(res.GetEvents())
+	endpoint.ConnectionID, err = ibctesting.ParseConnectionIDFromEvents(res.GetEvents().ToABCIEvents())
 	require.NoError(endpoint.Chain.t, err)
 
 	return nil
@@ -248,7 +248,7 @@ func (endpoint *Endpoint) ConnOpenTry() error {
 	}
 
 	if endpoint.ConnectionID == "" {
-		endpoint.ConnectionID, err = ibctesting.ParseConnectionIDFromEvents(res.GetEvents())
+		endpoint.ConnectionID, err = ibctesting.ParseConnectionIDFromEvents(res.GetEvents().ToABCIEvents())
 		require.NoError(endpoint.Chain.t, err)
 	}
 
@@ -330,7 +330,7 @@ func (endpoint *Endpoint) ChanOpenInit() error {
 		return err
 	}
 
-	endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
+	endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents().ToABCIEvents())
 	require.NoError(endpoint.Chain.t, err)
 
 	// update version to selected app version
@@ -361,7 +361,7 @@ func (endpoint *Endpoint) ChanOpenTry() error {
 	}
 
 	if endpoint.ChannelID == "" {
-		endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents())
+		endpoint.ChannelID, err = ibctesting.ParseChannelIDFromEvents(res.GetEvents().ToABCIEvents())
 		require.NoError(endpoint.Chain.t, err)
 	}
 

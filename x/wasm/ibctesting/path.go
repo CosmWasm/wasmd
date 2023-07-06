@@ -54,7 +54,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents().ToABCIEvents())
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func (path *Path) RelayPacket(packet channeltypes.Packet, _ []byte) error {
 			return err
 		}
 
-		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents())
+		ack, err := ibctesting.ParseAckFromEvents(res.GetEvents().ToABCIEvents())
 		if err != nil {
 			return err
 		}

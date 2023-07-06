@@ -74,7 +74,7 @@ func TestICA(t *testing.T) {
 	targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
-	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg})
+	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.App.AppCodec(), []proto.Message{payloadMsg}, icatypes.EncodingProtobuf)
 	require.NoError(t, err)
 	payloadPacket := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,
@@ -95,7 +95,7 @@ func TestICA(t *testing.T) {
 
 func parseIBCChannelEvents(t *testing.T, res *sdk.Result) (string, string, string) {
 	t.Helper()
-	chanID, err := ibctesting.ParseChannelIDFromEvents(res.GetEvents())
+	chanID, err := ibctesting.ParseChannelIDFromEvents(res.GetEvents().ToABCIEvents())
 	require.NoError(t, err)
 	portID, err := wasmibctesting.ParsePortIDFromEvents(res.GetEvents())
 	require.NoError(t, err)
