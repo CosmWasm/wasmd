@@ -17,7 +17,6 @@ var _ types.WasmerEngine = &MockWasmer{}
 // MockWasmer implements types.WasmerEngine for testing purpose. One or multiple messages can be stubbed.
 // Without a stub function a panic is thrown.
 type MockWasmer struct {
-	CreateFn             func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
 	StoreCodeFn          func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
 	StoreCodeUncheckedFn func(codeID wasmvm.WasmCode) (wasmvm.Checksum, error)
 	AnalyzeCodeFn        func(codeID wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
@@ -82,11 +81,9 @@ func (m *MockWasmer) IBCPacketTimeout(codeID wasmvm.Checksum, env wasmvmtypes.En
 	return m.IBCPacketTimeoutFn(codeID, env, msg, store, goapi, querier, gasMeter, gasLimit, deserCost)
 }
 
+// Deprecated: use StoreCode instead.
 func (m *MockWasmer) Create(codeID wasmvm.WasmCode) (wasmvm.Checksum, error) {
-	if m.CreateFn == nil {
-		panic("not supposed to be called!")
-	}
-	return m.CreateFn(codeID)
+	panic("Deprecated: use StoreCode instead")
 }
 
 func (m *MockWasmer) StoreCode(codeID wasmvm.WasmCode) (wasmvm.Checksum, error) {
@@ -337,13 +334,6 @@ func NewIBCContractMockWasmer(c IBCContractCallbacks) *MockWasmer {
 	return m
 }
 
-func HashOnlyCreateFn(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
-	if code == nil {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "wasm code must not be nil")
-	}
-	return wasmvm.CreateChecksum(code)
-}
-
 func HashOnlyStoreCodeFn(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
 	if code == nil {
 		return nil, errorsmod.Wrap(types.ErrInvalid, "wasm code must not be nil")
@@ -353,10 +343,6 @@ func HashOnlyStoreCodeFn(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
 
 func NoOpInstantiateFn(wasmvm.Checksum, wasmvmtypes.Env, wasmvmtypes.MessageInfo, []byte, wasmvm.KVStore, wasmvm.GoAPI, wasmvm.Querier, wasmvm.GasMeter, uint64, wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 	return &wasmvmtypes.Response{}, 0, nil
-}
-
-func NoOpCreateFn(_ wasmvm.WasmCode) (wasmvm.Checksum, error) {
-	return rand.Bytes(32), nil
 }
 
 func NoOpStoreCodeFn(_ wasmvm.WasmCode) (wasmvm.Checksum, error) {

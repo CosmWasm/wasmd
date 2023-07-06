@@ -12,7 +12,7 @@ import (
 )
 
 //go:embed testdata/reflect.wasm
-var wasmCode []byte
+var reflectWasmCode []byte
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	const (
@@ -56,8 +56,8 @@ func randBytes(n int) []byte {
 func CodeFixture(mutators ...func(*Code)) Code {
 	fixture := Code{
 		CodeID:    1,
-		CodeInfo:  CodeInfoFixture(WithSHA256CodeHash(wasmCode)),
-		CodeBytes: wasmCode,
+		CodeInfo:  CodeInfoFixture(WithSHA256CodeHash(reflectWasmCode)),
+		CodeBytes: reflectWasmCode,
 	}
 
 	for _, m := range mutators {
@@ -67,7 +67,7 @@ func CodeFixture(mutators ...func(*Code)) Code {
 }
 
 func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
-	codeHash, err := wasmvm.CreateChecksum(wasmCode)
+	codeHash, err := wasmvm.CreateChecksum(reflectWasmCode)
 	if err != nil {
 		panic(err)
 	}
