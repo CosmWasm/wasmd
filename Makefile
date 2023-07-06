@@ -152,7 +152,7 @@ test-sim-deterministic: runsim
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 1 1 TestAppStateDeterminism
 
 test-system: install
-	@VERSION=$(VERSION) cd tests/system; go test -mod=readonly -failfast -tags='system_test' ./... --wait-time=45s --verbose; EXIT_CODE=$$?; cd -; exit $$EXIT_CODE
+	$(MAKE) -C tests/system/ test
 
 ###############################################################################
 ###                                Linting                                  ###

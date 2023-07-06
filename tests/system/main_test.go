@@ -3,7 +3,7 @@
 package system
 
 import (
-	"encoding/json"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"os"
@@ -16,10 +16,6 @@ import (
 	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/app"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 var (
@@ -28,10 +24,14 @@ var (
 )
 
 func init() {
+	InitSDKConfig("wasm")
+}
+
+func InitSDKConfig(bech32Prefix string) {
 	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
-	config.SetBech32PrefixForValidator(app.Bech32PrefixValAddr, app.Bech32PrefixValPub)
-	config.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
+	config.SetBech32PrefixForAccount(bech32Prefix, bech32Prefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForValidator(bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator, bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic)
+	config.SetBech32PrefixForConsensusNode(bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus, bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic)
 }
 
 func TestMain(m *testing.M) {
@@ -75,10 +75,10 @@ func TestMain(m *testing.M) {
 }
 
 // requireEnoughFileHandlers uses `ulimit`
-func requireEnoughFileHandlers(nodesCount int) error {
+func requireEnoughFileHandlers(nodesCount int) {
 	ulimit, err := exec.LookPath("ulimit")
 	if err != nil || ulimit == "" { // skip when not available
-		return nil
+		return
 	}
 
 	cmd := exec.Command(ulimit, "-n")
@@ -95,7 +95,7 @@ func requireEnoughFileHandlers(nodesCount int) error {
 	if fileDescrCount < expFH {
 		panic(fmt.Sprintf("Fail fast. Insufficient setup. Run 'ulimit -n %d'", expFH))
 	}
-	return err
+	return
 }
 
 const (
@@ -128,11 +128,9 @@ func randomBech32Addr() string {
 
 // ContractBech32Address build a wasmd bech32 contract address
 func ContractBech32Address(codeID, instanceID uint64) string {
-	return wasmkeeper.BuildContractAddressClassic(codeID, instanceID).String()
-}
-
-func toJson(t *testing.T, o interface{}) string {
-	bz, err := json.Marshal(o)
-	require.NoError(t, err)
-	return string(bz)
+	// copied from wasmd keeper.BuildContractAddressClassic
+	contractID := make([]byte, 16)
+	binary.BigEndian.PutUint64(contractID[:8], codeID)
+	binary.BigEndian.PutUint64(contractID[8:], instanceID)
+	return sdk.AccAddress(address.Module("wasm", contractID)[:32]).String()
 }
