@@ -108,7 +108,7 @@ func restoreV1(ctx sdk.Context, k *Keeper, compressedCode []byte) error {
 	}
 
 	// FIXME: check which codeIDs the checksum matches??
-	_, err = k.wasmVM.Create(wasmCode)
+	_, err = k.wasmVM.StoreCodeUnchecked(wasmCode)
 	if err != nil {
 		return sdkerrors.Wrap(types.ErrCreateFailed, err.Error())
 	}

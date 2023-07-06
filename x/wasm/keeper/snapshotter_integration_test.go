@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -10,6 +9,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+<<<<<<< HEAD
+=======
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+>>>>>>> 1a5a2d96 (Upgrade to wasmvm 1.3.0-rc.0 (#1486))
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -92,9 +98,11 @@ func TestSnapshotter(t *testing.T) {
 			wasmKeeper.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
 				bz, err := wasmKeeper.GetByteCode(ctx, id)
 				require.NoError(t, err)
-				hash := sha256.Sum256(bz)
+
+				hash, err := wasmvm.CreateChecksum(bz)
+				require.NoError(t, err)
 				destCodeIDToChecksum[id] = hash[:]
-				assert.Equal(t, hash[:], info.CodeHash)
+				assert.Equal(t, hash[:], wasmvmtypes.Checksum(info.CodeHash))
 				return false
 			})
 			assert.Equal(t, srcCodeIDToChecksum, destCodeIDToChecksum)

@@ -9,6 +9,20 @@ import (
 	"testing"
 	"time"
 
+<<<<<<< HEAD
+=======
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	wasmvm "github.com/CosmWasm/wasmvm"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+>>>>>>> 1a5a2d96 (Upgrade to wasmvm 1.3.0-rc.0 (#1486))
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -539,7 +553,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmCodeHash := sha256.Sum256(wasmCode)
+	wasmCodeHash, err := wasmvm.CreateChecksum(wasmCode)
+	require.NoError(t, err)
 	enc64 := base64.StdEncoding.EncodeToString
 	genesisStr := fmt.Sprintf(genesisTemplate, enc64(wasmCodeHash[:]), enc64(wasmCode))
 
