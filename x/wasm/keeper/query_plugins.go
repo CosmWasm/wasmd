@@ -6,17 +6,18 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {
@@ -198,6 +199,27 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 					Denom:  coin.Denom,
 					Amount: coin.Amount.String(),
 				},
+			}
+			return json.Marshal(res)
+		}
+		if request.DenomMetadata != nil {
+			denomMetadata, ok := bankKeeper.GetDenomMetaData(ctx, request.DenomMetadata.Denom)
+			if !ok {
+				return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, request.DenomMetadata.Denom)
+			}
+			res := wasmvmtypes.DenomMetadataResponse{
+				Metadata: ConvertSdkDenomMetadataToWasmDenomMetadata(denomMetadata),
+			}
+			return json.Marshal(res)
+		}
+		if request.AllDenomMetadata != nil {
+			bankQueryRes, err := bankKeeper.DenomsMetadata(ctx, ConvertToDenomsMetadataRequest(request.AllDenomMetadata))
+			if err != nil {
+				return nil, sdkerrors.ErrInvalidRequest
+			}
+			res := wasmvmtypes.AllDenomMetadataResponse{
+				Metadata: ConvertSdkDenomMetadatasToWasmDenomMetadatas(bankQueryRes.Metadatas),
+				NextKey:  bankQueryRes.Pagination.NextKey,
 			}
 			return json.Marshal(res)
 		}
@@ -582,6 +604,51 @@ func ConvertSdkCoinToWasmCoin(coin sdk.Coin) wasmvmtypes.Coin {
 		Denom:  coin.Denom,
 		Amount: coin.Amount.String(),
 	}
+}
+
+func ConvertToDenomsMetadataRequest(wasmRequest *wasmvmtypes.AllDenomMetadataQuery) *banktypes.QueryDenomsMetadataRequest {
+	ret := &banktypes.QueryDenomsMetadataRequest{}
+	if wasmRequest.Pagination != nil {
+		ret.Pagination = &query.PageRequest{
+			Key:     wasmRequest.Pagination.Key,
+			Limit:   uint64(wasmRequest.Pagination.Limit),
+			Reverse: wasmRequest.Pagination.Reverse,
+		}
+	}
+	return ret
+}
+
+func ConvertSdkDenomMetadatasToWasmDenomMetadatas(metadata []banktypes.Metadata) []wasmvmtypes.DenomMetadata {
+	converted := make([]wasmvmtypes.DenomMetadata, len(metadata))
+	for i, m := range metadata {
+		converted[i] = ConvertSdkDenomMetadataToWasmDenomMetadata(m)
+	}
+	return converted
+}
+
+func ConvertSdkDenomMetadataToWasmDenomMetadata(metadata banktypes.Metadata) wasmvmtypes.DenomMetadata {
+	return wasmvmtypes.DenomMetadata{
+		Description: metadata.Description,
+		DenomUnits:  ConvertSdkDenomUnitsToWasmDenomUnits(metadata.DenomUnits),
+		Base:        metadata.Base,
+		Display:     metadata.Display,
+		Name:        metadata.Name,
+		Symbol:      metadata.Symbol,
+		URI:         metadata.URI,
+		URIHash:     metadata.URIHash,
+	}
+}
+
+func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []wasmvmtypes.DenomUnit {
+	converted := make([]wasmvmtypes.DenomUnit, len(denomUnits))
+	for i, u := range denomUnits {
+		converted[i] = wasmvmtypes.DenomUnit{
+			Denom:    u.Denom,
+			Exponent: u.Exponent,
+			Aliases:  u.Aliases,
+		}
+	}
+	return converted
 }
 
 // ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
