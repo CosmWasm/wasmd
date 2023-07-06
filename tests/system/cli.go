@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -17,8 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"golang.org/x/exp/slices"
-
-	"github.com/CosmWasm/wasmd/app"
 )
 
 type (
@@ -36,7 +37,6 @@ type WasmdCli struct {
 	homeDir        string
 	fees           string
 	Debug          bool
-	amino          *codec.LegacyAmino
 	assertErrorFn  RunErrorAssert
 	awaitNextBlock awaitNextBlock
 	expTXCommitted bool
@@ -63,7 +63,6 @@ func NewWasmdCLIx(
 		chainID:        chainID,
 		homeDir:        homeDir,
 		Debug:          debug,
-		amino:          app.MakeEncodingConfig().Amino,
 		assertErrorFn:  assert.NoError,
 		awaitNextBlock: awaiter,
 		fees:           fees,
@@ -86,7 +85,6 @@ func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
 		chainID:        c.chainID,
 		homeDir:        c.homeDir,
 		Debug:          c.Debug,
-		amino:          c.amino,
 		assertErrorFn:  f,
 		awaitNextBlock: c.awaitNextBlock,
 		fees:           c.fees,
@@ -101,7 +99,6 @@ func (c WasmdCli) WithNodeAddress(addr string) WasmdCli {
 		chainID:        c.chainID,
 		homeDir:        c.homeDir,
 		Debug:          c.Debug,
-		amino:          c.amino,
 		assertErrorFn:  c.assertErrorFn,
 		awaitNextBlock: c.awaitNextBlock,
 		fees:           c.fees,
@@ -311,12 +308,17 @@ func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
 	args := []string{"q", "tendermint-validator-set"}
 	got := c.CustomQuery(args...)
 
+	// still using amino here as the SDK
+	amino := codec.NewLegacyAmino()
+	std.RegisterLegacyAminoCodec(amino)
+	std.RegisterInterfaces(codectypes.NewInterfaceRegistry())
+
 	var res rpc.ResultValidatorsOutput
-	require.NoError(c.t, c.amino.UnmarshalJSON([]byte(got), &res), got)
+	require.NoError(c.t, amino.UnmarshalJSON([]byte(got), &res), got)
 	return res
 }
 
-// IsInTendermintValset returns true when the giben pub key is in the current active tendermint validator set
+// IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
 func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (rpc.ResultValidatorsOutput, bool) {
 	valResult := c.GetTendermintValidatorSet()
 	var found bool
