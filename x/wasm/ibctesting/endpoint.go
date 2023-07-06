@@ -52,7 +52,7 @@ func NewEndpoint(
 func NewDefaultEndpoint(chain *TestChain) *Endpoint {
 	return &Endpoint{
 		Chain:            chain,
-		ClientConfig:     ibctesting.NewTendermintConfig(false),
+		ClientConfig:     ibctesting.NewTendermintConfig(),
 		ConnectionConfig: ibctesting.NewConnectionConfig(),
 		ChannelConfig:    ibctesting.NewChannelConfig(),
 	}

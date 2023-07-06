@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
@@ -237,7 +237,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	var capturedPacket *CapturedPacket
 
 	capturePacketsSenderMock := &wasmtesting.MockIBCPacketSender{
-		SendPacketFn: func(ctx sdk.Context, channelCap *capabilityibctypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+		SendPacketFn: func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 			capturedPacket = &CapturedPacket{
 				sourcePort:       sourcePort,
 				sourceChannel:    sourceChannel,
@@ -259,8 +259,8 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		},
 	}
 	capKeeper := &wasmtesting.MockCapabilityKeeper{
-		GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilityibctypes.Capability, bool) {
-			return &capabilityibctypes.Capability{}, true
+		GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
+			return &capabilitytypes.Capability{}, true
 		},
 	}
 
@@ -294,7 +294,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			},
 			chanKeeper: chanKeeper,
 			capKeeper: wasmtesting.MockCapabilityKeeper{
-				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilityibctypes.Capability, bool) {
+				GetCapabilityFn: func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
 					return nil, false
 				},
 			},

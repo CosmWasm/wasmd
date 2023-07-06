@@ -3,7 +3,7 @@ package types
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
@@ -114,7 +114,7 @@ type IBCContractKeeper interface {
 	) error
 	// ClaimCapability allows the transfer module to claim a capability
 	// that IBC module passes to it
-	ClaimCapability(ctx sdk.Context, cap *capabilityibctypes.Capability, name string) error
+	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 	// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
-	AuthenticateCapability(ctx sdk.Context, cap *capabilityibctypes.Capability, name string) bool
+	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 }

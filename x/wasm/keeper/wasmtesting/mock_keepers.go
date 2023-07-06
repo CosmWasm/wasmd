@@ -2,7 +2,7 @@ package wasmtesting
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -12,7 +12,7 @@ import (
 type MockChannelKeeper struct {
 	GetChannelFn          func(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSendFn func(ctx sdk.Context, portID, channelID string) (uint64, bool)
-	ChanCloseInitFn       func(ctx sdk.Context, portID, channelID string, chanCap *capabilityibctypes.Capability) error
+	ChanCloseInitFn       func(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
 	GetAllChannelsFn      func(ctx sdk.Context) []channeltypes.IdentifiedChannel
 	IterateChannelsFn     func(ctx sdk.Context, cb func(channeltypes.IdentifiedChannel) bool)
 	SetChannelFn          func(ctx sdk.Context, portID, channelID string, channel channeltypes.Channel)
@@ -39,7 +39,7 @@ func (m *MockChannelKeeper) GetNextSequenceSend(ctx sdk.Context, portID, channel
 	return m.GetNextSequenceSendFn(ctx, portID, channelID)
 }
 
-func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilityibctypes.Capability) error {
+func (m *MockChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error {
 	if m.ChanCloseInitFn == nil {
 		panic("not supposed to be called!")
 	}
@@ -61,10 +61,10 @@ func (m *MockChannelKeeper) SetChannel(ctx sdk.Context, portID, channelID string
 }
 
 type MockIBCPacketSender struct {
-	SendPacketFn func(ctx sdk.Context, channelCap *capabilityibctypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
+	SendPacketFn func(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error)
 }
 
-func (m *MockIBCPacketSender) SendPacket(ctx sdk.Context, channelCap *capabilityibctypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+func (m *MockIBCPacketSender) SendPacket(ctx sdk.Context, channelCap *capabilitytypes.Capability, sourcePort string, sourceChannel string, timeoutHeight clienttypes.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 	if m.SendPacketFn == nil {
 		panic("not supposed to be called!")
 	}
@@ -83,26 +83,26 @@ func MockChannelKeeperIterator(s []channeltypes.IdentifiedChannel) func(ctx sdk.
 }
 
 type MockCapabilityKeeper struct {
-	GetCapabilityFn          func(ctx sdk.Context, name string) (*capabilityibctypes.Capability, bool)
-	ClaimCapabilityFn        func(ctx sdk.Context, cap *capabilityibctypes.Capability, name string) error
-	AuthenticateCapabilityFn func(ctx sdk.Context, capability *capabilityibctypes.Capability, name string) bool
+	GetCapabilityFn          func(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
+	ClaimCapabilityFn        func(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
+	AuthenticateCapabilityFn func(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool
 }
 
-func (m MockCapabilityKeeper) GetCapability(ctx sdk.Context, name string) (*capabilityibctypes.Capability, bool) {
+func (m MockCapabilityKeeper) GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool) {
 	if m.GetCapabilityFn == nil {
 		panic("not supposed to be called!")
 	}
 	return m.GetCapabilityFn(ctx, name)
 }
 
-func (m MockCapabilityKeeper) ClaimCapability(ctx sdk.Context, cap *capabilityibctypes.Capability, name string) error {
+func (m MockCapabilityKeeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	if m.ClaimCapabilityFn == nil {
 		panic("not supposed to be called!")
 	}
 	return m.ClaimCapabilityFn(ctx, cap, name)
 }
 
-func (m MockCapabilityKeeper) AuthenticateCapability(ctx sdk.Context, capability *capabilityibctypes.Capability, name string) bool {
+func (m MockCapabilityKeeper) AuthenticateCapability(ctx sdk.Context, capability *capabilitytypes.Capability, name string) bool {
 	if m.AuthenticateCapabilityFn == nil {
 		panic("not supposed to be called!")
 	}

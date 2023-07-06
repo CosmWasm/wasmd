@@ -32,13 +32,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	// capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	// capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	capabilityibckeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
@@ -68,7 +65,7 @@ type ChainApp interface {
 	GetBaseApp() *baseapp.BaseApp
 
 	TxConfig() client.TxConfig
-	GetScopedIBCKeeper() capabilityibckeeper.ScopedKeeper
+	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
 	GetIBCKeeper() *ibckeeper.Keeper
 	GetBankKeeper() bankkeeper.Keeper
 	GetStakingKeeper() *stakingkeeper.Keeper
@@ -587,7 +584,7 @@ func MakeBlockID(hash []byte, partSetSize uint32, partSetHash []byte) tmtypes.Bl
 // already exist. This function will fail testing on any resulting error.
 // NOTE: only creation of a capability for a transfer or mock port is supported
 // Other applications must bind to the port in InitGenesis or modify this code.
-func (chain *TestChain) CreatePortCapability(scopedKeeper capabilityibckeeper.ScopedKeeper, portID string) {
+func (chain *TestChain) CreatePortCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID string) {
 	// check if the portId is already binded, if not bind it
 	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
 	if !ok {
@@ -605,7 +602,7 @@ func (chain *TestChain) CreatePortCapability(scopedKeeper capabilityibckeeper.Sc
 
 // GetPortCapability returns the port capability for the given portID. The capability must
 // exist, otherwise testing will fail.
-func (chain *TestChain) GetPortCapability(portID string) *capabilityibctypes.Capability {
+func (chain *TestChain) GetPortCapability(portID string) *capabilitytypes.Capability {
 	portCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.PortPath(portID))
 	require.True(chain.t, ok)
 
@@ -615,7 +612,7 @@ func (chain *TestChain) GetPortCapability(portID string) *capabilityibctypes.Cap
 // CreateChannelCapability binds and claims a capability for the given portID and channelID
 // if it does not already exist. This function will fail testing on any resulting error. The
 // scoped keeper passed in will claim the new capability.
-func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilityibckeeper.ScopedKeeper, portID, channelID string) {
+func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilitykeeper.ScopedKeeper, portID, channelID string) {
 	capName := host.ChannelCapabilityPath(portID, channelID)
 	// check if the portId is already binded, if not bind it
 	_, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), capName)
@@ -631,7 +628,7 @@ func (chain *TestChain) CreateChannelCapability(scopedKeeper capabilityibckeeper
 
 // GetChannelCapability returns the channel capability for the given portID and channelID.
 // The capability must exist, otherwise testing will fail.
-func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilityibctypes.Capability {
+func (chain *TestChain) GetChannelCapability(portID, channelID string) *capabilitytypes.Capability {
 	chanCap, ok := chain.App.GetScopedIBCKeeper().GetCapability(chain.GetContext(), host.ChannelCapabilityPath(portID, channelID))
 	require.True(chain.t, ok)
 

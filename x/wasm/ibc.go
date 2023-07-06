@@ -5,8 +5,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"	
-	capabilityibctypes "github.com/cosmos/ibc-go/modules/capability/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
@@ -40,7 +40,7 @@ func (i IBCHandler) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilityibctypes.Capability,
+	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -88,7 +88,7 @@ func (i IBCHandler) OnChanOpenTry(
 	order channeltypes.Order,
 	connectionHops []string,
 	portID, channelID string,
-	chanCap *capabilityibctypes.Capability,
+	chanCap *capabilitytypes.Capability,
 	counterParty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
