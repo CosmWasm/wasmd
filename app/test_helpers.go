@@ -42,7 +42,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -51,10 +51,10 @@ type SetupOptions struct {
 	Logger   log.Logger
 	DB       *dbm.MemDB
 	AppOpts  servertypes.AppOptions
-	WasmOpts []wasm.Option
+	WasmOpts []wasmkeeper.Option
 }
 
-func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
+func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*WasmApp, GenesisState) {
 	db := dbm.NewMemDB()
 	nodeHome := t.TempDir()
 	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
@@ -118,7 +118,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 }
 
 // Setup initializes a new WasmApp. A Nop logger is set in WasmApp.
-func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
+func Setup(t *testing.T, opts ...wasmkeeper.Option) *WasmApp {
 	t.Helper()
 
 	privVal := mock.NewPV()
@@ -146,7 +146,7 @@ func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
-func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
+func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) *WasmApp {
 	t.Helper()
 
 	app, genesisState := setup(t, chainID, true, 5, opts...)
@@ -268,7 +268,7 @@ func ModuleAccountAddrs() map[string]bool {
 	return BlockedAddresses()
 }
 
-var emptyWasmOptions []wasm.Option
+var emptyWasmOptions []wasmkeeper.Option
 
 // NewTestNetworkFixture returns a new WasmApp AppConstructor for network simulation tests
 func NewTestNetworkFixture() network.TestFixture {

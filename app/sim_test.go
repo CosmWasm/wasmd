@@ -36,8 +36,6 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 // SimAppChainID hardcoded chainID for simulation
@@ -131,7 +129,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasmtypes.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	var genesisState GenesisState
@@ -234,7 +232,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasmtypes.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
@@ -275,7 +273,7 @@ func setupSimulationApp(t *testing.T, msg string) (simtypes.Config, dbm.DB, simt
 	appOptions[flags.FlagHome] = dir // ensure a unique folder
 	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
 
-	app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
+	app := NewWasmApp(logger, db, nil, true, wasmtypes.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", app.Name())
 	return config, db, appOptions, app
 }
@@ -314,7 +312,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			app := NewWasmApp(logger, db, nil, true, wasm.EnableAllProposals, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
+			app := NewWasmApp(logger, db, nil, true, wasmtypes.EnableAllProposals, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

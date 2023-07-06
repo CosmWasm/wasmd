@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 func TestModuleMigrations(t *testing.T) {
@@ -55,7 +54,7 @@ func TestModuleMigrations(t *testing.T) {
 			spec.setup(ctx)
 
 			fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
-			fromVM[wasm.ModuleName] = spec.startVersion
+			fromVM[types.ModuleName] = spec.startVersion
 			_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 			require.NoError(t, err)
 
@@ -65,7 +64,7 @@ func TestModuleMigrations(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			var expModuleVersion uint64 = 4
-			assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
+			assert.Equal(t, expModuleVersion, gotVM[types.ModuleName])
 			gotParams := wasmApp.WasmKeeper.GetParams(ctx)
 			assert.Equal(t, spec.exp, gotParams)
 		})
@@ -98,7 +97,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 	require.NoError(t, err)
 
 	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
-	fromVM[wasm.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
+	fromVM[types.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
 	_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 	require.NoError(t, err)
 
@@ -108,7 +107,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	var expModuleVersion uint64 = 4
-	assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
+	assert.Equal(t, expModuleVersion, gotVM[types.ModuleName])
 
 	// any address was not migrated
 	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code1).InstantiateConfig)

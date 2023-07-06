@@ -43,7 +43,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 var MaxAccounts = 10
@@ -68,7 +68,7 @@ type ChainApp interface {
 	GetBankKeeper() bankkeeper.Keeper
 	GetStakingKeeper() *stakingkeeper.Keeper
 	GetAccountKeeper() authkeeper.AccountKeeper
-	GetWasmKeeper() wasm.Keeper
+	GetWasmKeeper() wasmkeeper.Keeper
 }
 
 // TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
@@ -113,22 +113,22 @@ type PacketAck struct {
 }
 
 // ChainAppFactory abstract factory method that usually implemented by app.SetupWithGenesisValSet
-type ChainAppFactory func(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp
+type ChainAppFactory func(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) ChainApp
 
 // DefaultWasmAppFactory instantiates and sets up the default wasmd app
-func DefaultWasmAppFactory(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp {
+func DefaultWasmAppFactory(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) ChainApp {
 	return app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, balances...)
 }
 
 // NewDefaultTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
+func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasmkeeper.Option) *TestChain {
 	return NewTestChain(t, coord, DefaultWasmAppFactory, chainID, opts...)
 }
 
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasm.Option) *TestChain {
+func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasmkeeper.Option) *TestChain {
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -167,7 +167,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, 
 //
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
-func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasm.Option) *TestChain {
+func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasmkeeper.Option) *TestChain {
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []SenderAccount{}
