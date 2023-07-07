@@ -383,6 +383,28 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
+		"distribution fund community pool": {
+			sender: addr1,
+			srcMsg: wasmvmtypes.CosmosMsg{
+				Distribution: &wasmvmtypes.DistributionMsg{
+					FundCommunityPool: &wasmvmtypes.FundCommunityPoolMsg{
+						Amount: wasmvmtypes.Coins{
+							wasmvmtypes.NewCoin(200, "stones"),
+							wasmvmtypes.NewCoin(200, "feathers"),
+						},
+					},
+				},
+			},
+			output: []sdk.Msg{
+				&distributiontypes.MsgFundCommunityPool{
+					Depositor: addr1.String(),
+					Amount: sdk.NewCoins(
+						sdk.NewInt64Coin("stones", 200),
+						sdk.NewInt64Coin("feathers", 200),
+					),
+				},
+			},
+		},
 		"stargate encoded bank msg": {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
