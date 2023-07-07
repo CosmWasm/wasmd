@@ -357,6 +357,79 @@ func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types
 	}, nil
 }
 
+// AddCodeUploadParamsAddresses adds addresses to code upload params
+func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *types.MsgAddCodeUploadParamsAddresses) (*types.MsgAddCodeUploadParamsAddressesResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+	authority := m.keeper.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	params := m.keeper.GetParams(ctx)
+	addresses := params.CodeUploadAccess.Addresses
+	for _, newAddr := range req.Addresses {
+		found := false
+		for i := 0; i < len(addresses); i++ {
+			if addresses[i] == newAddr {
+				found = true
+				break
+			}
+		}
+		if !found {
+			addresses = append(addresses, newAddr)
+		}
+	}
+
+	params.CodeUploadAccess.Addresses = addresses
+
+	if err := m.keeper.SetParams(ctx, params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgAddCodeUploadParamsAddressesResponse{}, nil
+}
+
+// RemoveCodeUploadParamsAddresses removes addresses to code upload params
+func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *types.MsgRemoveCodeUploadParamsAddresses) (*types.MsgRemoveCodeUploadParamsAddressesResponse, error) {
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+	authority := m.keeper.GetAuthority()
+	if authority != req.Authority {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	params := m.keeper.GetParams(ctx)
+	addresses := params.CodeUploadAccess.Addresses
+	newAddresses := make([]string, 0)
+	for _, addr := range addresses {
+		found := false
+		for i := 0; i < len(req.Addresses); i++ {
+			if req.Addresses[i] == addr {
+				found = true
+				break
+			}
+			if !found {
+				newAddresses = append(newAddresses, addr)
+			}
+		}
+	}
+
+	params.CodeUploadAccess.Addresses = newAddresses
+
+	if err := m.keeper.SetParams(ctx, params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgRemoveCodeUploadParamsAddressesResponse{}, nil
+}
+
 func (m msgServer) selectAuthorizationPolicy(ctx sdk.Context, actor string) types.AuthorizationPolicy {
 	if actor == m.keeper.GetAuthority() {
 		return newGovAuthorizationPolicy(m.keeper.propagateGovAuthorization)

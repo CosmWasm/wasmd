@@ -615,3 +615,77 @@ func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 	}
 	return nil
 }
+
+func (msg MsgAddCodeUploadParamsAddresses) Route() string {
+	return RouterKey
+}
+
+func (msg MsgAddCodeUploadParamsAddresses) Type() string {
+	return "add-code-upload-params-addresses"
+}
+
+func (msg MsgAddCodeUploadParamsAddresses) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgAddCodeUploadParamsAddresses) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgAddCodeUploadParamsAddresses) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+
+	if len(msg.Addresses) == 0 {
+		return errorsmod.Wrap(ErrEmpty, "addresses")
+	}
+
+	for _, addr := range msg.Addresses {
+		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+			return errorsmod.Wrap(err, "addresses")
+		}
+	}
+	return nil
+}
+
+func (msg MsgRemoveCodeUploadParamsAddresses) Route() string {
+	return RouterKey
+}
+
+func (msg MsgRemoveCodeUploadParamsAddresses) Type() string {
+	return "remove-code-upload-params-addresses"
+}
+
+func (msg MsgRemoveCodeUploadParamsAddresses) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgRemoveCodeUploadParamsAddresses) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+
+	if len(msg.Addresses) == 0 {
+		return errorsmod.Wrap(ErrEmpty, "addresses")
+	}
+
+	for _, addr := range msg.Addresses {
+		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+			return errorsmod.Wrap(err, "addresses")
+		}
+	}
+	return nil
+}
