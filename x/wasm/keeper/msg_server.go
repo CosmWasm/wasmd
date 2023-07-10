@@ -378,16 +378,12 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 	addresses := params.CodeUploadAccess.Addresses
 	size := len(addresses)
 	for _, newAddr := range req.Addresses {
-		found := false
 		for i := 0; i < size; i++ {
 			if addresses[i] == newAddr {
-				found = true
 				return nil, errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("address already exists %s", newAddr))
 			}
 		}
-		if !found {
-			addresses = append(addresses, newAddr)
-		}
+		addresses = append(addresses, newAddr)
 	}
 
 	params.CodeUploadAccess.Addresses = addresses
@@ -413,7 +409,7 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 
 	params := m.keeper.GetParams(ctx)
 	if params.CodeUploadAccess.Permission != types.AccessTypeAnyOfAddresses {
-		return &types.MsgRemoveCodeUploadParamsAddressesResponse{}, errorsmod.Wrap(types.ErrInvalid, "permission")
+		return nil, errorsmod.Wrap(types.ErrInvalid, "permission")
 	}
 	addresses := params.CodeUploadAccess.Addresses
 	newAddresses := make([]string, 0)
@@ -424,9 +420,9 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 				found = true
 				break
 			}
-			if !found {
-				newAddresses = append(newAddresses, addr)
-			}
+		}
+		if !found {
+			newAddresses = append(newAddresses, addr)
 		}
 	}
 
