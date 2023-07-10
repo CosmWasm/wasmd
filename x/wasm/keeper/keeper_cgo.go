@@ -35,15 +35,11 @@ func NewKeeper(
 	authority string,
 	opts ...Option,
 ) Keeper {
-	wasmer, err := wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
-	if err != nil {
-		panic(err)
-	}
 
 	keeper := &Keeper{
 		storeKey:             storeKey,
 		cdc:                  cdc,
-		wasmVM:               wasmer,
+		wasmVM:               nil,
 		accountKeeper:        accountKeeper,
 		bank:                 NewBankCoinTransferrer(bankKeeper),
 		accountPruner:        NewVestingCoinBurner(bankKeeper),
@@ -63,6 +59,16 @@ func NewKeeper(
 	for _, o := range opts {
 		o.apply(keeper)
 	}
+	// only set the wasmvm if no one set this in the options
+	// NewVM does a lot, so better not to create it and silently drop it.
+	if keeper.wasmVM == nil {
+		var err error
+		keeper.wasmVM, err = wasmvm.NewVM(filepath.Join(homeDir, "wasm"), availableCapabilities, contractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	// not updateable, yet
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 	return *keeper
