@@ -1667,9 +1667,13 @@ type MsgClient interface {
 	//
 	// Since: 0.40
 	StoreAndInstantiateContract(ctx context.Context, in *MsgStoreAndInstantiateContract, opts ...grpc.CallOption) (*MsgStoreAndInstantiateContractResponse, error)
-	// RemoveCodeUploadParamsAddresses
+	// RemoveCodeUploadParamsAddresses defines a governance operation for
+	// removing addresses from code upload params.
+	// The authority is defined in the keeper.
 	RemoveCodeUploadParamsAddresses(ctx context.Context, in *MsgRemoveCodeUploadParamsAddresses, opts ...grpc.CallOption) (*MsgRemoveCodeUploadParamsAddressesResponse, error)
-	// AddCodeUploadParamsAddresses
+	// AddCodeUploadParamsAddresses defines a governance operation for
+	// addresses addresses to code upload params.
+	// The authority is defined in the keeper.
 	AddCodeUploadParamsAddresses(ctx context.Context, in *MsgAddCodeUploadParamsAddresses, opts ...grpc.CallOption) (*MsgAddCodeUploadParamsAddressesResponse, error)
 }
 
@@ -1861,9 +1865,13 @@ type MsgServer interface {
 	//
 	// Since: 0.40
 	StoreAndInstantiateContract(context.Context, *MsgStoreAndInstantiateContract) (*MsgStoreAndInstantiateContractResponse, error)
-	// RemoveCodeUploadParamsAddresses
+	// RemoveCodeUploadParamsAddresses defines a governance operation for
+	// removing addresses from code upload params.
+	// The authority is defined in the keeper.
 	RemoveCodeUploadParamsAddresses(context.Context, *MsgRemoveCodeUploadParamsAddresses) (*MsgRemoveCodeUploadParamsAddressesResponse, error)
-	// AddCodeUploadParamsAddresses
+	// AddCodeUploadParamsAddresses defines a governance operation for
+	// addresses addresses to code upload params.
+	// The authority is defined in the keeper.
 	AddCodeUploadParamsAddresses(context.Context, *MsgAddCodeUploadParamsAddresses) (*MsgAddCodeUploadParamsAddressesResponse, error)
 }
 

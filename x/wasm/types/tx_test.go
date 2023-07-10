@@ -807,6 +807,13 @@ func TestMsgAddCodeUploadParamsAddressesValidation(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"duplicate addresses": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress, goodAddress},
+			},
+			expErr: true,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -858,6 +865,13 @@ func TestMsgRemoveCodeUploadParamsAddressesValidation(t *testing.T) {
 			src: MsgRemoveCodeUploadParamsAddresses{
 				Authority: goodAddress,
 				Addresses: []string{badAddress},
+			},
+			expErr: true,
+		},
+		"duplicate addresses": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress, goodAddress},
 			},
 			expErr: true,
 		},

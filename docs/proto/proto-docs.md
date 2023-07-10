@@ -1863,8 +1863,8 @@ Since: 0.40 | |
 | `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract defines a governance operation for storing and instantiating the contract. The authority is defined in the keeper.
 
 Since: 0.40 | |
-| `RemoveCodeUploadParamsAddresses` | [MsgRemoveCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses) | [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse) | RemoveCodeUploadParamsAddresses | |
-| `AddCodeUploadParamsAddresses` | [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses) | [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse) | AddCodeUploadParamsAddresses | |
+| `RemoveCodeUploadParamsAddresses` | [MsgRemoveCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses) | [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse) | RemoveCodeUploadParamsAddresses defines a governance operation for removing addresses from code upload params. The authority is defined in the keeper. | |
+| `AddCodeUploadParamsAddresses` | [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses) | [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse) | AddCodeUploadParamsAddresses defines a governance operation for addresses addresses to code upload params. The authority is defined in the keeper. | |
 
  <!-- end services -->
 

@@ -810,7 +810,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
+		Short: "Submit an add code upload params addresses proposal to add addresses to code upload config params",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
@@ -852,7 +852,7 @@ func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
-		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
+		Short: "Submit a remove code upload params addresses proposal to remove addresses from code upload config params",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)

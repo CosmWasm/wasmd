@@ -645,10 +645,15 @@ func (msg MsgAddCodeUploadParamsAddresses) ValidateBasic() error {
 		return errorsmod.Wrap(ErrEmpty, "addresses")
 	}
 
+	duplicate := map[string]struct{}{}
 	for _, addr := range msg.Addresses {
 		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
 			return errorsmod.Wrap(err, "addresses")
 		}
+		if _, found := duplicate[addr]; found {
+			return errorsmod.Wrap(ErrInvalid, "duplicate addresses")
+		}
+		duplicate[addr] = struct{}{}
 	}
 	return nil
 }
@@ -682,10 +687,15 @@ func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
 		return errorsmod.Wrap(ErrEmpty, "addresses")
 	}
 
+	duplicate := map[string]struct{}{}
 	for _, addr := range msg.Addresses {
 		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
 			return errorsmod.Wrap(err, "addresses")
 		}
+		if _, found := duplicate[addr]; found {
+			return errorsmod.Wrap(ErrInvalid, "duplicate addresses")
+		}
+		duplicate[addr] = struct{}{}
 	}
 	return nil
 }

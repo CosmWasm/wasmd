@@ -60,10 +60,14 @@ service Msg {
   // Since: 0.40
   rpc StoreAndInstantiateContract(MsgStoreAndInstantiateContract)
       returns (MsgStoreAndInstantiateContractResponse);
-  // RemoveCodeUploadParamsAddresses
+  // RemoveCodeUploadParamsAddresses defines a governance operation for
+  // removing addresses from code upload params.
+  // The authority is defined in the keeper.
   rpc RemoveCodeUploadParamsAddresses(MsgRemoveCodeUploadParamsAddresses)
       returns (MsgRemoveCodeUploadParamsAddressesResponse);
-  // AddCodeUploadParamsAddresses
+  // AddCodeUploadParamsAddresses defines a governance operation for
+  // addresses addresses to code upload params.
+  // The authority is defined in the keeper.
   rpc AddCodeUploadParamsAddresses(MsgAddCodeUploadParamsAddresses)
       returns (MsgAddCodeUploadParamsAddressesResponse);
 }
