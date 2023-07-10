@@ -35,7 +35,6 @@ func NewKeeper(
 	authority string,
 	opts ...Option,
 ) Keeper {
-
 	keeper := &Keeper{
 		storeKey:             storeKey,
 		cdc:                  cdc,
@@ -56,7 +55,8 @@ func NewKeeper(
 		authority: authority,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
-	for _, o := range opts {
+	preOpts, postOpts := splitOpts(opts)
+	for _, o := range preOpts {
 		o.apply(keeper)
 	}
 	// only set the wasmvm if no one set this in the options
@@ -69,7 +69,10 @@ func NewKeeper(
 		}
 	}
 
-	// not updateable, yet
+	for _, o := range postOpts {
+		o.apply(keeper)
+	}
+	// not updatable, yet
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 	return *keeper
 }
