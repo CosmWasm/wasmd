@@ -94,18 +94,7 @@ func TestVestingAccounts(t *testing.T) {
 	assert.Equal(t, myStartTimestamp, accounts[0].Get("start_time").Int())
 
 	// check accounts have some balances
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))), getGenesisBalance([]byte(raw), vest1Addr))
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000001))), getGenesisBalance([]byte(raw), vest2Addr))
-	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(200000002))), getGenesisBalance([]byte(raw), vest3Addr))
-}
-
-func getGenesisBalance(raw []byte, addr string) sdk.Coins {
-	var r []sdk.Coin
-	balances := gjson.GetBytes(raw, fmt.Sprintf(`app_state.bank.balances.#[address==%q]#.coins`, addr)).Array()
-	for _, coins := range balances {
-		for _, coin := range coins.Array() {
-			r = append(r, sdk.NewCoin(coin.Get("denom").String(), sdk.NewInt(coin.Get("amount").Int())))
-		}
-	}
-	return r
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000000))), GetGenesisBalance([]byte(raw), vest1Addr))
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(100000001))), GetGenesisBalance([]byte(raw), vest2Addr))
+	assert.Equal(t, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(200000002))), GetGenesisBalance([]byte(raw), vest3Addr))
 }

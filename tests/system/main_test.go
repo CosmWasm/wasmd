@@ -23,22 +23,13 @@ var (
 	verbose bool
 )
 
-func init() {
-	InitSDKConfig("wasm")
-}
-
-func InitSDKConfig(bech32Prefix string) {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(bech32Prefix, bech32Prefix+sdk.PrefixPublic)
-	config.SetBech32PrefixForValidator(bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator, bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic)
-	config.SetBech32PrefixForConsensusNode(bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus, bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic)
-}
-
 func TestMain(m *testing.M) {
 	rebuild := flag.Bool("rebuild", false, "rebuild artifacts")
 	waitTime := flag.Duration("wait-time", defaultWaitTime, "time to wait for chain events")
 	nodesCount := flag.Int("nodes-count", 4, "number of nodes in the cluster")
 	blockTime := flag.Duration("block-time", 1000*time.Millisecond, "block creation time")
+	execBinary := flag.String("binary", "wasmd", "executable binary for server/ client side")
+	bech32Prefix := flag.String("bech32", "wasm", "bech32 prefix to be used with addresses")
 	flag.BoolVar(&verbose, "verbose", false, "verbose output")
 	flag.Parse()
 
@@ -53,8 +44,13 @@ func TestMain(m *testing.M) {
 	if verbose {
 		println("Work dir: ", workDir)
 	}
+	initSDKConfig(*bech32Prefix)
+
 	defaultWaitTime = *waitTime
-	sut = NewSystemUnderTest(verbose, *nodesCount, *blockTime)
+	if *execBinary == "" {
+		panic("executable binary name must not be empty")
+	}
+	sut = NewSystemUnderTest(*execBinary, verbose, *nodesCount, *blockTime)
 	if *rebuild {
 		sut.BuildNewBinary()
 	}
@@ -96,6 +92,13 @@ func requireEnoughFileHandlers(nodesCount int) {
 		panic(fmt.Sprintf("Fail fast. Insufficient setup. Run 'ulimit -n %d'", expFH))
 	}
 	return
+}
+
+func initSDKConfig(bech32Prefix string) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(bech32Prefix, bech32Prefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForValidator(bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator, bech32Prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic)
+	config.SetBech32PrefixForConsensusNode(bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus, bech32Prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic)
 }
 
 const (

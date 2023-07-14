@@ -33,6 +33,7 @@ var workDir string
 
 // SystemUnderTest blockchain provisioning
 type SystemUnderTest struct {
+	execBinary        string
 	blockListener     *EventListener
 	currentHeight     int64
 	chainID           string
@@ -51,9 +52,13 @@ type SystemUnderTest struct {
 	dirty             bool // requires full reset when marked dirty
 }
 
-func NewSystemUnderTest(verbose bool, nodesCount int, blockTime time.Duration) *SystemUnderTest {
+func NewSystemUnderTest(execBinary string, verbose bool, nodesCount int, blockTime time.Duration) *SystemUnderTest {
+	if execBinary == "" {
+		panic("executable binary name must not be empty")
+	}
 	return &SystemUnderTest{
 		chainID:           "testing",
+		execBinary:        execBinary,
 		outputDir:         "./testnet",
 		blockTime:         blockTime,
 		rpcAddr:           "tcp://localhost:26657",
@@ -84,9 +89,9 @@ func (s *SystemUnderTest) SetupChain() {
 		"--starting-ip-address", "", // empty to use host systems
 		"--single-host",
 	}
-	println("+++ wasmd " + strings.Join(args, " "))
+	fmt.Printf("+++ %s %s", s.execBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
-		locateExecutable("wasmd"),
+		locateExecutable(s.execBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -193,12 +198,23 @@ func appendToBuf(r io.Reader, b *ring.Ring, stop <-chan struct{}) {
 		}
 		text := scanner.Text()
 		// filter out noise
-		if strings.Contains(text, "module=rpc-server protocol=websocket") {
+		if isLogNoise(text) {
 			continue
 		}
 		b.Value = text
 		b = b.Next()
 	}
+}
+
+func isLogNoise(text string) bool {
+	for _, v := range []string{
+		"\x1b[36mmodule=\x1b[0mrpc-server", // "module=rpc-server",
+	} {
+		if strings.Contains(text, v) {
+			return true
+		}
+	}
+	return false
 }
 
 // AwaitNodeUp ensures the node is running
@@ -249,7 +265,7 @@ func (s *SystemUnderTest) StopChain() {
 	}
 	s.cleanupFn = nil
 	// send SIGTERM
-	cmd := exec.Command(locateExecutable("pkill"), "-15", "wasmd") //nolint:gosec
+	cmd := exec.Command(locateExecutable("pkill"), "-15", s.execBinary) //nolint:gosec
 	cmd.Dir = workDir
 	if _, err := cmd.CombinedOutput(); err != nil {
 		s.Logf("failed to stop chain: %s\n", err)
@@ -260,14 +276,14 @@ func (s *SystemUnderTest) StopChain() {
 		select {
 		case <-timeout:
 			s.Log("killing nodes now")
-			cmd = exec.Command(locateExecutable("pkill"), "-9", "wasmd") //nolint:gosec
+			cmd = exec.Command(locateExecutable("pkill"), "-9", s.execBinary) //nolint:gosec
 			cmd.Dir = workDir
 			if _, err := cmd.CombinedOutput(); err != nil {
 				s.Logf("failed to kill process: %s\n", err)
 			}
 			shutdown = true
 		default:
-			if err := exec.Command(locateExecutable("pgrep"), "wasmd").Run(); err != nil { //nolint:gosec
+			if err := exec.Command(locateExecutable("pgrep"), s.execBinary).Run(); err != nil { //nolint:gosec
 				shutdown = true
 			}
 		}
@@ -290,7 +306,7 @@ func (s SystemUnderTest) PrintBuffer() {
 	})
 }
 
-// BuildNewBinary builds and installs new wasmd binary
+// BuildNewBinary builds and installs new executable binary
 func (s SystemUnderTest) BuildNewBinary() {
 	s.Log("Install binaries\n")
 	makePath := locateExecutable("make")
@@ -431,7 +447,7 @@ func saveGenesis(home string, content []byte) error {
 	return nil
 }
 
-// ForEachNodeExecAndWait runs the given wasmd commands for all cluster nodes synchronously
+// ForEachNodeExecAndWait runs the given app executable commands for all cluster nodes synchronously
 // The commands output is returned for each node.
 func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string) [][]string {
 	result := make([][]string, s.nodesCount)
@@ -439,9 +455,9 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 		result[i] = make([]string, len(cmds))
 		for j, xargs := range cmds {
 			xargs = append(xargs, "--home", home)
-			s.Logf("Execute `wasmd %s`\n", strings.Join(xargs, " "))
+			s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(xargs, " "))
 			cmd := exec.Command( //nolint:gosec
-				locateExecutable("wasmd"),
+				locateExecutable(s.execBinary),
 				xargs...,
 			)
 			cmd.Dir = workDir
@@ -454,14 +470,14 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 	return result
 }
 
-// forEachNodesExecAsync runs the given wasmd command for all cluster nodes and returns without waiting
+// forEachNodesExecAsync runs the given app cli command for all cluster nodes and returns without waiting
 func (s *SystemUnderTest) forEachNodesExecAsync(t *testing.T, xargs ...string) []func() error {
 	r := make([]func() error, s.nodesCount)
 	s.withEachNodeHome(func(i int, home string) {
 		args := append(xargs, "--home", home) //nolint:gocritic
-		s.Logf("Execute `wasmd %s`\n", strings.Join(args, " "))
+		s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
 		cmd := exec.Command( //nolint:gosec
-			locateExecutable("wasmd"),
+			locateExecutable(s.execBinary),
 			args...,
 		)
 		cmd.Dir = workDir
@@ -480,7 +496,7 @@ func (s SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
 
 // nodePath returns the path of the node within the work dir. not absolute
 func (s SystemUnderTest) nodePath(i int) string {
-	return fmt.Sprintf("%s/node%d/wasmd", s.outputDir, i)
+	return fmt.Sprintf("%s/node%d/%s", s.outputDir, i, s.execBinary)
 }
 
 func (s SystemUnderTest) Log(msg string) {
@@ -538,9 +554,9 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 	// prepare new node
 	moniker := fmt.Sprintf("node%d", nodeNumber)
 	args := []string{"init", moniker, "--home", nodePath, "--overwrite"}
-	s.Logf("Execute `wasmd %s`\n", strings.Join(args, " "))
+	s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
-		locateExecutable("wasmd"),
+		locateExecutable(s.execBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -575,9 +591,9 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		"--log_level=info",
 		"--home", nodePath,
 	}
-	s.Logf("Execute `wasmd %s`\n", strings.Join(args, " "))
+	s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
 	cmd = exec.Command( //nolint:gosec
-		locateExecutable("wasmd"),
+		locateExecutable(s.execBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -608,6 +624,9 @@ func (n Node) RPCAddr() string {
 
 // locateExecutable looks up the binary on the OS path.
 func locateExecutable(file string) string {
+	if strings.TrimSpace(file) == "" {
+		panic("executable binary name must not be empty")
+	}
 	path, err := exec.LookPath(file)
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error %s", err.Error()))
