@@ -40,33 +40,52 @@ type WasmdCli struct {
 	assertErrorFn  RunErrorAssert
 	awaitNextBlock awaitNextBlock
 	expTXCommitted bool
+	execBinary     string
 }
 
 // NewWasmdCLI constructor
 func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
-	return NewWasmdCLIx(t, sut.rpcAddr, sut.chainID, sut.AwaitNextBlock, filepath.Join(workDir, sut.outputDir), "1"+sdk.DefaultBondDenom, verbose)
+	return NewWasmdCLIx(
+		t,
+		sut.execBinary,
+		sut.rpcAddr,
+		sut.chainID,
+		sut.AwaitNextBlock,
+		filepath.Join(workDir, sut.outputDir),
+		"1"+sdk.DefaultBondDenom,
+		verbose,
+		assert.NoError,
+		true,
+	)
 }
 
 // NewWasmdCLIx extended constructor
 func NewWasmdCLIx(
 	t *testing.T,
+	execBinary string,
 	nodeAddress string,
 	chainID string,
 	awaiter awaitNextBlock,
 	homeDir string,
 	fees string,
 	debug bool,
+	assertErrorFn RunErrorAssert,
+	expTXCommitted bool,
 ) *WasmdCli {
+	if strings.TrimSpace(execBinary) == "" {
+		panic("executable binary name must not be empty")
+	}
 	return &WasmdCli{
 		t:              t,
+		execBinary:     execBinary,
 		nodeAddress:    nodeAddress,
 		chainID:        chainID,
 		homeDir:        homeDir,
 		Debug:          debug,
-		assertErrorFn:  assert.NoError,
 		awaitNextBlock: awaiter,
 		fees:           fees,
-		expTXCommitted: true,
+		assertErrorFn:  assertErrorFn,
+		expTXCommitted: expTXCommitted,
 	}
 }
 
@@ -79,31 +98,48 @@ func (c WasmdCli) WithRunErrorsIgnored() WasmdCli {
 
 // WithRunErrorMatcher assert function to ensure run command error value
 func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
-	return WasmdCli{
-		t:              c.t,
-		nodeAddress:    c.nodeAddress,
-		chainID:        c.chainID,
-		homeDir:        c.homeDir,
-		Debug:          c.Debug,
-		assertErrorFn:  f,
-		awaitNextBlock: c.awaitNextBlock,
-		fees:           c.fees,
-		expTXCommitted: c.expTXCommitted,
-	}
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		c.nodeAddress,
+		c.chainID,
+		c.awaitNextBlock,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		f,
+		c.expTXCommitted,
+	)
 }
 
-func (c WasmdCli) WithNodeAddress(addr string) WasmdCli {
-	return WasmdCli{
-		t:              c.t,
-		nodeAddress:    addr,
-		chainID:        c.chainID,
-		homeDir:        c.homeDir,
-		Debug:          c.Debug,
-		assertErrorFn:  c.assertErrorFn,
-		awaitNextBlock: c.awaitNextBlock,
-		fees:           c.fees,
-		expTXCommitted: c.expTXCommitted,
-	}
+func (c WasmdCli) WithNodeAddress(nodeAddr string) WasmdCli {
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		nodeAddr,
+		c.chainID,
+		c.awaitNextBlock,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		c.assertErrorFn,
+		c.expTXCommitted,
+	)
+}
+
+func (c WasmdCli) WithAssertTXUncommitted() WasmdCli {
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		c.nodeAddress,
+		c.chainID,
+		c.awaitNextBlock,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		c.assertErrorFn,
+		false,
+	)
 }
 
 // CustomCommand main entry for executing wasmd cli commands.
@@ -160,9 +196,8 @@ func (c WasmdCli) CustomQuery(args ...string) string {
 
 // execute shell command
 func (c WasmdCli) run(args []string) (output string, ok bool) {
-	// todo assert error???
 	if c.Debug {
-		c.t.Logf("+++ running `wasmd %s`", strings.Join(args, " "))
+		c.t.Logf("+++ running `%s %s`", c.execBinary, strings.Join(args, " "))
 	}
 	gotOut, gotErr := func() (out []byte, err error) {
 		defer func() {

@@ -41,8 +41,10 @@ func TestRecursiveMsgsExternalTrigger(t *testing.T) {
 				fees = calcMinFeeRequired(t, gas)
 			}
 			for _, n := range sut.AllNodes(t) {
-				clix := cli.WithRunErrorMatcher(spec.expErrMatcher).WithNodeAddress(n.RPCAddr())
-				clix.expTXCommitted = false
+				clix := cli.
+					WithRunErrorMatcher(spec.expErrMatcher).
+					WithNodeAddress(n.RPCAddr()).
+					WithAssertTXUncommitted()
 				clix.WasmExecute(contractAddr, execMsg, defaultSrcAddr, "--gas="+gas, "--broadcast-mode=sync", "--fees="+fees)
 			}
 			sut.AwaitNextBlock(t)
