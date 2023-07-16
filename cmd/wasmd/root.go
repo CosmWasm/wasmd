@@ -7,7 +7,8 @@ import (
 
 	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
-	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
+
+	//	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
 	dbm "github.com/cosmos/cosmos-db"
@@ -204,7 +205,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig, b
 		keys.Commands(app.DefaultNodeHome),
 	)
 	// add rosetta
-	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
+	//	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
