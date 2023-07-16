@@ -139,7 +139,7 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	})
 
 	if res.Code != 0 {
-		return fmt.Errorf("query failed: (%d) %s", res.Code, res.Log)
+		return fmt.Errorf("smart query failed: (%d) %s", res.Code, res.Log)
 	}
 
 	// unpack protobuf
