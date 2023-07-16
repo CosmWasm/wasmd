@@ -6,14 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	stdrand "math/rand"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+<<<<<<< HEAD
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+=======
+>>>>>>> upstream/main
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -149,7 +153,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
-		policy      AuthorizationPolicy
+		policy      types.AuthorizationPolicy
 		chainUpload types.AccessConfig
 		expError    *errorsmod.Error
 	}{
@@ -715,7 +719,7 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 			return &wasmvmtypes.Response{Data: []byte("my-response-data")}, 0, nil
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
@@ -746,7 +750,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 			return do(codeID, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	// overwrite wasmvm in router
@@ -2057,7 +2061,7 @@ func TestSetAccessConfig(t *testing.T) {
 	const codeID = 1
 
 	specs := map[string]struct {
-		authz           AuthorizationPolicy
+		authz           types.AuthorizationPolicy
 		chainPermission types.AccessType
 		newConfig       types.AccessConfig
 		caller          sdk.AccAddress
@@ -2167,20 +2171,56 @@ func TestSetAccessConfig(t *testing.T) {
 }
 
 func TestAppendToContractHistory(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	var contractAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
-	var orderedEntries []types.ContractCodeHistoryEntry
-
 	f := fuzz.New().Funcs(ModelFuzzers...)
+<<<<<<< HEAD
 	for i := 0; i < 10; i++ {
 		var entry types.ContractCodeHistoryEntry
 		f.Fuzz(&entry)
 		require.NoError(t, keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry))
 		orderedEntries = append(orderedEntries, entry)
+=======
+	pCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	variableLengthAddresses := []sdk.AccAddress{
+		bytes.Repeat([]byte{0x1}, types.ContractAddrLen),
+		append([]byte{0x00}, bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1), 0x00),
+		append([]byte{0xff}, bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1), 0xff),
+		bytes.Repeat([]byte{0x1}, types.SDKAddrLen),
+		append([]byte{0x00}, bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1), 0x00),
+		append([]byte{0xff}, bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1), 0xff),
 	}
-	// when
-	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
-	assert.Equal(t, orderedEntries, gotHistory)
+	sRandom := stdrand.New(stdrand.NewSource(0))
+	for n := 0; n < 100; n++ {
+		t.Run(fmt.Sprintf("iteration %d", n), func(t *testing.T) {
+			sRandom.Seed(int64(n))
+			sRandom.Shuffle(len(variableLengthAddresses), func(i, j int) {
+				variableLengthAddresses[i], variableLengthAddresses[j] = variableLengthAddresses[j], variableLengthAddresses[i]
+			})
+			orderedEntries := make([][]types.ContractCodeHistoryEntry, len(variableLengthAddresses))
+
+			ctx, _ := pCtx.CacheContext()
+			for j, addr := range variableLengthAddresses {
+				for i := 0; i < 10; i++ {
+					var entry types.ContractCodeHistoryEntry
+					f.RandSource(sRandom).Fuzz(&entry)
+					k.appendToContractHistory(ctx, addr, entry)
+					orderedEntries[j] = append(orderedEntries[j], entry)
+				}
+			}
+			// when
+			for j, addr := range variableLengthAddresses {
+				gotHistory := k.GetContractHistory(ctx, addr)
+				assert.Equal(t, orderedEntries[j], gotHistory, "%d: %X", j, addr)
+				assert.Equal(t, orderedEntries[j][len(orderedEntries[j])-1], k.getLastContractHistoryEntry(ctx, addr))
+			}
+		})
+>>>>>>> upstream/main
+	}
 }
 
 func TestCoinBurnerPruneBalances(t *testing.T) {
@@ -2345,7 +2385,7 @@ func TestSetContractAdmin(t *testing.T) {
 	specs := map[string]struct {
 		newAdmin sdk.AccAddress
 		caller   sdk.AccAddress
-		policy   AuthorizationPolicy
+		policy   types.AuthorizationPolicy
 		expAdmin string
 		expErr   bool
 	}{

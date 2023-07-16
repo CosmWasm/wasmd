@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
 )
 
 func TestModuleMigrations(t *testing.T) {
@@ -61,10 +60,16 @@ func TestModuleMigrations(t *testing.T) {
 			ctx, _ := wasmApp.BaseApp.NewContext(false).CacheContext()
 			spec.setup(ctx)
 
+<<<<<<< HEAD
 			fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
 			require.NoError(t, err)
 			fromVM[wasm.ModuleName] = spec.startVersion
 			_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+=======
+			fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+			fromVM[types.ModuleName] = spec.startVersion
+			_, err := upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
+>>>>>>> upstream/main
 			require.NoError(t, err)
 
 			// when
@@ -73,7 +78,7 @@ func TestModuleMigrations(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			var expModuleVersion uint64 = 4
-			assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
+			assert.Equal(t, expModuleVersion, gotVM[types.ModuleName])
 			gotParams := wasmApp.WasmKeeper.GetParams(ctx)
 			assert.Equal(t, spec.exp, gotParams)
 		})
@@ -105,9 +110,14 @@ func TestAccessConfigMigrations(t *testing.T) {
 	code3, err := storeCode(ctx, wasmApp, types.AllowNobody)
 	require.NoError(t, err)
 
+<<<<<<< HEAD
 	fromVM, err := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
 	require.NoError(t, err)
 	fromVM[wasm.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
+=======
+	fromVM := wasmApp.UpgradeKeeper.GetModuleVersionMap(ctx)
+	fromVM[types.ModuleName] = wasmApp.ModuleManager.GetVersionMap()[types.ModuleName]
+>>>>>>> upstream/main
 	_, err = upgradeHandler(ctx, upgradetypes.Plan{Name: "testing"}, fromVM)
 	require.NoError(t, err)
 
@@ -117,7 +127,7 @@ func TestAccessConfigMigrations(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	var expModuleVersion uint64 = 4
-	assert.Equal(t, expModuleVersion, gotVM[wasm.ModuleName])
+	assert.Equal(t, expModuleVersion, gotVM[types.ModuleName])
 
 	// any address was not migrated
 	assert.Equal(t, types.AccessTypeAnyOfAddresses.With(address), wasmApp.WasmKeeper.GetCodeInfo(ctx, code1).InstantiateConfig)

@@ -32,7 +32,7 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 		return nil, errorsmod.Wrap(err, "sender")
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	codeID, checksum, err := m.keeper.create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission, policy)
 	if err != nil {
@@ -63,7 +63,7 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 		}
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	contractAddr, data, err := m.keeper.instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds, m.keeper.ClassicAddressGenerator(), policy)
 	if err != nil {
@@ -94,7 +94,7 @@ func (m msgServer) InstantiateContract2(goCtx context.Context, msg *types.MsgIns
 		}
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	addrGenerator := PredicableAddressGenerator(senderAddr, msg.Salt, msg.Msg, msg.FixMsg)
 
@@ -149,7 +149,7 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 		return nil, errorsmod.Wrap(err, "contract")
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	data, err := m.keeper.migrate(ctx, contractAddr, senderAddr, msg.CodeID, msg.Msg, policy)
 	if err != nil {
@@ -180,7 +180,7 @@ func (m msgServer) UpdateAdmin(goCtx context.Context, msg *types.MsgUpdateAdmin)
 		return nil, errorsmod.Wrap(err, "new admin")
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	if err := m.keeper.setContractAdmin(ctx, contractAddr, senderAddr, newAdminAddr, policy); err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func (m msgServer) ClearAdmin(goCtx context.Context, msg *types.MsgClearAdmin) (
 		return nil, errorsmod.Wrap(err, "contract")
 	}
 
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	if err := m.keeper.setContractAdmin(ctx, contractAddr, senderAddr, nil, policy); err != nil {
 		return nil, err
@@ -223,7 +223,7 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "sender")
 	}
-	policy := m.selectAuthorizationPolicy(msg.Sender)
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
 	if err := m.keeper.setAccessConfig(ctx, msg.CodeID, senderAddr, *msg.NewInstantiatePermission, policy); err != nil {
 		return nil, err
@@ -339,7 +339,7 @@ func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	policy := m.selectAuthorizationPolicy(req.Authority)
+	policy := m.selectAuthorizationPolicy(ctx, req.Authority)
 
 	codeID, _, err := m.keeper.create(ctx, authorityAddr, req.WASMByteCode, req.InstantiatePermission, policy)
 	if err != nil {
@@ -357,9 +357,12 @@ func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types
 	}, nil
 }
 
-func (m msgServer) selectAuthorizationPolicy(actor string) AuthorizationPolicy {
+func (m msgServer) selectAuthorizationPolicy(ctx sdk.Context, actor string) types.AuthorizationPolicy {
 	if actor == m.keeper.GetAuthority() {
-		return GovAuthorizationPolicy{}
+		return newGovAuthorizationPolicy(m.keeper.propagateGovAuthorization)
+	}
+	if policy, ok := types.SubMsgAuthzPolicy(ctx); ok {
+		return policy
 	}
 	return DefaultAuthorizationPolicy{}
 }

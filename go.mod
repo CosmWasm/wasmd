@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.20
 
 require (
-	github.com/CosmWasm/wasmvm v1.2.4
+	github.com/CosmWasm/wasmvm v1.3.0-rc.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
 	github.com/cosmos/cosmos-sdk v0.50.0-alpha.1.0.20230710100738-3fee9db3596b
 	github.com/cosmos/gogogateway v1.2.0 // indirect
@@ -39,7 +39,6 @@ require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1.0.20230630152705-9f4a4e416f85
-	cosmossdk.io/tools/confix v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/circuit v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/evidence v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/feegrant v0.0.0-20230630152705-9f4a4e416f85
@@ -84,8 +83,6 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.0 // indirect
-	github.com/creachadair/atomicfile v0.3.1 // indirect
-	github.com/creachadair/tomledit v0.0.24 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect

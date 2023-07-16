@@ -13,10 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var emptyWasmOpts []wasm.Option
+var emptyWasmOpts []wasmkeeper.Option
 
 func TestWasmdExport(t *testing.T) {
 	db := dbm.NewMemDB()
@@ -68,20 +69,20 @@ func TestGetEnabledProposals(t *testing.T) {
 	cases := map[string]struct {
 		proposalsEnabled string
 		specificEnabled  string
-		expected         []wasm.ProposalType
+		expected         []wasmtypes.ProposalType
 	}{
 		"all disabled": {
 			proposalsEnabled: "false",
-			expected:         wasm.DisableAllProposals,
+			expected:         wasmtypes.DisableAllProposals,
 		},
 		"all enabled": {
 			proposalsEnabled: "true",
-			expected:         wasm.EnableAllProposals,
+			expected:         wasmtypes.EnableAllProposals,
 		},
 		"some enabled": {
 			proposalsEnabled: "okay",
 			specificEnabled:  "StoreCode,InstantiateContract",
-			expected:         []wasm.ProposalType{wasm.ProposalTypeStoreCode, wasm.ProposalTypeInstantiateContract},
+			expected:         []wasmtypes.ProposalType{wasmtypes.ProposalTypeStoreCode, wasmtypes.ProposalTypeInstantiateContract},
 		},
 	}
 

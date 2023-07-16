@@ -1,12 +1,12 @@
 queue_rules:
   - name: default
     conditions:
-      - "#approved-reviews-by>0"
+      - '#approved-reviews-by>0'
 
 pull_request_rules:
   - name: backport patches to main branch
     conditions:
-      - base=releases/v0.3x
+      - base=releases/v0.40.x
       - label=backport/main
     actions:
       backport:

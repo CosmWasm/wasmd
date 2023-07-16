@@ -6,6 +6,12 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+<<<<<<< HEAD
+=======
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+>>>>>>> upstream/main
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -16,9 +22,17 @@ import (
 
 // BankViewKeeper defines a subset of methods implemented by the cosmos-sdk bank keeper
 type BankViewKeeper interface {
+<<<<<<< HEAD
 	GetAllBalances(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	GetSupply(ctx context.Context, denom string) sdk.Coin
+=======
+	GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
+	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	DenomsMetadata(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error)
+>>>>>>> upstream/main
 }
 
 // Burner is a subset of the sdk bank keeper methods

@@ -657,7 +657,7 @@ func TestPinCodesProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	var (
@@ -748,7 +748,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	var (
@@ -838,7 +838,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")

@@ -20,8 +20,14 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+<<<<<<< HEAD
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+=======
+	wasmvm "github.com/CosmWasm/wasmvm"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+>>>>>>> upstream/main
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -127,6 +133,9 @@ func TestGenesisExportImport(t *testing.T) {
 		return false
 	})
 
+	originalMaxWasmSize := types.MaxWasmSize
+	types.MaxWasmSize = 1
+
 	// re-import
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
@@ -141,6 +150,12 @@ func TestGenesisExportImport(t *testing.T) {
 	dstIT, err := dstKeeper.storeService.OpenKVStore(dstCtx).Iterator(nil, nil)
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		types.MaxWasmSize = originalMaxWasmSize
+		srcIT.Close()
+		dstIT.Close()
+	})
+
 	for i := 0; srcIT.Valid(); i++ {
 		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing", srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
@@ -151,8 +166,6 @@ func TestGenesisExportImport(t *testing.T) {
 	if !assert.False(t, dstIT.Valid()) {
 		t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
 	}
-	srcIT.Close()
-	dstIT.Close()
 }
 
 func TestGenesisInit(t *testing.T) {
@@ -555,7 +568,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmCodeHash := sha256.Sum256(wasmCode)
+	wasmCodeHash, err := wasmvm.CreateChecksum(wasmCode)
+	require.NoError(t, err)
 	enc64 := base64.StdEncoding.EncodeToString
 	genesisStr := fmt.Sprintf(genesisTemplate, enc64(wasmCodeHash[:]), enc64(wasmCode))
 

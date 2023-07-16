@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+<<<<<<< HEAD
 	sdkmath "cosmossdk.io/math"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -17,26 +18,34 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
+=======
+>>>>>>> upstream/main
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
-	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
-
-	// simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmtprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	cmttypes "github.com/cometbft/cometbft/types"
 	tmversion "github.com/cometbft/cometbft/version"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+<<<<<<< HEAD
+=======
+	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+>>>>>>> upstream/main
 	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
@@ -46,10 +55,14 @@ import (
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/cosmos/ibc-go/v7/modules/core/types"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
+
+	"github.com/CosmWasm/wasmd/app"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 var MaxAccounts = 10
@@ -76,7 +89,7 @@ type ChainApp interface {
 	GetBankKeeper() bankkeeper.Keeper
 	GetStakingKeeper() *stakingkeeper.Keeper
 	GetAccountKeeper() authkeeper.AccountKeeper
-	GetWasmKeeper() wasm.Keeper
+	GetWasmKeeper() wasmkeeper.Keeper
 }
 
 // TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
@@ -112,6 +125,7 @@ type TestChain struct {
 	SenderAccounts []SenderAccount
 
 	PendingSendPackets []channeltypes.Packet
+	DefaultMsgFees     sdk.Coins
 }
 
 type PacketAck struct {
@@ -120,22 +134,29 @@ type PacketAck struct {
 }
 
 // ChainAppFactory abstract factory method that usually implemented by app.SetupWithGenesisValSet
+<<<<<<< HEAD
 type ChainAppFactory func(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp
 
 // DefaultWasmAppFactory instantiates and sets up the default wasmd app
 func DefaultWasmAppFactory(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) ChainApp {
+=======
+type ChainAppFactory func(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) ChainApp
+
+// DefaultWasmAppFactory instantiates and sets up the default wasmd app
+func DefaultWasmAppFactory(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) ChainApp {
+>>>>>>> upstream/main
 	return app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, balances...)
 }
 
 // NewDefaultTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasm.Option) *TestChain {
+func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasmkeeper.Option) *TestChain {
 	return NewTestChain(t, coord, DefaultWasmAppFactory, chainID, opts...)
 }
 
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
-func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasm.Option) *TestChain {
+func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasmkeeper.Option) *TestChain {
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -174,7 +195,11 @@ func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, 
 //
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
+<<<<<<< HEAD
 func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator, opts ...wasm.Option) *TestChain {
+=======
+func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *tmtypes.ValidatorSet, signers map[string]tmtypes.PrivValidator, opts ...wasmkeeper.Option) *TestChain {
+>>>>>>> upstream/main
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []SenderAccount{}
@@ -230,6 +255,7 @@ func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAp
 		SenderPrivKey:  senderAccs[0].SenderPrivKey,
 		SenderAccount:  senderAccs[0].SenderAccount,
 		SenderAccounts: senderAccs,
+		DefaultMsgFees: sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.ZeroInt())),
 	}
 
 	coord.CommitBlock(chain)
@@ -322,6 +348,7 @@ func (chain *TestChain) QueryConsensusStateProof(clientID string) ([]byte, clien
 // It will call FinalizeBlock and Commit and apply the validator set changes to the next validators
 // of the next block being created. This follows the CometBFT protocol of applying valset changes
 // returned on block `n` to the validators of block `n+2`.
+<<<<<<< HEAD
 // It updates the current header with the new block created before returning.
 func (chain *TestChain) NextBlock() {
 	res, err := chain.App.FinalizeBlock(&abci.RequestFinalizeBlock{
@@ -336,6 +363,13 @@ func (chain *TestChain) NextBlock() {
 func (chain *TestChain) commitBlock(res *abci.ResponseFinalizeBlock) {
 	_, err := chain.App.Commit()
 	require.NoError(chain.t, err)
+=======
+// It calls BeginBlock with the new block created before returning.
+func (chain *TestChain) NextBlock() abci.ResponseEndBlock {
+	res := chain.App.EndBlock(abci.RequestEndBlock{Height: chain.CurrentHeader.Height})
+	chain.App.Commit()
+	chain.CaptureIBCEvents(res.Events)
+>>>>>>> upstream/main
 
 	// set the last header to the current header
 	// use nil trusted fields
@@ -358,6 +392,24 @@ func (chain *TestChain) commitBlock(res *abci.ResponseFinalizeBlock) {
 		NextValidatorsHash: chain.NextVals.Hash(),
 		ProposerAddress:    chain.CurrentHeader.ProposerAddress,
 	}
+<<<<<<< HEAD
+=======
+
+	votes := make([]abci.VoteInfo, len(chain.Vals.Validators))
+	for i, v := range chain.Vals.Validators {
+		votes[i] = abci.VoteInfo{
+			Validator:       abci.Validator{Address: v.Address, Power: v.VotingPower},
+			SignedLastBlock: true,
+		}
+	}
+	chain.App.BeginBlock(abci.RequestBeginBlock{
+		Header: chain.CurrentHeader,
+		LastCommitInfo: abci.CommitInfo{
+			Votes: votes,
+		},
+	})
+	return res
+>>>>>>> upstream/main
 }
 
 // sendMsgs delivers a transaction through the application without returning the result.
@@ -393,12 +445,17 @@ func (chain *TestChain) sendWithSigner(
 ) (*abci.ExecTxResult, error) {
 	// ensure the chain has the latest time
 	chain.Coordinator.UpdateTimeForChain(chain)
+<<<<<<< HEAD
 
 	blockResp, gotErr := app.SignAndDeliverWithoutCommit(
+=======
+	_, r, gotErr := app.SignAndDeliverWithoutCommit(
+>>>>>>> upstream/main
 		chain.t,
 		chain.TxConfig,
 		chain.App.GetBaseApp(),
 		msgs,
+		chain.DefaultMsgFees,
 		chain.ChainID,
 		[]uint64{senderAccount.GetAccountNumber()},
 		[]uint64{senderAccount.GetSequence()},
@@ -406,12 +463,25 @@ func (chain *TestChain) sendWithSigner(
 		senderPrivKey,
 	)
 
+<<<<<<< HEAD
 	chain.commitBlock(blockResp)
+=======
+	// NextBlock calls app.Commit()
+	chain.NextBlock()
+
+	// increment sequence for successful and failed transaction execution
+	require.NoError(chain.t, chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence()+1))
+>>>>>>> upstream/main
 	chain.Coordinator.IncrementTime()
 
 	if gotErr != nil {
 		return nil, gotErr
 	}
+<<<<<<< HEAD
+=======
+
+	chain.CaptureIBCEvents(r.Events)
+>>>>>>> upstream/main
 
 	require.Len(chain.t, blockResp.TxResults, 1)
 	txResult := blockResp.TxResults[0]
@@ -423,8 +493,13 @@ func (chain *TestChain) sendWithSigner(
 	return txResult, nil
 }
 
+<<<<<<< HEAD
 func (chain *TestChain) CaptureIBCEvents(r *abci.ExecTxResult) {
 	toSend := GetSendPackets(r.Events)
+=======
+func (chain *TestChain) CaptureIBCEvents(evts []abci.Event) {
+	toSend := GetSendPackets(evts)
+>>>>>>> upstream/main
 	if len(toSend) > 0 {
 		// Keep a queue on the chain that we can relay in tests
 		chain.PendingSendPackets = append(chain.PendingSendPackets, toSend...)

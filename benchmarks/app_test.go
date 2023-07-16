@@ -27,12 +27,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+<<<<<<< HEAD
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
 	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
+=======
+func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
+	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasmtypes.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
+>>>>>>> upstream/main
 
 	if withGenesis {
 		return wasmApp, wasmApp.DefaultGenesis()
