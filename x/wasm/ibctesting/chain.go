@@ -450,8 +450,7 @@ func (chain *TestChain) GetConsensusState(clientID string, height exported.Heigh
 // a success boolean depending on if the validator set exists or not at that height.
 func (chain *TestChain) GetValsAtHeight(height int64) (*cmttypes.ValidatorSet, bool) {
 	histInfo, err := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
-	switch {
-	case stakingtypes.ErrNoHistoricalInfo.Is(err):
+	if stakingtypes.ErrNoHistoricalInfo.Is(err) {
 		return nil, false
 	}
 	require.NoError(chain.t, err)

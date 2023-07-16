@@ -698,7 +698,7 @@ func nextBlock(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper) sdk.Context
 		panic(err)
 	}
 	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
-	stakingKeeper.BeginBlocker(ctx)
+	_ = stakingKeeper.BeginBlocker(ctx)
 	return ctx
 }
 
@@ -713,7 +713,10 @@ func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, d
 		panic(err)
 	}
 	payout := sdk.DecCoins{{Denom: "stake", Amount: amount}}
-	distKeeper.AllocateTokensToValidator(ctx, vali, payout)
+	err = distKeeper.AllocateTokensToValidator(ctx, vali, payout)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
