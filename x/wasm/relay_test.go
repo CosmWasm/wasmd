@@ -7,7 +7,6 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -41,8 +40,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		setupContract               func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
 		expChainAPendingSendPackets int
 		expChainBPendingSendPackets int
-		expChainABalanceDiff        math.Int
-		expChainBBalanceDiff        math.Int
+		expChainABalanceDiff        sdkmath.Int
+		expChainBBalanceDiff        sdkmath.Int
 		expErr                      bool
 	}{
 		"ack": {
