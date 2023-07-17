@@ -140,8 +140,10 @@ func TestAppImportExport(t *testing.T) {
 
 	ctxA := app.NewContextLegacy(true, cmtproto.Header{Height: app.LastBlockHeight()})
 	ctxB := newApp.NewContextLegacy(true, cmtproto.Header{Height: app.LastBlockHeight()})
-	newApp.ModuleManager.InitGenesis(ctxB, app.AppCodec(), genesisState)
-	newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
+	_, err = newApp.ModuleManager.InitGenesis(ctxB, app.AppCodec(), genesisState)
+	require.NoError(t, err)
+	err = newApp.StoreConsensusParams(ctxB, exported.ConsensusParams)
+	require.NoError(t, err)
 
 	t.Log("comparing stores...")
 	// skip certain prefixes
@@ -227,10 +229,11 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	newApp := NewWasmApp(log.NewNopLogger(), newDB, nil, true, wasmtypes.EnableAllProposals, appOptions, emptyWasmOpts, fauxMerkleModeOpt, baseapp.SetChainID(SimAppChainID))
 	require.Equal(t, "WasmApp", newApp.Name())
 
-	newApp.InitChain(&abci.RequestInitChain{
+	_, err = newApp.InitChain(&abci.RequestInitChain{
 		ChainId:       SimAppChainID,
 		AppStateBytes: exported.AppState,
 	})
+	require.NoError(t, err)
 
 	_, _, err = simulation.SimulateFromSeed(
 		t,

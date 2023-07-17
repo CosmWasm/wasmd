@@ -62,7 +62,7 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 	bondAmt := sdk.DefaultPowerReduction
 
 	for _, val := range valSet.Validators {
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pk, _ := cryptocodec.FromCmtPubKeyInterface(val.PubKey)
 		pkAny, _ := codectypes.NewAnyWithValue(pk)
 		validator := stakingtypes.Validator{
 			OperatorAddress:   sdk.ValAddress(val.Address).String(),
@@ -116,7 +116,8 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 		},
 	)
 	require.NoError(b, err)
-	wasmApp.Commit()
+	_, err = wasmApp.Commit()
+	require.NoError(b, err)
 	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: wasmApp.LastBlockHeight() + 1})
 	require.NoError(b, err)
 
@@ -225,7 +226,8 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 
 	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
 	require.NoError(b, err)
-	wasmApp.Commit()
+	_, err = wasmApp.Commit()
+	require.NoError(b, err)
 
 	return AppInfo{
 		App:          wasmApp,

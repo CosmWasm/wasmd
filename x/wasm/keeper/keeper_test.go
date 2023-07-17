@@ -15,7 +15,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-	stypes "cosmossdk.io/store/types"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -307,7 +306,7 @@ func TestCreateWithSimulation(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
 	ctx = ctx.WithBlockHeader(tmproto.Header{Height: 1}).
-		WithGasMeter(stypes.NewInfiniteGasMeter())
+		WithGasMeter(storetypes.NewInfiniteGasMeter())
 
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
@@ -338,15 +337,15 @@ func TestIsSimulationMode(t *testing.T) {
 		exp bool
 	}{
 		"genesis block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
 			exp: false,
 		},
 		"any regular block": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(stypes.NewGasMeter(10000000)),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewGasMeter(10000000)),
 			exp: false,
 		},
 		"simulation": {
-			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(stypes.NewInfiniteGasMeter()),
+			ctx: sdk.Context{}.WithBlockHeader(tmproto.Header{Height: 1}).WithGasMeter(storetypes.NewInfiniteGasMeter()),
 			exp: true,
 		},
 	}
@@ -621,13 +620,13 @@ func TestInstantiateWithAccounts(t *testing.T) {
 			expAccount:  authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 			expBalance:  sdk.NewCoins(sdk.NewCoin("denom", sdkmath.NewInt(1))),
 		},
-		//"prunable account without balance gets overwritten": { // todo : can not initialize vesting with empty balance
+		// "prunable account without balance gets overwritten": { // todo : can not initialize vesting with empty balance
 		//	account: must(vestingtypes.NewContinuousVestingAccount(
 		//		authtypes.NewBaseAccount(contractAddr, nil, 0, 0),
 		//		sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(0))), time.Now().Add(time.Hour).Unix(), time.Now().Add(2*time.Hour).Unix())),
 		//	expAccount: authtypes.NewBaseAccount(contractAddr, nil, lastAccountNumber+2, 0), // +1 for next seq, +1 for spec.account created
 		//	expBalance: sdk.NewCoins(),
-		//},
+		// },
 		"unknown account type is rejected with error": {
 			account: authtypes.NewModuleAccount(
 				authtypes.NewBaseAccount(contractAddr, nil, 0, 0),

@@ -77,7 +77,7 @@ func TestICA(t *testing.T) {
 	targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
-	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, "proto3")
+	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, icatypes.EncodingProto3JSON)
 	require.NoError(t, err)
 	payloadPacket := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,

@@ -121,8 +121,10 @@ func TestGenesisExportImport(t *testing.T) {
 		creatorAddress := sdk.MustAccAddressFromBech32(info.Creator)
 		history := wasmKeeper.GetContractHistory(srcCtx, address)
 
-		wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, history[len(history)-1])
-		wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, history[0].Updated, address)
+		err = wasmKeeper.addToContractCodeSecondaryIndex(srcCtx, address, history[len(history)-1])
+		require.NoError(t, err)
+		err = wasmKeeper.addToContractCreatorSecondaryIndex(srcCtx, creatorAddress, history[0].Updated, address)
+		require.NoError(t, err)
 		return false
 	})
 

@@ -40,7 +40,6 @@ require (
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v0.1.0-alpha.1.0.20230630152705-9f4a4e416f85
 	cosmossdk.io/tools/confix v0.0.0-20230630152705-9f4a4e416f85
-	cosmossdk.io/tools/rosetta v0.2.1-0.20230614114324-f368ed5c62bc
 	cosmossdk.io/x/circuit v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/evidence v0.0.0-20230630152705-9f4a4e416f85
 	cosmossdk.io/x/feegrant v0.0.0-20230630152705-9f4a4e416f85
@@ -81,12 +80,10 @@ require (
 	github.com/cockroachdb/pebble v0.0.0-20230701135918-609ae80aea41 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230613231145-182959a1fad6 // indirect
-	github.com/coinbase/rosetta-sdk-go/types v1.0.0 // indirect
 	github.com/cometbft/cometbft-db v0.8.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.13.0 // indirect
-	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/atomicfile v0.3.1 // indirect
 	github.com/creachadair/tomledit v0.0.24 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
@@ -101,7 +98,6 @@ require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/getsentry/sentry-go v0.22.0 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
@@ -216,9 +212,4 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
-replace (
-	// temporary redirects
-	// link ibc-go to notionals fork until upgraded
-	github.com/cosmos/ibc-go/modules/capability => /Users/alex/workspace/tmp/notional_ibc-go/modules/capability
-	github.com/cosmos/ibc-go/v7 => /Users/alex/workspace/tmp/notional_ibc-go
-)
+replace github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230716173805-c09432050940
