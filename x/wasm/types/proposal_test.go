@@ -1145,7 +1145,6 @@ func TestProposalCodeIDs(t *testing.T) {
 		src    govtypes.Content
 		expErr bool
 	}{
-
 		"Pin empty code id list": {
 			src: &PinCodesProposal{
 				Title:       "Foo",

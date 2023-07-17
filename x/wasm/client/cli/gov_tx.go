@@ -2,34 +2,25 @@ package cli
 
 import (
 	"bytes"
-<<<<<<< HEAD
-	"crypto/sha256"
 	"encoding/hex"
-=======
->>>>>>> 1a5a2d96 (Upgrade to wasmvm 1.3.0-rc.0 (#1486))
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
-<<<<<<< HEAD
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-
-	"github.com/docker/distribution/reference"
-
-=======
 	wasmvm "github.com/CosmWasm/wasmvm"
->>>>>>> 1a5a2d96 (Upgrade to wasmvm 1.3.0-rc.0 (#1486))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
