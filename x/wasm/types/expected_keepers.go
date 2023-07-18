@@ -52,7 +52,8 @@ type AccountKeeper interface {
 
 // DistributionKeeper defines a subset of methods implemented by the cosmos-sdk distribution keeper
 type DistributionKeeper interface {
-	DelegationRewards(c context.Context, req *distrtypes.QueryDelegationRewardsRequest) (*distrtypes.QueryDelegationRewardsResponse, error)
+	DelegationRewards(ctx context.Context, req *distrtypes.QueryDelegationRewardsRequest) (*distrtypes.QueryDelegationRewardsResponse, error)
+	GetDelegatorWithdrawAddr(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
 }
 
 // StakingKeeper defines a subset of methods implemented by the cosmos-sdk staking keeper

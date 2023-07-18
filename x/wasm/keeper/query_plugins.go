@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -18,6 +17,8 @@ import (
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {
@@ -78,12 +79,13 @@ func (q QueryHandler) GasConsumed() uint64 {
 type CustomQuerier func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
 
 type QueryPlugins struct {
-	Bank     func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
-	Custom   CustomQuerier
-	IBC      func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error)
-	Staking  func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
-	Stargate func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
-	Wasm     func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
+	Bank         func(ctx sdk.Context, request *wasmvmtypes.BankQuery) ([]byte, error)
+	Custom       CustomQuerier
+	IBC          func(ctx sdk.Context, caller sdk.AccAddress, request *wasmvmtypes.IBCQuery) ([]byte, error)
+	Staking      func(ctx sdk.Context, request *wasmvmtypes.StakingQuery) ([]byte, error)
+	Stargate     func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
+	Wasm         func(ctx sdk.Context, request *wasmvmtypes.WasmQuery) ([]byte, error)
+	Distribution func(ctx sdk.Context, request *wasmvmtypes.DistributionQuery) ([]byte, error)
 }
 
 type contractMetaDataSource interface {
@@ -106,12 +108,13 @@ func DefaultQueryPlugins(
 	wasm wasmQueryKeeper,
 ) QueryPlugins {
 	return QueryPlugins{
-		Bank:     BankQuerier(bank),
-		Custom:   NoCustomQuerier,
-		IBC:      IBCQuerier(wasm, channelKeeper),
-		Staking:  StakingQuerier(staking, distKeeper),
-		Stargate: RejectStargateQuerier(),
-		Wasm:     WasmQuerier(wasm),
+		Bank:         BankQuerier(bank),
+		Custom:       NoCustomQuerier,
+		IBC:          IBCQuerier(wasm, channelKeeper),
+		Staking:      StakingQuerier(staking, distKeeper),
+		Stargate:     RejectStargateQuerier(),
+		Wasm:         WasmQuerier(wasm),
+		Distribution: DistributionQuerier(distKeeper),
 	}
 }
 
@@ -138,29 +141,30 @@ func (e QueryPlugins) Merge(o *QueryPlugins) QueryPlugins {
 	if o.Wasm != nil {
 		e.Wasm = o.Wasm
 	}
+	if o.Distribution != nil {
+		e.Distribution = o.Distribution
+	}
 	return e
 }
 
 // HandleQuery executes the requested query
-func (e QueryPlugins) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
+func (e QueryPlugins) HandleQuery(ctx sdk.Context, caller sdk.AccAddress, req wasmvmtypes.QueryRequest) ([]byte, error) {
 	// do the query
-	if request.Bank != nil {
-		return e.Bank(ctx, request.Bank)
-	}
-	if request.Custom != nil {
-		return e.Custom(ctx, request.Custom)
-	}
-	if request.IBC != nil {
-		return e.IBC(ctx, caller, request.IBC)
-	}
-	if request.Staking != nil {
-		return e.Staking(ctx, request.Staking)
-	}
-	if request.Stargate != nil {
-		return e.Stargate(ctx, request.Stargate)
-	}
-	if request.Wasm != nil {
-		return e.Wasm(ctx, request.Wasm)
+	switch {
+	case req.Bank != nil:
+		return e.Bank(ctx, req.Bank)
+	case req.Custom != nil:
+		return e.Custom(ctx, req.Custom)
+	case req.IBC != nil:
+		return e.IBC(ctx, caller, req.IBC)
+	case req.Staking != nil:
+		return e.Staking(ctx, req.Staking)
+	case req.Stargate != nil:
+		return e.Stargate(ctx, req.Stargate)
+	case req.Wasm != nil:
+		return e.Wasm(ctx, req.Wasm)
+	case req.Distribution != nil:
+		return e.Distribution(ctx, req.Distribution)
 	}
 	return nil, wasmvmtypes.Unknown{}
 }
@@ -586,6 +590,22 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			return json.Marshal(res)
 		}
 		return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown WasmQuery variant"}
+	}
+}
+
+func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, request *wasmvmtypes.DistributionQuery) ([]byte, error) {
+	return func(ctx sdk.Context, req *wasmvmtypes.DistributionQuery) ([]byte, error) {
+		if req.DelegatorWithdrawAddress == nil {
+			return nil, wasmvmtypes.UnsupportedRequest{Kind: "unknown distribution query"}
+		}
+		addr, err := sdk.AccAddressFromBech32(req.DelegatorWithdrawAddress.DelegatorAddress)
+		if err != nil {
+			return nil, sdkerrors.ErrInvalidAddress.Wrap("delegator address")
+		}
+		res := wasmvmtypes.DelegatorWithdrawAddressResponse{
+			WithdrawAddress: k.GetDelegatorWithdrawAddr(ctx, addr).String(),
+		}
+		return json.Marshal(res)
 	}
 }
 
