@@ -711,7 +711,7 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 			return &wasmvmtypes.Response{Data: []byte("my-response-data")}, 0, nil
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
@@ -742,7 +742,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 			return do(codeID, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	// overwrite wasmvm in router

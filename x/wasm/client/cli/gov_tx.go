@@ -2,27 +2,25 @@ package cli
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-
-	"github.com/docker/distribution/reference"
-
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -135,7 +133,10 @@ func parseVerificationFlags(gzippedWasm []byte, flags *flag.FlagSet) (string, st
 		if err != nil {
 			return "", "", nil, fmt.Errorf("invalid zip: %w", err)
 		}
-		checksum := sha256.Sum256(raw)
+		checksum, err := wasmvm.CreateChecksum(raw)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("checksum: %s", err)
+		}
 		if !bytes.Equal(checksum[:], codeHash) {
 			return "", "", nil, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
 		}

@@ -997,6 +997,7 @@ func (c AccessConfigUpdate) String() string {
   AccessConfig: %v
 `, c.CodeID, c.InstantiatePermission)
 }
+
 func validateCodeIDs(codeIDs []uint64) error {
 	if len(codeIDs) == 0 {
 		return sdkerrors.Wrap(ErrEmpty, "code ids")
@@ -1004,7 +1005,6 @@ func validateCodeIDs(codeIDs []uint64) error {
 	for i, num1 := range codeIDs {
 		if num1 == 0 {
 			return ErrInvalid.Wrap("0 is not accepted")
-
 		}
 		for j, num2 := range codeIDs {
 			if i != j && num1 == num2 {
