@@ -5,32 +5,19 @@ import (
 	"errors"
 	"fmt"
 
-<<<<<<< HEAD
-=======
-	errorsmod "cosmossdk.io/errors"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	abci "github.com/cometbft/cometbft/abci/types"
->>>>>>> d2e9acea (Add AllDenomMetadata BankQuery (#1426))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	abci "github.com/tendermint/tendermint/abci/types"
-
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
-=======
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
->>>>>>> d2e9acea (Add AllDenomMetadata BankQuery (#1426))
+	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type QueryHandler struct {
@@ -218,7 +205,7 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 		if request.DenomMetadata != nil {
 			denomMetadata, ok := bankKeeper.GetDenomMetaData(ctx, request.DenomMetadata.Denom)
 			if !ok {
-				return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, request.DenomMetadata.Denom)
+				return nil, sdkerrors.Wrap(sdkerrors.ErrNotFound, request.DenomMetadata.Denom)
 			}
 			res := wasmvmtypes.DenomMetadataResponse{
 				Metadata: ConvertSdkDenomMetadataToWasmDenomMetadata(denomMetadata),
@@ -226,7 +213,7 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			return json.Marshal(res)
 		}
 		if request.AllDenomMetadata != nil {
-			bankQueryRes, err := bankKeeper.DenomsMetadata(ctx, ConvertToDenomsMetadataRequest(request.AllDenomMetadata))
+			bankQueryRes, err := bankKeeper.DenomsMetadata(ctx.Context(), ConvertToDenomsMetadataRequest(request.AllDenomMetadata))
 			if err != nil {
 				return nil, sdkerrors.ErrInvalidRequest
 			}
@@ -647,8 +634,6 @@ func ConvertSdkDenomMetadataToWasmDenomMetadata(metadata banktypes.Metadata) was
 		Display:     metadata.Display,
 		Name:        metadata.Name,
 		Symbol:      metadata.Symbol,
-		URI:         metadata.URI,
-		URIHash:     metadata.URIHash,
 	}
 }
 
