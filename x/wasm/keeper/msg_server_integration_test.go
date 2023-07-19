@@ -161,7 +161,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 		expUploadConfig types.AccessConfig
 		expErr          bool
 	}{
-		"can add addresses when permission is any of addresses": {
+		"authority can add addresses when permission is any of addresses": {
 			src: types.MsgAddCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -170,7 +170,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
 			expErr:          false,
 		},
-		"cannot add addresses when permission is allow everybody": {
+		"authority cannot add addresses when permission is allow everybody": {
 			src: types.MsgAddCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -179,7 +179,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AllowEverybody,
 			expErr:          true,
 		},
-		"cannot add addresses when permission is allow nobody": {
+		"authority cannot add addresses when permission is allow nobody": {
 			src: types.MsgAddCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -188,22 +188,31 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AllowNobody,
 			expErr:          true,
 		},
-		"cannot add existing addresses when permission is any of addresses": {
+		"authority cannot add existing addresses when permission is any of addresses": {
 			src: types.MsgAddCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{myAddress.String()},
 			},
 			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
-			expErr:          true,
+			expErr:          false,
 		},
-		"cannot add duplicate addresses when permission is any of addresses": {
+		"authority cannot add duplicate addresses when permission is any of addresses": {
 			src: types.MsgAddCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String(), otherAddr.String()},
 			},
 			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
+			expErr:          true,
+		},
+		"other address cannot add addresses when permission is any of addresses": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: otherAddr.String(),
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
 			expErr:          true,
 		},
 	}
@@ -249,7 +258,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 		expUploadConfig types.AccessConfig
 		expErr          bool
 	}{
-		"can remove addresses when permission is any of addresses": {
+		"authority can remove addresses when permission is any of addresses": {
 			src: types.MsgRemoveCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -258,7 +267,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
 			expErr:          false,
 		},
-		"cannot remove addresses when permission is allow everybody": {
+		"authority cannot remove addresses when permission is allow everybody": {
 			src: types.MsgRemoveCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -267,7 +276,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AllowEverybody,
 			expErr:          true,
 		},
-		"cannot remove addresses when permission is allow nobody": {
+		"authority cannot remove addresses when permission is allow nobody": {
 			src: types.MsgRemoveCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -276,7 +285,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AllowNobody,
 			expErr:          true,
 		},
-		"cannot remove not existing addresses when permission is any of addresses": {
+		"authority cannot remove not existing addresses when permission is any of addresses": {
 			src: types.MsgRemoveCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String()},
@@ -285,13 +294,22 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
 			expErr:          false,
 		},
-		"cannot remove duplicate addresses when permission is any of addresses": {
+		"authority cannot remove duplicate addresses when permission is any of addresses": {
 			src: types.MsgRemoveCodeUploadParamsAddresses{
 				Authority: govAuthority,
 				Addresses: []string{otherAddr.String(), otherAddr.String()},
 			},
 			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
 			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expErr:          true,
+		},
+		"other address cannot remove addresses when permission is any of addresses": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: otherAddr.String(),
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
 			expErr:          true,
 		},
 	}

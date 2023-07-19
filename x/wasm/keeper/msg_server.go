@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -378,12 +377,16 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 	addresses := params.CodeUploadAccess.Addresses
 	size := len(addresses)
 	for _, newAddr := range req.Addresses {
+		exists := false
 		for i := 0; i < size; i++ {
 			if addresses[i] == newAddr {
-				return nil, errorsmod.Wrap(types.ErrInvalid, fmt.Sprintf("address already exists %s", newAddr))
+				exists = true
+				break
 			}
 		}
-		addresses = append(addresses, newAddr)
+		if !exists {
+			addresses = append(addresses, newAddr)
+		}
 	}
 
 	params.CodeUploadAccess.Addresses = addresses
@@ -414,14 +417,14 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	addresses := params.CodeUploadAccess.Addresses
 	newAddresses := make([]string, 0)
 	for _, addr := range addresses {
-		found := false
+		reject := false
 		for i := 0; i < len(req.Addresses); i++ {
 			if req.Addresses[i] == addr {
-				found = true
+				reject = true
 				break
 			}
 		}
-		if !found {
+		if !reject {
 			newAddresses = append(newAddresses, addr)
 		}
 	}

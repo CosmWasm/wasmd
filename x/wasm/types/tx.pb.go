@@ -1672,7 +1672,7 @@ type MsgClient interface {
 	// The authority is defined in the keeper.
 	RemoveCodeUploadParamsAddresses(ctx context.Context, in *MsgRemoveCodeUploadParamsAddresses, opts ...grpc.CallOption) (*MsgRemoveCodeUploadParamsAddressesResponse, error)
 	// AddCodeUploadParamsAddresses defines a governance operation for
-	// addresses addresses to code upload params.
+	// adding addresses to code upload params.
 	// The authority is defined in the keeper.
 	AddCodeUploadParamsAddresses(ctx context.Context, in *MsgAddCodeUploadParamsAddresses, opts ...grpc.CallOption) (*MsgAddCodeUploadParamsAddressesResponse, error)
 }
@@ -1870,7 +1870,7 @@ type MsgServer interface {
 	// The authority is defined in the keeper.
 	RemoveCodeUploadParamsAddresses(context.Context, *MsgRemoveCodeUploadParamsAddresses) (*MsgRemoveCodeUploadParamsAddressesResponse, error)
 	// AddCodeUploadParamsAddresses defines a governance operation for
-	// addresses addresses to code upload params.
+	// adding addresses to code upload params.
 	// The authority is defined in the keeper.
 	AddCodeUploadParamsAddresses(context.Context, *MsgAddCodeUploadParamsAddresses) (*MsgAddCodeUploadParamsAddressesResponse, error)
 }
