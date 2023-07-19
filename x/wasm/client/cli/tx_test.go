@@ -26,22 +26,22 @@ func TestParseVerificationFlags(t *testing.T) {
 		"gov store zipped": {
 			srcPath: "../../keeper/testdata/hackatom.wasm.gzip",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 		},
 		"gov store raw": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 		},
 		"gov store checksum mismatch": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",
