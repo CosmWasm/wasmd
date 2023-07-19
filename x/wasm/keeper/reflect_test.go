@@ -628,8 +628,8 @@ func TestQueryDenomsIntegration(t *testing.T) {
 					"display":  "alx",
 					"name":     "my test denom",
 					"symbol":   "XALX",
-					"uri":      "https://example.com/ualx",
-					"uri_hash": "my_hash",
+					"uri":      "",
+					"uri_hash": "",
 				}, {
 					"description": "testing2",
 					"denom_units": []dict{
