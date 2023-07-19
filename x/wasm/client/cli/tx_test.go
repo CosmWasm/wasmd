@@ -12,71 +12,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-<<<<<<< HEAD
-=======
-func TestParseVerificationFlags(t *testing.T) {
-	mySender := sdk.MustAccAddressFromBech32("cosmos1wyqh3n50ecatjg4vww5crmtd0nmyzusnwckw4at4gluc0m5m477q4arfek")
-
-	specs := map[string]struct {
-		srcPath     string
-		args        []string
-		expErr      bool
-		expSource   string
-		expBuilder  string
-		expCodeHash string
-	}{
-		"gov store zipped": {
-			srcPath: "../../keeper/testdata/hackatom.wasm.gzip",
-			args: []string{
-				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
-				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
-			},
-			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
-			expSource:   "https://example.com",
-			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
-		},
-		"gov store raw": {
-			srcPath: "../../keeper/testdata/hackatom.wasm",
-			args: []string{
-				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
-				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
-			},
-			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
-			expSource:   "https://example.com",
-			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
-		},
-		"gov store checksum mismatch": {
-			srcPath: "../../keeper/testdata/hackatom.wasm",
-			args: []string{
-				"--instantiate-everybody=true", "--code-hash=0000de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
-				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
-			},
-			expErr: true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			flagSet := ProposalStoreAndInstantiateContractCmd().Flags()
-			require.NoError(t, flagSet.Parse(spec.args))
-
-			gotMsg, err := parseStoreCodeArgs(spec.srcPath, mySender.String(), flagSet)
-			require.NoError(t, err)
-			require.True(t, ioutils.IsGzip(gotMsg.WASMByteCode))
-
-			gotSource, gotBuilder, gotCodeHash, gotErr := parseVerificationFlags(gotMsg.WASMByteCode, flagSet)
-			if spec.expErr {
-				require.Error(t, gotErr)
-				return
-			}
-			require.NoError(t, gotErr)
-			assert.Equal(t, spec.expSource, gotSource)
-			assert.Equal(t, spec.expBuilder, gotBuilder)
-			assert.Equal(t, spec.expCodeHash, hex.EncodeToString(gotCodeHash))
-		})
-	}
-}
-
->>>>>>> fe3afd52 (Test coin metadata query (#1520))
 func TestParseAccessConfigFlags(t *testing.T) {
 	specs := map[string]struct {
 		args   []string
@@ -140,22 +75,22 @@ func TestParseVerificationFlags(t *testing.T) {
 		"gov store zipped": {
 			srcPath: "../../keeper/testdata/hackatom.wasm.gzip",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 		},
 		"gov store raw": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
+			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
 		},
 		"gov store checksum mismatch": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",

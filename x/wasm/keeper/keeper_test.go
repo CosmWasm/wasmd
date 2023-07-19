@@ -412,11 +412,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-<<<<<<< HEAD
-		require.Equal(t, uint64(0x1a7b6), gasAfter-gasBefore)
-=======
 		require.Equal(t, uint64(0x1b5bd), gasAfter-gasBefore)
->>>>>>> fe3afd52 (Test coin metadata query (#1520))
 	}
 
 	// ensure it is stored properly

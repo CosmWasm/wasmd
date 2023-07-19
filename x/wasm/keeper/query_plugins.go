@@ -216,7 +216,7 @@ func BankQuerier(bankKeeper types.BankViewKeeper) func(ctx sdk.Context, request 
 			return json.Marshal(res)
 		}
 		if request.AllDenomMetadata != nil {
-			bankQueryRes, err := bankKeeper.DenomsMetadata(ctx.Context(), ConvertToDenomsMetadataRequest(request.AllDenomMetadata))
+			bankQueryRes, err := bankKeeper.DenomsMetadata(sdk.WrapSDKContext(ctx), ConvertToDenomsMetadataRequest(request.AllDenomMetadata))
 			if err != nil {
 				return nil, sdkerrors.ErrInvalidRequest
 			}

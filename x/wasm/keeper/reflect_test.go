@@ -592,8 +592,6 @@ func TestQueryDenomsIntegration(t *testing.T) {
 			Display: "alx",
 			Name:    "my test denom",
 			Symbol:  "XALX",
-			URI:     "https://example.com/ualx",
-			URIHash: "my_hash",
 		}
 		metadata2 = banktypes.Metadata{
 			Description: "testing2",
@@ -615,7 +613,7 @@ func TestQueryDenomsIntegration(t *testing.T) {
 	specs := map[string]struct {
 		query  string
 		exp    []byte
-		expErr *errorsmod.Error
+		expErr *sdkerrors.Error
 	}{
 		"all denoms": {
 			query: `{"denoms":{}}`,
