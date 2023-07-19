@@ -82,6 +82,8 @@
     - [Query](#cosmwasm.wasm.v1.Query)
   
 - [cosmwasm/wasm/v1/tx.proto](#cosmwasm/wasm/v1/tx.proto)
+    - [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses)
+    - [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse)
     - [MsgClearAdmin](#cosmwasm.wasm.v1.MsgClearAdmin)
     - [MsgClearAdminResponse](#cosmwasm.wasm.v1.MsgClearAdminResponse)
     - [MsgExecuteContract](#cosmwasm.wasm.v1.MsgExecuteContract)
@@ -94,6 +96,8 @@
     - [MsgMigrateContractResponse](#cosmwasm.wasm.v1.MsgMigrateContractResponse)
     - [MsgPinCodes](#cosmwasm.wasm.v1.MsgPinCodes)
     - [MsgPinCodesResponse](#cosmwasm.wasm.v1.MsgPinCodesResponse)
+    - [MsgRemoveCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses)
+    - [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse)
     - [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract)
     - [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse)
     - [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode)
@@ -1333,6 +1337,34 @@ Query provides defines the gRPC querier service
 
 
 
+<a name="cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses"></a>
+
+### MsgAddCodeUploadParamsAddresses
+MsgAddCodeUploadParamsAddresses is the
+MsgAddCodeUploadParamsAddresses request type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
+| `addresses` | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse"></a>
+
+### MsgAddCodeUploadParamsAddressesResponse
+MsgAddCodeUploadParamsAddressesResponse defines the response
+structure for executing a MsgAddCodeUploadParamsAddresses message.
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.MsgClearAdmin"></a>
 
 ### MsgClearAdmin
@@ -1526,6 +1558,34 @@ MsgPinCodesResponse defines the response structure for executing a
 MsgPinCodes message.
 
 Since: 0.40
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses"></a>
+
+### MsgRemoveCodeUploadParamsAddresses
+MsgRemoveCodeUploadParamsAddresses is the
+MsgRemoveCodeUploadParamsAddresses request type.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
+| `addresses` | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse"></a>
+
+### MsgRemoveCodeUploadParamsAddressesResponse
+MsgRemoveCodeUploadParamsAddressesResponse defines the response
+structure for executing a MsgRemoveCodeUploadParamsAddresses message.
 
 
 
@@ -1803,6 +1863,8 @@ Since: 0.40 | |
 | `StoreAndInstantiateContract` | [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract) | [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse) | StoreAndInstantiateContract defines a governance operation for storing and instantiating the contract. The authority is defined in the keeper.
 
 Since: 0.40 | |
+| `RemoveCodeUploadParamsAddresses` | [MsgRemoveCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses) | [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse) | RemoveCodeUploadParamsAddresses defines a governance operation for removing addresses from code upload params. The authority is defined in the keeper. | |
+| `AddCodeUploadParamsAddresses` | [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses) | [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse) | AddCodeUploadParamsAddresses defines a governance operation for adding addresses to code upload params. The authority is defined in the keeper. | |
 
  <!-- end services -->
 

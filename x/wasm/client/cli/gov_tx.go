@@ -48,6 +48,8 @@ func SubmitProposalCmd() *cobra.Command {
 		ProposalPinCodesCmd(),
 		ProposalUnpinCodesCmd(),
 		ProposalUpdateInstantiateConfigCmd(),
+		ProposalAddCodeUploadParamsAddresses(),
+		ProposalRemoveCodeUploadParamsAddresses(),
 	)
 	return cmd
 }
@@ -789,6 +791,90 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 			}
 
 			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
+		Short: "Submit an add code upload params addresses proposal to add addresses to code upload config params",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgAddCodeUploadParamsAddresses{
+				Authority: authority,
+				Addresses: args,
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a remove code upload params addresses proposal to remove addresses from code upload config params",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: authority,
+				Addresses: args,
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
