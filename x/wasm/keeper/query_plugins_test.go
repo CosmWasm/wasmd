@@ -8,6 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+
 	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	dbm "github.com/cometbft/cometbft-db"
@@ -755,6 +759,82 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 			assert.JSONEq(t, spec.expResp, string(gotBz), string(gotBz))
 		})
 	}
+}
+
+func TestDistributionQuerier(t *testing.T) {
+	ctx := sdk.Context{}
+	var myAddr sdk.AccAddress = rand.Bytes(address.Len)
+	var myOtherAddr sdk.AccAddress = rand.Bytes(address.Len)
+	specs := map[string]struct {
+		q       wasmvmtypes.DistributionQuery
+		mockFn  func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
+		expAddr string
+		expErr  bool
+	}{
+		"withdrawal override": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
+			},
+			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+				return myOtherAddr
+			},
+			expAddr: myOtherAddr.String(),
+		},
+		"no withdrawal override": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
+			},
+			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+				return delAddr
+			},
+			expAddr: myAddr.String(),
+		},
+		"empty address": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{},
+			},
+			expErr: true,
+		},
+		"unknown query": {
+			q:      wasmvmtypes.DistributionQuery{},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			mock := distrKeeperMock{GetDelegatorWithdrawAddrFn: spec.mockFn}
+			q := keeper.DistributionQuerier(mock)
+
+			gotBz, gotErr := q(ctx, &spec.q)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			var rsp wasmvmtypes.DelegatorWithdrawAddressResponse
+			require.NoError(t, json.Unmarshal(gotBz, &rsp))
+			assert.Equal(t, spec.expAddr, rsp.WithdrawAddress)
+		})
+	}
+}
+
+type distrKeeperMock struct {
+	DelegationRewardsFn        func(c context.Context, req *distributiontypes.QueryDelegationRewardsRequest) (*distributiontypes.QueryDelegationRewardsResponse, error)
+	GetDelegatorWithdrawAddrFn func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
+}
+
+func (m distrKeeperMock) DelegationRewards(ctx context.Context, req *distributiontypes.QueryDelegationRewardsRequest) (*distributiontypes.QueryDelegationRewardsResponse, error) {
+	if m.DelegationRewardsFn == nil {
+		panic("not expected to be called")
+	}
+	return m.DelegationRewardsFn(ctx, req)
+}
+
+func (m distrKeeperMock) GetDelegatorWithdrawAddr(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+	if m.GetDelegatorWithdrawAddrFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetDelegatorWithdrawAddrFn(ctx, delAddr)
 }
 
 type mockWasmQueryKeeper struct {
