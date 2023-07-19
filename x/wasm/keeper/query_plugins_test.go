@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -432,7 +434,7 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 		}, nil
 	}}
 
-	ctx := sdk.Context{}
+	ctx := sdk.NewContext(nil, tmproto.Header{}, false, log.NewNopLogger())
 	q := keeper.BankQuerier(mock)
 	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
 		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{},
@@ -469,7 +471,7 @@ func TestBankQuerierAllMetadataPagination(t *testing.T) {
 		}, nil
 	}}
 
-	ctx := sdk.Context{}
+	ctx := sdk.NewContext(nil, tmproto.Header{}, false, log.NewNopLogger())
 	q := keeper.BankQuerier(mock)
 	_, gotErr := q(ctx, &wasmvmtypes.BankQuery{
 		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{
