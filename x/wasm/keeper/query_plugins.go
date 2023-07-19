@@ -5,10 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-<<<<<<< HEAD
-=======
-	errorsmod "cosmossdk.io/errors"
->>>>>>> a17f5f2f (Add distribution query)
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,12 +14,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
 	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-=======
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
->>>>>>> a17f5f2f (Add distribution query)
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
