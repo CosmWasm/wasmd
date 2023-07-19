@@ -57,8 +57,8 @@ func TestGasCostOnQuery(t *testing.T) {
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
 		GasWork50 uint64 = 64_218 // this is a little shy of 50k gas - to keep an eye on the limit
 
-		GasReturnUnhashed uint64 = 32
-		GasReturnHashed   uint64 = 27
+		GasReturnUnhashed uint64 = 29
+		GasReturnHashed   uint64 = 24
 	)
 
 	cases := map[string]struct {
@@ -208,9 +208,9 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 
 	const (
 		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
-		GasWork2k uint64 = 77_206 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
+		GasWork2k uint64 = 77_161 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
-		GasReturnHashed uint64 = 27
+		GasReturnHashed uint64 = 25
 	)
 
 	cases := map[string]struct {
@@ -261,7 +261,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 			expectQueriesFromContract: 10,
 			expectOutOfGas:            false,
 			expectError:               "query wasm contract failed", // Error we get from the contract instance doing the failing query, not wasmd
-			expectedGas:               10*(GasWork2k+GasReturnHashed) - 247,
+			expectedGas:               10*(GasWork2k+GasReturnHashed) - 229,
 		},
 	}
 
