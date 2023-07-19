@@ -375,22 +375,13 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 	}
 
 	addresses := params.CodeUploadAccess.Addresses
-	size := len(addresses)
 	for _, newAddr := range req.Addresses {
-		exists := false
-		for i := 0; i < size; i++ {
-			if addresses[i] == newAddr {
-				exists = true
-				break
-			}
-		}
-		if !exists {
+		if !contains(addresses, newAddr) {
 			addresses = append(addresses, newAddr)
 		}
 	}
 
 	params.CodeUploadAccess.Addresses = addresses
-
 	if err := m.keeper.SetParams(ctx, params); err != nil {
 		return nil, err
 	}
@@ -417,16 +408,10 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	addresses := params.CodeUploadAccess.Addresses
 	newAddresses := make([]string, 0)
 	for _, addr := range addresses {
-		reject := false
-		for i := 0; i < len(req.Addresses); i++ {
-			if req.Addresses[i] == addr {
-				reject = true
-				break
-			}
+		if contains(req.Addresses, addr) {
+			continue
 		}
-		if !reject {
-			newAddresses = append(newAddresses, addr)
-		}
+		newAddresses = append(newAddresses, addr)
 	}
 
 	params.CodeUploadAccess.Addresses = newAddresses
@@ -436,6 +421,15 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	}
 
 	return &types.MsgRemoveCodeUploadParamsAddressesResponse{}, nil
+}
+
+func contains[T comparable](src []T, o T) bool {
+	for _, v := range src {
+		if v == o {
+			return true
+		}
+	}
+	return false
 }
 
 func (m msgServer) selectAuthorizationPolicy(ctx sdk.Context, actor string) types.AuthorizationPolicy {
