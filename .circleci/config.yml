@@ -261,9 +261,7 @@ workflows:
               ignore:
                 - /.*/
           requires:
-            - docker-image
-            - test-system
-            - simulations
+            - setup-dependencies
       - setup-dependencies:
           # filters here are needed to enable this job also for tags
           filters:
