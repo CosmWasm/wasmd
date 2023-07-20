@@ -19,8 +19,6 @@ import (
 )
 
 func TestOnRecvPacket(t *testing.T) {
-	types.DeactivateTest(t)
-
 	anyRelayerAddr := sdk.AccAddress(rand.Bytes(address.Len))
 	anyContractIBCPkg := IBCPacketFixture(func(p *channeltypes.Packet) {
 		p.DestinationPort = "wasm.cosmos1w09vr7rpe2agu0kg2zlpkdckce865l3zps8mxjurxthfh3m7035qe5hh7f"

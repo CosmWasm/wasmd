@@ -21,8 +21,6 @@ import (
 )
 
 func TestOnChanOpenInitVersion(t *testing.T) {
-	types.DeactivateTest(t)
-
 	const startVersion = "v1"
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
@@ -74,8 +72,6 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 }
 
 func TestOnChanOpenTryVersion(t *testing.T) {
-	types.DeactivateTest(t)
-
 	const startVersion = ibctransfertypes.Version
 	specs := map[string]struct {
 		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
@@ -134,8 +130,6 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 }
 
 func TestOnIBCPacketReceive(t *testing.T) {
-	types.DeactivateTest(t)
-
 	// given 2 chains with a mock on chain A to control the IBC flow
 	// and  the ibc-reflect contract on chain B
 	// when the test package is relayed

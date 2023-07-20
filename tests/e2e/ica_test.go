@@ -21,11 +21,9 @@ import (
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestICA(t *testing.T) {
-	wasmtypes.DeactivateTest(t)
 	// scenario:
 	// given a host and controller chain
 	// when an ica is registered on the controller chain
@@ -77,7 +75,7 @@ func TestICA(t *testing.T) {
 	targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
-	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, icatypes.EncodingProto3JSON)
+	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg}, icatypes.EncodingProtobuf)
 	require.NoError(t, err)
 	payloadPacket := icatypes.InterchainAccountPacketData{
 		Type: icatypes.EXECUTE_TX,

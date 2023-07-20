@@ -11,11 +11,9 @@ import (
 
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestIBCReflectContract(t *testing.T) {
-	types.DeactivateTest(t)
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
 	//  chain B: reflect.wasm + ibc_reflect.wasm
