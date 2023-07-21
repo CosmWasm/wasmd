@@ -1040,8 +1040,8 @@ func (app *WasmApp) AutoCliOpts() autocli.AppOptions {
 	}
 
 	return autocli.AppOptions{
-		Modules:      modules,
-		AddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+		Modules:               modules,
+		AddressCodec:          authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		ValidatorAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 	}
 }
