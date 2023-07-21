@@ -2,7 +2,20 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.32.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.33.0...HEAD)
+
+## [v0.33.0](https://github.com/CosmWasm/wasmd/tree/v0.33.0) (TODO DATE)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.32.0...v0.33.0)
+
+- Accept wasm data from state-sync as valid [\#1467](https://github.com/CosmWasm/wasmd/issues/1467)
+- Upgrade to wasmvm v1.3 [\#1296](https://github.com/CosmWasm/wasmd/issues/1296)
+
+### Notable changes:
+- Support for new wasmvm v1.3.0 capabilities [\#1296](https://github.com/CosmWasm/wasmd/issues/1296)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.32.0](https://github.com/CosmWasm/wasmd/tree/v0.32.0) (2023-05-11)
 
