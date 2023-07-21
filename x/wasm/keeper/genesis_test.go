@@ -33,7 +33,7 @@ import (
 const firstCodeID = 1
 
 func TestGenesisExportImport(t *testing.T) {
-	wasmKeeper, srcCtx, srcStoreKeys := setupKeeper(t)
+	wasmKeeper, srcCtx, _ := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
 
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
@@ -102,7 +102,7 @@ func TestGenesisExportImport(t *testing.T) {
 	require.NoError(t, err)
 
 	// setup new instances
-	dstKeeper, dstCtx, dstStoreKeys := setupKeeper(t)
+	dstKeeper, dstCtx, _ := setupKeeper(t)
 
 	// reset contract code index in source DB for comparison with dest DB
 	wasmKeeper.IterateContractInfo(srcCtx, func(address sdk.AccAddress, info wasmTypes.ContractInfo) bool {
@@ -124,25 +124,7 @@ func TestGenesisExportImport(t *testing.T) {
 	InitGenesis(dstCtx, dstKeeper, importState)
 
 	// compare whole DB
-	for j := range srcStoreKeys {
-		srcIT := srcCtx.KVStore(srcStoreKeys[j]).Iterator(nil, nil)
-		dstIT := dstCtx.KVStore(dstStoreKeys[j]).Iterator(nil, nil)
 
-<<<<<<< HEAD
-		for i := 0; srcIT.Valid(); i++ {
-			require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", srcStoreKeys[j].Name(), srcIT.Key())
-			require.Equal(t, srcIT.Key(), dstIT.Key(), i)
-			require.Equal(t, srcIT.Value(), dstIT.Value(), "[%s] element (%d): %X", srcStoreKeys[j].Name(), i, srcIT.Key())
-			dstIT.Next()
-			srcIT.Next()
-		}
-		if !assert.False(t, dstIT.Valid()) {
-			t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
-		}
-		srcIT.Close()
-		dstIT.Close()
-	}
-=======
 	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
 	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
 
@@ -162,7 +144,6 @@ func TestGenesisExportImport(t *testing.T) {
 	if !assert.False(t, dstIT.Valid()) {
 		t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
 	}
->>>>>>> 17634778 (Remove check for wasm limit size in state sync (#1471))
 }
 
 func TestGenesisInit(t *testing.T) {
