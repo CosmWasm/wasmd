@@ -95,7 +95,7 @@ func BenchmarkTxSending(b *testing.B) {
 
 			// number of Tx per block for the benchmarks
 			blockSize := tc.blockSize
-			height := int64(3)
+			height := int64(2)
 			txEncoder := appInfo.TxConfig.TxEncoder()
 
 			b.ResetTimer()

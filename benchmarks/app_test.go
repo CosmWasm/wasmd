@@ -165,7 +165,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	wasmApp := SetupWithGenesisAccountsAndValSet(b, db, genAccs, bals...)
 
 	// add wasm contract
-	height := int64(2)
+	height := int64(1)
 	txGen := moduletestutil.MakeTestEncodingConfig().TxConfig
 	_, err := wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height, Time: time.Now()})
 	require.NoError(b, err)
@@ -221,7 +221,6 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	evt := res.Events[len(res.Events)-1]
 	attr := evt.Attributes[0]
 	contractAddr := attr.Value
-
 	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
 	require.NoError(b, err)
 	_, err = wasmApp.Commit()
