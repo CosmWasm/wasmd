@@ -174,8 +174,6 @@ func SetupWithGenesisValSet(
 		AppStateBytes:   stateBytes,
 	})
 	require.NoError(t, err)
-	// commit genesis changes
-	// app.Commit()
 
 	votes := make([]abci.VoteInfo, len(valSet.Validators))
 	for i, v := range valSet.Validators {

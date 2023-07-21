@@ -29,7 +29,7 @@ func TestUnsafeResetAll(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	sut.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
+	sut.ForEachNodeExecAndWait(t, []string{"comet", "unsafe-reset-all"})
 
 	// then
 	sut.withEachNodeHome(func(i int, home string) {

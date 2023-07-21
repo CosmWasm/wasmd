@@ -293,7 +293,7 @@ func (c WasmdCli) WasmStore(file string, args ...string) int {
 	rsp := c.CustomCommand(cmd...)
 
 	RequireTxSuccess(c.t, rsp)
-	codeID := gjson.Get(rsp, "logs.#.events.#.attributes.#(key=code_id).value").Array()[0].Array()[0].Int()
+	codeID := gjson.Get(rsp, "events.#.attributes.#(key=code_id).value").Array()[0].Array()[0].Int()
 	require.NotEmpty(c.t, codeID)
 	return int(codeID)
 }
@@ -306,7 +306,7 @@ func (c WasmdCli) WasmInstantiate(codeID int, initMsg string, args ...string) st
 	cmd := append([]string{"tx", "wasm", "instantiate", strconv.Itoa(codeID), initMsg}, args...)
 	rsp := c.CustomCommand(cmd...)
 	RequireTxSuccess(c.t, rsp)
-	addr := gjson.Get(rsp, "logs.#.events.#.attributes.#(key=_contract_address).value").Array()[0].Array()[0].String()
+	addr := gjson.Get(rsp, "events.#.attributes.#(key=_contract_address).value").Array()[0].Array()[0].String()
 	require.NotEmpty(c.t, addr)
 	return addr
 }
@@ -340,7 +340,7 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 }
 
 func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
-	args := []string{"q", "tendermint-validator-set"}
+	args := []string{"q", "comet-validator-set"}
 	got := c.CustomQuery(args...)
 
 	// still using amino here as the SDK

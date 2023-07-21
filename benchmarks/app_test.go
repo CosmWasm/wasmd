@@ -11,7 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -53,8 +53,8 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmtypes.NewValidator(pubKey, 1)
+	valSet := cmtypes.NewValidatorSet([]*cmtypes.Validator{validator})
 
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
@@ -115,8 +115,6 @@ func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authty
 			AppStateBytes:   stateBytes,
 		},
 	)
-	require.NoError(b, err)
-	_, err = wasmApp.Commit()
 	require.NoError(b, err)
 	_, err = wasmApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: wasmApp.LastBlockHeight() + 1})
 	require.NoError(b, err)
