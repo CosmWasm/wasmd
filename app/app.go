@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -1063,7 +1064,9 @@ func (app *WasmApp) GetStoreKeys() []storetypes.StoreKey {
 	for _, key := range app.keys {
 		keys = append(keys, key)
 	}
-
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].Name() < keys[j].Name()
+	})
 	return keys
 }
 
