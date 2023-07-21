@@ -123,7 +123,7 @@ func TestGovVoteByContract(t *testing.T) {
 			e2e.MustExecViaReflectContract(t, chain, contractAddr, voteMsg)
 
 			// then proposal executed after voting period
-			proposal, err := govKeeper.Proposals.Get(sdk.WrapSDKContext(chain.GetContext()), propID)
+			proposal, err := govKeeper.Proposals.Get(chain.GetContext(), propID)
 			require.NoError(t, err)
 			coord.IncrementTimeBy(proposal.VotingEndTime.Sub(chain.GetContext().BlockTime()) + time.Minute)
 			coord.CommitBlock(chain)

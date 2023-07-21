@@ -291,7 +291,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 			require.NoError(t, gotErr)
 			// and when
 			em := sdk.NewEventManager()
-			_, err = msgServer.ExecLegacyContent(sdk.WrapSDKContext(ctx.WithEventManager(em)), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
+			_, err = msgServer.ExecLegacyContent(ctx.WithEventManager(em), v1.NewMsgExecLegacyContent(contentMsg.Content, govAuthority))
 			// then
 			require.NoError(t, err)
 			contractAddr, err := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
