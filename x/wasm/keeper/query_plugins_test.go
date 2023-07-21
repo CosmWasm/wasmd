@@ -106,7 +106,7 @@ func TestIBCQuerier(t *testing.T) {
 				PortID: &wasmvmtypes.PortIDQuery{},
 			},
 			wasmKeeper: &mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					return &types.ContractInfo{IBCPortID: "myIBCPortID"}
 				},
 			},
@@ -233,7 +233,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			wasmKeeper: &mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					return &types.ContractInfo{IBCPortID: "myLoadedPortID"}
 				},
 			},
@@ -509,13 +509,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Admin, i.Creator, i.IBCPortID = myAdminAddr, myCreatorAddr, "myIBCPort"
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -535,7 +535,7 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 			req: &wasmvmtypes.WasmQuery{
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
-			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+			mock: mockWasmQueryKeeper{GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 				return nil
 			}},
 			expErr: true,
@@ -545,13 +545,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Admin, i.Creator = myAdminAddr, myCreatorAddr
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return false },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return false },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -565,13 +565,13 @@ func TestContractInfoWasmQuerier(t *testing.T) {
 				ContractInfo: &wasmvmtypes.ContractInfoQuery{ContractAddr: myValidContractAddr},
 			},
 			mock: mockWasmQueryKeeper{
-				GetContractInfoFn: func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+				GetContractInfoFn: func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 					val := types.ContractInfoFixture(func(i *types.ContractInfo) {
 						i.Creator = myCreatorAddr
 					})
 					return &val
 				},
-				IsPinnedCodeFn: func(ctx sdk.Context, codeID uint64) bool { return true },
+				IsPinnedCodeFn: func(ctx context.Context, codeID uint64) bool { return true },
 			},
 			expRes: wasmvmtypes.ContractInfoResponse{
 				CodeID:  1,
@@ -612,7 +612,7 @@ func TestCodeInfoWasmQuerier(t *testing.T) {
 				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
 			},
 			mock: mockWasmQueryKeeper{
-				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+				GetCodeInfoFn: func(ctx context.Context, codeID uint64) *types.CodeInfo {
 					return &types.CodeInfo{
 						CodeHash: myRawChecksum,
 						Creator:  myCreatorAddr,
@@ -640,7 +640,7 @@ func TestCodeInfoWasmQuerier(t *testing.T) {
 				CodeInfo: &wasmvmtypes.CodeInfoQuery{CodeID: 1},
 			},
 			mock: mockWasmQueryKeeper{
-				GetCodeInfoFn: func(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+				GetCodeInfoFn: func(ctx context.Context, codeID uint64) *types.CodeInfo {
 					return nil
 				},
 			},
@@ -843,42 +843,42 @@ func (m distrKeeperMock) GetDelegatorWithdrawAddr(ctx context.Context, delAddr s
 }
 
 type mockWasmQueryKeeper struct {
-	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
-	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmartFn      func(ctx sdk.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
-	IsPinnedCodeFn    func(ctx sdk.Context, codeID uint64) bool
-	GetCodeInfoFn     func(ctx sdk.Context, codeID uint64) *types.CodeInfo
+	GetContractInfoFn func(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+	QueryRawFn        func(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QuerySmartFn      func(ctx context.Context, contractAddr sdk.AccAddress, req types.RawContractMessage) ([]byte, error)
+	IsPinnedCodeFn    func(ctx context.Context, codeID uint64) bool
+	GetCodeInfoFn     func(ctx context.Context, codeID uint64) *types.CodeInfo
 }
 
-func (m mockWasmQueryKeeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
+func (m mockWasmQueryKeeper) GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
 	if m.GetContractInfoFn == nil {
 		panic("not expected to be called")
 	}
 	return m.GetContractInfoFn(ctx, contractAddress)
 }
 
-func (m mockWasmQueryKeeper) QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte {
+func (m mockWasmQueryKeeper) QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte {
 	if m.QueryRawFn == nil {
 		panic("not expected to be called")
 	}
 	return m.QueryRawFn(ctx, contractAddress, key)
 }
 
-func (m mockWasmQueryKeeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
+func (m mockWasmQueryKeeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error) {
 	if m.QuerySmartFn == nil {
 		panic("not expected to be called")
 	}
 	return m.QuerySmartFn(ctx, contractAddr, req)
 }
 
-func (m mockWasmQueryKeeper) IsPinnedCode(ctx sdk.Context, codeID uint64) bool {
+func (m mockWasmQueryKeeper) IsPinnedCode(ctx context.Context, codeID uint64) bool {
 	if m.IsPinnedCodeFn == nil {
 		panic("not expected to be called")
 	}
 	return m.IsPinnedCodeFn(ctx, codeID)
 }
 
-func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo {
+func (m mockWasmQueryKeeper) GetCodeInfo(ctx context.Context, codeID uint64) *types.CodeInfo {
 	if m.GetCodeInfoFn == nil {
 		panic("not expected to be called")
 	}

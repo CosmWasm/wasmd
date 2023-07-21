@@ -1,14 +1,14 @@
 package keeper
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/cosmos/gogoproto/proto"
-
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -19,6 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -92,15 +93,15 @@ type QueryPlugins struct {
 }
 
 type contractMetaDataSource interface {
-	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+	GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 }
 
 type wasmQueryKeeper interface {
 	contractMetaDataSource
-	GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo
-	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
-	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
+	GetCodeInfo(ctx context.Context, codeID uint64) *types.CodeInfo
+	QueryRaw(ctx context.Context, contractAddress sdk.AccAddress, key []byte) []byte
+	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	IsPinnedCode(ctx context.Context, codeID uint64) bool
 }
 
 func DefaultQueryPlugins(

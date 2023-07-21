@@ -1,25 +1,25 @@
 package v3
 
 import (
+	"context"
 	"encoding/binary"
 
 	corestoretypes "cosmossdk.io/core/store"
-
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"cosmossdk.io/store/prefix"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // StoreCodeInfoFn stores code info
-type StoreCodeInfoFn func(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo)
+type StoreCodeInfoFn func(ctx context.Context, codeID uint64, codeInfo types.CodeInfo)
 
 // Keeper abstract keeper
 type wasmKeeper interface {
-	SetParams(ctx sdk.Context, ps types.Params) error
+	SetParams(ctx context.Context, ps types.Params) error
 }
 
 // Migrator is a struct for handling in-place store migrations.

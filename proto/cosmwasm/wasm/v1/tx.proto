@@ -398,7 +398,7 @@ message MsgStoreAndInstantiateContract {
 message MsgStoreAndInstantiateContractResponse {
   // Address is the bech32 address of the new contract instance.
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  ;
+
   // Data contains bytes to returned from the contract
   bytes data = 2;
 }

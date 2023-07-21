@@ -39,11 +39,11 @@ const (
 // WasmKeeper is a subset of the wasm keeper used by simulations
 type WasmKeeper interface {
 	GetAuthority() string
-	GetParams(ctx sdk.Context) types.Params
-	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
-	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool)
-	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
-	PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) (uint64, error)
+	GetParams(ctx context.Context) types.Params
+	IterateCodeInfos(ctx context.Context, cb func(uint64, types.CodeInfo) bool)
+	IterateContractInfo(ctx context.Context, cb func(sdk.AccAddress, types.ContractInfo) bool)
+	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+	PeekAutoIncrementID(ctx context.Context, lastIDKey []byte) (uint64, error)
 }
 type BankKeeper interface {
 	simulation.BankKeeper
