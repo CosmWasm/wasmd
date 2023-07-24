@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/CosmWasm/wasmvm v1.3.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-beta.0
+	github.com/cosmos/cosmos-sdk v0.50.0-beta.0.0.20230723220119-d68a1231a44b
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/iavl v1.0.0-beta.2
@@ -32,23 +32,23 @@ require (
 
 require (
 	cosmossdk.io/api v0.7.0
-	cosmossdk.io/client/v2 v2.0.0-20230718142100-ecfe9a30184a
+	cosmossdk.io/client/v2 v2.0.0-20230722073756-0fa85b7a424d
 	cosmossdk.io/collections v0.3.0
 	cosmossdk.io/core v0.9.0
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/store v1.0.0-alpha.1
-	cosmossdk.io/tools/confix v0.0.0-20230630152705-9f4a4e416f85
-	cosmossdk.io/x/circuit v0.0.0-20230713220914-c0369a888135
-	cosmossdk.io/x/evidence v0.0.0-20230713220914-c0369a888135
-	cosmossdk.io/x/feegrant v0.0.0-20230713160716-d4e95eec9f29
+	cosmossdk.io/tools/confix v0.0.0-20230722073756-0fa85b7a424d
+	cosmossdk.io/x/circuit v0.0.0-20230722073756-0fa85b7a424d
+	cosmossdk.io/x/evidence v0.0.0-20230722073756-0fa85b7a424d
+	cosmossdk.io/x/feegrant v0.0.0-20230722073756-0fa85b7a424d
 	cosmossdk.io/x/nft v0.0.0-20230713160716-d4e95eec9f29
 	cosmossdk.io/x/tx v0.9.1
-	cosmossdk.io/x/upgrade v0.0.0-20230713160716-d4e95eec9f29
+	cosmossdk.io/x/upgrade v0.0.0-20230722073756-0fa85b7a424d
 	github.com/cometbft/cometbft v0.38.0-rc3
 	github.com/cosmos/cosmos-db v1.0.0
-	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc2
+	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc3
 	github.com/spf13/viper v1.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
 )
@@ -157,7 +157,7 @@ require (
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230110094441-db37f07504ce // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/petermattis/goid v0.0.0-20230518223814-80aa455d8761 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
@@ -212,4 +212,4 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
-replace github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230720133921-41772a40908c
+replace github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230724113134-e8c560b25881
