@@ -11,8 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const firstCodeID = 1
-const badAddress = "abcd"
+const (
+	firstCodeID = 1
+	badAddress  = "abcd"
+)
 
 func TestStoreCodeValidation(t *testing.T) {
 	// proper address size
