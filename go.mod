@@ -212,4 +212,4 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
-replace github.com/cosmos/ibc-go/v7 => github.com/notional-labs/ibc-go/v7 v7.0.0-20230725115016-ed60bbb0ec6f
+replace github.com/cosmos/ibc-go/v7 => github.com/cosmos/ibc-go/v7 v7.0.0-20230725164859-72bf69064fbe
