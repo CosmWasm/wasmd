@@ -1077,8 +1077,10 @@ func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *
 
 	k.appendToContractHistory(ctx, contractAddr, entries...)
 	k.storeContractInfo(ctx, contractAddr, c)
-	k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
-	k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
+	if len(entries) != 0 {
+		k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
+		k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
+	}
 	return k.importContractState(ctx, contractAddr, state)
 }
 
