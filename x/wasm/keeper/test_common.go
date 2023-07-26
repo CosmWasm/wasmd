@@ -109,11 +109,11 @@ var moduleBasics = module.NewBasicManager(
 )
 
 func MakeTestCodec(t testing.TB) codec.Codec {
-	return MakeEncodingConfig(t).Marshaler
+	return MakeEncodingConfig(t).Codec
 }
 
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
-	encodingConfig := wasmappparams.MakeEncodingConfig()
+	encodingConfig := wasmappparams.MakeTestEncodingConfig()
 	amino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 
@@ -255,7 +255,7 @@ func createTestInput(
 	ctx = types.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(t)
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
@@ -350,7 +350,7 @@ func createTestInput(
 	require.NoError(t, bankKeeper.SetParams(ctx, banktypes.DefaultParams()))
 
 	stakingKeeper := stakingkeeper.NewKeeper(
-		appCodec, runtime.NewKVStoreService(keys[stakingtypes.StoreKey]), accountKeeper, bankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authcodec.NewBech32Codec(sdk.Bech32PrefixValAddr), authcodec.NewBech32Codec(sdk.Bech32PrefixConsAddr))
+		appCodec, runtime.NewKVStoreService(keys[stakingtypes.StoreKey]), accountKeeper, bankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()), authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()))
 	stakingtypes.DefaultParams()
 	require.NoError(t, stakingKeeper.SetParams(ctx, TestingStakeParams))
 

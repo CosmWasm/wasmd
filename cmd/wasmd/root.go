@@ -47,27 +47,21 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// NewRootCmd creates a new root command for wasmd. It is called once in the
+// NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
 func NewRootCmd() *cobra.Command {
-	cfg := sdk.GetConfig()
-	cfg.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
-	cfg.SetBech32PrefixForValidator(app.Bech32PrefixValAddr, app.Bech32PrefixValPub)
-	cfg.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
-	cfg.SetAddressVerifier(wasmtypes.VerifyAddressLen())
-	cfg.Seal()
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	// note, this is not necessary when using app wiring, as depinject can be directly used (see root_v2.go)
 	tempApp := app.NewWasmApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(tempDir()), []wasmkeeper.Option{})
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
-		Marshaler:         tempApp.AppCodec(),
+		Codec:             tempApp.AppCodec(),
 		TxConfig:          tempApp.TxConfig(),
 		Amino:             tempApp.LegacyAmino(),
 	}
 
 	initClientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
@@ -76,8 +70,9 @@ func NewRootCmd() *cobra.Command {
 		WithViper("") // In wasmd, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:   version.AppName,
-		Short: "Wasm Daemon (server)",
+		Use:           version.AppName,
+		Short:         "Wasm Daemon (server)",
+		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())
@@ -96,8 +91,9 @@ func NewRootCmd() *cobra.Command {
 
 			// This needs to go after ReadFromClientConfig, as that function
 			// sets the RPC client needed for SIGN_MODE_TEXTUAL.
+			enabledSignModes := append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL)
 			txConfigOpts := tx.ConfigOptions{
-				EnabledSignModes:           append(tx.DefaultSignModes, signing.SignMode_SIGN_MODE_TEXTUAL),
+				EnabledSignModes:           enabledSignModes,
 				TextualCoinMetadataQueryFn: txmodule.NewGRPCCoinMetadataQueryFn(initClientCtx),
 			}
 			txConfigWithTextual, err := tx.NewTxConfigWithOptions(
@@ -122,9 +118,7 @@ func NewRootCmd() *cobra.Command {
 
 	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager)
 
-	if err := tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
-	}
+	tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd)
 
 	return rootCmd
 }
@@ -146,10 +140,19 @@ func initCometBFTConfig() *cmtcfg.Config {
 func initAppConfig() (string, interface{}) {
 	// The following code snippet is just for reference.
 
+	// WASMConfig defines configuration for the wasm module.
+	type WASMConfig struct {
+		// This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+		QueryGasLimit uint64 `mapstructure:"query_gas_limit"`
+
+		// Address defines the gRPC-web server to listen on
+		LruSize uint64 `mapstructure:"lru_size"`
+	}
+
 	type CustomAppConfig struct {
 		serverconfig.Config
 
-		Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
+		WASM WASMConfig `mapstructure:"wasm"`
 	}
 
 	// Optionally allow the chain developer to overwrite the SDK's default
@@ -172,11 +175,19 @@ func initAppConfig() (string, interface{}) {
 
 	customAppConfig := CustomAppConfig{
 		Config: *srvCfg,
-		Wasm:   wasmtypes.DefaultWasmConfig(),
+		WASM: WASMConfig{
+			LruSize:       1,
+			QueryGasLimit: 300000,
+		},
 	}
 
-	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		wasmtypes.DefaultConfigTemplate()
+	customAppTemplate := serverconfig.DefaultConfigTemplate + `
+[wasm]
+# This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+query_gas_limit = 300000
+# This is the number of wasm vm instances we keep cached in memory for speed-up
+# Warning: this is currently unstable and may lead to crashes, best to keep for 0 unless testing locally
+lru_size = 0`
 
 	return customAppTemplate, customAppConfig
 }
@@ -197,7 +208,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig, b
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
 	wasmcli.ExtendUnsafeResetAllCmd(rootCmd)
 
-	// add keybase, auxiliary RPC, query, and tx child commands
+	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
 		genesisCommand(encodingConfig, basicManager),
@@ -205,8 +216,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig, b
 		queryCommand(),
 		keys.Commands(app.DefaultNodeHome),
 	)
-	// add rosetta
-	//	rootCmd.AddCommand(rosettaCmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Marshaler))
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
@@ -240,6 +249,7 @@ func queryCommand() *cobra.Command {
 		authcmd.QueryTxsByEventsCmd(),
 		server.QueryBlocksCmd(),
 		authcmd.QueryTxCmd(),
+		server.QueryBlockResultsCmd(),
 	)
 
 	return cmd
@@ -264,6 +274,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
 		authcmd.GetAuxToFeeCommand(),
+		authcmd.GetSimulateCmd(),
 	)
 
 	return cmd
@@ -308,7 +319,7 @@ func appExport(
 	// we can exit more gracefully by checking the flag here.
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
-		return servertypes.ExportedApp{}, errors.New("application home is not set")
+		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
 	viperAppOpts, ok := appOpts.(*viper.Viper)
@@ -343,7 +354,7 @@ func appExport(
 var tempDir = func() string {
 	dir, err := os.MkdirTemp("", "wasmd")
 	if err != nil {
-		panic("failed to create temp dir: " + err.Error())
+		dir = app.DefaultNodeHome
 	}
 	defer os.RemoveAll(dir)
 
