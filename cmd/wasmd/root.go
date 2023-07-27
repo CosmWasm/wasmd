@@ -118,7 +118,10 @@ func NewRootCmd() *cobra.Command {
 
 	initRootCmd(rootCmd, encodingConfig, tempApp.BasicModuleManager)
 
-	tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd)
+	err := tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd)
+	if err != nil {
+		panic(err)
+	}
 
 	return rootCmd
 }
