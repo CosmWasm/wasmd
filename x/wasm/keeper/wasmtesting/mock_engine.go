@@ -3,12 +3,13 @@ package wasmtesting
 import (
 	"bytes"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/rand"
 
 	errorsmod "cosmossdk.io/errors"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var _ types.WasmerEngine = &MockWasmer{}

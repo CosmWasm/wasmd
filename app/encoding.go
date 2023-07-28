@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/CosmWasm/wasmd/app/params"
-
 	"github.com/cosmos/cosmos-sdk/std"
+
+	"github.com/CosmWasm/wasmd/app/params"
 )
 
 // MakeEncodingConfig creates a new EncodingConfig with all modules registered

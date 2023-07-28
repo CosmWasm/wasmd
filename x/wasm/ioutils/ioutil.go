@@ -5,9 +5,9 @@ import (
 	"compress/gzip"
 	"io"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	errorsmod "cosmossdk.io/errors"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // Uncompress expects a valid gzip source to unpack or fails. See IsGzip

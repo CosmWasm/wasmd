@@ -3,10 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestDefaultAuthzPolicyCanCreateCode(t *testing.T) {

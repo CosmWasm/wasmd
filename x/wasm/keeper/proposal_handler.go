@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals

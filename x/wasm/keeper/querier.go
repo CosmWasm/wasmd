@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"runtime/debug"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,6 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var _ types.QueryServer = &GrpcQuerier{}

@@ -1,12 +1,13 @@
 package wasmtesting
 
 import (
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type MockChannelKeeper struct {

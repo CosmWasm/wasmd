@@ -3,11 +3,12 @@ package keeper
 import (
 	"encoding/json"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	tmBytes "github.com/cometbft/cometbft/libs/bytes"
 	fuzz "github.com/google/gofuzz"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 var ModelFuzzers = []interface{}{FuzzAddr, FuzzAddrString, FuzzAbsoluteTxPosition, FuzzContractInfo, FuzzStateModel, FuzzAccessType, FuzzAccessConfig, FuzzContractCodeHistory}

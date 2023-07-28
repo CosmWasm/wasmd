@@ -81,6 +81,7 @@ linters-settings:
       - default # Default section: contains all imports that could not be matched to another section type.
       - prefix(cosmossdk.io)
       - prefix(github.com/cosmos/cosmos-sdk)
+      - prefix(github.com/CosmWasm/wasmd)
   revive:
     rules:
       - name: redefines-builtin-id

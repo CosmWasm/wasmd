@@ -3,12 +3,12 @@ package v3
 import (
 	"encoding/binary"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // StoreCodeInfoFn stores code info

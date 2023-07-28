@@ -3,15 +3,16 @@ package v2_test
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	"github.com/CosmWasm/wasmd/x/wasm/exported"
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/CosmWasm/wasmd/x/wasm/exported"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type mockSubspace struct {

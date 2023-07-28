@@ -3,10 +3,11 @@ package wasm
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const firstCodeID = 1
