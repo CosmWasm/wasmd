@@ -2,7 +2,38 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.2...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.41.0...HEAD)
+
+## [v0.41.0](https://github.com/CosmWasm/wasmd/tree/v0.41.0) (2023-07-28)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.40.2...v0.41.0)
+
+- Bump IBC-Go to 7.2.0 [\#1459](https://github.com/CosmWasm/wasmd/pull/1459)
+- Ensure history position does not conflict [\#1462](https://github.com/CosmWasm/wasmd/pull/1462)
+- Bump sequence in ibctests for failed messages [\#1464](https://github.com/CosmWasm/wasmd/pull/1464)
+- Accept wasm data from state-sync as valid [\#1467](https://github.com/CosmWasm/wasmd/issues/1467)
+- Add updates to ibctesting framework for MS [\#1472](https://github.com/CosmWasm/wasmd/pull/1472)
+- Bump CometBFT to v0.37.2 - security fix [\#1479](https://github.com/CosmWasm/wasmd/pull/1479)
+- Gov: support contracts that dynamically instantiate other contracts [\#1207](https://github.com/CosmWasm/wasmd/issues/1207)
+- Deprecate alias.go [\#1484](https://github.com/CosmWasm/wasmd/pull/1484)
+- Upgrade to wasmvm v1.3 [\#1296](https://github.com/CosmWasm/wasmd/issues/1296)
+- System tests dependency cleanup [\#1489](https://github.com/CosmWasm/wasmd/pull/1489)
+- Allow better override of wasmVM in x/wasm keeper [\#1494](https://github.com/CosmWasm/wasmd/pull/1494)
+- Make system tests extendable for other app binaries [\#1503](https://github.com/CosmWasm/wasmd/pull/1503)
+- Build release + artifact on CI [\#1515](https://github.com/CosmWasm/wasmd/pull/1515)
+- Add/Remove addresses for code upload params [\#1493](https://github.com/CosmWasm/wasmd/pull/1493)
+- Bump SDK to v0.47.4 [\#1525](https://github.com/CosmWasm/wasmd/pull/1525)
+
+### Notable changes:
+- Bump CometBFT to [v0.37.2](https://github.com/cometbft/cometbft/releases/tag/v0.37.2) because of security issues. See https://github.com/advisories/GHSA-w24w-wp77-qffm
+- Support for new wasmvm v1.3.0 capabilities [\#1296](https://github.com/CosmWasm/wasmd/issues/1296)
+- Deprecate alias.go [\#1484](https://github.com/CosmWasm/wasmd/pull/1484)
+- Gov: support contracts that dynamically instantiate other contracts [\#1207](https://github.com/CosmWasm/wasmd/issues/1207)
+- Add/Remove addresses for code upload params [\#1493](https://github.com/CosmWasm/wasmd/pull/1493)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
+- This release contains an ibc-go version bump from v7.0.1 to v7.2.0. Please read the [migration guide](https://github.com/cosmos/ibc-go/blob/v7.2.0/docs/migrations/v7-to-v7_1.md) carefully.
 
 ## [v0.40.2](https://github.com/CosmWasm/wasmd/tree/v0.40.2) (2023-06-09)
 
