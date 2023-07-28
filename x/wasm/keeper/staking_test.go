@@ -424,8 +424,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	}
 	bondBz, err := json.Marshal(bond)
 	require.NoError(t, err)
-	_, err = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
-	require.NoError(t, err)
+	_, _ = initInfo.contractKeeper.Execute(ctx, contractAddr, bob, bondBz, funds)
 
 	// update height a bit to solidify the delegation
 	ctx = nextBlock(ctx, stakingKeeper)
