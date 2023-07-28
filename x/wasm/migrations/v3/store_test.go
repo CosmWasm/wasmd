@@ -8,14 +8,13 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	v3 "github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestMigrate3To4(t *testing.T) {

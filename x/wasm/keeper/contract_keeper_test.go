@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestInstantiate2(t *testing.T) {

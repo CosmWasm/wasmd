@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type optsFn func(*Keeper)

@@ -1,13 +1,14 @@
 package keeper
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
+	errorsmod "cosmossdk.io/errors"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (
@@ -230,7 +231,7 @@ func (g WasmGasRegister) eventAttributeCosts(attrs []wasmvmtypes.EventAttribute,
 }
 
 // apply free tier
-func calcWithFreeTier(storedBytes uint64, freeTier uint64) (uint64, uint64) {
+func calcWithFreeTier(storedBytes, freeTier uint64) (uint64, uint64) {
 	if storedBytes <= freeTier {
 		return 0, freeTier - storedBytes
 	}

@@ -4,10 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
 )
 
 func TestWasmVMFlavouredError(t *testing.T) {
@@ -57,6 +58,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"fallback to sdk error when wasmvm error unset": {
 			exec: func(t *testing.T) {
+				t.Helper()
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(WasmVMFlavouredError{sdkErr: ErrEmpty}, &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
@@ -65,6 +67,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info": {
 			exec: func(t *testing.T) {
+				t.Helper()
 				codespace, code, log := errorsmod.ABCIInfo(myErr, false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)
@@ -73,6 +76,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 		},
 		"abci info - wrapped": {
 			exec: func(t *testing.T) {
+				t.Helper()
 				codespace, code, log := errorsmod.ABCIInfo(myErr.Wrap("my description"), false)
 				assert.Equal(t, DefaultCodespace, codespace)
 				assert.Equal(t, uint32(28), code)

@@ -5,12 +5,11 @@ package keeper
 import (
 	"path/filepath"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
-	wasmvm "github.com/CosmWasm/wasmvm"
-	"github.com/cosmos/cosmos-sdk/codec"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 // NewKeeper creates a new contract Keeper instance
