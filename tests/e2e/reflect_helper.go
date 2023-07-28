@@ -16,6 +16,7 @@ import (
 
 // InstantiateReflectContract store and instantiate a reflect contract instance
 func InstantiateReflectContract(t *testing.T, chain *ibctesting.TestChain) sdk.AccAddress {
+	t.Helper()
 	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm").CodeID
 	contractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
 	require.NotEmpty(t, contractAddr)
@@ -24,6 +25,7 @@ func InstantiateReflectContract(t *testing.T, chain *ibctesting.TestChain) sdk.A
 
 // MustExecViaReflectContract submit execute message to send payload to reflect contract
 func MustExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...wasmvmtypes.CosmosMsg) *sdk.Result {
+	t.Helper()
 	rsp, err := ExecViaReflectContract(t, chain, contractAddr, msgs)
 	require.NoError(t, err)
 	return rsp
@@ -35,6 +37,7 @@ type sdkMessageType interface {
 }
 
 func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs ...T) *sdk.Result {
+	t.Helper()
 	vmMsgs := make([]wasmvmtypes.CosmosMsg, len(msgs))
 	for i, m := range msgs {
 		bz, err := chain.Codec.Marshal(m)
@@ -53,6 +56,7 @@ func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *i
 
 // ExecViaReflectContract submit execute message to send payload to reflect contract
 func ExecViaReflectContract(t *testing.T, chain *ibctesting.TestChain, contractAddr sdk.AccAddress, msgs []wasmvmtypes.CosmosMsg) (*sdk.Result, error) {
+	t.Helper()
 	require.NotEmpty(t, msgs)
 	reflectSend := testdata.ReflectHandleMsg{
 		Reflect: &testdata.ReflectPayload{Msgs: msgs},

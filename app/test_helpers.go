@@ -55,6 +55,7 @@ type SetupOptions struct {
 }
 
 func setup(tb testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*WasmApp, GenesisState) {
+	tb.Helper()
 	db := dbm.NewMemDB()
 	nodeHome := tb.TempDir()
 	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
@@ -196,8 +197,10 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 }
 
 // SetupWithEmptyStore set up a wasmd app instance with empty DB
-func SetupWithEmptyStore(t testing.TB) *WasmApp {
-	app, _ := setup(t, "testing", false, 0)
+func SetupWithEmptyStore(tb testing.TB) *WasmApp {
+	tb.Helper()
+
+	app, _ := setup(tb, "testing", false, 0)
 	return app
 }
 
@@ -307,6 +310,7 @@ func SignAndDeliverWithoutCommit(
 	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins,
 	chainID string, accNums, accSeqs []uint64, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
+	t.Helper()
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
