@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -117,7 +117,7 @@ func (chain *TestChain) RawQuery(contractAddr string, queryData []byte) ([]byte,
 // SmartQuery This will serialize the query message and submit it to the contract.
 // The response is parsed into the provided interface.
 // Usage: SmartQuery(addr, QueryMsg{Foo: 1}, &response)
-func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, response interface{}) error {
+func (chain *TestChain) SmartQuery(contractAddr string, queryMsg, response interface{}) error {
 	msg, err := json.Marshal(queryMsg)
 	if err != nil {
 		return err

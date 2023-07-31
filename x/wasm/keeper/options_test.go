@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -27,6 +27,7 @@ func TestConstructorOptions(t *testing.T) {
 		"wasm engine": {
 			srcOpt: WithWasmEngine(&wasmtesting.MockWasmer{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
 			},
 		},
@@ -36,6 +37,7 @@ func TestConstructorOptions(t *testing.T) {
 				return &wasmtesting.MockWasmer{}
 			}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
 			},
 			isPostOpt: true,
@@ -43,12 +45,14 @@ func TestConstructorOptions(t *testing.T) {
 		"message handler": {
 			srcOpt: WithMessageHandler(&wasmtesting.MockMessageHandler{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockMessageHandler{}, k.messenger)
 			},
 		},
 		"query plugins": {
 			srcOpt: WithQueryHandler(&wasmtesting.MockQueryHandler{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockQueryHandler{}, k.wasmVMQueryHandler)
 			},
 		},
@@ -58,6 +62,7 @@ func TestConstructorOptions(t *testing.T) {
 				return &wasmtesting.MockMessageHandler{}
 			}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockMessageHandler{}, k.messenger)
 			},
 			isPostOpt: true,
@@ -68,6 +73,7 @@ func TestConstructorOptions(t *testing.T) {
 				return &wasmtesting.MockQueryHandler{}
 			}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockQueryHandler{}, k.wasmVMQueryHandler)
 			},
 			isPostOpt: true,
@@ -75,18 +81,21 @@ func TestConstructorOptions(t *testing.T) {
 		"coin transferrer": {
 			srcOpt: WithCoinTransferrer(&wasmtesting.MockCoinTransferrer{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockCoinTransferrer{}, k.bank)
 			},
 		},
 		"costs": {
 			srcOpt: WithGasRegister(&wasmtesting.MockGasRegister{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, &wasmtesting.MockGasRegister{}, k.gasRegister)
 			},
 		},
 		"api costs": {
 			srcOpt: WithAPICosts(1, 2),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				t.Cleanup(setAPIDefaults)
 				assert.Equal(t, uint64(1), costHumanize)
 				assert.Equal(t, uint64(2), costCanonical)
@@ -95,12 +104,14 @@ func TestConstructorOptions(t *testing.T) {
 		"max recursion query limit": {
 			srcOpt: WithMaxQueryStackSize(1),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.IsType(t, uint32(1), k.maxQueryStackSize)
 			},
 		},
 		"accepted account types": {
 			srcOpt: WithAcceptedAccountTypesOnContractInstantiation(&authtypes.BaseAccount{}, &vestingtypes.ContinuousVestingAccount{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				exp := map[reflect.Type]struct{}{
 					reflect.TypeOf(&authtypes.BaseAccount{}):                 {},
 					reflect.TypeOf(&vestingtypes.ContinuousVestingAccount{}): {},
@@ -111,12 +122,14 @@ func TestConstructorOptions(t *testing.T) {
 		"account pruner": {
 			srcOpt: WithAccountPruner(VestingCoinBurner{}),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				assert.Equal(t, VestingCoinBurner{}, k.accountPruner)
 			},
 		},
 		"gov propagation": {
 			srcOpt: WitGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
 			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
 				exp := map[types.AuthorizationPolicyAction]struct{}{
 					types.AuthZActionInstantiate:     {},
 					types.AuthZActionMigrateContract: {},

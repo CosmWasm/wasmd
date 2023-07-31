@@ -23,11 +23,11 @@ type decoratedKeeper interface {
 		authZ types.AuthorizationPolicy,
 	) (sdk.AccAddress, []byte, error)
 
-	migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ types.AuthorizationPolicy) ([]byte, error)
+	migrate(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte, authZ types.AuthorizationPolicy) ([]byte, error)
 	setContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress, authZ types.AuthorizationPolicy) error
 	pinCode(ctx sdk.Context, codeID uint64) error
 	unpinCode(ctx sdk.Context, codeID uint64) error
-	execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
+	execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 	Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 	setContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
 	setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, autz types.AuthorizationPolicy) error
@@ -91,11 +91,11 @@ func (p PermissionedKeeper) Instantiate2(
 	)
 }
 
-func (p PermissionedKeeper) Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
+func (p PermissionedKeeper) Execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	return p.nested.execute(ctx, contractAddress, caller, msg, coins)
 }
 
-func (p PermissionedKeeper) Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) ([]byte, error) {
+func (p PermissionedKeeper) Migrate(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) ([]byte, error) {
 	return p.nested.migrate(ctx, contractAddress, caller, newCodeID, msg, p.authZPolicy)
 }
 
@@ -103,11 +103,11 @@ func (p PermissionedKeeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress
 	return p.nested.Sudo(ctx, contractAddress, msg)
 }
 
-func (p PermissionedKeeper) UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error {
+func (p PermissionedKeeper) UpdateContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress) error {
 	return p.nested.setContractAdmin(ctx, contractAddress, caller, newAdmin, p.authZPolicy)
 }
 
-func (p PermissionedKeeper) ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error {
+func (p PermissionedKeeper) ClearContractAdmin(ctx sdk.Context, contractAddress, caller sdk.AccAddress) error {
 	return p.nested.setContractAdmin(ctx, contractAddress, caller, nil, p.authZPolicy)
 }
 

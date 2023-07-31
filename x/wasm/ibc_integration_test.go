@@ -3,12 +3,6 @@ package wasm_test
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/app"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -17,9 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestOnChanOpenInitVersion(t *testing.T) {
@@ -245,6 +243,7 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 
 // SubmitIBCPacket starts an IBC packet transfer on given chain and captures the ack returned
 func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmibctesting.Path, chainA *wasmibctesting.TestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
+	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
 	x.MockWasmer.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		return &wasmvmtypes.Response{

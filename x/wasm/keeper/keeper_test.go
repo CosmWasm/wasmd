@@ -12,13 +12,17 @@ import (
 	"testing"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	stypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -30,9 +34,6 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	fuzz "github.com/google/gofuzz"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -2226,12 +2227,16 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		expErr      *errorsmod.Error
 	}{
 		"vesting account - all removed": {
-			setupAcc:    func(t *testing.T, ctx sdk.Context) authtypes.AccountI { return myVestingAccount },
+			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
+				return myVestingAccount
+			},
 			expBalances: sdk.NewCoins(),
 			expHandled:  true,
 		},
 		"vesting account with other tokens - only original denoms removed": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
 				keepers.Faucet.Fund(ctx, vestingAddr, sdk.NewCoin("other", sdk.NewInt(2)))
 				return myVestingAccount
 			},
@@ -2240,6 +2245,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		},
 		"non vesting account - not handled": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {
+				t.Helper()
 				return &authtypes.BaseAccount{Address: myVestingAccount.GetAddress().String()}
 			},
 			expBalances: sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))),

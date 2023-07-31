@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -18,20 +15,20 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
@@ -45,14 +42,16 @@ func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.
 
 // SetupWithGenesisAccountsAndValSet initializes a new WasmApp with the provided genesis
 // accounts and possible balances.
-func SetupWithGenesisAccountsAndValSet(b testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
+func SetupWithGenesisAccountsAndValSet(tb testing.TB, db dbm.DB, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *app.WasmApp {
+	tb.Helper()
+
 	wasmApp, genesisState := setup(db, true, 0)
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	appCodec := wasmApp.AppCodec()
 
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
-	require.NoError(b, err)
+	require.NoError(tb, err)
 
 	genesisState[authtypes.ModuleName] = appCodec.MustMarshalJSON(authGenesis)
 
@@ -136,7 +135,9 @@ type AppInfo struct {
 	TxConfig     client.TxConfig
 }
 
-func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
+func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
+	tb.Helper()
+
 	// constants
 	minter := secp256k1.GenPrivKey()
 	addr := sdk.AccAddress(minter.PubKey().Address())
@@ -165,7 +166,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 			Coins:   sdk.NewCoins(sdk.NewInt64Coin(denom, 100000000000)),
 		}
 	}
-	wasmApp := SetupWithGenesisAccountsAndValSet(b, db, genAccs, bals...)
+	wasmApp := SetupWithGenesisAccountsAndValSet(tb, db, genAccs, bals...)
 
 	// add wasm contract
 	height := int64(2)
@@ -174,16 +175,16 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 
 	// upload the code
 	cw20Code, err := os.ReadFile("./testdata/cw20_base.wasm")
-	require.NoError(b, err)
+	require.NoError(tb, err)
 	storeMsg := wasmtypes.MsgStoreCode{
 		Sender:       addr.String(),
 		WASMByteCode: cw20Code,
 	}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	storeTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&storeMsg}, nil, 55123123, "", []uint64{0}, []uint64{0}, minter)
-	require.NoError(b, err)
+	require.NoError(tb, err)
 	_, _, err = wasmApp.SimDeliver(txGen.TxEncoder(), storeTx)
-	require.NoError(b, err)
+	require.NoError(tb, err)
 	codeID := uint64(1)
 
 	// instantiate the contract
@@ -205,7 +206,7 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 		InitialBalances: initialBalances,
 	}
 	initBz, err := json.Marshal(init)
-	require.NoError(b, err)
+	require.NoError(tb, err)
 	initMsg := wasmtypes.MsgInstantiateContract{
 		Sender: addr.String(),
 		Admin:  addr.String(),
@@ -215,9 +216,9 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	}
 	gasWanted := 500000 + 10000*uint64(numAccounts)
 	initTx, err := simtestutil.GenSignedMockTx(r, txGen, []sdk.Msg{&initMsg}, nil, gasWanted, "", []uint64{0}, []uint64{1}, minter)
-	require.NoError(b, err)
+	require.NoError(tb, err)
 	_, res, err := wasmApp.SimDeliver(txGen.TxEncoder(), initTx)
-	require.NoError(b, err)
+	require.NoError(tb, err)
 
 	// TODO: parse contract address better
 	evt := res.Events[len(res.Events)-1]
@@ -239,14 +240,16 @@ func InitializeWasmApp(b testing.TB, db dbm.DB, numAccounts int) AppInfo {
 	}
 }
 
-func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
+func GenSequenceOfTxs(tb testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
+	tb.Helper()
+
 	fees := sdk.Coins{sdk.NewInt64Coin(info.Denom, 0)}
 	txs := make([]sdk.Tx, numToGenerate)
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < numToGenerate; i++ {
 		msgs, err := msgGen(info)
-		require.NoError(b, err)
+		require.NoError(tb, err)
 		txs[i], err = simtestutil.GenSignedMockTx(
 			r,
 			info.TxConfig,
@@ -258,7 +261,7 @@ func GenSequenceOfTxs(b testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.
 			[]uint64{info.SeqNum},
 			info.MinterKey,
 		)
-		require.NoError(b, err)
+		require.NoError(tb, err)
 		info.SeqNum++
 	}
 

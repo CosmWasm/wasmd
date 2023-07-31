@@ -7,8 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,9 +21,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/gogoproto/proto"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -27,12 +29,14 @@ import (
 // ReflectInitMsg is {}
 
 func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
+	t.Helper()
 	bz, err := json.Marshal(query)
 	require.NoError(t, err)
 	return bz
 }
 
 func mustParse(t *testing.T, data []byte, res interface{}) {
+	t.Helper()
 	err := json.Unmarshal(data, res)
 	require.NoError(t, err)
 }
@@ -686,6 +690,7 @@ func TestQueryDenomsIntegration(t *testing.T) {
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+	t.Helper()
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)

@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 type Recurse struct {
@@ -25,6 +24,7 @@ type recurseWrapper struct {
 }
 
 func buildRecurseQuery(t *testing.T, msg Recurse) []byte {
+	t.Helper()
 	wrapper := recurseWrapper{Recurse: msg}
 	bz, err := json.Marshal(wrapper)
 	require.NoError(t, err)
@@ -39,6 +39,7 @@ type recurseResponse struct {
 var totalWasmQueryCounter int
 
 func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context, keeper *Keeper) {
+	t.Helper()
 	countingQuerierDec := func(realWasmQuerier WasmVMQueryHandler) WasmVMQueryHandler {
 		return WasmVMQueryHandlerFn(func(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error) {
 			totalWasmQueryCounter++

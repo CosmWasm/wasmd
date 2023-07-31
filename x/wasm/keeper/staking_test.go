@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,8 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -166,6 +167,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
+	t.Helper()
 	ctx, k := CreateTestInput(t, false, AvailableCapabilities)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
@@ -645,6 +647,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 
 // adds a few validators and returns a list of validators that are registered
 func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+	t.Helper()
 	owner := faucet.NewFundedRandomAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
@@ -693,7 +696,8 @@ func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, d
 	distKeeper.AllocateTokensToValidator(ctx, vali, payout)
 }
 
-func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Balance: &addressQuery{
 			Address: addr,
@@ -709,7 +713,8 @@ func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Ac
 	assert.Equal(t, expected, balance.Balance)
 }
 
-func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Claims: &addressQuery{
 			Address: addr,
@@ -726,6 +731,7 @@ func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Acc
 }
 
 func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
+	t.Helper()
 	query := StakingQueryMsg{Investment: &struct{}{}}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)

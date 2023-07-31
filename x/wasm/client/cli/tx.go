@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -15,8 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -43,7 +44,7 @@ const (
 	flagMaxCalls                  = "max-calls"
 	flagMaxFunds                  = "max-funds"
 	flagAllowAllMsgs              = "allow-all-messages"
-	flagNoTokenTransfer           = "no-token-transfer" //nolint:gosec
+	flagNoTokenTransfer           = "no-token-transfer"
 	flagAuthority                 = "authority"
 )
 
@@ -102,7 +103,7 @@ func StoreCodeCmd() *cobra.Command {
 }
 
 // Prepares MsgStoreCode object from flags with gzipped wasm byte code field
-func parseStoreCodeArgs(file string, sender string, flags *flag.FlagSet) (types.MsgStoreCode, error) {
+func parseStoreCodeArgs(file, sender string, flags *flag.FlagSet) (types.MsgStoreCode, error) {
 	wasm, err := os.ReadFile(file)
 	if err != nil {
 		return types.MsgStoreCode{}, err
@@ -393,7 +394,7 @@ func ExecuteContractCmd() *cobra.Command {
 	return cmd
 }
 
-func parseExecuteArgs(contractAddr string, execMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgExecuteContract, error) {
+func parseExecuteArgs(contractAddr, execMsg string, sender sdk.AccAddress, flags *flag.FlagSet) (types.MsgExecuteContract, error) {
 	amountStr, err := flags.GetString(flagAmount)
 	if err != nil {
 		return types.MsgExecuteContract{}, fmt.Errorf("amount: %s", err)
