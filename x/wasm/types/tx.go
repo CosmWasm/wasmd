@@ -694,3 +694,48 @@ func checkDuplicatedAddresses(addresses []string) error {
 	}
 	return nil
 }
+
+func (msg MsgStoreAndMigrateContract) Route() string {
+	return RouterKey
+}
+
+func (msg MsgStoreAndMigrateContract) Type() string {
+	return "store-and-migrate-contract"
+}
+
+func (msg MsgStoreAndMigrateContract) GetSigners() []sdk.AccAddress {
+	authority, err := sdk.AccAddressFromBech32(msg.Authority)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{authority}
+}
+
+func (msg MsgStoreAndMigrateContract) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
+}
+
+func (msg MsgStoreAndMigrateContract) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "authority")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
+		return errorsmod.Wrap(err, "contract")
+	}
+
+	if err := msg.Msg.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(err, "payload msg")
+	}
+
+	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+	}
+
+	if msg.InstantiatePermission != nil {
+		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
+			return errorsmod.Wrap(err, "instantiate permission")
+		}
+	}
+	return nil
+}
