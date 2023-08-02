@@ -1048,3 +1048,89 @@ func TestUpdateInstantiateConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestStoreAndMigrateContract(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		addr       string
+		permission *types.AccessConfig
+		expErr     bool
+	}{
+		"authority can store and migrate a contract when permission is nobody": {
+			addr:       authority,
+			permission: &types.AllowNobody,
+			expErr:     false,
+		},
+		"other address cannot store and migrate a contract when permission is nobody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowNobody,
+			expErr:     true,
+		},
+		"authority can store and migrate a contract when permission is everybody": {
+			addr:       authority,
+			permission: &types.AllowEverybody,
+			expErr:     false,
+		},
+		"other address can store and migrate a contract when permission is everybody": {
+			addr:       myAddress.String(),
+			permission: &types.AllowEverybody,
+			expErr:     false,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			initMsg := keeper.HackatomExampleInitMsg{
+				Verifier:    myAddress,
+				Beneficiary: myAddress,
+			}
+			initMsgBz, err := json.Marshal(initMsg)
+			require.NoError(t, err)
+			storeAndInstantiateMsg := &types.MsgStoreAndInstantiateContract{
+				Authority:             spec.addr,
+				WASMByteCode:          hackatomContract,
+				InstantiatePermission: &types.AllowEverybody,
+				Admin:                 myAddress.String(),
+				UnpinCode:             false,
+				Label:                 "test",
+				Msg:                   initMsgBz,
+				Funds:                 sdk.Coins{},
+			}
+			rsp, err := wasmApp.MsgServiceRouter().Handler(storeAndInstantiateMsg)(ctx, storeAndInstantiateMsg)
+			require.NoError(t, err)
+			var storeAndInstantiateResponse types.MsgStoreAndInstantiateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeAndInstantiateResponse))
+
+			contractAddr := storeAndInstantiateResponse.Address
+
+			// when
+			migMsg := struct {
+				Verifier sdk.AccAddress `json:"verifier"`
+			}{Verifier: myAddress}
+			migMsgBz, err := json.Marshal(migMsg)
+			require.NoError(t, err)
+			msg := &types.MsgStoreAndMigrateContract{
+				Authority:             spec.addr,
+				WASMByteCode:          hackatomContract,
+				InstantiatePermission: spec.permission,
+				Msg:                   migMsgBz,
+				Contract:              contractAddr,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+
+			// then
+			if spec.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
