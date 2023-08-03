@@ -7,6 +7,7 @@ import (
 	v1 "github.com/CosmWasm/wasmd/x/wasm/migrations/v1"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	v3 "github.com/CosmWasm/wasmd/x/wasm/migrations/v3"
+	v4 "github.com/CosmWasm/wasmd/x/wasm/migrations/v4"
 )
 
 // Migrator is a struct for handling in-place store migrations.
@@ -35,4 +36,10 @@ func (m Migrator) Migrate2to3(ctx sdk.Context) error {
 // version 3 to version 4.
 func (m Migrator) Migrate3to4(ctx sdk.Context) error {
 	return v3.NewMigrator(m.keeper, m.keeper.storeCodeInfo).Migrate3to4(ctx, m.keeper.storeKey, m.keeper.cdc)
+}
+
+// Migrate4to5 migrates the x/wasm module state from the consensus
+// version 4 to version 5.
+func (m Migrator) Migrate4to5(ctx sdk.Context) error {
+	return v4.NewMigrator(m.keeper).Migrate4to5(ctx)
 }
