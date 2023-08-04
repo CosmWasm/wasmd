@@ -108,7 +108,7 @@ var moduleBasics = module.NewBasicManager(
 func MakeTestCodec(tb testing.TB) codec.Codec {
 	tb.Helper()
 
-	return MakeEncodingConfig(tb).Marshaler
+	return MakeEncodingConfig(tb).Codec
 }
 
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
@@ -261,7 +261,7 @@ func createTestInput(
 	ctx = types.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(tb)
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,

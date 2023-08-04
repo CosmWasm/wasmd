@@ -958,7 +958,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
 			originalVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)
-			appCodec := app.MakeEncodingConfig().Marshaler
+			appCodec := app.MakeEncodingConfig().Codec
 
 			jsonMarshalledResponse, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.protoResponseStruct, originalVersionBz)
 			if tc.expectedError {
@@ -976,7 +976,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 }
 
 func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
-	appCodec := app.MakeEncodingConfig().Marshaler
+	appCodec := app.MakeEncodingConfig().Codec
 
 	protoMarshaler := &banktypes.QueryAllBalancesResponse{}
 	expected := appCodec.MustMarshalJSON(&banktypes.QueryAllBalancesResponse{
@@ -1052,7 +1052,7 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
-			appCodec := app.MakeEncodingConfig().Marshaler
+			appCodec := app.MakeEncodingConfig().Codec
 
 			originVersionBz, err := hex.DecodeString(tc.originalResponse)
 			require.NoError(t, err)

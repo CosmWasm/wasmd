@@ -224,7 +224,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		assert.NotEqual(t, contract, eventAddr)
 
 		var res types.MsgInstantiateContractResponse
-		keepers.EncodingConfig.Marshaler.MustUnmarshal(response.Ok.Data, &res)
+		keepers.EncodingConfig.Codec.MustUnmarshal(response.Ok.Data, &res)
 		assert.Equal(t, eventAddr, res.Address)
 	}
 
