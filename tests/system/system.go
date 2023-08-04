@@ -343,6 +343,7 @@ func (s *SystemUnderTest) AwaitNextBlock(t *testing.T, timeout ...time.Duration)
 
 // ResetDirtyChain reset chain when non default setup or state (dirty)
 func (s *SystemUnderTest) ResetDirtyChain(t *testing.T) {
+	t.Helper()
 	if s.IsDirty() {
 		s.ResetChain(t)
 	}
@@ -372,6 +373,7 @@ func (s *SystemUnderTest) ResetChain(t *testing.T) {
 
 // ModifyGenesisCLI executes the CLI commands to modify the genesis
 func (s *SystemUnderTest) ModifyGenesisCLI(t *testing.T, cmds ...[]string) {
+	t.Helper()
 	s.ForEachNodeExecAndWait(t, cmds...)
 	s.MarkDirty()
 }
@@ -388,12 +390,14 @@ type GenesisMutator func([]byte) []byte
 //		return state
 //	}
 func (s *SystemUnderTest) ModifyGenesisJSON(t *testing.T, mutators ...GenesisMutator) {
+	t.Helper()
 	s.ResetChain(t)
 	s.modifyGenesisJSON(t, mutators...)
 }
 
 // modify json without enforcing a reset
 func (s *SystemUnderTest) modifyGenesisJSON(t *testing.T, mutators ...GenesisMutator) {
+	t.Helper()
 	require.Empty(t, s.currentHeight, "forced chain reset required")
 	current, err := os.ReadFile(filepath.Join(workDir, s.nodePath(0), "config", "genesis.json"))
 	require.NoError(t, err)
@@ -408,6 +412,7 @@ func (s *SystemUnderTest) modifyGenesisJSON(t *testing.T, mutators ...GenesisMut
 
 // ReadGenesisJSON returns current genesis.json content as raw string
 func (s *SystemUnderTest) ReadGenesisJSON(t *testing.T) string {
+	t.Helper()
 	content, err := os.ReadFile(filepath.Join(workDir, s.nodePath(0), "config", "genesis.json"))
 	require.NoError(t, err)
 	return string(content)
@@ -415,6 +420,7 @@ func (s *SystemUnderTest) ReadGenesisJSON(t *testing.T) string {
 
 // setGenesis copy genesis file to all nodes
 func (s *SystemUnderTest) setGenesis(t *testing.T, srcPath string) {
+	t.Helper()
 	in, err := os.Open(srcPath)
 	require.NoError(t, err)
 	defer in.Close()
@@ -448,6 +454,7 @@ func saveGenesis(home string, content []byte) error {
 // ForEachNodeExecAndWait runs the given app executable commands for all cluster nodes synchronously
 // The commands output is returned for each node.
 func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string) [][]string {
+	t.Helper()
 	result := make([][]string, s.nodesCount)
 	s.withEachNodeHome(func(i int, home string) {
 		result[i] = make([]string, len(cmds))
@@ -470,6 +477,7 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 
 // forEachNodesExecAsync runs the given app cli command for all cluster nodes and returns without waiting
 func (s *SystemUnderTest) forEachNodesExecAsync(t *testing.T, xargs ...string) []func() error {
+	t.Helper()
 	r := make([]func() error, s.nodesCount)
 	s.withEachNodeHome(func(i int, home string) {
 		args := append(xargs, "--home", home)
@@ -508,10 +516,12 @@ func (s SystemUnderTest) Logf(msg string, args ...interface{}) {
 }
 
 func (s SystemUnderTest) RPCClient(t *testing.T) RPCClient {
+	t.Helper()
 	return NewRPCClient(t, s.rpcAddr)
 }
 
 func (s SystemUnderTest) AllPeers(t *testing.T) []string {
+	t.Helper()
 	result := make([]string, s.nodesCount)
 	for i, n := range s.AllNodes(t) {
 		result[i] = n.PeerAddr()
@@ -520,6 +530,7 @@ func (s SystemUnderTest) AllPeers(t *testing.T) []string {
 }
 
 func (s SystemUnderTest) AllNodes(t *testing.T) []Node {
+	t.Helper()
 	result := make([]Node, s.nodesCount)
 	outs := s.ForEachNodeExecAndWait(t, []string{"tendermint", "show-node-id"})
 	ip, err := server.ExternalIP()
@@ -543,6 +554,7 @@ func (s *SystemUnderTest) resetBuffers() {
 
 // AddFullnode starts a new fullnode that connects to the existing chain but is not a validator.
 func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumber int, nodePath string)) Node {
+	t.Helper()
 	s.MarkDirty()
 	s.nodesCount++
 	nodeNumber := s.nodesCount - 1
@@ -784,6 +796,7 @@ func restoreOriginalGenesis(t *testing.T, s SystemUnderTest) {
 
 // restoreOriginalKeyring replaces test keyring with original
 func restoreOriginalKeyring(t *testing.T, s SystemUnderTest) {
+	t.Helper()
 	dest := filepath.Join(workDir, s.outputDir, "keyring-test")
 	require.NoError(t, os.RemoveAll(dest))
 	for i := 0; i < s.initialNodesCount; i++ {

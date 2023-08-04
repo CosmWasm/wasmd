@@ -384,6 +384,7 @@ func RequireTxFailure(t *testing.T, got string, containsMsgs ...string) {
 }
 
 func parseResultCode(t *testing.T, got string) (int64, string) {
+	t.Helper()
 	code := gjson.Get(got, "code")
 	require.True(t, code.Exists(), "got response: %s", got)
 

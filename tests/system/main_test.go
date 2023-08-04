@@ -92,7 +92,6 @@ func requireEnoughFileHandlers(nodesCount int) {
 	if fileDescrCount < expFH {
 		panic(fmt.Sprintf("Fail fast. Insufficient setup. Run 'ulimit -n %d'", expFH))
 	}
-	return
 }
 
 func initSDKConfig(bech32Prefix string) {

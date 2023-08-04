@@ -73,6 +73,7 @@ func TestRecursiveSmartQuery(t *testing.T) {
 
 // with default gas factor and token
 func calcMinFeeRequired(t *testing.T, gas string) string {
+	t.Helper()
 	x, ok := sdkmath.NewIntFromString(gas)
 	require.True(t, ok)
 	const defaultTestnetFee = "0.000006"
