@@ -63,7 +63,7 @@ func setupTest(t *testing.T) testData {
 	queryRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	serviceRouter.SetInterfaceRegistry(encConf.InterfaceRegistry)
 	data := testData{
-		module:           NewAppModule(encConf.Marshaler, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(types.DefaultParams())),
+		module:           NewAppModule(encConf.Codec, keepers.WasmKeeper, keepers.StakingKeeper, keepers.AccountKeeper, keepers.BankKeeper, nil, newMockSubspace(types.DefaultParams())),
 		ctx:              ctx,
 		acctKeeper:       keepers.AccountKeeper,
 		keeper:           *keepers.WasmKeeper,
@@ -74,7 +74,7 @@ func setupTest(t *testing.T) testData {
 		msgServiceRouter: serviceRouter,
 		encConf:          encConf,
 	}
-	data.module.RegisterServices(module.NewConfigurator(encConf.Marshaler, serviceRouter, queryRouter))
+	data.module.RegisterServices(module.NewConfigurator(encConf.Codec, serviceRouter, queryRouter))
 	return data
 }
 
@@ -152,12 +152,12 @@ func TestHandleCreate(t *testing.T) {
 			res, err := h(data.ctx, tc.msg)
 			if !tc.isValid {
 				require.Error(t, err, "%#v", res)
-				assertCodeList(t, q, data.ctx, 0, data.encConf.Marshaler)
-				assertCodeBytes(t, q, data.ctx, 1, nil, data.encConf.Marshaler)
+				assertCodeList(t, q, data.ctx, 0, data.encConf.Codec)
+				assertCodeBytes(t, q, data.ctx, 1, nil, data.encConf.Codec)
 				return
 			}
 			require.NoError(t, err)
-			assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
+			assertCodeList(t, q, data.ctx, 1, data.encConf.Codec)
 		})
 	}
 }
@@ -219,16 +219,16 @@ func TestHandleInstantiate(t *testing.T) {
 	require.Equal(t, "wasm", res.Events[1].Type)
 	assertAttribute(t, "_contract_address", contractBech32Addr, res.Events[1].Attributes[0])
 
-	assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
-	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Marshaler)
+	assertCodeList(t, q, data.ctx, 1, data.encConf.Codec)
+	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Codec)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Codec)
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Codec)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	}, data.encConf.Marshaler)
+	}, data.encConf.Codec)
 }
 
 func TestHandleExecute(t *testing.T) {
@@ -353,16 +353,16 @@ func TestHandleExecute(t *testing.T) {
 	assert.Equal(t, sdk.Coins{}, data.bankKeeper.GetAllBalances(data.ctx, contractAcct.GetAddress()))
 
 	// ensure all contract state is as after init
-	assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
-	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Marshaler)
+	assertCodeList(t, q, data.ctx, 1, data.encConf.Codec)
+	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Codec)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Codec)
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Codec)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	}, data.encConf.Marshaler)
+	}, data.encConf.Codec)
 }
 
 func TestHandleExecuteEscrow(t *testing.T) {

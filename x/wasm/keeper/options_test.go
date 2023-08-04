@@ -23,7 +23,7 @@ import (
 
 func TestConstructorOptions(t *testing.T) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
-	codec := MakeEncodingConfig(t).Marshaler
+	codec := MakeEncodingConfig(t).Codec
 
 	specs := map[string]struct {
 		srcOpt    Option

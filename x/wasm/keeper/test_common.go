@@ -108,8 +108,10 @@ var moduleBasics = module.NewBasicManager(
 	vesting.AppModuleBasic{},
 )
 
-func MakeTestCodec(t testing.TB) codec.Codec {
-	return MakeEncodingConfig(t).Marshaler
+func MakeTestCodec(tb testing.TB) codec.Codec {
+	tb.Helper()
+
+	return MakeEncodingConfig(tb).Codec
 }
 
 func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
@@ -255,7 +257,7 @@ func createTestInput(
 	ctx = types.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(t)
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 
 	paramsKeeper := paramskeeper.NewKeeper(
 		appCodec,
