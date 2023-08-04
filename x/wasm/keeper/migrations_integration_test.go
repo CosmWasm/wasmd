@@ -3,15 +3,16 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+
 	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestModuleMigrations(t *testing.T) {

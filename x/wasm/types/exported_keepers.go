@@ -4,9 +4,10 @@ import (
 	"context"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ViewKeeper provides read only operations
@@ -55,19 +56,19 @@ type ContractOpsKeeper interface {
 	) (sdk.AccAddress, []byte, error)
 
 	// Execute executes the contract instance
-	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
+	Execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 
 	// Migrate allows to upgrade a contract to a new code with data migration.
-	Migrate(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) ([]byte, error)
+	Migrate(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newCodeID uint64, msg []byte) ([]byte, error)
 
 	// Sudo allows to call privileged entry point of a contract.
 	Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
 
 	// UpdateContractAdmin sets the admin value on the ContractInfo. It must be a valid address (use ClearContractAdmin to remove it)
-	UpdateContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, newAdmin sdk.AccAddress) error
+	UpdateContractAdmin(ctx sdk.Context, contractAddress, caller, newAdmin sdk.AccAddress) error
 
 	// ClearContractAdmin sets the admin value on the ContractInfo to nil, to disable further migrations/ updates.
-	ClearContractAdmin(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress) error
+	ClearContractAdmin(ctx sdk.Context, contractAddress, caller sdk.AccAddress) error
 
 	// PinCode pins the wasm contract in wasmvm cache
 	PinCode(ctx sdk.Context, codeID uint64) error

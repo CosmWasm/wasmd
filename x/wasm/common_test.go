@@ -3,8 +3,9 @@ package wasm
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -19,7 +20,7 @@ func assertStoreCodeResponse(t *testing.T, data []byte, expected uint64) {
 }
 
 // ensure execution returns the expected data
-func assertExecuteResponse(t *testing.T, data []byte, expected []byte) {
+func assertExecuteResponse(t *testing.T, data, expected []byte) {
 	var pExecResp types.MsgExecuteContractResponse
 	require.NoError(t, pExecResp.Unmarshal(data))
 	require.Equal(t, pExecResp.Data, expected)

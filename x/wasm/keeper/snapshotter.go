@@ -5,12 +5,13 @@ import (
 	"io"
 	"math"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	snapshot "cosmossdk.io/store/snapshots/types"
 	storetypes "cosmossdk.io/store/types"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"

@@ -3,13 +3,13 @@ package types
 import (
 	"testing"
 
-	"cosmossdk.io/log"
-
-	"cosmossdk.io/store"
-	"cosmossdk.io/store/iavl"
 	dbm "github.com/cosmos/cosmos-db"
 	iavl2 "github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/iavl"
 )
 
 // This is modeled close to

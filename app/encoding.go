@@ -3,8 +3,10 @@ package app
 import (
 	"testing"
 
-	"cosmossdk.io/log"
 	dbm "github.com/cosmos/cosmos-db"
+
+	"cosmossdk.io/log"
+
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"github.com/CosmWasm/wasmd/app/params"

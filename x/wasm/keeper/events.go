@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	errorsmod "cosmossdk.io/errors"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"

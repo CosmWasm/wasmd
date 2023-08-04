@@ -7,21 +7,21 @@ import (
 	"strings"
 	"testing"
 
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/spf13/viper"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
@@ -546,7 +546,7 @@ func prettyAttr(attr abci.EventAttribute) sdk.Attribute {
 	return sdk.NewAttribute(attr.Key, attr.Value)
 }
 
-func assertAttribute(t *testing.T, key string, value string, attr abci.EventAttribute) {
+func assertAttribute(t *testing.T, key, value string, attr abci.EventAttribute) {
 	t.Helper()
 	assert.Equal(t, key, attr.Key, prettyAttr(attr))
 	assert.Equal(t, value, attr.Value, prettyAttr(attr))

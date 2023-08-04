@@ -1,10 +1,12 @@
 package ibctesting
 
 import (
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
 )
 
 // Fund an address with the given amount in default denom
