@@ -122,18 +122,21 @@ type ChainAppFactory func(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs [
 
 // DefaultWasmAppFactory instantiates and sets up the default wasmd app
 func DefaultWasmAppFactory(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) ChainApp {
+	t.Helper()
 	return app.SetupWithGenesisValSet(t, valSet, genAccs, chainID, opts, balances...)
 }
 
 // NewDefaultTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
 func NewDefaultTestChain(t *testing.T, coord *Coordinator, chainID string, opts ...wasmkeeper.Option) *TestChain {
+	t.Helper()
 	return NewTestChain(t, coord, DefaultWasmAppFactory, chainID, opts...)
 }
 
 // NewTestChain initializes a new test chain with a default of 4 validators
 // Use this function if the tests do not need custom control over the validator set
 func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, opts ...wasmkeeper.Option) *TestChain {
+	t.Helper()
 	// generate validators private/public key
 	var (
 		validatorsPerChain = 4
@@ -173,6 +176,7 @@ func NewTestChain(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, 
 // CONTRACT: Validator array must be provided in the order expected by Tendermint.
 // i.e. sorted first by power and then lexicographically by address.
 func NewTestChainWithValSet(t *testing.T, coord *Coordinator, appFactory ChainAppFactory, chainID string, valSet *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator, opts ...wasmkeeper.Option) *TestChain {
+	t.Helper()
 	genAccs := []authtypes.GenesisAccount{}
 	genBals := []banktypes.Balance{}
 	senderAccs := []SenderAccount{}

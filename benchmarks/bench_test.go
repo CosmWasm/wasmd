@@ -148,6 +148,7 @@ func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
 
 func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
 	return func(b *testing.B, info *AppInfo) []sdk.Tx {
+		b.Helper()
 		return GenSequenceOfTxs(b, info, builder, b.N)
 	}
 }
@@ -157,6 +158,7 @@ func buildMemDB(_ *testing.B) dbm.DB {
 }
 
 func buildLevelDB(b *testing.B) dbm.DB {
+	b.Helper()
 	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
 	require.NoError(b, err)
 	return levelDB

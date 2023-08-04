@@ -42,7 +42,7 @@ const (
 	flagWasmMemoryCacheSize        = "wasm.memory_cache_size"
 	flagWasmQueryGasLimit          = "wasm.query_gas_limit"
 	flagWasmSimulationGasLimit     = "wasm.simulation_gas_limit"
-	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check" 
+	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.

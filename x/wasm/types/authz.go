@@ -169,8 +169,8 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 		// finally do limit state updates in result
 		switch {
 		case result.DeleteLimit:
-			updatedGrants := append(grants[0:i], grants[i+1:]...) 
-			if len(updatedGrants) == 0 {                          // remove when empty
+			updatedGrants := append(grants[0:i], grants[i+1:]...)
+			if len(updatedGrants) == 0 { // remove when empty
 				return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
 			}
 			newAuthz := factory.NewAuthz(updatedGrants)
