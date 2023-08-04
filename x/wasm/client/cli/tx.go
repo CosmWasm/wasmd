@@ -44,7 +44,7 @@ const (
 	flagMaxCalls                  = "max-calls"
 	flagMaxFunds                  = "max-funds"
 	flagAllowAllMsgs              = "allow-all-messages"
-	flagNoTokenTransfer           = "no-token-transfer" 
+	flagNoTokenTransfer           = "no-token-transfer"
 	flagAuthority                 = "authority"
 	flagExpedite                  = "expedite"
 )
