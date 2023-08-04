@@ -114,7 +114,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	//   and an ibc channel established
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
-	marshaler := app.MakeEncodingConfig().Codec
+	codec := app.MakeEncodingConfig().Codec
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
 	chainB := coord.GetChain(ibctesting.GetChainID(2))
