@@ -656,24 +656,24 @@ func SeedNewContractInstance(t testing.TB, ctx sdk.Context, keepers TestKeepers,
 }
 
 // StoreRandomContract sets the mock wasmerEngine in keeper and calls store
-func StoreRandomContract(t testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
-	return StoreRandomContractWithAccessConfig(t, ctx, keepers, mock, nil)
+func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+	return StoreRandomContractWithAccessConfig(tb, ctx, keepers, mock, nil)
 }
 
 func StoreRandomContractWithAccessConfig(
-	t testing.TB, ctx sdk.Context,
+	tb testing.TB, ctx sdk.Context,
 	keepers TestKeepers,
 	mock types.WasmerEngine,
 	cfg *types.AccessConfig,
 ) ExampleContract {
-	t.Helper()
+	tb.Helper()
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, creatorAddr := keyPubAddr()
-	fundAccounts(t, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
+	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
 	wasmCode := append(wasmIdent, rand.Bytes(10)...)
 	codeID, checksum, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, cfg)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID, Checksum: checksum}
 	return exampleContract
 }
