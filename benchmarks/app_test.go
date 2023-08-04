@@ -135,6 +135,7 @@ type AppInfo struct {
 }
 
 func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
+	tb.Helper()
 	// constants
 	minter := secp256k1.GenPrivKey()
 	addr := sdk.AccAddress(minter.PubKey().Address())
@@ -240,6 +241,7 @@ func InitializeWasmApp(tb testing.TB, db dbm.DB, numAccounts int) AppInfo {
 }
 
 func GenSequenceOfTxs(tb testing.TB, info *AppInfo, msgGen func(*AppInfo) ([]sdk.Msg, error), numToGenerate int) []sdk.Tx {
+	tb.Helper()
 	fees := sdk.Coins{sdk.NewInt64Coin(info.Denom, 0)}
 	txs := make([]sdk.Tx, numToGenerate)
 
