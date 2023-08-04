@@ -671,7 +671,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	wasmConfig := types.DefaultWasmConfig()
 
 	srcKeeper := NewKeeper(
-		encodingConfig.Marshaler,
+		encodingConfig.Codec,
 		runtime.NewKVStoreService(keyWasm),
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},

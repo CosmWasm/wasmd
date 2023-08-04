@@ -26,7 +26,7 @@ func MakeEncodingConfig(tb testing.TB) params.EncodingConfig {
 func makeEncodingConfig(tempApp *WasmApp) params.EncodingConfig {
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
-		Marshaler:         tempApp.AppCodec(),
+		Codec:             tempApp.AppCodec(),
 		TxConfig:          tempApp.TxConfig(),
 		Amino:             tempApp.LegacyAmino(),
 	}
