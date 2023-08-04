@@ -3,11 +3,11 @@ package wasmtesting
 import (
 	"bytes"
 
-	errorsmod "cosmossdk.io/errors"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/rand"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -211,7 +211,7 @@ func SelfCallingInstMockWasmer(executeCalled *bool) *MockWasmer {
 }
 
 // IBCContractCallbacks defines the methods from wasmvm to interact with the wasm contract.
-// A mock contract would implement the interface to fully simulate a wasm contract's behaviour.
+// A mock contract would implement the interface to fully simulate a wasm contract's behavior.
 type IBCContractCallbacks interface {
 	IBCChannelOpen(
 		codeID wasmvm.Checksum,

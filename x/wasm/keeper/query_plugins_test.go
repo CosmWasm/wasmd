@@ -8,9 +8,14 @@ import (
 	"testing"
 	"time"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/rand"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -19,20 +24,15 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	dbm "github.com/cosmos/cosmos-db"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -938,7 +938,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 		expectedError         bool
 	}{
 		{
-			name:                "successful conversion from proto response to json marshalled response",
+			name:                "successful conversion from proto response to json marshaled response",
 			queryPath:           "/cosmos.bank.v1beta1.Query/AllBalances",
 			originalResponse:    "0a090a036261721202333012050a03666f6f",
 			protoResponseStruct: &banktypes.QueryAllBalancesResponse{},
@@ -971,7 +971,7 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			// check response by json marshalling proto response into json response manually
+			// check response by json marshaling proto response into json response manually
 			jsonMarshalExpectedResponse, err := appCodec.MarshalJSON(tc.expectedProtoResponse)
 			require.NoError(t, err)
 			require.JSONEq(t, string(jsonMarshalledResponse), string(jsonMarshalExpectedResponse))
@@ -1004,7 +1004,7 @@ func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
 	require.Equal(t, expected, response)
 }
 
-// TestDeterministicJsonMarshal tests that we get deterministic JSON marshalled response upon
+// TestDeterministicJsonMarshal tests that we get deterministic JSON marshaled response upon
 // proto struct update in the state machine.
 func TestDeterministicJsonMarshal(t *testing.T) {
 	testCases := []struct {
@@ -1068,7 +1068,7 @@ func TestDeterministicJsonMarshal(t *testing.T) {
 			jsonMarshalledUpdatedBz, err := keeper.ConvertProtoToJSONMarshal(appCodec, tc.responseProtoStruct, newVersionBz)
 			require.NoError(t, err)
 
-			// json marshalled bytes should be the same since we use the same proto struct for unmarshalling
+			// json marshaled bytes should be the same since we use the same proto struct for unmarshalling
 			require.Equal(t, jsonMarshalledOriginalBz, jsonMarshalledUpdatedBz)
 
 			// raw build also make same result

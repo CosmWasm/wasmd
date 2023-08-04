@@ -7,9 +7,10 @@ import (
 	"encoding/json"
 	"math/rand"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+
 	sdkmath "cosmossdk.io/math"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

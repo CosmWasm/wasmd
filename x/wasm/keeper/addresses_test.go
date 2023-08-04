@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestBuildContractAddress(t *testing.T) {
