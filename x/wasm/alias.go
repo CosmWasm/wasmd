@@ -99,7 +99,7 @@ var (
 	// Deprecated: Do not use.
 	TestHandler = keeper.TestHandler
 	// Deprecated: Do not use.
-	NewWasmProposalHandler = keeper.NewWasmProposalHandler
+	NewWasmProposalHandler = keeper.NewWasmProposalHandler //nolint:staticcheck // we wish to use this.
 	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
