@@ -1,5 +1,7 @@
 run:
   tests: true
+  build-tags:
+    - 'system_test'
   timeout: 15m
   sort-results: true
   allow-parallel-runners: true
@@ -34,6 +36,7 @@ linters:
     - thelper
     - unconvert
     - unused
+    - zerologlint
 
 issues:
   exclude-rules:

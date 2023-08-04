@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,16 +16,15 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/tidwall/sjson"
-
 	"github.com/cometbft/cometbft/libs/sync"
 	client "github.com/cometbft/cometbft/rpc/client/http"
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/sjson"
+
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var workDir string
@@ -104,7 +102,7 @@ func (s *SystemUnderTest) SetupChain() {
 
 	// modify genesis with system test defaults
 	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json")
-	genesisBz, err := ioutil.ReadFile(src)
+	genesisBz, err := os.ReadFile(src)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load genesis: %s", err))
 	}
@@ -474,7 +472,7 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 func (s *SystemUnderTest) forEachNodesExecAsync(t *testing.T, xargs ...string) []func() error {
 	r := make([]func() error, s.nodesCount)
 	s.withEachNodeHome(func(i int, home string) {
-		args := append(xargs, "--home", home) //nolint:gocritic
+		args := append(xargs, "--home", home)
 		s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
 		cmd := exec.Command( //nolint:gosec
 			locateExecutable(s.execBinary),
@@ -604,6 +602,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 
 // NewEventListener constructor for Eventlistener with system rpc address
 func (s *SystemUnderTest) NewEventListener(t *testing.T) *EventListener {
+	t.Helper()
 	return NewEventListener(t, s.rpcAddr)
 }
 
@@ -645,6 +644,7 @@ type EventListener struct {
 
 // NewEventListener event listener
 func NewEventListener(t *testing.T, rpcAddr string) *EventListener {
+	t.Helper()
 	httpClient, err := client.New(rpcAddr, "/websocket")
 	require.NoError(t, err)
 	require.NoError(t, httpClient.Start())
@@ -696,6 +696,7 @@ func (l *EventListener) AwaitQuery(query string, optMaxWaitTime ...time.Duration
 // TimeoutConsumer is an event consumer decorator with a max wait time. Panics when wait time exceeded without
 // a result returned
 func TimeoutConsumer(t *testing.T, maxWaitTime time.Duration, next EventConsumer) EventConsumer {
+	t.Helper()
 	ctx, done := context.WithCancel(context.Background())
 	t.Cleanup(done)
 	timeout := time.NewTimer(maxWaitTime)
@@ -746,6 +747,7 @@ func CaptureSingleEventConsumer() (EventConsumer, *ctypes.ResultEvent) {
 //
 //		assert.Len(t, done(), 1) // then verify your assumption
 func CaptureAllEventsConsumer(t *testing.T, optMaxWaitTime ...time.Duration) (c EventConsumer, done func() []ctypes.ResultEvent) {
+	t.Helper()
 	maxWaitTime := defaultWaitTime
 	if len(optMaxWaitTime) != 0 {
 		maxWaitTime = optMaxWaitTime[0]
@@ -775,6 +777,7 @@ func CaptureAllEventsConsumer(t *testing.T, optMaxWaitTime ...time.Duration) (c 
 
 // restoreOriginalGenesis replace nodes genesis by the one created on setup
 func restoreOriginalGenesis(t *testing.T, s SystemUnderTest) {
+	t.Helper()
 	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json.orig")
 	s.setGenesis(t, src)
 }
@@ -812,7 +815,7 @@ func copyFilesInDir(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("mkdirs: %s", err)
 	}
-	fs, err := ioutil.ReadDir(src)
+	fs, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("read dir: %s", err)
 	}
@@ -828,7 +831,8 @@ func copyFilesInDir(src, dest string) error {
 }
 
 func storeTempFile(t *testing.T, content []byte) *os.File {
-	out, err := ioutil.TempFile(t.TempDir(), "genesis")
+	t.Helper()
+	out, err := os.CreateTemp(t.TempDir(), "genesis")
 	require.NoError(t, err)
 	_, err = io.Copy(out, bytes.NewReader(content))
 	require.NoError(t, err)

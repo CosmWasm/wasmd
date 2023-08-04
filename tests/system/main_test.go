@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )

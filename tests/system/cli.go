@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"golang.org/x/exp/slices"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
@@ -39,6 +40,7 @@ type WasmdCli struct {
 
 // NewWasmdCLI constructor
 func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
+	t.Helper()
 	return NewWasmdCLIx(
 		t,
 		sut.execBinary,
@@ -66,6 +68,7 @@ func NewWasmdCLIx(
 	assertErrorFn RunErrorAssert,
 	expTXCommitted bool,
 ) *WasmdCli {
+	t.Helper()
 	if strings.TrimSpace(execBinary) == "" {
 		panic("executable binary name must not be empty")
 	}
@@ -224,7 +227,7 @@ func (c WasmdCli) withTXFlags(args ...string) []string {
 }
 
 func (c WasmdCli) withKeyringFlags(args ...string) []string {
-	r := append(args, //nolint:gocritic
+	r := append(args,
 		"--home", c.homeDir,
 		"--keyring-backend", "test",
 	)
