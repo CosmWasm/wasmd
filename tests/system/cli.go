@@ -9,12 +9,6 @@ import (
 	"testing"
 	"time"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/std"
-
-	"github.com/cosmos/cosmos-sdk/client/rpc"
-	"github.com/cosmos/cosmos-sdk/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -339,6 +333,7 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 	return gjson.Get(raw, "amount").Int()
 }
 
+/*
 func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
 	args := []string{"q", "comet-validator-set"}
 	got := c.CustomQuery(args...)
@@ -351,6 +346,7 @@ func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
 	var res rpc.ResultValidatorsOutput
 	require.NoError(c.t, amino.UnmarshalJSON([]byte(got), &res), got)
 	return res
+
 }
 
 // IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
@@ -365,6 +361,7 @@ func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (rpc.Result
 	}
 	return valResult, found
 }
+*/
 
 // RequireTxSuccess require the received response to contain the success code
 func RequireTxSuccess(t *testing.T, got string) {
