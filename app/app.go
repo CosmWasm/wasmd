@@ -313,7 +313,7 @@ func NewWasmApp(
 ) *WasmApp {
 	encodingConfig := MakeEncodingConfig()
 
-	appCodec, legacyAmino := encodingConfig.Marshaler, encodingConfig.Amino
+	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
 

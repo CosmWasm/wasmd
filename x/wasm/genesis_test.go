@@ -67,16 +67,16 @@ func TestInitGenesis(t *testing.T) {
 	assertExecuteResponse(t, res.Data, []byte{0xf0, 0x0b, 0xaa})
 
 	// ensure all contract state is as after init
-	assertCodeList(t, q, data.ctx, 1, data.encConf.Marshaler)
-	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Marshaler)
+	assertCodeList(t, q, data.ctx, 1, data.encConf.Codec)
+	assertCodeBytes(t, q, data.ctx, 1, testContract, data.encConf.Codec)
 
-	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
-	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
+	assertContractList(t, q, data.ctx, 1, []string{contractBech32Addr}, data.encConf.Codec)
+	assertContractInfo(t, q, data.ctx, contractBech32Addr, 1, creator, data.encConf.Codec)
 	assertContractState(t, q, data.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	}, data.encConf.Marshaler)
+	}, data.encConf.Codec)
 
 	// export into genstate
 	genState := keeper.ExportGenesis(data.ctx, &data.keeper)
@@ -90,14 +90,14 @@ func TestInitGenesis(t *testing.T) {
 	require.NoError(t, err)
 
 	// run same checks again on newdata, to make sure it was reinitialized correctly
-	assertCodeList(t, q2, newData.ctx, 1, data.encConf.Marshaler)
-	assertCodeBytes(t, q2, newData.ctx, 1, testContract, data.encConf.Marshaler)
+	assertCodeList(t, q2, newData.ctx, 1, data.encConf.Codec)
+	assertCodeBytes(t, q2, newData.ctx, 1, testContract, data.encConf.Codec)
 
-	assertContractList(t, q2, newData.ctx, 1, []string{contractBech32Addr}, data.encConf.Marshaler)
-	assertContractInfo(t, q2, newData.ctx, contractBech32Addr, 1, creator, data.encConf.Marshaler)
+	assertContractList(t, q2, newData.ctx, 1, []string{contractBech32Addr}, data.encConf.Codec)
+	assertContractInfo(t, q2, newData.ctx, contractBech32Addr, 1, creator, data.encConf.Codec)
 	assertContractState(t, q2, newData.ctx, contractBech32Addr, state{
 		Verifier:    fred.String(),
 		Beneficiary: bob.String(),
 		Funder:      creator.String(),
-	}, data.encConf.Marshaler)
+	}, data.encConf.Codec)
 }
