@@ -18,12 +18,12 @@ commands:
       - attach_workspace:
           at: /tmp/bin
       - restore_cache:
-          name: "Restore source code cache"
+          name: 'Restore source code cache'
           keys:
             - go-src-v1-{{ .Revision }}
       - checkout
       - restore_cache:
-          name: "Restore go modules cache"
+          name: 'Restore go modules cache'
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
@@ -38,7 +38,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          name: "Restore go modules cache"
+          name: 'Restore go modules cache'
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
       - run:
@@ -48,22 +48,22 @@ jobs:
           name: Build
           command: make build
       - run:
-          name: "Git garbage collection"
+          name: 'Git garbage collection'
           command: git gc
       - save_cache:
-          name: "Save go modules cache"
+          name: 'Save go modules cache'
           key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
-            - "/go/pkg/mod"
+            - '/go/pkg/mod'
       - save_cache:
-          name: "Save source code cache"
+          name: 'Save source code cache'
           key: go-src-v1-{{ .Revision }}
           paths:
-            - ".git"
+            - '.git'
 
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.52.2
+      - image: golangci/golangci-lint:v1.53.3
     steps:
       - checkout
       - run:
@@ -94,10 +94,10 @@ jobs:
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
-            - "profiles/*"
+            - 'profiles/*'
       - store_artifacts:
           path: /tmp/logs
-  
+
   test-system:
     executor: golang
     parallelism: 1
@@ -190,7 +190,7 @@ jobs:
             fi
       - when:
           condition:
-            equal: [ main, << pipeline.git.branch >> ]
+            equal: [main, << pipeline.git.branch >>]
           steps:
             - run:
                 name: Push application Docker image to docker hub
