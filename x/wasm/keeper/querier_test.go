@@ -717,7 +717,7 @@ func TestQueryCodeInfo(t *testing.T) {
 		},
 		"with_address": {
 			codeID:       20,
-			accessConfig: types.AccessTypeOnlyAddress.With(anyAddress),
+			accessConfig: types.AccessTypeAnyOfAddresses.With(anyAddress),
 		},
 	}
 	for msg, spec := range specs {
@@ -782,7 +782,7 @@ func TestQueryCodeInfoList(t *testing.T) {
 		{
 			name:     "with_address",
 			codeID:   20,
-			codeInfo: codeInfoWithConfig(types.AccessTypeOnlyAddress.With(anyAddress)),
+			codeInfo: codeInfoWithConfig(types.AccessTypeAnyOfAddresses.With(anyAddress)),
 		},
 	}
 

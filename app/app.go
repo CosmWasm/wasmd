@@ -146,15 +146,15 @@ var (
 
 // GetEnabledProposals parses the ProposalsEnabled / EnableSpecificProposals values to
 // produce a list of enabled proposals to pass into wasmd app.
-func GetEnabledProposals() []wasm.ProposalType {
+func GetEnabledProposals() []wasmtypes.ProposalType {
 	if EnableSpecificProposals == "" {
 		if ProposalsEnabled == "true" {
-			return wasm.EnableAllProposals
+			return wasmtypes.EnableAllProposals
 		}
-		return wasm.DisableAllProposals
+		return wasmtypes.DisableAllProposals
 	}
 	chunks := strings.Split(EnableSpecificProposals, ",")
-	proposals, err := wasm.ConvertToProposals(chunks)
+	proposals, err := wasmtypes.ConvertToProposals(chunks)
 	if err != nil {
 		panic(err)
 	}
@@ -235,7 +235,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
-		wasm.ModuleName:                {authtypes.Burner},
+		wasmtypes.ModuleName:           {authtypes.Burner},
 	}
 )
 
@@ -281,7 +281,7 @@ type WasmApp struct {
 	ICAControllerKeeper icacontrollerkeeper.Keeper
 	ICAHostKeeper       icahostkeeper.Keeper
 	TransferKeeper      ibctransferkeeper.Keeper
-	WasmKeeper          wasm.Keeper
+	WasmKeeper          wasmkeeper.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
@@ -306,9 +306,9 @@ func NewWasmApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	loadLatest bool,
-	enabledProposals []wasm.ProposalType,
+	enabledProposals []wasmtypes.ProposalType,
 	appOpts servertypes.AppOptions,
-	wasmOpts []wasm.Option,
+	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *WasmApp {
 	encodingConfig := MakeEncodingConfig()
@@ -331,7 +331,7 @@ func NewWasmApp(
 		authzkeeper.StoreKey, nftkeeper.StoreKey, group.StoreKey,
 		// non sdk store keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey, ibcfeetypes.StoreKey,
-		wasm.StoreKey, icahosttypes.StoreKey,
+		wasmtypes.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
 	)
 
@@ -377,7 +377,7 @@ func NewWasmApp(
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
@@ -584,9 +584,9 @@ func NewWasmApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	availableCapabilities := strings.Join(AllCapabilities(), ",")
-	app.WasmKeeper = wasm.NewKeeper(
+	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasm.StoreKey],
+		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -607,7 +607,7 @@ func NewWasmApp(
 
 	// The gov proposal types can be individually enabled
 	if len(enabledProposals) != 0 {
-		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, enabledProposals))
+		govRouter.AddRoute(wasmtypes.RouterKey, wasmkeeper.NewWasmProposalHandler(app.WasmKeeper, enabledProposals)) //nolint:staticcheck
 	}
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
@@ -641,7 +641,7 @@ func NewWasmApp(
 	// Create static IBC router, add app routes, then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(wasm.ModuleName, wasmStack).
+		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -702,7 +702,7 @@ func NewWasmApp(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -717,7 +717,7 @@ func NewWasmApp(
 		ibcexported.ModuleName,
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -740,7 +740,7 @@ func NewWasmApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		// wasm after ibc transfer
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -787,7 +787,7 @@ func NewWasmApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setAnteHandler(encodingConfig.TxConfig, wasmConfig, keys[wasm.StoreKey])
+	app.setAnteHandler(encodingConfig.TxConfig, wasmConfig, keys[wasmtypes.StoreKey])
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption
@@ -1054,7 +1054,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
-	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper
 }

@@ -130,7 +130,7 @@ func TestValidateStoreCodeProposal(t *testing.T) {
 		},
 		"with instantiate permission": {
 			src: StoreCodeProposalFixture(func(p *StoreCodeProposal) {
-				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				accessConfig := AccessTypeAnyOfAddresses.With(anyAddress)
 				p.InstantiatePermission = &accessConfig
 			}),
 		},
@@ -340,6 +340,12 @@ func TestValidateInstantiateContract2Proposal(t *testing.T) {
 			}),
 			expErr: true,
 		},
+		"untrimmed label ": {
+			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
+				p.Label = "    label   "
+			}),
+			expErr: true,
+		},
 		"init funds negative": {
 			src: InstantiateContract2ProposalFixture(func(p *InstantiateContract2Proposal) {
 				p.Funds = sdk.Coins{{Denom: "foo", Amount: sdk.NewInt(-1)}}
@@ -408,7 +414,7 @@ func TestValidateStoreAndInstantiateContractProposal(t *testing.T) {
 		},
 		"with instantiate permission": {
 			src: StoreAndInstantiateContractProposalFixture(func(p *StoreAndInstantiateContractProposal) {
-				accessConfig := AccessTypeOnlyAddress.With(anyAddress)
+				accessConfig := AccessTypeAnyOfAddresses.With(anyAddress)
 				p.InstantiatePermission = &accessConfig
 			}),
 		},

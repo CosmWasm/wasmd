@@ -6,16 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	stdrand "math/rand"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	abci "github.com/cometbft/cometbft/abci/types"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -63,7 +64,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	codeHash := strings.ToLower("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
+	codeHash := strings.ToLower("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
 	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
@@ -115,9 +116,9 @@ func TestCreateStoresInstantiatePermission(t *testing.T) {
 			srcPermission: types.AccessTypeNobody,
 			expInstConf:   types.AllowNobody,
 		},
-		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress,
-			expInstConf:   types.AccessConfig{Permission: types.AccessTypeOnlyAddress, Address: myAddr.String()},
+		"anyAddress with matching address": {
+			srcPermission: types.AccessTypeAnyOfAddresses,
+			expInstConf:   types.AccessConfig{Permission: types.AccessTypeAnyOfAddresses, Addresses: []string{myAddr.String()}},
 		},
 	}
 	for msg, spec := range specs {
@@ -148,7 +149,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	otherAddr := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	specs := map[string]struct {
-		policy      AuthorizationPolicy
+		policy      types.AuthorizationPolicy
 		chainUpload types.AccessConfig
 		expError    *errorsmod.Error
 	}{
@@ -165,13 +166,13 @@ func TestCreateWithParamPermissions(t *testing.T) {
 			chainUpload: types.AllowNobody,
 			expError:    sdkerrors.ErrUnauthorized,
 		},
-		"onlyAddress with matching address": {
+		"anyAddress with matching address": {
 			policy:      DefaultAuthorizationPolicy{},
-			chainUpload: types.AccessTypeOnlyAddress.With(creator),
+			chainUpload: types.AccessTypeAnyOfAddresses.With(creator),
 		},
-		"onlyAddress with non matching address": {
+		"anyAddress with non matching address": {
 			policy:      DefaultAuthorizationPolicy{},
-			chainUpload: types.AccessTypeOnlyAddress.With(otherAddr),
+			chainUpload: types.AccessTypeAnyOfAddresses.With(otherAddr),
 			expError:    sdkerrors.ErrUnauthorized,
 		},
 		"gov: always allowed": {
@@ -206,8 +207,8 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	other := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	onlyCreator := types.AccessTypeOnlyAddress.With(creator)
-	onlyOther := types.AccessTypeOnlyAddress.With(other)
+	onlyCreator := types.AccessTypeAnyOfAddresses.With(creator)
+	onlyOther := types.AccessTypeAnyOfAddresses.With(other)
 
 	specs := map[string]struct {
 		defaultPermssion    types.AccessType
@@ -243,17 +244,17 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 			grantedPermission:   types.AccessConfig{Permission: types.AccessTypeNobody},
 		},
 		"only defaults to code creator": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: nil,
 			grantedPermission:   onlyCreator,
 		},
 		"can explicitly set to code creator": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyCreator,
 			grantedPermission:   onlyCreator,
 		},
 		"cannot override which address in only": {
-			defaultPermssion:    types.AccessTypeOnlyAddress,
+			defaultPermssion:    types.AccessTypeAnyOfAddresses,
 			requestedPermission: &onlyOther,
 			expError:            sdkerrors.ErrUnauthorized,
 		},
@@ -416,7 +417,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1b5bc), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1b5bd), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -530,13 +531,13 @@ func TestInstantiateWithPermissions(t *testing.T) {
 			srcActor:      myAddr,
 			expError:      sdkerrors.ErrUnauthorized,
 		},
-		"onlyAddress with matching address": {
-			srcPermission: types.AccessTypeOnlyAddress.With(myAddr),
+		"anyAddress with matching address": {
+			srcPermission: types.AccessTypeAnyOfAddresses.With(myAddr),
 			srcActor:      myAddr,
 		},
-		"onlyAddress with non matching address": {
+		"anyAddress with non matching address": {
 			srcActor:      myAddr,
-			srcPermission: types.AccessTypeOnlyAddress.With(otherAddr),
+			srcPermission: types.AccessTypeAnyOfAddresses.With(otherAddr),
 			expError:      sdkerrors.ErrUnauthorized,
 		},
 	}
@@ -714,7 +715,7 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 			return &wasmvmtypes.Response{Data: []byte("my-response-data")}, 0, nil
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
@@ -745,7 +746,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 			return do(codeID, env, info, initMsg, store, goapi, querier, gasMeter, gasLimit, deserCost)
 		},
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
 	// overwrite wasmvm in router
@@ -2051,7 +2052,7 @@ func TestSetAccessConfig(t *testing.T) {
 	const codeID = 1
 
 	specs := map[string]struct {
-		authz           AuthorizationPolicy
+		authz           types.AuthorizationPolicy
 		chainPermission types.AccessType
 		newConfig       types.AccessConfig
 		caller          sdk.AccAddress
@@ -2112,17 +2113,6 @@ func TestSetAccessConfig(t *testing.T) {
 				"code_permission": "Nobody",
 			},
 		},
-		"gov with new permissions > chain permissions": {
-			authz:           GovAuthorizationPolicy{},
-			chainPermission: types.AccessTypeNobody,
-			newConfig:       types.AccessTypeOnlyAddress.With(creatorAddr),
-			caller:          creatorAddr,
-			expEvts: map[string]string{
-				"code_id":              "1",
-				"code_permission":      "OnlyAddress",
-				"authorized_addresses": creatorAddr.String(),
-			},
-		},
 		"gov with new permissions > chain permissions - multiple addresses": {
 			authz:           GovAuthorizationPolicy{},
 			chainPermission: types.AccessTypeNobody,
@@ -2172,20 +2162,48 @@ func TestSetAccessConfig(t *testing.T) {
 }
 
 func TestAppendToContractHistory(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
-	var contractAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
-	var orderedEntries []types.ContractCodeHistoryEntry
-
 	f := fuzz.New().Funcs(ModelFuzzers...)
-	for i := 0; i < 10; i++ {
-		var entry types.ContractCodeHistoryEntry
-		f.Fuzz(&entry)
-		keepers.WasmKeeper.appendToContractHistory(ctx, contractAddr, entry)
-		orderedEntries = append(orderedEntries, entry)
+	pCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+
+	variableLengthAddresses := []sdk.AccAddress{
+		bytes.Repeat([]byte{0x1}, types.ContractAddrLen),
+		append([]byte{0x00}, bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1), 0x00),
+		append([]byte{0xff}, bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.ContractAddrLen-1), 0xff),
+		bytes.Repeat([]byte{0x1}, types.SDKAddrLen),
+		append([]byte{0x00}, bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1), 0x00),
+		append([]byte{0xff}, bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1)...),
+		append(bytes.Repeat([]byte{0x1}, types.SDKAddrLen-1), 0xff),
 	}
-	// when
-	gotHistory := keepers.WasmKeeper.GetContractHistory(ctx, contractAddr)
-	assert.Equal(t, orderedEntries, gotHistory)
+	sRandom := stdrand.New(stdrand.NewSource(0))
+	for n := 0; n < 100; n++ {
+		t.Run(fmt.Sprintf("iteration %d", n), func(t *testing.T) {
+			sRandom.Seed(int64(n))
+			sRandom.Shuffle(len(variableLengthAddresses), func(i, j int) {
+				variableLengthAddresses[i], variableLengthAddresses[j] = variableLengthAddresses[j], variableLengthAddresses[i]
+			})
+			orderedEntries := make([][]types.ContractCodeHistoryEntry, len(variableLengthAddresses))
+
+			ctx, _ := pCtx.CacheContext()
+			for j, addr := range variableLengthAddresses {
+				for i := 0; i < 10; i++ {
+					var entry types.ContractCodeHistoryEntry
+					f.RandSource(sRandom).Fuzz(&entry)
+					k.appendToContractHistory(ctx, addr, entry)
+					orderedEntries[j] = append(orderedEntries[j], entry)
+				}
+			}
+			// when
+			for j, addr := range variableLengthAddresses {
+				gotHistory := k.GetContractHistory(ctx, addr)
+				assert.Equal(t, orderedEntries[j], gotHistory, "%d: %X", j, addr)
+				assert.Equal(t, orderedEntries[j][len(orderedEntries[j])-1], k.getLastContractHistoryEntry(ctx, addr))
+			}
+		})
+	}
 }
 
 func TestCoinBurnerPruneBalances(t *testing.T) {
@@ -2350,7 +2368,7 @@ func TestSetContractAdmin(t *testing.T) {
 	specs := map[string]struct {
 		newAdmin sdk.AccAddress
 		caller   sdk.AccAddress
-		policy   AuthorizationPolicy
+		policy   types.AuthorizationPolicy
 		expAdmin string
 		expErr   bool
 	}{

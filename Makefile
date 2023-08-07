@@ -124,9 +124,8 @@ distclean: clean
 ########################################
 ### Testing
 
-
 test: test-unit
-test-all: check test-race test-cover
+test-all: check test-race test-cover test-system
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...
@@ -149,8 +148,11 @@ test-sim-multi-seed-short: runsim
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 5 TestFullAppSimulation
 
 test-sim-deterministic: runsim
-	@echo "Running short multi-seed application simulation. This may take awhile!"
+	@echo "Running application deterministic simulation. This may take awhile!"
 	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 1 1 TestAppStateDeterminism
+
+test-system: install
+	$(MAKE) -C tests/system/ test
 
 ###############################################################################
 ###                                Linting                                  ###
@@ -174,7 +176,7 @@ format: format-tools
 ###############################################################################
 ###                                Protobuf                                 ###
 ###############################################################################
-protoVer=0.11.6
+protoVer=0.13.1
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
@@ -201,3 +203,4 @@ proto-check-breaking:
 	go-mod-cache draw-deps clean build format \
 	test test-all test-build test-cover test-unit test-race \
 	test-sim-import-export build-windows-client \
+	test-system

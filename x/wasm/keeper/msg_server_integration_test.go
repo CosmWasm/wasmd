@@ -1,12 +1,13 @@
 package keeper_test
 
 import (
-	"crypto/sha256"
 	_ "embed"
 	"encoding/json"
 	"testing"
 	"time"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -42,12 +43,14 @@ func TestStoreCode(t *testing.T) {
 	var result types.MsgStoreCodeResponse
 	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
 	assert.Equal(t, uint64(1), result.CodeID)
-	expHash := sha256.Sum256(wasmContract)
-	assert.Equal(t, expHash[:], result.Checksum)
+
+	expHash, err := wasmvm.CreateChecksum(wasmContract)
+	require.NoError(t, err)
+	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(result.Checksum))
 	// and
 	info := wasmApp.WasmKeeper.GetCodeInfo(ctx, 1)
 	assert.NotNil(t, info)
-	assert.Equal(t, expHash[:], info.CodeHash)
+	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(info.CodeHash))
 	assert.Equal(t, sender.String(), info.Creator)
 	assert.Equal(t, types.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }
@@ -58,7 +61,7 @@ func TestUpdateParams(t *testing.T) {
 
 	var (
 		myAddress              sdk.AccAddress = make([]byte, types.ContractAddrLen)
-		oneAddressAccessConfig                = types.AccessTypeOnlyAddress.With(myAddress)
+		oneAddressAccessConfig                = types.AccessTypeAnyOfAddresses.With(myAddress)
 		govAuthority                          = wasmApp.WasmKeeper.GetAuthority()
 	)
 
@@ -138,6 +141,198 @@ func TestUpdateParams(t *testing.T) {
 			assert.True(t, spec.expUploadConfig.Equals(wasmApp.WasmKeeper.GetParams(ctx).CodeUploadAccess),
 				"got %#v not %#v", wasmApp.WasmKeeper.GetParams(ctx).CodeUploadAccess, spec.expUploadConfig)
 			assert.Equal(t, spec.expInstantiateType, wasmApp.WasmKeeper.GetParams(ctx).InstantiateDefaultPermission)
+		})
+	}
+}
+
+func TestAddCodeUploadParamsAddresses(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+		govAuthority                   = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		src             types.MsgAddCodeUploadParamsAddresses
+		uploadConfig    types.AccessConfig
+		expUploadConfig types.AccessConfig
+		expErr          bool
+	}{
+		"authority can add addresses when permission is any of addresses": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+		},
+		"add existing address": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{myAddress.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
+		},
+		"authority cannot add addresses when permission is allow everybody": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AllowEverybody,
+			expUploadConfig: types.AllowEverybody,
+			expErr:          true,
+		},
+		"authority cannot add addresses when permission is allow nobody": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AllowNobody,
+			expUploadConfig: types.AllowNobody,
+			expErr:          true,
+		},
+		"authority cannot add duplicate addresses when permission is any of addresses": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String(), otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
+			expErr:          true,
+		},
+		"other address cannot add addresses when permission is any of addresses": {
+			src: types.MsgAddCodeUploadParamsAddresses{
+				Authority: otherAddr.String(),
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expErr:          true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+				CodeUploadAccess:             spec.uploadConfig,
+				InstantiateDefaultPermission: types.AccessTypeEverybody,
+			})
+			require.NoError(t, err)
+
+			// when
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
+			if spec.expErr {
+				require.Error(t, err)
+				require.Nil(t, rsp)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, rsp.MsgResponses, 1)
+			assert.IsType(t, rsp.MsgResponses[0].GetCachedValue(), &types.MsgAddCodeUploadParamsAddressesResponse{})
+
+			// then
+			gotUploadConfig := wasmApp.WasmKeeper.GetParams(ctx).CodeUploadAccess
+			assert.True(t, spec.expUploadConfig.Equals(gotUploadConfig),
+				"got %#v not %#v", gotUploadConfig, spec.expUploadConfig)
+		})
+	}
+}
+
+func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+		govAuthority                   = wasmApp.WasmKeeper.GetAuthority()
+	)
+
+	specs := map[string]struct {
+		src             types.MsgRemoveCodeUploadParamsAddresses
+		uploadConfig    types.AccessConfig
+		expUploadConfig types.AccessConfig
+		expErr          bool
+	}{
+		"authority can remove addresses when permission is any of addresses": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
+		},
+		"authority cannot remove not existing addresses when permission is any of addresses": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress),
+		},
+		"authority cannot remove addresses when permission is allow everybody": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AllowEverybody,
+			expUploadConfig: types.AllowEverybody,
+			expErr:          true,
+		},
+		"authority cannot remove addresses when permission is allow nobody": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AllowNobody,
+			expUploadConfig: types.AllowNobody,
+			expErr:          true,
+		},
+		"authority cannot remove duplicate addresses when permission is any of addresses": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: govAuthority,
+				Addresses: []string{otherAddr.String(), otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expErr:          true,
+		},
+		"other address cannot remove addresses when permission is any of addresses": {
+			src: types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: otherAddr.String(),
+				Addresses: []string{otherAddr.String()},
+			},
+			uploadConfig:    types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expUploadConfig: types.AccessTypeAnyOfAddresses.With(myAddress, otherAddr),
+			expErr:          true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
+				CodeUploadAccess:             spec.uploadConfig,
+				InstantiateDefaultPermission: types.AccessTypeEverybody,
+			})
+			require.NoError(t, err)
+
+			// when
+			rsp, err := wasmApp.MsgServiceRouter().Handler(&spec.src)(ctx, &spec.src)
+			if spec.expErr {
+				require.Error(t, err)
+				require.Nil(t, rsp)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, rsp.MsgResponses, 1)
+			assert.IsType(t, rsp.MsgResponses[0].GetCachedValue(), &types.MsgRemoveCodeUploadParamsAddressesResponse{})
+
+			// then
+			gotUploadConfig := wasmApp.WasmKeeper.GetParams(ctx).CodeUploadAccess
+			assert.True(t, spec.expUploadConfig.Equals(gotUploadConfig),
+				"got %#v not %#v", gotUploadConfig, spec.expUploadConfig)
 		})
 	}
 }

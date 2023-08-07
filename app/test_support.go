@@ -8,7 +8,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func (app *WasmApp) GetIBCKeeper() *ibckeeper.Keeper {
@@ -35,6 +35,6 @@ func (app *WasmApp) GetAccountKeeper() authkeeper.AccountKeeper {
 	return app.AccountKeeper
 }
 
-func (app *WasmApp) GetWasmKeeper() wasm.Keeper {
+func (app *WasmApp) GetWasmKeeper() wasmkeeper.Keeper {
 	return app.WasmKeeper
 }

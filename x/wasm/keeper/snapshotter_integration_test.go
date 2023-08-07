@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"crypto/sha256"
 	"os"
 	"testing"
 	"time"
@@ -10,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -67,6 +68,12 @@ func TestSnapshotter(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotNil(t, snapshot)
 
+			originalMaxWasmSize := types.MaxWasmSize
+			types.MaxWasmSize = 1
+			t.Cleanup(func() {
+				types.MaxWasmSize = originalMaxWasmSize
+			})
+
 			// when snapshot imported into dest app instance
 			destWasmApp := app.SetupWithEmptyStore(t)
 			require.NoError(t, destWasmApp.SnapshotManager().Restore(*snapshot))
@@ -92,9 +99,11 @@ func TestSnapshotter(t *testing.T) {
 			wasmKeeper.IterateCodeInfos(ctx, func(id uint64, info types.CodeInfo) bool {
 				bz, err := wasmKeeper.GetByteCode(ctx, id)
 				require.NoError(t, err)
-				hash := sha256.Sum256(bz)
+
+				hash, err := wasmvm.CreateChecksum(bz)
+				require.NoError(t, err)
 				destCodeIDToChecksum[id] = hash[:]
-				assert.Equal(t, hash[:], info.CodeHash)
+				assert.Equal(t, hash[:], wasmvmtypes.Checksum(info.CodeHash))
 				return false
 			})
 			assert.Equal(t, srcCodeIDToChecksum, destCodeIDToChecksum)

@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const firstCodeID = 1
+const (
+	firstCodeID = 1
+	badAddress  = "abcd"
+)
 
 func TestStoreCodeValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, ContractAddrLen)).String()
 	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
@@ -59,7 +59,7 @@ func TestStoreCodeValidation(t *testing.T) {
 			msg: MsgStoreCode{
 				Sender:                goodAddress,
 				WASMByteCode:          []byte("foo"),
-				InstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
 			},
 			valid: false,
 		},
@@ -78,9 +78,6 @@ func TestStoreCodeValidation(t *testing.T) {
 }
 
 func TestInstantiateContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
@@ -186,9 +183,6 @@ func TestInstantiateContractValidation(t *testing.T) {
 }
 
 func TestInstantiateContract2Validation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
@@ -322,9 +316,6 @@ func TestInstantiateContract2Validation(t *testing.T) {
 }
 
 func TestExecuteContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
@@ -431,9 +422,6 @@ func TestExecuteContractValidation(t *testing.T) {
 }
 
 func TestMsgUpdateAdministrator(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20)).String()
@@ -503,9 +491,6 @@ func TestMsgUpdateAdministrator(t *testing.T) {
 }
 
 func TestMsgClearAdministrator(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
@@ -554,9 +539,6 @@ func TestMsgClearAdministrator(t *testing.T) {
 }
 
 func TestMsgMigrateContract(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
@@ -680,9 +662,6 @@ func TestMsgJsonSignBytes(t *testing.T) {
 }
 
 func TestMsgUpdateInstantiateConfig(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
@@ -697,14 +676,6 @@ func TestMsgUpdateInstantiateConfig(t *testing.T) {
 				CodeID:                   1,
 				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{anotherGoodAddress}},
 			},
-		},
-		"retained AccessTypeOnlyAddress": {
-			src: MsgUpdateInstantiateConfig{
-				Sender:                   goodAddress,
-				CodeID:                   1,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: anotherGoodAddress},
-			},
-			expErr: true,
 		},
 		"bad sender": {
 			src: MsgUpdateInstantiateConfig{
@@ -750,9 +721,6 @@ func TestMsgUpdateInstantiateConfig(t *testing.T) {
 }
 
 func TestMsgUpdateParamsValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
@@ -792,10 +760,128 @@ func TestMsgUpdateParamsValidation(t *testing.T) {
 	}
 }
 
+func TestMsgAddCodeUploadParamsAddressesValidation(t *testing.T) {
+	badAddress := "abcd"
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgAddCodeUploadParamsAddresses
+		expErr bool
+	}{
+		"all good": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress},
+			},
+		},
+		"bad authority": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: badAddress,
+				Addresses: []string{goodAddress},
+			},
+			expErr: true,
+		},
+		"empty authority": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Addresses: []string{goodAddress},
+			},
+			expErr: true,
+		},
+		"empty addresses": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: goodAddress,
+			},
+			expErr: true,
+		},
+		"invalid addresses": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{badAddress},
+			},
+			expErr: true,
+		},
+		"duplicate addresses": {
+			src: MsgAddCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress, goodAddress},
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestMsgRemoveCodeUploadParamsAddressesValidation(t *testing.T) {
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgRemoveCodeUploadParamsAddresses
+		expErr bool
+	}{
+		"all good": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress},
+			},
+		},
+		"bad authority": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: badAddress,
+				Addresses: []string{goodAddress},
+			},
+			expErr: true,
+		},
+		"empty authority": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Addresses: []string{goodAddress},
+			},
+			expErr: true,
+		},
+		"empty addresses": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: goodAddress,
+			},
+			expErr: true,
+		},
+		"invalid addresses": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{badAddress},
+			},
+			expErr: true,
+		},
+		"duplicate addresses": {
+			src: MsgRemoveCodeUploadParamsAddresses{
+				Authority: goodAddress,
+				Addresses: []string{goodAddress, goodAddress},
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestMsgPinCodesValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
@@ -842,9 +928,6 @@ func TestMsgPinCodesValidation(t *testing.T) {
 }
 
 func TestMsgUnpinCodesValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 
@@ -891,9 +974,7 @@ func TestMsgUnpinCodesValidation(t *testing.T) {
 }
 
 func TestMsgSudoContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
+	badAddress := "abcd"
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	anotherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x2}, 20)).String()
@@ -968,9 +1049,6 @@ func TestMsgSudoContractValidation(t *testing.T) {
 }
 
 func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
-	bad, err := sdk.AccAddressFromHexUnsafe("012345")
-	require.NoError(t, err)
-	badAddress := bad.String()
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
 	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
@@ -1120,7 +1198,7 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 				WASMByteCode:          []byte("foo"),
 				Label:                 "foo",
 				Msg:                   []byte(`{"some": "data"}`),
-				InstantiatePermission: &AccessConfig{Permission: AccessTypeOnlyAddress, Address: badAddress},
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
 			},
 			valid: false,
 		},

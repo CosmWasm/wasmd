@@ -24,7 +24,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -34,8 +34,8 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 )
 
-func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
-	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
+func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
+	wasmApp := app.NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasmtypes.EnableAllProposals, simtestutil.EmptyAppOptions{}, nil)
 
 	if withGenesis {
 		return wasmApp, app.NewDefaultGenesisState(wasmApp.AppCodec())

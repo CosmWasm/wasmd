@@ -38,10 +38,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -50,10 +51,10 @@ type SetupOptions struct {
 	Logger   log.Logger
 	DB       *dbm.MemDB
 	AppOpts  servertypes.AppOptions
-	WasmOpts []wasm.Option
+	WasmOpts []wasmkeeper.Option
 }
 
-func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasm.Option) (*WasmApp, GenesisState) {
+func setup(t testing.TB, chainID string, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*WasmApp, GenesisState) {
 	db := dbm.NewMemDB()
 	nodeHome := t.TempDir()
 	snapshotDir := filepath.Join(nodeHome, "data", "snapshots")
@@ -117,7 +118,7 @@ func NewWasmAppWithCustomOptions(t *testing.T, isCheckTx bool, options SetupOpti
 }
 
 // Setup initializes a new WasmApp. A Nop logger is set in WasmApp.
-func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
+func Setup(t *testing.T, opts ...wasmkeeper.Option) *WasmApp {
 	t.Helper()
 
 	privVal := mock.NewPV()
@@ -145,7 +146,7 @@ func Setup(t *testing.T, opts ...wasm.Option) *WasmApp {
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit in the default token of the WasmApp from first genesis
 // account. A Nop logger is set in WasmApp.
-func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasm.Option, balances ...banktypes.Balance) *WasmApp {
+func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, opts []wasmkeeper.Option, balances ...banktypes.Balance) *WasmApp {
 	t.Helper()
 
 	app, genesisState := setup(t, chainID, true, 5, opts...)
@@ -168,14 +169,28 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	)
 	// commit genesis changes
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
-		ChainID:            chainID,
-		Height:             app.LastBlockHeight() + 1,
-		AppHash:            app.LastCommitID().Hash,
-		Time:               time.Now().UTC(),
-		ValidatorsHash:     valSet.Hash(),
-		NextValidatorsHash: valSet.Hash(),
-	}})
+
+	votes := make([]abci.VoteInfo, len(valSet.Validators))
+	for i, v := range valSet.Validators {
+		votes[i] = abci.VoteInfo{
+			Validator:       abci.Validator{Address: v.Address, Power: v.VotingPower},
+			SignedLastBlock: true,
+		}
+	}
+
+	app.BeginBlock(abci.RequestBeginBlock{
+		Header: tmproto.Header{
+			ChainID:            chainID,
+			Height:             app.LastBlockHeight() + 1,
+			AppHash:            app.LastCommitID().Hash,
+			Time:               time.Now().UTC(),
+			ValidatorsHash:     valSet.Hash(),
+			NextValidatorsHash: valSet.Hash(),
+		},
+		LastCommitInfo: abci.CommitInfo{
+			Votes: votes,
+		},
+	})
 
 	return app
 }
@@ -253,7 +268,7 @@ func ModuleAccountAddrs() map[string]bool {
 	return BlockedAddresses()
 }
 
-var emptyWasmOptions []wasm.Option
+var emptyWasmOptions []wasmkeeper.Option
 
 // NewTestNetworkFixture returns a new WasmApp AppConstructor for network simulation tests
 func NewTestNetworkFixture() network.TestFixture {
@@ -289,14 +304,14 @@ func NewTestNetworkFixture() network.TestFixture {
 
 // SignAndDeliverWithoutCommit signs and delivers a transaction. No commit
 func SignAndDeliverWithoutCommit(
-	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, header tmproto.Header, msgs []sdk.Msg,
+	t *testing.T, txCfg client.TxConfig, app *bam.BaseApp, msgs []sdk.Msg, fees sdk.Coins,
 	chainID string, accNums, accSeqs []uint64, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	tx, err := simtestutil.GenSignedMockTx(
 		rand.New(rand.NewSource(time.Now().UnixNano())),
 		txCfg,
 		msgs,
-		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
+		fees,
 		simtestutil.DefaultGenTxGas,
 		chainID,
 		accNums,
@@ -363,6 +378,16 @@ func GenesisStateWithValSet(
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
 	genesisState[stakingtypes.ModuleName] = codec.MustMarshalJSON(stakingGenesis)
+
+	signingInfos := make([]slashingtypes.SigningInfo, len(valSet.Validators))
+	for i, val := range valSet.Validators {
+		signingInfos[i] = slashingtypes.SigningInfo{
+			Address:              sdk.ConsAddress(val.Address).String(),
+			ValidatorSigningInfo: slashingtypes.ValidatorSigningInfo{},
+		}
+	}
+	slashingGenesis := slashingtypes.NewGenesisState(slashingtypes.DefaultParams(), signingInfos, nil)
+	genesisState[slashingtypes.ModuleName] = codec.MustMarshalJSON(slashingGenesis)
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{

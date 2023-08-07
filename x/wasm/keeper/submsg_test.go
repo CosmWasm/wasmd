@@ -7,6 +7,13 @@ import (
 	"strconv"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
+
+	wasmvm "github.com/CosmWasm/wasmvm"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
@@ -547,6 +554,160 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 				// nothing should be there -> error
 				require.Error(t, err)
 			}
+		})
+	}
+}
+
+func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
+	mockWasmVM := &wasmtesting.MockWasmer{}
+	wasmtesting.MakeInstantiable(mockWasmVM)
+	var instanceLevel int
+	// mock wasvm to return new instantiate msgs with the response
+	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		if instanceLevel == 2 {
+			return &wasmvmtypes.Response{}, 0, nil
+		}
+		instanceLevel++
+		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
+		return &wasmvmtypes.Response{
+			Messages: []wasmvmtypes.SubMsg{
+				{
+					ReplyOn: wasmvmtypes.ReplyNever,
+					Msg: wasmvmtypes.CosmosMsg{
+						Wasm: &wasmvmtypes.WasmMsg{Instantiate: &wasmvmtypes.InstantiateMsg{
+							CodeID: 1, Msg: []byte(submsgPayload), Label: "from sub-msg",
+						}},
+					},
+				},
+			},
+		}, 0, nil
+	}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
+	k := keepers.WasmKeeper
+
+	// make chain restricted so that nobody can create instances
+	newParams := types.DefaultParams()
+	newParams.InstantiateDefaultPermission = types.AccessTypeNobody
+	require.NoError(t, k.SetParams(ctx, newParams))
+
+	example1 := StoreRandomContract(t, ctx, keepers, mockWasmVM)
+
+	specs := map[string]struct {
+		policy types.AuthorizationPolicy
+		expErr *errorsmod.Error
+	}{
+		"default policy - rejected": {
+			policy: DefaultAuthorizationPolicy{},
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"propagating gov policy - accepted": {
+			policy: newGovAuthorizationPolicy(map[types.AuthorizationPolicyAction]struct{}{
+				types.AuthZActionInstantiate: {},
+			}),
+		},
+		"non propagating gov policy - rejected in sub-msg": {
+			policy: newGovAuthorizationPolicy(nil),
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"propagating gov policy with diff action - rejected": {
+			policy: newGovAuthorizationPolicy(map[types.AuthorizationPolicyAction]struct{}{
+				types.AuthZActionMigrateContract: {},
+			}),
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			tCtx, _ := ctx.CacheContext()
+			instanceLevel = 0
+
+			_, _, gotErr := k.instantiate(tCtx, example1.CodeID, example1.CreatorAddr, nil, []byte(`{"first":{}}`), "from ext msg", nil, k.ClassicAddressGenerator(), spec.policy)
+			if spec.expErr != nil {
+				assert.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			var instanceCount int
+			k.IterateContractsByCode(tCtx, example1.CodeID, func(address sdk.AccAddress) bool {
+				instanceCount++
+				return false
+			})
+			assert.Equal(t, 3, instanceCount)
+			assert.Equal(t, 2, instanceLevel)
+		})
+	}
+}
+
+func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
+	mockWasmVM := &wasmtesting.MockWasmer{}
+	wasmtesting.MakeInstantiable(mockWasmVM)
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
+	k := keepers.WasmKeeper
+
+	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
+	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
+
+	var instanceLevel int
+	// mock wasvm to return new migrate msgs with the response
+	mockWasmVM.MigrateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+		if instanceLevel == 1 {
+			return &wasmvmtypes.Response{}, 0, nil
+		}
+		instanceLevel++
+		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
+		return &wasmvmtypes.Response{
+			Messages: []wasmvmtypes.SubMsg{
+				{
+					ReplyOn: wasmvmtypes.ReplyNever,
+					Msg: wasmvmtypes.CosmosMsg{
+						Wasm: &wasmvmtypes.WasmMsg{Migrate: &wasmvmtypes.MigrateMsg{
+							ContractAddr: example1.Contract.String(),
+							NewCodeID:    example2.CodeID,
+							Msg:          []byte(submsgPayload),
+						}},
+					},
+				},
+			},
+		}, 0, nil
+	}
+
+	specs := map[string]struct {
+		policy types.AuthorizationPolicy
+		expErr *errorsmod.Error
+	}{
+		"default policy - rejected": {
+			policy: DefaultAuthorizationPolicy{},
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"propagating gov policy - accepted": {
+			policy: newGovAuthorizationPolicy(map[types.AuthorizationPolicyAction]struct{}{
+				types.AuthZActionMigrateContract: {},
+			}),
+		},
+		"non propagating gov policy - rejected in sub-msg": {
+			policy: newGovAuthorizationPolicy(nil),
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"propagating gov policy with diff action - rejected": {
+			policy: newGovAuthorizationPolicy(map[types.AuthorizationPolicyAction]struct{}{
+				types.AuthZActionInstantiate: {},
+			}),
+			expErr: sdkerrors.ErrUnauthorized,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			tCtx, _ := ctx.CacheContext()
+			instanceLevel = 0
+
+			_, gotErr := k.migrate(tCtx, example1.Contract, RandomAccountAddress(t), example2.CodeID, []byte(`{}`), spec.policy)
+			if spec.expErr != nil {
+				assert.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, 1, instanceLevel)
 		})
 	}
 }

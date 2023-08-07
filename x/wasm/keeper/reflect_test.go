@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -36,7 +37,10 @@ func mustParse(t *testing.T, data []byte, res interface{}) {
 	require.NoError(t, err)
 }
 
-const ReflectFeatures = "staking,mask,stargate,cosmwasm_1_1"
+const (
+	ReflectFeatures   = "staking,mask,stargate,cosmwasm_1_1"
+	CyberpunkFeatures = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3"
+)
 
 func TestReflectContractSend(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Marshaler
@@ -546,7 +550,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 }
 
 func TestRustPanicIsHandled(t *testing.T) {
-	ctx, keepers := CreateTestInput(t, false, ReflectFeatures)
+	ctx, keepers := CreateTestInput(t, false, CyberpunkFeatures)
 	keeper := keepers.ContractKeeper
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
@@ -566,6 +570,119 @@ func TestRustPanicIsHandled(t *testing.T) {
 	require.ErrorIs(t, err, types.ErrExecuteFailed)
 	assert.Contains(t, err.Error(), "panicked at 'This page intentionally faulted'")
 	assert.Nil(t, gotData)
+}
+
+func TestQueryDenomsIntegration(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, CyberpunkFeatures)
+	ck, k := keepers.ContractKeeper, keepers.WasmKeeper
+	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
+
+	// upload code
+	codeID, _, err := ck.Create(ctx, creator, testdata.CyberpunkContractWasm(), nil)
+	require.NoError(t, err)
+
+	contractAddr, _, err := ck.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "cyberpunk contract", nil)
+	require.NoError(t, err)
+
+	var (
+		metadata1 = banktypes.Metadata{
+			Description: "testing",
+			DenomUnits: []*banktypes.DenomUnit{
+				{Denom: "ualx", Exponent: 0, Aliases: []string{"microalx"}},
+				{Denom: "alx", Exponent: 6, Aliases: []string{"ALX"}},
+			},
+			Base:    "ualx",
+			Display: "alx",
+			Name:    "my test denom",
+			Symbol:  "XALX",
+			URI:     "https://example.com/ualx",
+			URIHash: "my_hash",
+		}
+		metadata2 = banktypes.Metadata{
+			Description: "testing2",
+			DenomUnits: []*banktypes.DenomUnit{
+				{Denom: "ublx", Exponent: 0, Aliases: []string{"microblx"}},
+				{Denom: "blx", Exponent: 6, Aliases: []string{"BLX"}},
+			},
+			Base:    "ublx",
+			Display: "blx",
+			Name:    "my other test denom",
+			Symbol:  "XBLX",
+		}
+	)
+	type dict map[string]any
+
+	keepers.BankKeeper.SetDenomMetaData(ctx, metadata1)
+	keepers.BankKeeper.SetDenomMetaData(ctx, metadata2)
+
+	specs := map[string]struct {
+		query  string
+		exp    []byte
+		expErr *errorsmod.Error
+	}{
+		"all denoms": {
+			query: `{"denoms":{}}`,
+			exp: mustMarshal(t, []dict{
+				{
+					"description": "testing",
+					"denom_units": []dict{
+						{"denom": "ualx", "exponent": 0, "aliases": []string{"microalx"}},
+						{"denom": "alx", "exponent": 6, "aliases": []string{"ALX"}},
+					},
+					"base":     "ualx",
+					"display":  "alx",
+					"name":     "my test denom",
+					"symbol":   "XALX",
+					"uri":      "https://example.com/ualx",
+					"uri_hash": "my_hash",
+				}, {
+					"description": "testing2",
+					"denom_units": []dict{
+						{"denom": "ublx", "exponent": 0, "aliases": []string{"microblx"}},
+						{"denom": "blx", "exponent": 6, "aliases": []string{"BLX"}},
+					},
+					"base":     "ublx",
+					"display":  "blx",
+					"name":     "my other test denom",
+					"symbol":   "XBLX",
+					"uri":      "",
+					"uri_hash": "",
+				},
+			}),
+		},
+		"single denom": {
+			query: `{"denom":{"denom":"ublx"}}`,
+			exp: mustMarshal(t, dict{
+				"description": "testing2",
+				"denom_units": []dict{
+					{"denom": "ublx", "exponent": 0, "aliases": []string{"microblx"}},
+					{"denom": "blx", "exponent": 6, "aliases": []string{"BLX"}},
+				},
+				"base":     "ublx",
+				"display":  "blx",
+				"name":     "my other test denom",
+				"symbol":   "XBLX",
+				"uri":      "",
+				"uri_hash": "",
+			}),
+		},
+		"unknown denom": {
+			query:  `{"denom":{"denom":"unknown"}}`,
+			expErr: sdkerrors.ErrNotFound,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotData, gotErr := k.QuerySmart(ctx, contractAddr, []byte(spec.query))
+			if spec.expErr != nil {
+				require.Error(t, gotErr)
+				assert.Contains(t, gotErr.Error(), fmt.Sprintf("codespace: %s, code: %d:", spec.expErr.Codespace(), spec.expErr.ABCICode()))
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.JSONEq(t, string(spec.exp), string(gotData), string(gotData))
+		})
+	}
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {

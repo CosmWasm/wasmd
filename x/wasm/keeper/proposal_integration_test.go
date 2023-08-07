@@ -35,7 +35,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	require.NoError(t, err)
 	gzippedWasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
-	checksum, err := hex.DecodeString("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
+	checksum, err := hex.DecodeString("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -64,7 +64,7 @@ func TestStoreCodeProposal(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
 			myActorAddress := RandomBech32AccountAddress(t)
 
-			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) {
+			src := types.StoreCodeProposalFixture(func(p *types.StoreCodeProposal) { //nolint:staticcheck // testing deprecated function
 				p.RunAs = myActorAddress
 				p.WASMByteCode = spec.code
 				p.UnpinCode = spec.unpinCode
@@ -141,7 +141,7 @@ func TestInstantiateProposal(t *testing.T) {
 		oneAddress   sdk.AccAddress = bytes.Repeat([]byte{0x1}, types.ContractAddrLen)
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
 	)
-	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
+	src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) { //nolint:staticcheck // testing deprecated function
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
@@ -200,7 +200,7 @@ func TestInstantiate2Proposal(t *testing.T) {
 		label                       = "label"
 		salt                        = []byte("mySalt")
 	)
-	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) {
+	src := types.InstantiateContract2ProposalFixture(func(p *types.InstantiateContract2Proposal) { //nolint:staticcheck // testing deprecated function
 		p.CodeID = firstCodeID
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
@@ -270,7 +270,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) {
+			src := types.InstantiateContractProposalFixture(func(p *types.InstantiateContractProposal) { //nolint:staticcheck // testing deprecated function
 				p.CodeID = firstCodeID
 				p.RunAs = oneAddress.String()
 				p.Admin = spec.srcAdmin
@@ -330,7 +330,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	checksum, err := hex.DecodeString("beb3de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b")
+	checksum, err := hex.DecodeString("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
 	require.NoError(t, err)
 
 	var (
@@ -338,7 +338,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
 	)
 
-	src := types.StoreAndInstantiateContractProposalFixture(func(p *types.StoreAndInstantiateContractProposal) {
+	src := types.StoreAndInstantiateContractProposalFixture(func(p *types.StoreAndInstantiateContractProposal) { //nolint:staticcheck // testing deprecated function
 		p.WASMByteCode = wasmCode
 		p.RunAs = oneAddress.String()
 		p.Admin = otherAddress.String()
@@ -418,7 +418,7 @@ func TestMigrateProposal(t *testing.T) {
 	migMsgBz, err := json.Marshal(migMsg)
 	require.NoError(t, err)
 
-	src := &types.MigrateContractProposal{
+	src := &types.MigrateContractProposal{ //nolint:staticcheck // testing deprecated function
 		Title:       "Foo",
 		Description: "Bar",
 		CodeID:      2,
@@ -475,7 +475,7 @@ func TestExecuteProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	// try with runAs that doesn't have pemission
-	badSrc := &types.ExecuteContractProposal{
+	badSrc := &types.ExecuteContractProposal{ //nolint:staticcheck // testing deprecated function
 		Title:       "First",
 		Description: "Beneficiary has no permission to run",
 		Contract:    contractAddr.String(),
@@ -494,7 +494,7 @@ func TestExecuteProposal(t *testing.T) {
 	require.Equal(t, bal.Amount, sdk.NewInt(100))
 
 	// try again with the proper run-as
-	src := &types.ExecuteContractProposal{
+	src := &types.ExecuteContractProposal{ //nolint:staticcheck // testing deprecated function
 		Title:       "Second",
 		Description: "Verifier can execute",
 		Contract:    contractAddr.String(),
@@ -540,7 +540,7 @@ func TestSudoProposal(t *testing.T) {
 	require.NoError(t, err)
 
 	// sudo can do anything
-	src := &types.SudoContractProposal{
+	src := &types.SudoContractProposal{ //nolint:staticcheck // testing deprecated function
 		Title:       "Sudo",
 		Description: "Steal funds for the verifier",
 		Contract:    contractAddr.String(),
@@ -574,7 +574,7 @@ func TestAdminProposals(t *testing.T) {
 	}{
 		"update with different admin": {
 			state: types.ContractInfoFixture(),
-			srcProposal: &types.UpdateAdminProposal{
+			srcProposal: &types.UpdateAdminProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				Contract:    contractAddr.String(),
@@ -586,7 +586,7 @@ func TestAdminProposals(t *testing.T) {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
 				info.Admin = ""
 			}),
-			srcProposal: &types.UpdateAdminProposal{
+			srcProposal: &types.UpdateAdminProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				Contract:    contractAddr.String(),
@@ -596,7 +596,7 @@ func TestAdminProposals(t *testing.T) {
 		},
 		"clear admin": {
 			state: types.ContractInfoFixture(),
-			srcProposal: &types.ClearAdminProposal{
+			srcProposal: &types.ClearAdminProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				Contract:    contractAddr.String(),
@@ -607,7 +607,7 @@ func TestAdminProposals(t *testing.T) {
 			state: types.ContractInfoFixture(func(info *types.ContractInfo) {
 				info.Admin = ""
 			}),
-			srcProposal: &types.ClearAdminProposal{
+			srcProposal: &types.ClearAdminProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				Contract:    contractAddr.String(),
@@ -654,7 +654,7 @@ func TestPinCodesProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	var (
@@ -710,7 +710,7 @@ func TestPinCodesProposal(t *testing.T) {
 			gotPinnedChecksums = nil
 			ctx, _ := parentCtx.CacheContext()
 			mock.PinFn = spec.mockFn
-			proposal := &types.PinCodesProposal{
+			proposal := &types.PinCodesProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				CodeIDs:     spec.srcCodeIDs,
@@ -745,7 +745,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	var (
@@ -800,7 +800,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 			gotUnpinnedChecksums = nil
 			ctx, _ := parentCtx.CacheContext()
 			mock.UnpinFn = spec.mockFn
-			proposal := &types.UnpinCodesProposal{
+			proposal := &types.UnpinCodesProposal{ //nolint:staticcheck // testing deprecated function
 				Title:       "Foo",
 				Description: "Bar",
 				CodeIDs:     spec.srcCodeIDs,
@@ -835,7 +835,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 	wasmKeeper := keepers.WasmKeeper
 
 	mock := wasmtesting.MockWasmer{
-		CreateFn:      wasmtesting.NoOpCreateFn,
+		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
@@ -898,7 +898,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 
 			govAuthority := keepers.AccountKeeper.GetModuleAddress(govtypes.ModuleName).String()
 			msgServer := govkeeper.NewMsgServerImpl(keepers.GovKeeper)
-			proposal := &types.UpdateInstantiateConfigProposal{
+			proposal := &types.UpdateInstantiateConfigProposal{ //nolint:staticcheck // testing deprecated function
 				Title:               "Foo",
 				Description:         "Bar",
 				AccessConfigUpdates: updates,

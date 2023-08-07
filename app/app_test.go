@@ -11,10 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var emptyWasmOpts []wasm.Option
+var emptyWasmOpts []wasmkeeper.Option
 
 func TestWasmdExport(t *testing.T) {
 	db := dbm.NewMemDB()
@@ -26,7 +27,7 @@ func TestWasmdExport(t *testing.T) {
 	gapp.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newGapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasm.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(t.TempDir()), emptyWasmOpts)
+	newGapp := NewWasmApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, wasmtypes.EnableAllProposals, simtestutil.NewAppOptionsWithFlagHome(t.TempDir()), emptyWasmOpts)
 	_, err := newGapp.ExportAppStateAndValidators(false, []string{}, nil)
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -57,20 +58,20 @@ func TestGetEnabledProposals(t *testing.T) {
 	cases := map[string]struct {
 		proposalsEnabled string
 		specificEnabled  string
-		expected         []wasm.ProposalType
+		expected         []wasmtypes.ProposalType
 	}{
 		"all disabled": {
 			proposalsEnabled: "false",
-			expected:         wasm.DisableAllProposals,
+			expected:         wasmtypes.DisableAllProposals,
 		},
 		"all enabled": {
 			proposalsEnabled: "true",
-			expected:         wasm.EnableAllProposals,
+			expected:         wasmtypes.EnableAllProposals,
 		},
 		"some enabled": {
 			proposalsEnabled: "okay",
 			specificEnabled:  "StoreCode,InstantiateContract",
-			expected:         []wasm.ProposalType{wasm.ProposalTypeStoreCode, wasm.ProposalTypeInstantiateContract},
+			expected:         []wasmtypes.ProposalType{wasmtypes.ProposalTypeStoreCode, wasmtypes.ProposalTypeInstantiateContract},
 		},
 	}
 

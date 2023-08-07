@@ -18,6 +18,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -123,6 +124,9 @@ func TestGenesisExportImport(t *testing.T) {
 		return false
 	})
 
+	originalMaxWasmSize := types.MaxWasmSize
+	types.MaxWasmSize = 1
+
 	// re-import
 	var importState types.GenesisState
 	err = dstKeeper.cdc.UnmarshalJSON(exportedGenesis, &importState)
@@ -135,6 +139,12 @@ func TestGenesisExportImport(t *testing.T) {
 	srcIT := srcCtx.KVStore(wasmKeeper.storeKey).Iterator(nil, nil)
 	dstIT := dstCtx.KVStore(dstKeeper.storeKey).Iterator(nil, nil)
 
+	t.Cleanup(func() {
+		types.MaxWasmSize = originalMaxWasmSize
+		srcIT.Close()
+		dstIT.Close()
+	})
+
 	for i := 0; srcIT.Valid(); i++ {
 		require.True(t, dstIT.Valid(), "[%s] destination DB has less elements than source. Missing: %x", wasmKeeper.storeKey.Name(), srcIT.Key())
 		require.Equal(t, srcIT.Key(), dstIT.Key(), i)
@@ -145,8 +155,6 @@ func TestGenesisExportImport(t *testing.T) {
 	if !assert.False(t, dstIT.Valid()) {
 		t.Fatalf("dest Iterator still has key :%X", dstIT.Key())
 	}
-	srcIT.Close()
-	dstIT.Close()
 }
 
 func TestGenesisInit(t *testing.T) {
@@ -526,8 +534,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
         "code_hash": %q,
         "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
         "instantiate_config": {
-          "permission": "OnlyAddress",
-          "address": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"
+          "permission": "AnyOfAddresses",
+          "addresses": ["cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"]
         }
       },
       "code_bytes": %q
@@ -579,7 +587,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	wasmCodeHash := sha256.Sum256(wasmCode)
+	wasmCodeHash, err := wasmvm.CreateChecksum(wasmCode)
+	require.NoError(t, err)
 	enc64 := base64.StdEncoding.EncodeToString
 	genesisStr := fmt.Sprintf(genesisTemplate, enc64(wasmCodeHash[:]), enc64(wasmCode))
 
@@ -607,8 +616,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
 		InstantiateConfig: types.AccessConfig{
-			Permission: types.AccessTypeOnlyAddress,
-			Address:    codeCreatorAddr,
+			Permission: types.AccessTypeAnyOfAddresses,
+			Addresses:  []string{codeCreatorAddr},
 		},
 	}
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)

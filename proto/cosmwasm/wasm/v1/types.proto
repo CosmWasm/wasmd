@@ -20,10 +20,9 @@ enum AccessType {
   // AccessTypeNobody forbidden
   ACCESS_TYPE_NOBODY = 1
       [ (gogoproto.enumvalue_customname) = "AccessTypeNobody" ];
-  // AccessTypeOnlyAddress restricted to a single address
-  // Deprecated: use AccessTypeAnyOfAddresses instead
-  ACCESS_TYPE_ONLY_ADDRESS = 2
-      [ (gogoproto.enumvalue_customname) = "AccessTypeOnlyAddress" ];
+
+  reserved 2; // was AccessTypeOnlyAddress
+
   // AccessTypeEverybody unrestricted
   ACCESS_TYPE_EVERYBODY = 3
       [ (gogoproto.enumvalue_customname) = "AccessTypeEverybody" ];
@@ -43,9 +42,8 @@ message AccessConfig {
   option (gogoproto.goproto_stringer) = true;
   AccessType permission = 1 [ (gogoproto.moretags) = "yaml:\"permission\"" ];
 
-  // Address
-  // Deprecated: replaced by addresses
-  string address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  reserved 2; // was address
+
   repeated string addresses = 3 [ (gogoproto.moretags) = "yaml:\"addresses\"" ];
 }
 

@@ -1,9 +1,11 @@
 version: 2.1
+orbs:
+  gh: circleci/github-cli@2.2.0
 
 executors:
   golang:
     docker:
-      - image: cimg/go:1.19
+      - image: cimg/go:1.20
 
 commands:
   make:
@@ -61,7 +63,7 @@ jobs:
 
   lint:
     docker:
-      - image: golangci/golangci-lint:v1.50.1
+      - image: golangci/golangci-lint:v1.52.2
     steps:
       - checkout
       - run:
@@ -95,6 +97,21 @@ jobs:
             - "profiles/*"
       - store_artifacts:
           path: /tmp/logs
+  
+  test-system:
+    executor: golang
+    parallelism: 1
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+      - run:
+          name: Build and run system tests
+          command: make test-system
 
   benchmark:
     executor: golang
@@ -124,7 +141,9 @@ jobs:
       - run:
           name: Run simulations
           command: |
-            make test-sim-multi-seed-short test-sim-import-export test-sim-deterministic
+            make test-sim-deterministic test-sim-multi-seed-short test-sim-import-export
+      - store_artifacts:
+          path: /tmp
 
   upload-coverage:
     executor: golang
@@ -154,7 +173,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker:
-          version: 20.10.18
+          docker_layer_caching: true
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_SHA1}" .
@@ -188,8 +207,7 @@ jobs:
           at: /tmp/workspace
       - checkout
       - setup_remote_docker:
-          # >= v20.10 https://wiki.alpinelinux.org/wiki/Release_Notes_for_Alpine_3.14.0#faccessat2
-          version: 20.10.11
+          docker_layer_caching: true
       - run:
           name: Build Docker artifact
           command: docker build --pull -t "cosmwasm/wasmd:${CIRCLE_TAG}" .
@@ -200,8 +218,35 @@ jobs:
             docker push "cosmwasm/wasmd:${CIRCLE_TAG}"
             docker logout
 
+  release-tagged:
+    executor: golang
+    environment:
+      BUILD_DIR: /tmp/workspace
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Fetch static artifact
+          command: docker create --name wasmd_temp "cosmwasm/wasmd:${CIRCLE_TAG}"; docker cp wasmd_temp:/usr/bin/wasmd ${BUILD_DIR};  docker rm -f wasmd_temp
+      - run:
+          name: gzip
+          command: tar -zcvf ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz -C ${BUILD_DIR} wasmd
+      - gh/setup:
+          token: GITHUB_CREDS
+      - run:
+          name: Create release
+          command: |
+            gh release create ${CIRCLE_TAG} ${BUILD_DIR}/wasmd-${CIRCLE_TAG}-linux-amd64.tar.gz \
+            --title "$CIRCLE_TAG" \
+            --draft \
+            --notes "# Wasmd ${CIRCLE_TAG} Release
+            See the [CHANGELOG](https://github.com/CosmWasm/wasmd/blob/${CIRCLE_TAG}/CHANGELOG.md) for details on the changes in this version.
+            "
+
 workflows:
-  version: 2
   test-suite:
     jobs:
       - docker-image:
@@ -232,9 +277,22 @@ workflows:
       - upload-coverage:
           requires:
             - test-cover
+      - test-system:
+          requires:
+            - test-cover
       - benchmark:
           requires:
             - test-cover
       - simulations:
           requires:
             - setup-dependencies
+      - release-tagged:
+          requires:
+            - docker-tagged
+          filters:
+            tags:
+              only:
+                - /^v.*/
+            branches:
+              ignore:
+                - /.*/
