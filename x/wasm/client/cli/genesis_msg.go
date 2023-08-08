@@ -281,7 +281,7 @@ func GetAllCodes(state *types.GenesisState) []CodeMeta {
 			bz := msg.WASMByteCode
 			if ioutils.IsGzip(msg.WASMByteCode) {
 				var err error
-				bz, err = ioutils.Uncompress(msg.WASMByteCode, uint64(types.MaxWasmSize))
+				bz, err = ioutils.Uncompress(msg.WASMByteCode, int64(types.MaxWasmSize))
 				if err != nil {
 					panic(fmt.Sprintf("failed to unzip wasm binary: %s", err))
 				}

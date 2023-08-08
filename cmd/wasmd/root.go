@@ -9,8 +9,6 @@ import (
 	"io"
 	"os"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
