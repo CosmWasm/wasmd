@@ -27,7 +27,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	contractStart := sdk.NewCoins(sdk.NewInt64Coin("denom", 40000))
 
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
-	creatorBalance := deposit.Sub(contractStart)
+	creatorBalance := deposit.Sub(contractStart...)
 	_, _, fred := keyPubAddr()
 
 	// upload code

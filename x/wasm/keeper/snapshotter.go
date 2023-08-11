@@ -36,6 +36,10 @@ func (ws *WasmSnapshotter) SnapshotName() string {
 	return types.ModuleName
 }
 
+func (ws *WasmSnapshotter) PruneSnapshotHeight(height int64) {}
+
+func (ws *WasmSnapshotter) SetSnapshotInterval(snapshotInterval uint64) {}
+
 func (ws *WasmSnapshotter) SnapshotFormat() uint32 {
 	return SnapshotFormat
 }

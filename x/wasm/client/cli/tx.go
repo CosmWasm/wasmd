@@ -510,8 +510,8 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 			default:
 				return fmt.Errorf("%s authorization type not supported", args[1])
 			}
-
-			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, time.Unix(0, exp))
+			timeExp := time.Unix(0, exp)
+			grantMsg, err := authz.NewMsgGrant(clientCtx.GetFromAddress(), grantee, authorization, &timeExp)
 			if err != nil {
 				return err
 			}

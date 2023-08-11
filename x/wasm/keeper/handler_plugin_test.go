@@ -400,7 +400,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			// and total supply reduced by burned amount
 			after, err := keepers.BankKeeper.TotalSupply(sdk.WrapSDKContext(ctx), &banktypes.QueryTotalSupplyRequest{})
 			require.NoError(t, err)
-			diff := before.Supply.Sub(after.Supply)
+			diff := before.Supply.Sub(after.Supply...)
 			assert.Equal(t, sdk.NewCoins(sdk.NewCoin("denom", sdk.NewInt(100))), diff)
 		})
 	}
