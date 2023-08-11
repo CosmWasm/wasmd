@@ -1,4 +1,4 @@
-package types
+package vmtypes
 
 import (
 	wasmvm "github.com/CosmWasm/wasmvm"

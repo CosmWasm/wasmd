@@ -13,9 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
-var _ types.IBCContractKeeper = (*Keeper)(nil)
+var _ vmtypes.IBCContractKeeper = (*Keeper)(nil)
 
 // OnOpenChannel calls the contract to participate in the IBC channel handshake step.
 // In the IBC protocol this is either the `Channel Open Init` event on the initiating chain or
@@ -33,7 +34,7 @@ func (k Keeper) OnOpenChannel(
 		return "", err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
@@ -66,7 +67,7 @@ func (k Keeper) OnConnectChannel(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
@@ -97,7 +98,7 @@ func (k Keeper) OnCloseChannel(
 		return err
 	}
 
-	params := types.NewEnv(ctx, contractAddr)
+	params := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
@@ -127,7 +128,7 @@ func (k Keeper) OnRecvPacket(
 		return nil, err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
@@ -185,7 +186,7 @@ func (k Keeper) OnAckPacket(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)
@@ -212,7 +213,7 @@ func (k Keeper) OnTimeoutPacket(
 		return err
 	}
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	gas := k.runtimeGasForContract(ctx)

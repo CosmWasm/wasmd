@@ -7,6 +7,7 @@ package wasm
 import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 const (
@@ -59,9 +60,9 @@ var (
 	// Deprecated: Do not use.
 	NewContractInfo = types.NewContractInfo
 	// Deprecated: Do not use.
-	NewEnv = types.NewEnv
+	NewEnv = vmtypes.NewEnv
 	// Deprecated: Do not use.
-	NewWasmCoins = types.NewWasmCoins
+	NewWasmCoins = vmtypes.NewWasmCoins
 	// Deprecated: Do not use.
 	DefaultWasmConfig = types.DefaultWasmConfig
 	// Deprecated: Do not use.

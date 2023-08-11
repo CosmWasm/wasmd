@@ -1,9 +1,10 @@
-package types
+package vmtypes
 
 import (
 	"errors"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -66,9 +67,9 @@ func TestWasmVMFlavouredError(t *testing.T) {
 			exec: func(t *testing.T) {
 				t.Helper()
 				var wasmvmErr WasmVMErrorable
-				require.True(t, errors.As(WasmVMFlavouredError{sdkErr: ErrEmpty}, &wasmvmErr))
+				require.True(t, errors.As(WasmVMFlavouredError{sdkErr: types.ErrEmpty}, &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
-				assert.Equal(t, ErrEmpty, gotErr)
+				assert.Equal(t, types.ErrEmpty, gotErr)
 			},
 		},
 		"abci info": {

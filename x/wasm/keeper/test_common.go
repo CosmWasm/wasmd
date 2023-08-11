@@ -81,6 +81,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 var moduleBasics = module.NewBasicManager(
@@ -191,7 +192,7 @@ type TestKeepers struct {
 	DistKeeper       distributionkeeper.Keeper
 	BankKeeper       bankkeeper.Keeper
 	GovKeeper        *govkeeper.Keeper
-	ContractKeeper   types.ContractOpsKeeper
+	ContractKeeper   vmtypes.ContractOpsKeeper
 	WasmKeeper       *Keeper
 	IBCKeeper        *ibckeeper.Keeper
 	Router           MessageRouter
@@ -258,7 +259,7 @@ func createTestInput(
 		Height: 1234567,
 		Time:   time.Date(2020, time.April, 22, 12, 0, 0, 0, time.UTC),
 	}, isCheckTx, log.NewNopLogger())
-	ctx = types.WithTXCounter(ctx, 0)
+	ctx = vmtypes.WithTXCounter(ctx, 0)
 
 	encodingConfig := MakeEncodingConfig(tb)
 	appCodec, legacyAmino := encodingConfig.Codec, encodingConfig.Amino
@@ -501,7 +502,7 @@ func createTestInput(
 }
 
 // TestHandler returns a wasm handler for tests (to avoid circular imports)
-func TestHandler(k types.ContractOpsKeeper) MessageRouter {
+func TestHandler(k vmtypes.ContractOpsKeeper) MessageRouter {
 	return MessageRouterFunc(func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
@@ -526,7 +527,7 @@ func (m MessageRouterFunc) Handler(msg sdk.Msg) baseapp.MsgServiceHandler {
 	return m
 }
 
-func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
+func handleStoreCode(ctx sdk.Context, k vmtypes.ContractOpsKeeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "sender")
@@ -542,7 +543,7 @@ func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgS
 	}, nil
 }
 
-func handleInstantiate(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
+func handleInstantiate(ctx sdk.Context, k vmtypes.ContractOpsKeeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "sender")
@@ -565,7 +566,7 @@ func handleInstantiate(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.Ms
 	}, nil
 }
 
-func handleExecute(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
+func handleExecute(ctx sdk.Context, k vmtypes.ContractOpsKeeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "sender")
@@ -662,7 +663,7 @@ type ExampleContractInstance struct {
 }
 
 // SeedNewContractInstance sets the mock wasmerEngine in keeper and calls store + instantiate to init the contract's metadata
-func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
+func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock vmtypes.WasmerEngine) ExampleContractInstance {
 	tb.Helper()
 	exampleContract := StoreRandomContract(tb, ctx, keepers, mock)
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
@@ -674,7 +675,7 @@ func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers
 }
 
 // StoreRandomContract sets the mock wasmerEngine in keeper and calls store
-func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock vmtypes.WasmerEngine) ExampleContract {
 	tb.Helper()
 
 	return StoreRandomContractWithAccessConfig(tb, ctx, keepers, mock, nil)
@@ -683,7 +684,7 @@ func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mo
 func StoreRandomContractWithAccessConfig(
 	tb testing.TB, ctx sdk.Context,
 	keepers TestKeepers,
-	mock types.WasmerEngine,
+	mock vmtypes.WasmerEngine,
 	cfg *types.AccessConfig,
 ) ExampleContract {
 	tb.Helper()

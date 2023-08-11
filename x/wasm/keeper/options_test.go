@@ -16,6 +16,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 func TestConstructorOptions(t *testing.T) {
@@ -32,7 +33,7 @@ func TestConstructorOptions(t *testing.T) {
 			},
 		},
 		"decorate wasmvm": {
-			srcOpt: WithWasmEngineDecorator(func(old types.WasmerEngine) types.WasmerEngine {
+			srcOpt: WithWasmEngineDecorator(func(old vmtypes.WasmerEngine) vmtypes.WasmerEngine {
 				require.IsType(t, &wasmvm.VM{}, old)
 				return &wasmtesting.MockWasmer{}
 			}),

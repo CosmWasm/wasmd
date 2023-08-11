@@ -11,6 +11,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 // NewKeeper creates a new contract Keeper instance
@@ -47,7 +48,7 @@ func NewKeeper(
 		messenger:            NewDefaultMessageHandler(router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
 		gasRegister:          NewDefaultWasmGasRegister(),
-		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
+		maxQueryStackSize:    vmtypes.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionInstantiate: {},

@@ -12,6 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
@@ -24,7 +25,7 @@ func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.Prop
 // NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
 //
 // Deprecated: Do not use.
-func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
+func NewWasmProposalHandlerX(k vmtypes.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
@@ -68,7 +69,7 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 }
 
 //nolint:staticcheck
-func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreCodeProposal) error {
+func handleStoreCodeProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.StoreCodeProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -94,7 +95,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 }
 
 //nolint:staticcheck
-func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContractProposal) error {
+func handleInstantiateProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.InstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 }
 
 //nolint:staticcheck
-func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContract2Proposal) error {
+func handleInstantiate2Proposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.InstantiateContract2Proposal) error {
 	// Validatebasic with proposal
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -155,7 +156,7 @@ func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p ty
 }
 
 //nolint:staticcheck
-func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreAndInstantiateContractProposal) error {
+func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.StoreAndInstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -198,7 +199,7 @@ func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.Contract
 }
 
 //nolint:staticcheck
-func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.MigrateContractProposal) error {
+func handleMigrateProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.MigrateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -222,7 +223,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 }
 
 //nolint:staticcheck
-func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.SudoContractProposal) error {
+func handleSudoProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.SudoContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -244,7 +245,7 @@ func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.Sudo
 }
 
 //nolint:staticcheck
-func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ExecuteContractProposal) error {
+func handleExecuteProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.ExecuteContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -270,7 +271,7 @@ func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.E
 }
 
 //nolint:staticcheck
-func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
+func handleUpdateAdminProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -287,7 +288,7 @@ func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 }
 
 //nolint:staticcheck
-func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ClearAdminProposal) error {
+func handleClearAdminProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -301,7 +302,7 @@ func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 }
 
 //nolint:staticcheck
-func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
+func handlePinCodesProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.PinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -314,7 +315,7 @@ func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.
 }
 
 //nolint:staticcheck
-func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UnpinCodesProposal) error {
+func handleUnpinCodesProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.UnpinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
@@ -327,7 +328,7 @@ func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 }
 
 //nolint:staticcheck
-func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
+func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k vmtypes.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}

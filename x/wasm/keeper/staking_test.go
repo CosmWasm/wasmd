@@ -20,7 +20,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 type StakingInitMsg struct {
@@ -161,7 +161,7 @@ type initInfo struct {
 	stakingKeeper  *stakingkeeper.Keeper
 	distKeeper     distributionkeeper.Keeper
 	wasmKeeper     Keeper
-	contractKeeper wasmtypes.ContractOpsKeeper
+	contractKeeper vmtypes.ContractOpsKeeper
 	bankKeeper     bankkeeper.Keeper
 	faucet         *TestFaucet
 }

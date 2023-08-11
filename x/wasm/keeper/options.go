@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 type optsFn func(*Keeper)
@@ -26,14 +27,14 @@ func (f postOptsFn) apply(keeper *Keeper) {
 
 // WithWasmEngine is an optional constructor parameter to replace the default wasmVM engine with the
 // given one.
-func WithWasmEngine(x types.WasmerEngine) Option {
+func WithWasmEngine(x vmtypes.WasmerEngine) Option {
 	return optsFn(func(k *Keeper) {
 		k.wasmVM = x
 	})
 }
 
 // WithWasmEngineDecorator is an optional constructor parameter to decorate the default wasmVM engine.
-func WithWasmEngineDecorator(d func(old types.WasmerEngine) types.WasmerEngine) Option {
+func WithWasmEngineDecorator(d func(old vmtypes.WasmerEngine) vmtypes.WasmerEngine) Option {
 	return postOptsFn(func(k *Keeper) {
 		k.wasmVM = d(k.wasmVM)
 	})

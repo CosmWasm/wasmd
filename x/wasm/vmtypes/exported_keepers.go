@@ -1,6 +1,7 @@
-package types
+package vmtypes
 
 import (
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
@@ -10,26 +11,26 @@ import (
 
 // ViewKeeper provides read only operations
 type ViewKeeper interface {
-	GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []ContractCodeHistoryEntry
+	GetContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress) []types.ContractCodeHistoryEntry
 	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
 	QueryRaw(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
 	HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
-	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *ContractInfo
-	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, ContractInfo) bool)
+	GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
+	IterateContractInfo(ctx sdk.Context, cb func(sdk.AccAddress, types.ContractInfo) bool)
 	IterateContractsByCreator(ctx sdk.Context, creator sdk.AccAddress, cb func(address sdk.AccAddress) bool)
 	IterateContractsByCode(ctx sdk.Context, codeID uint64, cb func(address sdk.AccAddress) bool)
 	IterateContractState(ctx sdk.Context, contractAddress sdk.AccAddress, cb func(key, value []byte) bool)
-	GetCodeInfo(ctx sdk.Context, codeID uint64) *CodeInfo
-	IterateCodeInfos(ctx sdk.Context, cb func(uint64, CodeInfo) bool)
+	GetCodeInfo(ctx sdk.Context, codeID uint64) *types.CodeInfo
+	IterateCodeInfos(ctx sdk.Context, cb func(uint64, types.CodeInfo) bool)
 	GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error)
 	IsPinnedCode(ctx sdk.Context, codeID uint64) bool
-	GetParams(ctx sdk.Context) Params
+	GetParams(ctx sdk.Context) types.Params
 }
 
 // ContractOpsKeeper contains mutable operations on a contract.
 type ContractOpsKeeper interface {
 	// Create uploads and compiles a WASM contract, returning a short identifier for the contract
-	Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *AccessConfig) (codeID uint64, checksum []byte, err error)
+	Create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig) (codeID uint64, checksum []byte, err error)
 
 	// Instantiate creates an instance of a WASM contract using the classic sequence based address generator
 	Instantiate(
@@ -75,10 +76,10 @@ type ContractOpsKeeper interface {
 	UnpinCode(ctx sdk.Context, codeID uint64) error
 
 	// SetContractInfoExtension updates the extension point data that is stored with the contract info
-	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra ContractInfoExtension) error
+	SetContractInfoExtension(ctx sdk.Context, contract sdk.AccAddress, extra types.ContractInfoExtension) error
 
 	// SetAccessConfig updates the access config of a code id.
-	SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig AccessConfig) error
+	SetAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig) error
 }
 
 // IBCContractKeeper IBC lifecycle event handler

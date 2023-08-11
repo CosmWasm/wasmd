@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 var _ types.QueryServer = &GrpcQuerier{}
@@ -25,12 +26,12 @@ var _ types.QueryServer = &GrpcQuerier{}
 type GrpcQuerier struct {
 	cdc           codec.Codec
 	storeKey      storetypes.StoreKey
-	keeper        types.ViewKeeper
+	keeper        vmtypes.ViewKeeper
 	queryGasLimit sdk.Gas
 }
 
 // NewGrpcQuerier constructor
-func NewGrpcQuerier(cdc codec.Codec, storeKey storetypes.StoreKey, keeper types.ViewKeeper, queryGasLimit sdk.Gas) *GrpcQuerier {
+func NewGrpcQuerier(cdc codec.Codec, storeKey storetypes.StoreKey, keeper vmtypes.ViewKeeper, queryGasLimit sdk.Gas) *GrpcQuerier {
 	return &GrpcQuerier{cdc: cdc, storeKey: storeKey, keeper: keeper, queryGasLimit: queryGasLimit}
 }
 
@@ -47,7 +48,7 @@ func (q GrpcQuerier) ContractInfo(c context.Context, req *types.QueryContractInf
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+		return nil, vmtypes.ErrNoSuchContractFn(contractAddr.String()).
 			Wrapf("address %s", contractAddr.String())
 	}
 	return rsp, nil
@@ -123,7 +124,7 @@ func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+		return nil, vmtypes.ErrNoSuchContractFn(contractAddr.String()).
 			Wrapf("address %s", contractAddr.String())
 	}
 
@@ -159,7 +160,7 @@ func (q GrpcQuerier) RawContractState(c context.Context, req *types.QueryRawCont
 	}
 
 	if !q.keeper.HasContractInfo(ctx, contractAddr) {
-		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+		return nil, vmtypes.ErrNoSuchContractFn(contractAddr.String()).
 			Wrapf("address %s", contractAddr.String())
 	}
 	rsp := q.keeper.QueryRaw(ctx, contractAddr, req.QueryData)
@@ -204,7 +205,7 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 	case err != nil:
 		return nil, err
 	case bz == nil:
-		return nil, types.ErrNoSuchContractFn(contractAddr.String()).
+		return nil, vmtypes.ErrNoSuchContractFn(contractAddr.String()).
 			Wrapf("address %s", contractAddr.String())
 	}
 	return &types.QuerySmartContractStateResponse{Data: bz}, nil
@@ -222,7 +223,7 @@ func (q GrpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 	case err != nil:
 		return nil, err
 	case rsp == nil:
-		return nil, types.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
+		return nil, vmtypes.ErrNoSuchCodeFn(req.CodeId).Wrapf("code id %d", req.CodeId)
 	}
 	return &types.QueryCodeResponse{
 		CodeInfoResponse: rsp.CodeInfoResponse,
@@ -258,10 +259,10 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	return &types.QueryCodesResponse{CodeInfos: r, Pagination: pageRes}, nil
 }
 
-func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKeeper) (*types.QueryContractInfoResponse, error) {
+func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper vmtypes.ViewKeeper) (*types.QueryContractInfoResponse, error) {
 	info := keeper.GetContractInfo(ctx, addr)
 	if info == nil {
-		return nil, types.ErrNoSuchContractFn(addr.String()).
+		return nil, vmtypes.ErrNoSuchContractFn(addr.String()).
 			Wrapf("address %s", addr.String())
 	}
 	return &types.QueryContractInfoResponse{
@@ -270,7 +271,7 @@ func queryContractInfo(ctx sdk.Context, addr sdk.AccAddress, keeper types.ViewKe
 	}, nil
 }
 
-func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.QueryCodeResponse, error) {
+func queryCode(ctx sdk.Context, codeID uint64, keeper vmtypes.ViewKeeper) (*types.QueryCodeResponse, error) {
 	if codeID == 0 {
 		return nil, nil
 	}

@@ -21,6 +21,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 type QueryHandler struct {
@@ -65,7 +66,7 @@ func (q QueryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) (
 	}
 
 	// special mappings to wasmvm system error (which are not redacted)
-	var wasmvmErr types.WasmVMErrorable
+	var wasmvmErr vmtypes.WasmVMErrorable
 	if ok := errors.As(err, &wasmvmErr); ok {
 		err = wasmvmErr.ToWasmVMError()
 	}
@@ -563,7 +564,7 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			info := k.GetContractInfo(ctx, addr)
 			if info == nil {
-				return nil, types.ErrNoSuchContractFn(contractAddr).
+				return nil, vmtypes.ErrNoSuchContractFn(contractAddr).
 					Wrapf("address %s", contractAddr)
 			}
 			res := wasmvmtypes.ContractInfoResponse{
@@ -580,7 +581,7 @@ func WasmQuerier(k wasmQueryKeeper) func(ctx sdk.Context, request *wasmvmtypes.W
 			}
 			info := k.GetCodeInfo(ctx, request.CodeInfo.CodeID)
 			if info == nil {
-				return nil, types.ErrNoSuchCodeFn(request.CodeInfo.CodeID).
+				return nil, vmtypes.ErrNoSuchCodeFn(request.CodeInfo.CodeID).
 					Wrapf("code id %d", request.CodeInfo.CodeID)
 			}
 

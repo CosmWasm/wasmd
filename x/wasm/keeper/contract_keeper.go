@@ -4,9 +4,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
-var _ types.ContractOpsKeeper = PermissionedKeeper{}
+var _ vmtypes.ContractOpsKeeper = PermissionedKeeper{}
 
 // decoratedKeeper contains a subset of the wasm keeper that are already or can be guarded by an authorization policy in the future
 type decoratedKeeper interface {

@@ -16,6 +16,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 func TestCountTxDecorator(t *testing.T) {
@@ -37,7 +38,7 @@ func TestCountTxDecorator(t *testing.T) {
 				t.Helper()
 			},
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				gotCounter, ok := types.TXCounter(ctx)
+				gotCounter, ok := vmtypes.TXCounter(ctx)
 				require.True(t, ok)
 				assert.Equal(t, uint32(0), gotCounter)
 				// and stored +1
@@ -53,7 +54,7 @@ func TestCountTxDecorator(t *testing.T) {
 				ctx.MultiStore().GetKVStore(keyWasm).Set(types.TXCounterPrefix, bz)
 			},
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				gotCounter, ok := types.TXCounter(ctx)
+				gotCounter, ok := vmtypes.TXCounter(ctx)
 				require.True(t, ok)
 				assert.Equal(t, uint32(1<<24+2), gotCounter)
 				// and stored +1
@@ -70,7 +71,7 @@ func TestCountTxDecorator(t *testing.T) {
 				ctx.MultiStore().GetKVStore(keyWasm).Set(types.TXCounterPrefix, bz)
 			},
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				gotCounter, ok := types.TXCounter(ctx)
+				gotCounter, ok := vmtypes.TXCounter(ctx)
 				require.True(t, ok)
 				assert.Equal(t, uint32(0), gotCounter)
 				// and stored +1
@@ -85,7 +86,7 @@ func TestCountTxDecorator(t *testing.T) {
 			},
 			simulate: true,
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				_, ok := types.TXCounter(ctx)
+				_, ok := vmtypes.TXCounter(ctx)
 				assert.False(t, ok)
 				require.True(t, simulate)
 				// and not stored

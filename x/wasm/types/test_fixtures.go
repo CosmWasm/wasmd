@@ -2,18 +2,41 @@ package types
 
 import (
 	"bytes"
+	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/rand"
-
-	wasmvm "github.com/CosmWasm/wasmvm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 //go:embed testdata/reflect.wasm
 var reflectWasmCode []byte
+
+// Copied from wasmvm:
+// CreateChecksum performs the hashing of Wasm bytes to obtain the CosmWasm checksum.
+//
+// Ony Wasm blobs are allowed as inputs and a magic byte check will be performed
+// to avoid accidental misusage.
+type Checksum []byte
+
+func CreateChecksum(wasm []byte) (Checksum, error) {
+	if len(wasm) == 0 {
+		return Checksum{}, fmt.Errorf("Wasm bytes nil or empty")
+	}
+	if len(wasm) < 4 {
+		return Checksum{}, fmt.Errorf("Wasm bytes shorter than 4 bytes")
+	}
+	// magic number for Wasm is "\0asm"
+	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-module
+	if !bytes.Equal(wasm[:4], []byte("\x00\x61\x73\x6D")) {
+		return Checksum{}, fmt.Errorf("Wasm bytes do not not start with Wasm magic number")
+	}
+	hash := sha256.Sum256(wasm)
+	return Checksum(hash[:]), nil
+}
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	const (
@@ -68,7 +91,7 @@ func CodeFixture(mutators ...func(*Code)) Code {
 }
 
 func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
-	codeHash, err := wasmvm.CreateChecksum(reflectWasmCode)
+	codeHash, err := CreateChecksum(reflectWasmCode)
 	if err != nil {
 		panic(err)
 	}
@@ -142,7 +165,7 @@ func ContractCodeHistoryEntryFixture(mutators ...func(*ContractCodeHistoryEntry)
 
 func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 	return func(info *CodeInfo) {
-		codeHash, err := wasmvm.CreateChecksum(wasmCode)
+		codeHash, err := CreateChecksum(wasmCode)
 		if err != nil {
 			panic(err)
 		}

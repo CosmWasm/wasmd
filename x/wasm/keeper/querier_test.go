@@ -26,6 +26,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 func TestQueryAllContractState(t *testing.T) {
@@ -55,7 +56,7 @@ func TestQueryAllContractState(t *testing.T) {
 		},
 		"query all with unknown address": {
 			srcQuery: &types.QueryAllContractStateRequest{Address: randomAddr},
-			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
+			expErr:   vmtypes.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 		"with pagination offset": {
 			srcQuery: &types.QueryAllContractStateRequest{
@@ -148,7 +149,7 @@ func TestQuerySmartContractState(t *testing.T) {
 		},
 		"query smart with unknown address": {
 			srcQuery: &types.QuerySmartContractStateRequest{Address: randomAddr, QueryData: []byte(`{"verifier":{}}`)},
-			expErr:   types.ErrNoSuchContractFn(randomAddr),
+			expErr:   vmtypes.ErrNoSuchContractFn(randomAddr),
 		},
 	}
 	for msg, spec := range specs {
@@ -250,7 +251,7 @@ func TestQueryRawContractState(t *testing.T) {
 		},
 		"query raw with unknown address": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: randomAddr, QueryData: []byte("foo")},
-			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
+			expErr:   vmtypes.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 	}
 	for msg, spec := range specs {

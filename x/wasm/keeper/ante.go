@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 // CountTXDecorator ante handler to count the tx position in a block.
@@ -42,7 +43,7 @@ func (a CountTXDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, 
 	// store next counter value for current height
 	store.Set(types.TXCounterPrefix, encodeHeightCounter(currentHeight, txCounter+1))
 
-	return next(types.WithTXCounter(ctx, txCounter), tx, simulate)
+	return next(vmtypes.WithTXCounter(ctx, txCounter), tx, simulate)
 }
 
 func encodeHeightCounter(height int64, counter uint32) []byte {

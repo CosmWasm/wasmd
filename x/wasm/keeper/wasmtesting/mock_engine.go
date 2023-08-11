@@ -10,9 +10,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
-var _ types.WasmerEngine = &MockWasmer{}
+var _ vmtypes.WasmerEngine = &MockWasmer{}
 
 // MockWasmer implements types.WasmerEngine for testing purpose. One or multiple messages can be stubbed.
 // Without a stub function a panic is thrown.

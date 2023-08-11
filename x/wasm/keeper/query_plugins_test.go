@@ -35,6 +35,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 func TestIBCQuerier(t *testing.T) {
@@ -667,19 +668,19 @@ func TestQueryErrors(t *testing.T) {
 	}{
 		"no error": {},
 		"no such contract": {
-			src:    types.ErrNoSuchContractFn("contract-addr"),
+			src:    vmtypes.ErrNoSuchContractFn("contract-addr"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(vmtypes.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
-			src:    types.ErrNoSuchCodeFn(123),
+			src:    vmtypes.ErrNoSuchCodeFn(123),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(vmtypes.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}

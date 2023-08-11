@@ -17,6 +17,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 func TestOnRecvPacket(t *testing.T) {
@@ -196,10 +197,10 @@ func IBCPacketFixture(mutators ...func(p *channeltypes.Packet)) channeltypes.Pac
 	return r
 }
 
-var _ types.IBCContractKeeper = &IBCContractKeeperMock{}
+var _ vmtypes.IBCContractKeeper = &IBCContractKeeperMock{}
 
 type IBCContractKeeperMock struct {
-	types.IBCContractKeeper
+	vmtypes.IBCContractKeeper
 	OnRecvPacketFn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
 }
 

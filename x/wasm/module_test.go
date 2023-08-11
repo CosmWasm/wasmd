@@ -28,6 +28,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 type mockSubspace struct {
@@ -579,7 +580,7 @@ func assertCodeBytes(t *testing.T, q *baseapp.GRPCQueryRouter, ctx sdk.Context, 
 	path := "/cosmwasm.wasm.v1.Query/Code"
 	resp, err := q.Route(path)(ctx, abci.RequestQuery{Path: path, Data: bz})
 	if len(expectedBytes) == 0 {
-		require.Equal(t, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID).Error(), err.Error())
+		require.Equal(t, vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID).Error(), err.Error())
 		return
 	}
 	require.NoError(t, err)

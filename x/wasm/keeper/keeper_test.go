@@ -37,6 +37,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 //go:embed testdata/hackatom.wasm
@@ -704,7 +705,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 
 	const nonExistingCodeID = 9999
 	addr, _, err := keepers.ContractKeeper.Instantiate(ctx, nonExistingCodeID, creator, nil, initMsgBz, "demo contract 2", nil)
-	require.Equal(t, types.ErrNoSuchCodeFn(nonExistingCodeID).Wrapf("code id %d", nonExistingCodeID).Error(), err.Error())
+	require.Equal(t, vmtypes.ErrNoSuchCodeFn(nonExistingCodeID).Wrapf("code id %d", nonExistingCodeID).Error(), err.Error())
 	require.Nil(t, addr)
 }
 
@@ -985,7 +986,7 @@ func TestExecuteWithNonExistingAddress(t *testing.T) {
 	// unauthorized - trialCtx so we don't change state
 	nonExistingAddress := RandomAccountAddress(t)
 	_, err := keeper.Execute(ctx, nonExistingAddress, creator, []byte(`{}`), nil)
-	require.Equal(t, types.ErrNoSuchContractFn(nonExistingAddress.String()).Wrapf("address %s", nonExistingAddress.String()).Error(), err.Error())
+	require.Equal(t, vmtypes.ErrNoSuchContractFn(nonExistingAddress.String()).Wrapf("address %s", nonExistingAddress.String()).Error(), err.Error())
 }
 
 func TestExecuteWithPanic(t *testing.T) {

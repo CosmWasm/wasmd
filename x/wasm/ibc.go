@@ -16,6 +16,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 var _ porttypes.IBCModule = IBCHandler{}
@@ -27,12 +28,12 @@ type appVersionGetter interface {
 }
 
 type IBCHandler struct {
-	keeper           types.IBCContractKeeper
+	keeper           vmtypes.IBCContractKeeper
 	channelKeeper    types.ChannelKeeper
 	appVersionGetter appVersionGetter
 }
 
-func NewIBCHandler(k types.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
+func NewIBCHandler(k vmtypes.IBCContractKeeper, ck types.ChannelKeeper, vg appVersionGetter) IBCHandler {
 	return IBCHandler{keeper: k, channelKeeper: ck, appVersionGetter: vg}
 }
 

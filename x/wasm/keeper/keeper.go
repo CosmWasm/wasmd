@@ -28,6 +28,7 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm/vmtypes"
 )
 
 // contractMemoryLimit is the memory limit of each contract execution (in MiB)
@@ -85,7 +86,7 @@ type Keeper struct {
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
 	capabilityKeeper      types.CapabilityKeeper
-	wasmVM                types.WasmerEngine
+	wasmVM                vmtypes.WasmerEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
 	messenger             Messenger
@@ -251,7 +252,7 @@ func (k Keeper) instantiate(
 
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
-		return nil, nil, types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+		return nil, nil, vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 	if !authPolicy.CanInstantiateContract(codeInfo.InstantiateConfig, creator) {
 		return nil, nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not instantiate")
@@ -301,13 +302,13 @@ func (k Keeper) instantiate(
 	}
 
 	// prepare params for contract instantiate call
-	env := types.NewEnv(ctx, contractAddress)
-	info := types.NewInfo(creator, deposit)
+	env := vmtypes.NewEnv(ctx, contractAddress)
+	info := vmtypes.NewInfo(creator, deposit)
 
 	// create prefixed data store
 	// 0x03 | BuildContractAddressClassic (sdk.AccAddress)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
-	vmStore := types.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
+	vmStore := vmtypes.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -378,8 +379,8 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress,
 		}
 	}
 
-	env := types.NewEnv(ctx, contractAddress)
-	info := types.NewInfo(caller, coins)
+	env := vmtypes.NewEnv(ctx, contractAddress)
+	info := vmtypes.NewInfo(caller, coins)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -448,13 +449,13 @@ func (k Keeper) migrate(
 		contractInfo.IBCPortID = ibcPort
 	}
 
-	env := types.NewEnv(ctx, contractAddress)
+	env := vmtypes.NewEnv(ctx, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
-	vmStore := types.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
+	vmStore := vmtypes.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
 	gas := k.runtimeGasForContract(ctx)
 	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
@@ -502,7 +503,7 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	sudoSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, contractInfo.CodeID), len(msg))
 	ctx.GasMeter().ConsumeGas(sudoSetupCosts, "Loading CosmWasm module: sudo")
 
-	env := types.NewEnv(ctx, contractAddress)
+	env := vmtypes.NewEnv(ctx, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -538,7 +539,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	replyCosts := k.gasRegister.ReplyCosts(true, reply)
 	ctx.GasMeter().ConsumeGas(replyCosts, "Loading CosmWasm module: reply")
 
-	env := types.NewEnv(ctx, contractAddress)
+	env := vmtypes.NewEnv(ctx, contractAddress)
 
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
@@ -703,7 +704,7 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddr)
 
-	env := types.NewEnv(ctx, contractAddr)
+	env := vmtypes.NewEnv(ctx, contractAddr)
 	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if qErr != nil {
@@ -723,7 +724,7 @@ func checkAndIncreaseQueryStackSize(ctx sdk.Context, maxQueryStackSize uint32) (
 
 	// did we go too far?
 	if queryStackSize > maxQueryStackSize {
-		return ctx, types.ErrExceedMaxQueryStackSize
+		return ctx, vmtypes.ErrExceedMaxQueryStackSize
 	}
 
 	// set updated stack size
@@ -747,7 +748,7 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 
 	contractBz := store.Get(types.GetContractAddressKey(contractAddress))
 	if contractBz == nil {
-		return types.ContractInfo{}, types.CodeInfo{}, nil, types.ErrNoSuchContractFn(contractAddress.String()).
+		return types.ContractInfo{}, types.CodeInfo{}, nil, vmtypes.ErrNoSuchContractFn(contractAddress.String()).
 			Wrapf("address %s", contractAddress.String())
 	}
 	var contractInfo types.ContractInfo
@@ -755,14 +756,14 @@ func (k Keeper) contractInstance(ctx sdk.Context, contractAddress sdk.AccAddress
 
 	codeInfoBz := store.Get(types.GetCodeKey(contractInfo.CodeID))
 	if codeInfoBz == nil {
-		return contractInfo, types.CodeInfo{}, nil, types.ErrNoSuchCodeFn(contractInfo.CodeID).
+		return contractInfo, types.CodeInfo{}, nil, vmtypes.ErrNoSuchCodeFn(contractInfo.CodeID).
 			Wrapf("code id %d", contractInfo.CodeID)
 	}
 	var codeInfo types.CodeInfo
 	k.cdc.MustUnmarshal(codeInfoBz, &codeInfo)
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey)
-	return contractInfo, codeInfo, types.NewStoreAdapter(prefixStore), nil
+	return contractInfo, codeInfo, vmtypes.NewStoreAdapter(prefixStore), nil
 }
 
 func (k Keeper) GetContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo {
@@ -878,7 +879,7 @@ func (k Keeper) GetByteCode(ctx sdk.Context, codeID uint64) ([]byte, error) {
 func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
-		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+		return vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 
 	if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
@@ -899,7 +900,7 @@ func (k Keeper) pinCode(ctx sdk.Context, codeID uint64) error {
 func (k Keeper) unpinCode(ctx sdk.Context, codeID uint64) error {
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {
-		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+		return vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 	if err := k.wasmVM.Unpin(codeInfo.CodeHash); err != nil {
 		return errorsmod.Wrap(types.ErrUnpinContractFailed, err.Error())
@@ -931,7 +932,7 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 		codeID := types.ParsePinnedCodeIndex(iter.Key())
 		codeInfo := k.GetCodeInfo(ctx, codeID)
 		if codeInfo == nil {
-			return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+			return vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 		}
 		if err := k.wasmVM.Pin(codeInfo.CodeHash); err != nil {
 			return errorsmod.Wrap(types.ErrPinContractFailed, err.Error())
@@ -944,7 +945,7 @@ func (k Keeper) InitializePinnedCodes(ctx sdk.Context) error {
 func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAddress, ext types.ContractInfoExtension) error {
 	info := k.GetContractInfo(ctx, contractAddr)
 	if info == nil {
-		return types.ErrNoSuchContractFn(contractAddr.String()).
+		return vmtypes.ErrNoSuchContractFn(contractAddr.String()).
 			Wrapf("address %s", contractAddr.String())
 	}
 	if err := info.SetExtension(ext); err != nil {
@@ -958,7 +959,7 @@ func (k Keeper) setContractInfoExtension(ctx sdk.Context, contractAddr sdk.AccAd
 func (k Keeper) setAccessConfig(ctx sdk.Context, codeID uint64, caller sdk.AccAddress, newConfig types.AccessConfig, authz types.AuthorizationPolicy) error {
 	info := k.GetCodeInfo(ctx, codeID)
 	if info == nil {
-		return types.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
+		return vmtypes.ErrNoSuchCodeFn(codeID).Wrapf("code id %d", codeID)
 	}
 	isSubset := newConfig.Permission.IsSubset(k.getInstantiateAccessConfig(ctx))
 	if !authz.CanModifyCodeAccessConfig(sdk.MustAccAddressFromBech32(info.Creator), caller, isSubset) {
@@ -1065,7 +1066,7 @@ func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uin
 
 func (k Keeper) importContract(ctx sdk.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, entries []types.ContractCodeHistoryEntry) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
-		return types.ErrNoSuchCodeFn(c.CodeID).Wrapf("code id %d", c.CodeID)
+		return vmtypes.ErrNoSuchCodeFn(c.CodeID).Wrapf("code id %d", c.CodeID)
 	}
 	if k.HasContractInfo(ctx, contractAddr) {
 		return errorsmod.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
