@@ -125,7 +125,7 @@ distclean: clean
 ### Testing
 
 test: test-unit
-test-all: test-race test-cover test-system
+test-all: test-race test-cover test-system test-types
 
 test-unit:
 	@VERSION=$(VERSION) go test -mod=readonly -tags='ledger test_ledger_mock' ./...
@@ -135,6 +135,9 @@ test-race:
 
 test-cover:
 	@go test -mod=readonly -timeout 30m -race -coverprofile=coverage.txt -covermode=atomic -tags='ledger test_ledger_mock' ./...
+
+test-types:
+	@if [ "$(cd x/wasm/types && go mod graph | grep wasmvm)" ] ; then echo "types must not depend on wasmvm" ; exit 1 ; fi
 
 benchmark:
 	@go test -mod=readonly -bench=. ./...
