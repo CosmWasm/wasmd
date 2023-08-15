@@ -40,7 +40,6 @@ require (
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.8.0
-	github.com/spf13/viper v1.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
 )
 
