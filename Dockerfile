@@ -29,7 +29,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/wasmd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.15
+FROM alpine:3.16
 
 COPY --from=go-builder /code/build/wasmd /usr/bin/wasmd
 
