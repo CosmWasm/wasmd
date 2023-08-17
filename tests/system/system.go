@@ -7,13 +7,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -33,7 +33,7 @@ var workDir string
 
 // SystemUnderTest blockchain provisioning
 type SystemUnderTest struct {
-	execBinary        string
+	ExecBinary        string
 	blockListener     *EventListener
 	currentHeight     int64
 	chainID           string
@@ -49,16 +49,21 @@ type SystemUnderTest struct {
 	out               io.Writer
 	verbose           bool
 	ChainStarted      bool
+	projectName       string
 	dirty             bool // requires full reset when marked dirty
+
+	pidsLock sync.RWMutex
+	pids     []int
 }
 
 func NewSystemUnderTest(execBinary string, verbose bool, nodesCount int, blockTime time.Duration) *SystemUnderTest {
 	if execBinary == "" {
 		panic("executable binary name must not be empty")
 	}
+	xxx := "wasmd" // todo: extract unversioned name from ExecBinary
 	return &SystemUnderTest{
 		chainID:           "testing",
-		execBinary:        execBinary,
+		ExecBinary:        execBinary,
 		outputDir:         "./testnet",
 		blockTime:         blockTime,
 		rpcAddr:           "tcp://localhost:26657",
@@ -68,6 +73,7 @@ func NewSystemUnderTest(execBinary string, verbose bool, nodesCount int, blockTi
 		out:               os.Stdout,
 		verbose:           verbose,
 		minGasPrice:       fmt.Sprintf("0.000001%s", sdk.DefaultBondDenom),
+		projectName:       xxx,
 	}
 }
 
@@ -89,9 +95,9 @@ func (s *SystemUnderTest) SetupChain() {
 		"--starting-ip-address", "", // empty to use host systems
 		"--single-host",
 	}
-	fmt.Printf("+++ %s %s", s.execBinary, strings.Join(args, " "))
+	fmt.Printf("+++ %s %s\n", s.ExecBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
-		locateExecutable(s.execBinary),
+		locateExecutable(s.ExecBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -104,7 +110,7 @@ func (s *SystemUnderTest) SetupChain() {
 
 	// modify genesis with system test defaults
 	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json")
-	genesisBz, err := ioutil.ReadFile(src)
+	genesisBz, err := os.ReadFile(src)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load genesis: %s", err))
 	}
@@ -136,7 +142,7 @@ func (s *SystemUnderTest) StartChain(t *testing.T, xargs ...string) {
 	t.Helper()
 	s.Log("Start chain\n")
 	s.ChainStarted = true
-	s.forEachNodesExecAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
+	s.startNodesAsync(t, append([]string{"start", "--trace", "--log_level=info"}, xargs...)...)
 
 	s.AwaitNodeUp(t, s.rpcAddr)
 
@@ -217,6 +223,12 @@ func isLogNoise(text string) bool {
 	return false
 }
 
+func (s *SystemUnderTest) AwaitChainStopped() {
+	for s.anyNodeRunning() {
+		time.Sleep(s.blockTime)
+	}
+}
+
 // AwaitNodeUp ensures the node is running
 func (s *SystemUnderTest) AwaitNodeUp(t *testing.T, rpcAddr string) {
 	t.Helper()
@@ -265,29 +277,41 @@ func (s *SystemUnderTest) StopChain() {
 	}
 	s.cleanupFn = nil
 	// send SIGTERM
-	cmd := exec.Command(locateExecutable("pkill"), "-15", s.execBinary) //nolint:gosec
-	cmd.Dir = workDir
-	if _, err := cmd.CombinedOutput(); err != nil {
-		s.Logf("failed to stop chain: %s\n", err)
+	s.pidsLock.RLock()
+	for _, pid := range s.pids {
+		p, err := os.FindProcess(pid)
+		if err != nil {
+			continue
+		}
+		if err := p.Signal(syscall.Signal(15)); err == nil {
+			s.Logf("failed to stop node with pid %d: %s\n", pid, err)
+		}
 	}
-
+	s.pidsLock.RUnlock()
 	var shutdown bool
 	for timeout := time.NewTimer(500 * time.Millisecond).C; !shutdown; {
 		select {
 		case <-timeout:
 			s.Log("killing nodes now")
-			cmd = exec.Command(locateExecutable("pkill"), "-9", s.execBinary) //nolint:gosec
-			cmd.Dir = workDir
-			if _, err := cmd.CombinedOutput(); err != nil {
-				s.Logf("failed to kill process: %s\n", err)
+			s.pidsLock.RLock()
+			for _, pid := range s.pids {
+				p, err := os.FindProcess(pid)
+				if err != nil {
+					continue
+				}
+				if err := p.Kill(); err == nil {
+					s.Logf("failed to kill node with pid %d: %s\n", pid, err)
+				}
 			}
+			s.pidsLock.RUnlock()
 			shutdown = true
 		default:
-			if err := exec.Command(locateExecutable("pgrep"), s.execBinary).Run(); err != nil { //nolint:gosec
-				shutdown = true
-			}
+			shutdown = shutdown || s.anyNodeRunning()
 		}
 	}
+	s.pidsLock.Lock()
+	s.pids = nil
+	s.pidsLock.Unlock()
 	s.ChainStarted = false
 }
 
@@ -315,6 +339,30 @@ func (s SystemUnderTest) BuildNewBinary() {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error %#v : output: %s", err, string(out)))
+	}
+}
+
+// AwaitBlockHeight blocks until te target height is reached. An optional timout parameter can be passed to abort early
+func (s *SystemUnderTest) AwaitBlockHeight(t *testing.T, targetHeight int64, timeout ...time.Duration) {
+	t.Helper()
+	require.Greater(t, targetHeight, s.currentHeight)
+	var maxWaitTime time.Duration
+	if len(timeout) != 0 {
+		maxWaitTime = timeout[0]
+	} else {
+		maxWaitTime = time.Duration(targetHeight-s.currentHeight+3) * s.blockTime
+	}
+	abort := time.NewTimer(maxWaitTime).C
+	for {
+		select {
+		case <-abort:
+			t.Fatalf("Timeout - block %d not reached within %s", targetHeight, maxWaitTime)
+			return
+		default:
+			if current := s.AwaitNextBlock(t); current == targetHeight {
+				return
+			}
+		}
 	}
 }
 
@@ -455,9 +503,9 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 		result[i] = make([]string, len(cmds))
 		for j, xargs := range cmds {
 			xargs = append(xargs, "--home", home)
-			s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(xargs, " "))
+			s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(xargs, " "))
 			cmd := exec.Command( //nolint:gosec
-				locateExecutable(s.execBinary),
+				locateExecutable(s.ExecBinary),
 				xargs...,
 			)
 			cmd.Dir = workDir
@@ -470,22 +518,40 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 	return result
 }
 
-// forEachNodesExecAsync runs the given app cli command for all cluster nodes and returns without waiting
-func (s *SystemUnderTest) forEachNodesExecAsync(t *testing.T, xargs ...string) []func() error {
-	r := make([]func() error, s.nodesCount)
+// startNodesAsync runs the given app cli command for all cluster nodes and returns without waiting
+func (s *SystemUnderTest) startNodesAsync(t *testing.T, xargs ...string) {
 	s.withEachNodeHome(func(i int, home string) {
 		args := append(xargs, "--home", home) //nolint:gocritic
-		s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
+		s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 		cmd := exec.Command( //nolint:gosec
-			locateExecutable(s.execBinary),
+			locateExecutable(s.ExecBinary),
 			args...,
 		)
 		cmd.Dir = workDir
 		s.watchLogs(i, cmd)
 		require.NoError(t, cmd.Start(), "node %d", i)
-		r[i] = cmd.Wait
+
+		s.pidsLock.Lock()
+		s.pids = append(s.pids, cmd.Process.Pid)
+		s.pidsLock.Unlock()
+
+		// cleanup when stopped
+		go func() {
+			_ = cmd.Wait()
+			s.pidsLock.Lock()
+			defer s.pidsLock.Unlock()
+			if len(s.pids) == 0 {
+				return
+			}
+			newPids := make([]int, 0, len(s.pids)-1)
+			for _, p := range s.pids {
+				if p != cmd.Process.Pid {
+					newPids = append(newPids, p)
+				}
+			}
+			s.pids = newPids
+		}()
 	})
-	return r
 }
 
 func (s SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
@@ -496,7 +562,7 @@ func (s SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
 
 // nodePath returns the path of the node within the work dir. not absolute
 func (s SystemUnderTest) nodePath(i int) string {
-	return fmt.Sprintf("%s/node%d/%s", s.outputDir, i, s.execBinary)
+	return fmt.Sprintf("%s/node%d/%s", s.outputDir, i, s.projectName)
 }
 
 func (s SystemUnderTest) Log(msg string) {
@@ -554,9 +620,9 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 	// prepare new node
 	moniker := fmt.Sprintf("node%d", nodeNumber)
 	args := []string{"init", moniker, "--home", nodePath, "--overwrite"}
-	s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
+	s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
-		locateExecutable(s.execBinary),
+		locateExecutable(s.ExecBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -591,9 +657,9 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		"--log_level=info",
 		"--home", nodePath,
 	}
-	s.Logf("Execute `%s %s`\n", s.execBinary, strings.Join(args, " "))
+	s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 	cmd = exec.Command( //nolint:gosec
-		locateExecutable(s.execBinary),
+		locateExecutable(s.ExecBinary),
 		args...,
 	)
 	cmd.Dir = workDir
@@ -605,6 +671,13 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 // NewEventListener constructor for Eventlistener with system rpc address
 func (s *SystemUnderTest) NewEventListener(t *testing.T) *EventListener {
 	return NewEventListener(t, s.rpcAddr)
+}
+
+// is any process let running?
+func (s *SystemUnderTest) anyNodeRunning() bool {
+	s.pidsLock.RLock()
+	defer s.pidsLock.RUnlock()
+	return len(s.pids) != 0
 }
 
 type Node struct {
@@ -812,7 +885,7 @@ func copyFilesInDir(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("mkdirs: %s", err)
 	}
-	fs, err := ioutil.ReadDir(src)
+	fs, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("read dir: %s", err)
 	}
@@ -828,7 +901,7 @@ func copyFilesInDir(src, dest string) error {
 }
 
 func storeTempFile(t *testing.T, content []byte) *os.File {
-	out, err := ioutil.TempFile(t.TempDir(), "genesis")
+	out, err := os.CreateTemp(t.TempDir(), "genesis")
 	require.NoError(t, err)
 	_, err = io.Copy(out, bytes.NewReader(content))
 	require.NoError(t, err)
