@@ -21,7 +21,7 @@ func TestStakeUnstake(t *testing.T) {
 	// add genesis account with some tokens
 	account1Addr := cli.AddKey("account1")
 	sut.ModifyGenesisCLI(t,
-		[]string{"genesis", "add-genesis-account", account1Addr, "100000000stake"},
+		[]string{"genesis", "add-genesis-account", account1Addr, "10000000stake"},
 	)
 
 	sut.StartChain(t)

@@ -47,7 +47,7 @@ type WasmdCli struct {
 func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
 	return NewWasmdCLIx(
 		t,
-		sut.execBinary,
+		sut.ExecBinary,
 		sut.rpcAddr,
 		sut.chainID,
 		sut.AwaitNextBlock,

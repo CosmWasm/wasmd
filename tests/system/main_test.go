@@ -19,8 +19,9 @@ import (
 )
 
 var (
-	sut     *SystemUnderTest
-	verbose bool
+	sut            *SystemUnderTest
+	verbose        bool
+	execBinaryName string
 )
 
 func TestMain(m *testing.M) {
@@ -50,6 +51,7 @@ func TestMain(m *testing.M) {
 	if *execBinary == "" {
 		panic("executable binary name must not be empty")
 	}
+	execBinaryName = *execBinary
 	sut = NewSystemUnderTest(*execBinary, verbose, *nodesCount, *blockTime)
 	if *rebuild {
 		sut.BuildNewBinary()

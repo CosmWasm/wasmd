@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -30,4 +31,13 @@ func GetGenesisBalance(rawGenesis []byte, addr string) sdk.Coins {
 		}
 	}
 	return r
+}
+
+func SetGovVotingPeriod(t *testing.T, period time.Duration) GenesisMutator {
+	return func(genesis []byte) []byte {
+		t.Helper()
+		state, err := sjson.SetRawBytes(genesis, "app_state.gov.params.voting_period", []byte(fmt.Sprintf("%q", period.String())))
+		require.NoError(t, err)
+		return state
+	}
 }
