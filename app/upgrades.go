@@ -31,7 +31,7 @@ import (
 // NOTE: This upgrade defines a reference implementation of what an upgrade
 // could look like when an application is migrating from Cosmos SDK version
 // v0.46.x to v0.47.x.
-const UpgradeName = "v046-to-v047"
+const UpgradeName = "my chain upgrade"
 
 func (app WasmApp) RegisterUpgradeHandlers() {
 	// Set param key table for params module migration
