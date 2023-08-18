@@ -35,7 +35,7 @@ func TestStakeUnstake(t *testing.T) {
 	RequireTxSuccess(t, rsp)
 
 	t.Log(cli.QueryBalance(account1Addr, "stake"))
-	assert.Equal(t, int64(99989999), cli.QueryBalance(account1Addr, "stake"))
+	assert.Equal(t, int64(9989999), cli.QueryBalance(account1Addr, "stake"))
 
 	rsp = cli.CustomQuery("q", "staking", "delegation", account1Addr, valAddr)
 	assert.Equal(t, "10000", gjson.Get(rsp, "balance.amount").String())
