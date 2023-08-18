@@ -314,8 +314,8 @@ func (k Keeper) instantiate(
 
 	// instantiate wasm contract
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	res, gasReport, err := k.wasmVM.Instantiate(codeInfo.CodeHash, env, info, initMsg, vmStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(types.ErrInstantiateFailed, err.Error())
 	}
@@ -384,8 +384,8 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress,
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	res, gasReport, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
@@ -456,8 +456,8 @@ func (k Keeper) migrate(
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	vmStore := types.NewStoreAdapter(prefix.NewStore(ctx.KVStore(k.storeKey), prefixStoreKey))
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	res, gasReport, err := k.wasmVM.Migrate(newCodeInfo.CodeHash, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrMigrationFailed, err.Error())
 	}
@@ -507,8 +507,8 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
-	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	res, gasReport, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
@@ -544,8 +544,8 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
 
-	res, gasUsed, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	res, gasReport, execErr := k.wasmVM.Reply(codeInfo.CodeHash, env, reply, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
@@ -704,8 +704,8 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	env := types.NewEnv(ctx, contractAddr)
-	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
-	k.consumeRuntimeGas(ctx, gasUsed)
+	queryResult, gasReport, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
+	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
 	if qErr != nil {
 		return nil, errorsmod.Wrap(types.ErrQueryFailed, qErr.Error())
 	}

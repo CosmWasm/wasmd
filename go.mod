@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.20
 
 require (
-	github.com/CosmWasm/wasmvm v1.3.0
+	github.com/CosmWasm/wasmvm v1.3.1-0.20230817092953-e6f5f27aaf47
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.4
 	github.com/cosmos/gogogateway v1.2.0 // indirect
@@ -30,6 +30,8 @@ require (
 	google.golang.org/grpc v1.56.2
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+replace github.com/CosmWasm/wasmvm => ../wasmvm
 
 require (
 	cosmossdk.io/api v0.3.1
