@@ -205,7 +205,7 @@ var ( // store keys
 	maxValueKey     = []byte("max-value")
 )
 
-func (p player) storeEndpoint(store wasmvm.KVStore, channel wasmvmtypes.IBCChannel) {
+func (p player) storeEndpoint(store types.PrefixStoreInfo, channel wasmvmtypes.IBCChannel) {
 	var counterparties []connectedChannelsModel
 	if b := store.Store.Get(ibcEndpointsKey); b != nil {
 		require.NoError(p.t, json.Unmarshal(b, &counterparties))

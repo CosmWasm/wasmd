@@ -85,3 +85,7 @@ func (c *ContractSDKGasMeter) CloneWithNewLimit(gasLimit uint64, description str
 	newContractGasMeter := NewContractGasMeter(gasLimit, c.contractGasCalculationFunc, c.contractAddress, c.contractOperation)
 	return &newContractGasMeter
 }
+
+func (c *ContractSDKGasMeter) GasRemaining() uint64 {
+	return c.underlyingGasMeter.GasRemaining()
+}

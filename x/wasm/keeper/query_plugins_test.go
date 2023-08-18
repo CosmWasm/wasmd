@@ -548,7 +548,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: fmt.Errorf("error while querying from wasm smart contract, querier error: %s, error: %s", wasmvmtypes.NoSuchContract{Addr: "contract-addr"}, e),
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: fmt.Errorf("error while querying from wasm smart contract, querier error: %s, error: %s", wasmvmtypes.NoSuchContract{Addr: "contract-addr"}, e),
 		},
 		"no such code": {
@@ -556,7 +556,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: fmt.Errorf("error while querying from wasm smart contract, querier error: %s, error: %s", wasmvmtypes.NoSuchCode{CodeID: 123}, e),
 		},
 		"no such code - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: fmt.Errorf("error while querying from wasm smart contract, querier error: %s, error: %s", wasmvmtypes.NoSuchCode{CodeID: 123}, e),
 		},
 	}
