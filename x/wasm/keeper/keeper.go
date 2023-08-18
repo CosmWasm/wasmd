@@ -384,8 +384,30 @@ func (k Keeper) execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress,
 	// prepare querier
 	querier := k.newQueryHandler(ctx, contractAddress)
 	gas := k.runtimeGasForContract(ctx)
+
+	gasBefore := ctx.GasMeter().GasConsumed()
 	res, gasReport, execErr := k.wasmVM.Execute(codeInfo.CodeHash, env, info, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
+	gasAfter := ctx.GasMeter().GasConsumed()
+	expectedExternalGas := gasAfter - gasBefore
 	k.consumeRuntimeGas(ctx, gasReport.UsedInternally)
+	expectedInternalGas := ctx.GasMeter().GasConsumed() - gasAfter
+
+	// some sanity checks on the gas report
+	if gasReport.Limit != gas {
+		panic(fmt.Sprintf("gas limit mismatch: %d != %d", gasReport.Limit, gas))
+	}
+	if gasReport.UsedExternally+gasReport.UsedInternally != gasReport.Limit-gasReport.Remaining {
+		panic(fmt.Sprintf("gas remaining mismatch: %d != %d", gasReport.UsedExternally+gasReport.UsedInternally, gasReport.Limit-gasReport.Remaining))
+	}
+	reportedInternalGas := k.gasRegister.FromWasmVMGas(gasReport.UsedInternally)
+	reportedExternalGas := k.gasRegister.FromWasmVMGas(gasReport.UsedExternally)
+	if reportedExternalGas != expectedExternalGas {
+		panic(fmt.Sprintf("external gas usage mismatch: %d != %d", reportedExternalGas, expectedExternalGas))
+	}
+	if reportedInternalGas != expectedInternalGas {
+		panic(fmt.Sprintf("internal gas usage mismatch: %d != %d", reportedInternalGas, expectedInternalGas))
+	}
+
 	if execErr != nil {
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}

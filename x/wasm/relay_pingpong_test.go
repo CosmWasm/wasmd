@@ -137,8 +137,9 @@ type player struct {
 
 // Execute starts the ping pong game
 // Contracts finds all connected channels and broadcasts a ping message
-func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, gasLimit uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, wasmvmtypes.GasReport, error) {
+func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, gm wasmvm.GasMeter, gasLimit uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, wasmvmtypes.GasReport, error) {
 	p.execCalls++
+	gasBefore := gm.GasConsumed()
 	// start game
 	var start startGame
 	if err := json.Unmarshal(executeMsg, &start); err != nil {
@@ -153,6 +154,8 @@ func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.Mes
 
 	p.incrementCounter(sentBallsCountKey, store)
 	store.Set(lastBallSentKey, sdk.Uint64ToBigEndian(start.Value))
+
+	gasConsumed := gm.GasConsumed() - gasBefore
 	return &wasmvmtypes.Response{
 		Messages: []wasmvmtypes.SubMsg{
 			{
@@ -171,7 +174,7 @@ func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.Mes
 				ReplyOn: wasmvmtypes.ReplyNever,
 			},
 		},
-	}, wasmvmtypes.EmptyGasReport(gasLimit), nil
+	}, wasmvmtypes.GasReport{Limit: gasLimit, Remaining: gasLimit - gasConsumed, UsedExternally: gasConsumed}, nil
 }
 
 // OnIBCChannelOpen ensures to accept only configured version
