@@ -29,12 +29,14 @@ import (
 // ReflectInitMsg is {}
 
 func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {
+	t.Helper()
 	bz, err := json.Marshal(query)
 	require.NoError(t, err)
 	return bz
 }
 
 func mustParse(t *testing.T, data []byte, res interface{}) {
+	t.Helper()
 	err := json.Unmarshal(data, res)
 	require.NoError(t, err)
 }
@@ -688,6 +690,7 @@ func TestQueryDenomsIntegration(t *testing.T) {
 }
 
 func checkAccount(t *testing.T, ctx sdk.Context, accKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, addr sdk.AccAddress, expected sdk.Coins) {
+	t.Helper()
 	acct := accKeeper.GetAccount(ctx, addr)
 	if expected == nil {
 		assert.Nil(t, acct)

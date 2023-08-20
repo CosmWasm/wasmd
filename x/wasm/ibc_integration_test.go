@@ -244,6 +244,7 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 
 // SubmitIBCPacket starts an IBC packet transfer on given chain and captures the ack returned
 func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmibctesting.Path, chainA *wasmibctesting.TestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
+	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
 	x.MockWasmer.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		return &wasmvmtypes.Response{
