@@ -168,6 +168,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
+	t.Helper()
 	ctx, k := CreateTestInput(t, false, AvailableCapabilities)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
@@ -664,6 +665,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 
 // adds a few validators and returns a list of validators that are registered
 func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+	t.Helper()
 	owner := faucet.NewFundedRandomAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
@@ -721,6 +723,7 @@ func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, d
 }
 
 func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Balance: &addressQuery{
 			Address: addr,
@@ -737,6 +740,7 @@ func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr 
 }
 
 func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Claims: &addressQuery{
 			Address: addr,
@@ -753,6 +757,7 @@ func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr s
 }
 
 func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
+	t.Helper()
 	query := StakingQueryMsg{Investment: &struct{}{}}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)

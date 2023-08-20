@@ -769,18 +769,18 @@ func (m IBCReflectExampleInstance) GetBytes(t testing.TB) []byte {
 }
 
 // InstantiateIBCReflectContract load and instantiate the "./testdata/ibc_reflect.wasm" contract
-func InstantiateIBCReflectContract(t testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
-	reflectID := StoreReflectContract(t, ctx, keepers).CodeID
-	ibcReflectID := StoreIBCReflectContract(t, ctx, keepers).CodeID
+func InstantiateIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
+	reflectID := StoreReflectContract(tb, ctx, keepers).CodeID
+	ibcReflectID := StoreIBCReflectContract(tb, ctx, keepers).CodeID
 
 	initMsgBz, err := json.Marshal(IBCReflectInitMsg{
 		ReflectCodeID: reflectID,
 	})
-	require.NoError(t, err)
-	adminAddr := RandomAccountAddress(t)
+	require.NoError(tb, err)
+	adminAddr := RandomAccountAddress(tb)
 
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, ibcReflectID, adminAddr, adminAddr, initMsgBz, "ibc-reflect-factory", nil)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return IBCReflectExampleInstance{
 		Admin:         adminAddr,
 		Contract:      contractAddr,
@@ -793,9 +793,10 @@ type IBCReflectInitMsg struct {
 	ReflectCodeID uint64 `json:"reflect_code_id"`
 }
 
-func (m IBCReflectInitMsg) GetBytes(t testing.TB) []byte {
+func (m IBCReflectInitMsg) GetBytes(tb testing.TB) []byte {
+	tb.Helper()
 	initMsgBz, err := json.Marshal(m)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return initMsgBz
 }
 
@@ -803,16 +804,18 @@ type BurnerExampleInitMsg struct {
 	Payout sdk.AccAddress `json:"payout"`
 }
 
-func (m BurnerExampleInitMsg) GetBytes(t testing.TB) []byte {
+func (m BurnerExampleInitMsg) GetBytes(tb testing.TB) []byte {
+	tb.Helper()
 	initMsgBz, err := json.Marshal(m)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	return initMsgBz
 }
 
-func fundAccounts(t testing.TB, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
+func fundAccounts(tb testing.TB, ctx sdk.Context, am authkeeper.AccountKeeper, bank bankkeeper.Keeper, addr sdk.AccAddress, coins sdk.Coins) {
+	tb.Helper()
 	acc := am.NewAccountWithAddress(ctx, addr)
 	am.SetAccount(ctx, acc)
-	NewTestFaucet(t, ctx, bank, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
+	NewTestFaucet(tb, ctx, bank, minttypes.ModuleName, coins...).Fund(ctx, addr, coins...)
 }
 
 var keyCounter uint64
