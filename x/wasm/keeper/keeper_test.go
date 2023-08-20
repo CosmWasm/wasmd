@@ -2199,7 +2199,7 @@ func TestAppendToContractHistory(t *testing.T) {
 				for i := 0; i < 10; i++ {
 					var entry types.ContractCodeHistoryEntry
 					f.RandSource(sRandom).Fuzz(&entry)
-					k.appendToContractHistory(ctx, addr, entry)
+					k.appendToContractHistory(ctx, addr, entry) //nolint:errcheck
 					orderedEntries[j] = append(orderedEntries[j], entry)
 				}
 			}
