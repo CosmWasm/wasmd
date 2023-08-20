@@ -99,7 +99,7 @@ var (
 	// Deprecated: Do not use.
 	TestHandler = keeper.TestHandler
 	// Deprecated: Do not use.
-	NewWasmProposalHandler = keeper.NewWasmProposalHandler 
+	NewWasmProposalHandler = keeper.NewWasmProposalHandler
 	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
