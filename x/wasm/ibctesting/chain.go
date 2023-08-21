@@ -458,7 +458,9 @@ func (chain *TestChain) GetValsAtHeight(height int64) (*cmttypes.ValidatorSet, b
 		return nil, false
 	}
 	require.NoError(chain.t, err)
-	valSet := stakingtypes.Validators(histInfo.Valset)
+	valSet := stakingtypes.Validators{
+		Validators: histInfo.Valset,
+	}
 
 	vals, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
 	if err != nil {

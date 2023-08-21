@@ -78,7 +78,11 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 
 	// withdraw all validator commission
 	err := app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		valBz, err := app.StakingKeeper.ValidatorAddressCodec().StringToBytes(val.GetOperator())
+		if err != nil {
+			panic(err)
+		}
+		_, _ = app.DistrKeeper.WithdrawValidatorCommission(ctx, valBz)
 		return false
 	})
 	if err != nil {
@@ -115,8 +119,12 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 
 	// reinitialize all validators
 	err = app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
+		valBz, err := app.StakingKeeper.ValidatorAddressCodec().StringToBytes(val.GetOperator())
+		if err != nil {
+			panic(err)
+		}
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		scraps, err := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, val.GetOperator())
+		scraps, err := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, valBz)
 		if err != nil {
 			panic(err)
 		}
@@ -129,14 +137,11 @@ func (app *WasmApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs [
 			panic(err)
 		}
 
-		if err := app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator()); err != nil {
+		if err := app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, valBz); err != nil {
 			panic(err)
 		}
 		return false
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	// reinitialize all delegations
 	for _, del := range dels {

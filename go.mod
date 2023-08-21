@@ -36,13 +36,13 @@ require (
 	cosmossdk.io/core v0.10.0
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/log v1.2.0
-	cosmossdk.io/math v1.0.1
+	cosmossdk.io/math v1.1.2
 	cosmossdk.io/store v1.0.0-alpha.1.0.20230728080422-54ed7dab3982
 	cosmossdk.io/tools/confix v0.0.0-20230818115413-c402c51a1508
 	cosmossdk.io/x/circuit v0.0.0-20230818115413-c402c51a1508
 	cosmossdk.io/x/evidence v0.0.0-20230818115413-c402c51a1508
 	cosmossdk.io/x/feegrant v0.0.0-20230818115413-c402c51a1508
-	cosmossdk.io/x/nft v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/x/nft v0.0.0-20230818115413-c402c51a1508
 	cosmossdk.io/x/tx v0.9.1
 	cosmossdk.io/x/upgrade v0.0.0-20230818115413-c402c51a1508
 	github.com/cometbft/cometbft v0.38.0-rc3
