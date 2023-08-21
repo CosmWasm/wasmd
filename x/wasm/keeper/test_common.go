@@ -149,7 +149,6 @@ type TestFaucet struct {
 
 func NewTestFaucet(tb testing.TB, ctx sdk.Context, bankKeeper bankkeeper.Keeper, minterModuleName string, initialAmount ...sdk.Coin) *TestFaucet {
 	tb.Helper()
-
 	require.NotEmpty(tb, initialAmount)
 	r := &TestFaucet{t: tb, bankKeeper: bankKeeper, minterModuleName: minterModuleName}
 	_, addr := keyPubAddr()
@@ -207,14 +206,12 @@ type TestKeepers struct {
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(tb testing.TB) (sdk.Context, TestKeepers) {
 	tb.Helper()
-
 	return CreateTestInput(tb, false, "staking")
 }
 
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
 func CreateTestInput(tb testing.TB, isCheckTx bool, availableCapabilities string, opts ...Option) (sdk.Context, TestKeepers) {
 	tb.Helper()
-
 	// Load default wasm config
 	return createTestInput(tb, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
@@ -229,7 +226,6 @@ func createTestInput(
 	opts ...Option,
 ) (sdk.Context, TestKeepers) {
 	tb.Helper()
-
 	tempDir := tb.TempDir()
 
 	keys := storetypes.NewKVStoreKeys(
@@ -241,7 +237,6 @@ func createTestInput(
 		types.StoreKey,
 	)
 	logger := log.NewTestLogger(tb)
-
 	ms := store.NewCommitMultiStore(db, logger, storemetrics.NewNoOpMetrics())
 	for _, v := range keys {
 		ms.MountStoreWithDB(v, storetypes.StoreTypeIAVL, db)
@@ -603,7 +598,6 @@ func DeterministicAccountAddress(_ testing.TB, v byte) sdk.AccAddress {
 
 func RandomBech32AccountAddress(tb testing.TB) string {
 	tb.Helper()
-
 	return RandomAccountAddress(tb).String()
 }
 
@@ -617,31 +611,26 @@ type ExampleContract struct {
 
 func StoreHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
-
 	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm())
 }
 
 func StoreBurnerExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
-
 	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm())
 }
 
 func StoreIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
-
 	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm())
 }
 
 func StoreReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
-
 	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm())
 }
 
 func StoreExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
 	tb.Helper()
-
 	wasmCode, err := os.ReadFile(wasmFile)
 	require.NoError(tb, err)
 	return StoreExampleContractWasm(tb, ctx, keepers, wasmCode)
@@ -649,7 +638,6 @@ func StoreExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, w
 
 func StoreExampleContractWasm(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmCode []byte) ExampleContract {
 	tb.Helper()
-
 	anyAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 1000))
 	creator, creatorAddr := keyPubAddr()
 	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
@@ -756,7 +744,6 @@ type ExampleInstance struct {
 // InstantiateReflectExampleContract load and instantiate the "./testdata/reflect.wasm" contract
 func InstantiateReflectExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
 	tb.Helper()
-
 	example := StoreReflectContract(tb, ctx, keepers)
 	initialAmount := sdk.NewCoins(sdk.NewInt64Coin("denom", 100))
 	label := "demo contract to query"

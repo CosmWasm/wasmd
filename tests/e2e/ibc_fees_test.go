@@ -31,7 +31,7 @@ func TestIBCFeesTransfer(t *testing.T) {
 	//   with an ics-20 channel established
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
-	marshaler := app.MakeEncodingConfig(t).Codec
+	codec := app.MakeEncodingConfig(t).Codec
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
 	chainB := coord.GetChain(wasmibctesting.GetChainID(2))
@@ -45,12 +45,12 @@ func TestIBCFeesTransfer(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(codec.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(codec.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-20 transfer channel setup between both chains
@@ -116,7 +116,7 @@ func TestIBCFeesWasm(t *testing.T) {
 	//   and an ibc channel established
 	// when an ics-29 fee is attached to an ibc package
 	// then the relayer's payee is receiving the fee(s) on success
-	marshaler := app.MakeEncodingConfig(t).Codec
+	codec := app.MakeEncodingConfig(t).Codec
 	coord := wasmibctesting.NewCoordinator(t, 2)
 	chainA := coord.GetChain(wasmibctesting.GetChainID(1))
 	chainB := coord.GetChain(ibctesting.GetChainID(2))
@@ -140,12 +140,12 @@ func TestIBCFeesWasm(t *testing.T) {
 	path := wasmibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibcContractPortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(codec.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
 		Order:   channeltypes.UNORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
 		PortID:  ibctransfertypes.PortID,
-		Version: string(marshaler.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
+		Version: string(codec.MustMarshalJSON(&ibcfee.Metadata{FeeVersion: ibcfee.Version, AppVersion: ibctransfertypes.Version})),
 		Order:   channeltypes.UNORDERED,
 	}
 	// with an ics-29 fee enabled channel setup between both chains
