@@ -90,7 +90,13 @@ const cacheDir = "binaries"
 // FetchExecutable to download and extract tar.gz for linux
 func FetchExecutable(t *testing.T, version string) string {
 	// use local cache
-	cacheFile := filepath.Join(workDir, cacheDir, fmt.Sprintf("%s_%s", execBinaryName, version))
+	cacheFolder := filepath.Join(workDir, cacheDir)
+	err := os.MkdirAll(cacheFolder, 0777)
+	if err != nil && !os.IsExist(err) {
+		panic(err)
+	}
+
+	cacheFile := filepath.Join(cacheFolder, fmt.Sprintf("%s_%s", execBinaryName, version))
 	if _, err := os.Stat(cacheFile); err == nil {
 		return cacheFile
 	}
