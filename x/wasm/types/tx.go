@@ -100,7 +100,7 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+		return errorsmod.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
@@ -333,7 +333,7 @@ func (msg MsgInstantiateContract2) ValidateBasic() error {
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+		return errorsmod.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
@@ -524,7 +524,7 @@ func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "label is required")
+		return errorsmod.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
