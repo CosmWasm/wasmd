@@ -246,9 +246,24 @@ func initTestnetFiles(
 		genFiles    []string
 	)
 
+	const (
+		rpcPort  = 26657
+		apiPort  = 1317
+		grpcPort = 9090
+	)
+	p2pPortStart := 26656
+
 	inBuf := bufio.NewReader(cmd.InOrStdin())
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < args.numValidators; i++ {
+		var portOffset int
+		if args.singleMachine {
+			portOffset = i
+			p2pPortStart = 16656 // use different start point to not conflict with rpc port
+			nodeConfig.P2P.AddrBookStrict = false
+			nodeConfig.P2P.PexReactor = false
+			nodeConfig.P2P.AllowDuplicateIP = true
+		}
 		nodeDirName := fmt.Sprintf("%s%d", args.nodeDirPrefix, i)
 		nodeDir := filepath.Join(args.outputDir, nodeDirName, args.nodeDaemonHome)
 		gentxsDir := filepath.Join(args.outputDir, "gentxs")
@@ -256,6 +271,10 @@ func initTestnetFiles(
 		nodeConfig.SetRoot(nodeDir)
 		nodeConfig.Moniker = nodeDirName
 		nodeConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
+
+		appConfig.API.Address = fmt.Sprintf("tcp://0.0.0.0:%d", apiPort+portOffset)
+		appConfig.GRPC.Address = fmt.Sprintf("0.0.0.0:%d", grpcPort+portOffset)
+		appConfig.GRPCWeb.Enable = true
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(args.outputDir)
@@ -274,7 +293,7 @@ func initTestnetFiles(
 			return err
 		}
 
-		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
+		memo := fmt.Sprintf("%s@%s:%d", nodeIDs[i], ip, p2pPortStart+portOffset)
 		genFiles = append(genFiles, nodeConfig.GenesisFile())
 
 		kb, err := keyring.New(sdk.KeyringServiceName(), args.keyringBackend, nodeDir, inBuf, clientCtx.Codec)
@@ -370,6 +389,7 @@ func initTestnetFiles(
 	err := collectGenFiles(
 		clientCtx, nodeConfig, args.chainID, nodeIDs, valPubKeys, args.numValidators,
 		args.outputDir, args.nodeDirPrefix, args.nodeDaemonHome, genBalIterator, valAddrCodec,
+		rpcPort, p2pPortStart, args.singleMachine,
 	)
 	if err != nil {
 		return err
@@ -427,15 +447,23 @@ func collectGenFiles(
 	clientCtx client.Context, nodeConfig *cmtconfig.Config, chainID string,
 	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator, valAddrCodec runtime.ValidatorAddressCodec,
+	rpcPortStart, p2pPortStart int,
+	singleMachine bool,
 ) error {
 	var appState json.RawMessage
 	genTime := cmttime.Now()
 
 	for i := 0; i < numValidators; i++ {
+		var portOffset int
+		if singleMachine {
+			portOffset = i
+		}
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
 		nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 		gentxsDir := filepath.Join(outputDir, "gentxs")
 		nodeConfig.Moniker = nodeDirName
+		nodeConfig.RPC.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", rpcPortStart+portOffset)
+		nodeConfig.P2P.ListenAddress = fmt.Sprintf("tcp://0.0.0.0:%d", p2pPortStart+portOffset)
 
 		nodeConfig.SetRoot(nodeDir)
 

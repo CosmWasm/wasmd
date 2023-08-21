@@ -323,7 +323,7 @@ func (c WasmdCli) QueryBalances(addr string) string {
 // QueryBalance returns balance amount for given denom.
 // 0 when not found
 func (c WasmdCli) QueryBalance(addr, denom string) int64 {
-	raw := c.CustomQuery("q", "bank", "balances", addr, "--denom="+denom)
+	raw := c.CustomQuery("q", "bank", "balances", addr)
 	require.Contains(c.t, raw, "amount", raw)
 	return gjson.Get(raw, "amount").Int()
 }
