@@ -83,9 +83,13 @@ type GasRegister interface {
 	ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas
 	// EventCosts costs to persist an event
 	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) sdk.Gas
-	// ToWasmVMGas converts from sdk gas to wasmvm gas
+	// ToWasmVMGas converts from Cosmos SDK gas units to [CosmWasm gas] (aka. wasmvm gas)
+	//
+	// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 	ToWasmVMGas(source sdk.Gas) uint64
-	// FromWasmVMGas converts from wasmvm gas to sdk gas
+	// FromWasmVMGas converts from [CosmWasm gas] (aka. wasmvm gas) to Cosmos SDK gas units
+	//
+	// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 	FromWasmVMGas(source uint64) sdk.Gas
 }
 
@@ -240,7 +244,9 @@ func calcWithFreeTier(storedBytes, freeTier uint64) (uint64, uint64) {
 	return storedBytes, 0
 }
 
-// ToWasmVMGas convert to wasmVM contract runtime gas unit
+// ToWasmVMGas converts from Cosmos SDK gas units to [CosmWasm gas] (aka. wasmvm gas)
+//
+// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	x := source * g.c.GasMultiplier
 	if x < source {
@@ -249,7 +255,9 @@ func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	return x
 }
 
-// FromWasmVMGas converts to SDK gas unit
+// FromWasmVMGas converts from [CosmWasm gas] (aka. wasmvm gas) to Cosmos SDK gas units
+//
+// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
 func (g WasmGasRegister) FromWasmVMGas(source uint64) sdk.Gas {
 	return source / g.c.GasMultiplier
 }
