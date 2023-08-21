@@ -3,11 +3,9 @@ package main
 import (
 	"os"
 
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/spf13/cobra"
-
 	"cosmossdk.io/log"
 
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/app/params"
@@ -48,9 +47,8 @@ func NewRootCmd() *cobra.Command {
 		WithViper("") // In wasmd, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:           version.AppName,
-		Short:         "Wasm Daemon (server)",
-		SilenceErrors: true,
+		Use:   version.AppName,
+		Short: "Wasm Daemon (server)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())
@@ -96,10 +94,9 @@ func NewRootCmd() *cobra.Command {
 
 	initRootCmd(rootCmd, encodingConfig.TxConfig, encodingConfig.InterfaceRegistry, encodingConfig.Codec, tempApp.BasicModuleManager)
 
-	// Missing "consensus address codec in builder"
-	//	if err := tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd); err != nil {
-	//		panic(err)
-	//	}
+	if err := tempApp.AutoCliOpts().EnhanceRootCommand(rootCmd); err != nil {
+		panic(err)
+	}
 
 	return rootCmd
 }
