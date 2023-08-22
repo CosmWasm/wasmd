@@ -325,7 +325,7 @@ func (c WasmdCli) QueryBalances(addr string) string {
 func (c WasmdCli) QueryBalance(addr, denom string) int64 {
 	raw := c.CustomQuery("q", "bank", "balance", addr, denom)
 	require.Contains(c.t, raw, "amount", raw)
-	return gjson.Get(raw, "amount").Int()
+	return gjson.Get(raw, "balance.amount").Int()
 }
 
 // QueryTotalSupply returns total amount of tokens for a given denom.
