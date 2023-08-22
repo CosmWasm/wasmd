@@ -87,7 +87,7 @@ func (s *SystemUnderTest) SetupChain() {
 		"--starting-ip-address", "", // empty to use host systems
 		"--single-host",
 	}
-	fmt.Printf("+++ %s %s", s.execBinary, strings.Join(args, " "))
+	fmt.Printf("+++ %s %s\n", s.execBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
 		locateExecutable(s.execBinary),
 		args...,
