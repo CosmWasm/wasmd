@@ -94,7 +94,7 @@ func initAppConfig() (string, interface{}) {
 		Config: *srvCfg,
 		WASM: WASMConfig{
 			LruSize:       1,
-			QueryGasLimit: 300000,
+			QueryGasLimit: 320000,
 		},
 	}
 
