@@ -448,6 +448,7 @@ func TestQueryContractHistory(t *testing.T) {
 		},
 	}
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 
@@ -520,6 +521,7 @@ func TestQueryCodeList(t *testing.T) {
 	}
 
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 
@@ -596,6 +598,7 @@ func TestQueryContractInfo(t *testing.T) {
 		},
 	}
 	for name, spec := range specs {
+		spec := spec
 		t.Run(name, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
 			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored)

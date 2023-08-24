@@ -544,6 +544,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 		},
 	}
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 			accKeeper, bankKeeper, keeper := keepers.AccountKeeper, keepers.BankKeeper, keepers.ContractKeeper

@@ -993,6 +993,7 @@ code_ids:
 		},
 	}
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			v, err := yaml.Marshal(&spec.src)
 			require.NoError(t, err)
