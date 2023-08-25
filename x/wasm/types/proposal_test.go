@@ -994,6 +994,7 @@ code_ids:
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			spec := spec
 			v, err := yaml.Marshal(&spec.src)
 			require.NoError(t, err)
 			assert.Equal(t, spec.exp, string(v))
