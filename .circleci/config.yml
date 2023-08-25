@@ -101,11 +101,14 @@ jobs:
   test-system:
     executor: golang
     parallelism: 1
-    resource_class: large
+    resource_class: xlarge
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
       - run:
           name: Build and run system tests
           command: make test-system
