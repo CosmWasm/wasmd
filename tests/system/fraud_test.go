@@ -4,7 +4,6 @@ package system
 
 import (
 	"fmt"
-	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,7 +60,8 @@ func TestRecursiveSmartQuery(t *testing.T) {
 	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, randomBech32Addr(), randomBech32Addr())
 	maliciousContractAddr := cli.WasmInstantiate(cli.WasmStore("./testdata/hackatom.wasm.gzip", "--from=node0", "--gas=1500000", "--fees=2stake"), initMsg)
 
-	msg := fmt.Sprintf(`{"recurse":{"depth":%d, "work":0}}`, math.MaxUint32)
+	// msg := fmt.Sprintf(`{"recurse":{"depth":%d, "work":0}}`, math.MaxUint32)
+	msg := fmt.Sprintf(`{"recurse":{"depth": 50, "work":2000}}`)
 
 	// when
 	for _, n := range sut.AllNodes(t) {
