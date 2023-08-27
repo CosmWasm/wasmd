@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/CosmWasm/wasmvm v1.3.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230819070346-e8164be94954
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230825162232-992c164b49f1
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/iavl v1.0.0-beta.2
@@ -35,7 +35,7 @@ require (
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.10.0
 	cosmossdk.io/errors v1.0.0
-	cosmossdk.io/log v1.2.0
+	cosmossdk.io/log v1.2.1
 	cosmossdk.io/math v1.1.2
 	cosmossdk.io/store v1.0.0-alpha.1.0.20230728080422-54ed7dab3982
 	cosmossdk.io/tools/confix v0.0.0-20230818115413-c402c51a1508

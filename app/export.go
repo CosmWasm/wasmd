@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	storetypes "cosmossdk.io/store/types"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -20,7 +18,7 @@ import (
 // file.
 func (app *WasmApp) ExportAppStateAndValidators(forZeroHeight bool, jailAllowedAddrs, modulesToExport []string) (servertypes.ExportedApp, error) {
 	// as if they could withdraw from the start of the next block
-	ctx := app.NewContextLegacy(true, cmtproto.Header{Height: app.LastBlockHeight()})
+	ctx := app.NewContext(true)
 
 	// We export at last height + 1, because that's the height at which
 	// CometBFT will start InitChain.

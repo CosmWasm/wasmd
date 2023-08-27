@@ -449,6 +449,7 @@ func TestQueryContractHistory(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			spec := spec
 			xCtx, _ := ctx.CacheContext()
 
 			cAddr, _ := sdk.AccAddressFromBech32(myContractBech32Addr)
@@ -521,6 +522,7 @@ func TestQueryCodeList(t *testing.T) {
 
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
+			spec := spec
 			xCtx, _ := ctx.CacheContext()
 
 			for _, codeID := range spec.storedCodeIDs {
@@ -597,6 +599,7 @@ func TestQueryContractInfo(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			spec := spec
 			xCtx, _ := ctx.CacheContext()
 			k.mustStoreContractInfo(xCtx, contractAddr, &spec.stored)
 			// when

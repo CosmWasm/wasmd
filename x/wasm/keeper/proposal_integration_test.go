@@ -620,6 +620,7 @@ func TestAdminProposals(t *testing.T) {
 		},
 	}
 	for msg, spec := range specs {
+		spec := spec
 		t.Run(msg, func(t *testing.T) {
 			ctx, keepers := CreateTestInput(t, false, "staking")
 			wasmKeeper := keepers.WasmKeeper

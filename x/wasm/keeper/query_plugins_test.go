@@ -806,6 +806,7 @@ func TestDistributionQuerier(t *testing.T) {
 		},
 	}
 	for name, spec := range specs {
+		spec := spec
 		t.Run(name, func(t *testing.T) {
 			mock := distrKeeperMock{GetDelegatorWithdrawAddrFn: spec.mockFn}
 			q := keeper.DistributionQuerier(mock)

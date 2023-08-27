@@ -128,6 +128,7 @@ func TestUpdateParams(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			spec := spec
 			err := wasmApp.WasmKeeper.SetParams(ctx, types.DefaultParams())
 			require.NoError(t, err)
 
@@ -216,6 +217,7 @@ func TestAddCodeUploadParamsAddresses(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			spec := spec
 			err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             spec.uploadConfig,
 				InstantiateDefaultPermission: types.AccessTypeEverybody,
@@ -312,6 +314,7 @@ func TestRemoveCodeUploadParamsAddresses(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
+			spec := spec
 			err := wasmApp.WasmKeeper.SetParams(ctx, types.Params{
 				CodeUploadAccess:             spec.uploadConfig,
 				InstantiateDefaultPermission: types.AccessTypeEverybody,

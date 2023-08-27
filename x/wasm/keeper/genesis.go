@@ -45,6 +45,7 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 
 	var maxContractID int
 	for i, contract := range data.Contracts {
+		contract := contract
 		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractAddress)
 		if err != nil {
 			return nil, errorsmod.Wrapf(err, "address in contract number %d", i)

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -270,6 +269,15 @@ type WasmApp struct {
 	configurator module.Configurator
 }
 
+func init() {
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	DefaultNodeHome = filepath.Join(userHomeDir, ".simapp")
+}
+
 // NewWasmApp returns a reference to an initialized WasmApp.
 func NewWasmApp(
 	logger log.Logger,
@@ -345,14 +353,13 @@ func NewWasmApp(
 		icacontrollertypes.StoreKey,
 	)
 
-	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
-
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
 		panic(err)
 	}
 
+	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 	app := &WasmApp{
 		BaseApp:           bApp,
 		legacyAmino:       legacyAmino,
@@ -1063,28 +1070,12 @@ func (app *WasmApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 
 // GetStoreKeys returns all the stored store keys.
 func (app *WasmApp) GetStoreKeys() []storetypes.StoreKey {
-	keys := make([]storetypes.StoreKey, 0, len(app.keys))
+	keys := make([]storetypes.StoreKey, len(app.keys))
 	for _, key := range app.keys {
 		keys = append(keys, key)
 	}
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].Name() < keys[j].Name()
-	})
+
 	return keys
-}
-
-// GetTKey returns the TransientStoreKey for the provided store key.
-//
-// NOTE: This is solely to be used for testing purposes.
-func (app *WasmApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
-	return app.tkeys[storeKey]
-}
-
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
-func (app *WasmApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
-	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
@@ -1186,4 +1177,33 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
 	return paramsKeeper
+}
+
+// IBC TestingApp functions
+
+// GetBaseApp implements the TestingApp interface.
+func (app *WasmApp) GetBaseApp() *baseapp.BaseApp {
+	return app.BaseApp
+}
+
+// GetIBCKeeper implements the TestingApp interface.
+func (app *WasmApp) GetIBCKeeper() *ibckeeper.Keeper {
+	return app.IBCKeeper
+}
+
+// GetScopedIBCKeeper implements the TestingApp interface.
+func (app *WasmApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
+	return app.ScopedIBCKeeper
+}
+
+// GetTxConfig implements the TestingApp interface.
+func (app *WasmApp) GetTxConfig() client.TxConfig {
+	return app.txConfig
+}
+
+// GetMemKey returns the MemStoreKey for the provided mem key.
+//
+// NOTE: This is solely used for testing purposes.
+func (app *WasmApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
+	return app.memKeys[storeKey]
 }
