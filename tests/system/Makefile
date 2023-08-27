@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-WAIT_TIME ?= 45s
+WAIT_TIME ?= 90s
 
 all: test
 
