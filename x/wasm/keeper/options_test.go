@@ -39,7 +39,6 @@ func TestConstructorOptions(t *testing.T) {
 				registered := prometheus.DefaultRegisterer.Unregister(NewWasmVMMetricsCollector(k.wasmVM))
 				assert.True(t, registered)
 			},
-			isPostOpt: true,
 		},
 		"decorate wasmvm": {
 			srcOpt: WithWasmEngineDecorator(func(old types.WasmerEngine) types.WasmerEngine {
