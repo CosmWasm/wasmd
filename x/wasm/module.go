@@ -33,8 +33,10 @@ import (
 )
 
 var (
+	_ module.AppModule           = (*AppModule)(nil)
 	_ module.AppModuleBasic      = AppModuleBasic{}
 	_ module.AppModuleSimulation = AppModule{}
+	_ appmodule.AppModule        = (*AppModule)(nil)
 )
 
 // Module init related flags
