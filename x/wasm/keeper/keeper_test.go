@@ -2432,6 +2432,61 @@ func TestSetContractAdmin(t *testing.T) {
 	}
 }
 
+func TestGasConsumed(t *testing.T) {
+	specs := map[string]struct {
+		originalMeter            stypes.GasMeter
+		gasRegister              WasmGasRegister
+		consumeGas               sdk.Gas
+		expPanic                 bool
+		expMultipliedGasConsumed uint64
+	}{
+		"all good": {
+			originalMeter:            sdk.NewGasMeter(100),
+			gasRegister:              NewWasmGasRegister(DefaultGasRegisterConfig()),
+			consumeGas:               sdk.Gas(1),
+			expMultipliedGasConsumed: 140000000,
+		},
+		"consumeGas = limit": {
+			originalMeter:            sdk.NewGasMeter(1),
+			gasRegister:              NewWasmGasRegister(DefaultGasRegisterConfig()),
+			consumeGas:               sdk.Gas(1),
+			expMultipliedGasConsumed: 140000000,
+		},
+		"consumeGas > limit": {
+			originalMeter: sdk.NewGasMeter(10),
+			gasRegister:   NewWasmGasRegister(DefaultGasRegisterConfig()),
+			consumeGas:    sdk.Gas(11),
+			expPanic:      true,
+		},
+		"nil original meter": {
+			gasRegister: NewWasmGasRegister(DefaultGasRegisterConfig()),
+			consumeGas:  sdk.Gas(1),
+			expPanic:    true,
+		},
+		"nil gas register": {
+			originalMeter: sdk.NewGasMeter(100),
+			consumeGas:    sdk.Gas(1),
+			expPanic:      true,
+		},
+	}
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			m := NewMultipliedGasMeter(spec.originalMeter, spec.gasRegister)
+			if spec.expPanic {
+				assert.Panics(t, func() {
+					m.originalMeter.ConsumeGas(spec.consumeGas, "test-panic")
+					_ = m.GasConsumed()
+				})
+				return
+			}
+
+			m.originalMeter.ConsumeGas(spec.consumeGas, "test")
+			assert.Equal(t, spec.expMultipliedGasConsumed, m.GasConsumed())
+		})
+	}
+}
+
 func attrsToStringMap(attrs []abci.EventAttribute) map[string]string {
 	r := make(map[string]string, len(attrs))
 	for _, v := range attrs {
