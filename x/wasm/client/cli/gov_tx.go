@@ -2,98 +2,98 @@ package cli
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
-
-	"github.com/docker/distribution/reference"
-
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/docker/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
+// DefaultGovAuthority is set to the gov module address.
+// Extension point for chains to overwrite the default
+var DefaultGovAuthority = sdk.AccAddress(address.Module("gov"))
+
+func SubmitProposalCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:          "submit-proposal",
+		Short:        "Submit a wasm proposal.",
+		SilenceUsage: true,
+	}
+	cmd.AddCommand(
+		ProposalStoreCodeCmd(),
+		ProposalInstantiateContractCmd(),
+		ProposalInstantiateContract2Cmd(),
+		ProposalStoreAndInstantiateContractCmd(),
+		ProposalMigrateContractCmd(),
+		ProposalExecuteContractCmd(),
+		ProposalSudoContractCmd(),
+		ProposalUpdateContractAdminCmd(),
+		ProposalClearContractAdminCmd(),
+		ProposalPinCodesCmd(),
+		ProposalUnpinCodesCmd(),
+		ProposalUpdateInstantiateConfigCmd(),
+		ProposalAddCodeUploadParamsAddresses(),
+		ProposalRemoveCodeUploadParamsAddresses(),
+	)
+	return cmd
+}
+
 func ProposalStoreCodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "wasm-store [wasm file] --title [text] --description [text] --run-as [address] --unpin-code [unpin_code] --source [source] --builder [builder] --code-hash [code_hash]",
+		Use:   "wasm-store [wasm file] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a wasm binary proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			src, err := parseStoreCodeArgs(args[0], clientCtx.FromAddress, cmd.Flags())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
-			}
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
-			}
-
-			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
-			if err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			source, builder, codeHash, err := parseVerificationFlags(src.WASMByteCode, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			content := types.StoreCodeProposal{
-				Title:                 proposalTitle,
-				Description:           proposalDescr,
-				RunAs:                 runAs,
-				WASMByteCode:          src.WASMByteCode,
-				InstantiatePermission: src.InstantiatePermission,
-				UnpinCode:             unpinCode,
-				Source:                source,
-				Builder:               builder,
-				CodeHash:              codeHash,
-			}
-
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
-			if err != nil {
-				return err
-			}
-			if err = msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
-
-	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator")
-	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
-	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
-	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
-	cmd.Flags().BytesHex(flagCodeHash, nil, "CodeHash is the sha256 hash of the wasm code")
 	addInstantiatePermissionFlags(cmd)
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -131,11 +131,14 @@ func parseVerificationFlags(gzippedWasm []byte, flags *flag.FlagSet) (string, st
 		// wasm is gzipped in parseStoreCodeArgs
 		// checksum generation will be decoupled here
 		// reference https://github.com/CosmWasm/wasmvm/issues/359
-		raw, err := ioutils.Uncompress(gzippedWasm, uint64(types.MaxWasmSize))
+		raw, err := ioutils.Uncompress(gzippedWasm, int64(types.MaxWasmSize))
 		if err != nil {
 			return "", "", nil, fmt.Errorf("invalid zip: %w", err)
 		}
-		checksum := sha256.Sum256(raw)
+		checksum, err := wasmvm.CreateChecksum(raw)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("checksum: %s", err)
+		}
 		if !bytes.Equal(checksum[:], codeHash) {
 			return "", "", nil, fmt.Errorf("code-hash mismatch: %X, checksum: %X", codeHash, checksum)
 		}
@@ -145,110 +148,85 @@ func parseVerificationFlags(gzippedWasm []byte, flags *flag.FlagSet) (string, st
 
 func ProposalInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional]",
+		Use:   "instantiate-contract [code_id_int64] [json_encoded_init_args] --authority [address] --label [text] --title [text] --summary [text] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit an instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.FromAddress, cmd.Flags())
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
-			}
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
-			}
-
-			content := types.InstantiateContractProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				RunAs:       runAs,
-				Admin:       src.Admin,
-				CodeID:      src.CodeID,
-				Label:       src.Label,
-				Msg:         src.Msg,
-				Funds:       src.Funds,
-			}
-
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address or key name of an admin")
-	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalInstantiateContract2Cmd() *cobra.Command {
-	decoder := newArgDecoder(hex.DecodeString)
 	cmd := &cobra.Command{
-		Use:   "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] [salt] --label [text] --title [text] --description [text] --run-as [address] --admin [address,optional] --amount [coins,optional] --fix-msg [bool,optional]",
+		Use:   "instantiate-contract-2 [code_id_int64] [json_encoded_init_args] --authority [address] --label [text] --title [text] --summary [text]  --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit an instantiate wasm contract proposal with predictable address",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, clientCtx.FromAddress, cmd.Flags())
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
 			if err != nil {
 				return err
 			}
 
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
-			}
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
-			}
-
-			salt, err := decoder.DecodeString(args[2])
-			if err != nil {
-				return fmt.Errorf("salt: %w", err)
-			}
-
-			fixMsg, err := cmd.Flags().GetBool(flagFixMsg)
-			if err != nil {
-				return fmt.Errorf("fix msg: %w", err)
-			}
-
-			content := types.NewInstantiateContract2Proposal(proposalTitle, proposalDescr, runAs, src.Admin, src.CodeID, src.Label, src.Msg, src.Funds, salt, fixMsg)
-
-			msg, err := govtypes.NewMsgSubmitProposal(content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
@@ -256,40 +234,37 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 	cmd.Flags().String(flagLabel, "", "A human-readable name for this contract in lists")
 	cmd.Flags().String(flagAdmin, "", "Address of an admin")
-	cmd.Flags().String(flagRunAs, "", "The address that pays the init funds. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
-	cmd.Flags().Bool(flagFixMsg, false, "An optional flag to include the json_encoded_init_args for the predictable address generation mode")
-	decoder.RegisterFlags(cmd.PersistentFlags(), "salt")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "store-instantiate [wasm file] [json_encoded_init_args] --label [text] --title [text] --description [text] --run-as [address]" +
+		Use: "store-instantiate [wasm file] [json_encoded_init_args] --authority [address] --label [text] --title [text] --summary [text]" +
 			"--unpin-code [unpin_code,optional] --source [source,optional] --builder [builder,optional] --code-hash [code_hash,optional] --admin [address,optional] --amount [coins,optional]",
 		Short: "Submit and instantiate a wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			src, err := parseStoreCodeArgs(args[0], clientCtx.FromAddress, cmd.Flags())
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
 			if err != nil {
 				return err
-			}
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
-			}
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
 			}
 
 			unpinCode, err := cmd.Flags().GetBool(flagUnpinCode)
@@ -341,16 +316,18 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("admin %s", err)
 					}
-					adminStr = info.GetAddress().String()
+					admin, err := info.GetAddress()
+					if err != nil {
+						return err
+					}
+					adminStr = admin.String()
 				} else {
 					adminStr = addr.String()
 				}
 			}
 
-			content := types.StoreAndInstantiateContractProposal{
-				Title:                 proposalTitle,
-				Description:           proposalDescr,
-				RunAs:                 runAs,
+			msg := types.MsgStoreAndInstantiateContract{
+				Authority:             authority,
 				WASMByteCode:          src.WASMByteCode,
 				InstantiatePermission: src.InstantiatePermission,
 				UnpinCode:             unpinCode,
@@ -363,20 +340,19 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				Funds:                 amount,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 
-	cmd.Flags().String(flagRunAs, "", "The address that is stored as code creator. It is the creator of the contract and passed to the contract as sender on proposal execution")
 	cmd.Flags().Bool(flagUnpinCode, false, "Unpin code on upload, optional")
 	cmd.Flags().String(flagSource, "", "Code Source URL is a valid absolute HTTPS URI to the contract's source code,")
 	cmd.Flags().String(flagBuilder, "", "Builder is a valid docker image name with tag, such as \"cosmwasm/workspace-optimizer:0.12.9\"")
@@ -387,65 +363,70 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd.Flags().Bool(flagNoAdmin, false, "You must set this explicitly if you don't want an admin")
 	addInstantiatePermissionFlags(cmd)
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalMigrateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "migrate-contract [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args]",
+		Use:   "migrate-contract [contract_addr_bech32] [new_code_id_int64] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a migrate wasm contract to a new code version proposal",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			src, err := parseMigrateContractArgs(args, clientCtx)
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseMigrateContractArgs(args, authority)
 			if err != nil {
 				return err
 			}
 
-			content := types.MigrateContractProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				Contract:    src.Contract,
-				CodeID:      src.CodeID,
-				Msg:         src.Msg,
-			}
-
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
-
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute-contract [contract_addr_bech32] [json_encoded_migration_args]",
+		Use:   "execute-contract [contract_addr_bech32] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
 			}
 
 			contract := args[0]
@@ -458,174 +439,175 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("amount: %s", err)
 			}
-			runAs, err := cmd.Flags().GetString(flagRunAs)
-			if err != nil {
-				return fmt.Errorf("run-as: %s", err)
+
+			msg := types.MsgExecuteContract{
+				Sender:   authority,
+				Contract: contract,
+				Msg:      execMsg,
+				Funds:    funds,
 			}
 
-			if len(runAs) == 0 {
-				return errors.New("run-as address is required")
-			}
-
-			content := types.ExecuteContractProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				Contract:    contract,
-				Msg:         execMsg,
-				RunAs:       runAs,
-				Funds:       funds,
-			}
-
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
-	cmd.Flags().String(flagRunAs, "", "The address that is passed as sender to the contract on proposal execution")
 	cmd.Flags().String(flagAmount, "", "Coins to send to the contract during instantiation")
 
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalSudoContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sudo-contract [contract_addr_bech32] [json_encoded_migration_args]",
+		Use:   "sudo-contract [contract_addr_bech32] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a sudo wasm contract proposal (to call privileged commands)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			contract := args[0]
-			sudoMsg := []byte(args[1])
-
-			content := types.SudoContractProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				Contract:    contract,
-				Msg:         sudoMsg,
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgSudoContract{
+				Authority: authority,
+				Contract:  args[0],
+				Msg:       []byte(args[1]),
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
-
 	// proposal flagsExecute
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalUpdateContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32]",
+		Use:   "set-contract-admin [contract_addr_bech32] [new_admin_addr_bech32] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a new admin for a contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			src, err := parseUpdateContractAdminArgs(args, clientCtx)
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src := parseUpdateContractAdminArgs(args, authority)
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&src}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-
-			content := types.UpdateAdminProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				Contract:    src.Contract,
-				NewAdmin:    src.NewAdmin,
-			}
-
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
-			if err != nil {
-				return err
-			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalClearContractAdminCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clear-contract-admin [contract_addr_bech32]",
+		Use:   "clear-contract-admin [contract_addr_bech32] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a clear admin for a contract to prevent further migrations proposal",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
 
-			content := types.ClearAdminProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				Contract:    args[0],
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgClearAdmin{
+				Sender:   authority,
+				Contract: args[0],
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
 func ProposalPinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pin-codes [code-ids]",
+		Use:   "pin-codes [code-ids] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a pin code proposal for pinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -633,28 +615,25 @@ func ProposalPinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			content := types.PinCodesProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				CodeIDs:     codeIds,
+			msg := types.MsgPinCodes{
+				Authority: authority,
+				CodeIDs:   codeIds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -672,13 +651,21 @@ func parsePinCodesArgs(args []string) ([]uint64, error) {
 
 func ProposalUnpinCodesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "unpin-codes [code-ids]",
+		Use:   "unpin-codes [code-ids] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a unpin code proposal for unpinning a code to cache",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
+			}
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -686,28 +673,25 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 				return err
 			}
 
-			content := types.UnpinCodesProposal{
-				Title:       proposalTitle,
-				Description: proposalDescr,
-				CodeIDs:     codeIds,
+			msg := types.MsgUnpinCodes{
+				Authority: authority,
+				CodeIDs:   codeIds,
 			}
 
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
 }
 
@@ -767,7 +751,7 @@ func parseAccessConfigUpdates(args []string) ([]types.AccessConfigUpdate, error)
 func ProposalUpdateInstantiateConfigCmd() *cobra.Command {
 	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	cmd := &cobra.Command{
-		Use:   "update-instantiate-config [code-id:permission]...",
+		Use:   "update-instantiate-config [code-id:permission] --title [text] --summary [text] --authority [address]",
 		Short: "Submit an update instantiate config proposal.",
 		Args:  cobra.MinimumNArgs(1),
 		Long: strings.TrimSpace(
@@ -777,37 +761,142 @@ Example:
 $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
 `, version.AppName, bech32Prefix, bech32Prefix)),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, proposalTitle, proposalDescr, deposit, err := getProposalInfo(cmd)
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
 			if err != nil {
 				return err
 			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
 			updates, err := parseAccessConfigUpdates(args)
 			if err != nil {
 				return err
 			}
 
-			content := types.UpdateInstantiateConfigProposal{
-				Title:               proposalTitle,
-				Description:         proposalDescr,
-				AccessConfigUpdates: updates,
+			msgs := make([]sdk.Msg, len(updates))
+			for i, update := range updates {
+				permission := update.InstantiatePermission
+				msgs[i] = &types.MsgUpdateInstantiateConfig{
+					Sender:                   authority,
+					CodeID:                   update.CodeID,
+					NewInstantiatePermission: &permission,
+				}
 			}
-			msg, err := govtypes.NewMsgSubmitProposal(&content, deposit, clientCtx.GetFromAddress())
+
+			proposalMsg, err := v1.NewMsgSubmitProposal(msgs, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
 			if err != nil {
 				return err
 			}
-			if err = msg.ValidateBasic(); err != nil {
+			if err = proposalMsg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
 		},
 		SilenceUsage: true,
 	}
 	// proposal flags
-	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
-	cmd.Flags().String(cli.FlagDescription, "", "Description of proposal")
-	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	addCommonProposalFlags(cmd)
 	return cmd
+}
+
+func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
+		Short: "Submit an add code upload params addresses proposal to add addresses to code upload config params",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgAddCodeUploadParamsAddresses{
+				Authority: authority,
+				Addresses: args,
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove-code-upload-params-addresses [addresses] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a remove code upload params addresses proposal to remove addresses from code upload config params",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			msg := types.MsgRemoveCodeUploadParamsAddresses{
+				Authority: authority,
+				Addresses: args,
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
+}
+
+func addCommonProposalFlags(cmd *cobra.Command) {
+	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String(cli.FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(cli.FlagSummary, "", "Summary of proposal")
+	cmd.Flags().String(cli.FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(flagAuthority, DefaultGovAuthority.String(), "The address of the governance account. Default is the sdk gov module account")
 }
 
 func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Coins, error) {
@@ -821,20 +910,20 @@ func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Co
 		return clientCtx, proposalTitle, "", nil, err
 	}
 
-	proposalDescr, err := cmd.Flags().GetString(cli.FlagDescription)
+	summary, err := cmd.Flags().GetString(cli.FlagSummary)
 	if err != nil {
-		return client.Context{}, proposalTitle, proposalDescr, nil, err
+		return client.Context{}, proposalTitle, summary, nil, err
 	}
 
 	depositArg, err := cmd.Flags().GetString(cli.FlagDeposit)
 	if err != nil {
-		return client.Context{}, proposalTitle, proposalDescr, nil, err
+		return client.Context{}, proposalTitle, summary, nil, err
 	}
 
 	deposit, err := sdk.ParseCoinsNormalized(depositArg)
 	if err != nil {
-		return client.Context{}, proposalTitle, proposalDescr, deposit, err
+		return client.Context{}, proposalTitle, summary, deposit, err
 	}
 
-	return clientCtx, proposalTitle, proposalDescr, deposit, nil
+	return clientCtx, proposalTitle, summary, deposit, nil
 }

@@ -1,6 +1,7 @@
 package ibctesting
 
 import (
+	"cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -10,7 +11,7 @@ import (
 )
 
 // Fund an address with the given amount in default denom
-func (chain *TestChain) Fund(addr sdk.AccAddress, amount sdk.Int) {
+func (chain *TestChain) Fund(addr sdk.AccAddress, amount math.Int) {
 	require.NoError(chain.t, chain.sendMsgs(&banktypes.MsgSend{
 		FromAddress: chain.SenderAccount.GetAddress().String(),
 		ToAddress:   addr.String(),
@@ -27,26 +28,26 @@ func (chain *TestChain) SendNonDefaultSenderMsgs(senderPrivKey cryptotypes.PrivK
 	chain.Coordinator.UpdateTimeForChain(chain)
 
 	addr := sdk.AccAddress(senderPrivKey.PubKey().Address().Bytes())
-	account := chain.App.AccountKeeper.GetAccount(chain.GetContext(), addr)
+	account := chain.App.GetAccountKeeper().GetAccount(chain.GetContext(), addr)
 	require.NotNil(chain.t, account)
-	_, r, err := app.SignAndDeliver(
+	_, r, err := app.SignAndDeliverWithoutCommit(
 		chain.t,
 		chain.TxConfig,
-		chain.App.BaseApp,
-		chain.GetContext().BlockHeader(),
+		chain.App.GetBaseApp(),
 		msgs,
+		chain.DefaultMsgFees,
 		chain.ChainID,
 		[]uint64{account.GetAccountNumber()},
 		[]uint64{account.GetSequence()},
 		senderPrivKey,
 	)
 
-	// SignAndDeliver calls app.Commit()
+	// SignAndDeliverWithoutCommit calls app.Commit()
 	chain.NextBlock()
 	chain.Coordinator.IncrementTime()
 	if err != nil {
 		return r, err
 	}
-	chain.CaptureIBCEvents(r)
+	chain.CaptureIBCEvents(r.Events)
 	return r, nil
 }

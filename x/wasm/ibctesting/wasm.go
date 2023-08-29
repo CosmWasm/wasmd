@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/protobuf/proto" //nolint
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -56,14 +56,13 @@ func (chain *TestChain) StoreCode(byteCode []byte) types.MsgStoreCodeResponse {
 	}
 	r, err := chain.SendMsgs(storeMsg)
 	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
 	// unmarshal protobuf response from data
-	var pInstResp types.MsgStoreCodeResponse
-	require.NoError(chain.t, pInstResp.Unmarshal(protoResult.Data[0].Data))
+	require.Len(chain.t, r.MsgResponses, 1)
+	require.NotEmpty(chain.t, r.MsgResponses[0].GetCachedValue())
+	pInstResp := r.MsgResponses[0].GetCachedValue().(*types.MsgStoreCodeResponse)
 	require.NotEmpty(chain.t, pInstResp.CodeID)
 	require.NotEmpty(chain.t, pInstResp.Checksum)
-	return pInstResp
+	return *pInstResp
 }
 
 func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.AccAddress {
@@ -78,14 +77,41 @@ func (chain *TestChain) InstantiateContract(codeID uint64, initMsg []byte) sdk.A
 
 	r, err := chain.SendMsgs(instantiateMsg)
 	require.NoError(chain.t, err)
-	protoResult := chain.parseSDKResultData(r)
-	require.Len(chain.t, protoResult.Data, 1)
-
-	var pExecResp types.MsgInstantiateContractResponse
-	require.NoError(chain.t, pExecResp.Unmarshal(protoResult.Data[0].Data))
+	require.Len(chain.t, r.MsgResponses, 1)
+	require.NotEmpty(chain.t, r.MsgResponses[0].GetCachedValue())
+	pExecResp := r.MsgResponses[0].GetCachedValue().(*types.MsgInstantiateContractResponse)
 	a, err := sdk.AccAddressFromBech32(pExecResp.Address)
 	require.NoError(chain.t, err)
 	return a
+}
+
+func (chain *TestChain) RawQuery(contractAddr string, queryData []byte) ([]byte, error) {
+	req := types.QueryRawContractStateRequest{
+		Address:   contractAddr,
+		QueryData: queryData,
+	}
+	reqBin, err := proto.Marshal(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	res := chain.App.Query(abci.RequestQuery{
+		Path: "/cosmwasm.wasm.v1.Query/RawContractState",
+		Data: reqBin,
+	})
+
+	if res.Code != 0 {
+		return nil, fmt.Errorf("raw query failed: (%d) %s", res.Code, res.Log)
+	}
+
+	// unpack protobuf
+	var resp types.QueryRawContractStateResponse
+	err = proto.Unmarshal(res.Value, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Data, nil
 }
 
 // SmartQuery This will serialize the query message and submit it to the contract.
@@ -113,7 +139,7 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	})
 
 	if res.Code != 0 {
-		return fmt.Errorf("query failed: (%d) %s", res.Code, res.Log)
+		return fmt.Errorf("smart query failed: (%d) %s", res.Code, res.Log)
 	}
 
 	// unpack protobuf
@@ -126,13 +152,7 @@ func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, re
 	return json.Unmarshal(resp.Data, response)
 }
 
-func (chain *TestChain) parseSDKResultData(r *sdk.Result) sdk.TxMsgData {
-	var protoResult sdk.TxMsgData
-	require.NoError(chain.t, proto.Unmarshal(r.Data, &protoResult))
-	return protoResult
-}
-
 // ContractInfo is a helper function to returns the ContractInfo for the given contract address
 func (chain *TestChain) ContractInfo(contractAddr sdk.AccAddress) *types.ContractInfo {
-	return chain.App.WasmKeeper.GetContractInfo(chain.GetContext(), contractAddr)
+	return chain.App.GetWasmKeeper().GetContractInfo(chain.GetContext(), contractAddr)
 }

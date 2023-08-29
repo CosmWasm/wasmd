@@ -8,14 +8,13 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/rand"
 )
 
 func TestContractInfoValidateBasic(t *testing.T) {
@@ -33,7 +32,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *ContractInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"admin empty": {
@@ -41,7 +40,7 @@ func TestContractInfoValidateBasic(t *testing.T) {
 			expError:   false,
 		},
 		"admin not an address": {
-			srcMutator: func(c *ContractInfo) { c.Admin = "invalid address" },
+			srcMutator: func(c *ContractInfo) { c.Admin = invalidAddress },
 			expError:   true,
 		},
 		"label empty": {
@@ -55,18 +54,20 @@ func TestContractInfoValidateBasic(t *testing.T) {
 		"invalid extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.TextProposal{})
+				codecAny, err := codectypes.NewAnyWithValue(&v1beta1.TextProposal{})
+
 				require.NoError(t, err)
-				c.Extension = any
+				c.Extension = codecAny
 			},
 			expError: true,
 		},
 		"not validatable extension": {
 			srcMutator: func(c *ContractInfo) {
 				// any protobuf type with ValidateBasic method
-				any, err := codectypes.NewAnyWithValue(&govtypes.Proposal{})
+				codecAny, err := codectypes.NewAnyWithValue(&v1beta1.Proposal{})
+
 				require.NoError(t, err)
-				c.Extension = any
+				c.Extension = codecAny
 			},
 		},
 	}
@@ -102,7 +103,7 @@ func TestCodeInfoValidateBasic(t *testing.T) {
 			expError:   true,
 		},
 		"creator not an address": {
-			srcMutator: func(c *CodeInfo) { c.Creator = "invalid address" },
+			srcMutator: func(c *CodeInfo) { c.Creator = invalidAddress },
 			expError:   true,
 		},
 		"Instantiate config invalid": {
@@ -127,7 +128,7 @@ func TestContractInfoSetExtension(t *testing.T) {
 	anyTime := time.Now().UTC()
 	aNestedProtobufExt := func() ContractInfoExtension {
 		// using gov proposal here as a random protobuf types as it contains an Any type inside for nested unpacking
-		myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
+		myExtension, err := v1beta1.NewProposal(&v1beta1.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
 		require.NoError(t, err)
 		myExtension.TotalDeposit = nil
 		return &myExtension
@@ -146,10 +147,10 @@ func TestContractInfoSetExtension(t *testing.T) {
 			expNil: true,
 		},
 		"validated and accepted": {
-			src: &govtypes.TextProposal{Title: "bar", Description: "set"},
+			src: &v1beta1.TextProposal{Title: "bar", Description: "set"},
 		},
 		"validated and rejected": {
-			src:    &govtypes.TextProposal{Title: "bar"},
+			src:    &v1beta1.TextProposal{Title: "bar"},
 			expErr: true,
 		},
 	}
@@ -178,7 +179,7 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 
 	anyTime := time.Now().UTC()
 	// using gov proposal here as a random protobuf types as it contains an Any type inside for nested unpacking
-	myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
+	myExtension, err := v1beta1.NewProposal(&v1beta1.TextProposal{Title: "bar"}, 1, anyTime, anyTime)
 	require.NoError(t, err)
 	myExtension.TotalDeposit = nil
 
@@ -186,16 +187,16 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	err = src.SetExtension(&myExtension)
 	require.NoError(t, err)
 
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	RegisterInterfaces(interfaceRegistry)
 	// register proposal as extension type
 	interfaceRegistry.RegisterImplementations(
 		(*ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
+		&v1beta1.Proposal{},
 	)
 	// register gov types for nested Anys
-	govtypes.RegisterInterfaces(interfaceRegistry)
+	v1beta1.RegisterInterfaces(interfaceRegistry)
 
 	// when encode
 	bz, err := marshaler.Marshal(&src)
@@ -207,14 +208,14 @@ func TestContractInfoMarshalUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, src, dest)
 	// and sanity check nested any
-	var destExt govtypes.Proposal
+	var destExt v1beta1.Proposal
 	require.NoError(t, dest.ReadExtension(&destExt))
 	assert.Equal(t, destExt.GetTitle(), "bar")
 }
 
 func TestContractInfoReadExtension(t *testing.T) {
 	anyTime := time.Now().UTC()
-	myExtension, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo"}, 1, anyTime, anyTime)
+	myExtension, err := v1beta1.NewProposal(&v1beta1.TextProposal{Title: "foo"}, 1, anyTime, anyTime)
 	require.NoError(t, err)
 	type TestExtensionAsStruct struct {
 		ContractInfoExtension
@@ -228,10 +229,11 @@ func TestContractInfoReadExtension(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
-				return &govtypes.Proposal{}
+				return &v1beta1.Proposal{}
 			},
 			expVal: &myExtension,
 		},
@@ -239,13 +241,14 @@ func TestContractInfoReadExtension(t *testing.T) {
 			setup: func(i *ContractInfo) {
 			},
 			param: func() ContractInfoExtension {
-				return &govtypes.Proposal{}
+				return &v1beta1.Proposal{}
 			},
-			expVal: &govtypes.Proposal{},
+			expVal: &v1beta1.Proposal{},
 		},
 		"nil argument value": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
 				return nil
@@ -254,10 +257,11 @@ func TestContractInfoReadExtension(t *testing.T) {
 		},
 		"non matching types": {
 			setup: func(i *ContractInfo) {
-				i.SetExtension(&myExtension)
+				err = i.SetExtension(&myExtension)
+				require.NoError(t, err)
 			},
 			param: func() ContractInfoExtension {
-				return &govtypes.TextProposal{}
+				return &v1beta1.TextProposal{}
 			},
 			expErr: true,
 		},
@@ -388,11 +392,6 @@ func TestAccessConfigSubset(t *testing.T) {
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: true,
 		},
-		"only !< nobody": {
-			superSet: AccessConfig{Permission: AccessTypeNobody},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
-			isSubSet: false,
-		},
 		"anyOf !< nobody": {
 			superSet: AccessConfig{Permission: AccessTypeNobody},
 			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
@@ -408,68 +407,11 @@ func TestAccessConfigSubset(t *testing.T) {
 			check:    AccessConfig{Permission: AccessTypeUnspecified},
 			isSubSet: false,
 		},
-		// only
-		"nobody < only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeNobody},
-			isSubSet: true,
-		},
-		"only <= only(same)": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			isSubSet: true,
-		},
-		"only !< only(other)": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "other"},
-			isSubSet: false,
-		},
-		"anyOf(same) <= only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
-			isSubSet: true,
-		},
-		"anyOf(other) !< only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
-			isSubSet: false,
-		},
-		"anyOf(same, other) !< only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "foobar"}},
-			isSubSet: false,
-		},
-		"everybody !< only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeEverybody},
-			isSubSet: false,
-		},
-		"unspecified !<= only": {
-			superSet: AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			check:    AccessConfig{Permission: AccessTypeUnspecified},
-			isSubSet: false,
-		},
-
 		// any of
 		"nobody < anyOf": {
 			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: true,
-		},
-		"only(same) < anyOf(same)": {
-			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			isSubSet: true,
-		},
-		"only(same) < anyOf(same, other)": {
-			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner", "other"}},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "owner"},
-			isSubSet: true,
-		},
-		"only(other) !< anyOf": {
-			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "other"},
-			isSubSet: false,
 		},
 		"anyOf < anyOf": {
 			superSet: AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"owner"}},
@@ -507,11 +449,6 @@ func TestAccessConfigSubset(t *testing.T) {
 			check:    AccessConfig{Permission: AccessTypeNobody},
 			isSubSet: true,
 		},
-		"only < everybody": {
-			superSet: AccessConfig{Permission: AccessTypeEverybody},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
-			isSubSet: true,
-		},
 		"anyOf < everybody": {
 			superSet: AccessConfig{Permission: AccessTypeEverybody},
 			check:    AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{"foobar"}},
@@ -531,11 +468,6 @@ func TestAccessConfigSubset(t *testing.T) {
 		"nobody !< unspecified": {
 			superSet: AccessConfig{Permission: AccessTypeUnspecified},
 			check:    AccessConfig{Permission: AccessTypeNobody},
-			isSubSet: false,
-		},
-		"only !< unspecified": {
-			superSet: AccessConfig{Permission: AccessTypeUnspecified},
-			check:    AccessConfig{Permission: AccessTypeOnlyAddress, Address: "foobar"},
 			isSubSet: false,
 		},
 		"anyOf !< unspecified": {
@@ -574,11 +506,6 @@ func TestAccessTypeSubset(t *testing.T) {
 			check:    AccessTypeNobody,
 			isSubSet: true,
 		},
-		"only !< nobody": {
-			superSet: AccessTypeNobody,
-			check:    AccessTypeOnlyAddress,
-			isSubSet: false,
-		},
 		"any !< nobody": {
 			superSet: AccessTypeNobody,
 			check:    AccessTypeAnyOfAddresses,
@@ -594,41 +521,10 @@ func TestAccessTypeSubset(t *testing.T) {
 			check:    AccessTypeUnspecified,
 			isSubSet: false,
 		},
-		// only
-		"nobody < only": {
-			superSet: AccessTypeOnlyAddress,
-			check:    AccessTypeNobody,
-			isSubSet: true,
-		},
-		"only <= only": {
-			superSet: AccessTypeOnlyAddress,
-			check:    AccessTypeOnlyAddress,
-			isSubSet: true,
-		},
-		"anyOf !< only": {
-			superSet: AccessTypeOnlyAddress,
-			check:    AccessTypeAnyOfAddresses,
-			isSubSet: true,
-		},
-		"everybody !< only": {
-			superSet: AccessTypeOnlyAddress,
-			check:    AccessTypeEverybody,
-			isSubSet: false,
-		},
-		"unspecified !< only": {
-			superSet: AccessTypeOnlyAddress,
-			check:    AccessTypeUnspecified,
-			isSubSet: false,
-		},
 		// any of
 		"nobody < anyOf": {
 			superSet: AccessTypeAnyOfAddresses,
 			check:    AccessTypeNobody,
-			isSubSet: true,
-		},
-		"only <= anyOf": {
-			superSet: AccessTypeAnyOfAddresses,
-			check:    AccessTypeOnlyAddress,
 			isSubSet: true,
 		},
 		"anyOf <= anyOf": {
@@ -652,11 +548,6 @@ func TestAccessTypeSubset(t *testing.T) {
 			check:    AccessTypeNobody,
 			isSubSet: true,
 		},
-		"only < everybody": {
-			superSet: AccessTypeEverybody,
-			check:    AccessTypeOnlyAddress,
-			isSubSet: true,
-		},
 		"anyOf < everybody": {
 			superSet: AccessTypeEverybody,
 			check:    AccessTypeAnyOfAddresses,
@@ -676,11 +567,6 @@ func TestAccessTypeSubset(t *testing.T) {
 		"nobody !< unspecified": {
 			superSet: AccessTypeUnspecified,
 			check:    AccessTypeNobody,
-			isSubSet: false,
-		},
-		"only !< unspecified": {
-			superSet: AccessTypeUnspecified,
-			check:    AccessTypeOnlyAddress,
 			isSubSet: false,
 		},
 		"anyOf !< unspecified": {

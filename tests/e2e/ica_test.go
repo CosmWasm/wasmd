@@ -3,15 +3,19 @@ package e2e
 import (
 	"bytes"
 	"testing"
+	"time"
+
+	"github.com/CosmWasm/wasmd/app"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	hosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v4/testing"
-	intertxtypes "github.com/cosmos/interchain-accounts/x/inter-tx/types"
+	"github.com/cosmos/gogoproto/proto"
+	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
+	hosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,18 +30,20 @@ func TestICA(t *testing.T) {
 	// then the ICA owner can submit a message via IBC
 	//      to control their account on the host chain
 	coord := wasmibctesting.NewCoordinator(t, 2)
-	hostChain := coord.GetChain(ibctesting.GetChainID(0))
+	hostChain := coord.GetChain(ibctesting.GetChainID(1))
 	hostParams := hosttypes.NewParams(true, []string{sdk.MsgTypeURL(&banktypes.MsgSend{})})
-	hostChain.App.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
+	hostApp := hostChain.App.(*app.WasmApp)
+	hostApp.ICAHostKeeper.SetParams(hostChain.GetContext(), hostParams)
 
-	controllerChain := coord.GetChain(ibctesting.GetChainID(1))
+	controllerChain := coord.GetChain(ibctesting.GetChainID(2))
 
 	path := wasmibctesting.NewPath(controllerChain, hostChain)
 	coord.SetupConnections(path)
 
 	ownerAddr := sdk.AccAddress(controllerChain.SenderPrivKey.PubKey().Address())
-	msg := intertxtypes.NewMsgRegisterAccount(ownerAddr.String(), path.EndpointA.ConnectionID, "")
+	msg := icacontrollertypes.NewMsgRegisterInterchainAccount(path.EndpointA.ConnectionID, ownerAddr.String(), "")
 	res, err := controllerChain.SendMsgs(msg)
+	require.NoError(t, err)
 	chanID, portID, version := parseIBCChannelEvents(t, res)
 
 	// next open channels on both sides
@@ -48,28 +54,36 @@ func TestICA(t *testing.T) {
 		Order:   channeltypes.ORDERED,
 	}
 	path.EndpointB.ChannelConfig = &ibctesting.ChannelConfig{
-		PortID:  icatypes.PortID,
+		PortID:  icatypes.HostPortID,
 		Version: icatypes.Version,
 		Order:   channeltypes.ORDERED,
 	}
 	coord.CreateChannels(path)
 
 	// assert ICA exists on controller
-	icaRsp, err := controllerChain.App.InterTxKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &intertxtypes.QueryInterchainAccountRequest{
+	contApp := controllerChain.App.(*app.WasmApp)
+	icaRsp, err := contApp.ICAControllerKeeper.InterchainAccount(sdk.WrapSDKContext(controllerChain.GetContext()), &icacontrollertypes.QueryInterchainAccountRequest{
 		Owner:        ownerAddr.String(),
 		ConnectionId: path.EndpointA.ConnectionID,
 	})
 	require.NoError(t, err)
-	icaAddr := sdk.MustAccAddressFromBech32(icaRsp.InterchainAccountAddress)
+	icaAddr := sdk.MustAccAddressFromBech32(icaRsp.GetAddress())
 	hostChain.Fund(icaAddr, sdk.NewInt(1_000))
 
 	// submit a tx
 	targetAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, address.Len))
 	sendCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 	payloadMsg := banktypes.NewMsgSend(icaAddr, targetAddr, sdk.NewCoins(sendCoin))
-	msg2, err := intertxtypes.NewMsgSubmitTx(payloadMsg, path.EndpointA.ConnectionID, ownerAddr.String())
+	rawPayloadData, err := icatypes.SerializeCosmosTx(controllerChain.Codec, []proto.Message{payloadMsg})
 	require.NoError(t, err)
-	res, err = controllerChain.SendMsgs(msg2)
+	payloadPacket := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: rawPayloadData,
+		Memo: "testing",
+	}
+	relativeTimeout := uint64(time.Minute.Nanoseconds()) // note this is in nanoseconds
+	msgSendTx := icacontrollertypes.NewMsgSendTx(ownerAddr.String(), path.EndpointA.ConnectionID, relativeTimeout, payloadPacket)
+	_, err = controllerChain.SendMsgs(msgSendTx)
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, len(controllerChain.PendingSendPackets))

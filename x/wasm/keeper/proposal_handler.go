@@ -5,30 +5,36 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // NewWasmProposalHandler creates a new governance Handler for wasm proposals
-func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+//
+// Deprecated: Do not use.
+func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	return NewWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
 }
 
 // NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
-func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) govtypes.Handler {
+//
+// Deprecated: Do not use.
+func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}
 	}
-	return func(ctx sdk.Context, content govtypes.Content) error {
+	return func(ctx sdk.Context, content v1beta1.Content) error {
 		if content == nil {
-			return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "content must not be empty")
+			return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "content must not be empty")
 		}
 		if _, ok := enabledTypes[content.ProposalType()]; !ok {
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unsupported wasm proposal content type: %q", content.ProposalType())
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unsupported wasm proposal content type: %q", content.ProposalType())
 		}
 		switch c := content.(type) {
 		case *types.StoreCodeProposal:
@@ -56,11 +62,12 @@ func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []t
 		case *types.StoreAndInstantiateContractProposal:
 			return handleStoreAndInstantiateContractProposal(ctx, k, *c)
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized wasm proposal content type: %T", c)
 		}
 	}
 }
 
+//nolint:staticcheck
 func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreCodeProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -68,7 +75,7 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 	codeID, checksum, err := k.Create(ctx, runAsAddr, p.WASMByteCode, p.InstantiatePermission)
 	if err != nil {
@@ -86,18 +93,19 @@ func handleStoreCodeProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types
 	return k.PinCode(ctx, codeID)
 }
 
+//nolint:staticcheck
 func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 	var adminAddr sdk.AccAddress
 	if p.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(p.Admin); err != nil {
-			return sdkerrors.Wrap(err, "admin")
+			return errorsmod.Wrap(err, "admin")
 		}
 	}
 
@@ -113,6 +121,7 @@ func handleInstantiateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p typ
 	return nil
 }
 
+//nolint:staticcheck
 func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.InstantiateContract2Proposal) error {
 	// Validatebasic with proposal
 	if err := p.ValidateBasic(); err != nil {
@@ -122,14 +131,14 @@ func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p ty
 	// Get runAsAddr as AccAddress
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 
 	// Get admin address
 	var adminAddr sdk.AccAddress
 	if p.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(p.Admin); err != nil {
-			return sdkerrors.Wrap(err, "admin")
+			return errorsmod.Wrap(err, "admin")
 		}
 	}
 
@@ -145,18 +154,19 @@ func handleInstantiate2Proposal(ctx sdk.Context, k types.ContractOpsKeeper, p ty
 	return nil
 }
 
+//nolint:staticcheck
 func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.StoreAndInstantiateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 	var adminAddr sdk.AccAddress
 	if p.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(p.Admin); err != nil {
-			return sdkerrors.Wrap(err, "admin")
+			return errorsmod.Wrap(err, "admin")
 		}
 	}
 
@@ -166,7 +176,7 @@ func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.Contract
 	}
 
 	if p.CodeHash != nil && !bytes.Equal(checksum, p.CodeHash) {
-		return sdkerrors.Wrap(fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum), "code-hash mismatch")
+		return errorsmod.Wrap(fmt.Errorf("code-hash mismatch: %X, checksum: %X", p.CodeHash, checksum), "code-hash mismatch")
 	}
 
 	if !p.UnpinCode {
@@ -187,6 +197,7 @@ func handleStoreAndInstantiateContractProposal(ctx sdk.Context, k types.Contract
 	return nil
 }
 
+//nolint:staticcheck
 func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.MigrateContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -194,7 +205,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 
 	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
 	if err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 
 	// runAs is not used if this is permissioned, so just put any valid address there (second contractAddr)
@@ -210,6 +221,7 @@ func handleMigrateProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.M
 	return nil
 }
 
+//nolint:staticcheck
 func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.SudoContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -217,7 +229,7 @@ func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.Sudo
 
 	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
 	if err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	data, err := k.Sudo(ctx, contractAddr, p.Msg)
 	if err != nil {
@@ -231,6 +243,7 @@ func handleSudoProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.Sudo
 	return nil
 }
 
+//nolint:staticcheck
 func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ExecuteContractProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -238,11 +251,11 @@ func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.E
 
 	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
 	if err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	runAsAddr, err := sdk.AccAddressFromBech32(p.RunAs)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 	data, err := k.Execute(ctx, contractAddr, runAsAddr, p.Msg, p.Funds)
 	if err != nil {
@@ -256,22 +269,24 @@ func handleExecuteProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.E
 	return nil
 }
 
+//nolint:staticcheck
 func handleUpdateAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
 	if err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	newAdminAddr, err := sdk.AccAddressFromBech32(p.NewAdmin)
 	if err != nil {
-		return sdkerrors.Wrap(err, "run as address")
+		return errorsmod.Wrap(err, "run as address")
 	}
 
 	return k.UpdateContractAdmin(ctx, contractAddr, nil, newAdminAddr)
 }
 
+//nolint:staticcheck
 func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.ClearAdminProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -279,38 +294,39 @@ func handleClearAdminProposal(ctx sdk.Context, k types.ContractOpsKeeper, p type
 
 	contractAddr, err := sdk.AccAddressFromBech32(p.Contract)
 	if err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
-	if err := k.ClearContractAdmin(ctx, contractAddr, nil); err != nil {
-		return err
-	}
-	return nil
+	err = k.ClearContractAdmin(ctx, contractAddr, nil)
+	return err
 }
 
+//nolint:staticcheck
 func handlePinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.PinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 	for _, v := range p.CodeIDs {
 		if err := k.PinCode(ctx, v); err != nil {
-			return sdkerrors.Wrapf(err, "code id: %d", v)
+			return errorsmod.Wrapf(err, "code id: %d", v)
 		}
 	}
 	return nil
 }
 
+//nolint:staticcheck
 func handleUnpinCodesProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UnpinCodesProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
 	}
 	for _, v := range p.CodeIDs {
 		if err := k.UnpinCode(ctx, v); err != nil {
-			return sdkerrors.Wrapf(err, "code id: %d", v)
+			return errorsmod.Wrapf(err, "code id: %d", v)
 		}
 	}
 	return nil
 }
 
+//nolint:staticcheck
 func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsKeeper, p types.UpdateInstantiateConfigProposal) error {
 	if err := p.ValidateBasic(); err != nil {
 		return err
@@ -319,7 +335,7 @@ func handleUpdateInstantiateConfigProposal(ctx sdk.Context, k types.ContractOpsK
 	var emptyCaller sdk.AccAddress
 	for _, accessConfigUpdate := range p.AccessConfigUpdates {
 		if err := k.SetAccessConfig(ctx, accessConfigUpdate.CodeID, emptyCaller, accessConfigUpdate.InstantiatePermission); err != nil {
-			return sdkerrors.Wrapf(err, "code id: %d", accessConfigUpdate.CodeID)
+			return errorsmod.Wrapf(err, "code id: %d", accessConfigUpdate.CodeID)
 		}
 	}
 	return nil

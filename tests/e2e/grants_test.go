@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -26,9 +28,9 @@ func TestGrants(t *testing.T) {
 	// - balance A reduced (on success)
 	// - balance B not touched
 
-	chain := ibctesting.NewCoordinator(t, 1).GetChain(ibctesting.GetChainID(0))
-	codeID := chain.StoreCodeFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm").CodeID
-	contractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
+	coord := ibctesting.NewCoordinator(t, 1)
+	chain := coord.GetChain(ibctesting.GetChainID(1))
+	contractAddr := e2e.InstantiateReflectContract(t, chain)
 	require.NotEmpty(t, contractAddr)
 
 	granterAddr := chain.SenderAccount.GetAddress()
@@ -48,7 +50,7 @@ func TestGrants(t *testing.T) {
 		filter         types.ContractAuthzFilterX
 		transferAmount sdk.Coin
 		senderKey      cryptotypes.PrivKey
-		expErr         *sdkerrors.Error
+		expErr         *errorsmod.Error
 	}{
 		"in limits and filter": {
 			limit:          types.NewMaxFundsLimit(myAmount),
@@ -75,7 +77,7 @@ func TestGrants(t *testing.T) {
 			filter:         types.NewAllowAllMessagesFilter(),
 			senderKey:      otherPrivKey,
 			transferAmount: myAmount,
-			expErr:         sdkerrors.ErrUnauthorized,
+			expErr:         authz.ErrNoAuthorizationFound,
 		},
 	}
 	for name, spec := range specs {
@@ -84,7 +86,8 @@ func TestGrants(t *testing.T) {
 			grant, err := types.NewContractGrant(contractAddr, spec.limit, spec.filter)
 			require.NoError(t, err)
 			authorization := types.NewContractExecutionAuthorization(*grant)
-			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, time.Now().Add(time.Hour))
+			expiry := time.Now().Add(time.Hour)
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
 			require.NoError(t, err)
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
@@ -103,7 +106,7 @@ func TestGrants(t *testing.T) {
 
 			// then
 			if spec.expErr != nil {
-				require.ErrorIs(t, gotErr, spec.expErr)
+				require.True(t, spec.expErr.Is(gotErr))
 				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return

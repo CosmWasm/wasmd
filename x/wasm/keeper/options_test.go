@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,14 +20,25 @@ import (
 
 func TestConstructorOptions(t *testing.T) {
 	specs := map[string]struct {
-		srcOpt Option
-		verify func(*testing.T, Keeper)
+		srcOpt    Option
+		verify    func(*testing.T, Keeper)
+		isPostOpt bool
 	}{
 		"wasm engine": {
 			srcOpt: WithWasmEngine(&wasmtesting.MockWasmer{}),
 			verify: func(t *testing.T, k Keeper) {
 				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
 			},
+		},
+		"decorate wasmvm": {
+			srcOpt: WithWasmEngineDecorator(func(old types.WasmerEngine) types.WasmerEngine {
+				require.IsType(t, &wasmvm.VM{}, old)
+				return &wasmtesting.MockWasmer{}
+			}),
+			verify: func(t *testing.T, k Keeper) {
+				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
+			},
+			isPostOpt: true,
 		},
 		"message handler": {
 			srcOpt: WithMessageHandler(&wasmtesting.MockMessageHandler{}),
@@ -49,6 +60,7 @@ func TestConstructorOptions(t *testing.T) {
 			verify: func(t *testing.T, k Keeper) {
 				assert.IsType(t, &wasmtesting.MockMessageHandler{}, k.messenger)
 			},
+			isPostOpt: true,
 		},
 		"query plugins decorator": {
 			srcOpt: WithQueryHandlerDecorator(func(old WasmVMQueryHandler) WasmVMQueryHandler {
@@ -58,6 +70,7 @@ func TestConstructorOptions(t *testing.T) {
 			verify: func(t *testing.T, k Keeper) {
 				assert.IsType(t, &wasmtesting.MockQueryHandler{}, k.wasmVMQueryHandler)
 			},
+			isPostOpt: true,
 		},
 		"coin transferrer": {
 			srcOpt: WithCoinTransferrer(&wasmtesting.MockCoinTransferrer{}),
@@ -74,7 +87,7 @@ func TestConstructorOptions(t *testing.T) {
 		"api costs": {
 			srcOpt: WithAPICosts(1, 2),
 			verify: func(t *testing.T, k Keeper) {
-				t.Cleanup(setApiDefaults)
+				t.Cleanup(setAPIDefaults)
 				assert.Equal(t, uint64(1), costHumanize)
 				assert.Equal(t, uint64(2), costCanonical)
 			},
@@ -101,16 +114,58 @@ func TestConstructorOptions(t *testing.T) {
 				assert.Equal(t, VestingCoinBurner{}, k.accountPruner)
 			},
 		},
+		"gov propagation": {
+			srcOpt: WitGovSubMsgAuthZPropagated(types.AuthZActionInstantiate, types.AuthZActionMigrateContract),
+			verify: func(t *testing.T, k Keeper) {
+				exp := map[types.AuthorizationPolicyAction]struct{}{
+					types.AuthZActionInstantiate:     {},
+					types.AuthZActionMigrateContract: {},
+				}
+				assert.Equal(t, exp, k.propagateGovAuthorization)
+			},
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			k := NewKeeper(nil, nil, paramtypes.NewSubspace(nil, nil, nil, nil, ""), authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, distributionkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, spec.srcOpt)
+			opt := spec.srcOpt
+			_, gotPostOptMarker := opt.(postOptsFn)
+			require.Equal(t, spec.isPostOpt, gotPostOptMarker)
+			k := NewKeeper(nil, nil, authkeeper.AccountKeeper{}, &bankkeeper.BaseKeeper{}, stakingkeeper.Keeper{}, nil, nil, nil, nil, nil, nil, nil, nil, "tempDir", types.DefaultWasmConfig(), AvailableCapabilities, "", opt)
 			spec.verify(t, k)
 		})
 	}
 }
 
-func setApiDefaults() {
+func setAPIDefaults() {
 	costHumanize = DefaultGasCostHumanAddress * DefaultGasMultiplier
 	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
+}
+
+func TestSplitOpts(t *testing.T) {
+	a := optsFn(nil)
+	b := optsFn(nil)
+	c := postOptsFn(nil)
+	d := postOptsFn(nil)
+	specs := map[string]struct {
+		src             []Option
+		expPre, expPost []Option
+	}{
+		"by type": {
+			src:     []Option{a, c},
+			expPre:  []Option{a},
+			expPost: []Option{c},
+		},
+		"ordered": {
+			src:     []Option{a, b, c, d},
+			expPre:  []Option{a, b},
+			expPost: []Option{c, d},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotPre, gotPost := splitOpts(spec.src)
+			assert.Equal(t, spec.expPre, gotPre)
+			assert.Equal(t, spec.expPost, gotPost)
+		})
+	}
 }

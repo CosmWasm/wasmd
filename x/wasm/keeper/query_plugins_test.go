@@ -1,29 +1,34 @@
 package keeper_test
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/rand"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+
+	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	dbm "github.com/cometbft/cometbft-db"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	"github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -89,8 +94,8 @@ func TestIBCQuerier(t *testing.T) {
 		srcQuery      *wasmvmtypes.IBCQuery
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
-		expJsonResult string
-		expErr        *sdkerrors.Error
+		expJSONResult string
+		expErr        *errorsmod.Error
 	}{
 		"query port id": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -102,7 +107,7 @@ func TestIBCQuerier(t *testing.T) {
 				},
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{},
-			expJsonResult: `{"port_id":"myIBCPortID"}`,
+			expJSONResult: `{"port_id":"myIBCPortID"}`,
 		},
 		"query list channels - all": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -111,7 +116,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -151,7 +156,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channels": [
     {
       "endpoint": {
@@ -178,7 +183,7 @@ func TestIBCQuerier(t *testing.T) {
 			channelKeeper: &wasmtesting.MockChannelKeeper{
 				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
 			},
-			expJsonResult: `{"channels": []}`,
+			expJSONResult: `{"channels": []}`,
 		},
 		"query channel": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -201,7 +206,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myQueryPortID",
@@ -242,7 +247,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: `{
+			expJSONResult: `{
   "channel": {
     "endpoint": {
       "port_id": "myLoadedPortID",
@@ -278,7 +283,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel in closed state": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -301,7 +306,7 @@ func TestIBCQuerier(t *testing.T) {
 					}, true
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 		"query channel - empty result": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -315,7 +320,7 @@ func TestIBCQuerier(t *testing.T) {
 					return channeltypes.Channel{}, false
 				},
 			},
-			expJsonResult: "{}",
+			expJSONResult: "{}",
 		},
 	}
 	for name, spec := range specs {
@@ -326,7 +331,7 @@ func TestIBCQuerier(t *testing.T) {
 			if spec.expErr != nil {
 				return
 			}
-			assert.JSONEq(t, spec.expJsonResult, string(gotResult), string(gotResult))
+			assert.JSONEq(t, spec.expJSONResult, string(gotResult), string(gotResult))
 		})
 	}
 }
@@ -354,6 +359,133 @@ func TestBankQuerierBalance(t *testing.T) {
 		},
 	}
 	assert.Equal(t, exp, got)
+}
+
+func TestBankQuerierMetadata(t *testing.T) {
+	metadata := banktypes.Metadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+			},
+		},
+	}
+
+	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+		if denom == "utest" {
+			return metadata, true
+		} else {
+			return banktypes.Metadata{}, false
+		}
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "utest",
+		},
+	})
+	require.NoError(t, gotErr)
+	var got wasmvmtypes.DenomMetadataResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wasmvmtypes.DenomMetadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []wasmvmtypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+			},
+		},
+	}
+	assert.Equal(t, exp, got.Metadata)
+
+	_, gotErr2 := q(ctx, &wasmvmtypes.BankQuery{
+		DenomMetadata: &wasmvmtypes.DenomMetadataQuery{
+			Denom: "uatom",
+		},
+	})
+	require.Error(t, gotErr2)
+	assert.Contains(t, gotErr2.Error(), "uatom: not found")
+}
+
+func TestBankQuerierAllMetadata(t *testing.T) {
+	metadata := []banktypes.Metadata{
+		{
+			Name: "Test Token",
+			Base: "utest",
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    "utest",
+					Exponent: 0,
+				},
+			},
+		},
+	}
+
+	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+		return &banktypes.QueryDenomsMetadataResponse{
+			Metadatas:  metadata,
+			Pagination: &query.PageResponse{},
+		}, nil
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{},
+	})
+	require.NoError(t, gotErr)
+	var got wasmvmtypes.AllDenomMetadataResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wasmvmtypes.AllDenomMetadataResponse{
+		Metadata: []wasmvmtypes.DenomMetadata{
+			{
+				Name: "Test Token",
+				Base: "utest",
+				DenomUnits: []wasmvmtypes.DenomUnit{
+					{
+						Denom:    "utest",
+						Exponent: 0,
+					},
+				},
+			},
+		},
+	}
+	assert.Equal(t, exp, got)
+}
+
+func TestBankQuerierAllMetadataPagination(t *testing.T) {
+	var capturedPagination *query.PageRequest
+	mock := bankKeeperMock{GetDenomsMetadataFn: func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+		capturedPagination = req.Pagination
+		return &banktypes.QueryDenomsMetadataResponse{
+			Metadatas: []banktypes.Metadata{},
+			Pagination: &query.PageResponse{
+				NextKey: nil,
+			},
+		}, nil
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	_, gotErr := q(ctx, &wasmvmtypes.BankQuery{
+		AllDenomMetadata: &wasmvmtypes.AllDenomMetadataQuery{
+			Pagination: &wasmvmtypes.PageRequest{
+				Key:   []byte("key"),
+				Limit: 10,
+			},
+		},
+	})
+	require.NoError(t, gotErr)
+	exp := &query.PageRequest{
+		Key:   []byte("key"),
+		Limit: 10,
+	}
+	assert.Equal(t, exp, capturedPagination)
 }
 
 func TestContractInfoWasmQuerier(t *testing.T) {
@@ -538,7 +670,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
@@ -546,7 +678,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    sdkerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
@@ -566,9 +698,10 @@ func TestQueryErrors(t *testing.T) {
 func TestAcceptListStargateQuerier(t *testing.T) {
 	wasmApp := app.SetupWithEmptyStore(t)
 	ctx := wasmApp.NewUncachedContext(false, tmproto.Header{ChainID: "foo", Height: 1, Time: time.Now()})
-	wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	err := wasmApp.StakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	require.NoError(t, err)
 
-	addrs := app.AddTestAddrs(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
+	addrs := app.AddTestAddrsIncremental(wasmApp, ctx, 2, sdk.NewInt(1_000_000))
 	accepted := keeper.AcceptedStargateQueries{
 		"/cosmos.auth.v1beta1.Query/Account": &authtypes.QueryAccountResponse{},
 		"/no/route/to/this":                  &authtypes.QueryAccountResponse{},
@@ -628,6 +761,82 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	}
 }
 
+func TestDistributionQuerier(t *testing.T) {
+	ctx := sdk.Context{}
+	var myAddr sdk.AccAddress = rand.Bytes(address.Len)
+	var myOtherAddr sdk.AccAddress = rand.Bytes(address.Len)
+	specs := map[string]struct {
+		q       wasmvmtypes.DistributionQuery
+		mockFn  func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
+		expAddr string
+		expErr  bool
+	}{
+		"withdrawal override": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
+			},
+			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+				return myOtherAddr
+			},
+			expAddr: myOtherAddr.String(),
+		},
+		"no withdrawal override": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: myAddr.String()},
+			},
+			mockFn: func(_ sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+				return delAddr
+			},
+			expAddr: myAddr.String(),
+		},
+		"empty address": {
+			q: wasmvmtypes.DistributionQuery{
+				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{},
+			},
+			expErr: true,
+		},
+		"unknown query": {
+			q:      wasmvmtypes.DistributionQuery{},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			mock := distrKeeperMock{GetDelegatorWithdrawAddrFn: spec.mockFn}
+			q := keeper.DistributionQuerier(mock)
+
+			gotBz, gotErr := q(ctx, &spec.q)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			var rsp wasmvmtypes.DelegatorWithdrawAddressResponse
+			require.NoError(t, json.Unmarshal(gotBz, &rsp))
+			assert.Equal(t, spec.expAddr, rsp.WithdrawAddress)
+		})
+	}
+}
+
+type distrKeeperMock struct {
+	DelegationRewardsFn        func(c context.Context, req *distributiontypes.QueryDelegationRewardsRequest) (*distributiontypes.QueryDelegationRewardsResponse, error)
+	GetDelegatorWithdrawAddrFn func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress
+}
+
+func (m distrKeeperMock) DelegationRewards(ctx context.Context, req *distributiontypes.QueryDelegationRewardsRequest) (*distributiontypes.QueryDelegationRewardsResponse, error) {
+	if m.DelegationRewardsFn == nil {
+		panic("not expected to be called")
+	}
+	return m.DelegationRewardsFn(ctx, req)
+}
+
+func (m distrKeeperMock) GetDelegatorWithdrawAddr(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress {
+	if m.GetDelegatorWithdrawAddrFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetDelegatorWithdrawAddrFn(ctx, delAddr)
+}
+
 type mockWasmQueryKeeper struct {
 	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte
@@ -672,9 +881,11 @@ func (m mockWasmQueryKeeper) GetCodeInfo(ctx sdk.Context, codeID uint64) *types.
 }
 
 type bankKeeperMock struct {
-	GetSupplyFn      func(ctx sdk.Context, denom string) sdk.Coin
-	GetBalanceFn     func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
-	GetAllBalancesFn func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetSupplyFn         func(ctx sdk.Context, denom string) sdk.Coin
+	GetBalanceFn        func(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	GetAllBalancesFn    func(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetDenomMetadataFn  func(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	GetDenomsMetadataFn func(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error)
 }
 
 func (m bankKeeperMock) GetSupply(ctx sdk.Context, denom string) sdk.Coin {
@@ -696,6 +907,20 @@ func (m bankKeeperMock) GetAllBalances(ctx sdk.Context, addr sdk.AccAddress) sdk
 		panic("not expected to be called")
 	}
 	return m.GetAllBalancesFn(ctx, addr)
+}
+
+func (m bankKeeperMock) GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+	if m.GetDenomMetadataFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetDenomMetadataFn(ctx, denom)
+}
+
+func (m bankKeeperMock) DenomsMetadata(ctx context.Context, req *banktypes.QueryDenomsMetadataRequest) (*banktypes.QueryDenomsMetadataResponse, error) {
+	if m.GetDenomsMetadataFn == nil {
+		panic("not expected to be called")
+	}
+	return m.GetDenomsMetadataFn(ctx, req)
 }
 
 func TestConvertProtoToJSONMarshal(t *testing.T) {

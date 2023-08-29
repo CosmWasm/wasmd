@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 type ProposalType string
@@ -58,7 +60,7 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 	proposals := make([]ProposalType, len(keys))
 	for i, key := range keys {
 		if _, ok := valid[key]; !ok {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "'%s' is not a valid ProposalType", key)
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "'%s' is not a valid ProposalType", key)
 		}
 		proposals[i] = ProposalType(key)
 	}
@@ -66,30 +68,18 @@ func ConvertToProposals(keys []string) ([]ProposalType, error) {
 }
 
 func init() { // register new content types with the sdk
-	govtypes.RegisterProposalType(string(ProposalTypeStoreCode))
-	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract))
-	govtypes.RegisterProposalType(string(ProposalTypeInstantiateContract2))
-	govtypes.RegisterProposalType(string(ProposalTypeMigrateContract))
-	govtypes.RegisterProposalType(string(ProposalTypeSudoContract))
-	govtypes.RegisterProposalType(string(ProposalTypeExecuteContract))
-	govtypes.RegisterProposalType(string(ProposalTypeUpdateAdmin))
-	govtypes.RegisterProposalType(string(ProposalTypeClearAdmin))
-	govtypes.RegisterProposalType(string(ProposalTypePinCodes))
-	govtypes.RegisterProposalType(string(ProposalTypeUnpinCodes))
-	govtypes.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
-	govtypes.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
-	govtypes.RegisterProposalTypeCodec(&StoreCodeProposal{}, "wasm/StoreCodeProposal")
-	govtypes.RegisterProposalTypeCodec(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal")
-	govtypes.RegisterProposalTypeCodec(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal")
-	govtypes.RegisterProposalTypeCodec(&MigrateContractProposal{}, "wasm/MigrateContractProposal")
-	govtypes.RegisterProposalTypeCodec(&SudoContractProposal{}, "wasm/SudoContractProposal")
-	govtypes.RegisterProposalTypeCodec(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal")
-	govtypes.RegisterProposalTypeCodec(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal")
-	govtypes.RegisterProposalTypeCodec(&ClearAdminProposal{}, "wasm/ClearAdminProposal")
-	govtypes.RegisterProposalTypeCodec(&PinCodesProposal{}, "wasm/PinCodesProposal")
-	govtypes.RegisterProposalTypeCodec(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal")
-	govtypes.RegisterProposalTypeCodec(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal")
-	govtypes.RegisterProposalTypeCodec(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal")
+	v1beta1.RegisterProposalType(string(ProposalTypeStoreCode))
+	v1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract))
+	v1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract2))
+	v1beta1.RegisterProposalType(string(ProposalTypeMigrateContract))
+	v1beta1.RegisterProposalType(string(ProposalTypeSudoContract))
+	v1beta1.RegisterProposalType(string(ProposalTypeExecuteContract))
+	v1beta1.RegisterProposalType(string(ProposalTypeUpdateAdmin))
+	v1beta1.RegisterProposalType(string(ProposalTypeClearAdmin))
+	v1beta1.RegisterProposalType(string(ProposalTypePinCodes))
+	v1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
+	v1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
+	v1beta1.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
 }
 
 func NewStoreCodeProposal(
@@ -124,21 +114,21 @@ func (p StoreCodeProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
-		return sdkerrors.Wrap(err, "run as")
+		return errorsmod.Wrap(err, "run as")
 	}
 
 	if err := validateWasmCode(p.WASMByteCode, MaxProposalWasmSize); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
 	if p.InstantiatePermission != nil {
 		if err := p.InstantiatePermission.ValidateBasic(); err != nil {
-			return sdkerrors.Wrap(err, "instantiate permission")
+			return errorsmod.Wrap(err, "instantiate permission")
 		}
 	}
 
 	if err := ValidateVerificationInfo(p.Source, p.Builder, p.CodeHash); err != nil {
-		return sdkerrors.Wrapf(err, "code verification info")
+		return errorsmod.Wrapf(err, "code verification info")
 	}
 	return nil
 }
@@ -212,11 +202,11 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "run as")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "run as")
 	}
 
 	if p.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if err := ValidateLabel(p.Label); err != nil {
@@ -233,7 +223,7 @@ func (p InstantiateContractProposal) ValidateBasic() error {
 		}
 	}
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -312,7 +302,7 @@ func (p InstantiateContract2Proposal) ValidateBasic() error {
 	}
 	// Validate run as
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "run as")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "run as")
 	}
 	// Validate admin
 	if len(p.Admin) != 0 {
@@ -322,7 +312,7 @@ func (p InstantiateContract2Proposal) ValidateBasic() error {
 	}
 	// Validate codeid
 	if p.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 	// Validate label
 	if err := ValidateLabel(p.Label); err != nil {
@@ -330,7 +320,7 @@ func (p InstantiateContract2Proposal) ValidateBasic() error {
 	}
 	// Validate msg
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	// Validate funds
 	if !p.Funds.IsValid() {
@@ -338,7 +328,7 @@ func (p InstantiateContract2Proposal) ValidateBasic() error {
 	}
 	// Validate salt
 	if len(p.Salt) == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "salt is required")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "salt is required")
 	}
 	return nil
 }
@@ -435,20 +425,20 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
-		return sdkerrors.Wrap(err, "run as")
+		return errorsmod.Wrap(err, "run as")
 	}
 
 	if err := validateWasmCode(p.WASMByteCode, MaxProposalWasmSize); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
 	if err := ValidateVerificationInfo(p.Source, p.Builder, p.CodeHash); err != nil {
-		return sdkerrors.Wrap(err, "code info")
+		return errorsmod.Wrap(err, "code info")
 	}
 
 	if p.InstantiatePermission != nil {
 		if err := p.InstantiatePermission.ValidateBasic(); err != nil {
-			return sdkerrors.Wrap(err, "instantiate permission")
+			return errorsmod.Wrap(err, "instantiate permission")
 		}
 	}
 
@@ -466,7 +456,7 @@ func (p StoreAndInstantiateContractProposal) ValidateBasic() error {
 		}
 	}
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -557,13 +547,13 @@ func (p MigrateContractProposal) ValidateBasic() error {
 		return err
 	}
 	if p.CodeID == 0 {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code_id is required")
 	}
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -628,10 +618,10 @@ func (p SudoContractProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -690,16 +680,16 @@ func (p ExecuteContractProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	if _, err := sdk.AccAddressFromBech32(p.RunAs); err != nil {
-		return sdkerrors.Wrap(err, "run as")
+		return errorsmod.Wrap(err, "run as")
 	}
 	if !p.Funds.IsValid() {
 		return sdkerrors.ErrInvalidCoins
 	}
 	if err := p.Msg.ValidateBasic(); err != nil {
-		return sdkerrors.Wrap(err, "payload msg")
+		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -762,10 +752,10 @@ func (p UpdateAdminProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	if _, err := sdk.AccAddressFromBech32(p.NewAdmin); err != nil {
-		return sdkerrors.Wrap(err, "new admin")
+		return errorsmod.Wrap(err, "new admin")
 	}
 	return nil
 }
@@ -806,7 +796,7 @@ func (p ClearAdminProposal) ValidateBasic() error {
 		return err
 	}
 	if _, err := sdk.AccAddressFromBech32(p.Contract); err != nil {
-		return sdkerrors.Wrap(err, "contract")
+		return errorsmod.Wrap(err, "contract")
 	}
 	return nil
 }
@@ -850,7 +840,7 @@ func (p PinCodesProposal) ValidateBasic() error {
 		return err
 	}
 	if len(p.CodeIDs) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code ids")
+		return errorsmod.Wrap(ErrEmpty, "code ids")
 	}
 	return nil
 }
@@ -894,7 +884,7 @@ func (p UnpinCodesProposal) ValidateBasic() error {
 		return err
 	}
 	if len(p.CodeIDs) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code ids")
+		return errorsmod.Wrap(ErrEmpty, "code ids")
 	}
 	return nil
 }
@@ -910,22 +900,22 @@ func (p UnpinCodesProposal) String() string {
 
 func validateProposalCommons(title, description string) error {
 	if strings.TrimSpace(title) != title {
-		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title must not start/end with white spaces")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal title must not start/end with white spaces")
 	}
 	if len(title) == 0 {
-		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal title cannot be blank")
 	}
-	if len(title) > govtypes.MaxTitleLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", govtypes.MaxTitleLength)
+	if len(title) > v1beta1.MaxTitleLength {
+		return errorsmod.Wrapf(govtypes.ErrInvalidProposalContent, "proposal title is longer than max length of %d", v1beta1.MaxTitleLength)
 	}
 	if strings.TrimSpace(description) != description {
-		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal description must not start/end with white spaces")
 	}
 	if len(description) == 0 {
-		return sdkerrors.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")
+		return errorsmod.Wrap(govtypes.ErrInvalidProposalContent, "proposal description cannot be blank")
 	}
-	if len(description) > govtypes.MaxDescriptionLength {
-		return sdkerrors.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", govtypes.MaxDescriptionLength)
+	if len(description) > v1beta1.MaxDescriptionLength {
+		return errorsmod.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", v1beta1.MaxDescriptionLength)
 	}
 	return nil
 }
@@ -962,16 +952,16 @@ func (p UpdateInstantiateConfigProposal) ValidateBasic() error {
 		return err
 	}
 	if len(p.AccessConfigUpdates) == 0 {
-		return sdkerrors.Wrap(ErrEmpty, "code updates")
+		return errorsmod.Wrap(ErrEmpty, "code updates")
 	}
 	dedup := make(map[uint64]bool)
 	for _, codeUpdate := range p.AccessConfigUpdates {
 		_, found := dedup[codeUpdate.CodeID]
 		if found {
-			return sdkerrors.Wrapf(ErrDuplicate, "duplicate code: %d", codeUpdate.CodeID)
+			return errorsmod.Wrapf(ErrDuplicate, "duplicate code: %d", codeUpdate.CodeID)
 		}
 		if err := codeUpdate.InstantiatePermission.ValidateBasic(); err != nil {
-			return sdkerrors.Wrap(err, "instantiate permission")
+			return errorsmod.Wrap(err, "instantiate permission")
 		}
 		dedup[codeUpdate.CodeID] = true
 	}

@@ -3,10 +3,10 @@ package cli
 import (
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -25,7 +25,7 @@ func MigrateContractCmd() *cobra.Command {
 				return err
 			}
 
-			msg, err := parseMigrateContractArgs(args, clientCtx)
+			msg, err := parseMigrateContractArgs(args, clientCtx.GetFromAddress().String())
 			if err != nil {
 				return err
 			}
@@ -40,17 +40,17 @@ func MigrateContractCmd() *cobra.Command {
 	return cmd
 }
 
-func parseMigrateContractArgs(args []string, cliCtx client.Context) (types.MsgMigrateContract, error) {
+func parseMigrateContractArgs(args []string, sender string) (types.MsgMigrateContract, error) {
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
-		return types.MsgMigrateContract{}, sdkerrors.Wrap(err, "code id")
+		return types.MsgMigrateContract{}, errorsmod.Wrap(err, "code id")
 	}
 
 	migrateMsg := args[2]
 
 	msg := types.MsgMigrateContract{
-		Sender:   cliCtx.GetFromAddress().String(),
+		Sender:   sender,
 		Contract: args[0],
 		CodeID:   codeID,
 		Msg:      []byte(migrateMsg),
@@ -71,10 +71,7 @@ func UpdateContractAdminCmd() *cobra.Command {
 				return err
 			}
 
-			msg, err := parseUpdateContractAdminArgs(args, clientCtx)
-			if err != nil {
-				return err
-			}
+			msg := parseUpdateContractAdminArgs(args, clientCtx.GetFromAddress().String())
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -86,13 +83,13 @@ func UpdateContractAdminCmd() *cobra.Command {
 	return cmd
 }
 
-func parseUpdateContractAdminArgs(args []string, cliCtx client.Context) (types.MsgUpdateAdmin, error) {
+func parseUpdateContractAdminArgs(args []string, sender string) types.MsgUpdateAdmin {
 	msg := types.MsgUpdateAdmin{
-		Sender:   cliCtx.GetFromAddress().String(),
+		Sender:   sender,
 		Contract: args[0],
 		NewAdmin: args[1],
 	}
-	return msg, nil
+	return msg
 }
 
 // ClearContractAdminCmd clears an admin for a contract
@@ -145,7 +142,7 @@ func UpdateInstantiateConfigCmd() *cobra.Command {
 			}
 
 			msg := types.MsgUpdateInstantiateConfig{
-				Sender:                   string(clientCtx.GetFromAddress()),
+				Sender:                   clientCtx.GetFromAddress().String(),
 				CodeID:                   codeID,
 				NewInstantiatePermission: perm,
 			}

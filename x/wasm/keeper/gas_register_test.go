@@ -84,12 +84,12 @@ func TestNewContractInstanceCosts(t *testing.T) {
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost),
+			exp:       DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost,
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost),
+			exp:       DefaultInstanceCost,
 		},
 
 		"negative len": {
@@ -131,7 +131,7 @@ func TestContractInstanceCosts(t *testing.T) {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(DefaultContractMessageDataCost * math.MaxUint32),
+			exp:       DefaultContractMessageDataCost * math.MaxUint32,
 		},
 		"empty msg - pinned": {
 			srcLen:    0,
@@ -147,12 +147,12 @@ func TestContractInstanceCosts(t *testing.T) {
 		"big msg - unpinned": {
 			srcLen:    math.MaxUint32,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost),
+			exp:       DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost,
 		},
 		"empty msg - unpinned": {
 			srcLen:    0,
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost),
+			exp:       DefaultInstanceCost,
 		},
 
 		"negative len": {
@@ -196,7 +196,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost), // 3 == len("foo")
+			exp:       3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost, // 3 == len("foo")
 		},
 		"subcall response with events - pinned": {
 			src: wasmvmtypes.Reply{
@@ -210,7 +210,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas(3*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo")
+			exp:       3*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo")
 		},
 		"subcall response with events exceeds free tier- pinned": {
 			src: wasmvmtypes.Reply{
@@ -224,7 +224,7 @@ func TestReplyCost(t *testing.T) {
 			},
 			srcConfig: DefaultGasRegisterConfig(),
 			pinned:    true,
-			exp:       sdk.Gas((3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo"), 6 == len("myData")
+			exp:       (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - pinned": {
 			src: wasmvmtypes.Reply{
@@ -248,7 +248,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost),
+			exp:       DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost + DefaultContractMessageDataCost,
 		},
 		"subcall response with events - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -261,7 +261,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost),
+			exp:       DefaultInstanceCost + 3*DefaultEventAttributeDataCost + DefaultPerAttributeCost,
 		},
 		"subcall response with events exceeds free tier- unpinned": {
 			src: wasmvmtypes.Reply{
@@ -274,7 +274,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost + (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost), // 3 == len("foo"), 6 == len("myData")
+			exp:       DefaultInstanceCost + (3+6)*DefaultEventAttributeDataCost + DefaultPerAttributeCost, // 3 == len("foo"), 6 == len("myData")
 		},
 		"subcall response error - unpinned": {
 			src: wasmvmtypes.Reply{
@@ -283,7 +283,7 @@ func TestReplyCost(t *testing.T) {
 				},
 			},
 			srcConfig: DefaultGasRegisterConfig(),
-			exp:       sdk.Gas(DefaultInstanceCost + 3*DefaultContractMessageDataCost),
+			exp:       DefaultInstanceCost + 3*DefaultContractMessageDataCost,
 		},
 		"subcall response with empty events": {
 			src: wasmvmtypes.Reply{

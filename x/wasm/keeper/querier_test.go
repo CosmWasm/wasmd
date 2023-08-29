@@ -9,18 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	errorsmod "cosmossdk.io/errors"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -38,20 +38,22 @@ func TestQueryAllContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, contractAddr, contractModel))
 
+	randomAddr := RandomBech32AccountAddress(t)
+
 	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery            *types.QueryAllContractStateRequest
 		expModelContains    []types.Model
 		expModelContainsNot []types.Model
-		expErr              *sdkErrors.Error
+		expErr              error
 	}{
 		"query all": {
 			srcQuery:         &types.QueryAllContractStateRequest{Address: contractAddr.String()},
 			expModelContains: contractModel,
 		},
 		"query all with unknown address": {
-			srcQuery: &types.QueryAllContractStateRequest{Address: RandomBech32AccountAddress(t)},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QueryAllContractStateRequest{Address: randomAddr},
+			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 		"with pagination offset": {
 			srcQuery: &types.QueryAllContractStateRequest{
@@ -99,8 +101,9 @@ func TestQueryAllContractState(t *testing.T) {
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.AllContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
+
 			if spec.expErr != nil {
+				require.Equal(t, spec.expErr.Error(), err.Error())
 				return
 			}
 			for _, exp := range spec.expModelContains {
@@ -119,6 +122,8 @@ func TestQuerySmartContractState(t *testing.T) {
 
 	exampleContract := InstantiateHackatomExampleContract(t, ctx, keepers)
 	contractAddr := exampleContract.Contract.String()
+
+	randomAddr := RandomBech32AccountAddress(t)
 
 	q := Querier(keeper)
 	specs := map[string]struct {
@@ -140,8 +145,8 @@ func TestQuerySmartContractState(t *testing.T) {
 			expErr:   status.Error(codes.InvalidArgument, "invalid query data"),
 		},
 		"query smart with unknown address": {
-			srcQuery: &types.QuerySmartContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte(`{"verifier":{}}`)},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QuerySmartContractStateRequest{Address: randomAddr, QueryData: []byte(`{"verifier":{}}`)},
+			expErr:   types.ErrNoSuchContractFn(randomAddr),
 		},
 	}
 	for msg, spec := range specs {
@@ -168,7 +173,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 
 	specs := map[string]struct {
 		doInContract func()
-		expErr       *sdkErrors.Error
+		expErr       *errorsmod.Error
 	}{
 		"out of gas": {
 			doInContract: func() {
@@ -213,11 +218,13 @@ func TestQueryRawContractState(t *testing.T) {
 	}
 	require.NoError(t, keeper.importContractState(ctx, exampleContract.Contract, contractModel))
 
+	randomAddr := RandomBech32AccountAddress(t)
+
 	q := Querier(keeper)
 	specs := map[string]struct {
 		srcQuery *types.QueryRawContractStateRequest
 		expData  []byte
-		expErr   *sdkErrors.Error
+		expErr   error
 	}{
 		"query raw key": {
 			srcQuery: &types.QueryRawContractStateRequest{Address: contractAddr, QueryData: []byte("foo")},
@@ -240,15 +247,15 @@ func TestQueryRawContractState(t *testing.T) {
 			expData:  nil,
 		},
 		"query raw with unknown address": {
-			srcQuery: &types.QueryRawContractStateRequest{Address: RandomBech32AccountAddress(t), QueryData: []byte("foo")},
-			expErr:   types.ErrNotFound,
+			srcQuery: &types.QueryRawContractStateRequest{Address: randomAddr, QueryData: []byte("foo")},
+			expErr:   types.ErrNoSuchContractFn(randomAddr).Wrapf("address %s", randomAddr),
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			got, err := q.RawContractState(sdk.WrapSDKContext(ctx), spec.srcQuery)
-			require.True(t, spec.expErr.Is(err), err)
 			if spec.expErr != nil {
+				assert.Equal(t, spec.expErr.Error(), err.Error())
 				return
 			}
 			assert.Equal(t, spec.expData, got.Data)
@@ -271,7 +278,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, bob := keyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,
@@ -543,18 +550,19 @@ func TestQueryContractInfo(t *testing.T) {
 	// register an example extension. must be protobuf
 	keepers.EncodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*types.ContractInfoExtension)(nil),
-		&govtypes.Proposal{},
+		&govv1beta1.Proposal{},
 	)
-	govtypes.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
+	govv1beta1.RegisterInterfaces(keepers.EncodingConfig.InterfaceRegistry)
 
 	k := keepers.WasmKeeper
 	querier := NewGrpcQuerier(k.cdc, k.storeKey, k, k.queryGasLimit)
 	myExtension := func(info *types.ContractInfo) {
 		// abuse gov proposal as a random protobuf extension with an Any type
-		myExt, err := govtypes.NewProposal(&govtypes.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
+		myExt, err := govv1beta1.NewProposal(&govv1beta1.TextProposal{Title: "foo", Description: "bar"}, 1, anyDate, anyDate)
 		require.NoError(t, err)
 		myExt.TotalDeposit = nil
-		info.SetExtension(&myExt)
+		err = info.SetExtension(&myExt)
+		require.NoError(t, err)
 	}
 	specs := map[string]struct {
 		src    *types.QueryContractInfoRequest
@@ -613,7 +621,7 @@ func TestQueryPinnedCodes(t *testing.T) {
 	specs := map[string]struct {
 		srcQuery   *types.QueryPinnedCodesRequest
 		expCodeIDs []uint64
-		expErr     *sdkErrors.Error
+		expErr     *errorsmod.Error
 	}{
 		"query all": {
 			srcQuery:   &types.QueryPinnedCodesRequest{},
@@ -672,10 +680,11 @@ func TestQueryParams(t *testing.T) {
 	require.Equal(t, paramsResponse.Params.CodeUploadAccess, defaultParams.CodeUploadAccess)
 	require.Equal(t, paramsResponse.Params.InstantiateDefaultPermission, defaultParams.InstantiateDefaultPermission)
 
-	keeper.SetParams(ctx, types.Params{
+	err = keeper.SetParams(ctx, types.Params{
 		CodeUploadAccess:             types.AllowNobody,
 		InstantiateDefaultPermission: types.AccessTypeNobody,
 	})
+	require.NoError(t, err)
 
 	paramsResponse, err = q.Params(sdk.WrapSDKContext(ctx), &types.QueryParamsRequest{})
 	require.NoError(t, err)
@@ -695,39 +704,39 @@ func TestQueryCodeInfo(t *testing.T) {
 	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
 	require.NoError(t, err)
 	specs := map[string]struct {
-		codeId       uint64
+		codeID       uint64
 		accessConfig types.AccessConfig
 	}{
 		"everybody": {
-			codeId:       1,
+			codeID:       1,
 			accessConfig: types.AllowEverybody,
 		},
 		"nobody": {
-			codeId:       10,
+			codeID:       10,
 			accessConfig: types.AllowNobody,
 		},
 		"with_address": {
-			codeId:       20,
-			accessConfig: types.AccessTypeOnlyAddress.With(anyAddress),
+			codeID:       20,
+			accessConfig: types.AccessTypeAnyOfAddresses.With(anyAddress),
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
 			codeInfo.InstantiateConfig = spec.accessConfig
-			require.NoError(t, keeper.importCode(ctx, spec.codeId,
+			require.NoError(t, keeper.importCode(ctx, spec.codeID,
 				codeInfo,
 				wasmCode),
 			)
 
 			q := Querier(keeper)
 			got, err := q.Code(sdk.WrapSDKContext(ctx), &types.QueryCodeRequest{
-				CodeId: spec.codeId,
+				CodeId: spec.codeID,
 			})
 			require.NoError(t, err)
 			expectedResponse := &types.QueryCodeResponse{
 				CodeInfoResponse: &types.CodeInfoResponse{
-					CodeID:                spec.codeId,
+					CodeID:                spec.codeID,
 					Creator:               codeInfo.Creator,
 					DataHash:              codeInfo.CodeHash,
 					InstantiatePermission: spec.accessConfig,
@@ -757,37 +766,37 @@ func TestQueryCodeInfoList(t *testing.T) {
 
 	codes := []struct {
 		name     string
-		codeId   uint64
+		codeID   uint64
 		codeInfo types.CodeInfo
 	}{
 		{
 			name:     "everybody",
-			codeId:   1,
+			codeID:   1,
 			codeInfo: codeInfoWithConfig(types.AllowEverybody),
 		},
 		{
-			codeId:   10,
+			codeID:   10,
 			name:     "nobody",
 			codeInfo: codeInfoWithConfig(types.AllowNobody),
 		},
 		{
 			name:     "with_address",
-			codeId:   20,
-			codeInfo: codeInfoWithConfig(types.AccessTypeOnlyAddress.With(anyAddress)),
+			codeID:   20,
+			codeInfo: codeInfoWithConfig(types.AccessTypeAnyOfAddresses.With(anyAddress)),
 		},
 	}
 
 	allCodesResponse := make([]types.CodeInfoResponse, 0)
 	for _, code := range codes {
 		t.Run(fmt.Sprintf("import_%s", code.name), func(t *testing.T) {
-			require.NoError(t, keeper.importCode(ctx, code.codeId,
+			require.NoError(t, keeper.importCode(ctx, code.codeID,
 				code.codeInfo,
 				wasmCode),
 			)
 		})
 
 		allCodesResponse = append(allCodesResponse, types.CodeInfoResponse{
-			CodeID:                code.codeId,
+			CodeID:                code.codeID,
 			Creator:               code.codeInfo.Creator,
 			DataHash:              code.codeInfo.CodeHash,
 			InstantiatePermission: code.codeInfo.InstantiateConfig,
@@ -818,7 +827,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
 	require.NoError(t, err)
 
-	_, _, bob := keyPubAddr()
+	_, bob := keyPubAddr()
 	initMsg := HackatomExampleInitMsg{
 		Verifier:    anyAddr,
 		Beneficiary: bob,

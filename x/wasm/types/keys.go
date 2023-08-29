@@ -22,7 +22,6 @@ const (
 	RouterKey = ModuleName
 )
 
-// nolint
 var (
 	CodeKeyPrefix                                  = []byte{0x01}
 	ContractKeyPrefix                              = []byte{0x02}
@@ -33,6 +32,7 @@ var (
 	PinnedCodeIndexPrefix                          = []byte{0x07}
 	TXCounterPrefix                                = []byte{0x08}
 	ContractsByCreatorPrefix                       = []byte{0x09}
+	ParamsKey                                      = []byte{0x10}
 
 	KeyLastCodeID     = append(SequenceKeyPrefix, []byte("lastCodeId")...)
 	KeyLastInstanceID = append(SequenceKeyPrefix, []byte("lastContractId")...)
