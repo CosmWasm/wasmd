@@ -181,7 +181,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
+	codeID = k.autoIncrementID(ctx, types.KeySequenceCodeID)
 	k.Logger(ctx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
@@ -1030,22 +1030,22 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	}
 }
 
-func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) autoIncrementID(ctx sdk.Context, sequenceKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
+	bz := store.Get(sequenceKey)
 	id := uint64(1)
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)
 	}
 	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(lastIDKey, bz)
+	store.Set(sequenceKey, bz)
 	return id
 }
 
 // PeekAutoIncrementID reads the current value without incrementing it.
-func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, sequenceKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
+	bz := store.Get(sequenceKey)
 	id := uint64(1)
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)
@@ -1053,13 +1053,13 @@ func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) error {
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, sequenceKey []byte, val uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	if store.Has(lastIDKey) {
-		return errorsmod.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(lastIDKey))
+	if store.Has(sequenceKey) {
+		return errorsmod.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(sequenceKey))
 	}
 	bz := sdk.Uint64ToBigEndian(val)
-	store.Set(lastIDKey, bz)
+	store.Set(sequenceKey, bz)
 	return nil
 }
 
