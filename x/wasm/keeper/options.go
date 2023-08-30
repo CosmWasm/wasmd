@@ -126,7 +126,7 @@ func WithAccountPruner(x AccountPruner) Option {
 }
 
 func WithVMCacheMetrics(r prometheus.Registerer) Option {
-	return optsFn(func(k *Keeper) {
+	return postOptsFn(func(k *Keeper) {
 		NewWasmVMMetricsCollector(k.wasmVM).Register(r)
 	})
 }
