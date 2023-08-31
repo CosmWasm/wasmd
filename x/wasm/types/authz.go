@@ -16,11 +16,65 @@ import (
 const gasDeserializationCostPerByte = uint64(1)
 
 var (
+	_ authztypes.Authorization         = &StoreCodeAuthorization{}
 	_ authztypes.Authorization         = &ContractExecutionAuthorization{}
 	_ authztypes.Authorization         = &ContractMigrationAuthorization{}
 	_ cdctypes.UnpackInterfacesMessage = &ContractExecutionAuthorization{}
 	_ cdctypes.UnpackInterfacesMessage = &ContractMigrationAuthorization{}
 )
+
+// NewStoreCodeAuthorization constructor
+func NewStoreCodeAuthorization(grants ...CodeGrant) *StoreCodeAuthorization {
+	return &StoreCodeAuthorization{
+		Grants: grants,
+	}
+}
+
+// MsgTypeURL implements Authorization.MsgTypeURL.
+func (a StoreCodeAuthorization) MsgTypeURL() string {
+	return sdk.MsgTypeURL(&MsgStoreCode{})
+}
+
+// NewAuthz factory method to create an Authorization with updated grants
+func (a StoreCodeAuthorization) NewAuthz(g []CodeGrant) authztypes.Authorization {
+	return NewStoreCodeAuthorization(g...)
+}
+
+// Accept implements Authorization.Accept.
+func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
+	panic("implement")
+}
+
+// ValidateBasic implements Authorization.ValidateBasic.
+func (a StoreCodeAuthorization) ValidateBasic() error {
+	if len(a.Grants) == 0 {
+		return ErrEmpty.Wrap("grants")
+	}
+	for i, v := range a.Grants {
+		if err := v.ValidateBasic(); err != nil {
+			return errorsmod.Wrapf(err, "position %d", i)
+		}
+	}
+	return nil
+}
+
+// NewCodeGrant constructor
+func NewCodeGrant(codeHash []byte, instantiatePermission AccessConfig) (*CodeGrant, error) {
+	return &CodeGrant{
+		CodeHash:              codeHash,
+		InstantiatePermission: &instantiatePermission,
+	}, nil
+}
+
+// ValidateBasic validates the grant
+func (g CodeGrant) ValidateBasic() error {
+	if g.InstantiatePermission != nil {
+		if err := g.InstantiatePermission.ValidateBasic(); err != nil {
+			return errorsmod.Wrap(err, "instantiate permission")
+		}
+	}
+	return nil
+}
 
 // AuthzableWasmMsg is abstract wasm tx message that is supported in authz
 type AuthzableWasmMsg interface {
