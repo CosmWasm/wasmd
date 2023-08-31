@@ -208,7 +208,7 @@ func TestOnIBCPacketReceive(t *testing.T) {
 
 			// then
 			if spec.expPacketNotHandled {
-				const contractPanicToErrMsg = `recovered: Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted', src/contract.rs:316:5`
+				const contractPanicToErrMsg = `recovered: Error calling the VM: Error executing Wasm: Wasmer runtime error: RuntimeError: Aborted: panicked at 'This page intentionally faulted'`
 				assert.ErrorContains(t, err, contractPanicToErrMsg)
 				require.Nil(t, *capturedAck)
 				return

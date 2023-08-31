@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +38,7 @@ func TestStoreCodeProposal(t *testing.T) {
 	require.NoError(t, err)
 	gzippedWasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
-	checksum, err := hex.DecodeString("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
+	checksum, err := hex.DecodeString(testdata.ChecksumHackatom)
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -331,7 +333,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
 
-	checksum, err := hex.DecodeString("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
+	checksum, err := hex.DecodeString(testdata.ChecksumHackatom)
 	require.NoError(t, err)
 
 	var (

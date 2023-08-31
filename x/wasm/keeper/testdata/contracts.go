@@ -7,6 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	ChecksumHackatom = "EBED57113226028E105A28B02C473520C7D406A0E55AE85078CB3F036299C1E4"
+)
+
 var (
 	//go:embed reflect.wasm
 	reflectContract []byte

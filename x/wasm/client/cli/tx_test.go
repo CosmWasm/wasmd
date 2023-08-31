@@ -2,7 +2,10 @@ package cli
 
 import (
 	"encoding/hex"
+	"strings"
 	"testing"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,22 +30,22 @@ func TestParseVerificationFlags(t *testing.T) {
 		"gov store zipped": {
 			srcPath: "../../keeper/testdata/hackatom.wasm.gzip",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
+				"--instantiate-everybody=true", "--code-hash=" + testdata.ChecksumHackatom,
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
+			expCodeHash: testdata.ChecksumHackatom,
 		},
 		"gov store raw": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",
 			args: []string{
-				"--instantiate-everybody=true", "--code-hash=5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
+				"--instantiate-everybody=true", "--code-hash=" + testdata.ChecksumHackatom,
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
 			},
 			expBuilder:  "cosmwasm/workspace-optimizer:0.12.11",
 			expSource:   "https://example.com",
-			expCodeHash: "5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2",
+			expCodeHash: testdata.ChecksumHackatom,
 		},
 		"gov store checksum mismatch": {
 			srcPath: "../../keeper/testdata/hackatom.wasm",
@@ -70,7 +73,7 @@ func TestParseVerificationFlags(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expSource, gotSource)
 			assert.Equal(t, spec.expBuilder, gotBuilder)
-			assert.Equal(t, spec.expCodeHash, hex.EncodeToString(gotCodeHash))
+			assert.Equal(t, spec.expCodeHash, strings.ToUpper(hex.EncodeToString(gotCodeHash)))
 		})
 	}
 }
