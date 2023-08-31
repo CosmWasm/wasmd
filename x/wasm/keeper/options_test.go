@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"testing"
 
@@ -29,6 +30,14 @@ func TestConstructorOptions(t *testing.T) {
 			srcOpt: WithWasmEngine(&wasmtesting.MockWasmer{}),
 			verify: func(t *testing.T, k Keeper) {
 				assert.IsType(t, &wasmtesting.MockWasmer{}, k.wasmVM)
+			},
+		},
+		"vm cache metrics": {
+			srcOpt: WithVMCacheMetrics(prometheus.DefaultRegisterer),
+			verify: func(t *testing.T, k Keeper) {
+				t.Helper()
+				registered := prometheus.DefaultRegisterer.Unregister(NewWasmVMMetricsCollector(k.wasmVM))
+				assert.True(t, registered)
 			},
 		},
 		"decorate wasmvm": {
