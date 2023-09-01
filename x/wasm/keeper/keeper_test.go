@@ -8,7 +8,6 @@ import (
 	"fmt"
 	stdrand "math/rand"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -67,7 +66,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	codeHash := strings.ToLower(testdata.ChecksumHackatom)
+	codeHash := testdata.ChecksumHackatom
 	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }

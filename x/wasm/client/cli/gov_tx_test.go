@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
@@ -106,7 +107,7 @@ func TestParseCodeInfoFlags(t *testing.T) {
 	wasmBin, err := os.ReadFile("../../keeper/testdata/hackatom.wasm.gzip")
 	require.NoError(t, err)
 
-	checksumStr := testdata.ChecksumHackatom
+	checksumStr := strings.ToUpper(testdata.ChecksumHackatom)
 
 	specs := map[string]struct {
 		args   []string

@@ -2,7 +2,6 @@ package cli
 
 import (
 	"encoding/hex"
-	"strings"
 	"testing"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
@@ -73,7 +72,7 @@ func TestParseVerificationFlags(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expSource, gotSource)
 			assert.Equal(t, spec.expBuilder, gotBuilder)
-			assert.Equal(t, spec.expCodeHash, strings.ToUpper(hex.EncodeToString(gotCodeHash)))
+			assert.Equal(t, spec.expCodeHash, hex.EncodeToString(gotCodeHash))
 		})
 	}
 }
