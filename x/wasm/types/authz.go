@@ -1,12 +1,14 @@
 package types
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -35,14 +37,29 @@ func (a StoreCodeAuthorization) MsgTypeURL() string {
 	return sdk.MsgTypeURL(&MsgStoreCode{})
 }
 
-// NewAuthz factory method to create an Authorization with updated grants
-func (a StoreCodeAuthorization) NewAuthz(g []CodeGrant) authztypes.Authorization {
-	return NewStoreCodeAuthorization(g...)
-}
-
 // Accept implements Authorization.Accept.
 func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	panic("implement")
+	var code []byte
+	var permission AccessConfig
+	switch msg := msg.(type) {
+	case *MsgStoreCode:
+		code = msg.WASMByteCode
+		permission = *msg.InstantiatePermission
+	default:
+		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("unknown msg type")
+	}
+
+	checksum, err := wasmvm.CreateChecksum(code)
+	if err != nil {
+		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("checksum")
+	}
+
+	for _, grant := range a.Grants {
+		if grant.Accept(checksum, permission) {
+			return authztypes.AcceptResponse{Accept: true}, nil
+		}
+	}
+	return authztypes.AcceptResponse{Accept: false}, nil
 }
 
 // ValidateBasic implements Authorization.ValidateBasic.
@@ -68,12 +85,23 @@ func NewCodeGrant(codeHash []byte, instantiatePermission AccessConfig) (*CodeGra
 
 // ValidateBasic validates the grant
 func (g CodeGrant) ValidateBasic() error {
+	if len(g.CodeHash) == 0 {
+		return ErrEmpty.Wrap("code hash")
+	}
 	if g.InstantiatePermission != nil {
 		if err := g.InstantiatePermission.ValidateBasic(); err != nil {
 			return errorsmod.Wrap(err, "instantiate permission")
 		}
 	}
 	return nil
+}
+
+// Accept checks if checksum and permission match the grant
+func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
+	if !bytes.Equal(g.CodeHash, []byte("*")) && !bytes.Equal(g.CodeHash, checksum) {
+		return false
+	}
+	return permission.IsSubset(*g.InstantiatePermission)
 }
 
 // AuthzableWasmMsg is abstract wasm tx message that is supported in authz
