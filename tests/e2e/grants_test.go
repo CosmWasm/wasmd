@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,6 +118,104 @@ func TestGrants(t *testing.T) {
 			require.NoError(t, gotErr)
 			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
 			assert.Equal(t, granterStartBalance.Sub(spec.transferAmount.Amount), chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
+		})
+	}
+}
+
+func TestStoreCodeGrant(t *testing.T) {
+	// Given a grant for address B by A created
+	// When  B uploads code from A
+	// Then	 the grant is executed as defined
+	// And
+	// - balance A reduced (on success)
+	// - balance B not touched
+
+	reflectWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm")
+	require.NoError(t, err)
+
+	reflectCodeChecksum, err := wasmvm.CreateChecksum(reflectWasmCode)
+	require.NoError(t, err)
+
+	coord := ibctesting.NewCoordinator(t, 1)
+	chain := coord.GetChain(ibctesting.GetChainID(1))
+
+	granterAddr := chain.SenderAccount.GetAddress()
+	granteePrivKey := secp256k1.GenPrivKey()
+	granteeAddr := sdk.AccAddress(granteePrivKey.PubKey().Address().Bytes())
+	otherPrivKey := secp256k1.GenPrivKey()
+	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
+
+	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
+	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+
+	specs := map[string]struct {
+		codeHash              []byte
+		instantiatePermission types.AccessConfig
+		senderKey             cryptotypes.PrivKey
+		expErr                *errorsmod.Error
+	}{
+		"any code hash": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"match code hash and permission": {
+			codeHash:              reflectCodeChecksum,
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"not match code hash": {
+			codeHash:              []byte("ABC"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"not match permission": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowNobody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"non authorized sender address": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             otherPrivKey,
+			expErr:                authz.ErrNoAuthorizationFound,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup grant
+			grant, err := types.NewCodeGrant(spec.codeHash, spec.instantiatePermission)
+			require.NoError(t, err)
+			authorization := types.NewStoreCodeAuthorization(*grant)
+			expiry := time.Now().Add(time.Hour)
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			require.NoError(t, err)
+			_, err = chain.SendMsgs(grantMsg)
+			require.NoError(t, err)
+
+			granterStartBalance := chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount
+
+			// when
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+				Sender:                granterAddr.String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &types.AllowEverybody,
+			}})
+			_, gotErr := chain.SendNonDefaultSenderMsgs(spec.senderKey, &execMsg)
+
+			// then
+			if spec.expErr != nil {
+				require.True(t, spec.expErr.Is(gotErr))
+				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+			//assert.True(t, granterStartBalance.GT(chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount))
 		})
 	}
 }

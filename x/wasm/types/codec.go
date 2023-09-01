@@ -57,6 +57,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MaxFundsLimit{}, "wasm/MaxFundsLimit", nil)
 	cdc.RegisterConcrete(&CombinedLimit{}, "wasm/CombinedLimit", nil)
 
+	cdc.RegisterConcrete(&StoreCodeAuthorization{}, "wasm/StoreCodeAuthorization", nil)
 	cdc.RegisterConcrete(&ContractExecutionAuthorization{}, "wasm/ContractExecutionAuthorization", nil)
 	cdc.RegisterConcrete(&ContractMigrationAuthorization{}, "wasm/ContractMigrationAuthorization", nil)
 }
@@ -119,6 +120,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 
 	registry.RegisterImplementations(
 		(*authz.Authorization)(nil),
+		&StoreCodeAuthorization{},
 		&ContractExecutionAuthorization{},
 		&ContractMigrationAuthorization{},
 	)
