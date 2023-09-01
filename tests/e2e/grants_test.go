@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -215,7 +215,7 @@ func TestStoreCodeGrant(t *testing.T) {
 			}
 			require.NoError(t, gotErr)
 			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-			//assert.True(t, granterStartBalance.GT(chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount))
+			// assert.True(t, granterStartBalance.GT(chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount))
 		})
 	}
 }
