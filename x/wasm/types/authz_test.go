@@ -4,12 +4,12 @@ import (
 	"math"
 	"testing"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
