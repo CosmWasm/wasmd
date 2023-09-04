@@ -43,10 +43,10 @@ func TestPinPong(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(pingContract)),
+				wasmtesting.NewIBCContractMockWasmEngine(pingContract)),
 		}
 		chainBOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-			wasmtesting.NewIBCContractMockWasmer(pongContract),
+			wasmtesting.NewIBCContractMockWasmEngine(pongContract),
 		)}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))

@@ -26,14 +26,14 @@ func (f postOptsFn) apply(keeper *Keeper) {
 
 // WithWasmEngine is an optional constructor parameter to replace the default wasmVM engine with the
 // given one.
-func WithWasmEngine(x types.WasmerEngine) Option {
+func WithWasmEngine(x types.WasmEngine) Option {
 	return optsFn(func(k *Keeper) {
 		k.wasmVM = x
 	})
 }
 
 // WithWasmEngineDecorator is an optional constructor parameter to decorate the default wasmVM engine.
-func WithWasmEngineDecorator(d func(old types.WasmerEngine) types.WasmerEngine) Option {
+func WithWasmEngineDecorator(d func(old types.WasmEngine) types.WasmEngine) Option {
 	return postOptsFn(func(k *Keeper) {
 		k.wasmVM = d(k.wasmVM)
 	})

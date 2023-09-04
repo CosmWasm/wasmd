@@ -18,7 +18,7 @@ import (
 )
 
 func TestOnOpenChannel(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
@@ -88,7 +88,7 @@ func TestOnOpenChannel(t *testing.T) {
 }
 
 func TestOnConnectChannel(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
@@ -200,7 +200,7 @@ func TestOnConnectChannel(t *testing.T) {
 }
 
 func TestOnCloseChannel(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
@@ -310,7 +310,7 @@ func TestOnCloseChannel(t *testing.T) {
 }
 
 func TestOnRecvPacket(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
@@ -500,7 +500,7 @@ func TestOnRecvPacket(t *testing.T) {
 }
 
 func TestOnAckPacket(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
@@ -605,7 +605,7 @@ func TestOnAckPacket(t *testing.T) {
 }
 
 func TestOnTimeoutPacket(t *testing.T) {
-	var m wasmtesting.MockWasmer
+	var m wasmtesting.MockWasmEngine
 	wasmtesting.MakeIBCInstantiable(&m)
 	messenger := &wasmtesting.MockMessageHandler{}
 	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithMessageHandler(messenger))
