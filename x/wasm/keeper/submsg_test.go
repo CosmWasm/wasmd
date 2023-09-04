@@ -562,7 +562,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 }
 
 func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
-	mockWasmVM := &wasmtesting.MockWasmer{}
+	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
@@ -643,7 +643,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 }
 
 func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
-	mockWasmVM := &wasmtesting.MockWasmer{}
+	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
 	k := keepers.WasmKeeper
