@@ -23,7 +23,7 @@ var wasmIdent = []byte("\x00\x61\x73\x6D")
 
 // SeedNewContractInstance stores some wasm code and instantiates a new contract on this chain.
 // This method can be called to prepare the store with some valid CodeInfo and ContractInfo. The returned
-// Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmer
+// Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmEngine
 // for using a contract mock in Go.
 func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
 	pInstResp := chain.StoreCode(append(wasmIdent, rand.Bytes(10)...))

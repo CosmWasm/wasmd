@@ -55,7 +55,7 @@ func initRecurseContract(t *testing.T) (contract sdk.AccAddress, ctx sdk.Context
 func TestGasCostOnQuery(t *testing.T) {
 	const (
 		GasNoWork uint64 = 63_950
-		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
 		GasWork50 uint64 = 64_218 // this is a little shy of 50k gas - to keep an eye on the limit
 
 		GasReturnUnhashed uint64 = 29
@@ -208,7 +208,7 @@ func TestLimitRecursiveQueryGas(t *testing.T) {
 	// eventually hitting an OutOfGas panic.
 
 	const (
-		// Note: about 100 SDK gas (10k wasmer gas) for each round of sha256
+		// Note: about 100 SDK gas (10k CosmWasm gas) for each round of sha256
 		GasWork2k uint64 = 77_161 // = NewContractInstanceCosts + x // we have 6x gas used in cpu than in the instance
 		// This is overhead for calling into a sub-contract
 		GasReturnHashed uint64 = 25

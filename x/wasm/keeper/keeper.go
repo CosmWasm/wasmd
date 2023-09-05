@@ -77,7 +77,7 @@ var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
 	reflect.TypeOf(&authtypes.BaseAccount{}): {},
 }
 
-// Keeper will have a reference to Wasmer with it's own data directory.
+// Keeper will have a reference to Wasm Engine with it's own data directory.
 type Keeper struct {
 	storeKey              storetypes.StoreKey
 	cdc                   codec.Codec
@@ -85,7 +85,7 @@ type Keeper struct {
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
 	capabilityKeeper      types.CapabilityKeeper
-	wasmVM                types.WasmerEngine
+	wasmVM                types.WasmEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
 	messenger             Messenger
@@ -1026,7 +1026,7 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
 	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
 	if ctx.GasMeter().IsOutOfGas() {
-		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
+		panic(sdk.ErrorOutOfGas{Descriptor: "Wasm engine function execution"})
 	}
 }
 

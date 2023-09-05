@@ -711,7 +711,7 @@ func TestInstantiateWithNonExistingCodeID(t *testing.T) {
 func TestInstantiateWithContractDataResponse(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 
-	wasmerMock := &wasmtesting.MockWasmer{
+	wasmEngineMock := &wasmtesting.MockWasmEngine{
 		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 			return &wasmvmtypes.Response{Data: []byte("my-response-data")}, 0, nil
 		},
@@ -719,7 +719,7 @@ func TestInstantiateWithContractDataResponse(t *testing.T) {
 		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 	}
 
-	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
+	example := StoreRandomContract(t, ctx, keepers, wasmEngineMock)
 	_, data, err := keepers.ContractKeeper.Instantiate(ctx, example.CodeID, example.CreatorAddr, nil, nil, "test", nil)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("my-response-data"), data)
@@ -738,7 +738,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 
 	var instantiationCount int
 	callbacks := make([]func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error), 2)
-	wasmerMock := &wasmtesting.MockWasmer{
+	wasmEngineMock := &wasmtesting.MockWasmEngine{
 		// dispatch instantiation calls to callbacks
 		InstantiateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 			require.Greater(t, len(callbacks), instantiationCount, "unexpected call to instantiation")
@@ -758,7 +758,7 @@ func TestInstantiateWithContractFactoryChildQueriesParent(t *testing.T) {
 	// overwrite wasmvm in response handler
 	keeper.wasmVMResponseHandler = NewDefaultWasmVMContractResponseHandler(NewMessageDispatcher(keeper.messenger, keeper))
 
-	example := StoreRandomContract(t, ctx, keepers, wasmerMock)
+	example := StoreRandomContract(t, ctx, keepers, wasmEngineMock)
 	// factory contract
 	callbacks[0] = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		t.Log("called factory")
@@ -1467,7 +1467,7 @@ func TestIterateContractsByCode(t *testing.T) {
 
 func TestIterateContractsByCodeWithMigration(t *testing.T) {
 	// mock migration so that it does not fail when migrate example1 to example2.codeID
-	mockWasmVM := wasmtesting.MockWasmer{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mockWasmVM := wasmtesting.MockWasmEngine{MigrateFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		return &wasmvmtypes.Response{}, 1, nil
 	}}
 	wasmtesting.MakeInstantiable(&mockWasmVM)
@@ -1733,7 +1733,7 @@ func TestPinCode(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
 		capturedChecksums = append(capturedChecksums, checksum)
 		return nil
 	}}
@@ -1760,7 +1760,7 @@ func TestUnpinCode(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{
+	mock := wasmtesting.MockWasmEngine{
 		PinFn: func(checksum wasmvm.Checksum) error {
 			return nil
 		},
@@ -1794,7 +1794,7 @@ func TestInitializePinnedCodes(t *testing.T) {
 	k := keepers.WasmKeeper
 
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
 		capturedChecksums = append(capturedChecksums, checksum)
 		return nil
 	}}
@@ -1822,7 +1822,7 @@ func TestInitializePinnedCodes(t *testing.T) {
 
 func TestPinnedContractLoops(t *testing.T) {
 	var capturedChecksums []wasmvm.Checksum
-	mock := wasmtesting.MockWasmer{PinFn: func(checksum wasmvm.Checksum) error {
+	mock := wasmtesting.MockWasmEngine{PinFn: func(checksum wasmvm.Checksum) error {
 		capturedChecksums = append(capturedChecksums, checksum)
 		return nil
 	}}
@@ -1948,7 +1948,7 @@ func TestNewDefaultWasmVMContractResponseHandler(t *testing.T) {
 func TestReply(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
-	var mock wasmtesting.MockWasmer
+	var mock wasmtesting.MockWasmEngine
 	wasmtesting.MakeInstantiable(&mock)
 	example := SeedNewContractInstance(t, ctx, keepers, &mock)
 
@@ -2017,7 +2017,7 @@ func TestReply(t *testing.T) {
 func TestQueryIsolation(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
-	var mock wasmtesting.MockWasmer
+	var mock wasmtesting.MockWasmEngine
 	wasmtesting.MakeInstantiable(&mock)
 	example := SeedNewContractInstance(t, ctx, keepers, &mock)
 	WithQueryHandlerDecorator(func(other WasmVMQueryHandler) WasmVMQueryHandler {

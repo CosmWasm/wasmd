@@ -48,7 +48,7 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 			var (
 				chainAOpts = []wasmkeeper.Option{
 					wasmkeeper.WithWasmEngine(
-						wasmtesting.NewIBCContractMockWasmer(myContract)),
+						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
@@ -100,7 +100,7 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 			var (
 				chainAOpts = []wasmkeeper.Option{
 					wasmkeeper.WithWasmEngine(
-						wasmtesting.NewIBCContractMockWasmer(myContract)),
+						wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 				}
 				coordinator    = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 				chainA         = coordinator.GetChain(wasmibctesting.GetChainID(1))
@@ -225,12 +225,12 @@ func TestOnIBCPacketReceive(t *testing.T) {
 
 // mock to submit an ibc data package from given chain and capture the ack
 type captureAckTestContractEngine struct {
-	*wasmtesting.MockWasmer
+	*wasmtesting.MockWasmEngine
 }
 
 // NewCaptureAckTestContractEngine constructor
 func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
-	m := wasmtesting.NewIBCContractMockWasmer(&wasmtesting.MockIBCContractCallbacks{
+	m := wasmtesting.NewIBCContractMockWasmEngine(&wasmtesting.MockIBCContractCallbacks{
 		IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
 			return &wasmvmtypes.IBC3ChannelOpenResponse{}, 0, nil
 		},
@@ -245,7 +245,7 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmibctesting.Path, chainA *wasmibctesting.TestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
 	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
-	x.MockWasmer.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	x.MockWasmEngine.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		return &wasmvmtypes.Response{
 			Messages: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
 				ChannelID: path.EndpointA.ChannelID, Data: executeMsg, Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 10000000}},
@@ -254,7 +254,7 @@ func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmi
 	}
 	// capture acknowledgement
 	var gotAck []byte
-	x.MockWasmer.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+	x.MockWasmEngine.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 		gotAck = msg.Acknowledgement.Data
 		return &wasmvmtypes.IBCBasicResponse{}, 0, nil
 	}

@@ -661,8 +661,8 @@ type ExampleContractInstance struct {
 	Contract sdk.AccAddress
 }
 
-// SeedNewContractInstance sets the mock wasmerEngine in keeper and calls store + instantiate to init the contract's metadata
-func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContractInstance {
+// SeedNewContractInstance sets the mock WasmEngine in keeper and calls store + instantiate to init the contract's metadata
+func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmEngine) ExampleContractInstance {
 	tb.Helper()
 	exampleContract := StoreRandomContract(tb, ctx, keepers, mock)
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, exampleContract.CodeID, exampleContract.CreatorAddr, exampleContract.CreatorAddr, []byte(`{}`), "", nil)
@@ -673,8 +673,8 @@ func SeedNewContractInstance(tb testing.TB, ctx sdk.Context, keepers TestKeepers
 	}
 }
 
-// StoreRandomContract sets the mock wasmerEngine in keeper and calls store
-func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmerEngine) ExampleContract {
+// StoreRandomContract sets the mock WasmEngine in keeper and calls store
+func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mock types.WasmEngine) ExampleContract {
 	tb.Helper()
 
 	return StoreRandomContractWithAccessConfig(tb, ctx, keepers, mock, nil)
@@ -683,7 +683,7 @@ func StoreRandomContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, mo
 func StoreRandomContractWithAccessConfig(
 	tb testing.TB, ctx sdk.Context,
 	keepers TestKeepers,
-	mock types.WasmerEngine,
+	mock types.WasmEngine,
 	cfg *types.AccessConfig,
 ) ExampleContract {
 	tb.Helper()

@@ -654,7 +654,7 @@ func TestPinCodesProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 
-	mock := wasmtesting.MockWasmer{
+	mock := wasmtesting.MockWasmEngine{
 		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
@@ -745,7 +745,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 
-	mock := wasmtesting.MockWasmer{
+	mock := wasmtesting.MockWasmEngine{
 		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
@@ -835,7 +835,7 @@ func TestUpdateInstantiateConfigProposal(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 
-	mock := wasmtesting.MockWasmer{
+	mock := wasmtesting.MockWasmEngine{
 		StoreCodeFn:   wasmtesting.NoOpStoreCodeFn,
 		AnalyzeCodeFn: wasmtesting.WithoutIBCAnalyzeFn,
 	}
