@@ -31,7 +31,7 @@ linters:
     - revive
     - stylecheck
     - typecheck
-    - thelper
+#    - thelper # too many positives with table tests that have custom setup(*testing.T)
     - unconvert
     - unused
 
