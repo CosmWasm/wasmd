@@ -254,6 +254,9 @@ type WasmerEngine interface {
 	// Unpin is idempotent.
 	Unpin(checksum wasmvm.Checksum) error
 
+	// RemoveCode removes the wasm code referenced by checksum.
+	RemoveCode(checksum wasmvm.Checksum) error
+
 	// GetMetrics some internal metrics for monitoring purposes.
 	GetMetrics() (*wasmvmtypes.Metrics, error)
 }
