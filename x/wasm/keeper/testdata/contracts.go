@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ChecksumHackatom = "ebed57113226028e105a28b02c473520c7d406a0e55ae85078cb3f036299c1e4"
+	ChecksumHackatom = "3f4cd47c39c57fe1733fb41ed176eebd9d5c67baf5df8a1eeda1455e758f8514"
 )
 
 var (

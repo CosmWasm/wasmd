@@ -1370,9 +1370,8 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 
 	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
-	data, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
+	_, err = keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	assert.Equal(t, "burnt 1 keys", string(data))
 	type dict map[string]interface{}
 	expEvents := []dict{
 		{
