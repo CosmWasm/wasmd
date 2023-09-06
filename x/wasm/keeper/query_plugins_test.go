@@ -2,9 +2,11 @@ package keeper_test
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -957,7 +959,42 @@ func TestConvertProtoToJSONMarshal(t *testing.T) {
 		})
 	}
 }
-
+func TestConvertSDKDecCoinToWasmDecCoin(t *testing.T) {
+	specs := map[string]struct {
+		src sdk.DecCoins
+		exp []wasmvmtypes.DecCoin
+	}{
+		"one coin": {
+			src: sdk.NewDecCoins(sdk.NewInt64DecCoin("alx", 1)),
+			exp: []wasmvmtypes.DecCoin{{Amount: "1.000000000000000000", Denom: "alx"}},
+		},
+		"multiple coins": {
+			src: sdk.NewDecCoins(sdk.NewInt64DecCoin("alx", 1), sdk.NewInt64DecCoin("blx", 2)),
+			exp: []wasmvmtypes.DecCoin{{Amount: "1.000000000000000000", Denom: "alx"}, {Amount: "2.000000000000000000", Denom: "blx"}},
+		},
+		"small amount": {
+			src: sdk.NewDecCoins(sdk.NewDecCoinFromDec("alx", sdkmath.LegacyNewDecWithPrec(1, 18))),
+			exp: []wasmvmtypes.DecCoin{{Amount: "0.000000000000000001", Denom: "alx"}},
+		},
+		"big amount": {
+			src: sdk.NewDecCoins(sdk.NewDecCoin("alx", sdkmath.NewIntFromUint64(math.MaxUint64))),
+			exp: []wasmvmtypes.DecCoin{{Amount: "18446744073709551615.000000000000000000", Denom: "alx"}},
+		},
+		"empty": {
+			src: sdk.NewDecCoins(),
+			exp: []wasmvmtypes.DecCoin{},
+		},
+		"nil": {
+			exp: []wasmvmtypes.DecCoin{},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			got := keeper.ConvertSDKDecCoinsToWasmDecCoins(spec.src)
+			assert.Equal(t, spec.exp, got)
+		})
+	}
+}
 func TestResetProtoMarshalerAfterJsonMarshal(t *testing.T) {
 	appCodec := app.MakeEncodingConfig().Codec
 

@@ -616,7 +616,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 				return nil, err
 			}
 			return json.Marshal(wasmvmtypes.DelegationRewardsResponse{
-				Rewards: ConvertSDKDecCoinToWasmDecCoin(got.Rewards),
+				Rewards: ConvertSDKDecCoinsToWasmDecCoins(got.Rewards),
 			})
 		case req.DelegationTotalRewards != nil:
 			got, err := k.DelegationTotalRewards(ctx, &distrtypes.QueryDelegationTotalRewardsRequest{
@@ -627,7 +627,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 			}
 			return json.Marshal(wasmvmtypes.DelegationTotalRewardsResponse{
 				Rewards: ConvertSDKDelegatorRewardsToWasmRewards(got.Rewards),
-				Total:   ConvertSDKDecCoinToWasmDecCoin(got.Total),
+				Total:   ConvertSDKDecCoinsToWasmDecCoins(got.Total),
 			})
 		case req.DelegatorValidators != nil:
 			got, err := k.DelegatorValidators(ctx, &distrtypes.QueryDelegatorValidatorsRequest{
@@ -649,17 +649,17 @@ func ConvertSDKDelegatorRewardsToWasmRewards(rewards []distrtypes.DelegationDele
 	r := make([]wasmvmtypes.DelegatorReward, len(rewards))
 	for i, v := range rewards {
 		r[i] = wasmvmtypes.DelegatorReward{
-			Reward:           ConvertSDKDecCoinToWasmDecCoin(v.Reward),
+			Reward:           ConvertSDKDecCoinsToWasmDecCoins(v.Reward),
 			ValidatorAddress: v.ValidatorAddress,
 		}
 	}
 	return r
 }
 
-// ConvertSDKDecCoinToWasmDecCoin convert sdk to wasmvm type
-func ConvertSDKDecCoinToWasmDecCoin(rewards sdk.DecCoins) []wasmvmtypes.DecCoin {
-	r := make([]wasmvmtypes.DecCoin, len(rewards))
-	for i, v := range rewards {
+// ConvertSDKDecCoinsToWasmDecCoins convert sdk to wasmvm type
+func ConvertSDKDecCoinsToWasmDecCoins(src sdk.DecCoins) []wasmvmtypes.DecCoin {
+	r := make([]wasmvmtypes.DecCoin, len(src))
+	for i, v := range src {
 		r[i] = wasmvmtypes.DecCoin{
 			Amount: v.Amount.String(),
 			Denom:  v.Denom,
