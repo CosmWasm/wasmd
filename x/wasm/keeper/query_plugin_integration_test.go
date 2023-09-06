@@ -3,6 +3,7 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -472,9 +473,6 @@ func TestQueryDenomsIntegration(t *testing.T) {
 	}
 }
 
-func xxx[T any](t *testing.T, d func() T) {
-}
-
 func TestDistributionQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
 	pCtx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
@@ -567,6 +565,60 @@ func TestDistributionQuery(t *testing.T) {
 			query: &wasmvmtypes.DistributionQuery{
 				DelegationRewards: &wasmvmtypes.DelegationRewardsQuery{DelegatorAddress: delegator.String()},
 			},
+			expErr: true,
+		},
+		"delegation total rewards": {
+			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
+				val, found := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
+				require.True(t, found)
+				_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
+				require.NoError(t, err)
+				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
+				return nextBlock(ctx, keepers.StakingKeeper)
+			},
+			query: &wasmvmtypes.DistributionQuery{
+				DelegationTotalRewards: &wasmvmtypes.DelegationTotalRewardsQuery{DelegatorAddress: delegator.String()},
+			},
+			assert: func(t *testing.T, d []byte) {
+				var rsp wasmvmtypes.DelegationTotalRewardsResponse
+				mustUnmarshal(t, d, &rsp)
+				expRewards := []wasmvmtypes.DelegatorReward{
+					{
+						Reward:           []wasmvmtypes.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}},
+						ValidatorAddress: val1Addr.String(),
+					},
+				}
+				assert.Equal(t, expRewards, rsp.Rewards)
+				expTotal := []wasmvmtypes.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}}
+				assert.Equal(t, expTotal, rsp.Total)
+			},
+		},
+		"delegator validators": {
+			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
+				for _, v := range []sdk.ValAddress{val1Addr, val2Addr} {
+					val, found := keepers.StakingKeeper.GetValidator(ctx, v)
+					require.True(t, found)
+					_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
+					require.NoError(t, err)
+				}
+				return ctx
+			},
+			query: &wasmvmtypes.DistributionQuery{
+				DelegatorValidators: &wasmvmtypes.DelegatorValidatorsQuery{DelegatorAddress: delegator.String()},
+			},
+			assert: func(t *testing.T, d []byte) {
+				var rsp wasmvmtypes.DelegatorValidatorsResponse
+				mustUnmarshal(t, d, &rsp)
+				expVals := []string{val1Addr.String(), val2Addr.String()}
+				sort.Strings(expVals)
+				assert.Equal(t, expVals, rsp.Validators)
+			},
+		},
+		"empty": {
+			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
+				return ctx
+			},
+			query:  &wasmvmtypes.DistributionQuery{},
 			expErr: true,
 		},
 	}

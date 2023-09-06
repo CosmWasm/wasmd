@@ -631,7 +631,7 @@ func DistributionQuerier(k types.DistributionKeeper) func(ctx sdk.Context, reque
 			})
 		case req.DelegatorValidators != nil:
 			got, err := k.DelegatorValidators(ctx, &distrtypes.QueryDelegatorValidatorsRequest{
-				DelegatorAddress: req.DelegationTotalRewards.DelegatorAddress,
+				DelegatorAddress: req.DelegatorValidators.DelegatorAddress,
 			})
 			if err != nil {
 				return nil, err
