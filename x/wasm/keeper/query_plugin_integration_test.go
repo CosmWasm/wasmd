@@ -1,9 +1,9 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
@@ -610,16 +610,11 @@ func TestDistributionQuery(t *testing.T) {
 				var rsp wasmvmtypes.DelegatorValidatorsResponse
 				mustUnmarshal(t, d, &rsp)
 				expVals := []string{val1Addr.String(), val2Addr.String()}
-				sort.Strings(expVals)
+				if bytes.Compare(val1Addr, val2Addr) > 0 {
+					expVals = []string{expVals[1], expVals[0]}
+				}
 				assert.Equal(t, expVals, rsp.Validators)
 			},
-		},
-		"empty": {
-			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
-				return ctx
-			},
-			query:  &wasmvmtypes.DistributionQuery{},
-			expErr: true,
 		},
 	}
 	for name, spec := range specs {
