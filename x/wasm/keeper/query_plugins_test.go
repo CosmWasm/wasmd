@@ -821,20 +821,6 @@ func TestDistributionQuerier(t *testing.T) {
 	}
 }
 
-type distrKeeperMock struct{}
-
-//func (m distrKeeperMock) DelegatorWithdrawAddress(c context.Context, req *distributiontypes.QueryDelegatorWithdrawAddressRequest) (*distributiontypes.QueryDelegatorWithdrawAddressResponse, error) {
-//}
-//
-//func (m distrKeeperMock) DelegationRewards(c context.Context, req *distributiontypes.QueryDelegationRewardsRequest) (*distributiontypes.QueryDelegationRewardsResponse, error) {
-//}
-//
-//func (m distrKeeperMock) DelegationTotalRewards(c context.Context, req *distributiontypes.QueryDelegationTotalRewardsRequest) (*distributiontypes.QueryDelegationTotalRewardsResponse, error) {
-//}
-//
-//func (m distrKeeperMock) DelegatorValidators(c context.Context, req *distributiontypes.QueryDelegatorValidatorsRequest) (*distributiontypes.QueryDelegatorValidatorsResponse, error) {
-//}
-
 type mockWasmQueryKeeper struct {
 	GetContractInfoFn func(ctx sdk.Context, contractAddress sdk.AccAddress) *types.ContractInfo
 	QueryRawFn        func(ctx sdk.Context, contractAddress sdk.AccAddress, key []byte) []byte

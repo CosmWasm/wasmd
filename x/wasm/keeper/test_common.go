@@ -822,6 +822,7 @@ func (m IBCReflectInitMsg) GetBytes(tb testing.TB) []byte {
 
 type BurnerExampleInitMsg struct {
 	Payout sdk.AccAddress `json:"payout"`
+	Delete uint32         `json:"delete"`
 }
 
 func (m BurnerExampleInitMsg) GetBytes(tb testing.TB) []byte {

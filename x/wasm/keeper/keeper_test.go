@@ -1368,7 +1368,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
 	require.NoError(t, err)
 
-	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
+	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr, Delete: 100}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
 	_, err = keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
@@ -1385,8 +1385,9 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			"Type": "wasm",
 			"Attr": []dict{
 				{"_contract_address": contractAddr},
-				{"action": "burn"},
+				{"action": "migrate"},
 				{"payout": myPayoutAddr},
+				{"deleted_entries": "1"},
 			},
 		},
 		{
