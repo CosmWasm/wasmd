@@ -453,7 +453,7 @@ func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.Msg
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	policy := m.selectAuthorizationPolicy(ctx, req.Authority)
 
-	codeID, _, err := m.keeper.create(ctx, authorityAddr, req.WASMByteCode, req.InstantiatePermission, policy)
+	codeID, checksum, err := m.keeper.create(ctx, authorityAddr, req.WASMByteCode, req.InstantiatePermission, policy)
 	if err != nil {
 		return nil, err
 	}
@@ -469,6 +469,8 @@ func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.Msg
 	}
 
 	return &types.MsgStoreAndMigrateContractResponse{
-		Data: data,
+		CodeID:   codeID,
+		Checksum: checksum,
+		Data:     data,
 	}, nil
 }

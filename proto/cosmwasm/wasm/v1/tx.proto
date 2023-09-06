@@ -72,6 +72,8 @@ service Msg {
       returns (MsgAddCodeUploadParamsAddressesResponse);
   // StoreAndMigrateContract defines a governance operation for storing
   // and migrating the contract. The authority is defined in the keeper.
+  //
+  // Since: 0.42
   rpc StoreAndMigrateContract(MsgStoreAndMigrateContract)
       returns (MsgStoreAndMigrateContractResponse);
 }
@@ -438,6 +440,8 @@ message MsgRemoveCodeUploadParamsAddressesResponse {}
 
 // MsgStoreAndMigrateContract is the MsgStoreAndMigrateContract
 // request type.
+//
+// Since: 0.42
 message MsgStoreAndMigrateContract {
   option (amino.name) = "wasm/MsgStoreAndMigrateContract";
   option (cosmos.msg.v1.signer) = "authority";
@@ -456,7 +460,13 @@ message MsgStoreAndMigrateContract {
 
 // MsgStoreAndMigrateContractResponse defines the response structure
 // for executing a MsgStoreAndMigrateContract message.
+//
+// Since: 0.42
 message MsgStoreAndMigrateContractResponse {
+  // CodeID is the reference to the stored WASM code
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // Checksum is the sha256 hash of the stored code
+  bytes checksum = 2;
   // Data contains bytes to returned from the contract
-  bytes data = 1;
+  bytes data = 3;
 }

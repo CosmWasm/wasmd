@@ -51,6 +51,7 @@ func SubmitProposalCmd() *cobra.Command {
 		ProposalUpdateInstantiateConfigCmd(),
 		ProposalAddCodeUploadParamsAddresses(),
 		ProposalRemoveCodeUploadParamsAddresses(),
+		ProposalStoreAndMigrateContractCmd(),
 	)
 	return cmd
 }
@@ -412,7 +413,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 
 func ProposalExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute-contract [contract_addr_bech32] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
+		Use:   "execute-contract [contract_addr_bech32] [json_encoded_execution_args] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

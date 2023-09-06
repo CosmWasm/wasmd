@@ -1053,35 +1053,39 @@ func TestStoreAndMigrateContract(t *testing.T) {
 	wasmApp := app.Setup(t)
 	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
 
+	checksum, err := wasmvm.CreateChecksum(hackatomContract)
+	require.NoError(t, err)
+
 	var (
 		myAddress sdk.AccAddress = make([]byte, types.ContractAddrLen)
 		authority                = wasmApp.WasmKeeper.GetAuthority()
 	)
 
 	specs := map[string]struct {
-		addr       string
-		permission *types.AccessConfig
-		expErr     bool
+		addr        string
+		permission  *types.AccessConfig
+		expChecksum []byte
+		expErr      bool
 	}{
 		"authority can store and migrate a contract when permission is nobody": {
-			addr:       authority,
-			permission: &types.AllowNobody,
-			expErr:     false,
+			addr:        authority,
+			permission:  &types.AllowNobody,
+			expChecksum: checksum,
+		},
+		"authority can store and migrate a contract when permission is everybody": {
+			addr:        authority,
+			permission:  &types.AllowEverybody,
+			expChecksum: checksum,
+		},
+		"other address can store and migrate a contract when permission is everybody": {
+			addr:        myAddress.String(),
+			permission:  &types.AllowEverybody,
+			expChecksum: checksum,
 		},
 		"other address cannot store and migrate a contract when permission is nobody": {
 			addr:       myAddress.String(),
 			permission: &types.AllowNobody,
 			expErr:     true,
-		},
-		"authority can store and migrate a contract when permission is everybody": {
-			addr:       authority,
-			permission: &types.AllowEverybody,
-			expErr:     false,
-		},
-		"other address can store and migrate a contract when permission is everybody": {
-			addr:       myAddress.String(),
-			permission: &types.AllowEverybody,
-			expErr:     false,
 		},
 	}
 	for name, spec := range specs {
@@ -1123,14 +1127,20 @@ func TestStoreAndMigrateContract(t *testing.T) {
 				Msg:                   migMsgBz,
 				Contract:              contractAddr,
 			}
-			_, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			rsp, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
 
 			// then
 			if spec.expErr {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				require.Nil(t, rsp)
+				return
 			}
+
+			require.NoError(t, err)
+			var result types.MsgStoreAndMigrateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &result))
+			assert.Equal(t, spec.expChecksum, result.Checksum)
+			require.NotZero(t, result.CodeID)
 		})
 	}
 }
