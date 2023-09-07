@@ -326,17 +326,17 @@ func (c WasmdCli) QueryBalances(addr string) string {
 // QueryBalance returns balance amount for given denom.
 // 0 when not found
 func (c WasmdCli) QueryBalance(addr, denom string) int64 {
-	raw := c.CustomQuery("q", "bank", "balances", addr, "--denom="+denom)
+	raw := c.CustomQuery("q", "bank", "balance", addr, denom)
 	require.Contains(c.t, raw, "amount", raw)
-	return gjson.Get(raw, "amount").Int()
+	return gjson.Get(raw, "balance.amount").Int()
 }
 
 // QueryTotalSupply returns total amount of tokens for a given denom.
 // 0 when not found
 func (c WasmdCli) QueryTotalSupply(denom string) int64 {
-	raw := c.CustomQuery("q", "bank", "total", "--denom="+denom)
+	raw := c.CustomQuery("q", "bank", "total-supply")
 	require.Contains(c.t, raw, "amount", raw)
-	return gjson.Get(raw, "amount").Int()
+	return gjson.Get(raw, fmt.Sprintf("supply.#(denom==%q).amount", denom)).Int()
 }
 
 func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {

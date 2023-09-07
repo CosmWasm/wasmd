@@ -449,18 +449,27 @@ func (chain *TestChain) GetConsensusState(clientID string, height exported.Heigh
 // GetValsAtHeight will return the validator set of the chain at a given height. It will return
 // a success boolean depending on if the validator set exists or not at that height.
 func (chain *TestChain) GetValsAtHeight(height int64) (*cmttypes.ValidatorSet, bool) {
+	// if the current uncommitted header equals the requested height, then we can return
+	// the current validator set as this validator set will be stored in the historical info
+	// when the block height is executed
+	if height == chain.CurrentHeader.Height {
+		return chain.Vals, true
+	}
+
 	histInfo, err := chain.App.GetStakingKeeper().GetHistoricalInfo(chain.GetContext(), height)
-	if stakingtypes.ErrNoHistoricalInfo.Is(err) {
+	if err != nil {
 		return nil, false
 	}
-	require.NoError(chain.t, err)
-	valSet := stakingtypes.Validators(histInfo.Valset)
 
-	vals, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
+	valSet := stakingtypes.Validators{
+		Validators: histInfo.Valset,
+	}
+
+	tmValidators, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
 	if err != nil {
 		panic(err)
 	}
-	return cmttypes.NewValidatorSet(vals), true
+	return cmttypes.NewValidatorSet(tmValidators), true
 }
 
 // GetAcknowledgement retrieves an acknowledgement for the provided packet. If the
