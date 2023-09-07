@@ -5,7 +5,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
