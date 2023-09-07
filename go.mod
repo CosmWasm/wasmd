@@ -7,7 +7,7 @@ toolchain go1.21.0
 require (
 	github.com/CosmWasm/wasmvm v1.4.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230907064029-0fa4c54a9839
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230907092912-ea095bdc7ce9
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/iavl v1.0.0-rc.1
