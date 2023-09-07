@@ -7,17 +7,17 @@ import (
 	"strings"
 	"testing"
 
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	errorsmod "cosmossdk.io/errors"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -506,7 +506,7 @@ func TestDistributionQuery(t *testing.T) {
 		},
 		"delegator address -  withdrawal addr set": {
 			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
-				keepers.DistKeeper.SetWithdrawAddr(ctx, delegator, otherAddr)
+				require.NoError(t, keepers.DistKeeper.SetWithdrawAddr(ctx, delegator, otherAddr))
 				return ctx
 			},
 			query: &wasmvmtypes.DistributionQuery{
