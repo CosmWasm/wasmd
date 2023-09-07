@@ -100,6 +100,8 @@
     - [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse)
     - [MsgStoreAndInstantiateContract](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContract)
     - [MsgStoreAndInstantiateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndInstantiateContractResponse)
+    - [MsgStoreAndMigrateContract](#cosmwasm.wasm.v1.MsgStoreAndMigrateContract)
+    - [MsgStoreAndMigrateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndMigrateContractResponse)
     - [MsgStoreCode](#cosmwasm.wasm.v1.MsgStoreCode)
     - [MsgStoreCodeResponse](#cosmwasm.wasm.v1.MsgStoreCodeResponse)
     - [MsgSudoContract](#cosmwasm.wasm.v1.MsgSudoContract)
@@ -1639,6 +1641,48 @@ Since: 0.40
 
 
 
+<a name="cosmwasm.wasm.v1.MsgStoreAndMigrateContract"></a>
+
+### MsgStoreAndMigrateContract
+MsgStoreAndMigrateContract is the MsgStoreAndMigrateContract
+request type.
+
+Since: 0.42
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `authority` | [string](#string) |  | Authority is the address of the governance account. |
+| `wasm_byte_code` | [bytes](#bytes) |  | WASMByteCode can be raw or gzip compressed |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission to apply on contract creation, optional |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+| `msg` | [bytes](#bytes) |  | Msg json encoded message to be passed to the contract on migration |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgStoreAndMigrateContractResponse"></a>
+
+### MsgStoreAndMigrateContractResponse
+MsgStoreAndMigrateContractResponse defines the response structure
+for executing a MsgStoreAndMigrateContract message.
+
+Since: 0.42
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_id` | [uint64](#uint64) |  | CodeID is the reference to the stored WASM code |
+| `checksum` | [bytes](#bytes) |  | Checksum is the sha256 hash of the stored code |
+| `data` | [bytes](#bytes) |  | Data contains bytes to returned from the contract |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.MsgStoreCode"></a>
 
 ### MsgStoreCode
@@ -1865,6 +1909,9 @@ Since: 0.40 | |
 Since: 0.40 | |
 | `RemoveCodeUploadParamsAddresses` | [MsgRemoveCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddresses) | [MsgRemoveCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgRemoveCodeUploadParamsAddressesResponse) | RemoveCodeUploadParamsAddresses defines a governance operation for removing addresses from code upload params. The authority is defined in the keeper. | |
 | `AddCodeUploadParamsAddresses` | [MsgAddCodeUploadParamsAddresses](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddresses) | [MsgAddCodeUploadParamsAddressesResponse](#cosmwasm.wasm.v1.MsgAddCodeUploadParamsAddressesResponse) | AddCodeUploadParamsAddresses defines a governance operation for adding addresses to code upload params. The authority is defined in the keeper. | |
+| `StoreAndMigrateContract` | [MsgStoreAndMigrateContract](#cosmwasm.wasm.v1.MsgStoreAndMigrateContract) | [MsgStoreAndMigrateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndMigrateContractResponse) | StoreAndMigrateContract defines a governance operation for storing and migrating the contract. The authority is defined in the keeper.
+
+Since: 0.42 | |
 
  <!-- end services -->
 
