@@ -22,6 +22,7 @@ We have added 15 new wasm specific proposal messages that cover the contract's l
 * `MsgStoreAndInstantiateContract` - upload and instantiate a wasm contract.
 * `MsgRemoveCodeUploadParamsAddresses` - remove addresses from code upload params.
 * `MsgAddCodeUploadParamsAddresses` - add addresses to code upload params.
+* `MsgStoreAndMigrateContract` - upload and migrate a wasm contract.
 
 ## Wasmd Authorization Settings
 
