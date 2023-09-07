@@ -4,10 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	errorsmod "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
 )
 
 func TestWasmVMFlavouredError(t *testing.T) {

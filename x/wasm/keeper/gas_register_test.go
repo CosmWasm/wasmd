@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
-	storetypes "cosmossdk.io/store/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
+
+	storetypes "cosmossdk.io/store/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestCompileCosts(t *testing.T) {

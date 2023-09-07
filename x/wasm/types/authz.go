@@ -4,12 +4,14 @@ import (
 	"context"
 	"strings"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
+
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/cosmos/gogoproto/proto"
 )
 
 const gasDeserializationCostPerByte = uint64(1)
@@ -167,7 +169,7 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 		// finally do limit state updates in result
 		switch {
 		case result.DeleteLimit:
-			updatedGrants := append(grants[0:i], grants[i+1:]...) //nolint:gocritic
+			updatedGrants := append(grants[0:i], grants[i+1:]...) 
 			if len(updatedGrants) == 0 {                          // remove when empty
 				return authztypes.AcceptResponse{Accept: true, Delete: true}, nil
 			}

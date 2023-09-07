@@ -5,19 +5,19 @@ import (
 	"encoding/binary"
 	"runtime/debug"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	corestoretypes "cosmossdk.io/core/store"
-
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -68,7 +68,7 @@ func (q GrpcQuerier) ContractHistory(c context.Context, req *types.QueryContract
 	r := make([]types.ContractCodeHistoryEntry, 0)
 
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractCodeHistoryElementPrefix(contractAddr))
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var e types.ContractCodeHistoryEntry
 			if err := q.cdc.Unmarshal(value, &e); err != nil {
@@ -99,7 +99,7 @@ func (q GrpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 	r := make([]string, 0)
 
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractByCodeIDSecondaryIndexPrefix(req.CodeId))
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var contractAddr sdk.AccAddress = key[types.AbsoluteTxPositionLen:]
 			r = append(r, contractAddr.String())
@@ -131,7 +131,7 @@ func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 
 	r := make([]types.Model, 0)
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractStorePrefix(contractAddr))
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, types.Model{
 				Key:   key,
@@ -239,7 +239,7 @@ func (q GrpcQuerier) Codes(c context.Context, req *types.QueryCodesRequest) (*ty
 	ctx := sdk.UnwrapSDKContext(c)
 	r := make([]types.CodeInfoResponse, 0)
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.CodeKeyPrefix)
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, value []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			var c types.CodeInfo
 			if err := q.cdc.Unmarshal(value, &c); err != nil {
@@ -304,7 +304,7 @@ func (q GrpcQuerier) PinnedCodes(c context.Context, req *types.QueryPinnedCodesR
 	r := make([]uint64, 0)
 
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.PinnedCodeIndexPrefix)
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			r = append(r, sdk.BigEndianToUint64(key))
 		}
@@ -338,7 +338,7 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 		return nil, err
 	}
 	prefixStore := prefix.NewStore(runtime.KVStoreAdapter(q.storeService.OpenKVStore(ctx)), types.GetContractsByCreatorPrefix(creatorAddress))
-	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+	pageRes, err := query.FilteredPaginate(prefixStore, req.Pagination, func(key, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			accAddres := sdk.AccAddress(key[types.AbsoluteTxPositionLen:])
 			contracts = append(contracts, accAddres.String())
