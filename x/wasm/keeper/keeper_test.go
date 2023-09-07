@@ -8,9 +8,10 @@ import (
 	"fmt"
 	stdrand "math/rand"
 	"os"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -42,7 +43,7 @@ import (
 //go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
-const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1"
+const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 
 func TestNewKeeper(t *testing.T) {
 	_, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -65,7 +66,7 @@ func TestCreateSuccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hackatomWasm, storedCode)
 	// and events emitted
-	codeHash := strings.ToLower("5ca46abb8e9b1b754a5c906f9c0f4eec9121ee09e3cee55ea0faba54763706e2")
+	codeHash := testdata.ChecksumHackatom
 	exp := sdk.Events{sdk.NewEvent("store_code", sdk.NewAttribute("code_checksum", codeHash), sdk.NewAttribute("code_id", "1"))}
 	assert.Equal(t, exp, em.Events())
 }
@@ -861,7 +862,7 @@ func TestExecute(t *testing.T) {
 	// make sure gas is properly deducted from ctx
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1a154), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1a155), gasAfter-gasBefore)
 	}
 	// ensure bob now exists and got both payments released
 	bobAcct = accKeeper.GetAccount(ctx, bob)
@@ -1367,11 +1368,10 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, originalContractID, creator, fred, initMsgBz, "demo contract", deposit)
 	require.NoError(t, err)
 
-	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr}.GetBytes(t)
+	migMsgBz := BurnerExampleInitMsg{Payout: myPayoutAddr, Delete: 100}.GetBytes(t)
 	ctx = ctx.WithEventManager(sdk.NewEventManager()).WithBlockHeight(ctx.BlockHeight() + 1)
-	data, err := keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
+	_, err = keeper.Migrate(ctx, contractAddr, fred, burnerContractID, migMsgBz)
 	require.NoError(t, err)
-	assert.Equal(t, "burnt 1 keys", string(data))
 	type dict map[string]interface{}
 	expEvents := []dict{
 		{
@@ -1385,8 +1385,9 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 			"Type": "wasm",
 			"Attr": []dict{
 				{"_contract_address": contractAddr},
-				{"action": "burn"},
+				{"action": "migrate"},
 				{"payout": myPayoutAddr},
+				{"deleted_entries": "1"},
 			},
 		},
 		{
