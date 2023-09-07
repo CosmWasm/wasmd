@@ -265,7 +265,7 @@ func TestQueryRawContractState(t *testing.T) {
 	}
 }
 
-func TestQueryContractListByCodeOrdering(t *testing.T) {
+func TestQueryContractsByCode(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
@@ -298,6 +298,7 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 		return ctx
 	}
 
+	contractAddrs := make([]string, 0, 10)
 	// create 10 contracts with real block/gas setup
 	for i := 0; i < 10; i++ {
 		// 3 tx per block, so we ensure both comparisons work
@@ -305,19 +306,85 @@ func TestQueryContractListByCodeOrdering(t *testing.T) {
 			ctx = setBlock(ctx, h)
 			h++
 		}
-		_, _, err = keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		addr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, initMsgBz, fmt.Sprintf("contract %d", i), topUp)
+		contractAddrs = append(contractAddrs, addr.String())
 		require.NoError(t, err)
 	}
 
-	// query and check the results are properly sorted
 	q := Querier(keeper)
-	res, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), &types.QueryContractsByCodeRequest{CodeId: codeID})
-	require.NoError(t, err)
+	specs := map[string]struct {
+		req     *types.QueryContractsByCodeRequest
+		expAddr []string
+		expErr  error
+	}{
+		"with empty request": {
+			req:    nil,
+			expErr: status.Error(codes.InvalidArgument, "empty request"),
+		},
+		"req.CodeId=0": {
+			req:    &types.QueryContractsByCodeRequest{CodeId: 0},
+			expErr: errorsmod.Wrap(types.ErrInvalid, "code id"),
+		},
+		"not exist codeID": {
+			req:     &types.QueryContractsByCodeRequest{CodeId: codeID + 1},
+			expAddr: []string{},
+		},
+		"query all and check the results are properly sorted": {
+			req: &types.QueryContractsByCodeRequest{
+				CodeId: codeID,
+			},
+			expAddr: contractAddrs,
+		},
+		"with pagination offset": {
+			req: &types.QueryContractsByCodeRequest{
+				CodeId: codeID,
+				Pagination: &query.PageRequest{
+					Offset: 5,
+				},
+			},
+			expAddr: contractAddrs[5:10],
+		},
+		"with invalid pagination key": {
+			req: &types.QueryContractsByCodeRequest{
+				CodeId: codeID,
+				Pagination: &query.PageRequest{
+					Offset: 1,
+					Key:    []byte("test"),
+				},
+			},
+			expErr: fmt.Errorf("invalid request, either offset or key is expected, got both"),
+		},
+		"with pagination limit": {
+			req: &types.QueryContractsByCodeRequest{
+				CodeId: codeID,
+				Pagination: &query.PageRequest{
+					Limit: 5,
+				},
+			},
+			expAddr: contractAddrs[0:5],
+		},
+		"with pagination next key": {
+			req: &types.QueryContractsByCodeRequest{
+				CodeId: codeID,
+				Pagination: &query.PageRequest{
+					Key: fromBase64("AAAAAAAAAAoAAAAAAAOc/4cuhNIMvyvID4NhhfROlbQNuZ0fl0clmBPoWHtKYazH"),
+				},
+			},
+			expAddr: contractAddrs[1:10],
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, err := q.ContractsByCode(sdk.WrapSDKContext(ctx), spec.req)
 
-	require.Equal(t, 10, len(res.Contracts))
-
-	for _, contractAddr := range res.Contracts {
-		assert.NotEmpty(t, contractAddr)
+			if spec.expErr != nil {
+				assert.NotNil(t, err)
+				assert.EqualError(t, err, spec.expErr.Error())
+				return
+			}
+			assert.NotNil(t, got)
+			assert.Equal(t, spec.expAddr, got.Contracts)
+		})
 	}
 }
 
