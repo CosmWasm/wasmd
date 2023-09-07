@@ -26,6 +26,7 @@ import (
 const myTestLabel = "testing"
 
 func TestStoreCodeProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	parentCtx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(parentCtx, types.Params{
@@ -123,6 +124,7 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 }
 
 func TestInstantiateProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(ctx, types.Params{
@@ -181,6 +183,7 @@ func TestInstantiateProposal(t *testing.T) {
 }
 
 func TestInstantiate2Proposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(ctx, types.Params{
@@ -240,6 +243,7 @@ func TestInstantiate2Proposal(t *testing.T) {
 }
 
 func TestInstantiateProposal_NoAdmin(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(ctx, types.Params{
@@ -321,6 +325,7 @@ func TestInstantiateProposal_NoAdmin(t *testing.T) {
 }
 
 func TestStoreAndInstantiateContractProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(ctx, types.Params{
@@ -380,6 +385,7 @@ func TestStoreAndInstantiateContractProposal(t *testing.T) {
 }
 
 func TestMigrateProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 	err := wasmKeeper.SetParams(ctx, types.Params{
@@ -460,6 +466,7 @@ func TestMigrateProposal(t *testing.T) {
 }
 
 func TestExecuteProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	bankKeeper := keepers.BankKeeper
 
@@ -515,6 +522,7 @@ func TestExecuteProposal(t *testing.T) {
 }
 
 func TestSudoProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	bankKeeper := keepers.BankKeeper
 
@@ -562,6 +570,7 @@ func TestSudoProposal(t *testing.T) {
 }
 
 func TestAdminProposals(t *testing.T) {
+	t.Skip("DEPRECATED")
 	var (
 		otherAddress sdk.AccAddress = bytes.Repeat([]byte{0x2}, types.ContractAddrLen)
 		contractAddr                = BuildContractAddressClassic(1, 1)
@@ -652,6 +661,7 @@ func TestAdminProposals(t *testing.T) {
 }
 
 func TestPinCodesProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 
@@ -743,6 +753,7 @@ func TestPinCodesProposal(t *testing.T) {
 }
 
 func TestUnpinCodesProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 
@@ -833,6 +844,7 @@ func TestUnpinCodesProposal(t *testing.T) {
 }
 
 func TestUpdateInstantiateConfigProposal(t *testing.T) {
+	t.Skip("DEPRECATED")
 	ctx, keepers := CreateTestInput(t, false, "staking")
 	wasmKeeper := keepers.WasmKeeper
 

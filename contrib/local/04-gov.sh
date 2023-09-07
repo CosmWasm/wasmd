@@ -3,7 +3,6 @@ set -o errexit -o nounset -o pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-echo "Compile with buildflag ''-X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true' to enable gov"
 sleep 1
 echo "## Submit a CosmWasm gov proposal"
 RESP=$(wasmd tx wasm submit-proposal store-instantiate "$DIR/../../x/wasm/keeper/testdata/reflect.wasm" \
