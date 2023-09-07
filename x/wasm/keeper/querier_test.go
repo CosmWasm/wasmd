@@ -522,7 +522,7 @@ func TestQueryContractHistory(t *testing.T) {
 
 			// when
 			q := Querier(keeper)
-			got, err := q.ContractHistory(sdk.WrapSDKContext(xCtx), &spec.req)
+			got, err := q.ContractHistory(sdk.WrapSDKContext(xCtx), &spec.req) //nolint:gosec
 
 			// then
 			if spec.expContent == nil {
@@ -597,7 +597,7 @@ func TestQueryCodeList(t *testing.T) {
 			}
 			// when
 			q := Querier(keeper)
-			got, err := q.Codes(sdk.WrapSDKContext(xCtx), &spec.req)
+			got, err := q.Codes(sdk.WrapSDKContext(xCtx), &spec.req) //nolint:gosec
 
 			// then
 			require.NoError(t, err)
@@ -664,7 +664,7 @@ func TestQueryContractInfo(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			xCtx, _ := ctx.CacheContext()
-			k.storeContractInfo(xCtx, contractAddr, &spec.stored)
+			k.storeContractInfo(xCtx, contractAddr, &spec.stored) //nolint:gosec
 			// when
 			gotRsp, gotErr := querier.ContractInfo(sdk.WrapSDKContext(xCtx), spec.src)
 			if spec.expErr {
