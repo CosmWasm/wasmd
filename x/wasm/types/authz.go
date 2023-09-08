@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/gogoproto/proto"
 
@@ -15,7 +16,10 @@ import (
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
-const gasDeserializationCostPerByte = uint64(1)
+const (
+	gasDeserializationCostPerByte = uint64(1)
+	codehashWildcard              = "*"
+)
 
 var (
 	_ authztypes.Authorization         = &StoreCodeAuthorization{}
@@ -39,14 +43,21 @@ func (a StoreCodeAuthorization) MsgTypeURL() string {
 
 // Accept implements Authorization.Accept.
 func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	var code []byte
-	var permission AccessConfig
-	switch msg := msg.(type) {
-	case *MsgStoreCode:
-		code = msg.WASMByteCode
-		permission = *msg.InstantiatePermission
-	default:
+	storeMsg, ok := msg.(*MsgStoreCode)
+	if !ok {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("unknown msg type")
+	}
+
+	code := storeMsg.WASMByteCode
+	permission := *storeMsg.InstantiatePermission
+
+	if ioutils.IsGzip(code) {
+		// TODO: consume gas
+		wasmCode, err := ioutils.Uncompress(code, int64(MaxWasmSize))
+		if err != nil {
+			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap(errorsmod.Wrap(err, "uncompress wasm archive").Error())
+		}
+		code = wasmCode
 	}
 
 	checksum, err := wasmvm.CreateChecksum(code)
@@ -67,11 +78,20 @@ func (a StoreCodeAuthorization) ValidateBasic() error {
 	if len(a.Grants) == 0 {
 		return ErrEmpty.Wrap("grants")
 	}
-	for i, v := range a.Grants {
-		if err := v.ValidateBasic(); err != nil {
+	for i := 0; i < len(a.Grants); i++ {
+		if strings.EqualFold(string(a.Grants[i].CodeHash), codehashWildcard) && len(a.Grants) > 1 {
+			return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants when wildcard grant is one of them")
+		}
+		if err := a.Grants[i].ValidateBasic(); err != nil {
 			return errorsmod.Wrapf(err, "position %d", i)
 		}
+		for j := i + 1; j < len(a.Grants); j++ {
+			if strings.EqualFold(string(a.Grants[i].CodeHash), string(a.Grants[i].CodeHash)) {
+				return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants with same code hash")
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -98,7 +118,7 @@ func (g CodeGrant) ValidateBasic() error {
 
 // Accept checks if checksum and permission match the grant
 func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
-	if !bytes.Equal(g.CodeHash, []byte("*")) && !bytes.Equal(g.CodeHash, checksum) {
+	if !bytes.Equal(g.CodeHash, []byte(codehashWildcard)) && !bytes.Equal(g.CodeHash, checksum) {
 		return false
 	}
 	return permission.IsSubset(*g.InstantiatePermission)

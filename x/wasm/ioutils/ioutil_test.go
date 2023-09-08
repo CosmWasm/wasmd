@@ -11,8 +11,6 @@ import (
 	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestUncompress(t *testing.T) {
@@ -51,11 +49,11 @@ func TestUncompress(t *testing.T) {
 		},
 		"handle big gzip output": {
 			src:      asGzip(bytes.Repeat([]byte{0x1}, maxSize+1)),
-			expError: types.ErrLimit,
+			expError: errLimit,
 		},
 		"handle big gzip archive": {
 			src:      asGzip(rand.Bytes(2 * maxSize)),
-			expError: types.ErrLimit,
+			expError: errLimit,
 		},
 	}
 	for msg, spec := range specs {

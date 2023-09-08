@@ -398,20 +398,17 @@ func TestValidateContractGrant(t *testing.T) {
 	}{
 		"all good": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 		},
 		"invalid address": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant([]byte{}, NewMaxCallsLimit(1), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
 		},
 		"invalid limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 			},
 			expErr: true,
@@ -419,14 +416,12 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"invalid filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				return mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 			},
 			expErr: true,
 		},
 		"empty limit": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = nil
 				return r
@@ -436,7 +431,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"empty filter ": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = nil
 				return r
@@ -445,7 +439,6 @@ func TestValidateContractGrant(t *testing.T) {
 		},
 		"wrong limit type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(0), NewAllowAllMessagesFilter())
 				r.Limit = r.Filter
 				return r
@@ -455,7 +448,6 @@ func TestValidateContractGrant(t *testing.T) {
 
 		"wrong filter type": {
 			setup: func(t *testing.T) ContractGrant {
-				t.Helper()
 				r := mustGrant(randBytes(ContractAddrLen), NewMaxCallsLimit(1), NewAcceptedMessageKeysFilter())
 				r.Filter = r.Limit
 				return r
@@ -488,52 +480,44 @@ func TestValidateContractAuthorization(t *testing.T) {
 	}{
 		"contract execution": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant)
 			},
 		},
 		"contract execution - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract execution - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract execution - empty grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractExecutionAuthorization()
 			},
 			expErr: true,
 		},
 		"contract migration": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant)
 			},
 		},
 		"contract migration - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract migration - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract migration - empty grant": {
 			setup: func(t *testing.T) validatable {
-				t.Helper()
 				return NewContractMigrationAuthorization()
 			},
 			expErr: true,
@@ -753,7 +737,7 @@ func TestValidateCodeGrant(t *testing.T) {
 		expErr                bool
 	}{
 		"all good": {
-			codeHash:              []byte("ABC"),
+			codeHash:              []byte("any_valid_checksum"),
 			instantiatePermission: AllowEverybody,
 		},
 		"empty code hash": {
@@ -767,7 +751,7 @@ func TestValidateCodeGrant(t *testing.T) {
 			expErr:                true,
 		},
 		"invalid permission": {
-			codeHash:              []byte("ABC"),
+			codeHash:              []byte("any_valid_checksum"),
 			instantiatePermission: AccessConfig{Permission: AccessTypeUnspecified},
 			expErr:                true,
 		},
@@ -788,45 +772,42 @@ func TestValidateCodeGrant(t *testing.T) {
 }
 
 func TestValidateStoreCodeAuthorization(t *testing.T) {
-	validGrant, err := NewCodeGrant([]byte("ABC"), AllowEverybody)
+	validGrant, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
 	require.NoError(t, err)
 	invalidGrant, err := NewCodeGrant(nil, AllowEverybody)
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		setup  func(t *testing.T) validatable
+		setup  func(t *testing.T) []CodeGrant
 		expErr bool
 	}{
 		"all good": {
-			setup: func(t *testing.T) validatable {
-				t.Helper()
-				return NewStoreCodeAuthorization(*validGrant)
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant}
 			},
 		},
 		"duplicate grants": {
-			setup: func(t *testing.T) validatable {
-				t.Helper()
-				return NewStoreCodeAuthorization(*validGrant, *validGrant)
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *validGrant}
 			},
+			expErr: true,
 		},
 		"invalid grant": {
-			setup: func(t *testing.T) validatable {
-				t.Helper()
-				return NewStoreCodeAuthorization(*validGrant, *invalidGrant)
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *invalidGrant}
 			},
 			expErr: true,
 		},
 		"empty grants": {
-			setup: func(t *testing.T) validatable {
-				t.Helper()
-				return NewStoreCodeAuthorization()
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{}
 			},
 			expErr: true,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			gotErr := spec.setup(t).ValidateBasic()
+			gotErr := NewStoreCodeAuthorization(spec.setup(t)...).ValidateBasic()
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
@@ -846,7 +827,7 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 	grantReflectCode, err := NewCodeGrant(reflectCodeHash, AllowNobody)
 	require.NoError(t, err)
 
-	grantOtherCode, err := NewCodeGrant([]byte("ABC"), AllowEverybody)
+	grantOtherCode, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
 	require.NoError(t, err)
 
 	specs := map[string]struct {

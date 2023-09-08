@@ -166,7 +166,7 @@ func TestStoreCodeGrant(t *testing.T) {
 			senderKey:             granteePrivKey,
 		},
 		"not match code hash": {
-			codeHash:              []byte("ABC"),
+			codeHash:              []byte("any_valid_checksum"),
 			instantiatePermission: types.AllowEverybody,
 			senderKey:             granteePrivKey,
 			expErr:                sdkerrors.ErrUnauthorized,
