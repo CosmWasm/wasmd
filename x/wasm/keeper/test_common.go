@@ -93,8 +93,6 @@ var moduleBasics = module.NewBasicManager(
 	distribution.AppModuleBasic{},
 	gov.NewAppModuleBasic([]govclient.ProposalHandler{
 		paramsclient.ProposalHandler,
-		// upgradeclient.LegacyProposalHandler,
-		// upgradeclient.LegacyCancelProposalHandler,
 	}),
 	params.AppModuleBasic{},
 	crisis.AppModuleBasic{},
