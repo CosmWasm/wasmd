@@ -95,3 +95,21 @@ func (d LimitSimulationGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	}
 	return next(ctx, tx, simulate)
 }
+
+// GasRegisterDecorator ante decorator to store gas register in the context
+type GasRegisterDecorator struct {
+	gasRegister GasRegister
+}
+
+// NewGasRegisterDecorator constructor.
+func NewGasRegisterDecorator(gr GasRegister) *GasRegisterDecorator {
+	return &GasRegisterDecorator{gasRegister: gr}
+}
+
+// AnteHandle adds the gas register to the context.
+func (g GasRegisterDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if simulate {
+		return next(ctx, tx, simulate)
+	}
+	return next(types.WithGasRegister(ctx, g.gasRegister), tx, simulate)
+}

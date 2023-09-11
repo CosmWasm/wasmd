@@ -86,8 +86,6 @@ var (
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(errorsmod.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
-
-	// code 29 is used for ioutils gzip uncompress
 )
 
 // WasmVMErrorable mapped error type in wasmvm and are not redacted

@@ -145,6 +145,11 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
+// GetGasRegister returns the x/wasm module's gas register.
+func (k Keeper) GetGasRegister() GasRegister {
+	return k.gasRegister
+}
+
 func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ types.AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
