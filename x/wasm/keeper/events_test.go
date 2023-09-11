@@ -106,6 +106,23 @@ func TestNewCustomEvents(t *testing.T) {
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
+		"empty value can be solved": {
+			src: wasmvmtypes.Events{{
+				Type:       "foo",
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: ""}},
+			}},
+			exp: sdk.Events{sdk.NewEvent("wasm-foo",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("myKey", ""))},
+		},
+		"good on whitespace value": {
+			src: wasmvmtypes.Events{{
+				Type:       "foo",
+				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "\n\n\n"}},
+			}},			exp: sdk.Events{sdk.NewEvent("wasm-foo",
+			sdk.NewAttribute("_contract_address", myContract.String()),
+			sdk.NewAttribute("myKey", ""))},
+		},
 		"error on short event type": {
 			src: wasmvmtypes.Events{{
 				Type: "f",
@@ -154,16 +171,6 @@ func TestNewCustomEvents(t *testing.T) {
 				Attributes: []wasmvmtypes.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "\n\n\n\n", Value: "value"},
-				},
-			}},
-			isError: true,
-		},
-		"error on only whitespace value": {
-			src: wasmvmtypes.Events{{
-				Type: "boom",
-				Attributes: []wasmvmtypes.EventAttribute{
-					{Key: "some", Value: "data"},
-					{Key: "myKey", Value: " \t\r\n"},
 				},
 			}},
 			isError: true,
@@ -231,10 +238,6 @@ func TestNewWasmModuleEvent(t *testing.T) {
 		},
 		"error on whitespace key": {
 			src:     []wasmvmtypes.EventAttribute{{Key: "  ", Value: "value"}},
-			isError: true,
-		},
-		"error on whitespace value": {
-			src:     []wasmvmtypes.EventAttribute{{Key: "key", Value: "\n\n\n"}},
 			isError: true,
 		},
 		"strip whitespace": {
