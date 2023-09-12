@@ -2,6 +2,7 @@ package types
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -778,6 +779,8 @@ func TestValidateCodeGrant(t *testing.T) {
 func TestValidateStoreCodeAuthorization(t *testing.T) {
 	validGrant, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
 	require.NoError(t, err)
+	validGrantUpperCase, err := NewCodeGrant([]byte("ANY_VALID_CHECKSUM"), AllowEverybody)
+	require.NoError(t, err)
 	invalidGrant, err := NewCodeGrant(nil, AllowEverybody)
 	require.NoError(t, err)
 	wildcardGrant, err := NewCodeGrant([]byte("*"), AllowEverybody)
@@ -803,9 +806,15 @@ func TestValidateStoreCodeAuthorization(t *testing.T) {
 			},
 			expErr: true,
 		},
-		"duplicate grants": {
+		"duplicate grants - same case code hash": {
 			setup: func(t *testing.T) []CodeGrant {
 				return []CodeGrant{*validGrant, *validGrant}
+			},
+			expErr: true,
+		},
+		"duplicate grants - different case code hash": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *validGrantUpperCase}
 			},
 			expErr: true,
 		},
@@ -838,10 +847,15 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 	reflectCodeHash, err := wasmvm.CreateChecksum(reflectWasmCode)
 	require.NoError(t, err)
 
+	reflectCodeHashUpperCase := strings.ToUpper(string(reflectCodeHash))
+
 	grantWildcard, err := NewCodeGrant([]byte("*"), AllowEverybody)
 	require.NoError(t, err)
 
 	grantReflectCode, err := NewCodeGrant(reflectCodeHash, AllowNobody)
+	require.NoError(t, err)
+
+	grantReflectCodeUpperCase, err := NewCodeGrant([]byte(reflectCodeHashUpperCase), AllowNobody)
 	require.NoError(t, err)
 
 	grantOtherCode, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
@@ -866,6 +880,17 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 		},
 		"accepted reflect code": {
 			auth: NewStoreCodeAuthorization(*grantReflectCode),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowNobody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"accepted reflect code - different case": {
+			auth: NewStoreCodeAuthorization(*grantReflectCodeUpperCase),
 			msg: &MsgStoreCode{
 				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				WASMByteCode:          reflectWasmCode,

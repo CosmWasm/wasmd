@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -56,12 +55,12 @@ func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztype
 	if ioutils.IsGzip(code) {
 		gasRegister, ok := GasRegister(ctx)
 		if !ok {
-			panic("gas register not found") // TODO: check how to handle this
+			return authztypes.AcceptResponse{}, sdkerrors.ErrNotFound.Wrap("gas register")
 		}
 		ctx.GasMeter().ConsumeGas(gasRegister.UncompressCosts(len(code)), "Uncompress gzip bytecode")
 		wasmCode, err := ioutils.Uncompress(code, int64(MaxWasmSize))
 		if err != nil {
-			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap(errorsmod.Wrap(err, "uncompress wasm archive").Error())
+			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("uncompress wasm archive")
 		}
 		code = wasmCode
 	}
@@ -120,17 +119,15 @@ func (g CodeGrant) ValidateBasic() error {
 	if len(g.CodeHash) == 0 {
 		return ErrEmpty.Wrap("code hash")
 	}
-	if g.InstantiatePermission != nil {
-		if err := g.InstantiatePermission.ValidateBasic(); err != nil {
-			return errorsmod.Wrap(err, "instantiate permission")
-		}
+	if g.InstantiatePermission == nil {
+		return ErrEmpty.Wrap("permission")
 	}
-	return nil
+	return g.InstantiatePermission.ValidateBasic()
 }
 
 // Accept checks if checksum and permission match the grant
 func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
-	if !bytes.Equal(g.CodeHash, []byte(CodehashWildcard)) && !bytes.Equal(g.CodeHash, checksum) {
+	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !strings.EqualFold(string(g.CodeHash), string(checksum)) {
 		return false
 	}
 	return permission.IsSubset(*g.InstantiatePermission)
