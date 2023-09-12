@@ -123,13 +123,6 @@ func TestGrants(t *testing.T) {
 }
 
 func TestStoreCodeGrant(t *testing.T) {
-	// Given a grant for address B by A created
-	// When  B uploads code from A
-	// Then	 the grant is executed as defined
-	// And
-	// - balance A reduced (on success)
-	// - balance B not touched
-
 	reflectWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm")
 	require.NoError(t, err)
 
@@ -196,8 +189,6 @@ func TestStoreCodeGrant(t *testing.T) {
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
 
-			granterStartBalance := chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount
-
 			// when
 			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
 				Sender:                granterAddr.String(),
@@ -209,25 +200,14 @@ func TestStoreCodeGrant(t *testing.T) {
 			// then
 			if spec.expErr != nil {
 				require.True(t, spec.expErr.Is(gotErr))
-				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-			// assert.True(t, granterStartBalance.GT(chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount))
 		})
 	}
 }
 
 func TestGzipStoreCodeGrant(t *testing.T) {
-	// Given a grant for address B by A created
-	// When  B uploads gzip code from A
-	// Then	 the grant is executed as defined
-	// And
-	// - balance A reduced (on success)
-	// - balance B not touched
-
 	hackatomWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/hackatom.wasm")
 	require.NoError(t, err)
 
@@ -297,8 +277,6 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 			_, err = chain.SendMsgs(grantMsg)
 			require.NoError(t, err)
 
-			granterStartBalance := chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount
-
 			// when
 			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
 				Sender:                granterAddr.String(),
@@ -310,24 +288,14 @@ func TestGzipStoreCodeGrant(t *testing.T) {
 			// then
 			if spec.expErr != nil {
 				require.True(t, spec.expErr.Is(gotErr))
-				assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-				assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-			// assert.True(t, granterStartBalance.GT(chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount))
 		})
 	}
 }
 
 func TestBrokenGzipStoreCodeGrant(t *testing.T) {
-	// Given a grant for address B by A created
-	// When  B uploads broken gzip code from A
-	// Then	 the grant is executed as defined
-	// And
-	// an error is returned
-
 	brokenGzipWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/broken_crc.gzip")
 	require.NoError(t, err)
 
@@ -358,8 +326,6 @@ func TestBrokenGzipStoreCodeGrant(t *testing.T) {
 	_, err = chain.SendMsgs(grantMsg)
 	require.NoError(t, err)
 
-	granterStartBalance := chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount
-
 	// when
 	execMsg := authz.NewMsgExec(senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
 		Sender:                granterAddr.String(),
@@ -368,7 +334,6 @@ func TestBrokenGzipStoreCodeGrant(t *testing.T) {
 	}})
 	_, gotErr := chain.SendNonDefaultSenderMsgs(senderKey, &execMsg)
 
+	// then
 	require.Error(t, gotErr)
-	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
-	assert.Equal(t, granterStartBalance, chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 }

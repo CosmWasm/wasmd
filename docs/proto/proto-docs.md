@@ -364,8 +364,8 @@ CodeGrant a granted permission for a single code
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm |
-| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission access control to apply on contract creation, optional |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm Wildcard "*" is used to specify any kind of grant. |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission is the superset access control to apply on contract creation. |
 
 
 

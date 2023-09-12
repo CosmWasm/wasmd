@@ -49,10 +49,11 @@ message ContractMigrationAuthorization {
 // CodeGrant a granted permission for a single code
 message CodeGrant {
   // CodeHash is the unique identifier created by wasmvm
+  // Wildcard "*" is used to specify any kind of grant.
   bytes code_hash = 1;
 
-  // InstantiatePermission access control to apply on contract creation,
-  // optional
+  // InstantiatePermission is the superset access control to apply
+  // on contract creation.
   AccessConfig instantiate_permission = 2;
 }
 

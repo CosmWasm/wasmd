@@ -168,9 +168,10 @@ var xxx_messageInfo_ContractMigrationAuthorization proto.InternalMessageInfo
 // CodeGrant a granted permission for a single code
 type CodeGrant struct {
 	// CodeHash is the unique identifier created by wasmvm
+	// Wildcard "*" is used to specify any kind of grant.
 	CodeHash []byte `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
-	// InstantiatePermission access control to apply on contract creation,
-	// optional
+	// InstantiatePermission is the superset access control to apply
+	// on contract creation.
 	InstantiatePermission *AccessConfig `protobuf:"bytes,2,opt,name=instantiate_permission,json=instantiatePermission,proto3" json:"instantiate_permission,omitempty"`
 }
 
