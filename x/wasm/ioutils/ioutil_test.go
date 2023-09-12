@@ -3,7 +3,7 @@ package ioutils
 import (
 	"bytes"
 	"compress/gzip"
-	"errors"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -49,17 +49,17 @@ func TestUncompress(t *testing.T) {
 		},
 		"handle big gzip output": {
 			src:      asGzip(bytes.Repeat([]byte{0x1}, maxSize+1)),
-			expError: errLimit,
+			expError: fmt.Errorf("%s: max %d bytes", errLimit, maxSize),
 		},
 		"handle big gzip archive": {
 			src:      asGzip(rand.Bytes(2 * maxSize)),
-			expError: errLimit,
+			expError: fmt.Errorf("%s: max %d bytes", errLimit, maxSize),
 		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
 			r, err := Uncompress(spec.src, maxSize)
-			require.True(t, errors.Is(spec.expError, err), "exp %v got %+v", spec.expError, err)
+			assert.Equal(t, spec.expError, err)
 			if spec.expError != nil {
 				return
 			}

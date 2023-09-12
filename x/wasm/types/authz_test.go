@@ -755,6 +755,10 @@ func TestValidateCodeGrant(t *testing.T) {
 			instantiatePermission: AccessConfig{Permission: AccessTypeUnspecified},
 			expErr:                true,
 		},
+		"empty permission": {
+			codeHash: []byte("any_valid_checksum"),
+			expErr:   true,
+		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
@@ -776,6 +780,8 @@ func TestValidateStoreCodeAuthorization(t *testing.T) {
 	require.NoError(t, err)
 	invalidGrant, err := NewCodeGrant(nil, AllowEverybody)
 	require.NoError(t, err)
+	wildcardGrant, err := NewCodeGrant([]byte("*"), AllowEverybody)
+	require.NoError(t, err)
 
 	specs := map[string]struct {
 		setup  func(t *testing.T) []CodeGrant
@@ -785,6 +791,17 @@ func TestValidateStoreCodeAuthorization(t *testing.T) {
 			setup: func(t *testing.T) []CodeGrant {
 				return []CodeGrant{*validGrant}
 			},
+		},
+		"wildcard grant": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*wildcardGrant}
+			},
+		},
+		"duplicate grants - wildcard": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*wildcardGrant, *validGrant}
+			},
+			expErr: true,
 		},
 		"duplicate grants": {
 			setup: func(t *testing.T) []CodeGrant {
