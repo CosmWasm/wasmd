@@ -4,9 +4,9 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (
