@@ -485,12 +485,25 @@ func (msg MsgPinCodes) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&msg))
 }
 
+const maxCodeIDTotal = 50
+
 func (msg MsgPinCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
 		return errorsmod.Wrap(err, "authority")
 	}
-	if len(msg.CodeIDs) == 0 {
+	return validateCodeIDs(msg.CodeIDs)
+}
+
+// ensure not empty, not duplicates and not exceeding max number
+func validateCodeIDs(codeIDs []uint64) error {
+	switch n := len(codeIDs); {
+	case n == 0:
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
+	case n > maxCodeIDTotal:
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total number of code ids is greater than %d", maxCodeIDTotal)
+	}
+	if hasDuplicates(codeIDs) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "duplicate code ids")
 	}
 	return nil
 }
@@ -519,10 +532,7 @@ func (msg MsgUnpinCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
 		return errorsmod.Wrap(err, "authority")
 	}
-	if len(msg.CodeIDs) == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
-	}
-	return nil
+	return validateCodeIDs(msg.CodeIDs)
 }
 
 func (msg MsgSudoContract) Route() string {
@@ -684,6 +694,7 @@ func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
 func checkDuplicatedAddresses(addresses []string) error {
 	index := map[string]struct{}{}
 	for _, addr := range addresses {
+		addr = strings.ToUpper(addr)
 		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
 			return errorsmod.Wrap(err, "addresses")
 		}
@@ -738,4 +749,16 @@ func (msg MsgStoreAndMigrateContract) ValidateBasic() error {
 		}
 	}
 	return nil
+}
+
+// returns true when slice contains any duplicates
+func hasDuplicates[T comparable](s []T) bool {
+	index := make(map[T]struct{}, len(s))
+	for _, v := range s {
+		if _, exists := index[v]; exists {
+			return true
+		}
+		index[v] = struct{}{}
+	}
+	return false
 }
