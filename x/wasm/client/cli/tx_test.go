@@ -138,6 +138,12 @@ func TestParseStoreCodeGrants(t *testing.T) {
 				InstantiatePermission: &types.AccessConfig{Permission: types.AccessTypeNobody},
 			}},
 		},
+		"wildcard : wildcard": {
+			src: []string{"*:*"},
+			exp: []types.CodeGrant{{
+				CodeHash: []byte("*"),
+			}},
+		},
 		"wildcard : everybody": {
 			src: []string{"*:everybody"},
 			exp: []types.CodeGrant{{
@@ -147,41 +153,50 @@ func TestParseStoreCodeGrants(t *testing.T) {
 		},
 		"wildcard : any of addresses - single": {
 			src: []string{"*:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
-			exp: []types.CodeGrant{{
-				CodeHash: []byte("*"),
-				InstantiatePermission: &types.AccessConfig{
-					Permission: types.AccessTypeAnyOfAddresses,
-					Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			exp: []types.CodeGrant{
+				{
+					CodeHash: []byte("*"),
+					InstantiatePermission: &types.AccessConfig{
+						Permission: types.AccessTypeAnyOfAddresses,
+						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+					},
 				},
-			},
 			},
 		},
 		"wildcard : any of addresses - multiple": {
 			src: []string{"*:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
-			exp: []types.CodeGrant{{
-				CodeHash: []byte("*"),
-				InstantiatePermission: &types.AccessConfig{
-					Permission: types.AccessTypeAnyOfAddresses,
-					Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+			exp: []types.CodeGrant{
+				{
+					CodeHash: []byte("*"),
+					InstantiatePermission: &types.AccessConfig{
+						Permission: types.AccessTypeAnyOfAddresses,
+						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+					},
 				},
-			},
 			},
 		},
 		"multiple code hashes with different permissions": {
 			src: []string{"any_checksum_1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr", "any_checksum_2:nobody"},
+			exp: []types.CodeGrant{
+				{
+					CodeHash: []byte("any_checksum_1"),
+					InstantiatePermission: &types.AccessConfig{
+						Permission: types.AccessTypeAnyOfAddresses,
+						Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
+					},
+				}, {
+					CodeHash: []byte("any_checksum_2"),
+					InstantiatePermission: &types.AccessConfig{
+						Permission: types.AccessTypeNobody,
+					},
+				},
+			},
+		},
+		"code hash : wildcard": {
+			src: []string{"any_checksum_1:*"},
 			exp: []types.CodeGrant{{
 				CodeHash: []byte("any_checksum_1"),
-				InstantiatePermission: &types.AccessConfig{
-					Permission: types.AccessTypeAnyOfAddresses,
-					Addresses:  []string{"cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x", "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"},
-				},
-			}, {
-				CodeHash: []byte("any_checksum_2"),
-				InstantiatePermission: &types.AccessConfig{
-					Permission: types.AccessTypeNobody,
-				},
-			},
-			},
+			}},
 		},
 		"code hash : any of addresses - empty list": {
 			src:    []string{"any_checksum_1:"},
@@ -193,6 +208,10 @@ func TestParseStoreCodeGrants(t *testing.T) {
 		},
 		"code hash : any of addresses - duplicate address": {
 			src:    []string{"any_checksum_1:cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x,cosmos1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"},
+			expErr: true,
+		},
+		"empty code hash": {
+			src:    []string{":everyone"},
 			expErr: true,
 		},
 	}

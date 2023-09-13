@@ -172,6 +172,7 @@ type CodeGrant struct {
 	CodeHash []byte `protobuf:"bytes,1,opt,name=code_hash,json=codeHash,proto3" json:"code_hash,omitempty"`
 	// InstantiatePermission is the superset access control to apply
 	// on contract creation.
+	// Optional
 	InstantiatePermission *AccessConfig `protobuf:"bytes,2,opt,name=instantiate_permission,json=instantiatePermission,proto3" json:"instantiate_permission,omitempty"`
 }
 

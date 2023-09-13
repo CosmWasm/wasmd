@@ -630,6 +630,13 @@ func parseStoreCodeGrants(args []string) ([]types.CodeGrant, error) {
 			return nil, fmt.Errorf("invalid format")
 		}
 
+		if parts[1] == "*" {
+			grants[i] = types.CodeGrant{
+				CodeHash: []byte(parts[0]),
+			}
+			continue
+		}
+
 		accessConfig, err := parseAccessConfig(parts[1])
 		if err != nil {
 			return nil, err

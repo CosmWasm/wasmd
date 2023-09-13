@@ -54,6 +54,7 @@ message CodeGrant {
 
   // InstantiatePermission is the superset access control to apply
   // on contract creation.
+  // Optional
   AccessConfig instantiate_permission = 2;
 }
 

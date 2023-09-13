@@ -229,7 +229,7 @@ func TestGasRegisterDecorator(t *testing.T) {
 			ante := keeper.NewGasRegisterDecorator(&wasmtesting.MockGasRegister{})
 			_, gotErr := ante.AnteHandle(ctx, anyTx, spec.simulate, spec.nextAssertAnte)
 
-			//then
+			// then
 			require.NoError(t, gotErr)
 		})
 	}

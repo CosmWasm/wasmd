@@ -108,10 +108,10 @@ func (a StoreCodeAuthorization) ValidateBasic() error {
 }
 
 // NewCodeGrant constructor
-func NewCodeGrant(codeHash []byte, instantiatePermission AccessConfig) (*CodeGrant, error) {
+func NewCodeGrant(codeHash []byte, instantiatePermission *AccessConfig) (*CodeGrant, error) {
 	return &CodeGrant{
 		CodeHash:              codeHash,
-		InstantiatePermission: &instantiatePermission,
+		InstantiatePermission: instantiatePermission,
 	}, nil
 }
 
@@ -120,16 +120,19 @@ func (g CodeGrant) ValidateBasic() error {
 	if len(g.CodeHash) == 0 {
 		return ErrEmpty.Wrap("code hash")
 	}
-	if g.InstantiatePermission == nil {
-		return ErrEmpty.Wrap("permission")
+	if g.InstantiatePermission != nil {
+		return g.InstantiatePermission.ValidateBasic()
 	}
-	return g.InstantiatePermission.ValidateBasic()
+	return nil
 }
 
 // Accept checks if checksum and permission match the grant
 func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
 	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !bytes.EqualFold(g.CodeHash, checksum) {
 		return false
+	}
+	if g.InstantiatePermission == nil {
+		return true
 	}
 	return permission.IsSubset(*g.InstantiatePermission)
 }

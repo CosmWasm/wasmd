@@ -734,31 +734,31 @@ func mustGrant(contract sdk.AccAddress, limit ContractAuthzLimitX, filter Contra
 func TestValidateCodeGrant(t *testing.T) {
 	specs := map[string]struct {
 		codeHash              []byte
-		instantiatePermission AccessConfig
+		instantiatePermission *AccessConfig
 		expErr                bool
 	}{
 		"all good": {
 			codeHash:              []byte("any_valid_checksum"),
-			instantiatePermission: AllowEverybody,
+			instantiatePermission: &AllowEverybody,
+		},
+		"empty permission": {
+			codeHash: []byte("any_valid_checksum"),
+			expErr:   false,
 		},
 		"empty code hash": {
 			codeHash:              []byte{},
-			instantiatePermission: AllowEverybody,
+			instantiatePermission: &AllowEverybody,
 			expErr:                true,
 		},
 		"nil code hash": {
 			codeHash:              nil,
-			instantiatePermission: AllowEverybody,
+			instantiatePermission: &AllowEverybody,
 			expErr:                true,
 		},
 		"invalid permission": {
 			codeHash:              []byte("any_valid_checksum"),
-			instantiatePermission: AccessConfig{Permission: AccessTypeUnspecified},
+			instantiatePermission: &AccessConfig{Permission: AccessTypeUnspecified},
 			expErr:                true,
-		},
-		"empty permission": {
-			codeHash: []byte("any_valid_checksum"),
-			expErr:   true,
 		},
 	}
 	for name, spec := range specs {
@@ -777,13 +777,15 @@ func TestValidateCodeGrant(t *testing.T) {
 }
 
 func TestValidateStoreCodeAuthorization(t *testing.T) {
-	validGrant, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
+	validGrant, err := NewCodeGrant([]byte("any_valid_checksum"), &AllowEverybody)
 	require.NoError(t, err)
-	validGrantUpperCase, err := NewCodeGrant([]byte("ANY_VALID_CHECKSUM"), AllowEverybody)
+	validGrantUpperCase, err := NewCodeGrant([]byte("ANY_VALID_CHECKSUM"), &AllowEverybody)
 	require.NoError(t, err)
-	invalidGrant, err := NewCodeGrant(nil, AllowEverybody)
+	invalidGrant, err := NewCodeGrant(nil, &AllowEverybody)
 	require.NoError(t, err)
-	wildcardGrant, err := NewCodeGrant([]byte("*"), AllowEverybody)
+	wildcardGrant, err := NewCodeGrant([]byte("*"), &AllowEverybody)
+	require.NoError(t, err)
+	emptyPermissionGrant, err := NewCodeGrant([]byte("any_valid_checksum"), nil)
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -798,6 +800,11 @@ func TestValidateStoreCodeAuthorization(t *testing.T) {
 		"wildcard grant": {
 			setup: func(t *testing.T) []CodeGrant {
 				return []CodeGrant{*wildcardGrant}
+			},
+		},
+		"empty permission grant": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*emptyPermissionGrant}
 			},
 		},
 		"duplicate grants - wildcard": {
@@ -849,16 +856,19 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 
 	reflectCodeHashUpperCase := strings.ToUpper(string(reflectCodeHash))
 
-	grantWildcard, err := NewCodeGrant([]byte("*"), AllowEverybody)
+	grantWildcard, err := NewCodeGrant([]byte("*"), &AllowEverybody)
 	require.NoError(t, err)
 
-	grantReflectCode, err := NewCodeGrant(reflectCodeHash, AllowNobody)
+	grantReflectCode, err := NewCodeGrant(reflectCodeHash, &AllowNobody)
 	require.NoError(t, err)
 
-	grantReflectCodeUpperCase, err := NewCodeGrant([]byte(reflectCodeHashUpperCase), AllowNobody)
+	grantReflectCodeUpperCase, err := NewCodeGrant([]byte(reflectCodeHashUpperCase), &AllowNobody)
 	require.NoError(t, err)
 
-	grantOtherCode, err := NewCodeGrant([]byte("any_valid_checksum"), AllowEverybody)
+	grantOtherCode, err := NewCodeGrant([]byte("any_valid_checksum"), &AllowEverybody)
+	require.NoError(t, err)
+
+	emptyPermissionReflectCodeGrant, err := NewCodeGrant(reflectCodeHash, nil)
 	require.NoError(t, err)
 
 	specs := map[string]struct {
@@ -880,6 +890,17 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 		},
 		"accepted reflect code": {
 			auth: NewStoreCodeAuthorization(*grantReflectCode),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowNobody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"accepted reflect code - empty permission": {
+			auth: NewStoreCodeAuthorization(*emptyPermissionReflectCodeGrant),
 			msg: &MsgStoreCode{
 				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
 				WASMByteCode:          reflectWasmCode,
