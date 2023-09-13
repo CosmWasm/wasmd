@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
@@ -53,7 +54,7 @@ func (a *StoreCodeAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authztype
 	permission := *storeMsg.InstantiatePermission
 
 	if ioutils.IsGzip(code) {
-		gasRegister, ok := GasRegister(ctx)
+		gasRegister, ok := GasRegisterFromContext(ctx)
 		if !ok {
 			return authztypes.AcceptResponse{}, sdkerrors.ErrNotFound.Wrap("gas register")
 		}
@@ -89,7 +90,7 @@ func (a StoreCodeAuthorization) ValidateBasic() error {
 			return errorsmod.Wrapf(err, "position %d", 0)
 		}
 	default:
-		uniqueGrants := make(map[string]struct{})
+		uniqueGrants := make(map[string]struct{}, numberOfGrants)
 		for i, grant := range a.Grants {
 			if strings.EqualFold(string(grant.CodeHash), CodehashWildcard) {
 				return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants when wildcard grant is one of them")
@@ -127,7 +128,7 @@ func (g CodeGrant) ValidateBasic() error {
 
 // Accept checks if checksum and permission match the grant
 func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
-	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !strings.EqualFold(string(g.CodeHash), string(checksum)) {
+	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !bytes.EqualFold(g.CodeHash, checksum) {
 		return false
 	}
 	return permission.IsSubset(*g.InstantiatePermission)

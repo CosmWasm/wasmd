@@ -691,7 +691,7 @@ func TestQueryErrors(t *testing.T) {
 				return nil, spec.src
 			})
 			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter()).WithMultiStore(store.NewCommitMultiStore(dbm.NewMemDB())).WithLogger(log.TestingLogger())
-			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, keeper.NewDefaultWasmGasRegister())
+			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, types.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
 		})

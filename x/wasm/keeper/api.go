@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
@@ -18,10 +19,10 @@ const (
 )
 
 var (
-	costHumanize            = DefaultGasCostHumanAddress * DefaultGasMultiplier
-	costCanonical           = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
+	costHumanize            = DefaultGasCostHumanAddress * types.DefaultGasMultiplier
+	costCanonical           = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
 	costJSONDeserialization = wasmvmtypes.UFraction{
-		Numerator:   DefaultDeserializationCostPerByte * DefaultGasMultiplier,
+		Numerator:   DefaultDeserializationCostPerByte * types.DefaultGasMultiplier,
 		Denominator: 1,
 	}
 )

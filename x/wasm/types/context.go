@@ -18,11 +18,6 @@ const (
 	contextKeyGasRegister = iota
 )
 
-type gasRegister interface {
-	// UncompressCosts costs to unpack a new wasm contract
-	UncompressCosts(byteLength int) sdk.Gas
-}
-
 // WithTXCounter stores a transaction counter value in the context
 func WithTXCounter(ctx sdk.Context, counter uint32) sdk.Context {
 	return ctx.WithValue(contextKeyTXCount, counter)
@@ -61,15 +56,15 @@ func SubMsgAuthzPolicy(ctx sdk.Context) (AuthorizationPolicy, bool) {
 }
 
 // WithGasRegister stores the gas register into the context returned
-func WithGasRegister(ctx sdk.Context, gr gasRegister) sdk.Context {
+func WithGasRegister(ctx sdk.Context, gr GasRegister) sdk.Context {
 	if gr == nil {
 		panic("gas register must not be nil")
 	}
 	return ctx.WithValue(contextKeyGasRegister, gr)
 }
 
-// GetGasRegister reads the gas register from the context
-func GasRegister(ctx sdk.Context) (gasRegister, bool) {
-	val, ok := ctx.Value(contextKeyGasRegister).(gasRegister)
+// GasRegisterFromContext reads the gas register from the context
+func GasRegisterFromContext(ctx sdk.Context) (GasRegister, bool) {
+	val, ok := ctx.Value(contextKeyGasRegister).(GasRegister)
 	return val, ok
 }

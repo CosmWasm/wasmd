@@ -201,8 +201,8 @@ func TestGasRegisterDecorator(t *testing.T) {
 		"simulation": {
 			simulate: true,
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				_, ok := types.GasRegister(ctx)
-				assert.False(t, ok)
+				_, ok := types.GasRegisterFromContext(ctx)
+				assert.True(t, ok)
 				require.True(t, simulate)
 				return ctx, nil
 			},
@@ -210,7 +210,7 @@ func TestGasRegisterDecorator(t *testing.T) {
 		"not simulation": {
 			simulate: false,
 			nextAssertAnte: func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-				_, ok := types.GasRegister(ctx)
+				_, ok := types.GasRegisterFromContext(ctx)
 				assert.True(t, ok)
 				require.False(t, simulate)
 				return ctx, nil
