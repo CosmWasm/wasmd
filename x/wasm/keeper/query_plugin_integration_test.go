@@ -647,12 +647,13 @@ func TestIBCListChannelsQuery(t *testing.T) {
 	cdc := MakeEncodingConfig(t).Codec
 	pCtx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
 	keeper := keepers.WasmKeeper
-	example := InstantiateReflectExampleContract(t, pCtx, keepers)
+	nonIbcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
+	ibcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
 	// add an ibc port for testing
 	myIBCPortID := "myValidPortID"
-	cInfo := keeper.GetContractInfo(pCtx, example.Contract)
+	cInfo := keeper.GetContractInfo(pCtx, ibcExample.Contract)
 	cInfo.IBCPortID = myIBCPortID
-	keeper.storeContractInfo(pCtx, example.Contract, cInfo)
+	keeper.storeContractInfo(pCtx, ibcExample.Contract, cInfo)
 	// store a random channel to be ignored in queries
 	unusedChan := channeltypes.Channel{
 		State:    channeltypes.OPEN,
@@ -720,14 +721,16 @@ func TestIBCListChannelsQuery(t *testing.T) {
 	noopSetup := func(t *testing.T, ctx sdk.Context) sdk.Context { return ctx }
 
 	specs := map[string]struct {
-		setup  func(t *testing.T, ctx sdk.Context) sdk.Context
-		query  *wasmvmtypes.IBCQuery
-		expErr bool
-		assert func(t *testing.T, d []byte)
+		setup    func(t *testing.T, ctx sdk.Context) sdk.Context
+		contract sdk.AccAddress
+		query    *wasmvmtypes.IBCQuery
+		expErr   bool
+		assert   func(t *testing.T, d []byte)
 	}{
-		"only open channels - portID empty": {
-			setup: withChannelsStored(myIBCPortID, myExampleChannels...),
-			query: &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+		"open channels - with query portID empty": {
+			contract: ibcExample.Contract,
+			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
 				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
 				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
@@ -754,9 +757,10 @@ func TestIBCListChannelsQuery(t *testing.T) {
 				assert.Equal(t, exp, rsp)
 			},
 		},
-		"open channels - portID set to non contract addr": {
-			setup: withChannelsStored("OtherPortID", myExampleChannels...),
-			query: &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{PortID: "OtherPortID"}},
+		"open channels - with query portID passed": {
+			contract: ibcExample.Contract,
+			setup:    withChannelsStored("OtherPortID", myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{PortID: "OtherPortID"}},
 			assert: func(t *testing.T, d []byte) {
 				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
 				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
@@ -783,9 +787,19 @@ func TestIBCListChannelsQuery(t *testing.T) {
 				assert.Equal(t, exp, rsp)
 			},
 		},
-		"no channels": {
-			setup: noopSetup,
-			query: &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+		"non ibc contract - with query portID empty": {
+			contract: nonIbcExample.Contract,
+			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			assert: func(t *testing.T, d []byte) {
+				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				assert.Nil(t, rsp.Channels)
+			},
+		},
+		"no matching channels": {
+			contract: ibcExample.Contract,
+			setup:    noopSetup,
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
 				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
 				assert.Empty(t, rsp.Channels)
@@ -803,7 +817,7 @@ func TestIBCListChannelsQuery(t *testing.T) {
 					Request: &wasmvmtypes.QueryRequest{IBC: spec.query},
 				},
 			})
-			simpleRes, gotErr := keeper.QuerySmart(ctx, example.Contract, queryBz)
+			simpleRes, gotErr := keeper.QuerySmart(ctx, spec.contract, queryBz)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return

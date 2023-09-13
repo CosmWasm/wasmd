@@ -249,28 +249,31 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 		}
 		if request.ListChannels != nil {
 			portID := request.ListChannels.PortID
-			if portID == "" {
+			if portID == "" { // then fallback to contract port address
 				portID = wasm.GetContractInfo(ctx, caller).IBCPortID
 			}
-			gotChannels := channelKeeper.GetAllChannelsWithPortPrefix(ctx, portID)
-			channels := make(wasmvmtypes.IBCChannels, 0, len(gotChannels))
-			for _, ch := range gotChannels {
-				if ch.State != channeltypes.OPEN {
-					continue
+			var channels wasmvmtypes.IBCChannels
+			if portID != "" { // then return empty list for non ibc contracts; no channels possible
+				gotChannels := channelKeeper.GetAllChannelsWithPortPrefix(ctx, portID)
+				channels = make(wasmvmtypes.IBCChannels, 0, len(gotChannels))
+				for _, ch := range gotChannels {
+					if ch.State != channeltypes.OPEN {
+						continue
+					}
+					channels = append(channels, wasmvmtypes.IBCChannel{
+						Endpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    ch.PortId,
+							ChannelID: ch.ChannelId,
+						},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    ch.Counterparty.PortId,
+							ChannelID: ch.Counterparty.ChannelId,
+						},
+						Order:        ch.Ordering.String(),
+						Version:      ch.Version,
+						ConnectionID: ch.ConnectionHops[0],
+					})
 				}
-				channels = append(channels, wasmvmtypes.IBCChannel{
-					Endpoint: wasmvmtypes.IBCEndpoint{
-						PortID:    ch.PortId,
-						ChannelID: ch.ChannelId,
-					},
-					CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
-						PortID:    ch.Counterparty.PortId,
-						ChannelID: ch.Counterparty.ChannelId,
-					},
-					Order:        ch.Ordering.String(),
-					Version:      ch.Version,
-					ConnectionID: ch.ConnectionHops[0],
-				})
 			}
 			res := wasmvmtypes.ListChannelsResponse{
 				Channels: channels,
