@@ -9,6 +9,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -629,6 +630,194 @@ func TestDistributionQuery(t *testing.T) {
 				},
 			})
 			simpleRes, gotErr := keeper.QuerySmart(ctx, example.Contract, queryBz)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			// then
+			require.NoError(t, gotErr)
+			var rsp testdata.ChainResponse
+			mustUnmarshal(t, simpleRes, &rsp)
+			spec.assert(t, rsp.Data)
+		})
+	}
+}
+
+func TestIBCListChannelsQuery(t *testing.T) {
+	cdc := MakeEncodingConfig(t).Codec
+	pCtx, keepers := CreateTestInput(t, false, ReflectFeatures, WithMessageEncoders(reflectEncoders(cdc)), WithQueryPlugins(reflectPlugins()))
+	keeper := keepers.WasmKeeper
+	nonIbcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
+	ibcExample := InstantiateReflectExampleContract(t, pCtx, keepers)
+	// add an ibc port for testing
+	myIBCPortID := "myValidPortID"
+	cInfo := keeper.GetContractInfo(pCtx, ibcExample.Contract)
+	cInfo.IBCPortID = myIBCPortID
+	keeper.storeContractInfo(pCtx, ibcExample.Contract, cInfo)
+	// store a random channel to be ignored in queries
+	unusedChan := channeltypes.Channel{
+		State:    channeltypes.OPEN,
+		Ordering: channeltypes.UNORDERED,
+		Counterparty: channeltypes.Counterparty{
+			PortId:    "counterPartyPortID",
+			ChannelId: "counterPartyChannelID",
+		},
+		ConnectionHops: []string{"any"},
+		Version:        "any",
+	}
+	keepers.IBCKeeper.ChannelKeeper.SetChannel(pCtx, "nonContractPortID", "channel-99", unusedChan)
+
+	// mixed channel examples for testing
+	myExampleChannels := []channeltypes.Channel{
+		{
+			State:    channeltypes.OPEN,
+			Ordering: channeltypes.ORDERED,
+			Counterparty: channeltypes.Counterparty{
+				PortId:    "counterPartyPortID",
+				ChannelId: "counterPartyChannelID",
+			},
+			ConnectionHops: []string{"one"},
+			Version:        "v1",
+		},
+		{
+			State:    channeltypes.INIT,
+			Ordering: channeltypes.UNORDERED,
+			Counterparty: channeltypes.Counterparty{
+				PortId: "foobar",
+			},
+			ConnectionHops: []string{"one"},
+			Version:        "initversion",
+		},
+		{
+			State:    channeltypes.OPEN,
+			Ordering: channeltypes.UNORDERED,
+			Counterparty: channeltypes.Counterparty{
+				PortId:    "otherCounterPartyPortID",
+				ChannelId: "otherCounterPartyChannelID",
+			},
+			ConnectionHops: []string{"other", "second"},
+			Version:        "otherVersion",
+		},
+		{
+			State:    channeltypes.CLOSED,
+			Ordering: channeltypes.ORDERED,
+			Counterparty: channeltypes.Counterparty{
+				PortId:    "super",
+				ChannelId: "duper",
+			},
+			ConnectionHops: []string{"no-more"},
+			Version:        "closedVersion",
+		},
+	}
+
+	withChannelsStored := func(portID string, channels ...channeltypes.Channel) func(t *testing.T, ctx sdk.Context) sdk.Context {
+		return func(t *testing.T, ctx sdk.Context) sdk.Context {
+			for i, v := range channels {
+				keepers.IBCKeeper.ChannelKeeper.SetChannel(ctx, portID, fmt.Sprintf("channel-%d", i), v)
+			}
+			return ctx
+		}
+	}
+	noopSetup := func(t *testing.T, ctx sdk.Context) sdk.Context { return ctx }
+
+	specs := map[string]struct {
+		setup    func(t *testing.T, ctx sdk.Context) sdk.Context
+		contract sdk.AccAddress
+		query    *wasmvmtypes.IBCQuery
+		expErr   bool
+		assert   func(t *testing.T, d []byte)
+	}{
+		"open channels - with query portID empty": {
+			contract: ibcExample.Contract,
+			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			assert: func(t *testing.T, d []byte) {
+				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
+					{
+						Endpoint: wasmvmtypes.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-0"},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    "counterPartyPortID",
+							ChannelID: "counterPartyChannelID",
+						},
+						Order:        channeltypes.ORDERED.String(),
+						Version:      "v1",
+						ConnectionID: "one",
+					}, {
+						Endpoint: wasmvmtypes.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-2"},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    "otherCounterPartyPortID",
+							ChannelID: "otherCounterPartyChannelID",
+						},
+						Order:        channeltypes.UNORDERED.String(),
+						Version:      "otherVersion",
+						ConnectionID: "other",
+					},
+				}}
+				assert.Equal(t, exp, rsp)
+			},
+		},
+		"open channels - with query portID passed": {
+			contract: ibcExample.Contract,
+			setup:    withChannelsStored("OtherPortID", myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{PortID: "OtherPortID"}},
+			assert: func(t *testing.T, d []byte) {
+				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
+					{
+						Endpoint: wasmvmtypes.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-0"},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    "counterPartyPortID",
+							ChannelID: "counterPartyChannelID",
+						},
+						Order:        channeltypes.ORDERED.String(),
+						Version:      "v1",
+						ConnectionID: "one",
+					}, {
+						Endpoint: wasmvmtypes.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-2"},
+						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+							PortID:    "otherCounterPartyPortID",
+							ChannelID: "otherCounterPartyChannelID",
+						},
+						Order:        channeltypes.UNORDERED.String(),
+						Version:      "otherVersion",
+						ConnectionID: "other",
+					},
+				}}
+				assert.Equal(t, exp, rsp)
+			},
+		},
+		"non ibc contract - with query portID empty": {
+			contract: nonIbcExample.Contract,
+			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			assert: func(t *testing.T, d []byte) {
+				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				assert.Nil(t, rsp.Channels)
+			},
+		},
+		"no matching channels": {
+			contract: ibcExample.Contract,
+			setup:    noopSetup,
+			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			assert: func(t *testing.T, d []byte) {
+				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				assert.Empty(t, rsp.Channels)
+			},
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := pCtx.CacheContext()
+			ctx = spec.setup(t, ctx)
+
+			// when
+			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
+				Chain: &testdata.ChainQuery{
+					Request: &wasmvmtypes.QueryRequest{IBC: spec.query},
+				},
+			})
+			simpleRes, gotErr := keeper.QuerySmart(ctx, spec.contract, queryBz)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
