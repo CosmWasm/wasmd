@@ -390,7 +390,6 @@ type GenesisMutator func([]byte) []byte
 //		return state
 //	}
 func (s *SystemUnderTest) ModifyGenesisJSON(t *testing.T, mutators ...GenesisMutator) {
-	s.ResetChain(t)
 	s.modifyGenesisJSON(t, mutators...)
 }
 

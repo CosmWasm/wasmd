@@ -560,15 +560,15 @@ $ %s tx grant <grantee_addr> execution <contract_addr> --allow-all-messages --ma
 
 func GrantStoreCodeAuthorizationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grant [grantee] store-code [code_hash:permission]",
+		Use:   "grant-store-code [grantee] [code_hash:permission]",
 		Short: "Grant authorization to an address",
 		Long: fmt.Sprintf(`Grant authorization to an address.
 Examples:
-$ %s tx grant <grantee_addr> store-code 13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5:everybody  1wqrtry681b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5:nobody --expiration 1667979596
+$ %s tx grant-store-code <grantee_addr> 13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5:everybody  1wqrtry681b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5:nobody --expiration 1667979596
 
-$ %s tx grant <grantee_addr> store-code *:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
+$ %s tx grant-store-code <grantee_addr> *:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm,%s1vx8knpllrj7n963p9ttd80w47kpacrhuts497x
 `, version.AppName, version.AppName, version.AppName, version.AppName),
-		Args: cobra.MinimumNArgs(3),
+		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -580,11 +580,7 @@ $ %s tx grant <grantee_addr> store-code *:%s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx5
 				return err
 			}
 
-			if args[1] != "store-code" {
-				return fmt.Errorf("%s authorization type not supported", args[1])
-			}
-
-			grants, err := parseStoreCodeGrants(args[2:])
+			grants, err := parseStoreCodeGrants(args[1:])
 			if err != nil {
 				return err
 			}
