@@ -32,6 +32,7 @@ var (
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // StoreCodeAuthorization defines authorization for wasm code upload.
+// Since: wasmd 0.42
 type StoreCodeAuthorization struct {
 	// Grants for code upload
 	Grants []CodeGrant `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants"`

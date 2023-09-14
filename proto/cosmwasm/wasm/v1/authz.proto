@@ -12,6 +12,7 @@ option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // StoreCodeAuthorization defines authorization for wasm code upload.
+// Since: wasmd 0.42
 message StoreCodeAuthorization {
   option (amino.name) = "wasm/StoreCodeAuthorization";
   option (cosmos_proto.implements_interface) =

@@ -476,6 +476,7 @@ Since: wasmd 0.30
 
 ### StoreCodeAuthorization
 StoreCodeAuthorization defines authorization for wasm code upload.
+Since: wasmd 0.42
 
 
 | Field | Type | Label | Description |
