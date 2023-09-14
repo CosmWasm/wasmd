@@ -117,6 +117,10 @@ func (q GrpcQuerier) AllContractState(c context.Context, req *types.QueryAllCont
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
+	if req.Pagination != nil &&
+		(req.Pagination.Offset != 0 || req.Pagination.CountTotal) {
+		return nil, status.Error(codes.InvalidArgument, "offset and count queries not supported anymore")
+	}
 	contractAddr, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, err
