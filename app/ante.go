@@ -21,6 +21,7 @@ type HandlerOptions struct {
 	ante.HandlerOptions
 
 	IBCKeeper         *keeper.Keeper
+	WasmKeeper        *wasmkeeper.Keeper
 	WasmConfig        *wasmTypes.WasmConfig
 	TXCounterStoreKey storetypes.StoreKey
 }
@@ -46,6 +47,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
 		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreKey),
+		wasmkeeper.NewGasRegisterDecorator(options.WasmKeeper.GetGasRegister()),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),

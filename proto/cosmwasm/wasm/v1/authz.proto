@@ -4,11 +4,24 @@ package cosmwasm.wasm.v1;
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmwasm/wasm/v1/types.proto";
 import "google/protobuf/any.proto";
 import "amino/amino.proto";
 
 option go_package = "github.com/CosmWasm/wasmd/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
+
+// StoreCodeAuthorization defines authorization for wasm code upload.
+// Since: wasmd 0.42
+message StoreCodeAuthorization {
+  option (amino.name) = "wasm/StoreCodeAuthorization";
+  option (cosmos_proto.implements_interface) =
+      "cosmos.authz.v1beta1.Authorization";
+
+  // Grants for code upload
+  repeated CodeGrant grants = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
 
 // ContractExecutionAuthorization defines authorization for wasm execute.
 // Since: wasmd 0.30
@@ -32,6 +45,18 @@ message ContractMigrationAuthorization {
   // Grants for contract migrations
   repeated ContractGrant grants = 1
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// CodeGrant a granted permission for a single code
+message CodeGrant {
+  // CodeHash is the unique identifier created by wasmvm
+  // Wildcard "*" is used to specify any kind of grant.
+  bytes code_hash = 1;
+
+  // InstantiatePermission is the superset access control to apply
+  // on contract creation.
+  // Optional
+  AccessConfig instantiate_permission = 2;
 }
 
 // ContractGrant a granted permission for a single contract

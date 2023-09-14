@@ -27,10 +27,10 @@ type QueryHandler struct {
 	Ctx         sdk.Context
 	Plugins     WasmVMQueryHandler
 	Caller      sdk.AccAddress
-	gasRegister GasRegister
+	gasRegister types.GasRegister
 }
 
-func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller sdk.AccAddress, gasRegister GasRegister) QueryHandler {
+func NewQueryHandler(ctx sdk.Context, vmQueryHandler WasmVMQueryHandler, caller sdk.AccAddress, gasRegister types.GasRegister) QueryHandler {
 	return QueryHandler{
 		Ctx:         ctx,
 		Plugins:     vmQueryHandler,

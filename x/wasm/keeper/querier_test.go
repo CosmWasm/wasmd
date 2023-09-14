@@ -176,7 +176,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(sdk.NewGasMeter(DefaultInstanceCost)).WithLogger(log.TestingLogger())
+	ctx = ctx.WithGasMeter(sdk.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.TestingLogger())
 
 	specs := map[string]struct {
 		doInContract func()

@@ -4,17 +4,6 @@
 
 ## Table of Contents
 
-- [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
-    - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
-    - [AcceptedMessagesFilter](#cosmwasm.wasm.v1.AcceptedMessagesFilter)
-    - [AllowAllMessagesFilter](#cosmwasm.wasm.v1.AllowAllMessagesFilter)
-    - [CombinedLimit](#cosmwasm.wasm.v1.CombinedLimit)
-    - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
-    - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
-    - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
-    - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
-    - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
-  
 - [cosmwasm/wasm/v1/types.proto](#cosmwasm/wasm/v1/types.proto)
     - [AbsoluteTxPosition](#cosmwasm.wasm.v1.AbsoluteTxPosition)
     - [AccessConfig](#cosmwasm.wasm.v1.AccessConfig)
@@ -27,6 +16,19 @@
   
     - [AccessType](#cosmwasm.wasm.v1.AccessType)
     - [ContractCodeHistoryOperationType](#cosmwasm.wasm.v1.ContractCodeHistoryOperationType)
+  
+- [cosmwasm/wasm/v1/authz.proto](#cosmwasm/wasm/v1/authz.proto)
+    - [AcceptedMessageKeysFilter](#cosmwasm.wasm.v1.AcceptedMessageKeysFilter)
+    - [AcceptedMessagesFilter](#cosmwasm.wasm.v1.AcceptedMessagesFilter)
+    - [AllowAllMessagesFilter](#cosmwasm.wasm.v1.AllowAllMessagesFilter)
+    - [CodeGrant](#cosmwasm.wasm.v1.CodeGrant)
+    - [CombinedLimit](#cosmwasm.wasm.v1.CombinedLimit)
+    - [ContractExecutionAuthorization](#cosmwasm.wasm.v1.ContractExecutionAuthorization)
+    - [ContractGrant](#cosmwasm.wasm.v1.ContractGrant)
+    - [ContractMigrationAuthorization](#cosmwasm.wasm.v1.ContractMigrationAuthorization)
+    - [MaxCallsLimit](#cosmwasm.wasm.v1.MaxCallsLimit)
+    - [MaxFundsLimit](#cosmwasm.wasm.v1.MaxFundsLimit)
+    - [StoreCodeAuthorization](#cosmwasm.wasm.v1.StoreCodeAuthorization)
   
 - [cosmwasm/wasm/v1/genesis.proto](#cosmwasm/wasm/v1/genesis.proto)
     - [Code](#cosmwasm.wasm.v1.Code)
@@ -118,168 +120,6 @@
     - [Msg](#cosmwasm.wasm.v1.Msg)
   
 - [Scalar Value Types](#scalar-value-types)
-
-
-
-<a name="cosmwasm/wasm/v1/authz.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## cosmwasm/wasm/v1/authz.proto
-
-
-
-<a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
-
-### AcceptedMessageKeysFilter
-AcceptedMessageKeysFilter accept only the specific contract message keys in
-the json object to be executed.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `keys` | [string](#string) | repeated | Messages is the list of unique keys |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.AcceptedMessagesFilter"></a>
-
-### AcceptedMessagesFilter
-AcceptedMessagesFilter accept only the specific raw contract messages to be
-executed.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `messages` | [bytes](#bytes) | repeated | Messages is the list of raw contract messages |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.AllowAllMessagesFilter"></a>
-
-### AllowAllMessagesFilter
-AllowAllMessagesFilter is a wildcard to allow any type of contract payload
-message.
-Since: wasmd 0.30
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.CombinedLimit"></a>
-
-### CombinedLimit
-CombinedLimit defines the maximal amounts that can be sent to a contract and
-the maximal number of calls executable. Both need to remain >0 to be valid.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `calls_remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
-| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
-
-### ContractExecutionAuthorization
-ContractExecutionAuthorization defines authorization for wasm execute.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract executions |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.ContractGrant"></a>
-
-### ContractGrant
-ContractGrant a granted permission for a single contract
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `contract` | [string](#string) |  | Contract is the bech32 address of the smart contract |
-| `limit` | [google.protobuf.Any](#google.protobuf.Any) |  | Limit defines execution limits that are enforced and updated when the grant is applied. When the limit lapsed the grant is removed. |
-| `filter` | [google.protobuf.Any](#google.protobuf.Any) |  | Filter define more fine-grained control on the message payload passed to the contract in the operation. When no filter applies on execution, the operation is prohibited. |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
-
-### ContractMigrationAuthorization
-ContractMigrationAuthorization defines authorization for wasm contract
-migration. Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MaxCallsLimit"></a>
-
-### MaxCallsLimit
-MaxCallsLimit limited number of calls to the contract. No funds transferable.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
-
-
-
-
-
-
-<a name="cosmwasm.wasm.v1.MaxFundsLimit"></a>
-
-### MaxFundsLimit
-MaxFundsLimit defines the maximal amounts that can be sent to the contract.
-Since: wasmd 0.30
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
 
 
 
@@ -454,6 +294,200 @@ ContractCodeHistoryOperationType actions that caused a code change
 | CONTRACT_CODE_HISTORY_OPERATION_TYPE_MIGRATE | 2 | ContractCodeHistoryOperationTypeMigrate code migration |
 | CONTRACT_CODE_HISTORY_OPERATION_TYPE_GENESIS | 3 | ContractCodeHistoryOperationTypeGenesis based on genesis data |
 
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="cosmwasm/wasm/v1/authz.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmwasm/wasm/v1/authz.proto
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessageKeysFilter"></a>
+
+### AcceptedMessageKeysFilter
+AcceptedMessageKeysFilter accept only the specific contract message keys in
+the json object to be executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `keys` | [string](#string) | repeated | Messages is the list of unique keys |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AcceptedMessagesFilter"></a>
+
+### AcceptedMessagesFilter
+AcceptedMessagesFilter accept only the specific raw contract messages to be
+executed.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `messages` | [bytes](#bytes) | repeated | Messages is the list of raw contract messages |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.AllowAllMessagesFilter"></a>
+
+### AllowAllMessagesFilter
+AllowAllMessagesFilter is a wildcard to allow any type of contract payload
+message.
+Since: wasmd 0.30
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.CodeGrant"></a>
+
+### CodeGrant
+CodeGrant a granted permission for a single code
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_hash` | [bytes](#bytes) |  | CodeHash is the unique identifier created by wasmvm Wildcard "*" is used to specify any kind of grant. |
+| `instantiate_permission` | [AccessConfig](#cosmwasm.wasm.v1.AccessConfig) |  | InstantiatePermission is the superset access control to apply on contract creation. Optional |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.CombinedLimit"></a>
+
+### CombinedLimit
+CombinedLimit defines the maximal amounts that can be sent to a contract and
+the maximal number of calls executable. Both need to remain >0 to be valid.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `calls_remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractExecutionAuthorization"></a>
+
+### ContractExecutionAuthorization
+ContractExecutionAuthorization defines authorization for wasm execute.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract executions |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractGrant"></a>
+
+### ContractGrant
+ContractGrant a granted permission for a single contract
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `contract` | [string](#string) |  | Contract is the bech32 address of the smart contract |
+| `limit` | [google.protobuf.Any](#google.protobuf.Any) |  | Limit defines execution limits that are enforced and updated when the grant is applied. When the limit lapsed the grant is removed. |
+| `filter` | [google.protobuf.Any](#google.protobuf.Any) |  | Filter define more fine-grained control on the message payload passed to the contract in the operation. When no filter applies on execution, the operation is prohibited. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.ContractMigrationAuthorization"></a>
+
+### ContractMigrationAuthorization
+ContractMigrationAuthorization defines authorization for wasm contract
+migration. Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [ContractGrant](#cosmwasm.wasm.v1.ContractGrant) | repeated | Grants for contract migrations |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxCallsLimit"></a>
+
+### MaxCallsLimit
+MaxCallsLimit limited number of calls to the contract. No funds transferable.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `remaining` | [uint64](#uint64) |  | Remaining number that is decremented on each execution |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MaxFundsLimit"></a>
+
+### MaxFundsLimit
+MaxFundsLimit defines the maximal amounts that can be sent to the contract.
+Since: wasmd 0.30
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `amounts` | [cosmos.base.v1beta1.Coin](#cosmos.base.v1beta1.Coin) | repeated | Amounts is the maximal amount of tokens transferable to the contract. |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.StoreCodeAuthorization"></a>
+
+### StoreCodeAuthorization
+StoreCodeAuthorization defines authorization for wasm code upload.
+Since: wasmd 0.42
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `grants` | [CodeGrant](#cosmwasm.wasm.v1.CodeGrant) | repeated | Grants for code upload |
+
+
+
+
+
+ <!-- end messages -->
 
  <!-- end enums -->
 
