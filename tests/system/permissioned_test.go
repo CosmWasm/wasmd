@@ -17,7 +17,7 @@ func TestGrantStoreCodePermissionedChain(t *testing.T) {
 	const chainAuthorityAddress = "wasm1pvuujjdk0xt043ga0j9nrfh5u8pzj4rpplyqkm"
 	sut.ModifyGenesisJSON(t, SetCodeUploadPermission(t, "AnyOfAddresses", chainAuthorityAddress))
 
-	recoveredAddress := cli.AddKeyFromSeed("chain_authorized_account", "aisle ship absurd wedding arch admit fringe foam cluster tide trim aisle salad shiver tackle palm glance wrist valley hamster couch crystal frozen chronic")
+	recoveredAddress := cli.AddKeyFromSeed("chain_authority", "aisle ship absurd wedding arch admit fringe foam cluster tide trim aisle salad shiver tackle palm glance wrist valley hamster couch crystal frozen chronic")
 	require.Equal(t, chainAuthorityAddress, recoveredAddress)
 	devAccount := cli.AddKey("dev_account")
 
@@ -39,7 +39,7 @@ func TestGrantStoreCodePermissionedChain(t *testing.T) {
 	require.Equal(t, permission, "AnyOfAddresses")
 	require.Equal(t, chainAuthorityAddress, addrRes[0].Str)
 
-	// chain_authorized_account grant upload permission to dev_account
+	// chain_authority grant upload permission to dev_account
 	rsp = cli.CustomCommand("tx", "wasm", "grant", "store-code", devAccount, "*:*", "--from="+chainAuthorityAddress)
 	RequireTxSuccess(t, rsp)
 
