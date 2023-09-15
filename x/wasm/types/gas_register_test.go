@@ -1,4 +1,4 @@
-package keeper
+package types
 
 import (
 	"math"
@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	storetypes "cosmossdk.io/store/types"
-
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestCompileCosts(t *testing.T) {
@@ -451,7 +449,7 @@ func TestUncompressCosts(t *testing.T) {
 			exp:   2,
 		},
 		"max len": {
-			lenIn: types.MaxWasmSize,
+			lenIn: MaxWasmSize,
 			exp:   122880,
 		},
 		"invalid len": {

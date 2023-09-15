@@ -14,9 +14,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
+
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 )
 
-const gasDeserializationCostPerByte = uint64(1)
+const (
+	gasDeserializationCostPerByte = uint64(1)
+	// CodehashWildcard matches any code hash
+	CodehashWildcard = "*"
+)
 
 var (
 	_ authztypes.Authorization         = &StoreCodeAuthorization{}
@@ -40,14 +46,26 @@ func (a StoreCodeAuthorization) MsgTypeURL() string {
 
 // Accept implements Authorization.Accept.
 func (a *StoreCodeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authztypes.AcceptResponse, error) {
-	var code []byte
-	var permission AccessConfig
-	switch msg := msg.(type) {
-	case *MsgStoreCode:
-		code = msg.WASMByteCode
-		permission = *msg.InstantiatePermission
-	default:
+	storeMsg, ok := msg.(*MsgStoreCode)
+	if !ok {
 		return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("unknown msg type")
+	}
+
+	code := storeMsg.WASMByteCode
+	permission := *storeMsg.InstantiatePermission
+
+	if ioutils.IsGzip(code) {
+		gasRegister, ok := GasRegisterFromContext(ctx)
+		if !ok {
+			return authztypes.AcceptResponse{}, sdkerrors.ErrNotFound.Wrap("gas register")
+		}
+		sdk.UnwrapSDKContext(ctx).GasMeter().
+			ConsumeGas(gasRegister.UncompressCosts(len(code)), "Uncompress gzip bytecode")
+		wasmCode, err := ioutils.Uncompress(code, int64(MaxWasmSize))
+		if err != nil {
+			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidRequest.Wrap("uncompress wasm archive")
+		}
+		code = wasmCode
 	}
 
 	checksum, err := wasmvm.CreateChecksum(code)
@@ -65,22 +83,37 @@ func (a *StoreCodeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz
 
 // ValidateBasic implements Authorization.ValidateBasic.
 func (a StoreCodeAuthorization) ValidateBasic() error {
-	if len(a.Grants) == 0 {
+	numberOfGrants := len(a.Grants)
+	switch numberOfGrants {
+	case 0:
 		return ErrEmpty.Wrap("grants")
-	}
-	for i, v := range a.Grants {
-		if err := v.ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "position %d", i)
+	case 1:
+		if err := a.Grants[0].ValidateBasic(); err != nil {
+			return errorsmod.Wrapf(err, "position %d", 0)
+		}
+	default:
+		uniqueGrants := make(map[string]struct{}, numberOfGrants)
+		for i, grant := range a.Grants {
+			if strings.EqualFold(string(grant.CodeHash), CodehashWildcard) {
+				return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants when wildcard grant is one of them")
+			}
+			if err := grant.ValidateBasic(); err != nil {
+				return errorsmod.Wrapf(err, "position %d", i)
+			}
+			uniqueGrants[strings.ToLower(string(grant.CodeHash))] = struct{}{}
+		}
+		if len(uniqueGrants) != numberOfGrants {
+			return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants with same code hash")
 		}
 	}
 	return nil
 }
 
 // NewCodeGrant constructor
-func NewCodeGrant(codeHash []byte, instantiatePermission AccessConfig) (*CodeGrant, error) {
+func NewCodeGrant(codeHash []byte, instantiatePermission *AccessConfig) (*CodeGrant, error) {
 	return &CodeGrant{
 		CodeHash:              codeHash,
-		InstantiatePermission: &instantiatePermission,
+		InstantiatePermission: instantiatePermission,
 	}, nil
 }
 
@@ -90,17 +123,18 @@ func (g CodeGrant) ValidateBasic() error {
 		return ErrEmpty.Wrap("code hash")
 	}
 	if g.InstantiatePermission != nil {
-		if err := g.InstantiatePermission.ValidateBasic(); err != nil {
-			return errorsmod.Wrap(err, "instantiate permission")
-		}
+		return g.InstantiatePermission.ValidateBasic()
 	}
 	return nil
 }
 
 // Accept checks if checksum and permission match the grant
 func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
-	if !bytes.Equal(g.CodeHash, []byte("*")) && !bytes.Equal(g.CodeHash, checksum) {
+	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !bytes.EqualFold(g.CodeHash, checksum) {
 		return false
+	}
+	if g.InstantiatePermission == nil {
+		return true
 	}
 	return permission.IsSubset(*g.InstantiatePermission)
 }

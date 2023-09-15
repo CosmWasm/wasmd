@@ -368,7 +368,10 @@ func GetCmdGetContractStateAll() *cobra.Command {
 		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "contract state")
+	cmd.Flags().String(flags.FlagPageKey, "", "pagination page-key of contract state to query for")
+	cmd.Flags().Uint64(flags.FlagLimit, 100, "pagination limit of contract state to query for")
+	cmd.Flags().Bool(flags.FlagReverse, false, "results are sorted in descending order")
+
 	return cmd
 }
 

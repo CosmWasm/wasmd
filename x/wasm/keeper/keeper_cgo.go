@@ -49,7 +49,7 @@ func NewKeeper(
 		capabilityKeeper:     capabilityKeeper,
 		messenger:            NewDefaultMessageHandler(router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
-		gasRegister:          NewDefaultWasmGasRegister(),
+		gasRegister:          types.NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 		params:               collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),

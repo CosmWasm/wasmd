@@ -24,6 +24,7 @@ type HandlerOptions struct {
 
 	IBCKeeper             *keeper.Keeper
 	WasmConfig            *wasmTypes.WasmConfig
+	WasmKeeper            *wasmkeeper.Keeper
 	TXCounterStoreService corestoretypes.KVStoreService
 	CircuitKeeper         *circuitkeeper.Keeper
 }
@@ -52,6 +53,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
 		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreService),
+		wasmkeeper.NewGasRegisterDecorator(options.WasmKeeper.GetGasRegister()),
 		circuitante.NewCircuitBreakerDecorator(options.CircuitKeeper),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		ante.NewValidateBasicDecorator(),

@@ -153,8 +153,8 @@ func TestConstructorOptions(t *testing.T) {
 }
 
 func setAPIDefaults() {
-	costHumanize = DefaultGasCostHumanAddress * DefaultGasMultiplier
-	costCanonical = DefaultGasCostCanonicalAddress * DefaultGasMultiplier
+	costHumanize = DefaultGasCostHumanAddress * types.DefaultGasMultiplier
+	costCanonical = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
 }
 
 func TestSplitOpts(t *testing.T) {

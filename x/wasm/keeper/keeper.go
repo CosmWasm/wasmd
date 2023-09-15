@@ -96,7 +96,7 @@ type Keeper struct {
 	messenger             Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit        uint64
-	gasRegister          GasRegister
+	gasRegister          types.GasRegister
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
@@ -134,6 +134,11 @@ func (k Keeper) SetParams(ctx context.Context, ps types.Params) error {
 // GetAuthority returns the x/wasm module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
+}
+
+// GetGasRegister returns the x/wasm module's gas register.
+func (k Keeper) GetGasRegister() types.GasRegister {
+	return k.gasRegister
 }
 
 func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ types.AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
@@ -1173,10 +1178,10 @@ func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress)
 // MultipliedGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
 type MultipliedGasMeter struct {
 	originalMeter storetypes.GasMeter
-	GasRegister   GasRegister
+	GasRegister   types.GasRegister
 }
 
-func NewMultipliedGasMeter(originalMeter storetypes.GasMeter, gr GasRegister) MultipliedGasMeter {
+func NewMultipliedGasMeter(originalMeter storetypes.GasMeter, gr types.GasRegister) MultipliedGasMeter {
 	return MultipliedGasMeter{originalMeter: originalMeter, GasRegister: gr}
 }
 

@@ -943,6 +943,7 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 			},
 			IBCKeeper:             app.IBCKeeper,
 			WasmConfig:            &wasmConfig,
+			WasmKeeper:            &app.WasmKeeper,
 			TXCounterStoreService: runtime.NewKVStoreService(txCounterStoreKey),
 			CircuitKeeper:         &app.CircuitKeeper,
 		},

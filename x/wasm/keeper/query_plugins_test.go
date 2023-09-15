@@ -39,59 +39,6 @@ import (
 )
 
 func TestIBCQuerier(t *testing.T) {
-	myExampleChannels := []channeltypes.IdentifiedChannel{
-		// this is returned
-		{
-			State:    channeltypes.OPEN,
-			Ordering: channeltypes.ORDERED,
-			Counterparty: channeltypes.Counterparty{
-				PortId:    "counterPartyPortID",
-				ChannelId: "counterPartyChannelID",
-			},
-			ConnectionHops: []string{"one"},
-			Version:        "v1",
-			PortId:         "myPortID",
-			ChannelId:      "myChannelID",
-		},
-		// this is filtered out
-		{
-			State:    channeltypes.INIT,
-			Ordering: channeltypes.UNORDERED,
-			Counterparty: channeltypes.Counterparty{
-				PortId: "foobar",
-			},
-			ConnectionHops: []string{"one"},
-			Version:        "initversion",
-			PortId:         "initPortID",
-			ChannelId:      "initChannelID",
-		},
-		// this is returned
-		{
-			State:    channeltypes.OPEN,
-			Ordering: channeltypes.UNORDERED,
-			Counterparty: channeltypes.Counterparty{
-				PortId:    "otherCounterPartyPortID",
-				ChannelId: "otherCounterPartyChannelID",
-			},
-			ConnectionHops: []string{"other", "second"},
-			Version:        "otherVersion",
-			PortId:         "otherPortID",
-			ChannelId:      "otherChannelID",
-		},
-		// this is filtered out
-		{
-			State:    channeltypes.CLOSED,
-			Ordering: channeltypes.ORDERED,
-			Counterparty: channeltypes.Counterparty{
-				PortId:    "super",
-				ChannelId: "duper",
-			},
-			ConnectionHops: []string{"no-more"},
-			Version:        "closedVersion",
-			PortId:         "closedPortID",
-			ChannelId:      "closedChannelID",
-		},
-	}
 	specs := map[string]struct {
 		srcQuery      *wasmvmtypes.IBCQuery
 		wasmKeeper    *mockWasmQueryKeeper
@@ -110,82 +57,6 @@ func TestIBCQuerier(t *testing.T) {
 			},
 			channelKeeper: &wasmtesting.MockChannelKeeper{},
 			expJSONResult: `{"port_id":"myIBCPortID"}`,
-		},
-		"query list channels - all": {
-			srcQuery: &wasmvmtypes.IBCQuery{
-				ListChannels: &wasmvmtypes.ListChannelsQuery{},
-			},
-			channelKeeper: &wasmtesting.MockChannelKeeper{
-				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
-			},
-			expJSONResult: `{
-  "channels": [
-    {
-      "endpoint": {
-        "port_id": "myPortID",
-        "channel_id": "myChannelID"
-      },
-      "counterparty_endpoint": {
-        "port_id": "counterPartyPortID",
-        "channel_id": "counterPartyChannelID"
-      },
-      "order": "ORDER_ORDERED",
-      "version": "v1",
-      "connection_id": "one"
-    },
-    {
-      "endpoint": {
-        "port_id": "otherPortID",
-        "channel_id": "otherChannelID"
-      },
-      "counterparty_endpoint": {
-        "port_id": "otherCounterPartyPortID",
-        "channel_id": "otherCounterPartyChannelID"
-      },
-      "order": "ORDER_UNORDERED",
-      "version": "otherVersion",
-      "connection_id": "other"
-    }
-  ]
-}`,
-		},
-		"query list channels - filtered": {
-			srcQuery: &wasmvmtypes.IBCQuery{
-				ListChannels: &wasmvmtypes.ListChannelsQuery{
-					PortID: "otherPortID",
-				},
-			},
-			channelKeeper: &wasmtesting.MockChannelKeeper{
-				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
-			},
-			expJSONResult: `{
-  "channels": [
-    {
-      "endpoint": {
-        "port_id": "otherPortID",
-        "channel_id": "otherChannelID"
-      },
-      "counterparty_endpoint": {
-        "port_id": "otherCounterPartyPortID",
-        "channel_id": "otherCounterPartyChannelID"
-      },
-      "order": "ORDER_UNORDERED",
-      "version": "otherVersion",
-      "connection_id": "other"
-    }
-  ]
-}`,
-		},
-		"query list channels - filtered empty": {
-			srcQuery: &wasmvmtypes.IBCQuery{
-				ListChannels: &wasmvmtypes.ListChannelsQuery{
-					PortID: "none-existing",
-				},
-			},
-			channelKeeper: &wasmtesting.MockChannelKeeper{
-				IterateChannelsFn: wasmtesting.MockChannelKeeperIterator(myExampleChannels),
-			},
-			expJSONResult: `{"channels": []}`,
 		},
 		"query channel": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -691,7 +562,7 @@ func TestQueryErrors(t *testing.T) {
 			})
 			ms := store.NewCommitMultiStore(dbm.NewMemDB(), log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 			ctx := sdk.Context{}.WithGasMeter(storetypes.NewInfiniteGasMeter()).WithMultiStore(ms).WithLogger(log.NewTestLogger(t))
-			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, keeper.NewDefaultWasmGasRegister())
+			q := keeper.NewQueryHandler(ctx, mock, sdk.AccAddress{}, types.NewDefaultWasmGasRegister())
 			_, gotErr := q.Query(wasmvmtypes.QueryRequest{}, 1)
 			assert.Equal(t, spec.expErr, gotErr)
 		})

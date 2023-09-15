@@ -1976,7 +1976,7 @@ func TestReply(t *testing.T) {
 					Bank: &wasmvmtypes.BankQuery{
 						Balance: &wasmvmtypes.BalanceQuery{Address: env.Contract.Address, Denom: "stake"},
 					},
-				}, 10_000*DefaultGasMultiplier)
+				}, 10_000*types.DefaultGasMultiplier)
 				require.NoError(t, err)
 				var gotBankRsp wasmvmtypes.BalanceResponse
 				require.NoError(t, json.Unmarshal(bzRsp, &gotBankRsp))
@@ -2040,7 +2040,7 @@ func TestQueryIsolation(t *testing.T) {
 	mock.ReplyFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, reply wasmvmtypes.Reply, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
 		_, err := querier.Query(wasmvmtypes.QueryRequest{
 			Custom: []byte(`{}`),
-		}, 10000*DefaultGasMultiplier)
+		}, 10000*types.DefaultGasMultiplier)
 		require.NoError(t, err)
 		return &wasmvmtypes.Response{}, 0, nil
 	}
@@ -2437,31 +2437,31 @@ func TestSetContractAdmin(t *testing.T) {
 func TestGasConsumed(t *testing.T) {
 	specs := map[string]struct {
 		originalMeter            storetypes.GasMeter
-		gasRegister              WasmGasRegister
+		gasRegister              types.WasmGasRegister
 		consumeGas               storetypes.Gas
 		expPanic                 bool
 		expMultipliedGasConsumed uint64
 	}{
 		"all good": {
 			originalMeter:            storetypes.NewGasMeter(100),
-			gasRegister:              NewWasmGasRegister(DefaultGasRegisterConfig()),
+			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
 			expMultipliedGasConsumed: 140000000,
 		},
 		"consumeGas = limit": {
 			originalMeter:            storetypes.NewGasMeter(1),
-			gasRegister:              NewWasmGasRegister(DefaultGasRegisterConfig()),
+			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
 			expMultipliedGasConsumed: 140000000,
 		},
 		"consumeGas > limit": {
 			originalMeter: storetypes.NewGasMeter(10),
-			gasRegister:   NewWasmGasRegister(DefaultGasRegisterConfig()),
+			gasRegister:   types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:    storetypes.Gas(11),
 			expPanic:      true,
 		},
 		"nil original meter": {
-			gasRegister: NewWasmGasRegister(DefaultGasRegisterConfig()),
+			gasRegister: types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:  storetypes.Gas(1),
 			expPanic:    true,
 		},

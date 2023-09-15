@@ -41,8 +41,8 @@ func TestOnOpenChannel(t *testing.T) {
 		},
 		"consume max gas": {
 			contractAddr: example.Contract,
-			contractGas:  math.MaxUint64 / DefaultGasMultiplier,
-			expGas:       math.MaxUint64 / DefaultGasMultiplier,
+			contractGas:  math.MaxUint64 / types.DefaultGasMultiplier,
+			expGas:       math.MaxUint64 / types.DefaultGasMultiplier,
 		},
 		"consume gas on error": {
 			contractAddr: example.Contract,
@@ -61,7 +61,7 @@ func TestOnOpenChannel(t *testing.T) {
 			myMsg := wasmvmtypes.IBCChannelOpenMsg{OpenTry: &wasmvmtypes.IBCOpenTry{Channel: myChannel, CounterpartyVersion: "foo"}}
 			m.IBCChannelOpenFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
 				assert.Equal(t, myMsg, msg)
-				return &wasmvmtypes.IBC3ChannelOpenResponse{}, spec.contractGas * DefaultGasMultiplier, spec.contractErr
+				return &wasmvmtypes.IBC3ChannelOpenResponse{}, spec.contractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 
 			ctx, _ := parentCtx.CacheContext()
@@ -158,7 +158,7 @@ func TestOnConnectChannel(t *testing.T) {
 			myMsg := wasmvmtypes.IBCChannelConnectMsg{OpenConfirm: &wasmvmtypes.IBCOpenConfirm{Channel: myChannel}}
 			m.IBCChannelConnectFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 				assert.Equal(t, msg, myMsg)
-				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 
 			ctx, _ := parentCtx.CacheContext()
@@ -270,7 +270,7 @@ func TestOnCloseChannel(t *testing.T) {
 			myMsg := wasmvmtypes.IBCChannelCloseMsg{CloseInit: &wasmvmtypes.IBCCloseInit{Channel: myChannel}}
 			m.IBCChannelCloseFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelCloseMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 				assert.Equal(t, msg, myMsg)
-				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 
 			ctx, _ := parentCtx.CacheContext()
@@ -443,7 +443,7 @@ func TestOnRecvPacket(t *testing.T) {
 
 			m.IBCPacketReceiveFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketReceiveMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCReceiveResult, uint64, error) {
 				assert.Equal(t, myPacket, msg.Packet)
-				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 			if spec.mockReplyFn != nil {
 				m.ReplyFn = spec.mockReplyFn
@@ -569,7 +569,7 @@ func TestOnAckPacket(t *testing.T) {
 			myAck := wasmvmtypes.IBCPacketAckMsg{Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: []byte("myAck")}}
 			m.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 				assert.Equal(t, myAck, msg)
-				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 
 			ctx, _ := parentCtx.CacheContext()
@@ -689,7 +689,7 @@ func TestOnTimeoutPacket(t *testing.T) {
 			myPacket := wasmvmtypes.IBCPacket{Data: []byte("my test packet")}
 			m.IBCPacketTimeoutFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketTimeoutMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
 				assert.Equal(t, myPacket, msg.Packet)
-				return spec.contractResp, myContractGas * DefaultGasMultiplier, spec.contractErr
+				return spec.contractResp, myContractGas * types.DefaultGasMultiplier, spec.contractErr
 			}
 
 			ctx, _ := parentCtx.CacheContext()

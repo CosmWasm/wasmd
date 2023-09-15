@@ -65,12 +65,16 @@ func TestQueryAllContractState(t *testing.T) {
 					Offset: 1,
 				},
 			},
-			expModelContains: []types.Model{
-				{Key: []byte("foo"), Value: []byte(`"bar"`)},
+			expErr: status.Error(codes.InvalidArgument, "offset and count queries not supported anymore"),
+		},
+		"with pagination count": {
+			srcQuery: &types.QueryAllContractStateRequest{
+				Address: contractAddr.String(),
+				Pagination: &query.PageRequest{
+					CountTotal: true,
+				},
 			},
-			expModelContainsNot: []types.Model{
-				{Key: []byte{0x0, 0x1}, Value: []byte(`{"count":8}`)},
-			},
+			expErr: status.Error(codes.InvalidArgument, "offset and count queries not supported anymore"),
 		},
 		"with pagination limit": {
 			srcQuery: &types.QueryAllContractStateRequest{
@@ -109,6 +113,7 @@ func TestQueryAllContractState(t *testing.T) {
 				require.Equal(t, spec.expErr.Error(), err.Error())
 				return
 			}
+			require.NoError(t, err)
 			for _, exp := range spec.expModelContains {
 				assert.Contains(t, got.Models, exp)
 			}
@@ -172,7 +177,7 @@ func TestQuerySmartContractPanics(t *testing.T) {
 		CodeID:  1,
 		Created: types.NewAbsoluteTxPosition(ctx),
 	})
-	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(DefaultInstanceCost)).WithLogger(log.NewTestLogger(t))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(types.DefaultInstanceCost)).WithLogger(log.NewTestLogger(t))
 
 	specs := map[string]struct {
 		doInContract func()
