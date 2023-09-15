@@ -33,7 +33,7 @@ func GetGenesisBalance(rawGenesis []byte, addr string) sdk.Coins {
 }
 
 // SetCodeUploadPermission sets the code upload permissions
-func SetCodeUploadPermission(t *testing.T, permission string, addresses []string) GenesisMutator {
+func SetCodeUploadPermission(t *testing.T, permission string, addresses ...string) GenesisMutator {
 	return func(genesis []byte) []byte {
 		t.Helper()
 		state, err := sjson.Set(string(genesis), "app_state.wasm.params.code_upload_access.permission", permission)
