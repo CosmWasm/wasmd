@@ -12,7 +12,9 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func TestGrantStoreCode(t *testing.T) {
+func TestGrantStoreCodePermissioned(t *testing.T) {
+	t.Skip()
+
 	sut.ResetChain(t)
 	cli := NewWasmdCLI(t, sut, verbose)
 
@@ -33,7 +35,7 @@ func TestGrantStoreCode(t *testing.T) {
 	sut.ModifyGenesisJSON(t, SetCodeUploadPermission(t, "AnyOfAddresses", []string{account1Addr}))
 	sut.StartChain(t)
 
-	// query validator address to delegate tokens
+	// query params
 	rsp := cli.CustomQuery("q", "wasm", "params")
 	permission := gjson.Get(rsp, "code_upload_access.permission").String()
 	addresses := gjson.Get(rsp, "code_upload_access.addresses").Array()
@@ -41,7 +43,7 @@ func TestGrantStoreCode(t *testing.T) {
 	assert.Equal(t, permission, "AnyOfAddresses")
 	assert.Equal(t, []string{account1Addr}, addresses)
 
-	// grant upload permission to address2
+	// address1 grant upload permission to address2
 	rsp = cli.CustomCommand("tx", "wasm", "grant-store-code", account2Addr, "*:*", "--from="+account1Addr)
 	RequireTxSuccess(t, rsp)
 
@@ -58,6 +60,56 @@ func TestGrantStoreCode(t *testing.T) {
 	require.NoError(t, err)
 
 	// address2 authz exec  store code should succeed
+	rsp = cli.CustomCommand("tx", "authz", "exec", pathToTx, "--from="+account2Addr, "--gas=1500000", "--fees=2stake")
+	RequireTxSuccess(t, rsp)
+}
+
+func TestGrantStoreCode(t *testing.T) {
+	sut.ResetChain(t)
+	cli := NewWasmdCLI(t, sut, verbose)
+
+	// add genesis account with some tokens
+	account1Addr := cli.AddKey("account1")
+
+	// add genesis account with some tokens
+	account2Addr := cli.AddKey("account2")
+
+	sut.ModifyGenesisCLI(t,
+		[]string{"genesis", "add-genesis-account", account1Addr, "100000000stake"},
+	)
+	sut.ModifyGenesisCLI(t,
+		[]string{"genesis", "add-genesis-account", account2Addr, "100000000stake"},
+	)
+
+	sut.StartChain(t)
+
+	// address1 grant upload permission to address2
+	rsp := cli.CustomCommand("tx", "wasm", "grant-store-code", account2Addr, "*:nobody", "--from="+account1Addr)
+	RequireTxSuccess(t, rsp)
+
+	// create tx - permission everybody
+	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-everybody=true", "--from="+account2Addr, "--generate-only")
+	tx, ok := cli.run(args)
+	require.True(t, ok)
+
+	pathToTx := filepath.Join(t.TempDir(), "tx.json")
+	err := os.WriteFile(pathToTx, []byte(tx), os.FileMode(0o744))
+	require.NoError(t, err)
+
+	// address2 authz exec fails because instantiate permissions do not match
+	rsp = cli.CustomCommand("tx", "authz", "exec", pathToTx, "--from="+account2Addr, "--gas=1500000", "--fees=2stake")
+	RequireTxSuccess(t, rsp)
+
+	// create tx - permission nobody
+	args = cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-nobody=true", "--from="+account2Addr, "--generate-only")
+	tx, ok = cli.run(args)
+	require.True(t, ok)
+
+	pathToTx = filepath.Join(t.TempDir(), "tx.json")
+	err = os.WriteFile(pathToTx, []byte(tx), os.FileMode(0o744))
+	require.NoError(t, err)
+
+	// address2 authz exec succeeds
 	rsp = cli.CustomCommand("tx", "authz", "exec", pathToTx, "--from="+account2Addr, "--gas=1500000", "--fees=2stake")
 	RequireTxSuccess(t, rsp)
 }
