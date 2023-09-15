@@ -12,9 +12,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func TestGrantStoreCodePermissioned(t *testing.T) {
-	t.Skip()
-
+func TestGrantStoreCodePermissionedChain(t *testing.T) {
 	sut.ResetChain(t)
 	cli := NewWasmdCLI(t, sut, verbose)
 
@@ -38,10 +36,11 @@ func TestGrantStoreCodePermissioned(t *testing.T) {
 	// query params
 	rsp := cli.CustomQuery("q", "wasm", "params")
 	permission := gjson.Get(rsp, "code_upload_access.permission").String()
-	addresses := gjson.Get(rsp, "code_upload_access.addresses").Array()
+	addrRes := gjson.Get(rsp, "code_upload_access.addresses").Array()
+	assert.Equal(t, 1, len(addrRes))
 
 	assert.Equal(t, permission, "AnyOfAddresses")
-	assert.Equal(t, []string{account1Addr}, addresses)
+	assert.Equal(t, account1Addr, addrRes[0].Str)
 
 	// address1 grant upload permission to address2
 	rsp = cli.CustomCommand("tx", "wasm", "grant-store-code", account2Addr, "*:*", "--from="+account1Addr)
@@ -51,7 +50,8 @@ func TestGrantStoreCodePermissioned(t *testing.T) {
 	rsp = cli.CustomCommand("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+account2Addr, "--gas=1500000", "--fees=2stake")
 	RequireTxFailure(t, rsp)
 
-	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+account2Addr, "--generate-only")
+	// create tx
+	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+account1Addr, "--generate-only")
 	tx, ok := cli.run(args)
 	require.True(t, ok)
 
@@ -88,7 +88,7 @@ func TestGrantStoreCode(t *testing.T) {
 	RequireTxSuccess(t, rsp)
 
 	// create tx - permission everybody
-	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-everybody=true", "--from="+account2Addr, "--generate-only")
+	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-everybody=true", "--from="+account1Addr, "--generate-only")
 	tx, ok := cli.run(args)
 	require.True(t, ok)
 
@@ -98,10 +98,10 @@ func TestGrantStoreCode(t *testing.T) {
 
 	// address2 authz exec fails because instantiate permissions do not match
 	rsp = cli.CustomCommand("tx", "authz", "exec", pathToTx, "--from="+account2Addr, "--gas=1500000", "--fees=2stake")
-	RequireTxSuccess(t, rsp)
+	RequireTxFailure(t, rsp)
 
 	// create tx - permission nobody
-	args = cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-nobody=true", "--from="+account2Addr, "--generate-only")
+	args = cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--instantiate-nobody=true", "--from="+account1Addr, "--generate-only")
 	tx, ok = cli.run(args)
 	require.True(t, ok)
 
