@@ -12,17 +12,17 @@ import (
 )
 
 func TestGrantStoreCodePermissionedChain(t *testing.T) {
-	sut.ResetChain(t)
 	cli := NewWasmdCLI(t, sut, verbose)
+	// set params to restrict chain
+	const chainAuthorityAddress = "wasm1pvuujjdk0xt043ga0j9nrfh5u8pzj4rpplyqkm"
+	sut.ModifyGenesisJSON(t, SetCodeUploadPermission(t, "AnyOfAddresses", chainAuthorityAddress))
 
-	chainAuthorizedAccount := cli.AddKey("chain_authorized_account")
+	recoveredAddress := cli.AddKeyFromSeed("chain_authorized_account", "aisle ship absurd wedding arch admit fringe foam cluster tide trim aisle salad shiver tackle palm glance wrist valley hamster couch crystal frozen chronic")
+	require.Equal(t, chainAuthorityAddress, recoveredAddress)
 	devAccount := cli.AddKey("dev_account")
 
-	//set params
-	sut.ModifyGenesisJSON(t, SetCodeUploadPermission(t, "AnyOfAddresses", chainAuthorizedAccount))
-
 	sut.ModifyGenesisCLI(t,
-		[]string{"genesis", "add-genesis-account", chainAuthorizedAccount, "100000000stake"},
+		[]string{"genesis", "add-genesis-account", chainAuthorityAddress, "100000000stake"},
 	)
 	sut.ModifyGenesisCLI(t,
 		[]string{"genesis", "add-genesis-account", devAccount, "100000000stake"},
@@ -37,10 +37,10 @@ func TestGrantStoreCodePermissionedChain(t *testing.T) {
 	require.Equal(t, 1, len(addrRes))
 
 	require.Equal(t, permission, "AnyOfAddresses")
-	require.Equal(t, chainAuthorizedAccount, addrRes[0].Str)
+	require.Equal(t, chainAuthorityAddress, addrRes[0].Str)
 
 	// chain_authorized_account grant upload permission to dev_account
-	rsp = cli.CustomCommand("tx", "wasm", "grant", devAccount, "store-code", "*:*", "--from="+chainAuthorizedAccount)
+	rsp = cli.CustomCommand("tx", "wasm", "grant", "store-code", devAccount, "*:*", "--from="+chainAuthorityAddress)
 	RequireTxSuccess(t, rsp)
 
 	// dev_account store code fails as the address is not in the code-upload accept-list
@@ -48,7 +48,7 @@ func TestGrantStoreCodePermissionedChain(t *testing.T) {
 	RequireTxFailure(t, rsp)
 
 	// create tx should work for addresses in the accept-list
-	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+chainAuthorizedAccount, "--generate-only")
+	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+chainAuthorityAddress, "--generate-only")
 	tx, ok := cli.run(args)
 	require.True(t, ok)
 
