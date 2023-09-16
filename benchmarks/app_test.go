@@ -10,6 +10,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtypes "github.com/cometbft/cometbft/types"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
@@ -33,7 +34,10 @@ import (
 )
 
 func setup(db dbm.DB, withGenesis bool, invCheckPeriod uint, opts ...wasmkeeper.Option) (*app.WasmApp, app.GenesisState) { //nolint:unparam
-	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
+
+	logLevel := log.LevelOption(zerolog.InfoLevel)
+
+	wasmApp := app.NewWasmApp(log.NewLogger(os.Stdout, logLevel), db, nil, true, simtestutil.EmptyAppOptions{}, nil)
 
 	if withGenesis {
 		return wasmApp, wasmApp.DefaultGenesis()
