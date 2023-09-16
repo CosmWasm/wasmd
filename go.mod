@@ -5,10 +5,9 @@ go 1.21
 require (
 	github.com/CosmWasm/wasmvm v1.4.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230914160309-b1dd67aa771a
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230915171831-2196edacb99d
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
-	github.com/cosmos/iavl v1.0.0-rc.1
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/dvsekhvalnov/jose2go v1.5.0 // indirect
@@ -25,12 +24,12 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
-	google.golang.org/grpc v1.58.0
+	google.golang.org/grpc v1.58.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	cosmossdk.io/api v0.7.1-0.20230820170544-1bd37053e0c0
+	cosmossdk.io/api v0.7.1
 	cosmossdk.io/client/v2 v2.0.0-20230818115413-c402c51a1508
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.0
@@ -47,6 +46,7 @@ require (
 	cosmossdk.io/x/upgrade v0.0.0-20230818115413-c402c51a1508
 	github.com/cometbft/cometbft v0.38.0
 	github.com/cosmos/cosmos-db v1.0.0
+	github.com/cosmos/iavl v1.0.0-rc.1
 	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc5
 	github.com/cosmos/ibc-go/v8 v8.0.0-alpha.1.0.20230910030911-23eabb55bf29
 	github.com/spf13/viper v1.16.0
@@ -192,7 +192,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230913181813-007df8e322eb // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
