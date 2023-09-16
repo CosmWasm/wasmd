@@ -1,11 +1,13 @@
 package keeper
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
