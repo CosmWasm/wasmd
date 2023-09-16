@@ -13,7 +13,7 @@ import (
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {
-	t.Skip("TODO: enable with new sdk tag")
+	sut.ResetChain(t)
 	const maxBlockGas = 2_000_000
 	sut.ModifyGenesisJSON(t, SetConsensusMaxGas(t, maxBlockGas))
 	sut.StartChain(t)

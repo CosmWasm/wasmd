@@ -52,7 +52,7 @@ func (a *StoreCodeAuthorization) Accept(ctx context.Context, msg sdk.Msg) (authz
 	}
 
 	code := storeMsg.WASMByteCode
-	permission := *storeMsg.InstantiatePermission
+	permission := storeMsg.InstantiatePermission
 
 	if ioutils.IsGzip(code) {
 		gasRegister, ok := GasRegisterFromContext(ctx)
@@ -129,7 +129,7 @@ func (g CodeGrant) ValidateBasic() error {
 }
 
 // Accept checks if checksum and permission match the grant
-func (g CodeGrant) Accept(checksum []byte, permission AccessConfig) bool {
+func (g CodeGrant) Accept(checksum []byte, permission *AccessConfig) bool {
 	if !strings.EqualFold(string(g.CodeHash), CodehashWildcard) && !bytes.EqualFold(g.CodeHash, checksum) {
 		return false
 	}
