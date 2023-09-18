@@ -28,8 +28,15 @@
 - Fix gas calculation [\#1567](https://github.com/CosmWasm/wasmd/pull/1567)
 - Upgrade to wasmvm 1.4 [\#1586](https://github.com/CosmWasm/wasmd/issues/1586)
 - Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)
+  - If `port_id` is omitted, all channels bound to the contract's port will be listed.
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
+  - Pagination limit is set to 100 for all-state-query. See also [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
+- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+  - Total number of code ids is limited to 50 for pin/unpin operations
 - Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.41.0](https://github.com/CosmWasm/wasmd/tree/v0.41.0) (2023-07-28)
 
