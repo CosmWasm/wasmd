@@ -41,7 +41,6 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 		}
 	}
 
-	var maxContractID int
 	for i, contract := range data.Contracts {
 		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractAddress)
 		if err != nil {
@@ -51,7 +50,6 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 		if err != nil {
 			return nil, errorsmod.Wrapf(err, "contract number %d", i)
 		}
-		maxContractID = i + 1 // not ideal but max(contractID) is not persisted otherwise
 	}
 
 	for i, seq := range data.Sequences {
@@ -66,9 +64,12 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState) ([]ab
 	if seqVal <= maxCodeID {
 		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeySequenceCodeID), seqVal, maxCodeID)
 	}
-	seqVal = keeper.PeekAutoIncrementID(ctx, types.KeySequenceInstanceID)
-	if seqVal <= uint64(maxContractID) {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeySequenceInstanceID), seqVal, maxContractID)
+	// ensure next classic address is unused so that we know the sequence is good
+	rCtx, _ := ctx.CacheContext()
+	seqVal = keeper.PeekAutoIncrementID(rCtx, types.KeySequenceInstanceID)
+	addr := keeper.ClassicAddressGenerator()(rCtx, seqVal, nil)
+	if keeper.HasContractInfo(ctx, addr) {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "value: %d for seq %s was used already", seqVal, string(types.KeySequenceInstanceID))
 	}
 	return nil, nil
 }

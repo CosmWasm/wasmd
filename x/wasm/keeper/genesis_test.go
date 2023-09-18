@@ -154,6 +154,20 @@ func TestGenesisExportImport(t *testing.T) {
 	}
 }
 
+func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+	eCtx, _ := ctx.CacheContext()
+	codeID := StoreReflectContract(t, eCtx, keepers).CodeID
+	creator := RandomAccountAddress(t)
+	_, _, err := keepers.ContractKeeper.Instantiate2(eCtx, codeID, creator, nil, []byte("{}"), "testing", nil, []byte("my_salt"), false)
+	require.NoError(t, err)
+	genesisState := ExportGenesis(eCtx, k)
+	// when imported
+	_, err = InitGenesis(ctx, k, *genesisState)
+	require.NoError(t, err)
+}
+
 func TestGenesisInit(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -438,7 +452,7 @@ func TestGenesisInit(t *testing.T) {
 				Params: types.DefaultParams(),
 			},
 		},
-		"prevent contract id seq init value == count contracts": {
+		"prevent contract id seq init value not high enough": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
 					CodeID:    firstCodeID,
