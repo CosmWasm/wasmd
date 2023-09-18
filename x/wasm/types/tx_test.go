@@ -885,7 +885,6 @@ func TestMsgRemoveCodeUploadParamsAddressesValidation(t *testing.T) {
 func TestMsgPinCodesValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-
 	specs := map[string]struct {
 		src    MsgPinCodes
 		expErr bool
@@ -912,6 +911,20 @@ func TestMsgPinCodesValidation(t *testing.T) {
 		"empty code ids": {
 			src: MsgPinCodes{
 				Authority: goodAddress,
+			},
+			expErr: true,
+		},
+		"exceeds max code ids": {
+			src: MsgPinCodes{
+				Authority: goodAddress,
+				CodeIDs:   genCodeIDs(51),
+			},
+			expErr: true,
+		},
+		"duplicate code ids": {
+			src: MsgPinCodes{
+				Authority: goodAddress,
+				CodeIDs:   []uint64{1, 1},
 			},
 			expErr: true,
 		},
@@ -961,6 +974,20 @@ func TestMsgUnpinCodesValidation(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"exceeds max code ids": {
+			src: MsgUnpinCodes{
+				Authority: goodAddress,
+				CodeIDs:   genCodeIDs(51),
+			},
+			expErr: true,
+		},
+		"duplicate code ids": {
+			src: MsgUnpinCodes{
+				Authority: goodAddress,
+				CodeIDs:   []uint64{1, 1},
+			},
+			expErr: true,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -972,6 +999,14 @@ func TestMsgUnpinCodesValidation(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func genCodeIDs(max int) []uint64 {
+	r := make([]uint64, max)
+	for i := 0; i < max; i++ {
+		r[i] = uint64(i)
+	}
+	return r
 }
 
 func TestMsgSudoContractValidation(t *testing.T) {
