@@ -368,7 +368,7 @@ func GetCmdGetContractStateAll() *cobra.Command {
 		SilenceUsage: true,
 	}
 	flags.AddQueryFlagsToCmd(cmd)
-	addPaginationFlags(cmd, "contract state ")
+	addPaginationFlags(cmd, "contract state")
 	return cmd
 }
 
