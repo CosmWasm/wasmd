@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"io"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -196,6 +197,10 @@ func (c WasmdCli) CustomQuery(args ...string) string {
 
 // execute shell command
 func (c WasmdCli) run(args []string) (output string, ok bool) {
+	return c.runWithInput(args, nil)
+}
+
+func (c WasmdCli) runWithInput(args []string, input io.Reader) (output string, ok bool) {
 	if c.Debug {
 		c.t.Logf("+++ running `%s %s`", c.execBinary, strings.Join(args, " "))
 	}
@@ -207,6 +212,7 @@ func (c WasmdCli) run(args []string) (output string, ok bool) {
 		}()
 		cmd := exec.Command(locateExecutable("wasmd"), args...) //nolint:gosec
 		cmd.Dir = workDir
+		cmd.Stdin = input
 		return cmd.CombinedOutput()
 	}()
 	ok = c.assertErrorFn(c.t, gotErr, string(gotOut))
@@ -256,8 +262,17 @@ func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) st
 
 // AddKey add key to default keyring. Returns address
 func (c WasmdCli) AddKey(name string) string {
-	cmd := c.withKeyringFlags("keys", "add", name, "--no-backup")
+	cmd := c.withKeyringFlags("keys", "add", name) //, "--no-backup")
 	out, _ := c.run(cmd)
+	addr := gjson.Get(out, "address").String()
+	require.NotEmpty(c.t, addr, "got %q", out)
+	return addr
+}
+
+// AddKeyFromSeed recovers the key from given seed and add it to default keyring. Returns address
+func (c WasmdCli) AddKeyFromSeed(name, mnemoic string) string {
+	cmd := c.withKeyringFlags("keys", "add", name, "--recover")
+	out, _ := c.runWithInput(cmd, strings.NewReader(mnemoic))
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr
