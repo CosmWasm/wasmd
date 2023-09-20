@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.42.0...HEAD)
 
-## [v0.42.0](https://github.com/CosmWasm/wasmd/tree/v0.42.0) (SET_DATE)
+## [v0.42.0](https://github.com/CosmWasm/wasmd/tree/v0.42.0) (2023-09-20)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.41.0...v0.42.0)
 
