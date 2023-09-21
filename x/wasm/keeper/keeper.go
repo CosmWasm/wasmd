@@ -1142,12 +1142,15 @@ func (k Keeper) importAutoIncrementID(ctx context.Context, sequenceKey []byte, v
 	return store.Set(sequenceKey, bz)
 }
 
-func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, entries []types.ContractCodeHistoryEntry) error {
+func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress, c *types.ContractInfo, state []types.Model, historyEntries []types.ContractCodeHistoryEntry) error {
 	if !k.containsCodeInfo(ctx, c.CodeID) {
 		return types.ErrNoSuchCodeFn(c.CodeID).Wrapf("code id %d", c.CodeID)
 	}
 	if k.HasContractInfo(ctx, contractAddr) {
 		return errorsmod.Wrapf(types.ErrDuplicate, "contract: %s", contractAddr)
+	}
+	if len(historyEntries) == 0 {
+		return types.ErrEmpty.Wrap("contract history")
 	}
 
 	creatorAddress, err := sdk.AccAddressFromBech32(c.Creator)
@@ -1155,16 +1158,16 @@ func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress,
 		return err
 	}
 
-	err = k.appendToContractHistory(ctx, contractAddr, entries...)
+	err = k.appendToContractHistory(ctx, contractAddr, historyEntries...)
 	if err != nil {
 		return err
 	}
 	k.mustStoreContractInfo(ctx, contractAddr, c)
-	err = k.addToContractCodeSecondaryIndex(ctx, contractAddr, entries[len(entries)-1])
+	err = k.addToContractCodeSecondaryIndex(ctx, contractAddr, historyEntries[len(historyEntries)-1])
 	if err != nil {
 		return err
 	}
-	err = k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, entries[0].Updated, contractAddr)
+	err = k.addToContractCreatorSecondaryIndex(ctx, creatorAddress, historyEntries[0].Updated, contractAddr)
 	if err != nil {
 		return err
 	}

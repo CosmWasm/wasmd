@@ -76,7 +76,7 @@ type ChainApp interface {
 	GetWasmKeeper() wasmkeeper.Keeper
 }
 
-// TestChain is a testing struct that wraps a simapp with the last TM Header, the current ABCI
+// TestChain is a testing struct that wraps a simapp with the last CMT header, the current ABCI
 // header and the validators of the TestChain. It also contains a field called ChainID. This
 // is the clientID that *other* chains use to refer to this TestChain. The SenderAccount
 // is used for delivering transactions through the application state.
@@ -405,13 +405,12 @@ func (chain *TestChain) sendWithSigner(
 		chain.CurrentHeader.GetTime(),
 		senderPrivKey,
 	)
-
-	chain.commitBlock(blockResp)
-	chain.Coordinator.IncrementTime()
-
 	if gotErr != nil {
 		return nil, gotErr
 	}
+
+	chain.commitBlock(blockResp)
+	chain.Coordinator.IncrementTime()
 
 	require.Len(chain.t, blockResp.TxResults, 1)
 	txResult := blockResp.TxResults[0]
@@ -465,11 +464,11 @@ func (chain *TestChain) GetValsAtHeight(height int64) (*cmttypes.ValidatorSet, b
 		Validators: histInfo.Valset,
 	}
 
-	tmValidators, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
+	cmtValidators, err := testutil.ToCmtValidators(valSet, sdk.DefaultPowerReduction)
 	if err != nil {
 		panic(err)
 	}
-	return cmttypes.NewValidatorSet(tmValidators), true
+	return cmttypes.NewValidatorSet(cmtValidators), true
 }
 
 // GetAcknowledgement retrieves an acknowledgement for the provided packet. If the
@@ -538,7 +537,7 @@ func (chain *TestChain) ExpireClient(amount time.Duration) {
 	chain.Coordinator.IncrementTimeBy(amount)
 }
 
-// CurrentCmtClientHeader creates a TM header using the current header parameters
+// CurrentCmtClientHeader creates a CMT header using the current header parameters
 // on the chain. The trusted fields in the header are set to nil.
 func (chain *TestChain) CurrentCmtClientHeader() *ibctm.Header {
 	return chain.CreateCmtClientHeader(
@@ -553,9 +552,9 @@ func (chain *TestChain) CurrentCmtClientHeader() *ibctm.Header {
 	)
 }
 
-// CreateCmtClientHeader creates a TM header to update the TM client. Args are passed in to allow
+// CreateCmtClientHeader creates a CMT header to update the CMT client. Args are passed in to allow
 // caller flexibility to use params that differ from the chain.
-func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64, trustedHeight clienttypes.Height, timestamp time.Time, cmtValSet, nextVals, tmTrustedVals *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator) *ibctm.Header {
+func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64, trustedHeight clienttypes.Height, timestamp time.Time, cmtValSet, nextVals, cmtTrustedVals *cmttypes.ValidatorSet, signers map[string]cmttypes.PrivValidator) *ibctm.Header {
 	var (
 		valSet      *cmtproto.ValidatorSet
 		trustedVals *cmtproto.ValidatorSet
@@ -605,8 +604,8 @@ func (chain *TestChain) CreateCmtClientHeader(chainID string, blockHeight int64,
 		require.NoError(chain.t, err)
 	}
 
-	if tmTrustedVals != nil {
-		trustedVals, err = tmTrustedVals.ToProto()
+	if cmtTrustedVals != nil {
+		trustedVals, err = cmtTrustedVals.ToProto()
 		require.NoError(chain.t, err)
 	}
 

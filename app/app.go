@@ -392,15 +392,6 @@ func NewWasmApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		logger,
 	)
-	app.StakingKeeper = stakingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		authcodec.NewBech32Codec(Bech32PrefixValAddr),
-		authcodec.NewBech32Codec(Bech32PrefixConsAddr),
-	)
 
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
