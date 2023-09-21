@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/CosmWasm/wasmvm v1.4.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230919061034-c25ddd3101a9
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230921092356-3d9ce99e4eee
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/iavl v1.0.0-rc.1
@@ -49,6 +49,7 @@ require (
 	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.0-rc5
 	github.com/cosmos/ibc-go/v8 v8.0.0-beta.0
+	github.com/rs/zerolog v1.30.0
 	github.com/spf13/viper v1.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e
 )
@@ -169,7 +170,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/rs/cors v1.8.3 // indirect
-	github.com/rs/zerolog v1.30.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/spf13/afero v1.9.5 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
