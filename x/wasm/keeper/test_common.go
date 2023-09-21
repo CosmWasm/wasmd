@@ -286,17 +286,17 @@ func createTestInput(
 		case banktypes.ModuleName:
 			keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 		case stakingtypes.ModuleName:
-			keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = stakingtypes.ParamKeyTable() 
 		case minttypes.ModuleName:
 			keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
 		case distributiontypes.ModuleName:
-			keyTable = distributiontypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = distributiontypes.ParamKeyTable() 
 		case slashingtypes.ModuleName:
-			keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = slashingtypes.ParamKeyTable() 
 		case govtypes.ModuleName:
 			keyTable = govv1.ParamKeyTable() //nolint:staticcheck
 		case crisistypes.ModuleName:
-			keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = crisistypes.ParamKeyTable() 
 			// ibc types
 		case ibctransfertypes.ModuleName:
 			keyTable = ibctransfertypes.ParamKeyTable()
