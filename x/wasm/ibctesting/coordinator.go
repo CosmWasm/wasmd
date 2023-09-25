@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/require"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -81,7 +80,6 @@ func (coord *Coordinator) UpdateTime() {
 // UpdateTimeForChain updates the clock for a specific chain.
 func (coord *Coordinator) UpdateTimeForChain(chain *TestChain) {
 	chain.CurrentHeader.Time = coord.CurrentTime.UTC()
-	chain.App.BeginBlock(abci.RequestBeginBlock{Header: chain.CurrentHeader})
 }
 
 // Setup constructs a TM client, connection, and channel on both chains provided. It will

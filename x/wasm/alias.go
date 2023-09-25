@@ -45,8 +45,6 @@ var (
 	// Deprecated: Do not use.
 	ValidateGenesis = types.ValidateGenesis
 	// Deprecated: Do not use.
-	ConvertToProposals = types.ConvertToProposals
-	// Deprecated: Do not use.
 	GetCodeKey = types.GetCodeKey
 	// Deprecated: Do not use.
 	GetContractAddressKey = types.GetContractAddressKey
@@ -110,8 +108,6 @@ var (
 	NewCountTXDecorator = keeper.NewCountTXDecorator
 
 	// variable aliases
-	// Deprecated: Do not use.
-	ModuleCdc = types.ModuleCdc
 	// Deprecated: Do not use.
 	DefaultCodespace = types.DefaultCodespace
 	// Deprecated: Do not use.

@@ -63,7 +63,7 @@ message CodeGrant {
 // Since: wasmd 0.30
 message ContractGrant {
   // Contract is the bech32 address of the smart contract
-  string contract = 1;
+  string contract = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // Limit defines execution limits that are enforced and updated when the grant
   // is applied. When the limit lapsed the grant is removed.

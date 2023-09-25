@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,7 +88,7 @@ func (s *SystemUnderTest) SetupChain() {
 		"--starting-ip-address", "", // empty to use host systems
 		"--single-host",
 	}
-	fmt.Printf("+++ %s %s", s.execBinary, strings.Join(args, " "))
+	fmt.Printf("+++ %s %s\n", s.execBinary, strings.Join(args, " "))
 	cmd := exec.Command( //nolint:gosec
 		locateExecutable(s.execBinary),
 		args...,
@@ -104,12 +103,12 @@ func (s *SystemUnderTest) SetupChain() {
 
 	// modify genesis with system test defaults
 	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json")
-	genesisBz, err := ioutil.ReadFile(src)
+	genesisBz, err := os.ReadFile(src)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load genesis: %s", err))
 	}
 
-	genesisBz, err = sjson.SetRawBytes(genesisBz, "consensus_params.block.max_gas", []byte(fmt.Sprintf(`"%d"`, 10_000_000)))
+	genesisBz, err = sjson.SetRawBytes(genesisBz, "consensus.params.block.max_gas", []byte(fmt.Sprintf(`"%d"`, 10_000_000)))
 	if err != nil {
 		panic(fmt.Sprintf("failed set block max gas: %s", err))
 	}
@@ -812,7 +811,7 @@ func copyFilesInDir(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("mkdirs: %s", err)
 	}
-	fs, err := ioutil.ReadDir(src)
+	fs, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("read dir: %s", err)
 	}
@@ -828,7 +827,7 @@ func copyFilesInDir(src, dest string) error {
 }
 
 func storeTempFile(t *testing.T, content []byte) *os.File {
-	out, err := ioutil.TempFile(t.TempDir(), "genesis")
+	out, err := os.CreateTemp(t.TempDir(), "genesis")
 	require.NoError(t, err)
 	_, err = io.Copy(out, bytes.NewReader(content))
 	require.NoError(t, err)

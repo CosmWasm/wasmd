@@ -5,7 +5,7 @@ orbs:
 executors:
   golang:
     docker:
-      - image: cimg/go:1.20
+      - image: cimg/go:1.21
 
 commands:
   make:
@@ -101,7 +101,7 @@ jobs:
   test-system:
     executor: golang
     parallelism: 1
-    resource_class: large
+    resource_class: xlarge
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -135,7 +135,7 @@ jobs:
   simulations:
     executor: golang
     parallelism: 1
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - run:

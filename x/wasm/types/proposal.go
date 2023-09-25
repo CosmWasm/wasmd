@@ -32,9 +32,11 @@ const (
 )
 
 // DisableAllProposals contains no wasm gov types.
+// Deprecated: all gov v1beta1 types will be removed
 var DisableAllProposals []ProposalType
 
 // EnableAllProposals contains all wasm gov types as keys.
+// Deprecated: all gov v1beta1 types will be removed
 var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreCode,
 	ProposalTypeInstantiateContract,
@@ -50,24 +52,7 @@ var EnableAllProposals = []ProposalType{
 	ProposalTypeStoreAndInstantiateContractProposal,
 }
 
-// ConvertToProposals maps each key to a ProposalType and returns a typed list.
-// If any string is not a valid type (in this file), then return an error
-func ConvertToProposals(keys []string) ([]ProposalType, error) {
-	valid := make(map[string]bool, len(EnableAllProposals))
-	for _, key := range EnableAllProposals {
-		valid[string(key)] = true
-	}
-
-	proposals := make([]ProposalType, len(keys))
-	for i, key := range keys {
-		if _, ok := valid[key]; !ok {
-			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "'%s' is not a valid ProposalType", key)
-		}
-		proposals[i] = ProposalType(key)
-	}
-	return proposals, nil
-}
-
+// Deprecated: all gov v1beta1 types will be removed
 func init() { // register new content types with the sdk
 	v1beta1.RegisterProposalType(string(ProposalTypeStoreCode))
 	v1beta1.RegisterProposalType(string(ProposalTypeInstantiateContract))
@@ -81,20 +66,6 @@ func init() { // register new content types with the sdk
 	v1beta1.RegisterProposalType(string(ProposalTypeUnpinCodes))
 	v1beta1.RegisterProposalType(string(ProposalTypeUpdateInstantiateConfig))
 	v1beta1.RegisterProposalType(string(ProposalTypeStoreAndInstantiateContractProposal))
-}
-
-func NewStoreCodeProposal(
-	title string,
-	description string,
-	runAs string,
-	wasmBz []byte,
-	permission *AccessConfig,
-	unpinCode bool,
-	source string,
-	builder string,
-	codeHash []byte,
-) *StoreCodeProposal {
-	return &StoreCodeProposal{title, description, runAs, wasmBz, permission, unpinCode, source, builder, codeHash}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -168,19 +139,6 @@ func (p StoreCodeProposal) MarshalYAML() (interface{}, error) {
 		Builder:               p.Builder,
 		CodeHash:              hex.EncodeToString(p.CodeHash),
 	}, nil
-}
-
-func NewInstantiateContractProposal(
-	title string,
-	description string,
-	runAs string,
-	admin string,
-	codeID uint64,
-	label string,
-	msg RawContractMessage,
-	funds sdk.Coins,
-) *InstantiateContractProposal {
-	return &InstantiateContractProposal{title, description, runAs, admin, codeID, label, msg, funds}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -264,21 +222,6 @@ func (p InstantiateContractProposal) MarshalYAML() (interface{}, error) {
 		Msg:         string(p.Msg),
 		Funds:       p.Funds,
 	}, nil
-}
-
-func NewInstantiateContract2Proposal(
-	title string,
-	description string,
-	runAs string,
-	admin string,
-	codeID uint64,
-	label string,
-	msg RawContractMessage,
-	funds sdk.Coins,
-	salt []byte,
-	fixMsg bool,
-) *InstantiateContract2Proposal {
-	return &InstantiateContract2Proposal{title, description, runAs, admin, codeID, label, msg, funds, salt, fixMsg}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -372,38 +315,6 @@ func (p InstantiateContract2Proposal) MarshalYAML() (interface{}, error) {
 		Funds:       p.Funds,
 		Salt:        base64.StdEncoding.EncodeToString(p.Salt),
 	}, nil
-}
-
-func NewStoreAndInstantiateContractProposal(
-	title string,
-	description string,
-	runAs string,
-	wasmBz []byte,
-	source string,
-	builder string,
-	codeHash []byte,
-	permission *AccessConfig,
-	unpinCode bool,
-	admin string,
-	label string,
-	msg RawContractMessage,
-	funds sdk.Coins,
-) *StoreAndInstantiateContractProposal {
-	return &StoreAndInstantiateContractProposal{
-		Title:                 title,
-		Description:           description,
-		RunAs:                 runAs,
-		WASMByteCode:          wasmBz,
-		Source:                source,
-		Builder:               builder,
-		CodeHash:              codeHash,
-		InstantiatePermission: permission,
-		UnpinCode:             unpinCode,
-		Admin:                 admin,
-		Label:                 label,
-		Msg:                   msg,
-		Funds:                 funds,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -514,22 +425,6 @@ func (p StoreAndInstantiateContractProposal) MarshalYAML() (interface{}, error) 
 	}, nil
 }
 
-func NewMigrateContractProposal(
-	title string,
-	description string,
-	contract string,
-	codeID uint64,
-	msg RawContractMessage,
-) *MigrateContractProposal {
-	return &MigrateContractProposal{
-		Title:       title,
-		Description: description,
-		Contract:    contract,
-		CodeID:      codeID,
-		Msg:         msg,
-	}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p MigrateContractProposal) ProposalRoute() string { return RouterKey }
 
@@ -587,20 +482,6 @@ func (p MigrateContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
-func NewSudoContractProposal(
-	title string,
-	description string,
-	contract string,
-	msg RawContractMessage,
-) *SudoContractProposal {
-	return &SudoContractProposal{
-		Title:       title,
-		Description: description,
-		Contract:    contract,
-		Msg:         msg,
-	}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p SudoContractProposal) ProposalRoute() string { return RouterKey }
 
@@ -650,17 +531,6 @@ func (p SudoContractProposal) MarshalYAML() (interface{}, error) {
 		Contract:    p.Contract,
 		Msg:         string(p.Msg),
 	}, nil
-}
-
-func NewExecuteContractProposal(
-	title string,
-	description string,
-	runAs string,
-	contract string,
-	msg RawContractMessage,
-	funds sdk.Coins,
-) *ExecuteContractProposal {
-	return &ExecuteContractProposal{title, description, runAs, contract, msg, funds}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -726,15 +596,6 @@ func (p ExecuteContractProposal) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
-func NewUpdateAdminProposal(
-	title string,
-	description string,
-	newAdmin string,
-	contract string,
-) *UpdateAdminProposal {
-	return &UpdateAdminProposal{title, description, newAdmin, contract}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p UpdateAdminProposal) ProposalRoute() string { return RouterKey }
 
@@ -771,14 +632,6 @@ func (p UpdateAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract, p.NewAdmin)
 }
 
-func NewClearAdminProposal(
-	title string,
-	description string,
-	contract string,
-) *ClearAdminProposal {
-	return &ClearAdminProposal{title, description, contract}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p ClearAdminProposal) ProposalRoute() string { return RouterKey }
 
@@ -811,18 +664,6 @@ func (p ClearAdminProposal) String() string {
 `, p.Title, p.Description, p.Contract)
 }
 
-func NewPinCodesProposal(
-	title string,
-	description string,
-	codeIDs []uint64,
-) *PinCodesProposal {
-	return &PinCodesProposal{
-		Title:       title,
-		Description: description,
-		CodeIDs:     codeIDs,
-	}
-}
-
 // ProposalRoute returns the routing key of a parameter change proposal.
 func (p PinCodesProposal) ProposalRoute() string { return RouterKey }
 
@@ -853,18 +694,6 @@ func (p PinCodesProposal) String() string {
   Description: %s
   Codes:       %v
 `, p.Title, p.Description, p.CodeIDs)
-}
-
-func NewUnpinCodesProposal(
-	title string,
-	description string,
-	codeIDs []uint64,
-) *UnpinCodesProposal {
-	return &UnpinCodesProposal{
-		Title:       title,
-		Description: description,
-		CodeIDs:     codeIDs,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.
@@ -919,18 +748,6 @@ func validateProposalCommons(title, description string) error {
 		return errorsmod.Wrapf(govtypes.ErrInvalidProposalContent, "proposal description is longer than max length of %d", v1beta1.MaxDescriptionLength)
 	}
 	return nil
-}
-
-func NewUpdateInstantiateConfigProposal(
-	title string,
-	description string,
-	accessConfigUpdates ...AccessConfigUpdate,
-) *UpdateInstantiateConfigProposal {
-	return &UpdateInstantiateConfigProposal{
-		Title:               title,
-		Description:         description,
-		AccessConfigUpdates: accessConfigUpdates,
-	}
 }
 
 // ProposalRoute returns the routing key of a parameter change proposal.

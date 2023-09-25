@@ -9,6 +9,8 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -174,7 +176,7 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 		Msg:    []byte(`{"foo":"bar"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
-			Amount: sdk.NewInt(1),
+			Amount: sdkmath.NewInt(1),
 		}},
 	}
 	for _, m := range mutators {
@@ -194,7 +196,7 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 		Msg:      []byte(`{"do":"something"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
-			Amount: sdk.NewInt(1),
+			Amount: sdkmath.NewInt(1),
 		}},
 	}
 	for _, m := range mutators {
@@ -203,6 +205,7 @@ func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecut
 	return r
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodeProposal {
 	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	wasm := []byte{0x0}
@@ -227,6 +230,7 @@ func StoreCodeProposalFixture(mutators ...func(*StoreCodeProposal)) *StoreCodePr
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractProposal)) *InstantiateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
@@ -262,6 +266,7 @@ func InstantiateContractProposalFixture(mutators ...func(p *InstantiateContractP
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func InstantiateContract2ProposalFixture(mutators ...func(p *InstantiateContract2Proposal)) *InstantiateContract2Proposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
@@ -302,6 +307,7 @@ func InstantiateContract2ProposalFixture(mutators ...func(p *InstantiateContract
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInstantiateContractProposal)) *StoreAndInstantiateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
@@ -346,6 +352,7 @@ func StoreAndInstantiateContractProposalFixture(mutators ...func(p *StoreAndInst
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)) *MigrateContractProposal {
 	var (
 		anyValidAddress sdk.AccAddress = bytes.Repeat([]byte{0x1}, ContractAddrLen)
@@ -377,6 +384,7 @@ func MigrateContractProposalFixture(mutators ...func(p *MigrateContractProposal)
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func SudoContractProposalFixture(mutators ...func(p *SudoContractProposal)) *SudoContractProposal {
 	const (
 		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
@@ -395,6 +403,7 @@ func SudoContractProposalFixture(mutators ...func(p *SudoContractProposal)) *Sud
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func ExecuteContractProposalFixture(mutators ...func(p *ExecuteContractProposal)) *ExecuteContractProposal {
 	const (
 		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
@@ -409,7 +418,7 @@ func ExecuteContractProposalFixture(mutators ...func(p *ExecuteContractProposal)
 		Msg:         []byte(`{"do":"something"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",
-			Amount: sdk.NewInt(1),
+			Amount: sdkmath.NewInt(1),
 		}},
 	}
 
@@ -419,6 +428,7 @@ func ExecuteContractProposalFixture(mutators ...func(p *ExecuteContractProposal)
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *UpdateAdminProposal {
 	const (
 		contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
@@ -437,6 +447,7 @@ func UpdateAdminProposalFixture(mutators ...func(p *UpdateAdminProposal)) *Updat
 	return p
 }
 
+// Deprecated: all gov v1beta1 types will be removed
 func ClearAdminProposalFixture(mutators ...func(p *ClearAdminProposal)) *ClearAdminProposal {
 	const contractAddr = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	p := &ClearAdminProposal{

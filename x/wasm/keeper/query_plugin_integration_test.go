@@ -9,11 +9,12 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -528,9 +529,9 @@ func TestDistributionQuery(t *testing.T) {
 		},
 		"delegation rewards - existing delegation": {
 			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
-				val1, ok := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
-				require.True(t, ok)
-				_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val1, true)
+				val1, err := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
+				require.NoError(t, err)
+				_, err = keepers.StakingKeeper.Delegate(ctx, delegator, sdkmath.NewInt(10_000_000), stakingtypes.Unbonded, val1, true)
 				require.NoError(t, err)
 				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
 				return nextBlock(ctx, keepers.StakingKeeper)
@@ -557,9 +558,9 @@ func TestDistributionQuery(t *testing.T) {
 		},
 		"delegation rewards - validator empty": {
 			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
-				val, found := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
-				require.True(t, found)
-				_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
+				val, err := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
+				require.NoError(t, err)
+				_, err = keepers.StakingKeeper.Delegate(ctx, delegator, sdkmath.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
 				require.NoError(t, err)
 				return ctx
 			},
@@ -570,9 +571,9 @@ func TestDistributionQuery(t *testing.T) {
 		},
 		"delegation total rewards": {
 			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
-				val, found := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
-				require.True(t, found)
-				_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
+				val, err := keepers.StakingKeeper.GetValidator(ctx, val1Addr)
+				require.NoError(t, err)
+				_, err = keepers.StakingKeeper.Delegate(ctx, delegator, sdkmath.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
 				require.NoError(t, err)
 				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
 				return nextBlock(ctx, keepers.StakingKeeper)
@@ -597,9 +598,9 @@ func TestDistributionQuery(t *testing.T) {
 		"delegator validators": {
 			setup: func(t *testing.T, ctx sdk.Context) sdk.Context {
 				for _, v := range []sdk.ValAddress{val1Addr, val2Addr} {
-					val, found := keepers.StakingKeeper.GetValidator(ctx, v)
-					require.True(t, found)
-					_, err := keepers.StakingKeeper.Delegate(ctx, delegator, sdk.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
+					val, err := keepers.StakingKeeper.GetValidator(ctx, v)
+					require.NoError(t, err)
+					_, err = keepers.StakingKeeper.Delegate(ctx, delegator, sdkmath.NewInt(10_000_000), stakingtypes.Unbonded, val, true)
 					require.NoError(t, err)
 				}
 				return ctx
@@ -653,7 +654,7 @@ func TestIBCListChannelsQuery(t *testing.T) {
 	myIBCPortID := "myValidPortID"
 	cInfo := keeper.GetContractInfo(pCtx, ibcExample.Contract)
 	cInfo.IBCPortID = myIBCPortID
-	keeper.storeContractInfo(pCtx, ibcExample.Contract, cInfo)
+	keeper.mustStoreContractInfo(pCtx, ibcExample.Contract, cInfo)
 	// store a random channel to be ignored in queries
 	unusedChan := channeltypes.Channel{
 		State:    channeltypes.OPEN,
