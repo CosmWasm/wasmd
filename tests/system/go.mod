@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3 // indirect
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.0.0.20230921092356-3d9ce99e4eee
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.1
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11 // indirect
 	github.com/cosmos/iavl v1.0.0-rc.1 // indirect
@@ -25,7 +25,7 @@ require (
 )
 
 require (
-	cosmossdk.io/math v1.1.2
+	cosmossdk.io/math v1.1.3-rc.1
 	github.com/cometbft/cometbft v0.38.0
 	github.com/tidwall/gjson v1.14.2
 	github.com/tidwall/sjson v1.2.5
