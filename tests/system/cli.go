@@ -13,7 +13,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 
-	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -354,7 +354,7 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 	return gjson.Get(raw, fmt.Sprintf("supply.#(denom==%q).amount", denom)).Int()
 }
 
-func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
+func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetResponse {
 	args := []string{"q", "comet-validator-set"}
 	got := c.CustomQuery(args...)
 
@@ -363,17 +363,17 @@ func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
 	std.RegisterLegacyAminoCodec(amino)
 	std.RegisterInterfaces(codectypes.NewInterfaceRegistry())
 
-	var res rpc.ResultValidatorsOutput
+	var res cmtservice.GetLatestValidatorSetResponse
 	require.NoError(c.t, amino.UnmarshalJSON([]byte(got), &res), got)
 	return res
 }
 
 // IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
-func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (rpc.ResultValidatorsOutput, bool) {
+func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
 	valResult := c.GetTendermintValidatorSet()
 	var found bool
 	for _, v := range valResult.Validators {
-		if v.PubKey.Equals(valPubKey) {
+		if v.PubKey.Equal(valPubKey) {
 			found = true
 			break
 		}
