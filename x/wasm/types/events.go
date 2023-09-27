@@ -24,6 +24,7 @@ const (
 	EventTypeReply                  = "reply"
 	EventTypeGovContractResult      = "gov_contract_result"
 	EventTypeUpdateContractAdmin    = "update_contract_admin"
+	EventTypeUpdateContractLabel    = "update_contract_label"
 	EventTypeUpdateCodeAccessConfig = "update_code_access_config"
 	EventTypePacketRecv             = "ibc_packet_received"
 	// add new types to IsAcceptedEventOnRecvPacketErrorAck
@@ -61,6 +62,7 @@ const (
 	AttributeKeyResultDataHex       = "result"
 	AttributeKeyRequiredCapability  = "required_capability"
 	AttributeKeyNewAdmin            = "new_admin_address"
+	AttributeKeyNewLabel            = "new_label"
 	AttributeKeyCodePermission      = "code_permission"
 	AttributeKeyAuthorizedAddresses = "authorized_addresses"
 	AttributeKeyAckSuccess          = "success"

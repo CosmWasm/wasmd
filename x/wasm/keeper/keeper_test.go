@@ -2489,6 +2489,58 @@ func TestGasConsumed(t *testing.T) {
 	}
 }
 
+func TestSetContractLabel(t *testing.T) {
+	parentCtx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+	example := InstantiateReflectExampleContract(t, parentCtx, keepers)
+
+	specs := map[string]struct {
+		newLabel string
+		caller   sdk.AccAddress
+		policy   types.AuthorizationPolicy
+		expErr   bool
+	}{
+		"update label - default policy": {
+			newLabel: "new label",
+			caller:   example.CreatorAddr,
+			policy:   DefaultAuthorizationPolicy{},
+		},
+		"update label - unauthorized": {
+			newLabel: "new label",
+			caller:   RandomAccountAddress(t),
+			policy:   DefaultAuthorizationPolicy{},
+			expErr:   true,
+		},
+		"update label - gov policy": {
+			newLabel: "new label",
+			policy:   GovAuthorizationPolicy{},
+			caller:   example.CreatorAddr,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx, _ := parentCtx.CacheContext()
+			em := sdk.NewEventManager()
+			ctx = ctx.WithEventManager(em)
+			gotErr := k.setContractLabel(ctx, example.Contract, spec.caller, spec.newLabel, spec.policy)
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.newLabel, k.GetContractInfo(ctx, example.Contract).Label)
+			// and event emitted
+			require.Len(t, em.Events(), 1)
+			assert.Equal(t, "update_contract_label", em.Events()[0].Type)
+			exp := map[string]string{
+				"_contract_address": example.Contract.String(),
+				"new_label":         spec.newLabel,
+			}
+			assert.Equal(t, exp, attrsToStringMap(em.Events()[0].Attributes))
+		})
+	}
+}
+
 func attrsToStringMap(attrs []abci.EventAttribute) map[string]string {
 	r := make(map[string]string, len(attrs))
 	for _, v := range attrs {
