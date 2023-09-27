@@ -159,6 +159,7 @@ func TestGenesisExportImport(t *testing.T) {
 func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	k := keepers.WasmKeeper
+	contractKeeper := NewGovPermissionKeeper(k)
 	eCtx, _ := ctx.CacheContext()
 	codeID := StoreReflectContract(t, eCtx, keepers).CodeID
 	creator := RandomAccountAddress(t)
@@ -166,7 +167,7 @@ func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
 	require.NoError(t, err)
 	genesisState := ExportGenesis(eCtx, k)
 	// when imported
-	_, err = InitGenesis(ctx, k, *genesisState)
+	_, err = InitGenesis(ctx, k, *genesisState, TestHandler(contractKeeper))
 	require.NoError(t, err)
 }
 

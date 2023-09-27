@@ -184,7 +184,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 					{Sum: &types.GenesisState_GenMsgs_StoreCode{StoreCode: types.MsgStoreCodeFixture()}},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 100},
+					{IDKey: types.KeySequenceCodeID, Value: 100},
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
@@ -454,7 +454,7 @@ func TestExecuteContractCmd(t *testing.T) {
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: types.MsgInstantiateContractFixture()}},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
+					{IDKey: types.KeySequenceInstanceID, Value: 100},
 				},
 			},
 			mutator: func(cmd *cobra.Command) {
@@ -593,7 +593,7 @@ func TestGetAllContracts(t *testing.T) {
 		"read from message state with contract sequence": {
 			src: types.GenesisState{
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
+					{IDKey: types.KeySequenceInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
@@ -615,7 +615,7 @@ func TestGetAllContracts(t *testing.T) {
 					},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastInstanceID, Value: 100},
+					{IDKey: types.KeySequenceInstanceID, Value: 100},
 				},
 				GenMsgs: []types.GenesisState_GenMsgs{
 					{Sum: &types.GenesisState_GenMsgs_InstantiateContract{InstantiateContract: &types.MsgInstantiateContract{Label: "hundred"}}},
@@ -642,7 +642,7 @@ func TestGetAllContracts(t *testing.T) {
 }
 
 func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
-	appCodec := keeper.MakeEncodingConfig(t).Marshaler
+	appCodec := keeper.MakeEncodingConfig(t).Codec
 	homeDir := t.TempDir()
 
 	require.NoError(t, os.Mkdir(path.Join(homeDir, "config"), 0o700))
@@ -675,7 +675,7 @@ func executeCmdWithContext(t *testing.T, homeDir string, cmd *cobra.Command) err
 	logger := log.NewNopLogger()
 	cfg, err := genutiltest.CreateDefaultTendermintConfig(homeDir)
 	require.NoError(t, err)
-	appCodec := keeper.MakeEncodingConfig(t).Marshaler
+	appCodec := keeper.MakeEncodingConfig(t).Codec
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
 	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(homeDir)
 
@@ -700,7 +700,7 @@ func loadModuleState(t *testing.T, homeDir string) types.GenesisState {
 	require.NoError(t, err)
 	require.Contains(t, appState, types.ModuleName)
 
-	appCodec := keeper.MakeEncodingConfig(t).Marshaler
+	appCodec := keeper.MakeEncodingConfig(t).Codec
 	var moduleState types.GenesisState
 	require.NoError(t, appCodec.UnmarshalJSON(appState[types.ModuleName], &moduleState))
 	return moduleState
