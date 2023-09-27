@@ -33,11 +33,11 @@ import (
 
 var wasmIdent = []byte("\x00\x61\x73\x6D")
 
-var myWellFundedAccount = keeper.RandomBech32AccountAddress(nil)
-
 const defaultTestKeyName = "my-key-name"
 
 func TestGenesisStoreCodeCmd(t *testing.T) {
+	myWellFundedAccount := keeper.RandomBech32AccountAddress(t)
+
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
@@ -86,7 +86,7 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			homeDir := setupGenesis(t, spec.srcGenesis)
+			homeDir := setupGenesis(t, spec.srcGenesis, myWellFundedAccount)
 
 			// when
 			cmd := GenesisStoreCodeCmd(homeDir, NewDefaultGenesisIO())
@@ -105,6 +105,8 @@ func TestGenesisStoreCodeCmd(t *testing.T) {
 }
 
 func TestInstantiateContractCmd(t *testing.T) {
+	myWellFundedAccount := keeper.RandomBech32AccountAddress(t)
+
 	minimalWasmGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
@@ -360,7 +362,7 @@ func TestInstantiateContractCmd(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			homeDir := setupGenesis(t, spec.srcGenesis)
+			homeDir := setupGenesis(t, spec.srcGenesis, myWellFundedAccount)
 
 			// when
 			cmd := GenesisInstantiateContractCmd(homeDir, NewDefaultGenesisIO())
@@ -379,6 +381,8 @@ func TestInstantiateContractCmd(t *testing.T) {
 }
 
 func TestExecuteContractCmd(t *testing.T) {
+	myWellFundedAccount := keeper.RandomBech32AccountAddress(t)
+
 	const firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
 	anyValidWasmFile, err := os.CreateTemp(t.TempDir(), "wasm")
 	require.NoError(t, err)
@@ -525,7 +529,7 @@ func TestExecuteContractCmd(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			homeDir := setupGenesis(t, spec.srcGenesis)
+			homeDir := setupGenesis(t, spec.srcGenesis, myWellFundedAccount)
 			cmd := GenesisExecuteContractCmd(homeDir, NewDefaultGenesisIO())
 			spec.mutator(cmd)
 
@@ -641,7 +645,8 @@ func TestGetAllContracts(t *testing.T) {
 	}
 }
 
-func setupGenesis(t *testing.T, wasmGenesis types.GenesisState) string {
+func setupGenesis(t *testing.T, wasmGenesis types.GenesisState, myWellFundedAccount string) string {
+
 	appCodec := keeper.MakeEncodingConfig(t).Codec
 	homeDir := t.TempDir()
 
