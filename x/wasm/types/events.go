@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -28,7 +29,7 @@ const (
 	// add new types to IsAcceptedEventOnRecvPacketErrorAck
 )
 
-// EmitAcknowledgementEvent emits an event signalling a successful or failed acknowledgement and including the error
+// EmitAcknowledgementEvent emits an event signaling a successful or failed acknowledgement and including the error
 // details if any.
 func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack exported.Acknowledgement, err error) {
 	success := err == nil && (ack == nil || ack.Success())

@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/docker/distribution/reference"
+
+	errorsmod "cosmossdk.io/errors"
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract

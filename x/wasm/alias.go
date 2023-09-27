@@ -99,7 +99,7 @@ var (
 	// Deprecated: Do not use.
 	TestHandler = keeper.TestHandler
 	// Deprecated: Do not use.
-	NewWasmProposalHandler = keeper.NewWasmProposalHandler //nolint:staticcheck
+	NewWasmProposalHandler = keeper.NewWasmProposalHandler //nolint:staticcheck // we still require this alias despite the deprecation
 	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
@@ -133,9 +133,9 @@ var (
 	// Deprecated: Do not use.
 	ErrInvalidMsg = types.ErrInvalidMsg
 	// Deprecated: Do not use.
-	KeyLastCodeID = types.KeyLastCodeID
+	KeyLastCodeID = types.KeySequenceCodeID
 	// Deprecated: Do not use.
-	KeyLastInstanceID = types.KeyLastInstanceID
+	KeyLastInstanceID = types.KeySequenceInstanceID
 	// Deprecated: Do not use.
 	CodeKeyPrefix = types.CodeKeyPrefix
 	// Deprecated: Do not use.

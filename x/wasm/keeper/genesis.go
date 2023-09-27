@@ -1,8 +1,10 @@
 package keeper
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -40,17 +42,15 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgRo
 		}
 	}
 
-	var maxContractID int
 	for i, contract := range data.Contracts {
 		contractAddr, err := sdk.AccAddressFromBech32(contract.ContractAddress)
 		if err != nil {
 			return nil, errorsmod.Wrapf(err, "address in contract number %d", i)
 		}
-		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState, contract.ContractCodeHistory)
+		err = keeper.importContract(ctx, contractAddr, &contract.ContractInfo, contract.ContractState, contract.ContractCodeHistory) //nolint:gosec
 		if err != nil {
 			return nil, errorsmod.Wrapf(err, "contract number %d", i)
 		}
-		maxContractID = i + 1 // not ideal but max(contractID) is not persisted otherwise
 	}
 
 	for i, seq := range data.Sequences {
@@ -61,13 +61,16 @@ func InitGenesis(ctx sdk.Context, keeper *Keeper, data types.GenesisState, msgRo
 	}
 
 	// sanity check seq values
-	seqVal := keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID)
+	seqVal := keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID)
 	if seqVal <= maxCodeID {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastCodeID), seqVal, maxCodeID)
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeySequenceCodeID), seqVal, maxCodeID)
 	}
-	seqVal = keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID)
-	if seqVal <= uint64(maxContractID) {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "seq %s with value: %d must be greater than: %d ", string(types.KeyLastInstanceID), seqVal, maxContractID)
+	// ensure next classic address is unused so that we know the sequence is good
+	rCtx, _ := ctx.CacheContext()
+	seqVal = keeper.PeekAutoIncrementID(rCtx, types.KeySequenceInstanceID)
+	addr := keeper.ClassicAddressGenerator()(rCtx, seqVal, nil)
+	if keeper.HasContractInfo(ctx, addr) {
+		return nil, errorsmod.Wrapf(types.ErrInvalid, "value: %d for seq %s was used already", seqVal, string(types.KeySequenceInstanceID))
 	}
 
 	if len(data.GenMsgs) == 0 {
@@ -125,7 +128,7 @@ func ExportGenesis(ctx sdk.Context, keeper *Keeper) *types.GenesisState {
 		return false
 	})
 
-	for _, k := range [][]byte{types.KeyLastCodeID, types.KeyLastInstanceID} {
+	for _, k := range [][]byte{types.KeySequenceCodeID, types.KeySequenceInstanceID} {
 		genState.Sequences = append(genState.Sequences, types.Sequence{
 			IDKey: k,
 			Value: keeper.PeekAutoIncrementID(ctx, k),

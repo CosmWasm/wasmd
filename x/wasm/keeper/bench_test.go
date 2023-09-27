@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )

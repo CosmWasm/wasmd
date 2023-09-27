@@ -4,6 +4,13 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -11,12 +18,6 @@ import (
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -560,7 +561,7 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
 			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, err)
@@ -795,7 +796,7 @@ func TestEncodeGovMsg(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Marshaler, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
 			res, gotEncErr := encoder.Encode(ctx, tc.sender, "myIBCPort", tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, gotEncErr)

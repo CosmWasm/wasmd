@@ -208,6 +208,80 @@ docker run --rm -it \
     query gov votes 1
 ```
 
+## Vote on the upgrade (Starting from wasmd v0.40.0)
+
+Starting from `v0.40.0` of `wasmd`, which incorporates cosmos-sdk `v0.47.x`,
+there have been changes in how upgrade proposals are handled. Below, 
+we provide an example of how to achieve the same outcome as described 
+in the preceding section.
+
+Please be aware that some commands have been replaced by an interactive 
+Command Line Interface (CLI), and the process of submitting a proposal 
+is now divided into two distinct steps: `proposal creation` and `proposal submission`.
+
+```sh
+# create the proposal
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.40.0 wasmd \
+    tx gov draft-proposal \
+    --from validator --chain-id testing
+
+# choose <software-upgrade> from the interactive CLI and fill all the fields
+# of the generated json file draft_proposal.json
+# example:
+{
+ "messages": [
+  {
+   "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+   "authority": "wasm10d07y265gmmuvt4z0w9aw880jnsr700js7zslc",
+   "plan": {
+    "name": "Upgrade",
+    "time": "0001-01-01T00:00:00Z",
+    "height": "500",
+    "info": "",
+    "upgraded_client_state": null
+   }
+  }
+ ],
+ "metadata": "ipfs://CID",
+ "deposit": "100000ustake",
+ "title": "Upgrade",
+ "summary": "summary"
+}
+
+# submit the proposal
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.40.0 wasmd \
+    tx gov submit-proposal draft_proposal.json \
+    --from validator --chain-id testing
+
+# make sure it looks good
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.40.0 wasmd \
+    query gov proposal 1
+
+# vote for it
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.40.0 wasmd \
+    tx gov vote 1 yes \
+    --from validator --chain-id testing
+
+# ensure vote was counted
+docker run --rm -it \
+    --mount type=volume,source=musselnet_client,target=/root \
+    --network=host \
+    cosmwasm/wasmd:v0.40.0 wasmd \
+    query gov votes 1
+```
+
 ## Swap out binaries
 
 Now, we just wait about 5 minutes for the vote to pass, and ensure it is passed:

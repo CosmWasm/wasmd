@@ -8,6 +8,7 @@ import (
 	"math/rand"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

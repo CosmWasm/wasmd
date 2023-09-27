@@ -8,6 +8,11 @@ import (
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/docker/distribution/reference"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -16,10 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/docker/distribution/reference"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	flag "github.com/spf13/pflag"
 
 	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -50,6 +51,7 @@ func SubmitProposalCmd() *cobra.Command {
 		ProposalUpdateInstantiateConfigCmd(),
 		ProposalAddCodeUploadParamsAddresses(),
 		ProposalRemoveCodeUploadParamsAddresses(),
+		ProposalStoreAndMigrateContractCmd(),
 	)
 	return cmd
 }
@@ -245,7 +247,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "store-instantiate [wasm file] [json_encoded_init_args] --authority [address] --label [text] --title [text] --summary [text]" +
 			"--unpin-code [unpin_code,optional] --source [source,optional] --builder [builder,optional] --code-hash [code_hash,optional] --admin [address,optional] --amount [coins,optional]",
-		Short: "Submit and instantiate a wasm contract proposal",
+		Short: "Submit a store and instantiate wasm contract proposal",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
@@ -411,7 +413,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 
 func ProposalExecuteContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "execute-contract [contract_addr_bech32] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
+		Use:   "execute-contract [contract_addr_bech32] [json_encoded_execution_args] --title [text] --summary [text] --authority [address]",
 		Short: "Submit a execute wasm contract proposal (run by any address)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -926,4 +928,56 @@ func getProposalInfo(cmd *cobra.Command) (client.Context, string, string, sdk.Co
 	}
 
 	return clientCtx, proposalTitle, summary, deposit, nil
+}
+
+func ProposalStoreAndMigrateContractCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "store-migrate [wasm file] [contract_addr_bech32] [json_encoded_migration_args] --title [text] --summary [text] --authority [address]",
+		Short: "Submit a store and migrate wasm contract proposal",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, proposalTitle, summary, deposit, err := getProposalInfo(cmd)
+			if err != nil {
+				return err
+			}
+
+			authority, err := cmd.Flags().GetString(flagAuthority)
+			if err != nil {
+				return fmt.Errorf("authority: %s", err)
+			}
+
+			if len(authority) == 0 {
+				return errors.New("authority address is required")
+			}
+
+			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgStoreAndMigrateContract{
+				Authority:             authority,
+				WASMByteCode:          src.WASMByteCode,
+				InstantiatePermission: src.InstantiatePermission,
+				Msg:                   []byte(args[2]),
+				Contract:              args[1],
+			}
+
+			proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{&msg}, deposit, clientCtx.GetFromAddress().String(), "", proposalTitle, summary)
+			if err != nil {
+				return err
+			}
+			if err = proposalMsg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), proposalMsg)
+		},
+		SilenceUsage: true,
+	}
+
+	addInstantiatePermissionFlags(cmd)
+	// proposal flags
+	addCommonProposalFlags(cmd)
+	return cmd
 }

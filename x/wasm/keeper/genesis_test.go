@@ -11,26 +11,25 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	fuzz "github.com/google/gofuzz"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/store"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	fuzz "github.com/google/gofuzz"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -157,6 +156,20 @@ func TestGenesisExportImport(t *testing.T) {
 	}
 }
 
+func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	k := keepers.WasmKeeper
+	eCtx, _ := ctx.CacheContext()
+	codeID := StoreReflectContract(t, eCtx, keepers).CodeID
+	creator := RandomAccountAddress(t)
+	_, _, err := keepers.ContractKeeper.Instantiate2(eCtx, codeID, creator, nil, []byte("{}"), "testing", nil, []byte("my_salt"), false)
+	require.NoError(t, err)
+	genesisState := ExportGenesis(eCtx, k)
+	// when imported
+	_, err = InitGenesis(ctx, k, *genesisState)
+	require.NoError(t, err)
+}
+
 func TestGenesisInit(t *testing.T) {
 	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
 	require.NoError(t, err)
@@ -176,8 +189,8 @@ func TestGenesisInit(t *testing.T) {
 					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
+					{IDKey: types.KeySequenceCodeID, Value: 2},
+					{IDKey: types.KeySequenceInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -195,8 +208,8 @@ func TestGenesisInit(t *testing.T) {
 					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 10},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
+					{IDKey: types.KeySequenceCodeID, Value: 10},
+					{IDKey: types.KeySequenceInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -215,8 +228,8 @@ func TestGenesisInit(t *testing.T) {
 				}},
 				Contracts: nil,
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 3},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
+					{IDKey: types.KeySequenceCodeID, Value: 3},
+					{IDKey: types.KeySequenceInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -286,8 +299,8 @@ func TestGenesisInit(t *testing.T) {
 					},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 2},
+					{IDKey: types.KeySequenceCodeID, Value: 2},
+					{IDKey: types.KeySequenceInstanceID, Value: 2},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -326,8 +339,8 @@ func TestGenesisInit(t *testing.T) {
 					},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 3},
+					{IDKey: types.KeySequenceCodeID, Value: 2},
+					{IDKey: types.KeySequenceInstanceID, Value: 3},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -438,12 +451,12 @@ func TestGenesisInit(t *testing.T) {
 					CodeBytes: wasmCode,
 				}},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 1},
+					{IDKey: types.KeySequenceCodeID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
 		},
-		"prevent contract id seq init value == count contracts": {
+		"prevent contract id seq init value not high enough": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
 					CodeID:    firstCodeID,
@@ -465,8 +478,8 @@ func TestGenesisInit(t *testing.T) {
 					},
 				},
 				Sequences: []types.Sequence{
-					{IDKey: types.KeyLastCodeID, Value: 2},
-					{IDKey: types.KeyLastInstanceID, Value: 1},
+					{IDKey: types.KeySequenceCodeID, Value: 2},
+					{IDKey: types.KeySequenceInstanceID, Value: 1},
 				},
 				Params: types.DefaultParams(),
 			},
@@ -659,8 +672,8 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		},
 	}
 	assert.Equal(t, expHistory, keeper.GetContractHistory(ctx, contractAddr))
-	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeyLastCodeID))
-	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeyLastInstanceID))
+	assert.Equal(t, uint64(2), keeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID))
+	assert.Equal(t, uint64(3), keeper.PeekAutoIncrementID(ctx, types.KeySequenceInstanceID))
 }
 
 func TestSupportedGenMsgTypes(t *testing.T) {
@@ -764,7 +777,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 	wasmConfig := types.DefaultWasmConfig()
 
 	srcKeeper := NewKeeper(
-		encodingConfig.Marshaler,
+		encodingConfig.Codec,
 		keyWasm,
 		authkeeper.AccountKeeper{},
 		&bankkeeper.BaseKeeper{},

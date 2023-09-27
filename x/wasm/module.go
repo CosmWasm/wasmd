@@ -7,12 +7,15 @@ import (
 	"runtime/debug"
 	"strings"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+
 	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-
-	wasmvm "github.com/CosmWasm/wasmvm"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,9 +24,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
 
 	"github.com/CosmWasm/wasmd/x/wasm/client/cli"
 	"github.com/CosmWasm/wasmd/x/wasm/exported"
@@ -42,7 +42,7 @@ const (
 	flagWasmMemoryCacheSize        = "wasm.memory_cache_size"
 	flagWasmQueryGasLimit          = "wasm.query_gas_limit"
 	flagWasmSimulationGasLimit     = "wasm.simulation_gas_limit"
-	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check" //nolint:gosec
+	flagWasmSkipWasmVMVersionCheck = "wasm.skip_wasmvm_version_check"
 )
 
 // AppModuleBasic defines the basic application module used by the wasm module.

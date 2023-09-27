@@ -1,11 +1,13 @@
 package ibctesting
 
 import (
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/app"
 )

@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 func TestValidateProposalCommons(t *testing.T) {
@@ -991,7 +992,7 @@ code_ids:
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			v, err := yaml.Marshal(&spec.src)
+			v, err := yaml.Marshal(&spec.src) //nolint:gosec
 			require.NoError(t, err)
 			assert.Equal(t, spec.exp, string(v))
 		})

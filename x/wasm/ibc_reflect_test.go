@@ -3,12 +3,10 @@ package wasm_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
