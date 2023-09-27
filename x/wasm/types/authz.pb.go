@@ -41,11 +41,9 @@ func (*StoreCodeAuthorization) ProtoMessage()    {}
 func (*StoreCodeAuthorization) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{0}
 }
-
 func (m *StoreCodeAuthorization) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *StoreCodeAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_StoreCodeAuthorization.Marshal(b, m, deterministic)
@@ -58,15 +56,12 @@ func (m *StoreCodeAuthorization) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-
 func (m *StoreCodeAuthorization) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_StoreCodeAuthorization.Merge(m, src)
 }
-
 func (m *StoreCodeAuthorization) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *StoreCodeAuthorization) XXX_DiscardUnknown() {
 	xxx_messageInfo_StoreCodeAuthorization.DiscardUnknown(m)
 }
@@ -170,11 +165,9 @@ func (*CodeGrant) ProtoMessage()    {}
 func (*CodeGrant) Descriptor() ([]byte, []int) {
 	return fileDescriptor_36ff3a20cf32b258, []int{3}
 }
-
 func (m *CodeGrant) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *CodeGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_CodeGrant.Marshal(b, m, deterministic)
@@ -187,15 +180,12 @@ func (m *CodeGrant) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-
 func (m *CodeGrant) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_CodeGrant.Merge(m, src)
 }
-
 func (m *CodeGrant) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *CodeGrant) XXX_DiscardUnknown() {
 	xxx_messageInfo_CodeGrant.DiscardUnknown(m)
 }
@@ -974,7 +964,6 @@ func encodeVarintAuthz(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-
 func (m *StoreCodeAuthorization) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1148,7 +1137,6 @@ func sovAuthz(x uint64) (n int) {
 func sozAuthz(x uint64) (n int) {
 	return sovAuthz(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-
 func (m *StoreCodeAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1233,7 +1221,6 @@ func (m *StoreCodeAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *ContractExecutionAuthorization) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1402,7 +1389,6 @@ func (m *ContractMigrationAuthorization) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *CodeGrant) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0

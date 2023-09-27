@@ -1176,11 +1176,9 @@ func (*MsgAddCodeUploadParamsAddresses) ProtoMessage()    {}
 func (*MsgAddCodeUploadParamsAddresses) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{26}
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgAddCodeUploadParamsAddresses.Marshal(b, m, deterministic)
@@ -1193,15 +1191,12 @@ func (m *MsgAddCodeUploadParamsAddresses) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgAddCodeUploadParamsAddresses.Merge(m, src)
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgAddCodeUploadParamsAddresses.DiscardUnknown(m)
 }
@@ -1210,7 +1205,8 @@ var xxx_messageInfo_MsgAddCodeUploadParamsAddresses proto.InternalMessageInfo
 
 // MsgAddCodeUploadParamsAddressesResponse defines the response
 // structure for executing a MsgAddCodeUploadParamsAddresses message.
-type MsgAddCodeUploadParamsAddressesResponse struct{}
+type MsgAddCodeUploadParamsAddressesResponse struct {
+}
 
 func (m *MsgAddCodeUploadParamsAddressesResponse) Reset() {
 	*m = MsgAddCodeUploadParamsAddressesResponse{}
@@ -1220,11 +1216,9 @@ func (*MsgAddCodeUploadParamsAddressesResponse) ProtoMessage()    {}
 func (*MsgAddCodeUploadParamsAddressesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{27}
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgAddCodeUploadParamsAddressesResponse.Marshal(b, m, deterministic)
@@ -1237,15 +1231,12 @@ func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_Marshal(b []byte, determin
 		return b[:n], nil
 	}
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgAddCodeUploadParamsAddressesResponse.Merge(m, src)
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgAddCodeUploadParamsAddressesResponse.DiscardUnknown(m)
 }
@@ -1266,11 +1257,9 @@ func (*MsgRemoveCodeUploadParamsAddresses) ProtoMessage()    {}
 func (*MsgRemoveCodeUploadParamsAddresses) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{28}
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgRemoveCodeUploadParamsAddresses.Marshal(b, m, deterministic)
@@ -1283,15 +1272,12 @@ func (m *MsgRemoveCodeUploadParamsAddresses) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgRemoveCodeUploadParamsAddresses.Merge(m, src)
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgRemoveCodeUploadParamsAddresses.DiscardUnknown(m)
 }
@@ -1300,12 +1286,12 @@ var xxx_messageInfo_MsgRemoveCodeUploadParamsAddresses proto.InternalMessageInfo
 
 // MsgRemoveCodeUploadParamsAddressesResponse defines the response
 // structure for executing a MsgRemoveCodeUploadParamsAddresses message.
-type MsgRemoveCodeUploadParamsAddressesResponse struct{}
+type MsgRemoveCodeUploadParamsAddressesResponse struct {
+}
 
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) Reset() {
 	*m = MsgRemoveCodeUploadParamsAddressesResponse{}
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) String() string {
 	return proto.CompactTextString(m)
 }
@@ -1313,11 +1299,9 @@ func (*MsgRemoveCodeUploadParamsAddressesResponse) ProtoMessage() {}
 func (*MsgRemoveCodeUploadParamsAddressesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{29}
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgRemoveCodeUploadParamsAddressesResponse.Marshal(b, m, deterministic)
@@ -1330,15 +1314,12 @@ func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_Marshal(b []byte, deter
 		return b[:n], nil
 	}
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgRemoveCodeUploadParamsAddressesResponse.Merge(m, src)
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgRemoveCodeUploadParamsAddressesResponse.DiscardUnknown(m)
 }
@@ -1368,11 +1349,9 @@ func (*MsgStoreAndMigrateContract) ProtoMessage()    {}
 func (*MsgStoreAndMigrateContract) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{30}
 }
-
 func (m *MsgStoreAndMigrateContract) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgStoreAndMigrateContract) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgStoreAndMigrateContract.Marshal(b, m, deterministic)
@@ -1385,15 +1364,12 @@ func (m *MsgStoreAndMigrateContract) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-
 func (m *MsgStoreAndMigrateContract) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgStoreAndMigrateContract.Merge(m, src)
 }
-
 func (m *MsgStoreAndMigrateContract) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgStoreAndMigrateContract) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgStoreAndMigrateContract.DiscardUnknown(m)
 }
@@ -1419,11 +1395,9 @@ func (*MsgStoreAndMigrateContractResponse) ProtoMessage()    {}
 func (*MsgStoreAndMigrateContractResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4f74d82755520264, []int{31}
 }
-
 func (m *MsgStoreAndMigrateContractResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-
 func (m *MsgStoreAndMigrateContractResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_MsgStoreAndMigrateContractResponse.Marshal(b, m, deterministic)
@@ -1436,15 +1410,12 @@ func (m *MsgStoreAndMigrateContractResponse) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-
 func (m *MsgStoreAndMigrateContractResponse) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_MsgStoreAndMigrateContractResponse.Merge(m, src)
 }
-
 func (m *MsgStoreAndMigrateContractResponse) XXX_Size() int {
 	return m.Size()
 }
-
 func (m *MsgStoreAndMigrateContractResponse) XXX_DiscardUnknown() {
 	xxx_messageInfo_MsgStoreAndMigrateContractResponse.DiscardUnknown(m)
 }
@@ -1920,15 +1891,12 @@ func (*UnimplementedMsgServer) UnpinCodes(ctx context.Context, req *MsgUnpinCode
 func (*UnimplementedMsgServer) StoreAndInstantiateContract(ctx context.Context, req *MsgStoreAndInstantiateContract) (*MsgStoreAndInstantiateContractResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAndInstantiateContract not implemented")
 }
-
 func (*UnimplementedMsgServer) RemoveCodeUploadParamsAddresses(ctx context.Context, req *MsgRemoveCodeUploadParamsAddresses) (*MsgRemoveCodeUploadParamsAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveCodeUploadParamsAddresses not implemented")
 }
-
 func (*UnimplementedMsgServer) AddCodeUploadParamsAddresses(ctx context.Context, req *MsgAddCodeUploadParamsAddresses) (*MsgAddCodeUploadParamsAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCodeUploadParamsAddresses not implemented")
 }
-
 func (*UnimplementedMsgServer) StoreAndMigrateContract(ctx context.Context, req *MsgStoreAndMigrateContract) (*MsgStoreAndMigrateContractResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreAndMigrateContract not implemented")
 }
@@ -7656,7 +7624,6 @@ func (m *MsgStoreAndInstantiateContractResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgAddCodeUploadParamsAddresses) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -7771,7 +7738,6 @@ func (m *MsgAddCodeUploadParamsAddresses) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgAddCodeUploadParamsAddressesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -7822,7 +7788,6 @@ func (m *MsgAddCodeUploadParamsAddressesResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgRemoveCodeUploadParamsAddresses) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -7937,7 +7902,6 @@ func (m *MsgRemoveCodeUploadParamsAddresses) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgRemoveCodeUploadParamsAddressesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -7988,7 +7952,6 @@ func (m *MsgRemoveCodeUploadParamsAddressesResponse) Unmarshal(dAtA []byte) erro
 	}
 	return nil
 }
-
 func (m *MsgStoreAndMigrateContract) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -8207,7 +8170,6 @@ func (m *MsgStoreAndMigrateContract) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-
 func (m *MsgStoreAndMigrateContractResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
