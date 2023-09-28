@@ -1147,7 +1147,7 @@ func TestStoreAndMigrateContract(t *testing.T) {
 
 func TestUpdateContractLabel(t *testing.T) {
 	wasmApp := app.Setup(t)
-	ctx := wasmApp.BaseApp.NewContextLegacy(false, tmproto.Header{Time: time.Now()})
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	var (
 		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)

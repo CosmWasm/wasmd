@@ -630,13 +630,8 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 	return nil
 }
 
-<<<<<<< HEAD
-func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
-	store := ctx.KVStore(k.storeKey)
-=======
-func (k Keeper) setContractLabel(ctx context.Context, contractAddress, caller sdk.AccAddress, newLabel string, authZ types.AuthorizationPolicy) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	contractInfo := k.GetContractInfo(sdkCtx, contractAddress)
+func (k Keeper) setContractLabel(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newLabel string, authZ types.AuthorizationPolicy) error {
+	contractInfo := k.GetContractInfo(ctx, contractAddress)
 	if contractInfo == nil {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
 	}
@@ -644,8 +639,8 @@ func (k Keeper) setContractLabel(ctx context.Context, contractAddress, caller sd
 		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
 	}
 	contractInfo.Label = newLabel
-	k.mustStoreContractInfo(sdkCtx, contractAddress, contractInfo)
-	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+	k.storeContractInfo(ctx, contractAddress, contractInfo)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeUpdateContractLabel,
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 		sdk.NewAttribute(types.AttributeKeyNewLabel, newLabel),
@@ -654,9 +649,8 @@ func (k Keeper) setContractLabel(ctx context.Context, contractAddress, caller sd
 	return nil
 }
 
-func (k Keeper) appendToContractHistory(ctx context.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) error {
-	store := k.storeService.OpenKVStore(ctx)
->>>>>>> e6548083 (Add msg update contract label (#1640))
+func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
+	store := ctx.KVStore(k.storeKey)
 	// find last element position
 	var pos uint64
 	prefixStore := prefix.NewStore(store, types.GetContractCodeHistoryElementPrefix(contractAddr))

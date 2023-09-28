@@ -475,11 +475,12 @@ func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.Msg
 	}, nil
 }
 
-func (m msgServer) UpdateContractLabel(ctx context.Context, msg *types.MsgUpdateContractLabel) (*types.MsgUpdateContractLabelResponse, error) {
+func (m msgServer) UpdateContractLabel(goCtx context.Context, msg *types.MsgUpdateContractLabel) (*types.MsgUpdateContractLabelResponse, error) {
 	if err := msg.ValidateBasic(); err != nil {
 		return nil, err
 	}
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "sender")
