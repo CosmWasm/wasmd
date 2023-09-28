@@ -27,6 +27,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgAddCodeUploadParamsAddresses{}, "wasm/MsgAddCodeUploadParamsAddresses", nil)
 	cdc.RegisterConcrete(&MsgRemoveCodeUploadParamsAddresses{}, "wasm/MsgRemoveCodeUploadParamsAddresses", nil)
 	cdc.RegisterConcrete(&MsgStoreAndMigrateContract{}, "wasm/MsgStoreAndMigrateContract", nil)
+	cdc.RegisterConcrete(&MsgUpdateContractLabel{}, "wasm/MsgUpdateContractLabel", nil)
 
 	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
 	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
@@ -79,6 +80,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgAddCodeUploadParamsAddresses{},
 		&MsgRemoveCodeUploadParamsAddresses{},
 		&MsgStoreAndMigrateContract{},
+		&MsgUpdateContractLabel{},
 	)
 	registry.RegisterImplementations(
 		(*v1beta1.Content)(nil),

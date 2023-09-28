@@ -112,6 +112,8 @@
     - [MsgUnpinCodesResponse](#cosmwasm.wasm.v1.MsgUnpinCodesResponse)
     - [MsgUpdateAdmin](#cosmwasm.wasm.v1.MsgUpdateAdmin)
     - [MsgUpdateAdminResponse](#cosmwasm.wasm.v1.MsgUpdateAdminResponse)
+    - [MsgUpdateContractLabel](#cosmwasm.wasm.v1.MsgUpdateContractLabel)
+    - [MsgUpdateContractLabelResponse](#cosmwasm.wasm.v1.MsgUpdateContractLabelResponse)
     - [MsgUpdateInstantiateConfig](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfig)
     - [MsgUpdateInstantiateConfigResponse](#cosmwasm.wasm.v1.MsgUpdateInstantiateConfigResponse)
     - [MsgUpdateParams](#cosmwasm.wasm.v1.MsgUpdateParams)
@@ -1845,6 +1847,33 @@ MsgUpdateAdminResponse returns empty data
 
 
 
+<a name="cosmwasm.wasm.v1.MsgUpdateContractLabel"></a>
+
+### MsgUpdateContractLabel
+MsgUpdateContractLabel sets a new label for a smart contract
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `sender` | [string](#string) |  | Sender is the that actor that signed the messages |
+| `new_label` | [string](#string) |  | NewLabel string to be set |
+| `contract` | [string](#string) |  | Contract is the address of the smart contract |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.MsgUpdateContractLabelResponse"></a>
+
+### MsgUpdateContractLabelResponse
+MsgUpdateContractLabelResponse returns empty data
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.MsgUpdateInstantiateConfig"></a>
 
 ### MsgUpdateInstantiateConfig
@@ -1946,6 +1975,9 @@ Since: 0.40 | |
 | `StoreAndMigrateContract` | [MsgStoreAndMigrateContract](#cosmwasm.wasm.v1.MsgStoreAndMigrateContract) | [MsgStoreAndMigrateContractResponse](#cosmwasm.wasm.v1.MsgStoreAndMigrateContractResponse) | StoreAndMigrateContract defines a governance operation for storing and migrating the contract. The authority is defined in the keeper.
 
 Since: 0.42 | |
+| `UpdateContractLabel` | [MsgUpdateContractLabel](#cosmwasm.wasm.v1.MsgUpdateContractLabel) | [MsgUpdateContractLabelResponse](#cosmwasm.wasm.v1.MsgUpdateContractLabelResponse) | UpdateContractLabel sets a new label for a smart contract
+
+Since: 0.43 | |
 
  <!-- end services -->
 

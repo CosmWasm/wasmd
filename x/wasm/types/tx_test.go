@@ -1326,3 +1326,71 @@ func TestMsgStoreAndMigrateContractValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestMsgUpdateContractLabel(t *testing.T) {
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgUpdateContractLabel
+		expErr bool
+	}{
+		"all good": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "new label",
+				Contract: otherGoodAddress,
+			},
+		},
+		"new label required": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad sender": {
+			src: MsgUpdateContractLabel{
+				Sender:   badAddress,
+				NewLabel: "new label",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"empty new label": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad new label": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: " start with space ",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad contract addr": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "new label",
+				Contract: badAddress,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
