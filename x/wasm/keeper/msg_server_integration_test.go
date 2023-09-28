@@ -1156,20 +1156,33 @@ func TestUpdateContractLabel(t *testing.T) {
 	)
 
 	specs := map[string]struct {
-		addr   string
-		expErr bool
+		addr     string
+		newLabel string
+		expErr   bool
 	}{
 		"authority can update contract label": {
-			addr:   authority,
-			expErr: false,
+			addr:     authority,
+			newLabel: "new label",
+			expErr:   false,
 		},
 		"admin can update contract label": {
-			addr:   myAddress.String(),
-			expErr: false,
+			addr:     myAddress.String(),
+			newLabel: "new label",
+			expErr:   false,
 		},
 		"other address cannot update contract label": {
-			addr:   otherAddr.String(),
+			addr:     otherAddr.String(),
+			newLabel: "new label",
+			expErr:   true,
+		},
+		"empty new label": {
+			addr:   authority,
 			expErr: true,
+		},
+		"invalid new label": {
+			addr:     authority,
+			newLabel: " start with space ",
+			expErr:   true,
 		},
 	}
 	for name, spec := range specs {
@@ -1198,7 +1211,7 @@ func TestUpdateContractLabel(t *testing.T) {
 			// when
 			msgUpdateLabel := &types.MsgUpdateContractLabel{
 				Sender:   spec.addr,
-				NewLabel: "new label",
+				NewLabel: spec.newLabel,
 				Contract: storeAndInstantiateResponse.Address,
 			}
 			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateLabel)(ctx, msgUpdateLabel)
@@ -1209,7 +1222,7 @@ func TestUpdateContractLabel(t *testing.T) {
 				require.Equal(t, "old label", wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, "new label", wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
+				require.Equal(t, spec.newLabel, wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
 			}
 		})
 	}

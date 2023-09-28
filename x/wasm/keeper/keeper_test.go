@@ -2498,23 +2498,34 @@ func TestSetContractLabel(t *testing.T) {
 		newLabel string
 		caller   sdk.AccAddress
 		policy   types.AuthorizationPolicy
+		contract sdk.AccAddress
 		expErr   bool
 	}{
 		"update label - default policy": {
 			newLabel: "new label",
 			caller:   example.CreatorAddr,
 			policy:   DefaultAuthorizationPolicy{},
+			contract: example.Contract,
+		},
+		"update label - gov policy": {
+			newLabel: "new label",
+			policy:   GovAuthorizationPolicy{},
+			caller:   RandomAccountAddress(t),
+			contract: example.Contract,
 		},
 		"update label - unauthorized": {
 			newLabel: "new label",
 			caller:   RandomAccountAddress(t),
 			policy:   DefaultAuthorizationPolicy{},
+			contract: example.Contract,
 			expErr:   true,
 		},
-		"update label - gov policy": {
+		"update label - unknown contract": {
 			newLabel: "new label",
-			policy:   GovAuthorizationPolicy{},
 			caller:   example.CreatorAddr,
+			policy:   DefaultAuthorizationPolicy{},
+			contract: RandomAccountAddress(t),
+			expErr:   true,
 		},
 	}
 	for name, spec := range specs {
@@ -2522,18 +2533,18 @@ func TestSetContractLabel(t *testing.T) {
 			ctx, _ := parentCtx.CacheContext()
 			em := sdk.NewEventManager()
 			ctx = ctx.WithEventManager(em)
-			gotErr := k.setContractLabel(ctx, example.Contract, spec.caller, spec.newLabel, spec.policy)
+			gotErr := k.setContractLabel(ctx, spec.contract, spec.caller, spec.newLabel, spec.policy)
 			if spec.expErr {
 				require.Error(t, gotErr)
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.Equal(t, spec.newLabel, k.GetContractInfo(ctx, example.Contract).Label)
+			assert.Equal(t, spec.newLabel, k.GetContractInfo(ctx, spec.contract).Label)
 			// and event emitted
 			require.Len(t, em.Events(), 1)
 			assert.Equal(t, "update_contract_label", em.Events()[0].Type)
 			exp := map[string]string{
-				"_contract_address": example.Contract.String(),
+				"_contract_address": spec.contract.String(),
 				"new_label":         spec.newLabel,
 			}
 			assert.Equal(t, exp, attrsToStringMap(em.Events()[0].Attributes))
