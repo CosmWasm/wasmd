@@ -1144,3 +1144,86 @@ func TestStoreAndMigrateContract(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateContractLabel(t *testing.T) {
+	wasmApp := app.Setup(t)
+	ctx := wasmApp.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+
+	var (
+		myAddress       sdk.AccAddress = make([]byte, types.ContractAddrLen)
+		authority                      = wasmApp.WasmKeeper.GetAuthority()
+		_, _, otherAddr                = testdata.KeyTestPubAddr()
+	)
+
+	specs := map[string]struct {
+		addr     string
+		newLabel string
+		expErr   bool
+	}{
+		"authority can update contract label": {
+			addr:     authority,
+			newLabel: "new label",
+			expErr:   false,
+		},
+		"admin can update contract label": {
+			addr:     myAddress.String(),
+			newLabel: "new label",
+			expErr:   false,
+		},
+		"other address cannot update contract label": {
+			addr:     otherAddr.String(),
+			newLabel: "new label",
+			expErr:   true,
+		},
+		"empty new label": {
+			addr:   authority,
+			expErr: true,
+		},
+		"invalid new label": {
+			addr:     authority,
+			newLabel: " start with space ",
+			expErr:   true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup
+			msg := &types.MsgStoreAndInstantiateContract{
+				Authority:             spec.addr,
+				WASMByteCode:          wasmContract,
+				InstantiatePermission: &types.AllowEverybody,
+				Admin:                 myAddress.String(),
+				UnpinCode:             false,
+				Label:                 "old label",
+				Msg:                   []byte(`{}`),
+				Funds:                 sdk.Coins{},
+			}
+			rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+			require.NoError(t, err)
+			var storeAndInstantiateResponse types.MsgStoreAndInstantiateContractResponse
+			require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &storeAndInstantiateResponse))
+
+			contract := storeAndInstantiateResponse.Address
+			contractAddr, err := sdk.AccAddressFromBech32(contract)
+			require.NoError(t, err)
+			require.Equal(t, "old label", wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
+
+			// when
+			msgUpdateLabel := &types.MsgUpdateContractLabel{
+				Sender:   spec.addr,
+				NewLabel: spec.newLabel,
+				Contract: storeAndInstantiateResponse.Address,
+			}
+			_, err = wasmApp.MsgServiceRouter().Handler(msgUpdateLabel)(ctx, msgUpdateLabel)
+
+			// then
+			if spec.expErr {
+				require.Error(t, err)
+				require.Equal(t, "old label", wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, spec.newLabel, wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
+			}
+		})
+	}
+}

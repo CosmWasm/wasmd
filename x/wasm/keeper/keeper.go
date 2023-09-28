@@ -630,6 +630,25 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 	return nil
 }
 
+func (k Keeper) setContractLabel(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newLabel string, authZ types.AuthorizationPolicy) error {
+	contractInfo := k.GetContractInfo(ctx, contractAddress)
+	if contractInfo == nil {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
+	}
+	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
+		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
+	}
+	contractInfo.Label = newLabel
+	k.storeContractInfo(ctx, contractAddress, contractInfo)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeUpdateContractLabel,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyNewLabel, newLabel),
+	))
+
+	return nil
+}
+
 func (k Keeper) appendToContractHistory(ctx sdk.Context, contractAddr sdk.AccAddress, newEntries ...types.ContractCodeHistoryEntry) {
 	store := ctx.KVStore(k.storeKey)
 	// find last element position

@@ -474,3 +474,27 @@ func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.Msg
 		Data:     data,
 	}, nil
 }
+
+func (m msgServer) UpdateContractLabel(goCtx context.Context, msg *types.MsgUpdateContractLabel) (*types.MsgUpdateContractLabelResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "sender")
+	}
+	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "contract")
+	}
+
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
+
+	if err := m.keeper.setContractLabel(ctx, contractAddr, senderAddr, msg.NewLabel, policy); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateContractLabelResponse{}, nil
+}
