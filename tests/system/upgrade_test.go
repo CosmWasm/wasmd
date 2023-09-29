@@ -26,14 +26,14 @@ func TestChainUpgrade(t *testing.T) {
 	// todo: this test works only with linux, currently
 	legacyBinary := FetchExecutable(t, "v0.41.0")
 	t.Logf("+++ legacy binary: %s\n", legacyBinary)
-	targetBinary := sut.ExecBinary
+	currentBranchBinary := sut.ExecBinary
 	sut.ExecBinary = legacyBinary
 	sut.SetupChain()
-	votingPeriod := 15 * time.Second
+	votingPeriod := 10 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
 	const upgradeHeight int64 = 20 //
-	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight-1))
+	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
 
 	cli := NewWasmdCLI(t, sut, verbose)
 
@@ -41,7 +41,7 @@ func TestChainUpgrade(t *testing.T) {
 
 	// submit upgrade proposal
 	// todo: all of this can be moved into the test_cli to make it more readable in the tests
-	upgradeName := "my chain upgrade"
+	upgradeName := "v0.50.x"
 	proposal := fmt.Sprintf(`
 {
  "messages": [
@@ -70,19 +70,30 @@ func TestChainUpgrade(t *testing.T) {
 	require.NotEmpty(t, proposals, raw)
 	ourProposalID := proposals[len(proposals)-1].String() // last is ours
 	sut.withEachNodeHome(func(n int, _ string) {
-		t.Logf("Voting: validator %d\n", n)
-		rsp = cli.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", cli.GetKeyAddr(fmt.Sprintf("node%d", n)))
-		RequireTxSuccess(t, rsp)
+		go func() { // do parallel
+			t.Logf("Voting: validator %d\n", n)
+			rsp = cli.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", cli.GetKeyAddr(fmt.Sprintf("node%d", n)))
+			RequireTxSuccess(t, rsp)
+		}()
 	})
+	//
+	t.Logf("current_height: %d\n", sut.currentHeight)
+	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
+	t.Log(raw)
+	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
 	t.Log(raw)
 
-	sut.AwaitChainStopped()
+	t.Log("waiting for upgrade info")
+	sut.AwaitUpgradeInfo(t)
+	sut.StopChain() // just in case
+
 	t.Log("Upgrade height was reached. Upgrading chain")
-	sut.ExecBinary = targetBinary
+	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
 	// todo: ensure that state matches expectations
+	t.Log("Done")
 }
 
 const cacheDir = "binaries"

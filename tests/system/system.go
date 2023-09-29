@@ -234,6 +234,23 @@ func isLogNoise(text string) bool {
 	return false
 }
 
+// AwaitUpgradeInfo blocks util an upgrade info file is persisted to disk
+func (s *SystemUnderTest) AwaitUpgradeInfo(t *testing.T) {
+	var found bool
+	for !found {
+		s.withEachNodeHome(func(i int, home string) {
+			_, err := os.Stat(filepath.Join(s.nodePath(0), "data", "upgrade-info.json"))
+			switch {
+			case err == nil:
+				found = true
+			case !os.IsNotExist(err):
+				t.Fatalf(err.Error())
+			}
+		})
+		time.Sleep(s.blockTime)
+	}
+}
+
 func (s *SystemUnderTest) AwaitChainStopped() {
 	for s.anyNodeRunning() {
 		time.Sleep(s.blockTime)
@@ -289,23 +306,24 @@ func (s *SystemUnderTest) StopChain() {
 	s.cleanupFn = nil
 	// send SIGTERM
 	s.withEachPid(func(p *os.Process) {
-		if err := p.Signal(syscall.SIGTERM); err != nil {
-			s.Logf("failed to stop node with pid %d: %s\n", p.Pid, err)
-		}
+		go func() {
+			if err := p.Signal(syscall.SIGTERM); err != nil {
+				s.Logf("failed to stop node with pid %d: %s\n", p.Pid, err)
+			}
+		}()
 	})
 	// give some final time to shut down
 	s.withEachPid(func(p *os.Process) {
 		time.Sleep(200 * time.Millisecond)
 	})
 	// goodbye
-	s.withEachPid(func(p *os.Process) {
-		s.Logf("killing node %d\n", p.Pid)
-		if err := p.Kill(); err != nil {
-			s.Logf("failed to kill node with pid %d: %s\n", p.Pid, err)
-		}
-	})
-	for s.anyNodeRunning() {
-		time.Sleep(100 * time.Millisecond)
+	for ; s.anyNodeRunning(); time.Sleep(100 * time.Millisecond) {
+		s.withEachPid(func(p *os.Process) {
+			s.Logf("killing node %d\n", p.Pid)
+			if err := p.Kill(); err != nil {
+				s.Logf("failed to kill node with pid %d: %s\n", p.Pid, err)
+			}
+		})
 	}
 	s.ChainStarted = false
 }
@@ -547,13 +565,13 @@ func (s *SystemUnderTest) startNodesAsync(t *testing.T, xargs ...string) {
 		s.Logf("Node started: %d\n", pid)
 
 		// cleanup when stopped
-		go func() {
+		go func(pid int) {
 			_ = cmd.Wait() // blocks until shutdown
 			s.pidsLock.Lock()
 			delete(s.pids, pid)
 			s.pidsLock.Unlock()
 			s.Logf("Node stopped: %d\n", pid)
-		}()
+		}(pid)
 	})
 }
 
