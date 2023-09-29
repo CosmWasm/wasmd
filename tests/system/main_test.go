@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -41,9 +42,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	workDir = dir
+	WorkDir = dir
 	if verbose {
-		println("Work dir: ", workDir)
+		println("Work dir: ", WorkDir)
 	}
 	initSDKConfig(*bech32Prefix)
 
@@ -80,7 +81,7 @@ func requireEnoughFileHandlers(nodesCount int) {
 	}
 
 	cmd := exec.Command(ulimit, "-n")
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error :%#+v, output: %s", err, string(out)))

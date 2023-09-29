@@ -1,4 +1,4 @@
-//go:build system_test
+//go:build system_test && linux
 
 package system
 
@@ -90,8 +90,8 @@ const cacheDir = "binaries"
 // FetchExecutable to download and extract tar.gz for linux
 func FetchExecutable(t *testing.T, version string) string {
 	// use local cache
-	cacheFolder := filepath.Join(workDir, cacheDir)
-	err := os.MkdirAll(cacheFolder, 0777)
+	cacheFolder := filepath.Join(WorkDir, cacheDir)
+	err := os.MkdirAll(cacheFolder, 0o777)
 	if err != nil && !os.IsExist(err) {
 		panic(err)
 	}
