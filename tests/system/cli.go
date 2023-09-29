@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/std"
+
+	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"golang.org/x/exp/slices"
-
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/std"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
@@ -308,7 +308,7 @@ func (c WasmdCli) WasmStore(file string, args ...string) int {
 	rsp := c.CustomCommand(cmd...)
 
 	RequireTxSuccess(c.t, rsp)
-	codeID := gjson.Get(rsp, "events.#.attributes.#(key=code_id).value").Array()[0].Array()[0].Int()
+	codeID := gjson.Get(rsp, "logs.#.events.#.attributes.#(key=code_id).value").Array()[0].Array()[0].Int()
 	require.NotEmpty(c.t, codeID)
 	return int(codeID)
 }
@@ -321,7 +321,7 @@ func (c WasmdCli) WasmInstantiate(codeID int, initMsg string, args ...string) st
 	cmd := append([]string{"tx", "wasm", "instantiate", strconv.Itoa(codeID), initMsg}, args...)
 	rsp := c.CustomCommand(cmd...)
 	RequireTxSuccess(c.t, rsp)
-	addr := gjson.Get(rsp, "events.#.attributes.#(key=_contract_address).value").Array()[0].Array()[0].String()
+	addr := gjson.Get(rsp, "logs.#.events.#.attributes.#(key=_contract_address).value").Array()[0].Array()[0].String()
 	require.NotEmpty(c.t, addr)
 	return addr
 }
@@ -341,21 +341,21 @@ func (c WasmdCli) QueryBalances(addr string) string {
 // QueryBalance returns balance amount for given denom.
 // 0 when not found
 func (c WasmdCli) QueryBalance(addr, denom string) int64 {
-	raw := c.CustomQuery("q", "bank", "balance", addr, denom)
+	raw := c.CustomQuery("q", "bank", "balances", addr, "--denom="+denom)
 	require.Contains(c.t, raw, "amount", raw)
-	return gjson.Get(raw, "balance.amount").Int()
+	return gjson.Get(raw, "amount").Int()
 }
 
 // QueryTotalSupply returns total amount of tokens for a given denom.
 // 0 when not found
 func (c WasmdCli) QueryTotalSupply(denom string) int64 {
-	raw := c.CustomQuery("q", "bank", "total-supply")
+	raw := c.CustomQuery("q", "bank", "total", "--denom="+denom)
 	require.Contains(c.t, raw, "amount", raw)
-	return gjson.Get(raw, fmt.Sprintf("supply.#(denom==%q).amount", denom)).Int()
+	return gjson.Get(raw, "amount").Int()
 }
 
-func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetResponse {
-	args := []string{"q", "comet-validator-set"}
+func (c WasmdCli) GetTendermintValidatorSet() rpc.ResultValidatorsOutput {
+	args := []string{"q", "tendermint-validator-set"}
 	got := c.CustomQuery(args...)
 
 	// still using amino here as the SDK
@@ -363,17 +363,17 @@ func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetRe
 	std.RegisterLegacyAminoCodec(amino)
 	std.RegisterInterfaces(codectypes.NewInterfaceRegistry())
 
-	var res cmtservice.GetLatestValidatorSetResponse
+	var res rpc.ResultValidatorsOutput
 	require.NoError(c.t, amino.UnmarshalJSON([]byte(got), &res), got)
 	return res
 }
 
 // IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
-func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
+func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (rpc.ResultValidatorsOutput, bool) {
 	valResult := c.GetTendermintValidatorSet()
 	var found bool
 	for _, v := range valResult.Validators {
-		if v.PubKey.Equal(valPubKey) {
+		if v.PubKey.Equals(valPubKey) {
 			found = true
 			break
 		}
