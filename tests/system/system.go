@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -17,19 +18,24 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/tidwall/sjson"
-
 	"github.com/cometbft/cometbft/libs/sync"
 	client "github.com/cometbft/cometbft/rpc/client/http"
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/sjson"
+
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var workDir string
+var (
+	// WorkDir is the directory where tests are executed. Path should be relative to this dir
+	WorkDir string
+
+	// ExecBinaryUnversionedRegExp regular expression to extract the unversioned binary name
+	ExecBinaryUnversionedRegExp = regexp.MustCompile(`^(\w+)-?.*$`)
+)
 
 // SystemUnderTest blockchain provisioning
 type SystemUnderTest struct {
@@ -53,14 +59,18 @@ type SystemUnderTest struct {
 	dirty             bool // requires full reset when marked dirty
 
 	pidsLock sync.RWMutex
-	pids     []int
+	pids     map[int]struct{}
 }
 
 func NewSystemUnderTest(execBinary string, verbose bool, nodesCount int, blockTime time.Duration) *SystemUnderTest {
 	if execBinary == "" {
 		panic("executable binary name must not be empty")
 	}
-	xxx := "wasmd" // todo: extract unversioned name from ExecBinary
+	nameTokens := ExecBinaryUnversionedRegExp.FindAllString(execBinary, 1)
+	if len(nameTokens) == 0 || nameTokens[0] == "" {
+		panic("failed to parse project name from binary")
+	}
+
 	return &SystemUnderTest{
 		chainID:           "testing",
 		ExecBinary:        execBinary,
@@ -73,13 +83,14 @@ func NewSystemUnderTest(execBinary string, verbose bool, nodesCount int, blockTi
 		out:               os.Stdout,
 		verbose:           verbose,
 		minGasPrice:       fmt.Sprintf("0.000001%s", sdk.DefaultBondDenom),
-		projectName:       xxx,
+		projectName:       nameTokens[0],
+		pids:              make(map[int]struct{}, nodesCount),
 	}
 }
 
 func (s *SystemUnderTest) SetupChain() {
 	s.Logf("Setup chain: %s\n", s.outputDir)
-	if err := os.RemoveAll(filepath.Join(workDir, s.outputDir)); err != nil {
+	if err := os.RemoveAll(filepath.Join(WorkDir, s.outputDir)); err != nil {
 		panic(err.Error())
 	}
 
@@ -100,7 +111,7 @@ func (s *SystemUnderTest) SetupChain() {
 		locateExecutable(s.ExecBinary),
 		args...,
 	)
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error :%#+v, output: %s", err, string(out)))
@@ -109,7 +120,7 @@ func (s *SystemUnderTest) SetupChain() {
 	s.nodesCount = s.initialNodesCount
 
 	// modify genesis with system test defaults
-	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json")
+	src := filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json")
 	genesisBz, err := os.ReadFile(src)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load genesis: %s", err))
@@ -126,13 +137,13 @@ func (s *SystemUnderTest) SetupChain() {
 	})
 
 	// backup genesis
-	dest := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json.orig")
+	dest := filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json.orig")
 	if _, err := copyFile(src, dest); err != nil {
 		panic(fmt.Sprintf("copy failed :%#+v", err))
 	}
 	// backup keyring
-	src = filepath.Join(workDir, s.nodePath(0), "keyring-test")
-	dest = filepath.Join(workDir, s.outputDir, "keyring-test")
+	src = filepath.Join(WorkDir, s.nodePath(0), "keyring-test")
+	dest = filepath.Join(WorkDir, s.outputDir, "keyring-test")
 	if err := copyFilesInDir(src, dest); err != nil {
 		panic(fmt.Sprintf("copy files from dir :%#+v", err))
 	}
@@ -165,13 +176,13 @@ func (s *SystemUnderTest) MarkDirty() {
 }
 
 // IsDirty true when non default genesis or other state modification were applied that might create incompatibility for tests
-func (s SystemUnderTest) IsDirty() bool {
+func (s *SystemUnderTest) IsDirty() bool {
 	return s.dirty
 }
 
 // watchLogs stores stdout/stderr in a file and in a ring buffer to output the last n lines on test error
 func (s *SystemUnderTest) watchLogs(node int, cmd *exec.Cmd) {
-	logfile, err := os.Create(filepath.Join(workDir, s.outputDir, fmt.Sprintf("node%d.out", node)))
+	logfile, err := os.Create(filepath.Join(WorkDir, s.outputDir, fmt.Sprintf("node%d.out", node)))
 	if err != nil {
 		panic(fmt.Sprintf("open logfile error %#+v", err))
 	}
@@ -277,46 +288,44 @@ func (s *SystemUnderTest) StopChain() {
 	}
 	s.cleanupFn = nil
 	// send SIGTERM
+	s.withEachPid(func(p *os.Process) {
+		if err := p.Signal(syscall.SIGTERM); err != nil {
+			s.Logf("failed to stop node with pid %d: %s\n", p.Pid, err)
+		}
+	})
+	// give some final time to shut down
+	s.withEachPid(func(p *os.Process) {
+		time.Sleep(200 * time.Millisecond)
+	})
+	// goodbye
+	s.withEachPid(func(p *os.Process) {
+		s.Logf("killing node %d\n", p.Pid)
+		if err := p.Kill(); err != nil {
+			s.Logf("failed to kill node with pid %d: %s\n", p.Pid, err)
+		}
+	})
+	for s.anyNodeRunning() {
+		time.Sleep(100 * time.Millisecond)
+	}
+	s.ChainStarted = false
+}
+
+func (s *SystemUnderTest) withEachPid(cb func(p *os.Process)) {
 	s.pidsLock.RLock()
-	for _, pid := range s.pids {
+	pids := s.pids
+	s.pidsLock.RUnlock()
+
+	for pid := range pids {
 		p, err := os.FindProcess(pid)
 		if err != nil {
 			continue
 		}
-		if err := p.Signal(syscall.Signal(15)); err == nil {
-			s.Logf("failed to stop node with pid %d: %s\n", pid, err)
-		}
+		cb(p)
 	}
-	s.pidsLock.RUnlock()
-	var shutdown bool
-	for timeout := time.NewTimer(500 * time.Millisecond).C; !shutdown; {
-		select {
-		case <-timeout:
-			s.Log("killing nodes now")
-			s.pidsLock.RLock()
-			for _, pid := range s.pids {
-				p, err := os.FindProcess(pid)
-				if err != nil {
-					continue
-				}
-				if err := p.Kill(); err == nil {
-					s.Logf("failed to kill node with pid %d: %s\n", pid, err)
-				}
-			}
-			s.pidsLock.RUnlock()
-			shutdown = true
-		default:
-			shutdown = shutdown || s.anyNodeRunning()
-		}
-	}
-	s.pidsLock.Lock()
-	s.pids = nil
-	s.pidsLock.Unlock()
-	s.ChainStarted = false
 }
 
 // PrintBuffer prints the chain logs to the console
-func (s SystemUnderTest) PrintBuffer() {
+func (s *SystemUnderTest) PrintBuffer() {
 	s.outBuff.Do(func(v interface{}) {
 		if v != nil {
 			fmt.Fprintf(s.out, "out> %s\n", v)
@@ -331,11 +340,11 @@ func (s SystemUnderTest) PrintBuffer() {
 }
 
 // BuildNewBinary builds and installs new executable binary
-func (s SystemUnderTest) BuildNewBinary() {
+func (s *SystemUnderTest) BuildNewBinary() {
 	s.Log("Install binaries\n")
 	makePath := locateExecutable("make")
 	cmd := exec.Command(makePath, "clean", "install")
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error %#v : output: %s", err, string(out)))
@@ -403,18 +412,18 @@ func (s *SystemUnderTest) ResetChain(t *testing.T) {
 	t.Helper()
 	t.Log("Reset chain")
 	s.StopChain()
-	restoreOriginalGenesis(t, *s)
-	restoreOriginalKeyring(t, *s)
+	restoreOriginalGenesis(t, s)
+	restoreOriginalKeyring(t, s)
 	s.resetBuffers()
 
 	// remove all additional nodes
 	for i := s.initialNodesCount; i < s.nodesCount; i++ {
-		os.RemoveAll(filepath.Join(workDir, s.nodePath(i)))
-		os.Remove(filepath.Join(workDir, s.outputDir, fmt.Sprintf("node%d.out", i)))
+		_ = os.RemoveAll(filepath.Join(WorkDir, s.nodePath(i)))
+		_ = os.Remove(filepath.Join(WorkDir, s.outputDir, fmt.Sprintf("node%d.out", i)))
 	}
 	s.nodesCount = s.initialNodesCount
 
-	// reset all validataor nodes
+	// reset all validator nodes
 	s.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
 	s.currentHeight = 0
 	s.dirty = false
@@ -445,7 +454,7 @@ func (s *SystemUnderTest) ModifyGenesisJSON(t *testing.T, mutators ...GenesisMut
 // modify json without enforcing a reset
 func (s *SystemUnderTest) modifyGenesisJSON(t *testing.T, mutators ...GenesisMutator) {
 	require.Empty(t, s.currentHeight, "forced chain reset required")
-	current, err := os.ReadFile(filepath.Join(workDir, s.nodePath(0), "config", "genesis.json"))
+	current, err := os.ReadFile(filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json"))
 	require.NoError(t, err)
 	for _, m := range mutators {
 		current = m(current)
@@ -458,7 +467,7 @@ func (s *SystemUnderTest) modifyGenesisJSON(t *testing.T, mutators ...GenesisMut
 
 // ReadGenesisJSON returns current genesis.json content as raw string
 func (s *SystemUnderTest) ReadGenesisJSON(t *testing.T) string {
-	content, err := os.ReadFile(filepath.Join(workDir, s.nodePath(0), "config", "genesis.json"))
+	content, err := os.ReadFile(filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json"))
 	require.NoError(t, err)
 	return string(content)
 }
@@ -479,7 +488,7 @@ func (s *SystemUnderTest) setGenesis(t *testing.T, srcPath string) {
 }
 
 func saveGenesis(home string, content []byte) error {
-	out, err := os.Create(filepath.Join(workDir, home, "config", "genesis.json"))
+	out, err := os.Create(filepath.Join(WorkDir, home, "config", "genesis.json"))
 	if err != nil {
 		return fmt.Errorf("out file: %w", err)
 	}
@@ -508,7 +517,7 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 				locateExecutable(s.ExecBinary),
 				xargs...,
 			)
-			cmd.Dir = workDir
+			cmd.Dir = WorkDir
 			out, err := cmd.CombinedOutput()
 			require.NoError(t, err, "node %d: %s", i, string(out))
 			s.Logf("Result: %s\n", string(out))
@@ -521,65 +530,59 @@ func (s *SystemUnderTest) ForEachNodeExecAndWait(t *testing.T, cmds ...[]string)
 // startNodesAsync runs the given app cli command for all cluster nodes and returns without waiting
 func (s *SystemUnderTest) startNodesAsync(t *testing.T, xargs ...string) {
 	s.withEachNodeHome(func(i int, home string) {
-		args := append(xargs, "--home", home) //nolint:gocritic
+		args := append(xargs, "--home", home)
 		s.Logf("Execute `%s %s`\n", s.ExecBinary, strings.Join(args, " "))
 		cmd := exec.Command( //nolint:gosec
 			locateExecutable(s.ExecBinary),
 			args...,
 		)
-		cmd.Dir = workDir
+		cmd.Dir = WorkDir
 		s.watchLogs(i, cmd)
 		require.NoError(t, cmd.Start(), "node %d", i)
 
+		pid := cmd.Process.Pid
 		s.pidsLock.Lock()
-		s.pids = append(s.pids, cmd.Process.Pid)
+		s.pids[pid] = struct{}{}
 		s.pidsLock.Unlock()
+		s.Logf("Node started: %d\n", pid)
 
 		// cleanup when stopped
 		go func() {
-			_ = cmd.Wait()
+			_ = cmd.Wait() // blocks until shutdown
 			s.pidsLock.Lock()
-			defer s.pidsLock.Unlock()
-			if len(s.pids) == 0 {
-				return
-			}
-			newPids := make([]int, 0, len(s.pids)-1)
-			for _, p := range s.pids {
-				if p != cmd.Process.Pid {
-					newPids = append(newPids, p)
-				}
-			}
-			s.pids = newPids
+			delete(s.pids, pid)
+			s.pidsLock.Unlock()
+			s.Logf("Node stopped: %d\n", pid)
 		}()
 	})
 }
 
-func (s SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
+func (s *SystemUnderTest) withEachNodeHome(cb func(i int, home string)) {
 	for i := 0; i < s.nodesCount; i++ {
 		cb(i, s.nodePath(i))
 	}
 }
 
 // nodePath returns the path of the node within the work dir. not absolute
-func (s SystemUnderTest) nodePath(i int) string {
+func (s *SystemUnderTest) nodePath(i int) string {
 	return fmt.Sprintf("%s/node%d/%s", s.outputDir, i, s.projectName)
 }
 
-func (s SystemUnderTest) Log(msg string) {
+func (s *SystemUnderTest) Log(msg string) {
 	if s.verbose {
-		fmt.Fprint(s.out, msg)
+		_, _ = fmt.Fprint(s.out, msg)
 	}
 }
 
-func (s SystemUnderTest) Logf(msg string, args ...interface{}) {
+func (s *SystemUnderTest) Logf(msg string, args ...interface{}) {
 	s.Log(fmt.Sprintf(msg, args...))
 }
 
-func (s SystemUnderTest) RPCClient(t *testing.T) RPCClient {
+func (s *SystemUnderTest) RPCClient(t *testing.T) RPCClient {
 	return NewRPCClient(t, s.rpcAddr)
 }
 
-func (s SystemUnderTest) AllPeers(t *testing.T) []string {
+func (s *SystemUnderTest) AllPeers(t *testing.T) []string {
 	result := make([]string, s.nodesCount)
 	for i, n := range s.AllNodes(t) {
 		result[i] = n.PeerAddr()
@@ -587,7 +590,7 @@ func (s SystemUnderTest) AllPeers(t *testing.T) []string {
 	return result
 }
 
-func (s SystemUnderTest) AllNodes(t *testing.T) []Node {
+func (s *SystemUnderTest) AllNodes(t *testing.T) []Node {
 	result := make([]Node, s.nodesCount)
 	outs := s.ForEachNodeExecAndWait(t, []string{"tendermint", "show-node-id"})
 	ip, err := server.ExternalIP()
@@ -625,15 +628,15 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		locateExecutable(s.ExecBinary),
 		args...,
 	)
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	s.watchLogs(nodeNumber, cmd)
 	require.NoError(t, cmd.Run(), "failed to start node with id %d", nodeNumber)
 	require.NoError(t, saveGenesis(nodePath, []byte(s.ReadGenesisJSON(t))))
 
 	// quick hack: copy config and overwrite by start params
-	configFile := filepath.Join(workDir, nodePath, "config", "config.toml")
+	configFile := filepath.Join(WorkDir, nodePath, "config", "config.toml")
 	_ = os.Remove(configFile)
-	_, err := copyFile(filepath.Join(workDir, s.nodePath(0), "config", "config.toml"), configFile)
+	_, err := copyFile(filepath.Join(WorkDir, s.nodePath(0), "config", "config.toml"), configFile)
 	require.NoError(t, err)
 
 	// start node
@@ -662,7 +665,7 @@ func (s *SystemUnderTest) AddFullnode(t *testing.T, beforeStart ...func(nodeNumb
 		locateExecutable(s.ExecBinary),
 		args...,
 	)
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	s.watchLogs(nodeNumber, cmd)
 	require.NoError(t, cmd.Start(), "node %d", nodeNumber)
 	return node
@@ -847,17 +850,17 @@ func CaptureAllEventsConsumer(t *testing.T, optMaxWaitTime ...time.Duration) (c 
 }
 
 // restoreOriginalGenesis replace nodes genesis by the one created on setup
-func restoreOriginalGenesis(t *testing.T, s SystemUnderTest) {
-	src := filepath.Join(workDir, s.nodePath(0), "config", "genesis.json.orig")
+func restoreOriginalGenesis(t *testing.T, s *SystemUnderTest) {
+	src := filepath.Join(WorkDir, s.nodePath(0), "config", "genesis.json.orig")
 	s.setGenesis(t, src)
 }
 
 // restoreOriginalKeyring replaces test keyring with original
-func restoreOriginalKeyring(t *testing.T, s SystemUnderTest) {
-	dest := filepath.Join(workDir, s.outputDir, "keyring-test")
+func restoreOriginalKeyring(t *testing.T, s *SystemUnderTest) {
+	dest := filepath.Join(WorkDir, s.outputDir, "keyring-test")
 	require.NoError(t, os.RemoveAll(dest))
 	for i := 0; i < s.initialNodesCount; i++ {
-		src := filepath.Join(workDir, s.nodePath(i), "keyring-test")
+		src := filepath.Join(WorkDir, s.nodePath(i), "keyring-test")
 		require.NoError(t, copyFilesInDir(src, dest))
 	}
 }

@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/std"
-
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
-	"github.com/cosmos/cosmos-sdk/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"golang.org/x/exp/slices"
+
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
@@ -52,7 +52,7 @@ func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
 		sut.rpcAddr,
 		sut.chainID,
 		sut.AwaitNextBlock,
-		filepath.Join(workDir, sut.outputDir),
+		filepath.Join(WorkDir, sut.outputDir),
 		"1"+sdk.DefaultBondDenom,
 		verbose,
 		assert.NoError,
@@ -211,7 +211,7 @@ func (c WasmdCli) runWithInput(args []string, input io.Reader) (output string, o
 			}
 		}()
 		cmd := exec.Command(locateExecutable("wasmd"), args...) //nolint:gosec
-		cmd.Dir = workDir
+		cmd.Dir = WorkDir
 		cmd.Stdin = input
 		return cmd.CombinedOutput()
 	}()
@@ -236,7 +236,7 @@ func (c WasmdCli) withTXFlags(args ...string) []string {
 }
 
 func (c WasmdCli) withKeyringFlags(args ...string) []string {
-	r := append(args, //nolint:gocritic
+	r := append(args,
 		"--home", c.homeDir,
 		"--keyring-backend", "test",
 	)
@@ -262,7 +262,7 @@ func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) st
 
 // AddKey add key to default keyring. Returns address
 func (c WasmdCli) AddKey(name string) string {
-	cmd := c.withKeyringFlags("keys", "add", name) //, "--no-backup")
+	cmd := c.withKeyringFlags("keys", "add", name, "--no-backup")
 	out, _ := c.run(cmd)
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
