@@ -381,12 +381,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 			// validators := keeper.GetAllValidators(ctx)
 			wasmVals := make([]wasmvmtypes.Validator, len(validators))
 			for i, v := range validators {
-				wasmVals[i] = wasmvmtypes.Validator{
-					Address:       v.OperatorAddress,
-					Commission:    v.Commission.Rate.String(),
-					MaxCommission: v.Commission.MaxRate.String(),
-					MaxChangeRate: v.Commission.MaxChangeRate.String(),
-				}
+				wasmVals[i] = ConvertSdkValidatorToWasm(v)
 			}
 			res := wasmvmtypes.AllValidatorsResponse{
 				Validators: wasmVals,
@@ -767,7 +762,7 @@ func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []w
 	return converted
 }
 
-// ConvertProtoToJSONMarshal  unmarshals the given bytes into a proto message and then marshals it to json.
+// ConvertProtoToJSONMarshal unmarshals the given bytes into a proto message and then marshals it to json.
 // This is done so that clients calling stargate queries do not need to define their own proto unmarshalers,
 // being able to use response directly by json marshaling, which is supported in cosmwasm.
 func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse proto.Message, bz []byte) ([]byte, error) {
@@ -784,6 +779,16 @@ func ConvertProtoToJSONMarshal(cdc codec.Codec, protoResponse proto.Message, bz 
 
 	protoResponse.Reset()
 	return bz, nil
+}
+
+// ConvertSdkValidatorToWasm sdk validator to wasmvm validator type
+func ConvertSdkValidatorToWasm(v stakingtypes.Validator) wasmvmtypes.Validator {
+	return wasmvmtypes.Validator{
+		Address:       v.OperatorAddress,
+		Commission:    v.Commission.Rate.String(),
+		MaxCommission: v.Commission.MaxRate.String(),
+		MaxChangeRate: v.Commission.MaxChangeRate.String(),
+	}
 }
 
 var _ WasmVMQueryHandler = WasmVMQueryHandlerFn(nil)
