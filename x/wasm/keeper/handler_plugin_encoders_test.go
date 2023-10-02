@@ -11,12 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -48,14 +46,10 @@ func TestEncoding(t *testing.T) {
 	bankMsgBin, err := proto.Marshal(bankMsg)
 	require.NoError(t, err)
 
-	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
+	msg := types.MsgStoreCodeFixture()
+	proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{msg}, sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)), addr1.String(), "", "title", "summary")
 	require.NoError(t, err)
 
-	proposalMsg := &v1beta1.MsgSubmitProposal{
-		Proposer:       addr1.String(),
-		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
-		Content:        content,
-	}
 	proposalMsgBin, err := proto.Marshal(proposalMsg)
 	require.NoError(t, err)
 
@@ -420,7 +414,7 @@ func TestEncoding(t *testing.T) {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.gov.v1beta1.MsgSubmitProposal",
+					TypeURL: "/cosmos.gov.v1.MsgSubmitProposal",
 					Value:   proposalMsgBin,
 				},
 			},
