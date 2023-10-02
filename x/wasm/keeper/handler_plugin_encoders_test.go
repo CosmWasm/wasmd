@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -46,10 +47,13 @@ func TestEncoding(t *testing.T) {
 	bankMsgBin, err := proto.Marshal(bankMsg)
 	require.NoError(t, err)
 
-	msg := types.MsgStoreCodeFixture()
-	proposalMsg, err := v1.NewMsgSubmitProposal([]sdk.Msg{msg}, sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)), addr1.String(), "", "title", "summary")
+	msg, err := codectypes.NewAnyWithValue(types.MsgStoreCodeFixture())
 	require.NoError(t, err)
-
+	proposalMsg := &v1.MsgSubmitProposal{
+		Proposer:       addr1.String(),
+		Messages:       []*codectypes.Any{msg},
+		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
+	}
 	proposalMsgBin, err := proto.Marshal(proposalMsg)
 	require.NoError(t, err)
 
@@ -288,7 +292,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
-		"staking delegate to non-validator": {
+		"staking delegate to non-validator - invalid": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
@@ -710,7 +714,7 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 		},
-		"Gov weighted vote: duplicate option": {
+		"Gov weighted vote: duplicate option - invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
@@ -735,7 +739,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			},
 			expInvalid: true,
 		},
-		"Gov weighted vote: weight sum exceeds 1": {
+		"Gov weighted vote: weight sum exceeds 1- invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
@@ -760,7 +764,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			},
 			expInvalid: true,
 		},
-		"Gov weighted vote: weight sum less than 1": {
+		"Gov weighted vote: weight sum less than 1 - invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
