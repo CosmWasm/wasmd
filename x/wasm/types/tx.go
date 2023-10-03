@@ -103,8 +103,8 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 		return errorsmod.Wrap(err, "label")
 	}
 
-	if !msg.Funds.IsValid() {
-		return sdkerrors.ErrInvalidCoins
+	if err := msg.Funds.Validate(); err != nil {
+		return errorsmod.Wrap(err, "funds")
 	}
 
 	if len(msg.Admin) != 0 {
@@ -142,8 +142,8 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 		return errorsmod.Wrap(err, "contract")
 	}
 
-	if !msg.Funds.IsValid() {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
+	if err := msg.Funds.Validate(); err != nil {
+		return errorsmod.Wrap(err, "funds")
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
 		return errorsmod.Wrap(err, "payload msg")
@@ -336,8 +336,8 @@ func (msg MsgInstantiateContract2) ValidateBasic() error {
 		return errorsmod.Wrap(err, "label")
 	}
 
-	if !msg.Funds.IsValid() {
-		return sdkerrors.ErrInvalidCoins
+	if err := msg.Funds.Validate(); err != nil {
+		return errorsmod.Wrap(err, "funds")
 	}
 
 	if len(msg.Admin) != 0 {
@@ -537,8 +537,8 @@ func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 		return errorsmod.Wrap(err, "label")
 	}
 
-	if !msg.Funds.IsValid() {
-		return sdkerrors.ErrInvalidCoins
+	if err := msg.Funds.Validate(); err != nil {
+		return errorsmod.Wrap(err, "funds")
 	}
 
 	if len(msg.Admin) != 0 {
