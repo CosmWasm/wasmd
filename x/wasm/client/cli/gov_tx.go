@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
