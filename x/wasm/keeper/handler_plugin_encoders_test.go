@@ -53,6 +53,8 @@ func TestEncoding(t *testing.T) {
 		Proposer:       addr1.String(),
 		Messages:       []*codectypes.Any{msg},
 		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
+		Title:          "proposal",
+		Summary:        "proposal summary",
 	}
 	proposalMsgBin, err := proto.Marshal(proposalMsg)
 	require.NoError(t, err)
