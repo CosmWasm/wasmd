@@ -9,7 +9,7 @@ import (
 
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/assert"
