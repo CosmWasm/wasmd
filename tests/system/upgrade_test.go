@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 )
@@ -23,7 +25,6 @@ func TestChainUpgrade(t *testing.T) {
 	// when a chain upgrade proposal is executed
 	// then the chain upgrades successfully
 
-	// todo: this test works only with linux, currently
 	legacyBinary := FetchExecutable(t, "v0.41.0")
 	t.Logf("+++ legacy binary: %s\n", legacyBinary)
 	currentBranchBinary := sut.ExecBinary
@@ -32,12 +33,22 @@ func TestChainUpgrade(t *testing.T) {
 	votingPeriod := 10 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
-	const upgradeHeight int64 = 20 //
+	const upgradeHeight int64 = 22
 	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
 
 	cli := NewWasmdCLI(t, sut, verbose)
 
-	// todo: set some state to ensure that migrations work
+	// set some state to ensure that migrations work
+	verifierAddr := cli.AddKey("verifier")
+	beneficiary := randomBech32Addr()
+
+	t.Log("Launch hackatom contract")
+	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
+	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, verifierAddr, beneficiary)
+	contractAddr := cli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr, "--amount=1000000stake")
+
+	gotRsp := cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 
 	// submit upgrade proposal
 	// todo: all of this can be moved into the test_cli to make it more readable in the tests
@@ -84,6 +95,8 @@ func TestChainUpgrade(t *testing.T) {
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
 	t.Log(raw)
+	proposalStatus := gjson.Get(raw, "proposal.status").String()
+	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus)
 
 	t.Log("waiting for upgrade info")
 	sut.AwaitUpgradeInfo(t)
@@ -92,8 +105,13 @@ func TestChainUpgrade(t *testing.T) {
 	t.Log("Upgrade height was reached. Upgrading chain")
 	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
-	// todo: ensure that state matches expectations
-	t.Log("Done")
+
+	// ensure that state matches expectations
+	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
+	// and contract execution works as expected
+	RequireTxSuccess(t, cli.WasmExecute(contractAddr, verifierAddr, `{"release":{}}`))
+	assert.Equal(t, 1_000_000, cli.QueryBalance(beneficiary, "stake"))
 }
 
 const cacheDir = "binaries"

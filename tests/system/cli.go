@@ -216,7 +216,7 @@ func (c WasmdCli) runWithInput(args []string, input io.Reader) (output string, o
 		return cmd.CombinedOutput()
 	}()
 	ok = c.assertErrorFn(c.t, gotErr, string(gotOut))
-	return string(gotOut), ok
+	return strings.TrimSpace(string(gotOut)), ok
 }
 
 func (c WasmdCli) withQueryFlags(args ...string) []string {
@@ -302,7 +302,7 @@ func (c WasmdCli) FundAddress(destAddr, amount string) string {
 // WasmStore uploads a wasm contract to the chain. Returns code id
 func (c WasmdCli) WasmStore(file string, args ...string) int {
 	if len(args) == 0 {
-		args = []string{"--from=" + defaultSrcAddr, "--gas=2500000"}
+		args = []string{"--from=" + defaultSrcAddr, "--gas=2500000", "--fees=3stake"}
 	}
 	cmd := append([]string{"tx", "wasm", "store", file}, args...)
 	rsp := c.CustomCommand(cmd...)
