@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 
-	circuittypes "cosmossdk.io/x/circuit/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
@@ -13,9 +11,11 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 
 	storetypes "cosmossdk.io/store/types"
+	circuittypes "cosmossdk.io/x/circuit/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the sample SimApp upgrade
