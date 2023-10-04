@@ -104,15 +104,51 @@ func (c WasmdCli) WithRunErrorsIgnored() WasmdCli {
 
 // WithRunErrorMatcher assert function to ensure run command error value
 func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
-	return *NewWasmdCLIx(c.t, c.execBinary, c.nodeAddress, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, f, c.expTXCommitted)
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		c.nodeAddress,
+		c.chainID,
+		c.awaitNextBlock,
+		c.nodesCount,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		f,
+		c.expTXCommitted,
+	)
 }
 
 func (c WasmdCli) WithNodeAddress(nodeAddr string) WasmdCli {
-	return *NewWasmdCLIx(c.t, c.execBinary, nodeAddr, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, c.assertErrorFn, c.expTXCommitted)
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		nodeAddr,
+		c.chainID,
+		c.awaitNextBlock,
+		c.nodesCount,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		c.assertErrorFn,
+		c.expTXCommitted,
+	)
 }
 
 func (c WasmdCli) WithAssertTXUncommitted() WasmdCli {
-	return *NewWasmdCLIx(c.t, c.execBinary, c.nodeAddress, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, c.assertErrorFn, false)
+	return *NewWasmdCLIx(
+		c.t,
+		c.execBinary,
+		c.nodeAddress,
+		c.chainID,
+		c.awaitNextBlock,
+		c.nodesCount,
+		c.homeDir,
+		c.fees,
+		c.Debug,
+		c.assertErrorFn,
+		false,
+	)
 }
 
 // CustomCommand main entry for executing wasmd cli commands.
