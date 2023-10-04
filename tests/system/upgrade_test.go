@@ -51,8 +51,6 @@ func TestChainUpgrade(t *testing.T) {
 	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 
 	// submit upgrade proposal
-	// todo: all of this can be moved into the test_cli to make it more readable in the tests
-	upgradeName := "v0.50.x"
 	proposal := fmt.Sprintf(`
 {
  "messages": [
@@ -69,34 +67,16 @@ func TestChainUpgrade(t *testing.T) {
  "deposit": "100000000stake",
  "title": "my upgrade",
  "summary": "testing"
-}`, upgradeName, upgradeHeight)
-	pathToProposal := filepath.Join(t.TempDir(), "proposal.json")
-	err := os.WriteFile(pathToProposal, []byte(proposal), os.FileMode(0o744))
-	require.NoError(t, err)
-	t.Log("Submit upgrade proposal")
-	rsp := cli.CustomCommand("tx", "gov", "submit-proposal", pathToProposal, "--from", cli.GetKeyAddr(defaultSrcAddr))
-	RequireTxSuccess(t, rsp)
-	raw := cli.CustomQuery("q", "gov", "proposals", "--depositor", cli.GetKeyAddr(defaultSrcAddr))
-	proposals := gjson.Get(raw, "proposals.#.id").Array()
-	require.NotEmpty(t, proposals, raw)
-	ourProposalID := proposals[len(proposals)-1].String() // last is ours
-	sut.withEachNodeHome(func(n int, _ string) {
-		go func() { // do parallel
-			t.Logf("Voting: validator %d\n", n)
-			rsp = cli.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", cli.GetKeyAddr(fmt.Sprintf("node%d", n)))
-			RequireTxSuccess(t, rsp)
-		}()
-	})
-	//
+}`, "v0.50.x", upgradeHeight)
+	proposalID := cli.SubmitAndVoteGovProposal(proposal)
 	t.Logf("current_height: %d\n", sut.currentHeight)
-	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
+	raw := cli.CustomQuery("q", "gov", "proposal", proposalID)
 	t.Log(raw)
 	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
-	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
-	t.Log(raw)
+	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
 	proposalStatus := gjson.Get(raw, "proposal.status").String()
-	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus)
+	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
 
 	t.Log("waiting for upgrade info")
 	sut.AwaitUpgradeInfo(t)

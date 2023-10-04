@@ -54,6 +54,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		UpgradeName,
 		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			app.GovKeeper.Constitution.Set(ctx, "Constitution") // required for genesis export but should go into the SDK instead
 			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
 		},
 	)

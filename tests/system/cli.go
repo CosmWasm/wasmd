@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -42,6 +43,7 @@ type WasmdCli struct {
 	awaitNextBlock awaitNextBlock
 	expTXCommitted bool
 	execBinary     string
+	nodesCount     int
 }
 
 // NewWasmdCLI constructor
@@ -52,6 +54,7 @@ func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
 		sut.rpcAddr,
 		sut.chainID,
 		sut.AwaitNextBlock,
+		sut.nodesCount,
 		filepath.Join(WorkDir, sut.outputDir),
 		"1"+sdk.DefaultBondDenom,
 		verbose,
@@ -67,6 +70,7 @@ func NewWasmdCLIx(
 	nodeAddress string,
 	chainID string,
 	awaiter awaitNextBlock,
+	nodesCount int,
 	homeDir string,
 	fees string,
 	debug bool,
@@ -84,6 +88,7 @@ func NewWasmdCLIx(
 		homeDir:        homeDir,
 		Debug:          debug,
 		awaitNextBlock: awaiter,
+		nodesCount:     nodesCount,
 		fees:           fees,
 		assertErrorFn:  assertErrorFn,
 		expTXCommitted: expTXCommitted,
@@ -99,48 +104,15 @@ func (c WasmdCli) WithRunErrorsIgnored() WasmdCli {
 
 // WithRunErrorMatcher assert function to ensure run command error value
 func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
-	return *NewWasmdCLIx(
-		c.t,
-		c.execBinary,
-		c.nodeAddress,
-		c.chainID,
-		c.awaitNextBlock,
-		c.homeDir,
-		c.fees,
-		c.Debug,
-		f,
-		c.expTXCommitted,
-	)
+	return *NewWasmdCLIx(c.t, c.execBinary, c.nodeAddress, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, f, c.expTXCommitted)
 }
 
 func (c WasmdCli) WithNodeAddress(nodeAddr string) WasmdCli {
-	return *NewWasmdCLIx(
-		c.t,
-		c.execBinary,
-		nodeAddr,
-		c.chainID,
-		c.awaitNextBlock,
-		c.homeDir,
-		c.fees,
-		c.Debug,
-		c.assertErrorFn,
-		c.expTXCommitted,
-	)
+	return *NewWasmdCLIx(c.t, c.execBinary, nodeAddr, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, c.assertErrorFn, c.expTXCommitted)
 }
 
 func (c WasmdCli) WithAssertTXUncommitted() WasmdCli {
-	return *NewWasmdCLIx(
-		c.t,
-		c.execBinary,
-		c.nodeAddress,
-		c.chainID,
-		c.awaitNextBlock,
-		c.homeDir,
-		c.fees,
-		c.Debug,
-		c.assertErrorFn,
-		false,
-	)
+	return *NewWasmdCLIx(c.t, c.execBinary, c.nodeAddress, c.chainID, c.awaitNextBlock, 0, c.homeDir, c.fees, c.Debug, c.assertErrorFn, false)
 }
 
 // CustomCommand main entry for executing wasmd cli commands.
@@ -354,7 +326,7 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 	return gjson.Get(raw, fmt.Sprintf("supply.#(denom==%q).amount", denom)).Int()
 }
 
-func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetResponse {
+func (c WasmdCli) GetCometBFTValidatorSet() cmtservice.GetLatestValidatorSetResponse {
 	args := []string{"q", "comet-validator-set"}
 	got := c.CustomQuery(args...)
 
@@ -368,9 +340,9 @@ func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetRe
 	return res
 }
 
-// IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
-func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
-	valResult := c.GetTendermintValidatorSet()
+// IsInCometBftValset returns true when the given pub key is in the current active tendermint validator set
+func (c WasmdCli) IsInCometBftValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
+	valResult := c.GetCometBFTValidatorSet()
 	var found bool
 	for _, v := range valResult.Validators {
 		if v.PubKey.Equal(valPubKey) {
@@ -379,6 +351,39 @@ func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice
 		}
 	}
 	return valResult, found
+}
+
+// SubmitUpgradeGovProposal submit a chain upgrade gov v1 proposal
+
+// SubmitGovProposal submit a gov v1 proposal
+func (c WasmdCli) SubmitGovProposal(proposalJson string, args ...string) string {
+	if len(args) == 0 {
+		args = []string{"--from=" + defaultSrcAddr}
+	}
+
+	pathToProposal := filepath.Join(c.t.TempDir(), "proposal.json")
+	err := os.WriteFile(pathToProposal, []byte(proposalJson), os.FileMode(0o744))
+	require.NoError(c.t, err)
+	c.t.Log("Submit upgrade proposal")
+	return c.CustomCommand(append([]string{"tx", "gov", "submit-proposal", pathToProposal}, args...)...)
+}
+
+// SubmitAndVoteGovProposal submit proposal, let all validators vote yes and return proposal id
+func (c WasmdCli) SubmitAndVoteGovProposal(proposalJson string, args ...string) string {
+	rsp := c.SubmitGovProposal(proposalJson, args...)
+	RequireTxSuccess(c.t, rsp)
+	raw := c.CustomQuery("q", "gov", "proposals", "--depositor", c.GetKeyAddr(defaultSrcAddr))
+	proposals := gjson.Get(raw, "proposals.#.id").Array()
+	require.NotEmpty(c.t, proposals, raw)
+	ourProposalID := proposals[len(proposals)-1].String() // last is ours
+	for i := 0; i < c.nodesCount; i++ {
+		go func(i int) { // do parallel
+			c.t.Logf("Voting: validator %d\n", i)
+			rsp = c.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", c.GetKeyAddr(fmt.Sprintf("node%d", i)))
+			RequireTxSuccess(c.t, rsp)
+		}(i)
+	}
+	return ourProposalID
 }
 
 // RequireTxSuccess require the received response to contain the success code
