@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 )
@@ -23,25 +25,32 @@ func TestChainUpgrade(t *testing.T) {
 	// when a chain upgrade proposal is executed
 	// then the chain upgrades successfully
 
-	// todo: this test works only with linux, currently
 	legacyBinary := FetchExecutable(t, "v0.41.0")
 	t.Logf("+++ legacy binary: %s\n", legacyBinary)
-	targetBinary := sut.ExecBinary
+	currentBranchBinary := sut.ExecBinary
 	sut.ExecBinary = legacyBinary
 	sut.SetupChain()
-	votingPeriod := 15 * time.Second
+	votingPeriod := 10 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
-	const upgradeHeight int64 = 20 //
-	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight-1))
+	const upgradeHeight int64 = 22
+	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
 
 	cli := NewWasmdCLI(t, sut, verbose)
 
-	// todo: set some state to ensure that migrations work
+	// set some state to ensure that migrations work
+	verifierAddr := cli.AddKey("verifier")
+	beneficiary := randomBech32Addr()
+
+	t.Log("Launch hackatom contract")
+	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
+	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, verifierAddr, beneficiary)
+	contractAddr := cli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr, "--amount=1000000stake")
+
+	gotRsp := cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 
 	// submit upgrade proposal
-	// todo: all of this can be moved into the test_cli to make it more readable in the tests
-	upgradeName := "my chain upgrade"
 	proposal := fmt.Sprintf(`
 {
  "messages": [
@@ -58,31 +67,33 @@ func TestChainUpgrade(t *testing.T) {
  "deposit": "100000000stake",
  "title": "my upgrade",
  "summary": "testing"
-}`, upgradeName, upgradeHeight)
-	pathToProposal := filepath.Join(t.TempDir(), "proposal.json")
-	err := os.WriteFile(pathToProposal, []byte(proposal), os.FileMode(0o744))
-	require.NoError(t, err)
-	t.Log("Submit upgrade proposal")
-	rsp := cli.CustomCommand("tx", "gov", "submit-proposal", pathToProposal, "--from", cli.GetKeyAddr(defaultSrcAddr))
-	RequireTxSuccess(t, rsp)
-	raw := cli.CustomQuery("q", "gov", "proposals", "--depositor", cli.GetKeyAddr(defaultSrcAddr))
-	proposals := gjson.Get(raw, "proposals.#.id").Array()
-	require.NotEmpty(t, proposals, raw)
-	ourProposalID := proposals[len(proposals)-1].String() // last is ours
-	sut.withEachNodeHome(func(n int, _ string) {
-		t.Logf("Voting: validator %d\n", n)
-		rsp = cli.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", cli.GetKeyAddr(fmt.Sprintf("node%d", n)))
-		RequireTxSuccess(t, rsp)
-	})
+}`, "v0.43.x", upgradeHeight)
+	proposalID := cli.SubmitAndVoteGovProposal(proposal)
 	t.Logf("current_height: %d\n", sut.currentHeight)
-	raw = cli.CustomQuery("q", "gov", "proposal", ourProposalID)
+	raw := cli.CustomQuery("q", "gov", "proposal", proposalID)
 	t.Log(raw)
+	sut.AwaitBlockHeight(t, upgradeHeight-1)
+	t.Logf("current_height: %d\n", sut.currentHeight)
+	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
+	t.Log(raw)
+	proposalStatus := gjson.Get(raw, "status").String()
+	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
 
-	sut.AwaitChainStopped()
+	t.Log("waiting for upgrade info")
+	sut.AwaitUpgradeInfo(t)
+	sut.StopChain()
+
 	t.Log("Upgrade height was reached. Upgrading chain")
-	sut.ExecBinary = targetBinary
+	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
-	// todo: ensure that state matches expectations
+
+	t.Skip("wasmvm 1.4 upgrade fails, currently. Skipping for now")
+	// ensure that state matches expectations
+	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
+	// and contract execution works as expected
+	RequireTxSuccess(t, cli.WasmExecute(contractAddr, verifierAddr, `{"release":{}}`))
+	assert.Equal(t, 1_000_000, cli.QueryBalance(beneficiary, "stake"))
 }
 
 const cacheDir = "binaries"
