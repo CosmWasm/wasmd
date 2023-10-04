@@ -1,4 +1,4 @@
-//go:build system_test && linux
+//go:build system_test
 
 package system
 
@@ -87,7 +87,7 @@ func TestChainUpgrade(t *testing.T) {
 
 	t.Log("waiting for upgrade info")
 	sut.AwaitUpgradeInfo(t)
-	sut.StopChain() // just in case
+	sut.StopChain()
 
 	t.Log("Upgrade height was reached. Upgrading chain")
 	sut.ExecBinary = currentBranchBinary
