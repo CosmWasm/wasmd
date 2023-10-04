@@ -16,7 +16,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -48,13 +47,14 @@ func TestEncoding(t *testing.T) {
 	bankMsgBin, err := proto.Marshal(bankMsg)
 	require.NoError(t, err)
 
-	content, err := codectypes.NewAnyWithValue(types.StoreCodeProposalFixture())
+	msg, err := codectypes.NewAnyWithValue(types.MsgStoreCodeFixture())
 	require.NoError(t, err)
-
-	proposalMsg := &v1beta1.MsgSubmitProposal{
+	proposalMsg := &v1.MsgSubmitProposal{
 		Proposer:       addr1.String(),
+		Messages:       []*codectypes.Any{msg},
 		InitialDeposit: sdk.NewCoins(sdk.NewInt64Coin("uatom", 12345)),
-		Content:        content,
+		Title:          "proposal",
+		Summary:        "proposal summary",
 	}
 	proposalMsgBin, err := proto.Marshal(proposalMsg)
 	require.NoError(t, err)
@@ -294,7 +294,7 @@ func TestEncoding(t *testing.T) {
 				},
 			},
 		},
-		"staking delegate to non-validator": {
+		"staking delegate to non-validator - invalid": {
 			sender: addr1,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Staking: &wasmvmtypes.StakingMsg{
@@ -420,7 +420,7 @@ func TestEncoding(t *testing.T) {
 			sender: addr2,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Stargate: &wasmvmtypes.StargateMsg{
-					TypeURL: "/cosmos.gov.v1beta1.MsgSubmitProposal",
+					TypeURL: "/cosmos.gov.v1.MsgSubmitProposal",
 					Value:   proposalMsgBin,
 				},
 			},
@@ -716,7 +716,7 @@ func TestEncodeGovMsg(t *testing.T) {
 				},
 			},
 		},
-		"Gov weighted vote: duplicate option": {
+		"Gov weighted vote: duplicate option - invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
@@ -741,7 +741,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			},
 			expInvalid: true,
 		},
-		"Gov weighted vote: weight sum exceeds 1": {
+		"Gov weighted vote: weight sum exceeds 1- invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
@@ -766,7 +766,7 @@ func TestEncodeGovMsg(t *testing.T) {
 			},
 			expInvalid: true,
 		},
-		"Gov weighted vote: weight sum less than 1": {
+		"Gov weighted vote: weight sum less than 1 - invalid": {
 			sender: myAddr,
 			srcMsg: wasmvmtypes.CosmosMsg{
 				Gov: &wasmvmtypes.GovMsg{
