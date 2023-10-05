@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetConsensusMaxGas max gas that can be consumed in a block

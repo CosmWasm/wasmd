@@ -1,11 +1,12 @@
 package v043
 
 import (
-	"github.com/CosmWasm/wasmd/app/upgrades"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	"github.com/CosmWasm/wasmd/app/upgrades"
 )
 
 // UpgradeName defines the on-chain upgrade name
