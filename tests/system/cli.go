@@ -164,7 +164,7 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 	if !ok {
 		return execOutput
 	}
-	rsp, committed := c.awaitTxCommitted(execOutput, defaultWaitTime)
+	rsp, committed := c.awaitTxCommitted(execOutput, DefaultWaitTime)
 	c.t.Logf("tx committed: %v", committed)
 	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %v", c.expTXCommitted)
 	return rsp
@@ -218,7 +218,7 @@ func (c WasmdCli) runWithInput(args []string, input io.Reader) (output string, o
 				err = fmt.Errorf("recovered from panic: %v", r)
 			}
 		}()
-		cmd := exec.Command(locateExecutable("wasmd"), args...) //nolint:gosec
+		cmd := exec.Command(locateExecutable(c.execBinary), args...) //nolint:gosec
 		cmd.Dir = WorkDir
 		cmd.Stdin = input
 		return cmd.CombinedOutput()

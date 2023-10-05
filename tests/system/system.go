@@ -261,7 +261,7 @@ func (s *SystemUnderTest) AwaitChainStopped() {
 func (s *SystemUnderTest) AwaitNodeUp(t *testing.T, rpcAddr string) {
 	t.Helper()
 	t.Logf("Await node is up: %s", rpcAddr)
-	timeout := defaultWaitTime
+	timeout := DefaultWaitTime
 	ctx, done := context.WithTimeout(context.Background(), timeout)
 	defer done()
 
@@ -745,7 +745,7 @@ func NewEventListener(t *testing.T, rpcAddr string) *EventListener {
 	return &EventListener{client: httpClient, t: t}
 }
 
-var defaultWaitTime = 30 * time.Second
+var DefaultWaitTime = 30 * time.Second
 
 type (
 	CleanupFn     func()
@@ -760,7 +760,7 @@ func (l *EventListener) Subscribe(query string, cb EventConsumer) func() {
 	eventsChan, err := l.client.WSEvents.Subscribe(ctx, "testing", query)
 	require.NoError(l.t, err)
 	cleanup := func() {
-		ctx, _ := context.WithTimeout(ctx, defaultWaitTime)     //nolint:govet
+		ctx, _ := context.WithTimeout(ctx, DefaultWaitTime)     //nolint:govet
 		go l.client.WSEvents.Unsubscribe(ctx, "testing", query) //nolint:errcheck
 		done()
 	}
@@ -778,7 +778,7 @@ func (l *EventListener) Subscribe(query string, cb EventConsumer) func() {
 // For query syntax See https://docs.cosmos.network/master/core/events.html#subscribing-to-events
 func (l *EventListener) AwaitQuery(query string, optMaxWaitTime ...time.Duration) *ctypes.ResultEvent {
 	c, result := CaptureSingleEventConsumer()
-	maxWaitTime := defaultWaitTime
+	maxWaitTime := DefaultWaitTime
 	if len(optMaxWaitTime) != 0 {
 		maxWaitTime = optMaxWaitTime[0]
 	}
@@ -840,7 +840,7 @@ func CaptureSingleEventConsumer() (EventConsumer, *ctypes.ResultEvent) {
 //
 //		assert.Len(t, done(), 1) // then verify your assumption
 func CaptureAllEventsConsumer(t *testing.T, optMaxWaitTime ...time.Duration) (c EventConsumer, done func() []ctypes.ResultEvent) {
-	maxWaitTime := defaultWaitTime
+	maxWaitTime := DefaultWaitTime
 	if len(optMaxWaitTime) != 0 {
 		maxWaitTime = optMaxWaitTime[0]
 	}

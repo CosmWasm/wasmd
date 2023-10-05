@@ -1,34 +1,62 @@
 package app
 
 import (
-	"context"
-
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"fmt"
+	"github.com/CosmWasm/wasmd/app/upgrades"
+	v043 "github.com/CosmWasm/wasmd/app/upgrades/v043"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-
-	storetypes "cosmossdk.io/store/types"
-	circuittypes "cosmossdk.io/x/circuit/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-
-	"github.com/cosmos/cosmos-sdk/types/module"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
-// UpgradeName defines the on-chain upgrade name for the sample SimApp upgrade
-// from v047 to v050.
-//
-// NOTE: This upgrade defines a reference implementation of what an upgrade
-// could look like when an application is migrating from Cosmos SDK version
-// v0.47.x to v0.50.x.
-const UpgradeName = "v0.50.x"
+// Upgrades list of chain upgrades
+var Upgrades = []upgrades.Upgrade{v043.Upgrade}
 
+// RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app WasmApp) RegisterUpgradeHandlers() {
+	setupLegacyKeyTables(app.ParamsKeeper)
+
+	keepers := upgrades.AppKeepers{AccountKeeper: app.AccountKeeper}
+	// register all upgrade handlers
+	for _, upgrade := range Upgrades {
+		app.UpgradeKeeper.SetUpgradeHandler(
+			upgrade.UpgradeName,
+			upgrade.CreateUpgradeHandler(
+				app.ModuleManager,
+				app.configurator,
+				&keepers,
+			),
+		)
+	}
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Sprintf("failed to read upgrade info from disk %s", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	// register store loader for current upgrade
+	for _, upgrade := range Upgrades {
+		if upgradeInfo.Name == upgrade.UpgradeName {
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+			break
+		}
+	}
+}
+
+func setupLegacyKeyTables(k paramskeeper.Keeper) {
 	// Set param key table for params module migration
-	for _, subspace := range app.ParamsKeeper.GetSubspaces() {
+	for _, subspace := range k.GetSubspaces() {
+		subspace := subspace
 
 		var keyTable paramstypes.KeyTable
 		switch subspace.Name() {
@@ -49,26 +77,5 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 		if !subspace.HasKeyTable() {
 			subspace.WithKeyTable(keyTable)
 		}
-	}
-
-	app.UpgradeKeeper.SetUpgradeHandler(
-		UpgradeName,
-		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
-		},
-	)
-
-	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	if err != nil {
-		panic(err)
-	}
-
-	if upgradeInfo.Name == UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{circuittypes.ModuleName},
-		}
-
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}
 }
