@@ -46,11 +46,14 @@ func ValidateLabel(label string) error {
 	if label != strings.TrimSpace(label) {
 		return ErrInvalid.Wrap("label must not start/end with whitespaces")
 	}
-	labelWithoutNonPrintableChars := strings.TrimFunc(label, func(r rune) bool {
-		return !unicode.IsGraphic(r)
-	})
-	if label != labelWithoutNonPrintableChars {
-		return ErrInvalid.Wrap("label must not have non printable characters")
+	labelWithPrintableCharsOnly := strings.Map(func(r rune) rune {
+		if unicode.IsPrint(r) {
+			return r
+		}
+		return -1
+	}, label)
+	if label != labelWithPrintableCharsOnly {
+		return ErrInvalid.Wrap("label must have printable characters only")
 	}
 	return nil
 }

@@ -125,11 +125,29 @@ func TestInstantiateContractValidation(t *testing.T) {
 			},
 			valid: false,
 		},
-		"non printable chars in label": {
+		"non printable chars ending label": {
 			msg: MsgInstantiateContract{
 				Sender: goodAddress,
 				CodeID: firstCodeID,
 				Label:  "foo\v",
+				Msg:    []byte("{}"),
+			},
+			valid: false,
+		},
+		"non printable chars in label": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "f\voo",
+				Msg:    []byte("{}"),
+			},
+			valid: false,
+		},
+		"non printable chars beginning label": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "\vfoo",
 				Msg:    []byte("{}"),
 			},
 			valid: false,
