@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"unicode"
 
 	"github.com/distribution/reference"
 
@@ -44,6 +45,12 @@ func ValidateLabel(label string) error {
 	}
 	if label != strings.TrimSpace(label) {
 		return ErrInvalid.Wrap("label must not start/end with whitespaces")
+	}
+	labelWithoutNonPrintableChars := strings.TrimFunc(label, func(r rune) bool {
+		return !unicode.IsGraphic(r)
+	})
+	if label != labelWithoutNonPrintableChars {
+		return ErrInvalid.Wrap("label must not have non printable characters")
 	}
 	return nil
 }

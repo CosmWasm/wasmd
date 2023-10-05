@@ -116,6 +116,24 @@ func TestInstantiateContractValidation(t *testing.T) {
 			},
 			valid: false,
 		},
+		"white space ending label": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo ",
+				Msg:    []byte("{}"),
+			},
+			valid: false,
+		},
+		"non printable chars in label": {
+			msg: MsgInstantiateContract{
+				Sender: goodAddress,
+				CodeID: firstCodeID,
+				Label:  "foo\v",
+				Msg:    []byte("{}"),
+			},
+			valid: false,
+		},
 		"label too long": {
 			msg: MsgInstantiateContract{
 				Sender: goodAddress,
