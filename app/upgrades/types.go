@@ -1,10 +1,10 @@
 package upgrades
 
 import (
-	store "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 type AppKeepers struct {
@@ -21,5 +21,5 @@ type Upgrade struct {
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
 	CreateUpgradeHandler func(*module.Manager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
-	StoreUpgrades        store.StoreUpgrades
+	StoreUpgrades        storetypes.StoreUpgrades
 }

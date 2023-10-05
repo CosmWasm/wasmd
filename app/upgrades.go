@@ -1,10 +1,10 @@
 package app
 
 import (
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
-	"github.com/CosmWasm/wasmd/app/upgrades"
-	v043 "github.com/CosmWasm/wasmd/app/upgrades/v043"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
@@ -13,10 +13,14 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+
+	"github.com/CosmWasm/wasmd/app/upgrades"
+	v043 "github.com/CosmWasm/wasmd/app/upgrades/v043"
+	v050 "github.com/CosmWasm/wasmd/app/upgrades/v050"
 )
 
 // Upgrades list of chain upgrades
-var Upgrades = []upgrades.Upgrade{v043.Upgrade}
+var Upgrades = []upgrades.Upgrade{v043.Upgrade, v050.Upgrade}
 
 // RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app WasmApp) RegisterUpgradeHandlers() {
@@ -47,7 +51,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 	// register store loader for current upgrade
 	for _, upgrade := range Upgrades {
 		if upgradeInfo.Name == upgrade.UpgradeName {
-			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades))
+			app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &upgrade.StoreUpgrades)) // nolint:gosec
 			break
 		}
 	}
