@@ -33,7 +33,11 @@ func TestChainUpgrade(t *testing.T) {
 	votingPeriod := 10 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
-	const upgradeHeight int64 = 22
+	const (
+		upgradeHeight int64 = 22
+		upgradeName         = "v0.43"
+	)
+
 	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
 
 	cli := NewWasmdCLI(t, sut, verbose)
@@ -67,7 +71,7 @@ func TestChainUpgrade(t *testing.T) {
  "deposit": "100000000stake",
  "title": "my upgrade",
  "summary": "testing"
-}`, "v0.43.x", upgradeHeight)
+}`, upgradeName, upgradeHeight)
 	proposalID := cli.SubmitAndVoteGovProposal(proposal)
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw := cli.CustomQuery("q", "gov", "proposal", proposalID)
