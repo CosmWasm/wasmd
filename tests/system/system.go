@@ -386,7 +386,7 @@ func (s *SystemUnderTest) AwaitBlockHeight(t *testing.T, targetHeight int64, tim
 			t.Fatalf("Timeout - block %d not reached within %s", targetHeight, maxWaitTime)
 			return
 		default:
-			if current := s.AwaitNextBlock(t); current == targetHeight {
+			if current := s.AwaitNextBlock(t); current >= targetHeight {
 				return
 			}
 		}

@@ -78,7 +78,7 @@ func TestChainUpgrade(t *testing.T) {
 	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
-	proposalStatus := gjson.Get(raw, "proposal.status").String()
+	proposalStatus := gjson.Get(raw, "status").String()
 	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
 
 	t.Log("waiting for upgrade info")
