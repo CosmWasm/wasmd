@@ -44,6 +44,7 @@ func TestChainUpgrade(t *testing.T) {
 	// set some state to ensure that migrations work
 	verifierAddr := cli.AddKey("verifier")
 	beneficiary := randomBech32Addr()
+	cli.FundAddress("verifier", "1000stake")
 
 	t.Log("Launch hackatom contract")
 	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
@@ -90,12 +91,11 @@ func TestChainUpgrade(t *testing.T) {
 	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
 
-	t.Skip("wasmvm 1.4 upgrade fails, currently. Skipping for now")
 	// ensure that state matches expectations
 	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
 	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 	// and contract execution works as expected
-	RequireTxSuccess(t, cli.WasmExecute(contractAddr, verifierAddr, `{"release":{}}`))
+	RequireTxSuccess(t, cli.WasmExecute(contractAddr, `{"release":{}}`, verifierAddr))
 	assert.Equal(t, 1_000_000, cli.QueryBalance(beneficiary, "stake"))
 }
 
