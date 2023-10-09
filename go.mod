@@ -193,3 +193,6 @@ replace (
 	// pin version! 126854af5e6d has issues with the store so that queries fail
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
+
+// see https://github.com/CosmWasm/wasmd/issues/1651
+retract v0.42.0
