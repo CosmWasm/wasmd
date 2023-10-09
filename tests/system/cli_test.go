@@ -46,7 +46,7 @@ func TestVestingAccounts(t *testing.T) {
 	//   given: a genesis file
 	//   when: add-genesis-account with vesting flags is executed
 	//   then: the vesting account data is added to the genesis
-	sut.ResetChain(t)
+	sut.ResetChainHard(t)
 	cli := NewWasmdCLI(t, sut, verbose)
 	vest1Addr := cli.AddKey("vesting1")
 	vest2Addr := cli.AddKey("vesting2")

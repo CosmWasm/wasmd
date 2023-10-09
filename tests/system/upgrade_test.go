@@ -134,7 +134,8 @@ func TestChainExportImport(t *testing.T) {
 	require.True(t, ok, msg)
 	// copy to node folders
 	sut.setGenesis(t, exportFile)
-
+	sut.ResetChainState(t)
+	
 	// and genesis migrated
 	sut.ExecBinary = currentBranchBinary
 	cli = NewWasmdCLI(t, sut, verbose)

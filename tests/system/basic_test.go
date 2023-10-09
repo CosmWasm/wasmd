@@ -19,7 +19,7 @@ func TestBasicWasm(t *testing.T) {
 	// watch for an event
 	// update instantiate contract
 	// set contract admin
-	sut.ResetChain(t)
+	sut.ResetChainHard(t)
 	sut.StartChain(t)
 
 	cli := NewWasmdCLI(t, sut, verbose)
@@ -86,7 +86,7 @@ func TestMultiContract(t *testing.T) {
 	// upload hackatom escrow code
 	// creator instantiates a contract and gives it tokens
 	// reflect a message through the reflect to call the escrow
-	sut.ResetChain(t)
+	sut.ResetChainHard(t)
 	sut.StartChain(t)
 
 	cli := NewWasmdCLI(t, sut, verbose)

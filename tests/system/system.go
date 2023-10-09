@@ -421,12 +421,12 @@ func (s *SystemUnderTest) AwaitNextBlock(t *testing.T, timeout ...time.Duration)
 // ResetDirtyChain reset chain when non default setup or state (dirty)
 func (s *SystemUnderTest) ResetDirtyChain(t *testing.T) {
 	if s.IsDirty() {
-		s.ResetChain(t)
+		s.ResetChainHard(t)
 	}
 }
 
-// ResetChain stops and clears all nodes state via 'unsafe-reset-all'
-func (s *SystemUnderTest) ResetChain(t *testing.T) {
+// ResetChainHard stops and clears all nodes state via 'unsafe-reset-all'.
+func (s *SystemUnderTest) ResetChainHard(t *testing.T) {
 	t.Helper()
 	t.Log("Reset chain")
 	s.StopChain()
@@ -442,8 +442,30 @@ func (s *SystemUnderTest) ResetChain(t *testing.T) {
 	s.nodesCount = s.initialNodesCount
 
 	// reset all validator nodes
-	s.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
+	s.ForEachNodeExecAndWait(t, []string{"comet", "unsafe-reset-all"})
 	s.currentHeight = 0
+	s.dirty = false
+}
+
+// ResetChainState stops and clears all nodes state via 'reset-state'. The validator keys persist
+func (s *SystemUnderTest) ResetChainState(t *testing.T) {
+	t.Helper()
+	t.Log("Reset chain")
+	s.StopChain()
+	restoreOriginalGenesis(t, s)
+	restoreOriginalKeyring(t, s)
+	s.resetBuffers()
+
+	// remove all additional nodes
+	for i := s.initialNodesCount; i < s.nodesCount; i++ {
+		_ = os.RemoveAll(filepath.Join(WorkDir, s.nodePath(i)))
+		_ = os.Remove(filepath.Join(WorkDir, s.outputDir, fmt.Sprintf("node%d.out", i)))
+	}
+	s.nodesCount = s.initialNodesCount
+
+	// reset all validator nodes
+	s.ForEachNodeExecAndWait(t, []string{"comet", "reset-state"})
+	s.currentHeight = 0 // should read from genesis instead
 	s.dirty = false
 }
 
@@ -465,7 +487,7 @@ type GenesisMutator func([]byte) []byte
 //		return state
 //	}
 func (s *SystemUnderTest) ModifyGenesisJSON(t *testing.T, mutators ...GenesisMutator) {
-	s.ResetChain(t)
+	s.ResetChainHard(t)
 	s.modifyGenesisJSON(t, mutators...)
 }
 

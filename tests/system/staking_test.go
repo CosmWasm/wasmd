@@ -14,7 +14,7 @@ func TestStakeUnstake(t *testing.T) {
 	// delegate tokens to validator
 	// undelegate some tokens
 
-	sut.ResetChain(t)
+	sut.ResetChainHard(t)
 
 	cli := NewWasmdCLI(t, sut, verbose)
 

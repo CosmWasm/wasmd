@@ -13,7 +13,7 @@ import (
 )
 
 func TestRecursiveMsgsExternalTrigger(t *testing.T) {
-	sut.ResetChain(t)
+	sut.ResetChainHard(t)
 	const maxBlockGas = 2_000_000
 	sut.ModifyGenesisJSON(t, SetConsensusMaxGas(t, maxBlockGas))
 	sut.StartChain(t)
