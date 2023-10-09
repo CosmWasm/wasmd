@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"io"
 	"os"
 
@@ -130,14 +131,29 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 	wasm.AddModuleInitFlags(startCmd)
 }
 
-// genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
+// genesisCommand builds genesis-related `wasmd genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(txConfig client.TxConfig, basicManager module.BasicManager, cmds ...*cobra.Command) *cobra.Command {
-	cmd := genutilcli.Commands(txConfig, basicManager, app.DefaultNodeHome)
+	cmd := genutilcli.CommandsWithCustomMigrationMap(txConfig, basicManager, app.DefaultNodeHome, migrationMap())
 
 	for _, subCmd := range cmds {
 		cmd.AddCommand(subCmd)
 	}
 	return cmd
+}
+
+func migrationMap() genutiltypes.MigrationMap {
+	m := genutilcli.MigrationMap
+	if _, ok := m["v0.50"]; !ok {
+		m["v0.50"] = NoopMigrationFn() // register a migration although this is SDK code
+	}
+	return m
+}
+
+// NoopMigrationFn returns no state changing function
+func NoopMigrationFn() func(appState genutiltypes.AppMap, clientCtx client.Context) (genutiltypes.AppMap, error) {
+	return func(appState genutiltypes.AppMap, clientCtx client.Context) (genutiltypes.AppMap, error) {
+		return appState, nil
+	}
 }
 
 func queryCommand() *cobra.Command {

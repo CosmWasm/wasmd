@@ -160,7 +160,7 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 		args = append(args, "--fees="+c.fees) // add default fee
 	}
 	args = c.withTXFlags(args...)
-	execOutput, ok := c.run(args)
+	execOutput, ok := c.run(args...)
 	if !ok {
 		return execOutput
 	}
@@ -192,19 +192,19 @@ func (c WasmdCli) awaitTxCommitted(submitResp string, timeout ...time.Duration) 
 // Keys wasmd keys CLI command
 func (c WasmdCli) Keys(args ...string) string {
 	args = c.withKeyringFlags(args...)
-	out, _ := c.run(args)
+	out, _ := c.run(args...)
 	return out
 }
 
 // CustomQuery main entrypoint for wasmd CLI queries
 func (c WasmdCli) CustomQuery(args ...string) string {
 	args = c.withQueryFlags(args...)
-	out, _ := c.run(args)
+	out, _ := c.run(args...)
 	return out
 }
 
 // execute shell command
-func (c WasmdCli) run(args []string) (output string, ok bool) {
+func (c WasmdCli) run(args ...string) (output string, ok bool) {
 	return c.runWithInput(args, nil)
 }
 
@@ -271,7 +271,7 @@ func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) st
 // AddKey add key to default keyring. Returns address
 func (c WasmdCli) AddKey(name string) string {
 	cmd := c.withKeyringFlags("keys", "add", name, "--no-backup")
-	out, _ := c.run(cmd)
+	out, _ := c.run(cmd...)
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr
@@ -289,7 +289,7 @@ func (c WasmdCli) AddKeyFromSeed(name, mnemoic string) string {
 // GetKeyAddr returns address
 func (c WasmdCli) GetKeyAddr(name string) string {
 	cmd := c.withKeyringFlags("keys", "show", name, "-a")
-	out, _ := c.run(cmd)
+	out, _ := c.run(cmd...)
 	addr := strings.Trim(out, "\n")
 	require.NotEmpty(c.t, addr, "got %q", out)
 	return addr

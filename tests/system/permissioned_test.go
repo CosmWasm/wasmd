@@ -49,7 +49,7 @@ func TestGrantStoreCodePermissionedChain(t *testing.T) {
 
 	// create tx should work for addresses in the accept-list
 	args := cli.withTXFlags("tx", "wasm", "store", "./testdata/hackatom.wasm.gzip", "--from="+chainAuthorityAddress, "--generate-only")
-	tx, ok := cli.run(args)
+	tx, ok := cli.run(args...)
 	require.True(t, ok)
 
 	pathToTx := filepath.Join(t.TempDir(), "tx.json")

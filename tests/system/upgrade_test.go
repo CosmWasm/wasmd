@@ -1,4 +1,4 @@
-//go:build system_test && linux
+//go:build system_test
 
 package system
 
@@ -96,6 +96,64 @@ func TestChainUpgrade(t *testing.T) {
 	// and contract execution works as expected
 	RequireTxSuccess(t, cli.WasmExecute(contractAddr, `{"release":{}}`, verifierAddr))
 	assert.Equal(t, int64(1_000_000), cli.QueryBalance(beneficiary, "stake"))
+}
+
+func TestChainExportImport(t *testing.T) {
+	// Scenario:
+	// start a legacy chain with some state
+	// when a chain state is exported to genesis
+	// and the state migrated
+	// then the chain starts successfully
+
+	legacyBinary := FetchExecutable(t, "v0.41.0")
+	t.Logf("+++ legacy binary: %s\n", legacyBinary)
+	currentBranchBinary := sut.ExecBinary
+	sut.ExecBinary = legacyBinary
+	sut.SetupChain()
+	cli := NewWasmdCLI(t, sut, verbose)
+	sut.StartChain(t)
+
+	// set some state to ensure that migrations work
+	verifierAddr := cli.AddKey("verifier")
+	beneficiary := randomBech32Addr()
+	cli.FundAddress(verifierAddr, "1000stake")
+
+	t.Log("Launch hackatom contract")
+	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
+	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, verifierAddr, beneficiary)
+	contractAddr := cli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr, "--amount=1000000stake")
+
+	gotRsp := cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
+
+	// stop and export genesis state
+	sut.StopChain()
+	exportFile := filepath.Join(t.TempDir(), "state_export.json")
+	t.Logf("Export and migrate state to: %s\n", exportFile)
+	msg, ok := cli.run("export", fmt.Sprintf("--home=%s", filepath.Join(WorkDir, sut.nodePath(0))), fmt.Sprintf("--output-document=%s", exportFile))
+	require.True(t, ok, msg)
+	// copy to node folders
+	sut.setGenesis(t, exportFile)
+
+	// and genesis migrated
+	sut.ExecBinary = currentBranchBinary
+	cli = NewWasmdCLI(t, sut, verbose)
+	sut.withEachNodeHome(func(i int, home string) {
+		out, ok := cli.run("genesis", "migrate", "v0.50", filepath.Join(WorkDir, home, "config", "genesis.json"))
+		require.True(t, ok, out)
+	})
+
+	// then
+	t.Log("Starting new chain with genesis import")
+	sut.StartChain(t)
+
+	// ensure that state matches expectations
+	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
+	// and contract execution works as expected
+	RequireTxSuccess(t, cli.WasmExecute(contractAddr, `{"release":{}}`, verifierAddr))
+	assert.Equal(t, int64(1_000_000), cli.QueryBalance(beneficiary, "stake"))
+
 }
 
 const cacheDir = "binaries"
