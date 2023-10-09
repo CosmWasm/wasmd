@@ -3,15 +3,9 @@ module github.com/CosmWasm/wasmd
 go 1.21
 
 require (
-<<<<<<< HEAD
-	github.com/CosmWasm/wasmvm v1.4.0
+	github.com/CosmWasm/wasmvm v1.4.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
 	github.com/cosmos/cosmos-sdk v0.50.0-rc.1
-=======
-	github.com/CosmWasm/wasmvm v1.4.1
-	github.com/cosmos/cosmos-proto v1.0.0-beta.2
-	github.com/cosmos/cosmos-sdk v0.47.5
->>>>>>> 7270ccd9 (Bump wasmvm to v1.4.1 - bugfix (#1658))
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/iavl v1.0.0-rc.1
