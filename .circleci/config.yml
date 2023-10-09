@@ -113,13 +113,12 @@ jobs:
           name: Build and run system tests
           command: make test-system
       - run:
-          when: on_success
-          name: Clear system test work dir
-          command: rm -rf /tmp/workspace/tests/system/testnet
+          command: |
+            mkdir -p /tmp/system-test-workspace
+            mv /tmp/workspace/tests/system/testnet /tmp/system-test-workspace
+          when: on_fail
       - store_artifacts:
-          path: /tmp/workspace/tests/system/testnet
-
-
+          path: /tmp/system-test-workspace
 
   benchmark:
     executor: golang
