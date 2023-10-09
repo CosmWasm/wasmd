@@ -98,7 +98,7 @@ func TestChainUpgrade(t *testing.T) {
 	assert.Equal(t, int64(1_000_000), cli.QueryBalance(beneficiary, "stake"))
 }
 
-func TestChainExportImport(t *testing.T) {
+func TestChainExportImportUpgrade(t *testing.T) {
 	// Scenario:
 	// start a legacy chain with some state
 	// when a chain state is exported to genesis
@@ -133,9 +133,9 @@ func TestChainExportImport(t *testing.T) {
 	msg, ok := cli.run("export", fmt.Sprintf("--home=%s", filepath.Join(WorkDir, sut.nodePath(0))), fmt.Sprintf("--output-document=%s", exportFile))
 	require.True(t, ok, msg)
 	// copy to node folders
-	sut.setGenesis(t, exportFile)
 	sut.ResetChainState(t)
-	
+	sut.setGenesis(t, exportFile)
+
 	// and genesis migrated
 	sut.ExecBinary = currentBranchBinary
 	cli = NewWasmdCLI(t, sut, verbose)
