@@ -29,7 +29,7 @@ func TestChainUpgrade(t *testing.T) {
 	currentBranchBinary := sut.ExecBinary
 	sut.ExecBinary = legacyBinary
 	sut.SetupChain()
-	votingPeriod := 10 * time.Second // enough time to vote
+	votingPeriod := 5 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
 	const (
@@ -44,7 +44,7 @@ func TestChainUpgrade(t *testing.T) {
 	// set some state to ensure that migrations work
 	verifierAddr := cli.AddKey("verifier")
 	beneficiary := randomBech32Addr()
-	cli.FundAddress("verifier", "1000stake")
+	cli.FundAddress(verifierAddr, "1000stake")
 
 	t.Log("Launch hackatom contract")
 	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
@@ -96,7 +96,7 @@ func TestChainUpgrade(t *testing.T) {
 	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 	// and contract execution works as expected
 	RequireTxSuccess(t, cli.WasmExecute(contractAddr, `{"release":{}}`, verifierAddr))
-	assert.Equal(t, 1_000_000, cli.QueryBalance(beneficiary, "stake"))
+	assert.Equal(t, int64(1_000_000), cli.QueryBalance(beneficiary, "stake"))
 }
 
 const cacheDir = "binaries"
