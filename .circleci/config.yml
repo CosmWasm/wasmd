@@ -112,6 +112,14 @@ jobs:
       - run:
           name: Build and run system tests
           command: make test-system
+      - run:
+          when: on_success
+          name: Clear system test work dir
+          command: rm -rf /tmp/workspace/tests/system/testnet
+      - store_artifacts:
+          path: /tmp/workspace/tests/system/testnet
+
+
 
   benchmark:
     executor: golang
