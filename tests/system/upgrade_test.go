@@ -79,7 +79,6 @@ func TestChainUpgrade(t *testing.T) {
 	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
 	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
-	t.Log(raw)
 	proposalStatus := gjson.Get(raw, "status").String()
 	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
 
@@ -90,6 +89,7 @@ func TestChainUpgrade(t *testing.T) {
 	t.Log("Upgrade height was reached. Upgrading chain")
 	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
+	cli = NewWasmdCLI(t, sut, verbose)
 
 	// ensure that state matches expectations
 	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)

@@ -201,7 +201,7 @@ func (s *SystemUnderTest) watchLogs(node int, cmd *exec.Cmd) {
 	go appendToBuf(io.TeeReader(outReader, logfile), s.outBuff, stopRingBuffer)
 	s.cleanupFn = append(s.cleanupFn, func() {
 		close(stopRingBuffer)
-		logfile.Close()
+		_ = logfile.Close()
 	})
 }
 
@@ -247,7 +247,7 @@ func (s *SystemUnderTest) AwaitUpgradeInfo(t *testing.T) {
 				t.Fatalf(err.Error())
 			}
 		})
-		time.Sleep(s.blockTime)
+		time.Sleep(s.blockTime / 2)
 	}
 }
 
