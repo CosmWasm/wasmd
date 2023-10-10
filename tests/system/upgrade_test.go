@@ -37,7 +37,7 @@ func TestChainUpgrade(t *testing.T) {
 		upgradeName         = "v0.50"
 	)
 
-	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
+	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight+1))
 
 	cli := NewWasmdCLI(t, sut, verbose)
 
