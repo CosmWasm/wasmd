@@ -4,11 +4,10 @@ import (
 	"context"
 
 	storetypes "cosmossdk.io/store/types"
+	circuittypes "cosmossdk.io/x/circuit/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
 )
@@ -21,8 +20,7 @@ var Upgrade = upgrades.Upgrade{
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: storetypes.StoreUpgrades{
 		Added: []string{
-			consensustypes.ModuleName,
-			crisistypes.ModuleName,
+			circuittypes.ModuleName,
 		},
 		Deleted: []string{},
 	},

@@ -37,7 +37,7 @@ func TestChainUpgrade(t *testing.T) {
 		upgradeName         = "v0.50"
 	)
 
-	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight+1))
+	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
 
 	cli := NewWasmdCLI(t, sut, verbose)
 
@@ -89,6 +89,7 @@ func TestChainUpgrade(t *testing.T) {
 	t.Log("Upgrade height was reached. Upgrading chain")
 	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
+	cli = NewWasmdCLI(t, sut, verbose)
 
 	// ensure that state matches expectations
 	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
