@@ -136,11 +136,11 @@ func TestChainExportImportUpgrade(t *testing.T) {
 	sut.ResetChainState(t)
 	sut.setGenesis(t, exportFile)
 
-	// and genesis migrated
+	// and genesis is migrated to new version
 	sut.ExecBinary = currentBranchBinary
 	cli = NewWasmdCLI(t, sut, verbose)
 	sut.withEachNodeHome(func(i int, home string) {
-		out, ok := cli.run("genesis", "migrate", "v0.50", filepath.Join(WorkDir, home, "config", "genesis.json"))
+		out, ok := cli.run("genesis", "migrate", "v0.50", exportFile, fmt.Sprintf("--output-document=%s", filepath.Join(WorkDir, home, "config", "genesis.json")))
 		require.True(t, ok, out)
 	})
 
