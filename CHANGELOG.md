@@ -2,7 +2,25 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.42.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.43.0...HEAD)
+
+## [v0.43.0](https://github.com/CosmWasm/wasmd/tree/v0.43.0) (2023-10-10)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.42.0...v0.43.0)
+
+- Make contract label updatable [\#1601](https://github.com/CosmWasm/wasmd/issues/1601)
+- Remove gov v1beta1 dependencies and deprecated proposals [\#1608](https://github.com/CosmWasm/wasmd/issues/1608)
+- Retract v0.42.0 release [\#1651](https://github.com/CosmWasm/wasmd/issues/1651)
+- Bump wasmvm to v1.4.1 [\#1657](https://github.com/CosmWasm/wasmd/issues/1657)
+
+### Notable changes:
+- Wasmd v0.42.0 was retracted because an issue was found in CosmWasm 1.4.0. See https://twitter.com/CosmWasm/status/1709507168448229497
+- This release bundles CosmWasm v1.4.1 patch release. If you are using wasmd v0.42.0 please upgrade to wasmd 0.43.0 as soon as possible.
+- Deprecated wasm gov proposals have been removed completely from the codebase together with all the govv1beta1 dependencies.
+- MsgUpdateContractLabel was introduced to allow contract label updates.
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.42.0](https://github.com/CosmWasm/wasmd/tree/v0.42.0) (2023-09-20)
 
