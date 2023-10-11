@@ -15,16 +15,20 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/CosmWasm/wasmd/app/upgrades"
-	v043 "github.com/CosmWasm/wasmd/app/upgrades/v043"
+	"github.com/CosmWasm/wasmd/app/upgrades/noop"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 // Upgrades list of chain upgrades
-var Upgrades = []upgrades.Upgrade{v043.Upgrade}
+var Upgrades []upgrades.Upgrade
 
 // RegisterUpgradeHandlers registers the chain upgrade handlers
 func (app WasmApp) RegisterUpgradeHandlers() {
 	setupLegacyKeyTables(app.ParamsKeeper)
+	if len(Upgrades) == 0 {
+		// always have a unique upgrade registered for the current version to test in system tests
+		Upgrades = append(Upgrades, noop.NewUpgrade(app.Version()))
+	}
 
 	keepers := upgrades.AppKeepers{AccountKeeper: app.AccountKeeper}
 	// register all upgrade handlers

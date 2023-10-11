@@ -1,4 +1,4 @@
-package v043
+package noop
 
 import (
 	store "github.com/cosmos/cosmos-sdk/store/types"
@@ -9,16 +9,16 @@ import (
 	"github.com/CosmWasm/wasmd/app/upgrades"
 )
 
-// UpgradeName defines the on-chain upgrade name
-const UpgradeName = "v0.43"
-
-var Upgrade = upgrades.Upgrade{
-	UpgradeName:          UpgradeName,
-	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{},
-		Deleted: []string{},
-	},
+// NewUpgrade constructor
+func NewUpgrade(semver string) upgrades.Upgrade {
+	return upgrades.Upgrade{
+		UpgradeName:          semver,
+		CreateUpgradeHandler: CreateUpgradeHandler,
+		StoreUpgrades: store.StoreUpgrades{
+			Added:   []string{},
+			Deleted: []string{},
+		},
+	}
 }
 
 func CreateUpgradeHandler(

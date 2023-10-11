@@ -422,6 +422,13 @@ func (c WasmdCli) SubmitAndVoteGovProposal(proposalJson string, args ...string) 
 	return ourProposalID
 }
 
+// Version returns the current version of the client binary
+func (c WasmdCli) Version() string {
+	v, ok := c.run([]string{"version"})
+	require.True(c.t, ok)
+	return v
+}
+
 // RequireTxSuccess require the received response to contain the success code
 func RequireTxSuccess(t *testing.T, got string) {
 	t.Helper()

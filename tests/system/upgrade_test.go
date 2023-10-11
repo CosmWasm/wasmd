@@ -1,4 +1,4 @@
-//go:build system_test && linux
+//go:build system_test
 
 package system
 
@@ -24,6 +24,8 @@ func TestChainUpgrade(t *testing.T) {
 	// when a chain upgrade proposal is executed
 	// then the chain upgrades successfully
 
+	cli := NewWasmdCLI(t, sut, verbose)
+
 	legacyBinary := FetchExecutable(t, "v0.41.0")
 	t.Logf("+++ legacy binary: %s\n", legacyBinary)
 	currentBranchBinary := sut.ExecBinary
@@ -32,26 +34,23 @@ func TestChainUpgrade(t *testing.T) {
 	votingPeriod := 5 * time.Second // enough time to vote
 	sut.ModifyGenesisJSON(t, SetGovVotingPeriod(t, votingPeriod))
 
-	const (
-		upgradeHeight int64 = 22
-		upgradeName         = "v0.43"
-	)
+	const upgradeHeight int64 = 22
+	upgradeName := cli.Version()
 
 	sut.StartChain(t, fmt.Sprintf("--halt-height=%d", upgradeHeight))
-
-	cli := NewWasmdCLI(t, sut, verbose)
+	legacyCli := NewWasmdCLI(t, sut, verbose)
 
 	// set some state to ensure that migrations work
-	verifierAddr := cli.AddKey("verifier")
+	verifierAddr := legacyCli.AddKey("verifier")
 	beneficiary := randomBech32Addr()
-	cli.FundAddress(verifierAddr, "1000stake")
+	legacyCli.FundAddress(verifierAddr, "1000stake")
 
 	t.Log("Launch hackatom contract")
-	codeID := cli.WasmStore("./testdata/hackatom.wasm.gzip")
+	codeID := legacyCli.WasmStore("./testdata/hackatom.wasm.gzip")
 	initMsg := fmt.Sprintf(`{"verifier":%q, "beneficiary":%q}`, verifierAddr, beneficiary)
-	contractAddr := cli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr, "--amount=1000000stake")
+	contractAddr := legacyCli.WasmInstantiate(codeID, initMsg, "--admin="+defaultSrcAddr, "--label=label1", "--from="+defaultSrcAddr, "--amount=1000000stake")
 
-	gotRsp := cli.QuerySmart(contractAddr, `{"verifier":{}}`)
+	gotRsp := legacyCli.QuerySmart(contractAddr, `{"verifier":{}}`)
 	require.Equal(t, fmt.Sprintf(`{"data":{"verifier":"%s"}}`, verifierAddr), gotRsp)
 
 	// submit upgrade proposal
@@ -72,13 +71,13 @@ func TestChainUpgrade(t *testing.T) {
  "title": "my upgrade",
  "summary": "testing"
 }`, upgradeName, upgradeHeight)
-	proposalID := cli.SubmitAndVoteGovProposal(proposal)
+	proposalID := legacyCli.SubmitAndVoteGovProposal(proposal)
 	t.Logf("current_height: %d\n", sut.currentHeight)
-	raw := cli.CustomQuery("q", "gov", "proposal", proposalID)
+	raw := legacyCli.CustomQuery("q", "gov", "proposal", proposalID)
 	t.Log(raw)
 	sut.AwaitBlockHeight(t, upgradeHeight-1)
 	t.Logf("current_height: %d\n", sut.currentHeight)
-	raw = cli.CustomQuery("q", "gov", "proposal", proposalID)
+	raw = legacyCli.CustomQuery("q", "gov", "proposal", proposalID)
 	proposalStatus := gjson.Get(raw, "status").String()
 	require.Equal(t, "PROPOSAL_STATUS_PASSED", proposalStatus, raw)
 
@@ -89,7 +88,6 @@ func TestChainUpgrade(t *testing.T) {
 	t.Log("Upgrade height was reached. Upgrading chain")
 	sut.ExecBinary = currentBranchBinary
 	sut.StartChain(t)
-	cli = NewWasmdCLI(t, sut, verbose)
 
 	// ensure that state matches expectations
 	gotRsp = cli.QuerySmart(contractAddr, `{"verifier":{}}`)
