@@ -19,69 +19,47 @@ func TestBuildContractAddressClassic(t *testing.T) {
 	})
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
 
-	// prepare test data
-	type Spec struct {
-		In struct {
-			CodeId     uint64 `json:"codeId"`
-			InstanceId uint64 `json:"InstanceId"`
-		} `json:"in"`
-		Out struct {
-			Address sdk.AccAddress `json:"address"`
-		} `json:"out"`
+	specs := map[string]struct {
+		codeId     uint64
+		instanceId uint64
+		expAddress string
+	}{
+		"code 0, instance 0": {
+			codeId:     0,
+			instanceId: 0,
+			expAddress: "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7",
+		},
+		"code 0, instance 1": {
+			codeId:     0,
+			instanceId: 1,
+			expAddress: "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj",
+		},
+		"code 1, instance 0": {
+			codeId:     1,
+			instanceId: 0,
+			expAddress: "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk",
+		},
+		"code 1, instance 1": {
+			codeId:     1,
+			instanceId: 1,
+			expAddress: "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm",
+		},
 	}
-	var specs []Spec
-	require.NoError(t, json.Unmarshal([]byte(goldenMasterClassicContractAddr), &specs))
-	require.NotEmpty(t, specs)
-	// run test on prepared test data
-	for i, spec := range specs {
-		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			expAddr, err := sdk.AccAddressFromBech32(spec.expAddress)
+			require.NoError(t, err)
+
 			// when
-			gotAddr := BuildContractAddressClassic(spec.In.CodeId, spec.In.InstanceId)
+			gotAddr := BuildContractAddressClassic(spec.codeId, spec.instanceId)
+
 			// then
-			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
+			require.True(t, expAddr.Equals(gotAddr))
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
-
-const goldenMasterClassicContractAddr = `[
-  {
-    "in": {
-      "codeId": 0,
-      "instanceId": 0
-    },
-    "out": {
-      "address": "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7"
-    }
-  },
-  {
-    "in": {
-      "codeId": 0,
-      "instanceId": 1
-    },
-    "out": {
-      "address": "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj"
-    }
-  },
-  {
-    "in": {
-      "codeId": 1,
-      "instanceId": 0
-    },
-    "out": {
-      "address": "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk"
-    }
-  },
-  {
-    "in": {
-      "codeId": 1,
-      "instanceId": 1
-    },
-    "out": {
-      "address": "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm"
-    }
-  }
-]`
 
 func TestBuildContractAddressPredictable(t *testing.T) {
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
