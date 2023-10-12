@@ -22,82 +22,63 @@ func TestBuildContractAddressClassic(t *testing.T) {
 
 	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
-	// disables address cache, AccAddress -> String conversion is then slower,
-	// but does not lead to errors like:
-	// runtime error: invalid memory address or nil pointer dereference
+	// disable address cache
+	// AccAddress -> String conversion is then slower, but does not lead to errors like this:
+	//   runtime error: invalid memory address or nil pointer dereference
 	sdk.SetAddrCacheEnabled(false)
 
-	// prepare test data
-	type Spec struct {
-		In struct {
-			CodeId     uint64 `json:"codeId"`
-			InstanceId uint64 `json:"instanceId"`
-		} `json:"in"`
-		Out struct {
-			Address sdk.AccAddress `json:"address"`
-		} `json:"out"`
-	}
-	var specs []Spec
-	require.NoError(t, json.Unmarshal([]byte(goldenMasterClassicContractAddr), &specs))
-	require.NotEmpty(t, specs)
-
-	// run test on prepared test data
-	for i, spec := range specs {
+	// run tests
+	for i, spec := range classicContractAddr {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			// when
-			gotAddr := BuildContractAddressClassic(spec.In.CodeId, spec.In.InstanceId)
+			gotAddr := BuildContractAddressClassic(spec.codeId, spec.instanceId)
 			// then
-			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
+			require.Equal(t, spec.address, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
 
-const goldenMasterClassicContractAddr = `[
-  {
-    "in": {
-      "codeId": 0,
-      "instanceId": 0
-    },
-    "out": {
-      "address": "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7"
-    }
-  },
-  {
-    "in": {
-      "codeId": 0,
-      "instanceId": 1
-    },
-    "out": {
-      "address": "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj"
-    }
-  },
-  {
-    "in": {
-      "codeId": 1,
-      "instanceId": 0
-    },
-    "out": {
-      "address": "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk"
-    }
-  },
-  {
-    "in": {
-      "codeId": 1,
-      "instanceId": 1
-    },
-    "out": {
-      "address": "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm"
-    }
-  }
-]`
+var classicContractAddr = []struct {
+	codeId     uint64
+	instanceId uint64
+	address    string
+}{
+	{
+		codeId:     0,
+		instanceId: 0,
+		address:    "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7",
+	},
+	{
+		codeId:     0,
+		instanceId: 1,
+		address:    "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj",
+	},
+	{
+		codeId:     1,
+		instanceId: 0,
+		address:    "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk",
+	},
+	{
+		codeId:     1,
+		instanceId: 1,
+		address:    "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm",
+	},
+}
 
 func TestBuildContractAddressPredictable(t *testing.T) {
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
+	c := sdk.IsAddrCacheEnabled()
 	t.Cleanup(func() {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
+		sdk.SetAddrCacheEnabled(c)
 	})
+	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
+	// disable address cache
+	// AccAddress -> String conversion is then slower, but does not lead to errors like this:
+	//   runtime error: invalid memory address or nil pointer dereference
+	sdk.SetAddrCacheEnabled(false)
 
 	// test vectors generated via cosmjs: https://github.com/cosmos/cosmjs/pull/1253/files
 	type Spec struct {
