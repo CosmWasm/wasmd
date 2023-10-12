@@ -11,7 +11,79 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestBuildContractAddress(t *testing.T) {
+func TestBuildContractAddressClassic(t *testing.T) {
+	// preserve current Bech32 settings and make sure they will be restores when this test finishes
+	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
+	t.Cleanup(func() {
+		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
+	})
+	// set custom Bech32 settings
+	sdk.GetConfig().SetBech32PrefixForAccount("juno", "juno")
+	// prepare test data
+	type Spec struct {
+		In struct {
+			CodeId     uint64 `json:"codeId"`
+			InstanceId uint64 `json:"InstanceId"`
+		} `json:"in"`
+		Out struct {
+			Address sdk.AccAddress `json:"address"`
+		} `json:"out"`
+	}
+	var specs []Spec
+	require.NoError(t, json.Unmarshal([]byte(goldenMasterClassicContractAddr), &specs))
+	require.NotEmpty(t, specs)
+	// run test on prepared test data
+	for i, spec := range specs {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			// when
+			gotAddr := BuildContractAddressClassic(spec.In.CodeId, spec.In.InstanceId)
+			// then
+			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
+			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
+		})
+	}
+}
+
+const goldenMasterClassicContractAddr = `[
+  {
+    "in": {
+      "codeId": 0,
+      "instanceId": 0
+    },
+    "out": {
+      "address": "juno1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qytf73z"
+    }
+  },
+  {
+    "in": {
+      "codeId": 0,
+      "instanceId": 1
+    },
+    "out": {
+      "address": "juno156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04sej49ew"
+    }
+  },
+  {
+    "in": {
+      "codeId": 1,
+      "instanceId": 0
+    },
+    "out": {
+      "address": "juno1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfsenlwu2"
+    }
+  },
+  {
+    "in": {
+      "codeId": 1,
+      "instanceId": 1
+    },
+    "out": {
+      "address": "juno14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9skjuwg8"
+    }
+  }
+]`
+
+func TestBuildContractAddressPredictable(t *testing.T) {
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
 	t.Cleanup(func() {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)

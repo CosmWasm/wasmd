@@ -31,7 +31,7 @@ func PredicableAddressGenerator(creator sdk.AccAddress, salt, msg []byte, fixMsg
 	}
 }
 
-// BuildContractAddressClassic builds an sdk account address for a contract.
+// BuildContractAddressClassic builds an address for a contract.
 func BuildContractAddressClassic(codeID, instanceID uint64) sdk.AccAddress {
 	contractID := make([]byte, 16)
 	binary.BigEndian.PutUint64(contractID[:8], codeID)
