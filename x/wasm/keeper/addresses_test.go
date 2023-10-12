@@ -3,9 +3,9 @@ package keeper
 import (
 	"encoding/json"
 	"fmt"
+	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	"testing"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,12 +14,18 @@ import (
 func TestBuildContractAddressClassic(t *testing.T) {
 	// preserve current Bech32 settings and restore them after test completion
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
+	c := sdk.IsAddrCacheEnabled()
 	t.Cleanup(func() {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
+		sdk.SetAddrCacheEnabled(c)
 	})
 
 	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
+	// disables address cache, AccAddress -> String conversion is then slower,
+	// but does not lead to errors like:
+	// runtime error: invalid memory address or nil pointer dereference
+	sdk.SetAddrCacheEnabled(false)
 
 	// prepare test data
 	type Spec struct {
@@ -112,7 +118,7 @@ func TestBuildContractAddressPredictable(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			// when
 			gotAddr := BuildContractAddressPredictable(spec.In.Checksum, spec.In.Creator, spec.In.Salt.Bytes(), []byte(spec.In.Msg))
-
+			// then
 			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
