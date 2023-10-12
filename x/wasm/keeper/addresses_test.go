@@ -23,7 +23,7 @@ func TestBuildContractAddressClassic(t *testing.T) {
 	type Spec struct {
 		In struct {
 			CodeId     uint64 `json:"codeId"`
-			InstanceId uint64 `json:"InstanceId"`
+			InstanceId uint64 `json:"instanceId"`
 		} `json:"in"`
 		Out struct {
 			Address sdk.AccAddress `json:"address"`
