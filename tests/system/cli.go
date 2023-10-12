@@ -389,7 +389,6 @@ func (c WasmdCli) IsInCometBftValset(valPubKey cryptotypes.PubKey) (rpc.ResultVa
 	return valResult, found
 }
 
-// SubmitUpgradeGovProposal submit a chain upgrade gov v1 proposal
 
 // SubmitGovProposal submit a gov v1 proposal
 func (c WasmdCli) SubmitGovProposal(proposalJson string, args ...string) string {
