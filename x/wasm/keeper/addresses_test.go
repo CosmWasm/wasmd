@@ -12,11 +12,13 @@ import (
 )
 
 func TestBuildContractAddressClassic(t *testing.T) {
-	// preserve current Bech32 settings and make sure they will be restores when this test finishes
+	// preserve current Bech32 settings and restore them after test completion
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
 	t.Cleanup(func() {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
 	})
+
+	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
 
 	// prepare test data
@@ -32,6 +34,7 @@ func TestBuildContractAddressClassic(t *testing.T) {
 	var specs []Spec
 	require.NoError(t, json.Unmarshal([]byte(goldenMasterClassicContractAddr), &specs))
 	require.NotEmpty(t, specs)
+
 	// run test on prepared test data
 	for i, spec := range specs {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
