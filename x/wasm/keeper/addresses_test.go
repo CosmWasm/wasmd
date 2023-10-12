@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestBuildContractAddressClassic(t *testing.T) {
+func PrepareCleanup(t *testing.T) {
 	// preserve current Bech32 settings and restore them after test completion
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
 	c := sdk.IsAddrCacheEnabled()
@@ -19,67 +19,59 @@ func TestBuildContractAddressClassic(t *testing.T) {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
 		sdk.SetAddrCacheEnabled(c)
 	})
-
 	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
 	// disable address cache
 	// AccAddress -> String conversion is then slower, but does not lead to errors like this:
 	//   runtime error: invalid memory address or nil pointer dereference
 	sdk.SetAddrCacheEnabled(false)
+}
 
+func TestBuildContractAddressClassic(t *testing.T) {
+	// set cleanup function
+	PrepareCleanup(t)
+	// prepare test data
+	specs := []struct {
+		codeId     uint64
+		instanceId uint64
+		expAddress string
+	}{
+		{
+			codeId:     0,
+			instanceId: 0,
+			expAddress: "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7",
+		},
+		{
+			codeId:     0,
+			instanceId: 1,
+			expAddress: "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj",
+		},
+		{
+			codeId:     1,
+			instanceId: 0,
+			expAddress: "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk",
+		},
+		{
+			codeId:     1,
+			instanceId: 1,
+			expAddress: "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm",
+		},
+	}
 	// run tests
-	for i, spec := range classicContractAddr {
+	for i, spec := range specs {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			// when
 			gotAddr := BuildContractAddressClassic(spec.codeId, spec.instanceId)
 			// then
-			require.Equal(t, spec.address, gotAddr.String())
+			require.Equal(t, spec.expAddress, gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
 
-var classicContractAddr = []struct {
-	codeId     uint64
-	instanceId uint64
-	address    string
-}{
-	{
-		codeId:     0,
-		instanceId: 0,
-		address:    "purple1w0w8sasnut0jx0vvsnvlc8nayq0q2ej8xgrpwgel05tn6wy4r57qfplul7",
-	},
-	{
-		codeId:     0,
-		instanceId: 1,
-		address:    "purple156r47kpk4va938pmtpuee4fh77847gqcw2dmpl2nnpwztwfgz04s5cr8hj",
-	},
-	{
-		codeId:     1,
-		instanceId: 0,
-		address:    "purple1mzdhwvvh22wrt07w59wxyd58822qavwkx5lcej7aqfkpqqlhaqfs5efvjk",
-	},
-	{
-		codeId:     1,
-		instanceId: 1,
-		address:    "purple14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9smc2vxm",
-	},
-}
-
 func TestBuildContractAddressPredictable(t *testing.T) {
-	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
-	c := sdk.IsAddrCacheEnabled()
-	t.Cleanup(func() {
-		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
-		sdk.SetAddrCacheEnabled(c)
-	})
-	// set custom Bech32 settings
-	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
-	// disable address cache
-	// AccAddress -> String conversion is then slower, but does not lead to errors like this:
-	//   runtime error: invalid memory address or nil pointer dereference
-	sdk.SetAddrCacheEnabled(false)
-
+	// set cleanup function
+	PrepareCleanup(t)
 	// test vectors generated via cosmjs: https://github.com/cosmos/cosmjs/pull/1253/files
 	type Spec struct {
 		In struct {
