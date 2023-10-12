@@ -17,8 +17,8 @@ func TestBuildContractAddressClassic(t *testing.T) {
 	t.Cleanup(func() {
 		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
 	})
-	// set custom Bech32 settings
 	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
+
 	// prepare test data
 	type Spec struct {
 		In struct {
@@ -39,7 +39,7 @@ func TestBuildContractAddressClassic(t *testing.T) {
 			gotAddr := BuildContractAddressClassic(spec.In.CodeId, spec.In.InstanceId)
 			// then
 			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
-			//require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
+			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
