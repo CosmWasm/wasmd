@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -10,17 +11,17 @@ import (
 	"testing"
 	"time"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/std"
-
-	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
-	"github.com/cosmos/cosmos-sdk/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 	"golang.org/x/exp/slices"
+
+	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
@@ -42,17 +43,19 @@ type WasmdCli struct {
 	awaitNextBlock awaitNextBlock
 	expTXCommitted bool
 	execBinary     string
+	nodesCount     int
 }
 
 // NewWasmdCLI constructor
 func NewWasmdCLI(t *testing.T, sut *SystemUnderTest, verbose bool) *WasmdCli {
 	return NewWasmdCLIx(
 		t,
-		sut.execBinary,
+		sut.ExecBinary,
 		sut.rpcAddr,
 		sut.chainID,
 		sut.AwaitNextBlock,
-		filepath.Join(workDir, sut.outputDir),
+		sut.nodesCount,
+		filepath.Join(WorkDir, sut.outputDir),
 		"1"+sdk.DefaultBondDenom,
 		verbose,
 		assert.NoError,
@@ -67,6 +70,7 @@ func NewWasmdCLIx(
 	nodeAddress string,
 	chainID string,
 	awaiter awaitNextBlock,
+	nodesCount int,
 	homeDir string,
 	fees string,
 	debug bool,
@@ -84,6 +88,7 @@ func NewWasmdCLIx(
 		homeDir:        homeDir,
 		Debug:          debug,
 		awaitNextBlock: awaiter,
+		nodesCount:     nodesCount,
 		fees:           fees,
 		assertErrorFn:  assertErrorFn,
 		expTXCommitted: expTXCommitted,
@@ -105,6 +110,7 @@ func (c WasmdCli) WithRunErrorMatcher(f RunErrorAssert) WasmdCli {
 		c.nodeAddress,
 		c.chainID,
 		c.awaitNextBlock,
+		c.nodesCount,
 		c.homeDir,
 		c.fees,
 		c.Debug,
@@ -120,6 +126,7 @@ func (c WasmdCli) WithNodeAddress(nodeAddr string) WasmdCli {
 		nodeAddr,
 		c.chainID,
 		c.awaitNextBlock,
+		c.nodesCount,
 		c.homeDir,
 		c.fees,
 		c.Debug,
@@ -135,6 +142,7 @@ func (c WasmdCli) WithAssertTXUncommitted() WasmdCli {
 		c.nodeAddress,
 		c.chainID,
 		c.awaitNextBlock,
+		c.nodesCount,
 		c.homeDir,
 		c.fees,
 		c.Debug,
@@ -156,7 +164,7 @@ func (c WasmdCli) CustomCommand(args ...string) string {
 	if !ok {
 		return execOutput
 	}
-	rsp, committed := c.awaitTxCommitted(execOutput, defaultWaitTime)
+	rsp, committed := c.awaitTxCommitted(execOutput, DefaultWaitTime)
 	c.t.Logf("tx committed: %v", committed)
 	require.Equal(c.t, c.expTXCommitted, committed, "expected tx committed: %v", c.expTXCommitted)
 	return rsp
@@ -210,13 +218,13 @@ func (c WasmdCli) runWithInput(args []string, input io.Reader) (output string, o
 				err = fmt.Errorf("recovered from panic: %v", r)
 			}
 		}()
-		cmd := exec.Command(locateExecutable("wasmd"), args...) //nolint:gosec
-		cmd.Dir = workDir
+		cmd := exec.Command(locateExecutable(c.execBinary), args...) //nolint:gosec
+		cmd.Dir = WorkDir
 		cmd.Stdin = input
 		return cmd.CombinedOutput()
 	}()
 	ok = c.assertErrorFn(c.t, gotErr, string(gotOut))
-	return string(gotOut), ok
+	return strings.TrimSpace(string(gotOut)), ok
 }
 
 func (c WasmdCli) withQueryFlags(args ...string) []string {
@@ -236,7 +244,7 @@ func (c WasmdCli) withTXFlags(args ...string) []string {
 }
 
 func (c WasmdCli) withKeyringFlags(args ...string) []string {
-	r := append(args, //nolint:gocritic
+	r := append(args,
 		"--home", c.homeDir,
 		"--keyring-backend", "test",
 	)
@@ -262,7 +270,7 @@ func (c WasmdCli) WasmExecute(contractAddr, msg, from string, args ...string) st
 
 // AddKey add key to default keyring. Returns address
 func (c WasmdCli) AddKey(name string) string {
-	cmd := c.withKeyringFlags("keys", "add", name) //, "--no-backup")
+	cmd := c.withKeyringFlags("keys", "add", name, "--no-backup")
 	out, _ := c.run(cmd)
 	addr := gjson.Get(out, "address").String()
 	require.NotEmpty(c.t, addr, "got %q", out)
@@ -302,7 +310,7 @@ func (c WasmdCli) FundAddress(destAddr, amount string) string {
 // WasmStore uploads a wasm contract to the chain. Returns code id
 func (c WasmdCli) WasmStore(file string, args ...string) int {
 	if len(args) == 0 {
-		args = []string{"--from=" + defaultSrcAddr, "--gas=2500000"}
+		args = []string{"--from=" + defaultSrcAddr, "--gas=2500000", "--fees=3stake"}
 	}
 	cmd := append([]string{"tx", "wasm", "store", file}, args...)
 	rsp := c.CustomCommand(cmd...)
@@ -354,7 +362,7 @@ func (c WasmdCli) QueryTotalSupply(denom string) int64 {
 	return gjson.Get(raw, fmt.Sprintf("supply.#(denom==%q).amount", denom)).Int()
 }
 
-func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetResponse {
+func (c WasmdCli) GetCometBFTValidatorSet() cmtservice.GetLatestValidatorSetResponse {
 	args := []string{"q", "comet-validator-set"}
 	got := c.CustomQuery(args...)
 
@@ -368,9 +376,9 @@ func (c WasmdCli) GetTendermintValidatorSet() cmtservice.GetLatestValidatorSetRe
 	return res
 }
 
-// IsInTendermintValset returns true when the given pub key is in the current active tendermint validator set
-func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
-	valResult := c.GetTendermintValidatorSet()
+// IsInCometBftValset returns true when the given pub key is in the current active tendermint validator set
+func (c WasmdCli) IsInCometBftValset(valPubKey cryptotypes.PubKey) (cmtservice.GetLatestValidatorSetResponse, bool) {
+	valResult := c.GetCometBFTValidatorSet()
 	var found bool
 	for _, v := range valResult.Validators {
 		if v.PubKey.Equal(valPubKey) {
@@ -379,6 +387,45 @@ func (c WasmdCli) IsInTendermintValset(valPubKey cryptotypes.PubKey) (cmtservice
 		}
 	}
 	return valResult, found
+}
+
+
+// SubmitGovProposal submit a gov v1 proposal
+func (c WasmdCli) SubmitGovProposal(proposalJson string, args ...string) string {
+	if len(args) == 0 {
+		args = []string{"--from=" + defaultSrcAddr}
+	}
+
+	pathToProposal := filepath.Join(c.t.TempDir(), "proposal.json")
+	err := os.WriteFile(pathToProposal, []byte(proposalJson), os.FileMode(0o744))
+	require.NoError(c.t, err)
+	c.t.Log("Submit upgrade proposal")
+	return c.CustomCommand(append([]string{"tx", "gov", "submit-proposal", pathToProposal}, args...)...)
+}
+
+// SubmitAndVoteGovProposal submit proposal, let all validators vote yes and return proposal id
+func (c WasmdCli) SubmitAndVoteGovProposal(proposalJson string, args ...string) string {
+	rsp := c.SubmitGovProposal(proposalJson, args...)
+	RequireTxSuccess(c.t, rsp)
+	raw := c.CustomQuery("q", "gov", "proposals", "--depositor", c.GetKeyAddr(defaultSrcAddr))
+	proposals := gjson.Get(raw, "proposals.#.id").Array()
+	require.NotEmpty(c.t, proposals, raw)
+	ourProposalID := proposals[len(proposals)-1].String() // last is ours
+	for i := 0; i < c.nodesCount; i++ {
+		go func(i int) { // do parallel
+			c.t.Logf("Voting: validator %d\n", i)
+			rsp = c.CustomCommand("tx", "gov", "vote", ourProposalID, "yes", "--from", c.GetKeyAddr(fmt.Sprintf("node%d", i)))
+			RequireTxSuccess(c.t, rsp)
+		}(i)
+	}
+	return ourProposalID
+}
+
+// Version returns the current version of the client binary
+func (c WasmdCli) Version() string {
+	v, ok := c.run([]string{"version"})
+	require.True(c.t, ok)
+	return v
 }
 
 // RequireTxSuccess require the received response to contain the success code

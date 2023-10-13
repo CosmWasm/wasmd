@@ -3,6 +3,7 @@ package system
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -44,5 +45,14 @@ func SetCodeUploadPermission(t *testing.T, permission string, addresses ...strin
 		state, err = sjson.Set(state, "app_state.wasm.params.code_upload_access.addresses", addresses)
 		require.NoError(t, err)
 		return []byte(state)
+	}
+}
+
+func SetGovVotingPeriod(t *testing.T, period time.Duration) GenesisMutator {
+	return func(genesis []byte) []byte {
+		t.Helper()
+		state, err := sjson.SetRawBytes(genesis, "app_state.gov.params.voting_period", []byte(fmt.Sprintf("%q", period.String())))
+		require.NoError(t, err)
+		return state
 	}
 }

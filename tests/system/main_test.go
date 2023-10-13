@@ -14,18 +14,20 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/libs/rand"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 var (
-	sut     *SystemUnderTest
-	verbose bool
+	sut            *SystemUnderTest
+	verbose        bool
+	execBinaryName string
 )
 
 func TestMain(m *testing.M) {
 	rebuild := flag.Bool("rebuild", false, "rebuild artifacts")
-	waitTime := flag.Duration("wait-time", defaultWaitTime, "time to wait for chain events")
+	waitTime := flag.Duration("wait-time", DefaultWaitTime, "time to wait for chain events")
 	nodesCount := flag.Int("nodes-count", 4, "number of nodes in the cluster")
 	blockTime := flag.Duration("block-time", 1000*time.Millisecond, "block creation time")
 	execBinary := flag.String("binary", "wasmd", "executable binary for server/ client side")
@@ -40,16 +42,17 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	workDir = dir
+	WorkDir = dir
 	if verbose {
-		println("Work dir: ", workDir)
+		println("Work dir: ", WorkDir)
 	}
 	initSDKConfig(*bech32Prefix)
 
-	defaultWaitTime = *waitTime
+	DefaultWaitTime = *waitTime
 	if *execBinary == "" {
 		panic("executable binary name must not be empty")
 	}
+	execBinaryName = *execBinary
 	sut = NewSystemUnderTest(*execBinary, verbose, *nodesCount, *blockTime)
 	if *rebuild {
 		sut.BuildNewBinary()
@@ -78,7 +81,7 @@ func requireEnoughFileHandlers(nodesCount int) {
 	}
 
 	cmd := exec.Command(ulimit, "-n")
-	cmd.Dir = workDir
+	cmd.Dir = WorkDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error :%#+v, output: %s", err, string(out)))
