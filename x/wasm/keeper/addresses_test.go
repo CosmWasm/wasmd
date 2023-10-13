@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func PrepareCleanup(t *testing.T) {
+func prepareCleanup(t *testing.T) {
 	// preserve current Bech32 settings and restore them after test completion
 	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
 	c := sdk.IsAddrCacheEnabled()
@@ -29,7 +29,7 @@ func PrepareCleanup(t *testing.T) {
 
 func TestBuildContractAddressClassic(t *testing.T) {
 	// set cleanup function
-	PrepareCleanup(t)
+	prepareCleanup(t)
 	// prepare test data
 	specs := []struct {
 		codeId     uint64
@@ -71,7 +71,7 @@ func TestBuildContractAddressClassic(t *testing.T) {
 
 func TestBuildContractAddressPredictable(t *testing.T) {
 	// set cleanup function
-	PrepareCleanup(t)
+	prepareCleanup(t)
 	// test vectors generated via cosmjs: https://github.com/cosmos/cosmjs/pull/1253/files
 	type Spec struct {
 		In struct {
