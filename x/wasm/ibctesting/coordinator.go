@@ -257,22 +257,22 @@ func (coord *Coordinator) RelayAndAckPendingPackets(path *Path) error {
 	src := path.EndpointA
 	require.NoError(coord.t, src.UpdateClient())
 	coord.t.Logf("Relay: %d Packets A->B, %d Packets B->A\n", len(src.Chain.PendingSendPackets), len(path.EndpointB.Chain.PendingSendPackets))
-	for i, v := range src.Chain.PendingSendPackets {
+	for _, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
 		if err != nil {
 			return err
 		}
-		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
+		src.Chain.PendingSendPackets = src.Chain.PendingSendPackets[1:]
 	}
 
 	src = path.EndpointB
 	require.NoError(coord.t, src.UpdateClient())
-	for i, v := range src.Chain.PendingSendPackets {
+	for _, v := range src.Chain.PendingSendPackets {
 		err := path.RelayPacket(v, nil)
 		if err != nil {
 			return err
 		}
-		src.Chain.PendingSendPackets = append(src.Chain.PendingSendPackets[0:i], src.Chain.PendingSendPackets[i+1:]...)
+		src.Chain.PendingSendPackets = src.Chain.PendingSendPackets[1:]
 	}
 	return nil
 }
