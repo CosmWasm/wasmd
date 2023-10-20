@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-
-
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	"github.com/stretchr/testify/require"
 
