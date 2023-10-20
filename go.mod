@@ -30,18 +30,18 @@ require (
 
 require (
 	cosmossdk.io/api v0.7.2
-	cosmossdk.io/client/v2 v2.0.0-20230818115413-c402c51a1508
+	cosmossdk.io/client/v2 v2.0.0-20231009141709-5e209c3c0fce
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.0
-	cosmossdk.io/errors v1.0.0
+	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.2.1
 	cosmossdk.io/math v1.1.3-rc.1
 	cosmossdk.io/store v1.0.0-rc.0
-	cosmossdk.io/tools/confix v0.0.0-20230818115413-c402c51a1508
-	cosmossdk.io/x/circuit v0.0.0-20230818115413-c402c51a1508
-	cosmossdk.io/x/evidence v0.0.0-20230818115413-c402c51a1508
-	cosmossdk.io/x/feegrant v0.0.0-20230818115413-c402c51a1508
-	cosmossdk.io/x/nft v0.0.0-20230630152705-9f4a4e416f85
+	cosmossdk.io/tools/confix v0.0.0-20230925151519-64e0e8980834
+	cosmossdk.io/x/circuit v0.0.0-20231006095526-33390754f9fe
+	cosmossdk.io/x/evidence v0.0.0-20230925151519-64e0e8980834
+	cosmossdk.io/x/feegrant v0.0.0-20231009114728-5259373edec8
+	cosmossdk.io/x/nft v0.0.0-20231006095526-33390754f9fe
 	cosmossdk.io/x/tx v0.11.0
 	cosmossdk.io/x/upgrade v0.0.0-20230915171831-2196edacb99d
 	github.com/cometbft/cometbft v0.38.0
@@ -54,13 +54,14 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97
 )
 
+require cosmossdk.io/errors v1.0.0
+
 require (
 	cloud.google.com/go v0.110.8 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.2 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
-	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -162,7 +163,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
-	github.com/petermattis/goid v0.0.0-20230518223814-80aa455d8761 // indirect
+	github.com/petermattis/goid v0.0.0-20230808133559-b036b712a89b // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
