@@ -70,6 +70,7 @@ func GetTxCmd() *cobra.Command {
 		GrantCmd(),
 		UpdateInstantiateConfigCmd(),
 		SubmitProposalCmd(),
+		UpdateContractLabelCmd(),
 	)
 	return txCmd
 }

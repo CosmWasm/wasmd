@@ -3,7 +3,7 @@ module github.com/CosmWasm/wasmd
 go 1.20
 
 require (
-	github.com/CosmWasm/wasmvm v1.4.0
+	github.com/CosmWasm/wasmvm v1.4.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.5
 	github.com/cosmos/gogogateway v1.2.0 // indirect
@@ -193,3 +193,6 @@ replace (
 	// pin version! 126854af5e6d has issues with the store so that queries fail
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
+
+// see https://github.com/CosmWasm/wasmd/issues/1651
+retract v0.42.0

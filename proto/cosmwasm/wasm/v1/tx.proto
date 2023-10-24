@@ -27,7 +27,7 @@ service Msg {
   rpc ExecuteContract(MsgExecuteContract) returns (MsgExecuteContractResponse);
   // Migrate runs a code upgrade/ downgrade for a smart contract
   rpc MigrateContract(MsgMigrateContract) returns (MsgMigrateContractResponse);
-  // UpdateAdmin sets a new   admin for a smart contract
+  // UpdateAdmin sets a new admin for a smart contract
   rpc UpdateAdmin(MsgUpdateAdmin) returns (MsgUpdateAdminResponse);
   // ClearAdmin removes any admin stored for a smart contract
   rpc ClearAdmin(MsgClearAdmin) returns (MsgClearAdminResponse);
@@ -76,6 +76,11 @@ service Msg {
   // Since: 0.42
   rpc StoreAndMigrateContract(MsgStoreAndMigrateContract)
       returns (MsgStoreAndMigrateContractResponse);
+  // UpdateContractLabel sets a new label for a smart contract
+  //
+  // Since: 0.43
+  rpc UpdateContractLabel(MsgUpdateContractLabel)
+      returns (MsgUpdateContractLabelResponse);
 }
 
 // MsgStoreCode submit Wasm code to the system
@@ -246,6 +251,16 @@ message MsgClearAdmin {
 
 // MsgClearAdminResponse returns empty data
 message MsgClearAdminResponse {}
+
+// AccessConfigUpdate contains the code id and the access config to be
+// applied.
+message AccessConfigUpdate {
+  // CodeID is the reference to the stored WASM code to be updated
+  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
+  // InstantiatePermission to apply to the set of code ids
+  AccessConfig instantiate_permission = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
 
 // MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 message MsgUpdateInstantiateConfig {
@@ -470,3 +485,19 @@ message MsgStoreAndMigrateContractResponse {
   // Data contains bytes to returned from the contract
   bytes data = 3;
 }
+
+// MsgUpdateContractLabel sets a new label for a smart contract
+message MsgUpdateContractLabel {
+  option (amino.name) = "wasm/MsgUpdateContractLabel";
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Sender is the that actor that signed the messages
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // NewLabel string to be set
+  string new_label = 2;
+  // Contract is the address of the smart contract
+  string contract = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// MsgUpdateContractLabelResponse returns empty data
+message MsgUpdateContractLabelResponse {}

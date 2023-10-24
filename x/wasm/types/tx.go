@@ -762,3 +762,32 @@ func hasDuplicates[T comparable](s []T) bool {
 	}
 	return false
 }
+
+func (msg MsgUpdateContractLabel) Route() string {
+	return RouterKey
+}
+
+func (msg MsgUpdateContractLabel) Type() string {
+	return "update-contract-label"
+}
+
+func (msg MsgUpdateContractLabel) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
+		return errorsmod.Wrap(err, "sender")
+	}
+	if err := ValidateLabel(msg.NewLabel); err != nil {
+		return errorsmod.Wrap(err, "label")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
+		return errorsmod.Wrap(err, "contract")
+	}
+	return nil
+}
+
+func (msg MsgUpdateContractLabel) GetSigners() []sdk.AccAddress {
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil { // should never happen as valid basic rejects invalid addresses
+		panic(err.Error())
+	}
+	return []sdk.AccAddress{senderAddr}
+}
