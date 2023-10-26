@@ -222,4 +222,4 @@ replace (
 // see https://github.com/CosmWasm/wasmd/issues/1651
 retract v0.42.0
 
-replace github.com/cosmos/ibc-go/v8 => github.com/notional-labs/ibc-go/v8 v8.0.0-alpha.1.0.20231020092114-2119e0b53883
+replace github.com/cosmos/ibc-go/v8 => github.com/notional-labs/ibc-go/v8 v8.0.0-alpha.1.0.20231026154521-3165ace201b3
