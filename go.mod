@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/CosmWasm/wasmvm v1.4.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
-	github.com/cosmos/cosmos-sdk v0.50.0-rc.1.0.20231019221833-0c9930dfe36f
+	github.com/cosmos/cosmos-sdk v0.50.0-rc.1.0.20231026141021-0469fc17e158
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/iavl v1.0.0-rc.1
@@ -222,4 +222,4 @@ replace (
 // see https://github.com/CosmWasm/wasmd/issues/1651
 retract v0.42.0
 
-replace github.com/cosmos/ibc-go/v8 => github.com/notional-labs/ibc-go/v8 v8.0.0-alpha.1.0.20231026154521-3165ace201b3
+replace github.com/cosmos/ibc-go/v8 => github.com/notional-labs/ibc-go/v8 v8.0.0-alpha.1.0.20231026155905-fa9b0ad233d7
