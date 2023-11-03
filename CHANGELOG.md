@@ -29,7 +29,59 @@ It solves some incompatibility problems by improving cache invalidation. See [\#
 
 ### Migration notes:
 - This release does not include any state migrations or breaking changes, therefore a coordinated chain upgrade is not required.
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.41.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.43.0...HEAD)
+
+## [v0.43.0](https://github.com/CosmWasm/wasmd/tree/v0.43.0) (2023-10-10)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.42.0...v0.43.0)
+
+- Make contract label updatable [\#1601](https://github.com/CosmWasm/wasmd/issues/1601)
+- Remove gov v1beta1 dependencies and deprecated proposals [\#1608](https://github.com/CosmWasm/wasmd/issues/1608)
+- Retract v0.42.0 release [\#1651](https://github.com/CosmWasm/wasmd/issues/1651)
+- Bump wasmvm to v1.4.1 [\#1657](https://github.com/CosmWasm/wasmd/issues/1657)
+
+### Notable changes:
+- Wasmd v0.42.0 was retracted because an issue was found in CosmWasm 1.4.0. See https://twitter.com/CosmWasm/status/1709507168448229497
+- This release bundles CosmWasm v1.4.1 patch release. If you are using wasmd v0.42.0 please upgrade to wasmd 0.43.0 as soon as possible.
+- Deprecated wasm gov proposals have been removed completely from the codebase together with all the govv1beta1 dependencies.
+- MsgUpdateContractLabel was introduced to allow contract label updates.
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
+
+## [v0.42.0](https://github.com/CosmWasm/wasmd/tree/v0.42.0) (2023-09-20)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.41.0...v0.42.0)
+
+- Fix label validation error [\#1555](https://github.com/CosmWasm/wasmd/pull/1555)
+- Improve ToWasmVMGas/FromWasmVMGas code level documentation [\#1564](https://github.com/CosmWasm/wasmd/pull/1564)
+- Fix gas calculation [\#1567](https://github.com/CosmWasm/wasmd/pull/1567)
+- Bump cosmos-sdk to v0.47.5 [\#1467](https://github.com/CosmWasm/wasmd/issues/1467)
+- fix: make sure wasmvm cache metrics collector registration after VM setup[\#1575](https://github.com/CosmWasm/wasmd/pull/1575)
+- Remove legacy gov proposal dependencies [\#1587](https://github.com/CosmWasm/wasmd/pull/1587)
+- Upgrade to wasmvm 1.4 [\#1586](https://github.com/CosmWasm/wasmd/issues/1586)
+- Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
+- Bump github.com/cosmos/ibc-go/v7 from 7.2.0 to 7.3.0 [\#1594](https://github.com/CosmWasm/wasmd/pull/1594)
+- Log query error before redacting [\#1593](https://github.com/CosmWasm/wasmd/issues/1593)
+- Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
+- Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)
+- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+- Ensure genesis import works with both address generators [\#1629](https://github.com/CosmWasm/wasmd/issues/1629)
+- Set default query limit and ensure constraints [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
+
+### Notable changes:
+- Fix gas calculation [\#1567](https://github.com/CosmWasm/wasmd/pull/1567)
+- Upgrade to wasmvm 1.4 [\#1586](https://github.com/CosmWasm/wasmd/issues/1586)
+- Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)
+  - If `port_id` is omitted, all channels bound to the contract's port will be listed.
+- Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
+  - Pagination limit is set to 100 for all-state-query. See also [\#1632](https://github.com/CosmWasm/wasmd/pull/1632)
+- Ensure some contraints and limits on pin/unpin code ids [\#1624](https://github.com/CosmWasm/wasmd/pull/1624)
+  - Total number of code ids is limited to 50 for pin/unpin operations
+- Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.41.0](https://github.com/CosmWasm/wasmd/tree/v0.41.0) (2023-07-28)
 

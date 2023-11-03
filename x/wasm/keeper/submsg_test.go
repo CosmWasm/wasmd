@@ -7,19 +7,18 @@ import (
 	"strconv"
 	"testing"
 
-	errorsmod "cosmossdk.io/errors"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -194,12 +193,14 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertReturnedEvents := func(expectedEvents int) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+			t.Helper()
 			require.Len(t, response.Ok.Events, expectedEvents)
 		}
 	}
 
 	assertGasUsed := func(minGas, maxGas uint64) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+			t.Helper()
 			gasUsed := ctx.GasMeter().GasConsumed()
 			assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
 			assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)
@@ -208,11 +209,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 
 	assertErrorString := func(shouldContain string) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+			t.Helper()
 			assert.Contains(t, response.Err, shouldContain)
 		}
 	}
 
 	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+		t.Helper()
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
 		require.Equal(t, event.Type, "instantiate")
@@ -221,7 +224,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		assert.NotEqual(t, contract, eventAddr)
 
 		var res types.MsgInstantiateContractResponse
-		keepers.EncodingConfig.Marshaler.MustUnmarshal(response.Ok.Data, &res)
+		keepers.EncodingConfig.Codec.MustUnmarshal(response.Ok.Data, &res)
 		assert.Equal(t, eventAddr, res.Address)
 	}
 
@@ -559,7 +562,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 }
 
 func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
-	mockWasmVM := &wasmtesting.MockWasmer{}
+	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
@@ -640,7 +643,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 }
 
 func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
-	mockWasmVM := &wasmtesting.MockWasmer{}
+	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
 	k := keepers.WasmKeeper

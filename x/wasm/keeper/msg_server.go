@@ -4,6 +4,7 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
@@ -327,10 +328,6 @@ func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types
 		return nil, errorsmod.Wrap(err, "authority")
 	}
 
-	if err = req.ValidateBasic(); err != nil {
-		return nil, err
-	}
-
 	var adminAddr sdk.AccAddress
 	if req.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(req.Admin); err != nil {
@@ -440,4 +437,64 @@ func (m msgServer) selectAuthorizationPolicy(ctx sdk.Context, actor string) type
 		return policy
 	}
 	return DefaultAuthorizationPolicy{}
+}
+
+// StoreAndMigrateContract stores and migrates the contract.
+func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.MsgStoreAndMigrateContract) (*types.MsgStoreAndMigrateContractResponse, error) {
+	authorityAddr, err := sdk.AccAddressFromBech32(req.Authority)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "authority")
+	}
+
+	if err = req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	policy := m.selectAuthorizationPolicy(ctx, req.Authority)
+
+	codeID, checksum, err := m.keeper.create(ctx, authorityAddr, req.WASMByteCode, req.InstantiatePermission, policy)
+	if err != nil {
+		return nil, err
+	}
+
+	contractAddr, err := sdk.AccAddressFromBech32(req.Contract)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "contract")
+	}
+
+	data, err := m.keeper.migrate(ctx, contractAddr, authorityAddr, codeID, req.Msg, policy)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgStoreAndMigrateContractResponse{
+		CodeID:   codeID,
+		Checksum: checksum,
+		Data:     data,
+	}, nil
+}
+
+func (m msgServer) UpdateContractLabel(goCtx context.Context, msg *types.MsgUpdateContractLabel) (*types.MsgUpdateContractLabelResponse, error) {
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "sender")
+	}
+	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "contract")
+	}
+
+	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
+
+	if err := m.keeper.setContractLabel(ctx, contractAddr, senderAddr, msg.NewLabel, policy); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateContractLabelResponse{}, nil
 }

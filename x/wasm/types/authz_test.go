@@ -2,15 +2,18 @@ package types
 
 import (
 	"math"
+	"strings"
 	"testing"
 
-	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 func TestContractAuthzFilterValidate(t *testing.T) {
@@ -478,23 +481,23 @@ func TestValidateContractAuthorization(t *testing.T) {
 	}{
 		"contract execution": {
 			setup: func(t *testing.T) validatable {
-				return NewContractMigrationAuthorization(*validGrant)
+				return NewContractExecutionAuthorization(*validGrant)
 			},
 		},
 		"contract execution - duplicate grants": {
 			setup: func(t *testing.T) validatable {
-				return NewContractMigrationAuthorization(*validGrant, *validGrant)
+				return NewContractExecutionAuthorization(*validGrant, *validGrant)
 			},
 		},
 		"contract execution - invalid grant": {
 			setup: func(t *testing.T) validatable {
-				return NewContractMigrationAuthorization(*validGrant, *invalidGrant)
+				return NewContractExecutionAuthorization(*validGrant, *invalidGrant)
 			},
 			expErr: true,
 		},
 		"contract execution - empty grants": {
 			setup: func(t *testing.T) validatable {
-				return NewContractMigrationAuthorization()
+				return NewContractExecutionAuthorization()
 			},
 			expErr: true,
 		},
@@ -726,4 +729,244 @@ func mustGrant(contract sdk.AccAddress, limit ContractAuthzLimitX, filter Contra
 		panic(err)
 	}
 	return *g
+}
+
+func TestValidateCodeGrant(t *testing.T) {
+	specs := map[string]struct {
+		codeHash              []byte
+		instantiatePermission *AccessConfig
+		expErr                bool
+	}{
+		"all good": {
+			codeHash:              []byte("any_valid_checksum"),
+			instantiatePermission: &AllowEverybody,
+		},
+		"empty permission": {
+			codeHash: []byte("any_valid_checksum"),
+			expErr:   false,
+		},
+		"empty code hash": {
+			codeHash:              []byte{},
+			instantiatePermission: &AllowEverybody,
+			expErr:                true,
+		},
+		"nil code hash": {
+			codeHash:              nil,
+			instantiatePermission: &AllowEverybody,
+			expErr:                true,
+		},
+		"invalid permission": {
+			codeHash:              []byte("any_valid_checksum"),
+			instantiatePermission: &AccessConfig{Permission: AccessTypeUnspecified},
+			expErr:                true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			grant, err := NewCodeGrant(spec.codeHash, spec.instantiatePermission)
+			require.NoError(t, err)
+
+			gotErr := grant.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestValidateStoreCodeAuthorization(t *testing.T) {
+	validGrant, err := NewCodeGrant([]byte("any_valid_checksum"), &AllowEverybody)
+	require.NoError(t, err)
+	validGrantUpperCase, err := NewCodeGrant([]byte("ANY_VALID_CHECKSUM"), &AllowEverybody)
+	require.NoError(t, err)
+	invalidGrant, err := NewCodeGrant(nil, &AllowEverybody)
+	require.NoError(t, err)
+	wildcardGrant, err := NewCodeGrant([]byte("*"), &AllowEverybody)
+	require.NoError(t, err)
+	emptyPermissionGrant, err := NewCodeGrant([]byte("any_valid_checksum"), nil)
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		setup  func(t *testing.T) []CodeGrant
+		expErr bool
+	}{
+		"all good": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant}
+			},
+		},
+		"wildcard grant": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*wildcardGrant}
+			},
+		},
+		"empty permission grant": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*emptyPermissionGrant}
+			},
+		},
+		"duplicate grants - wildcard": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*wildcardGrant, *validGrant}
+			},
+			expErr: true,
+		},
+		"duplicate grants - same case code hash": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *validGrant}
+			},
+			expErr: true,
+		},
+		"duplicate grants - different case code hash": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *validGrantUpperCase}
+			},
+			expErr: true,
+		},
+		"invalid grant": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{*validGrant, *invalidGrant}
+			},
+			expErr: true,
+		},
+		"empty grants": {
+			setup: func(t *testing.T) []CodeGrant {
+				return []CodeGrant{}
+			},
+			expErr: true,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			gotErr := NewStoreCodeAuthorization(spec.setup(t)...).ValidateBasic()
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestStoreCodeAuthorizationAccept(t *testing.T) {
+	reflectCodeHash, err := wasmvm.CreateChecksum(reflectWasmCode)
+	require.NoError(t, err)
+
+	reflectCodeHashUpperCase := strings.ToUpper(string(reflectCodeHash))
+
+	grantWildcard, err := NewCodeGrant([]byte("*"), &AllowEverybody)
+	require.NoError(t, err)
+
+	grantReflectCode, err := NewCodeGrant(reflectCodeHash, &AllowNobody)
+	require.NoError(t, err)
+
+	grantReflectCodeUpperCase, err := NewCodeGrant([]byte(reflectCodeHashUpperCase), &AllowNobody)
+	require.NoError(t, err)
+
+	grantOtherCode, err := NewCodeGrant([]byte("any_valid_checksum"), &AllowEverybody)
+	require.NoError(t, err)
+
+	emptyPermissionReflectCodeGrant, err := NewCodeGrant(reflectCodeHash, nil)
+	require.NoError(t, err)
+
+	specs := map[string]struct {
+		auth      authztypes.Authorization
+		msg       sdk.Msg
+		expResult authztypes.AcceptResponse
+		expErr    *errorsmod.Error
+	}{
+		"accepted wildcard": {
+			auth: NewStoreCodeAuthorization(*grantWildcard),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowEverybody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"accepted reflect code": {
+			auth: NewStoreCodeAuthorization(*grantReflectCode),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowNobody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"accepted reflect code - empty permission": {
+			auth: NewStoreCodeAuthorization(*emptyPermissionReflectCodeGrant),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowNobody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"accepted reflect code - different case": {
+			auth: NewStoreCodeAuthorization(*grantReflectCodeUpperCase),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowNobody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: true,
+			},
+		},
+		"not accepted - no matching code": {
+			auth: NewStoreCodeAuthorization(*grantOtherCode),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowEverybody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: false,
+			},
+		},
+		"not accepted - no matching permission": {
+			auth: NewStoreCodeAuthorization(*grantReflectCode),
+			msg: &MsgStoreCode{
+				Sender:                sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &AllowEverybody,
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: false,
+			},
+		},
+		"invalid msg type": {
+			auth: NewStoreCodeAuthorization(*grantWildcard),
+			msg: &MsgMigrateContract{
+				Sender:   sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				Contract: sdk.AccAddress(randBytes(SDKAddrLen)).String(),
+				CodeID:   1,
+				Msg:      []byte(`{"foo":"bar"}`),
+			},
+			expResult: authztypes.AcceptResponse{
+				Accept: false,
+			},
+			expErr: sdkerrors.ErrInvalidRequest,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithGasMeter(sdk.NewInfiniteGasMeter())
+			gotResult, gotErr := spec.auth.Accept(ctx, spec.msg)
+			if spec.expErr != nil {
+				require.ErrorIs(t, gotErr, spec.expErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, spec.expResult, gotResult)
+		})
+	}
 }

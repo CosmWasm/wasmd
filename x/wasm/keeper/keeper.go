@@ -11,14 +11,15 @@ import (
 	"strings"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/log"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -46,7 +47,7 @@ type WasmVMQueryHandler interface {
 
 type CoinTransferrer interface {
 	// TransferCoins sends the coin amounts from the source to the destination with rules applied.
-	TransferCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	TransferCoins(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // AccountPruner handles the balances and data cleanup for accounts that are pruned on contract instantiate.
@@ -76,7 +77,7 @@ var defaultAcceptedAccountTypes = map[reflect.Type]struct{}{
 	reflect.TypeOf(&authtypes.BaseAccount{}): {},
 }
 
-// Keeper will have a reference to Wasmer with it's own data directory.
+// Keeper will have a reference to Wasm Engine with it's own data directory.
 type Keeper struct {
 	storeKey              storetypes.StoreKey
 	cdc                   codec.Codec
@@ -84,13 +85,13 @@ type Keeper struct {
 	bank                  CoinTransferrer
 	portKeeper            types.PortKeeper
 	capabilityKeeper      types.CapabilityKeeper
-	wasmVM                types.WasmerEngine
+	wasmVM                types.WasmEngine
 	wasmVMQueryHandler    WasmVMQueryHandler
 	wasmVMResponseHandler WasmVMResponseHandler
 	messenger             Messenger
 	// queryGasLimit is the max wasmvm gas that can be spent on executing a query with a contract
 	queryGasLimit        uint64
-	gasRegister          GasRegister
+	gasRegister          types.GasRegister
 	maxQueryStackSize    uint32
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
@@ -144,6 +145,11 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
+// GetGasRegister returns the x/wasm module's gas register.
+func (k Keeper) GetGasRegister() types.GasRegister {
+	return k.gasRegister
+}
+
 func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ types.AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
@@ -180,7 +186,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
 	}
-	codeID = k.autoIncrementID(ctx, types.KeyLastCodeID)
+	codeID = k.autoIncrementID(ctx, types.KeySequenceCodeID)
 	k.Logger(ctx).Debug("storing new contract", "capabilities", report.RequiredCapabilities, "code_id", codeID)
 	codeInfo := types.NewCodeInfo(checksum, creator, *instantiateAccess)
 	k.storeCodeInfo(ctx, codeID, codeInfo)
@@ -365,7 +371,7 @@ func (k Keeper) instantiate(
 }
 
 // Execute executes the contract instance
-func (k Keeper) execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
+func (k Keeper) execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
@@ -630,6 +636,25 @@ func (k Keeper) setContractAdmin(ctx sdk.Context, contractAddress, caller, newAd
 		types.EventTypeUpdateContractAdmin,
 		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
 		sdk.NewAttribute(types.AttributeKeyNewAdmin, newAdminStr),
+	))
+
+	return nil
+}
+
+func (k Keeper) setContractLabel(ctx sdk.Context, contractAddress, caller sdk.AccAddress, newLabel string, authZ types.AuthorizationPolicy) error {
+	contractInfo := k.GetContractInfo(ctx, contractAddress)
+	if contractInfo == nil {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "unknown contract")
+	}
+	if !authZ.CanModifyContract(contractInfo.AdminAddr(), caller) {
+		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "can not modify contract")
+	}
+	contractInfo.Label = newLabel
+	k.storeContractInfo(ctx, contractAddress, contractInfo)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeUpdateContractLabel,
+		sdk.NewAttribute(types.AttributeKeyContractAddr, contractAddress.String()),
+		sdk.NewAttribute(types.AttributeKeyNewLabel, newLabel),
 	))
 
 	return nil
@@ -1036,26 +1061,26 @@ func (k Keeper) consumeRuntimeGas(ctx sdk.Context, gas uint64) {
 	ctx.GasMeter().ConsumeGas(consumed, "wasm contract")
 	// throw OutOfGas error if we ran out (got exactly to zero due to better limit enforcing)
 	if ctx.GasMeter().IsOutOfGas() {
-		panic(sdk.ErrorOutOfGas{Descriptor: "Wasmer function execution"})
+		panic(sdk.ErrorOutOfGas{Descriptor: "Wasm engine function execution"})
 	}
 }
 
-func (k Keeper) autoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) autoIncrementID(ctx sdk.Context, sequenceKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
+	bz := store.Get(sequenceKey)
 	id := uint64(1)
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)
 	}
 	bz = sdk.Uint64ToBigEndian(id + 1)
-	store.Set(lastIDKey, bz)
+	store.Set(sequenceKey, bz)
 	return id
 }
 
 // PeekAutoIncrementID reads the current value without incrementing it.
-func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
+func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, sequenceKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(lastIDKey)
+	bz := store.Get(sequenceKey)
 	id := uint64(1)
 	if bz != nil {
 		id = binary.BigEndian.Uint64(bz)
@@ -1063,13 +1088,13 @@ func (k Keeper) PeekAutoIncrementID(ctx sdk.Context, lastIDKey []byte) uint64 {
 	return id
 }
 
-func (k Keeper) importAutoIncrementID(ctx sdk.Context, lastIDKey []byte, val uint64) error {
+func (k Keeper) importAutoIncrementID(ctx sdk.Context, sequenceKey []byte, val uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	if store.Has(lastIDKey) {
-		return errorsmod.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(lastIDKey))
+	if store.Has(sequenceKey) {
+		return errorsmod.Wrapf(types.ErrDuplicate, "autoincrement id: %s", string(sequenceKey))
 	}
 	bz := sdk.Uint64ToBigEndian(val)
-	store.Set(lastIDKey, bz)
+	store.Set(sequenceKey, bz)
 	return nil
 }
 
@@ -1100,10 +1125,10 @@ func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress)
 // MultipliedGasMeter wraps the GasMeter from context and multiplies all reads by out defined multiplier
 type MultipliedGasMeter struct {
 	originalMeter sdk.GasMeter
-	GasRegister   GasRegister
+	GasRegister   types.GasRegister
 }
 
-func NewMultipliedGasMeter(originalMeter sdk.GasMeter, gr GasRegister) MultipliedGasMeter {
+func NewMultipliedGasMeter(originalMeter sdk.GasMeter, gr types.GasRegister) MultipliedGasMeter {
 	return MultipliedGasMeter{originalMeter: originalMeter, GasRegister: gr}
 }
 
@@ -1136,7 +1161,7 @@ func (k Keeper) QueryGasLimit() sdk.Gas {
 	return k.queryGasLimit
 }
 
-// BankCoinTransferrer replicates the cosmos-sdk behaviour as in
+// BankCoinTransferrer replicates the cosmos-sdk behavior as in
 // https://github.com/cosmos/cosmos-sdk/blob/v0.41.4/x/bank/keeper/msg_server.go#L26
 type BankCoinTransferrer struct {
 	keeper types.BankKeeper
@@ -1150,7 +1175,7 @@ func NewBankCoinTransferrer(keeper types.BankKeeper) BankCoinTransferrer {
 
 // TransferCoins transfers coins from source to destination account when coin send was enabled for them and the recipient
 // is not in the blocked address list.
-func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amount sdk.Coins) error {
+func (c BankCoinTransferrer) TransferCoins(parentCtx sdk.Context, fromAddr, toAddr sdk.AccAddress, amount sdk.Coins) error {
 	em := sdk.NewEventManager()
 	ctx := parentCtx.WithEventManager(em)
 	if err := c.keeper.IsSendEnabledCoins(ctx, amount...); err != nil {

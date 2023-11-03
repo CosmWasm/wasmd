@@ -6,13 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CosmWasm/wasmd/app"
-
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
@@ -20,6 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/CosmWasm/wasmd/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -45,6 +46,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"ack": {
 			contract: &ackReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
+				t.Helper()
 				c := contract.(*ackReceiverContract)
 				c.t = t
 				c.chain = chain
@@ -57,6 +59,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"nack": {
 			contract: &nackReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
+				t.Helper()
 				c := contract.(*nackReceiverContract)
 				c.t = t
 			},
@@ -68,6 +71,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		"error": {
 			contract: &errorReceiverContract{},
 			setupContract: func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain) {
+				t.Helper()
 				c := contract.(*errorReceiverContract)
 				c.t = t
 			},
@@ -82,7 +86,7 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var (
 				chainAOpts = []wasmkeeper.Option{wasmkeeper.WithWasmEngine(
-					wasmtesting.NewIBCContractMockWasmer(spec.contract),
+					wasmtesting.NewIBCContractMockWasmEngine(spec.contract),
 				)}
 				coordinator = wasmibctesting.NewCoordinator(t, 2, []wasmkeeper.Option{}, chainAOpts)
 				chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
@@ -158,7 +162,7 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContract)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 		chainA      = coordinator.GetChain(wasmibctesting.GetChainID(1))
@@ -229,7 +233,7 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContract)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
@@ -304,7 +308,7 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContract)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContract)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts)
 
@@ -385,10 +389,10 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractA1),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractA1),
 			),
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractA2),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractA2),
 			),
 		}
 
@@ -448,11 +452,11 @@ func TestContractHandlesChannelClose(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractA)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractA)),
 		}
 		chainBOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractB)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractB)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 
@@ -494,13 +498,13 @@ func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
 	var (
 		chainAOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractA1)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractA1)),
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractA2)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractA2)),
 		}
 		chainBOpts = []wasmkeeper.Option{
 			wasmkeeper.WithWasmEngine(
-				wasmtesting.NewIBCContractMockWasmer(myContractB)),
+				wasmtesting.NewIBCContractMockWasmEngine(myContractB)),
 		}
 		coordinator = wasmibctesting.NewCoordinator(t, 2, chainAOpts, chainBOpts)
 

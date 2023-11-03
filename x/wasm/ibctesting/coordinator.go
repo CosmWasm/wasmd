@@ -30,11 +30,13 @@ type Coordinator struct {
 
 // NewCoordinator initializes Coordinator with n default wasm TestChain instances
 func NewCoordinator(t *testing.T, n int, opts ...[]wasmkeeper.Option) *Coordinator {
+	t.Helper()
 	return NewCoordinatorX(t, n, DefaultWasmAppFactory, opts...)
 }
 
 // NewCoordinatorX initializes Coordinator with N TestChain instances using the given app factory
 func NewCoordinatorX(t *testing.T, n int, appFactory ChainAppFactory, opts ...[]wasmkeeper.Option) *Coordinator {
+	t.Helper()
 	chains := make(map[string]*TestChain)
 	coord := &Coordinator{
 		t:           t,

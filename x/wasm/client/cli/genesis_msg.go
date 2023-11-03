@@ -443,7 +443,7 @@ func (x DefaultGenesisIO) AlterWasmModuleState(cmd *cobra.Command, callback func
 func contractSeqValue(state *types.GenesisState) uint64 {
 	var seq uint64 = 1
 	for _, s := range state.Sequences {
-		if bytes.Equal(s.IDKey, types.KeyLastInstanceID) {
+		if bytes.Equal(s.IDKey, types.KeySequenceInstanceID) {
 			seq = s.Value
 			break
 		}
@@ -456,7 +456,7 @@ func contractSeqValue(state *types.GenesisState) uint64 {
 func codeSeqValue(state *types.GenesisState) uint64 {
 	var seq uint64 = 1
 	for _, s := range state.Sequences {
-		if bytes.Equal(s.IDKey, types.KeyLastCodeID) {
+		if bytes.Equal(s.IDKey, types.KeySequenceCodeID) {
 			seq = s.Value
 			break
 		}

@@ -5,10 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const (
@@ -884,7 +885,6 @@ func TestMsgRemoveCodeUploadParamsAddressesValidation(t *testing.T) {
 func TestMsgPinCodesValidation(t *testing.T) {
 	// proper address size
 	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
-
 	specs := map[string]struct {
 		src    MsgPinCodes
 		expErr bool
@@ -911,6 +911,20 @@ func TestMsgPinCodesValidation(t *testing.T) {
 		"empty code ids": {
 			src: MsgPinCodes{
 				Authority: goodAddress,
+			},
+			expErr: true,
+		},
+		"exceeds max code ids": {
+			src: MsgPinCodes{
+				Authority: goodAddress,
+				CodeIDs:   genCodeIDs(51),
+			},
+			expErr: true,
+		},
+		"duplicate code ids": {
+			src: MsgPinCodes{
+				Authority: goodAddress,
+				CodeIDs:   []uint64{1, 1},
 			},
 			expErr: true,
 		},
@@ -960,6 +974,20 @@ func TestMsgUnpinCodesValidation(t *testing.T) {
 			},
 			expErr: true,
 		},
+		"exceeds max code ids": {
+			src: MsgUnpinCodes{
+				Authority: goodAddress,
+				CodeIDs:   genCodeIDs(51),
+			},
+			expErr: true,
+		},
+		"duplicate code ids": {
+			src: MsgUnpinCodes{
+				Authority: goodAddress,
+				CodeIDs:   []uint64{1, 1},
+			},
+			expErr: true,
+		},
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
@@ -971,6 +999,14 @@ func TestMsgUnpinCodesValidation(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func genCodeIDs(max int) []uint64 {
+	r := make([]uint64, max)
+	for i := 0; i < max; i++ {
+		r[i] = uint64(i)
+	}
+	return r
 }
 
 func TestMsgSudoContractValidation(t *testing.T) {
@@ -1212,6 +1248,187 @@ func TestMsgStoreAndInstantiateContractValidation(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
+		})
+	}
+}
+
+func TestMsgStoreAndMigrateContractValidation(t *testing.T) {
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
+
+	cases := map[string]struct {
+		msg   MsgStoreAndMigrateContract
+		valid bool
+	}{
+		"all good": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              goodAddress,
+				Msg:                   []byte("{}"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: true,
+		},
+		"empty InstantiatePermission": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:    goodAddress,
+				Contract:     goodAddress,
+				Msg:          []byte("{}"),
+				WASMByteCode: []byte("foo"),
+			},
+			valid: true,
+		},
+		"empty": {
+			msg:   MsgStoreAndMigrateContract{},
+			valid: false,
+		},
+		"missing byte code": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              goodAddress,
+				Msg:                   []byte("{}"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"missing contract": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Msg:                   []byte("{}"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"bad contract": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              badAddress,
+				Msg:                   []byte("{}"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"bad authority": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             badAddress,
+				Contract:              goodAddress,
+				Msg:                   []byte("{}"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"non json msg": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              goodAddress,
+				Msg:                   []byte("invalid-json"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"empty msg": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              goodAddress,
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{goodAddress}},
+			},
+			valid: false,
+		},
+		"invalid InstantiatePermission": {
+			msg: MsgStoreAndMigrateContract{
+				Authority:             goodAddress,
+				Contract:              goodAddress,
+				Msg:                   []byte("{}"),
+				WASMByteCode:          []byte("foo"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: []string{badAddress}},
+			},
+			valid: false,
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestMsgUpdateContractLabel(t *testing.T) {
+	// proper address size
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	otherGoodAddress := sdk.AccAddress(bytes.Repeat([]byte{0x1}, 20)).String()
+
+	specs := map[string]struct {
+		src    MsgUpdateContractLabel
+		expErr bool
+	}{
+		"all good": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "new label",
+				Contract: otherGoodAddress,
+			},
+		},
+		"new label required": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad sender": {
+			src: MsgUpdateContractLabel{
+				Sender:   badAddress,
+				NewLabel: "new label",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"empty new label": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad new label": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: " start with space ",
+				Contract: otherGoodAddress,
+			},
+			expErr: true,
+		},
+		"bad contract addr": {
+			src: MsgUpdateContractLabel{
+				Sender:   goodAddress,
+				NewLabel: "new label",
+				Contract: badAddress,
+			},
+			expErr: true,
+		},
+	}
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			err := spec.src.ValidateBasic()
+			if spec.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

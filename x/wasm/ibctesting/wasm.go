@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/rand"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -23,7 +23,7 @@ var wasmIdent = []byte("\x00\x61\x73\x6D")
 
 // SeedNewContractInstance stores some wasm code and instantiates a new contract on this chain.
 // This method can be called to prepare the store with some valid CodeInfo and ContractInfo. The returned
-// Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmer
+// Address is the contract address for this instance. Test should make use of this data and/or use NewIBCContractMockWasmEngine
 // for using a contract mock in Go.
 func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
 	pInstResp := chain.StoreCode(append(wasmIdent, rand.Bytes(10)...))
@@ -117,7 +117,7 @@ func (chain *TestChain) RawQuery(contractAddr string, queryData []byte) ([]byte,
 // SmartQuery This will serialize the query message and submit it to the contract.
 // The response is parsed into the provided interface.
 // Usage: SmartQuery(addr, QueryMsg{Foo: 1}, &response)
-func (chain *TestChain) SmartQuery(contractAddr string, queryMsg interface{}, response interface{}) error {
+func (chain *TestChain) SmartQuery(contractAddr string, queryMsg, response interface{}) error {
 	msg, err := json.Marshal(queryMsg)
 	if err != nil {
 		return err

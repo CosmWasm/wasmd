@@ -6,6 +6,9 @@ import (
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,8 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -166,6 +167,7 @@ type initInfo struct {
 }
 
 func initializeStaking(t *testing.T) initInfo {
+	t.Helper()
 	ctx, k := CreateTestInput(t, false, AvailableCapabilities)
 	accKeeper, stakingKeeper, keeper, bankKeeper := k.AccountKeeper, k.StakingKeeper, k.WasmKeeper, k.BankKeeper
 
@@ -458,9 +460,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
 	var reflectRes testdata.ChainResponse
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 	var bondedRes wasmvmtypes.BondedDenomResponse
-	mustParse(t, reflectRes.Data, &bondedRes)
+	mustUnmarshal(t, reflectRes.Data, &bondedRes)
 	assert.Equal(t, "stake", bondedRes.Denom)
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
@@ -471,9 +473,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectAllValidatorsBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 	var allValidatorsRes wasmvmtypes.AllValidatorsResponse
-	mustParse(t, reflectRes.Data, &allValidatorsRes)
+	mustUnmarshal(t, reflectRes.Data, &allValidatorsRes)
 	require.Len(t, allValidatorsRes.Validators, 1, string(res))
 	valInfo := allValidatorsRes.Validators[0]
 	// Note: this ValAddress not AccAddress, may change with #264
@@ -492,9 +494,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectValidatorBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 	var validatorRes wasmvmtypes.ValidatorResponse
-	mustParse(t, reflectRes.Data, &validatorRes)
+	mustUnmarshal(t, reflectRes.Data, &validatorRes)
 	require.NotNil(t, validatorRes.Validator)
 	valInfo = *validatorRes.Validator
 	// Note: this ValAddress not AccAddress, may change with #264
@@ -514,9 +516,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectNoValidatorBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 	var noValidatorRes wasmvmtypes.ValidatorResponse
-	mustParse(t, reflectRes.Data, &noValidatorRes)
+	mustUnmarshal(t, reflectRes.Data, &noValidatorRes)
 	require.Nil(t, noValidatorRes.Validator)
 
 	// test to get all my delegations
@@ -529,9 +531,9 @@ func TestQueryStakingInfo(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectAllDelegationsBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 	var allDelegationsRes wasmvmtypes.AllDelegationsResponse
-	mustParse(t, reflectRes.Data, &allDelegationsRes)
+	mustUnmarshal(t, reflectRes.Data, &allDelegationsRes)
 	require.Len(t, allDelegationsRes.Delegations, 1)
 	delInfo := allDelegationsRes.Delegations[0]
 	// Note: this ValAddress not AccAddress, may change with #264
@@ -553,10 +555,10 @@ func TestQueryStakingInfo(t *testing.T) {
 	res, err = keeper.QuerySmart(ctx, maskAddr, reflectDelegationBin)
 	require.NoError(t, err)
 	// first we pull out the data from chain response, before parsing the original response
-	mustParse(t, res, &reflectRes)
+	mustUnmarshal(t, res, &reflectRes)
 
 	var delegationRes wasmvmtypes.DelegationResponse
-	mustParse(t, reflectRes.Data, &delegationRes)
+	mustUnmarshal(t, reflectRes.Data, &delegationRes)
 	assert.NotEmpty(t, delegationRes.Delegation)
 	delInfo2 := delegationRes.Delegation
 	// Note: this ValAddress not AccAddress, may change with #264
@@ -622,7 +624,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 	raw, err := StakingQuerier(stakingKeeper, distributionkeeper.NewQuerier(distKeeper))(ctx, &query)
 	require.NoError(t, err)
 	var res wasmvmtypes.DelegationResponse
-	mustParse(t, raw, &res)
+	mustUnmarshal(t, raw, &res)
 	assert.NotEmpty(t, res.Delegation)
 	delInfo := res.Delegation
 	// Note: this ValAddress not AccAddress, may change with #264
@@ -645,6 +647,7 @@ func TestQueryStakingPlugin(t *testing.T) {
 
 // adds a few validators and returns a list of validators that are registered
 func addValidator(t *testing.T, ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, faucet *TestFaucet, value sdk.Coin) sdk.ValAddress {
+	t.Helper()
 	owner := faucet.NewFundedRandomAccount(ctx, value)
 
 	privKey := secp256k1.GenPrivKey()
@@ -693,7 +696,8 @@ func setValidatorRewards(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, d
 	distKeeper.AllocateTokensToValidator(ctx, vali, payout)
 }
 
-func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Balance: &addressQuery{
 			Address: addr,
@@ -709,7 +713,8 @@ func assertBalance(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Ac
 	assert.Equal(t, expected, balance.Balance)
 }
 
-func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, addr sdk.AccAddress, expected string) {
+func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract, addr sdk.AccAddress, expected string) {
+	t.Helper()
 	query := StakingQueryMsg{
 		Claims: &addressQuery{
 			Address: addr,
@@ -726,6 +731,7 @@ func assertClaims(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.Acc
 }
 
 func assertSupply(t *testing.T, ctx sdk.Context, keeper Keeper, contract sdk.AccAddress, expectedIssued string, expectedBonded sdk.Coin) {
+	t.Helper()
 	query := StakingQueryMsg{Investment: &struct{}{}}
 	queryBz, err := json.Marshal(query)
 	require.NoError(t, err)

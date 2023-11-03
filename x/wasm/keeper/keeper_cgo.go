@@ -5,10 +5,10 @@ package keeper
 import (
 	"path/filepath"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	wasmvm "github.com/CosmWasm/wasmvm"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
@@ -46,7 +46,7 @@ func NewKeeper(
 		capabilityKeeper:     capabilityKeeper,
 		messenger:            NewDefaultMessageHandler(router, ics4Wrapper, channelKeeper, capabilityKeeper, bankKeeper, cdc, portSource),
 		queryGasLimit:        wasmConfig.SmartQueryGasLimit,
-		gasRegister:          NewDefaultWasmGasRegister(),
+		gasRegister:          types.NewDefaultWasmGasRegister(),
 		maxQueryStackSize:    types.DefaultMaxQueryStackSize,
 		acceptedAccountTypes: defaultAcceptedAccountTypes,
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{

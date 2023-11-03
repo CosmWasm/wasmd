@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/server"
+	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	"github.com/spf13/cobra"
 
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	"github.com/cosmos/cosmos-sdk/server"
 )
 
 // ExtendUnsafeResetAllCmd - also clear wasm dir

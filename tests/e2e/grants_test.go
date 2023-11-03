@@ -2,17 +2,21 @@ package e2e_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
+	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/CosmWasm/wasmd/tests/e2e"
 	"github.com/CosmWasm/wasmd/x/wasm/ibctesting"
@@ -116,4 +120,220 @@ func TestGrants(t *testing.T) {
 			assert.Equal(t, granterStartBalance.Sub(spec.transferAmount.Amount), chain.Balance(granterAddr, sdk.DefaultBondDenom).Amount)
 		})
 	}
+}
+
+func TestStoreCodeGrant(t *testing.T) {
+	reflectWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/reflect_1_1.wasm")
+	require.NoError(t, err)
+
+	reflectCodeChecksum, err := wasmvm.CreateChecksum(reflectWasmCode)
+	require.NoError(t, err)
+
+	coord := ibctesting.NewCoordinator(t, 1)
+	chain := coord.GetChain(ibctesting.GetChainID(1))
+
+	granterAddr := chain.SenderAccount.GetAddress()
+	granteePrivKey := secp256k1.GenPrivKey()
+	granteeAddr := sdk.AccAddress(granteePrivKey.PubKey().Address().Bytes())
+	otherPrivKey := secp256k1.GenPrivKey()
+	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
+
+	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
+	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+
+	specs := map[string]struct {
+		codeHash              []byte
+		instantiatePermission types.AccessConfig
+		senderKey             cryptotypes.PrivKey
+		expErr                *errorsmod.Error
+	}{
+		"any code hash": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"match code hash and permission": {
+			codeHash:              reflectCodeChecksum,
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"not match code hash": {
+			codeHash:              []byte("any_valid_checksum"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"not match permission": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowNobody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"non authorized sender address": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             otherPrivKey,
+			expErr:                authz.ErrNoAuthorizationFound,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup grant
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
+			require.NoError(t, err)
+			authorization := types.NewStoreCodeAuthorization(*grant)
+			expiry := time.Now().Add(time.Hour)
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			require.NoError(t, err)
+			_, err = chain.SendMsgs(grantMsg)
+			require.NoError(t, err)
+
+			// when
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+				Sender:                granterAddr.String(),
+				WASMByteCode:          reflectWasmCode,
+				InstantiatePermission: &types.AllowEverybody,
+			}})
+			_, gotErr := chain.SendNonDefaultSenderMsgs(spec.senderKey, &execMsg)
+
+			// then
+			if spec.expErr != nil {
+				require.True(t, spec.expErr.Is(gotErr))
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestGzipStoreCodeGrant(t *testing.T) {
+	hackatomWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/hackatom.wasm")
+	require.NoError(t, err)
+
+	hackatomGzipWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/hackatom.wasm.gzip")
+	require.NoError(t, err)
+
+	hackatomCodeChecksum, err := wasmvm.CreateChecksum(hackatomWasmCode)
+	require.NoError(t, err)
+
+	coord := ibctesting.NewCoordinator(t, 1)
+	chain := coord.GetChain(ibctesting.GetChainID(1))
+
+	granterAddr := chain.SenderAccount.GetAddress()
+	granteePrivKey := secp256k1.GenPrivKey()
+	granteeAddr := sdk.AccAddress(granteePrivKey.PubKey().Address().Bytes())
+	otherPrivKey := secp256k1.GenPrivKey()
+	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
+
+	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
+	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+
+	specs := map[string]struct {
+		codeHash              []byte
+		instantiatePermission types.AccessConfig
+		senderKey             cryptotypes.PrivKey
+		expErr                *errorsmod.Error
+	}{
+		"any code hash": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"match code hash and permission": {
+			codeHash:              hackatomCodeChecksum,
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+		},
+		"not match code hash": {
+			codeHash:              []byte("any_valid_checksum"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"not match permission": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowNobody,
+			senderKey:             granteePrivKey,
+			expErr:                sdkerrors.ErrUnauthorized,
+		},
+		"non authorized sender address": {
+			codeHash:              []byte("*"),
+			instantiatePermission: types.AllowEverybody,
+			senderKey:             otherPrivKey,
+			expErr:                authz.ErrNoAuthorizationFound,
+		},
+	}
+	for name, spec := range specs {
+		t.Run(name, func(t *testing.T) {
+			// setup grant
+			grant, err := types.NewCodeGrant(spec.codeHash, &spec.instantiatePermission)
+			require.NoError(t, err)
+			authorization := types.NewStoreCodeAuthorization(*grant)
+			expiry := time.Now().Add(time.Hour)
+			grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+			require.NoError(t, err)
+			_, err = chain.SendMsgs(grantMsg)
+			require.NoError(t, err)
+
+			// when
+			execMsg := authz.NewMsgExec(spec.senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+				Sender:                granterAddr.String(),
+				WASMByteCode:          hackatomGzipWasmCode,
+				InstantiatePermission: &types.AllowEverybody,
+			}})
+			_, gotErr := chain.SendNonDefaultSenderMsgs(spec.senderKey, &execMsg)
+
+			// then
+			if spec.expErr != nil {
+				require.True(t, spec.expErr.Is(gotErr))
+				return
+			}
+			require.NoError(t, gotErr)
+		})
+	}
+}
+
+func TestBrokenGzipStoreCodeGrant(t *testing.T) {
+	brokenGzipWasmCode, err := os.ReadFile("../../x/wasm/keeper/testdata/broken_crc.gzip")
+	require.NoError(t, err)
+
+	coord := ibctesting.NewCoordinator(t, 1)
+	chain := coord.GetChain(ibctesting.GetChainID(1))
+
+	granterAddr := chain.SenderAccount.GetAddress()
+	granteePrivKey := secp256k1.GenPrivKey()
+	granteeAddr := sdk.AccAddress(granteePrivKey.PubKey().Address().Bytes())
+	otherPrivKey := secp256k1.GenPrivKey()
+	otherAddr := sdk.AccAddress(otherPrivKey.PubKey().Address().Bytes())
+
+	chain.Fund(granteeAddr, sdk.NewInt(1_000_000))
+	chain.Fund(otherAddr, sdk.NewInt(1_000_000))
+	assert.Equal(t, sdk.NewInt(1_000_000), chain.Balance(granteeAddr, sdk.DefaultBondDenom).Amount)
+
+	codeHash := []byte("*")
+	instantiatePermission := types.AllowEverybody
+	senderKey := granteePrivKey
+
+	// setup grant
+	grant, err := types.NewCodeGrant(codeHash, &instantiatePermission)
+	require.NoError(t, err)
+	authorization := types.NewStoreCodeAuthorization(*grant)
+	expiry := time.Now().Add(time.Hour)
+	grantMsg, err := authz.NewMsgGrant(granterAddr, granteeAddr, authorization, &expiry)
+	require.NoError(t, err)
+	_, err = chain.SendMsgs(grantMsg)
+	require.NoError(t, err)
+
+	// when
+	execMsg := authz.NewMsgExec(senderKey.PubKey().Address().Bytes(), []sdk.Msg{&types.MsgStoreCode{
+		Sender:                granterAddr.String(),
+		WASMByteCode:          brokenGzipWasmCode,
+		InstantiatePermission: &types.AllowEverybody,
+	}})
+	_, gotErr := chain.SendNonDefaultSenderMsgs(senderKey, &execMsg)
+
+	// then
+	require.Error(t, gotErr)
 }

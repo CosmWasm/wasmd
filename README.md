@@ -27,6 +27,7 @@ compatibility list:
 
 | wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
 |-------|--------------|-------------|--------------|
+| 0.42  | v1.4.0       |             | 1.0-1.4      |
 | 0.41  | v1.3.0       |             | 1.0-1.3      |
 | 0.40  | v1.2.3       |             | 1.0-1.2      |
 | 0.31  | v1.2.0       |             | 1.0-1.2      |
@@ -198,9 +199,6 @@ Available flags:
  
 * `-X github.com/CosmWasm/wasmd/app.NodeDir=.corald` - set the config/data directory for the node (default `~/.wasmd`)
 * `-X github.com/CosmWasm/wasmd/app.Bech32Prefix=coral` - set the bech32 prefix for all accounts (default `wasm`)
-* `-X github.com/CosmWasm/wasmd/app.ProposalsEnabled=true` - enable all x/wasm governance proposals (default `false`)
-* `-X github.com/CosmWasm/wasmd/app.EnableSpecificProposals=MigrateContract,UpdateAdmin,ClearAdmin` - 
-    enable a subset of the x/wasm governance proposal types (overrides `ProposalsEnabled`)
 
 Examples:
 
@@ -227,8 +225,7 @@ We strongly suggest **to limit the max block gas in the genesis** and not use th
 ```
 
 Tip: if you want to lock this down to a permisisoned network, the following script can edit the genesis file
-to only allow permissioned use of code upload or instantiating. (Make sure you set `app.ProposalsEnabled=true`
-in this binary):
+to only allow permissioned use of code upload or instantiating:
 
 `sed -i 's/permission": "Everybody"/permission": "Nobody"/'  .../config/genesis.json`
 

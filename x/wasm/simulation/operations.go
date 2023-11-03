@@ -5,9 +5,10 @@ import (
 	"math/rand"
 	"os"
 
+	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	errorsmod "cosmossdk.io/errors"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -25,7 +26,7 @@ import (
 
 // Simulation operation weights constants
 //
-//nolint:gosec
+
 const (
 	OpWeightMsgStoreCode           = "op_weight_msg_store_code"
 	OpWeightMsgInstantiateContract = "op_weight_msg_instantiate_contract"

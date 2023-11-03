@@ -5,12 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -154,6 +153,7 @@ func cw20TransferMsg(info *AppInfo) ([]sdk.Msg, error) {
 
 func buildTxFromMsg(builder func(info *AppInfo) ([]sdk.Msg, error)) func(b *testing.B, info *AppInfo) []sdk.Tx {
 	return func(b *testing.B, info *AppInfo) []sdk.Tx {
+		b.Helper()
 		return GenSequenceOfTxs(b, info, builder, b.N)
 	}
 }
@@ -163,6 +163,7 @@ func buildMemDB(_ *testing.B) dbm.DB {
 }
 
 func buildLevelDB(b *testing.B) dbm.DB {
+	b.Helper()
 	levelDB, err := dbm.NewGoLevelDBWithOpts("testing", b.TempDir(), &opt.Options{BlockCacher: opt.NoCacher})
 	require.NoError(b, err)
 	return levelDB
