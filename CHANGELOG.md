@@ -4,7 +4,7 @@
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.44.0...HEAD)
 
-## [v0.44.0](https://github.com/CosmWasm/wasmd/tree/v0.44.0) (TBD)
+## [v0.44.0](https://github.com/CosmWasm/wasmd/tree/v0.44.0) (2023-11-06)
 
 [Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.43.0...v0.44.0)
 
