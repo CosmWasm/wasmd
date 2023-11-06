@@ -2,7 +2,20 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.43.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.44.0...HEAD)
+
+## [v0.44.0](https://github.com/CosmWasm/wasmd/tree/v0.44.0) (2023-11-06)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.43.0...v0.44.0)
+
+- Upgrade to wasmvm v1.5.0 [\#1675](https://github.com/CosmWasm/wasmd/issues/1675)
+- Prevent non printable characters in label [\#1623](https://github.com/CosmWasm/wasmd/issues/1623)
+
+### Notable changes:
+- Upgrade to wasmvm [v1.5.0](https://github.com/CosmWasm/wasmvm/releases/tag/v1.5.0)
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.43.0](https://github.com/CosmWasm/wasmd/tree/v0.43.0) (2023-10-10)
 
