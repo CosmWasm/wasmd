@@ -442,7 +442,7 @@ func (s *SystemUnderTest) ResetChain(t *testing.T) {
 	s.nodesCount = s.initialNodesCount
 
 	// reset all validator nodes
-	s.ForEachNodeExecAndWait(t, []string{"tendermint", "unsafe-reset-all"})
+	s.ForEachNodeExecAndWait(t, []string{"comet", "unsafe-reset-all"})
 	s.currentHeight = 0
 	s.dirty = false
 }

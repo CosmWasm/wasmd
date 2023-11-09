@@ -74,14 +74,6 @@ func (msg MsgStoreCode) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgStoreCode) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgInstantiateContract) Route() string {
 	return RouterKey
 }
@@ -118,14 +110,6 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgInstantiateContract) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgExecuteContract) Route() string {
 	return RouterKey
 }
@@ -149,14 +133,6 @@ func (msg MsgExecuteContract) ValidateBasic() error {
 		return errorsmod.Wrap(err, "payload msg")
 	}
 	return nil
-}
-
-func (msg MsgExecuteContract) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
 }
 
 // GetMsg returns the payload message send to the contract
@@ -200,14 +176,6 @@ func (msg MsgMigrateContract) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgMigrateContract) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 // GetMsg returns the payload message send to the contract
 func (msg MsgMigrateContract) GetMsg() RawContractMessage {
 	return msg.Msg
@@ -247,14 +215,6 @@ func (msg MsgUpdateAdmin) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgUpdateAdmin) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgClearAdmin) Route() string {
 	return RouterKey
 }
@@ -273,14 +233,6 @@ func (msg MsgClearAdmin) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgClearAdmin) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgIBCSend) Route() string {
 	return RouterKey
 }
@@ -293,10 +245,6 @@ func (msg MsgIBCSend) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgIBCSend) GetSigners() []sdk.AccAddress {
-	return nil
-}
-
 func (msg MsgIBCCloseChannel) Route() string {
 	return RouterKey
 }
@@ -306,10 +254,6 @@ func (msg MsgIBCCloseChannel) Type() string {
 }
 
 func (msg MsgIBCCloseChannel) ValidateBasic() error {
-	return nil
-}
-
-func (msg MsgIBCCloseChannel) GetSigners() []sdk.AccAddress {
 	return nil
 }
 
@@ -354,14 +298,6 @@ func (msg MsgInstantiateContract2) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgInstantiateContract2) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgUpdateInstantiateConfig) Route() string {
 	return RouterKey
 }
@@ -390,28 +326,12 @@ func (msg MsgUpdateInstantiateConfig) ValidateBasic() error {
 	return nil
 }
 
-func (msg MsgUpdateInstantiateConfig) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
-}
-
 func (msg MsgUpdateParams) Route() string {
 	return RouterKey
 }
 
 func (msg MsgUpdateParams) Type() string {
 	return "update-params"
-}
-
-func (msg MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgUpdateParams) ValidateBasic() error {
@@ -427,14 +347,6 @@ func (msg MsgPinCodes) Route() string {
 
 func (msg MsgPinCodes) Type() string {
 	return "pin-codes"
-}
-
-func (msg MsgPinCodes) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgPinCodes) ValidateBasic() error {
@@ -468,14 +380,6 @@ func (msg MsgUnpinCodes) Type() string {
 	return "unpin-codes"
 }
 
-func (msg MsgUnpinCodes) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
-}
-
 func (msg MsgUnpinCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
 		return errorsmod.Wrap(err, "authority")
@@ -489,14 +393,6 @@ func (msg MsgSudoContract) Route() string {
 
 func (msg MsgSudoContract) Type() string {
 	return "sudo-contract"
-}
-
-func (msg MsgSudoContract) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgSudoContract) ValidateBasic() error {
@@ -518,14 +414,6 @@ func (msg MsgStoreAndInstantiateContract) Route() string {
 
 func (msg MsgStoreAndInstantiateContract) Type() string {
 	return "store-and-instantiate-contract"
-}
-
-func (msg MsgStoreAndInstantiateContract) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
@@ -575,14 +463,6 @@ func (msg MsgAddCodeUploadParamsAddresses) Type() string {
 	return "add-code-upload-params-addresses"
 }
 
-func (msg MsgAddCodeUploadParamsAddresses) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
-}
-
 func (msg MsgAddCodeUploadParamsAddresses) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
 		return errorsmod.Wrap(err, "authority")
@@ -601,14 +481,6 @@ func (msg MsgRemoveCodeUploadParamsAddresses) Route() string {
 
 func (msg MsgRemoveCodeUploadParamsAddresses) Type() string {
 	return "remove-code-upload-params-addresses"
-}
-
-func (msg MsgRemoveCodeUploadParamsAddresses) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
@@ -644,14 +516,6 @@ func (msg MsgStoreAndMigrateContract) Route() string {
 
 func (msg MsgStoreAndMigrateContract) Type() string {
 	return "store-and-migrate-contract"
-}
-
-func (msg MsgStoreAndMigrateContract) GetSigners() []sdk.AccAddress {
-	authority, err := sdk.AccAddressFromBech32(msg.Authority)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{authority}
 }
 
 func (msg MsgStoreAndMigrateContract) ValidateBasic() error {
@@ -710,12 +574,4 @@ func (msg MsgUpdateContractLabel) ValidateBasic() error {
 		return errorsmod.Wrap(err, "contract")
 	}
 	return nil
-}
-
-func (msg MsgUpdateContractLabel) GetSigners() []sdk.AccAddress {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil { // should never happen as valid basic rejects invalid addresses
-		panic(err.Error())
-	}
-	return []sdk.AccAddress{senderAddr}
 }
