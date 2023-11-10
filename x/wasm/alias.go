@@ -89,8 +89,6 @@ var (
 	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
-	ContractFromPortID = keeper.ContractFromPortID
-	// Deprecated: Do not use.
 	WithWasmEngine = keeper.WithWasmEngine
 	// Deprecated: Do not use.
 	NewCountTXDecorator = keeper.NewCountTXDecorator

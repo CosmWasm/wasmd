@@ -120,4 +120,7 @@ type IBCContractKeeper interface {
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 	// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
+
+	// ContractFromPortID resolves contract address from the ibc port-di
+	ContractFromPortID(portID string) (sdk.AccAddress, error)
 }

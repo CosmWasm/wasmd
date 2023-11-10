@@ -107,6 +107,7 @@ func TestOnRecvPacket(t *testing.T) {
 					ctx.EventManager().EmitEvent(myCustomEvent)
 					return spec.contractRsp, spec.contractOkMsgExecErr
 				},
+				ContractFromPortIDFn: keeper.DefaultIBCPortNameGenerator{}.ContractFromPortID,
 			}
 			h := NewIBCHandler(mock, nil, nil)
 			em := &sdk.EventManager{}
@@ -200,7 +201,15 @@ var _ types.IBCContractKeeper = &IBCContractKeeperMock{}
 
 type IBCContractKeeperMock struct {
 	types.IBCContractKeeper
-	OnRecvPacketFn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
+	OnRecvPacketFn       func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
+	ContractFromPortIDFn func(portID string) (sdk.AccAddress, error)
+}
+
+func (m IBCContractKeeperMock) ContractFromPortID(portID string) (sdk.AccAddress, error) {
+	if m.ContractFromPortIDFn == nil {
+		panic("not expected to be called")
+	}
+	return m.ContractFromPortIDFn(portID)
 }
 
 func (m IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {

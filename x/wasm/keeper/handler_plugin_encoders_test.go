@@ -553,7 +553,7 @@ func TestEncoding(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource, DefaultIBCPortNameGenerator{})
 			res, err := encoder.Encode(ctx, tc.sender, tc.srcContractIBCPort, tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, err)
@@ -773,7 +773,7 @@ func TestEncodeGovMsg(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			var ctx sdk.Context
-			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource)
+			encoder := DefaultEncoders(encodingConfig.Codec, tc.transferPortSource, DefaultIBCPortNameGenerator{})
 			res, gotEncErr := encoder.Encode(ctx, tc.sender, "myIBCPort", tc.srcMsg)
 			if tc.expError {
 				assert.Error(t, gotEncErr)
