@@ -394,19 +394,19 @@ func NewWasmApp(
 	)
 
 	// optional: enable sign mode textual by overwriting the default tx config (after setting the bank keeper)
-	//enabledSignModes := append(tx.DefaultSignModes, sigtypes.SignMode_SIGN_MODE_TEXTUAL)
-	//txConfigOpts := tx.ConfigOptions{
-	//	EnabledSignModes:           enabledSignModes,
-	//	TextualCoinMetadataQueryFn: txmodule.NewBankKeeperCoinMetadataQueryFn(app.BankKeeper),
-	//}
-	//txConfig, err := tx.NewTxConfigWithOptions(
-	//	appCodec,
-	//	txConfigOpts,
-	//)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//app.txConfig = txConfig
+	// enabledSignModes := append(tx.DefaultSignModes, sigtypes.SignMode_SIGN_MODE_TEXTUAL)
+	// txConfigOpts := tx.ConfigOptions{
+	//	 EnabledSignModes:           enabledSignModes,
+	//	 TextualCoinMetadataQueryFn: txmodule.NewBankKeeperCoinMetadataQueryFn(app.BankKeeper),
+	// }
+	// txConfig, err := tx.NewTxConfigWithOptions(
+	// 	 appCodec,
+	// 	 txConfigOpts,
+	// )
+	// if err != nil {
+	//	 panic(err)
+	// }
+	// app.txConfig = txConfig
 
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
