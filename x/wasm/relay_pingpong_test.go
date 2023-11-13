@@ -67,8 +67,8 @@ func TestPinPong(t *testing.T) {
 	pongContract.contractAddr = pongContractAddr
 
 	var (
-		sourcePortID       = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(pingContractAddr)
-		counterpartyPortID = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(pongContractAddr)
+		sourcePortID       = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(nil, pingContractAddr)
+		counterpartyPortID = wasmkeeper.DefaultIBCPortNameGenerator{}.PortIDForContract(nil, pongContractAddr)
 	)
 
 	path := wasmibctesting.NewPath(chainA, chainB)

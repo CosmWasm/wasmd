@@ -1195,8 +1195,9 @@ func (k Keeper) importContract(ctx context.Context, contractAddr sdk.AccAddress,
 	return k.importContractState(ctx, contractAddr, state)
 }
 
-func (k Keeper) ContractFromPortID(portID string) (sdk.AccAddress, error) {
-	return k.ibcPortNameGenerator.ContractFromPortID(portID)
+// ContractFromPortID returns the contract address for given port-id. The method does not check if the contract exists
+func (k Keeper) ContractFromPortID(ctx context.Context, portID string) (sdk.AccAddress, error) {
+	return k.ibcPortNameGenerator.ContractFromPortID(ctx, portID)
 }
 
 func (k Keeper) newQueryHandler(ctx sdk.Context, contractAddress sdk.AccAddress) QueryHandler {

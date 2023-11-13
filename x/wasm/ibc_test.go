@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"context"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
@@ -202,14 +203,14 @@ var _ types.IBCContractKeeper = &IBCContractKeeperMock{}
 type IBCContractKeeperMock struct {
 	types.IBCContractKeeper
 	OnRecvPacketFn       func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
-	ContractFromPortIDFn func(portID string) (sdk.AccAddress, error)
+	ContractFromPortIDFn func(ctx context.Context, portID string) (sdk.AccAddress, error)
 }
 
-func (m IBCContractKeeperMock) ContractFromPortID(portID string) (sdk.AccAddress, error) {
+func (m IBCContractKeeperMock) ContractFromPortID(ctx context.Context, portID string) (sdk.AccAddress, error) {
 	if m.ContractFromPortIDFn == nil {
 		panic("not expected to be called")
 	}
-	return m.ContractFromPortIDFn(portID)
+	return m.ContractFromPortIDFn(ctx, portID)
 }
 
 func (m IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {

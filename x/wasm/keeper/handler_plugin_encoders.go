@@ -308,7 +308,7 @@ func EncodeIBCMsg(
 		switch {
 		case msg.CloseChannel != nil:
 			return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
-				PortId:    ibcPortAllocator.PortIDForContract(sender),
+				PortId:    ibcPortAllocator.PortIDForContract(ctx, sender),
 				ChannelId: msg.CloseChannel.ChannelID,
 				Signer:    sender.String(),
 			}}, nil

@@ -122,5 +122,5 @@ type IBCContractKeeper interface {
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 
 	// ContractFromPortID resolves contract address from the ibc port-di
-	ContractFromPortID(portID string) (sdk.AccAddress, error)
+	ContractFromPortID(ctx context.Context, portID string) (sdk.AccAddress, error)
 }
