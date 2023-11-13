@@ -393,6 +393,21 @@ func NewWasmApp(
 		logger,
 	)
 
+	// optional: enable sign mode textual by overwriting the default tx config (after setting the bank keeper)
+	//enabledSignModes := append(tx.DefaultSignModes, sigtypes.SignMode_SIGN_MODE_TEXTUAL)
+	//txConfigOpts := tx.ConfigOptions{
+	//	EnabledSignModes:           enabledSignModes,
+	//	TextualCoinMetadataQueryFn: txmodule.NewBankKeeperCoinMetadataQueryFn(app.BankKeeper),
+	//}
+	//txConfig, err := tx.NewTxConfigWithOptions(
+	//	appCodec,
+	//	txConfigOpts,
+	//)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//app.txConfig = txConfig
+
 	app.StakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
@@ -510,9 +525,7 @@ func NewWasmApp(
 	// See: https://docs.cosmos.network/main/modules/gov#proposal-messages
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
-		// This should be removed. It is still in place to avoid failures of modules that have not yet been upgraded.
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-
 	govConfig := govtypes.DefaultConfig()
 	/*
 		Example of setting gov params:
@@ -529,6 +542,9 @@ func NewWasmApp(
 		govConfig,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// Set legacy router for backwards compatibility with gov v1beta1
+	govKeeper.SetLegacyRouter(govRouter)
 
 	app.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
@@ -631,9 +647,6 @@ func NewWasmApp(
 		wasmOpts...,
 	)
 
-	// Set legacy router for backwards compatibility with gov v1beta1
-	app.GovKeeper.SetLegacyRouter(govRouter)
-
 	// Create Transfer Stack
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
@@ -725,7 +738,6 @@ func NewWasmApp(
 					paramsclient.ProposalHandler,
 				},
 			),
-			ibctm.ModuleName: ibctm.AppModuleBasic{},
 		})
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
@@ -873,12 +885,7 @@ func NewWasmApp(
 	// meaning that both `runMsgs` and `postHandler` state will be committed if
 	// both are successful, and both will be reverted if any of the two fails.
 	//
-	// The SDK exposes a default postHandlers chain, which comprises of only
-	// one decorator: the Transaction Tips decorator. However, some chains do
-	// not need it by default, so feel free to comment the next line if you do
-	// not need tips.
-	// To read more about tips:
-	// https://docs.cosmos.network/main/core/tips.html
+	// The SDK exposes a default postHandlers chain
 	//
 	// Please note that changing any of the anteHandler or postHandler chain is
 	// likely to be a state-machine breaking change, which needs a coordinated
@@ -933,6 +940,8 @@ func (app *WasmApp) setAnteHandler(txConfig client.TxConfig, wasmConfig wasmtype
 	if err != nil {
 		panic(fmt.Errorf("failed to create AnteHandler: %s", err))
 	}
+
+	// Set the AnteHandler for the app
 	app.SetAnteHandler(anteHandler)
 }
 

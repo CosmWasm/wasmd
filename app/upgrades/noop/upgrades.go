@@ -24,7 +24,7 @@ func NewUpgrade(semver string) upgrades.Upgrade {
 }
 
 func CreateUpgradeHandler(
-	mm *module.Manager,
+	mm upgrades.ModuleManager,
 	configurator module.Configurator,
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
