@@ -175,13 +175,6 @@ func SetupWithGenesisValSet(
 	})
 	require.NoError(t, err)
 
-	votes := make([]abci.VoteInfo, len(valSet.Validators))
-	for i, v := range valSet.Validators {
-		votes[i] = abci.VoteInfo{
-			Validator: abci.Validator{Address: v.Address, Power: v.VotingPower},
-		}
-	}
-
 	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
 		Height:             app.LastBlockHeight() + 1,
 		Hash:               app.LastCommitID().Hash,
@@ -236,12 +229,12 @@ func AddTestAddrsIncremental(app *WasmApp, ctx sdk.Context, accNum int, accAmt s
 
 func addTestAddrs(app *WasmApp, ctx sdk.Context, accNum int, accAmt sdkmath.Int, strategy simtestutil.GenerateAccountStrategy) []sdk.AccAddress {
 	testAddrs := strategy(accNum)
-
-	denom, err := app.StakingKeeper.BondDenom(ctx)
+	bondDenom, err := app.StakingKeeper.BondDenom(ctx)
 	if err != nil {
 		panic(err)
 	}
-	initCoins := sdk.NewCoins(sdk.NewCoin(denom, accAmt))
+
+	initCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, accAmt))
 
 	for _, addr := range testAddrs {
 		initAccountWithCoins(app, ctx, addr, initCoins)
@@ -260,13 +253,6 @@ func initAccountWithCoins(app *WasmApp, ctx sdk.Context, addr sdk.AccAddress, co
 	if err != nil {
 		panic(err)
 	}
-}
-
-// ModuleAccountAddrs provides a list of blocked module accounts from configuration in AppConfig
-//
-// Ported from WasmApp
-func ModuleAccountAddrs() map[string]bool {
-	return BlockedAddresses()
 }
 
 var emptyWasmOptions []wasmkeeper.Option

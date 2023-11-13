@@ -29,6 +29,7 @@ type HandlerOptions struct {
 	CircuitKeeper         *circuitkeeper.Keeper
 }
 
+// NewAnteHandler constructor
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.AccountKeeper == nil {
 		return nil, errors.New("account keeper is required for ante builder")

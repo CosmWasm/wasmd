@@ -1,6 +1,8 @@
 package upgrades
 
 import (
+	"context"
+
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
@@ -10,6 +12,10 @@ import (
 
 type AppKeepers struct {
 	authkeeper.AccountKeeper
+}
+type ModuleManager interface {
+	RunMigrations(ctx context.Context, cfg module.Configurator, fromVM module.VersionMap) (module.VersionMap, error)
+	GetVersionMap() module.VersionMap
 }
 
 // Upgrade defines a struct containing necessary fields that a SoftwareUpgradeProposal
@@ -21,6 +27,6 @@ type Upgrade struct {
 	UpgradeName string
 
 	// CreateUpgradeHandler defines the function that creates an upgrade handler
-	CreateUpgradeHandler func(*module.Manager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
+	CreateUpgradeHandler func(ModuleManager, module.Configurator, *AppKeepers) upgradetypes.UpgradeHandler
 	StoreUpgrades        storetypes.StoreUpgrades
 }
