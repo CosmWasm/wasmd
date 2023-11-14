@@ -22,8 +22,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const myTestLabel = "testing"
-
 func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 	pCtx, keepers := CreateTestInput(t, false, ReflectCapabilities+",iterator")
 	k := keepers.WasmKeeper
