@@ -24,6 +24,16 @@ const (
 	WasmModuleEventType = types.WasmModuleEventType
 	// Deprecated: Do not use.
 	AttributeKeyContractAddr = types.AttributeKeyContractAddr
+	// Deprecated: Do not use.
+	ProposalTypeStoreCode = types.ProposalTypeStoreCode
+	// Deprecated: Do not use.
+	ProposalTypeInstantiateContract = types.ProposalTypeInstantiateContract
+	// Deprecated: Do not use.
+	ProposalTypeMigrateContract = types.ProposalTypeMigrateContract
+	// Deprecated: Do not use.
+	ProposalTypeUpdateAdmin = types.ProposalTypeUpdateAdmin
+	// Deprecated: Do not use.
+	ProposalTypeClearAdmin = types.ProposalTypeClearAdmin
 )
 
 var (
@@ -87,6 +97,8 @@ var (
 	// Deprecated: Do not use.
 	TestHandler = keeper.TestHandler
 	// Deprecated: Do not use.
+	NewWasmProposalHandler = keeper.NewWasmProposalHandler //nolint:staticcheck // we still require this alias despite the deprecation
+	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
 	ContractFromPortID = keeper.ContractFromPortID
@@ -126,9 +138,15 @@ var (
 	ContractKeyPrefix = types.ContractKeyPrefix
 	// Deprecated: Do not use.
 	ContractStorePrefix = types.ContractStorePrefix
+	// Deprecated: Do not use.
+	EnableAllProposals = types.EnableAllProposals
+	// Deprecated: Do not use.
+	DisableAllProposals = types.DisableAllProposals
 )
 
 type (
+	// Deprecated: Do not use.
+	ProposalType = types.ProposalType
 	// Deprecated: Do not use.
 	GenesisState = types.GenesisState
 	// Deprecated: Do not use.

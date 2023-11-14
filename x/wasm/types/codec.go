@@ -29,6 +29,19 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgStoreAndMigrateContract{}, "wasm/MsgStoreAndMigrateContract", nil)
 	cdc.RegisterConcrete(&MsgUpdateContractLabel{}, "wasm/MsgUpdateContractLabel", nil)
 
+	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
+	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
+	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
+	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
+	cdc.RegisterConcrete(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal", nil)
+	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
+	cdc.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
+	cdc.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal", nil)
+	cdc.RegisterConcrete(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal", nil)
+	cdc.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
+	cdc.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal", nil)
+	cdc.RegisterConcrete(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal", nil)
+
 	cdc.RegisterInterface((*ContractInfoExtension)(nil), nil)
 
 	cdc.RegisterInterface((*ContractAuthzFilterX)(nil), nil)
@@ -71,6 +84,18 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 	registry.RegisterImplementations(
 		(*v1beta1.Content)(nil),
+		&StoreCodeProposal{},
+		&InstantiateContractProposal{},
+		&InstantiateContract2Proposal{},
+		&MigrateContractProposal{},
+		&SudoContractProposal{},
+		&ExecuteContractProposal{},
+		&UpdateAdminProposal{},
+		&ClearAdminProposal{},
+		&PinCodesProposal{},
+		&UnpinCodesProposal{},
+		&UpdateInstantiateConfigProposal{},
+		&StoreAndInstantiateContractProposal{},
 	)
 
 	registry.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
