@@ -97,8 +97,6 @@ var (
 	// Deprecated: Do not use.
 	TestHandler = keeper.TestHandler
 	// Deprecated: Do not use.
-	NewWasmProposalHandler = keeper.NewWasmProposalHandler //nolint:staticcheck // we still require this alias despite the deprecation
-	// Deprecated: Do not use.
 	NewQuerier = keeper.Querier
 	// Deprecated: Do not use.
 	ContractFromPortID = keeper.ContractFromPortID
