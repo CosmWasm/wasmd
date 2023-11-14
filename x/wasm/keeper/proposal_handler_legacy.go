@@ -14,17 +14,17 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-// NewWasmProposalHandler creates a new governance Handler for wasm proposals
+// NewLegacyWasmProposalHandler creates a new governance Handler for wasm proposals
 //
-// Deprecated: Do not use.
-func NewWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
-	return NewWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
+// Deprecated: Do not use v1beta1 handlers anymore. Gov v1 is the way to go
+func NewLegacyWasmProposalHandler(k decoratedKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
+	return NewLegacyWasmProposalHandlerX(NewGovPermissionKeeper(k), enabledProposalTypes)
 }
 
-// NewWasmProposalHandlerX creates a new governance Handler for wasm proposals
+// NewLegacyWasmProposalHandlerX creates a new governance Handler for wasm proposals
 //
-// Deprecated: Do not use.
-func NewWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
+// Deprecated: Do not use v1beta1 handlers anymore. Gov v1 is the way to go
+func NewLegacyWasmProposalHandlerX(k types.ContractOpsKeeper, enabledProposalTypes []types.ProposalType) v1beta1.Handler {
 	enabledTypes := make(map[string]struct{}, len(enabledProposalTypes))
 	for i := range enabledProposalTypes {
 		enabledTypes[string(enabledProposalTypes[i])] = struct{}{}

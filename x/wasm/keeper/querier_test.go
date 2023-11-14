@@ -412,14 +412,14 @@ func TestQueryContractHistory(t *testing.T) {
 		"response with internal fields cleared": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}},
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Msg:       []byte(`"init message"`),
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
@@ -427,7 +427,7 @@ func TestQueryContractHistory(t *testing.T) {
 		"response with multiple entries": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
@@ -444,7 +444,7 @@ func TestQueryContractHistory(t *testing.T) {
 			req: types.QueryContractHistoryRequest{Address: myContractBech32Addr},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Msg:       []byte(`"init message"`),
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}, {
@@ -462,7 +462,7 @@ func TestQueryContractHistory(t *testing.T) {
 		"with pagination offset": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
@@ -482,7 +482,7 @@ func TestQueryContractHistory(t *testing.T) {
 		"with pagination limit": {
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 				Msg:       []byte(`"init message"`),
 			}, {
@@ -499,7 +499,7 @@ func TestQueryContractHistory(t *testing.T) {
 			},
 			expContent: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeInit,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Msg:       []byte(`"init message"`),
 				Updated:   &types.AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2},
 			}},
@@ -508,7 +508,7 @@ func TestQueryContractHistory(t *testing.T) {
 			req: types.QueryContractHistoryRequest{Address: otherBech32Addr},
 			srcHistory: []types.ContractCodeHistoryEntry{{
 				Operation: types.ContractCodeHistoryOperationTypeGenesis,
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				Updated:   types.NewAbsoluteTxPosition(ctx),
 				Msg:       []byte(`"init message"`),
 			}},
