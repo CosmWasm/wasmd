@@ -217,5 +217,11 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
-// see https://github.com/CosmWasm/wasmd/issues/1651
-retract v0.42.0
+retract (
+	// see https://github.com/CosmWasm/wasmd/issues/1713
+	v0.44.0
+	// see https://github.com/CosmWasm/wasmd/issues/1713
+	v0.43.0
+	// see https://github.com/CosmWasm/wasmd/issues/1651
+	v0.42.0
+)
