@@ -254,16 +254,6 @@ message MsgClearAdmin {
 // MsgClearAdminResponse returns empty data
 message MsgClearAdminResponse {}
 
-// AccessConfigUpdate contains the code id and the access config to be
-// applied.
-message AccessConfigUpdate {
-  // CodeID is the reference to the stored WASM code to be updated
-  uint64 code_id = 1 [ (gogoproto.customname) = "CodeID" ];
-  // InstantiatePermission to apply to the set of code ids
-  AccessConfig instantiate_permission = 2
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
-}
-
 // MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 message MsgUpdateInstantiateConfig {
   option (amino.name) = "wasm/MsgUpdateInstantiateConfig";

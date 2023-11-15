@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
-// RegisterLegacyAminoCodec registers the account types and interface
+// RegisterLegacyAminoCodec registers the concrete types and interface
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgStoreCode{}, "wasm/MsgStoreCode", nil)
 	cdc.RegisterConcrete(&MsgInstantiateContract{}, "wasm/MsgInstantiateContract", nil)
@@ -44,8 +44,23 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&StoreCodeAuthorization{}, "wasm/StoreCodeAuthorization", nil)
 	cdc.RegisterConcrete(&ContractExecutionAuthorization{}, "wasm/ContractExecutionAuthorization", nil)
 	cdc.RegisterConcrete(&ContractMigrationAuthorization{}, "wasm/ContractMigrationAuthorization", nil)
+
+	// legacy gov v1beta1 types that may be used for unmarshalling stored gov data
+	cdc.RegisterConcrete(&PinCodesProposal{}, "wasm/PinCodesProposal", nil)
+	cdc.RegisterConcrete(&UnpinCodesProposal{}, "wasm/UnpinCodesProposal", nil)
+	cdc.RegisterConcrete(&StoreCodeProposal{}, "wasm/StoreCodeProposal", nil)
+	cdc.RegisterConcrete(&InstantiateContractProposal{}, "wasm/InstantiateContractProposal", nil)
+	cdc.RegisterConcrete(&InstantiateContract2Proposal{}, "wasm/InstantiateContract2Proposal", nil)
+	cdc.RegisterConcrete(&MigrateContractProposal{}, "wasm/MigrateContractProposal", nil)
+	cdc.RegisterConcrete(&SudoContractProposal{}, "wasm/SudoContractProposal", nil)
+	cdc.RegisterConcrete(&ExecuteContractProposal{}, "wasm/ExecuteContractProposal", nil)
+	cdc.RegisterConcrete(&UpdateAdminProposal{}, "wasm/UpdateAdminProposal", nil)
+	cdc.RegisterConcrete(&ClearAdminProposal{}, "wasm/ClearAdminProposal", nil)
+	cdc.RegisterConcrete(&UpdateInstantiateConfigProposal{}, "wasm/UpdateInstantiateConfigProposal", nil)
+	cdc.RegisterConcrete(&StoreAndInstantiateContractProposal{}, "wasm/StoreAndInstantiateContractProposal", nil)
 }
 
+// RegisterInterfaces registers the concrete proto types and interfaces with the SDK interface registry
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
@@ -69,10 +84,6 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&MsgStoreAndMigrateContract{},
 		&MsgUpdateContractLabel{},
 	)
-	registry.RegisterImplementations(
-		(*v1beta1.Content)(nil),
-	)
-
 	registry.RegisterInterface("cosmwasm.wasm.v1.ContractInfoExtension", (*ContractInfoExtension)(nil))
 
 	registry.RegisterInterface("cosmwasm.wasm.v1.ContractAuthzFilterX", (*ContractAuthzFilterX)(nil))
@@ -99,4 +110,21 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
+
+	// legacy gov v1beta1 types that may be used for unmarshalling stored gov data
+	registry.RegisterImplementations(
+		(*v1beta1.Content)(nil),
+		&StoreCodeProposal{},
+		&InstantiateContractProposal{},
+		&InstantiateContract2Proposal{},
+		&MigrateContractProposal{},
+		&SudoContractProposal{},
+		&ExecuteContractProposal{},
+		&UpdateAdminProposal{},
+		&ClearAdminProposal{},
+		&PinCodesProposal{},
+		&UnpinCodesProposal{},
+		&UpdateInstantiateConfigProposal{},
+		&StoreAndInstantiateContractProposal{},
+	)
 }
