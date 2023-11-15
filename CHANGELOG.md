@@ -2,7 +2,22 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.44.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.45.0...HEAD)
+
+## [v0.45.0](https://github.com/CosmWasm/wasmd/tree/v0.45.0) (2023-11-15)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.44.0...v0.45.0)
+
+- Retract wasmd v0.43.0 and v0.44.0 [\#1720](https://github.com/CosmWasm/wasmd/pull/1720)
+- Allow empty attribute values [\#1618](https://github.com/CosmWasm/wasmd/pull/1618)
+- Fix gov v1beta1 support for legacy proposals [\#1715](https://github.com/CosmWasm/wasmd/pull/1715)
+- Prevent empty channel version [\#1697](https://github.com/CosmWasm/wasmd/pull/1697)
+
+### Notable changes:
+- Wasmd v0.43.0 and 0.44.0 releases were retracted because of a bug related to legacy proposals. See https://github.com/CosmWasm/wasmd/issues/1713 for more details.
+
+### Migration notes:
+- This release does not include any state migrations but breaking changes that require a coordinated chain upgrade.
 
 ## [v0.44.0](https://github.com/CosmWasm/wasmd/tree/v0.44.0) (2023-11-06)
 
