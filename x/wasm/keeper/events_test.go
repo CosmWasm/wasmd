@@ -119,9 +119,9 @@ func TestNewCustomEvents(t *testing.T) {
 			src: wasmvmtypes.Events{{
 				Type:       "foo",
 				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "\n\n\n"}},
-			}},			exp: sdk.Events{sdk.NewEvent("wasm-foo",
-			sdk.NewAttribute("_contract_address", myContract.String()),
-			sdk.NewAttribute("myKey", ""))},
+			}}, exp: sdk.Events{sdk.NewEvent("wasm-foo",
+				sdk.NewAttribute("_contract_address", myContract.String()),
+				sdk.NewAttribute("myKey", ""))},
 		},
 		"error on short event type": {
 			src: wasmvmtypes.Events{{
