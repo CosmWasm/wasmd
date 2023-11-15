@@ -23,7 +23,7 @@ import (
 )
 
 func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
-	pCtx, keepers := CreateTestInput(t, false, ReflectCapabilities+",iterator")
+	pCtx, keepers := CreateTestInput(t, false, ReflectFeatures+",iterator")
 	k := keepers.WasmKeeper
 	keepers.GovKeeper.SetLegacyRouter(v1beta1.NewRouter().
 		AddRoute(types.ModuleName, NewLegacyWasmProposalHandler(k, types.EnableAllProposals)),
@@ -181,9 +181,9 @@ func TestLoadStoredGovV1Beta1LegacyTypes(t *testing.T) {
 			ctx, _ := pCtx.CacheContext()
 			propID := mustSubmitAndExecuteLegacyProposal(t, ctx, spec.legacyContent, myAddress.String(), keepers)
 			// when
-			proposal, err := keepers.GovKeeper.Proposals.Get(ctx, propID)
+			proposal, exists := keepers.GovKeeper.GetProposal(ctx, propID)
 			// then
-			require.NoError(t, err)
+			require.True(t, exists)
 			require.Len(t, proposal.Messages, 1)
 			assert.NotNil(t, proposal.Messages[0].GetCachedValue())
 		})
@@ -216,11 +216,18 @@ func submitLegacyProposal(t *testing.T, ctx sdk.Context, content v1beta1.Content
 		"",
 		content.GetTitle(),
 		content.GetDescription(),
-		false,
 	)
 	require.NoError(t, err)
 
 	// when stored
 	rsp, err := msgServer.SubmitProposal(ctx, proposal)
 	return contentMsg, rsp, err
+}
+
+// for test code only
+func must[t any](s t, err error) t {
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
