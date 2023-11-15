@@ -32,8 +32,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const firstCodeID = 1
-
 func TestGenesisExportImport(t *testing.T) {
 	wasmKeeper, srcCtx := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
@@ -180,7 +178,7 @@ func TestGenesisInit(t *testing.T) {
 		"happy path: code info correct": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -195,7 +193,7 @@ func TestGenesisInit(t *testing.T) {
 		"happy path: code ids can contain gaps": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}, {
@@ -218,7 +216,7 @@ func TestGenesisInit(t *testing.T) {
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}, {
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -233,7 +231,7 @@ func TestGenesisInit(t *testing.T) {
 		},
 		"prevent code hash mismatch": {src: types.GenesisState{
 			Codes: []types.Code{{
-				CodeID:    firstCodeID,
+				CodeID:    1,
 				CodeInfo:  types.CodeInfoFixture(func(i *types.CodeInfo) { i.CodeHash = make([]byte, sha256.Size) }),
 				CodeBytes: wasmCode,
 			}},
@@ -242,12 +240,12 @@ func TestGenesisInit(t *testing.T) {
 		"prevent duplicate codeIDs": {src: types.GenesisState{
 			Codes: []types.Code{
 				{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				},
 				{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				},
@@ -258,7 +256,7 @@ func TestGenesisInit(t *testing.T) {
 			src: types.GenesisState{
 				Codes: []types.Code{
 					{
-						CodeID:    firstCodeID,
+						CodeID:    1,
 						CodeInfo:  myCodeInfo,
 						CodeBytes: wasmCode,
 						Pinned:    true,
@@ -276,7 +274,7 @@ func TestGenesisInit(t *testing.T) {
 		"happy path: code id in info and contract do match": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -305,7 +303,7 @@ func TestGenesisInit(t *testing.T) {
 		"happy path: code info with two contracts": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -364,7 +362,7 @@ func TestGenesisInit(t *testing.T) {
 		"prevent duplicate contract address": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -399,7 +397,7 @@ func TestGenesisInit(t *testing.T) {
 		"prevent duplicate contract model keys": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -455,7 +453,7 @@ func TestGenesisInit(t *testing.T) {
 		"prevent contract id seq init value not high enough": {
 			src: types.GenesisState{
 				Codes: []types.Code{{
-					CodeID:    firstCodeID,
+					CodeID:    1,
 					CodeInfo:  myCodeInfo,
 					CodeBytes: wasmCode,
 				}},
@@ -611,7 +609,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	adminAddr := "cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn"
 
 	expContractInfo := types.ContractInfo{
-		CodeID:  firstCodeID,
+		CodeID:  1,
 		Creator: contractCreatorAddr,
 		Admin:   adminAddr,
 		Label:   "ȀĴnZV芢毤",
@@ -622,7 +620,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	expHistory := []types.ContractCodeHistoryEntry{
 		{
 			Operation: types.ContractCodeHistoryOperationTypeInit,
-			CodeID:    firstCodeID,
+			CodeID:    1,
 			Updated: &types.AbsoluteTxPosition{
 				BlockHeight: 100,
 				TxIndex:     10,
@@ -631,7 +629,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 		},
 		{
 			Operation: types.ContractCodeHistoryOperationTypeMigrate,
-			CodeID:    firstCodeID,
+			CodeID:    1,
 			Updated: &types.AbsoluteTxPosition{
 				BlockHeight: 200,
 				TxIndex:     10,
