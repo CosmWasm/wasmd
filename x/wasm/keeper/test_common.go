@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
+
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -314,7 +316,7 @@ func createTestInput(
 			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case types.ModuleName:
-			keyTable = types.ParamKeyTable() //nolint:staticcheck
+			keyTable = v2.ParamKeyTable() //nolint:staticcheck
 		default:
 			return r
 		}

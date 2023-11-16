@@ -15,13 +15,8 @@ import (
 // module state.
 func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace exported.Subspace, cdc codec.BinaryCodec) error {
 	store := ctx.KVStore(storeKey)
-	var currParams types.Params
+	var currParams Params
 	legacySubspace.GetParamSet(ctx, &currParams)
-
-	if err := currParams.ValidateBasic(); err != nil {
-		return err
-	}
-
 	bz, err := cdc.Marshal(&currParams)
 	if err != nil {
 		return err
