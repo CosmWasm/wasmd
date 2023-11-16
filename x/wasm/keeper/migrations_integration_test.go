@@ -3,20 +3,24 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/CosmWasm/wasmd/app"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 func TestModuleMigrations(t *testing.T) {
 	wasmApp := app.Setup(t)
+	myAddress := sdk.AccAddress(rand.Bytes(address.Len))
 
 	upgradeHandler := func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) { //nolint:unparam
 		return wasmApp.ModuleManager.RunMigrations(ctx, wasmApp.Configurator(), fromVM)
@@ -30,15 +34,15 @@ func TestModuleMigrations(t *testing.T) {
 		"with legacy params migrated": {
 			startVersion: 1,
 			setup: func(ctx sdk.Context) {
-				params := types.Params{
-					CodeUploadAccess:             types.AllowNobody,
-					InstantiateDefaultPermission: types.AccessTypeNobody,
+				params := v2.Params{
+					CodeUploadAccess:             v2.AccessConfig{Permission: v2.AccessTypeNobody},
+					InstantiateDefaultPermission: v2.AccessTypeNobody,
 				}
 
 				// upgrade code shipped with v0.40
 				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
 				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
-				keyTable := types.ParamKeyTable()
+				keyTable := v2.ParamKeyTable()
 				if !sp.HasKeyTable() {
 					sp.WithKeyTable(keyTable)
 				}
@@ -47,6 +51,29 @@ func TestModuleMigrations(t *testing.T) {
 			},
 			exp: types.Params{
 				CodeUploadAccess:             types.AllowNobody,
+				InstantiateDefaultPermission: types.AccessTypeNobody,
+			},
+		},
+		"with legacy one address type replaced": {
+			startVersion: 1,
+			setup: func(ctx sdk.Context) {
+				params := v2.Params{
+					CodeUploadAccess:             v2.AccessConfig{Permission: v2.AccessTypeOnlyAddress, Address: myAddress.String()},
+					InstantiateDefaultPermission: v2.AccessTypeNobody,
+				}
+
+				// upgrade code shipped with v0.40
+				// https://github.com/CosmWasm/wasmd/blob/v0.40.0/app/upgrades.go#L66
+				sp, _ := wasmApp.ParamsKeeper.GetSubspace(types.ModuleName)
+				keyTable := v2.ParamKeyTable()
+				if !sp.HasKeyTable() {
+					sp.WithKeyTable(keyTable)
+				}
+
+				sp.SetParamSet(ctx, &params)
+			},
+			exp: types.Params{
+				CodeUploadAccess:             types.AccessTypeAnyOfAddresses.With(myAddress),
 				InstantiateDefaultPermission: types.AccessTypeNobody,
 			},
 		},
