@@ -6,7 +6,10 @@ for migration purposes and will be removed in a future release.
 package v2
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/cosmos/gogoproto/jsonpb"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -95,4 +98,45 @@ func assertValidAddresses(addrs []string) error {
 		idx[a] = struct{}{}
 	}
 	return nil
+}
+
+func (a AccessType) String() string {
+	switch a {
+	case AccessTypeNobody:
+		return "Nobody"
+	case AccessTypeOnlyAddress:
+		return "OnlyAddress"
+	case AccessTypeEverybody:
+		return "Everybody"
+	case AccessTypeAnyOfAddresses:
+		return "AnyOfAddresses"
+	}
+	return "Unspecified"
+}
+
+func (a *AccessType) UnmarshalText(text []byte) error {
+	for _, v := range AllAccessTypes {
+		if v.String() == string(text) {
+			*a = v
+			return nil
+		}
+	}
+	*a = AccessTypeUnspecified
+	return nil
+}
+
+func (a AccessType) MarshalText() ([]byte, error) {
+	return []byte(a.String()), nil
+}
+
+func (a *AccessType) MarshalJSONPB(_ *jsonpb.Marshaler) ([]byte, error) {
+	return json.Marshal(a)
+}
+
+func (a *AccessType) UnmarshalJSONPB(_ *jsonpb.Unmarshaler, data []byte) error {
+	return json.Unmarshal(data, a)
+}
+
+func (a AccessConfig) Equals(o AccessConfig) bool {
+	return a.Permission == o.Permission && a.Address == o.Address
 }
