@@ -5,8 +5,6 @@ import (
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,6 +22,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -33,7 +32,7 @@ import (
 // NOTE: This upgrade defines a reference implementation of what an upgrade
 // could look like when an application is migrating from Cosmos SDK version
 // v0.46.x to v0.47.x.
-const UpgradeName = "v046-to-v047"
+const UpgradeName = "v0.4x"
 
 func (app WasmApp) RegisterUpgradeHandlers() {
 	// Set param key table for params module migration
@@ -100,8 +99,12 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 	if upgradeInfo.Name == UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{
-				consensustypes.ModuleName,
+				// SDK 46
+				//   group.ModuleName,
+				//   nft.ModuleName,
+				// SDK 47
 				crisistypes.ModuleName,
+				consensustypes.ModuleName,
 			},
 		}
 
