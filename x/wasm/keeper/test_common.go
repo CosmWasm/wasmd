@@ -78,6 +78,7 @@ import (
 	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -314,7 +315,7 @@ func createTestInput(
 			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case types.ModuleName:
-			keyTable = types.ParamKeyTable() //nolint:staticcheck
+			keyTable = v2.ParamKeyTable() //nolint:staticcheck
 		default:
 			return r
 		}

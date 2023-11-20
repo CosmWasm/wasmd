@@ -22,6 +22,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
@@ -31,7 +32,7 @@ import (
 // NOTE: This upgrade defines a reference implementation of what an upgrade
 // could look like when an application is migrating from Cosmos SDK version
 // v0.46.x to v0.47.x.
-const UpgradeName = "v046-to-v047"
+const UpgradeName = "v0.4x"
 
 func (app WasmApp) RegisterUpgradeHandlers() {
 	// Set param key table for params module migration
@@ -65,7 +66,7 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 			keyTable = icacontrollertypes.ParamKeyTable()
 			// wasm
 		case wasmtypes.ModuleName:
-			keyTable = wasmtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = v2.ParamKeyTable() //nolint:staticcheck
 		default:
 			continue
 		}
@@ -98,8 +99,12 @@ func (app WasmApp) RegisterUpgradeHandlers() {
 	if upgradeInfo.Name == UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{
-				consensustypes.ModuleName,
+				// SDK 46
+				//   group.ModuleName,
+				//   nft.ModuleName,
+				// SDK 47
 				crisistypes.ModuleName,
+				consensustypes.ModuleName,
 			},
 		}
 
