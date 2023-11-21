@@ -1,1 +1,2 @@
-https://github.com/CosmWasm/cw-nfts/releases/download/v0.17.0/cw721_base.wasm
+cw721_base      - https://github.com/CosmWasm/cw-nfts/releases/download/v0.17.0/cw721_base.wasm
+cw721-receiver  - https://github.com/CosmWasm/cw-nfts/pulls
