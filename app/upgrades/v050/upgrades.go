@@ -31,6 +31,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	ak *upgrades.AppKeepers,
 ) upgradetypes.UpgradeHandler {
+	// sdk 47 to sdk 50
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return mm.RunMigrations(ctx, configurator, fromVM)
 	}

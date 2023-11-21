@@ -1,0 +1,73 @@
+package v050
+
+import (
+	"context"
+
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	v6 "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/migrations/v6"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	ibctmmigrations "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint/migrations"
+
+	storetypes "cosmossdk.io/store/types"
+	circuittypes "cosmossdk.io/x/circuit/types"
+	"cosmossdk.io/x/nft"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	"github.com/cosmos/cosmos-sdk/x/group"
+
+	"github.com/CosmWasm/wasmd/app/upgrades"
+)
+
+// UpgradeName defines the on-chain upgrade name
+const UpgradeName = "v0.50"
+
+var Upgrade = upgrades.Upgrade{
+	UpgradeName:          UpgradeName,
+	CreateUpgradeHandler: CreateUpgradeHandler,
+	StoreUpgrades: storetypes.StoreUpgrades{
+		Added: []string{
+			// SDK 46
+			group.ModuleName,
+			nft.ModuleName,
+			// SDK 47
+			crisistypes.ModuleName,
+			consensusparamtypes.ModuleName,
+			// SDK 50
+			circuittypes.ModuleName,
+		},
+		Deleted: []string{},
+	},
+}
+
+func CreateUpgradeHandler(
+	mm upgrades.ModuleManager,
+	configurator module.Configurator,
+	ak *upgrades.AppKeepers,
+) upgradetypes.UpgradeHandler {
+	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		// ibc v6
+		// NOTE: The moduleName arg of v6.CreateUpgradeHandler refers to the auth module ScopedKeeper name to which the channel capability should be migrated from.
+		// This should be the same string value provided upon instantiation of the ScopedKeeper with app.CapabilityKeeper.ScopeToModule()
+		const moduleName = icacontrollertypes.SubModuleName
+		if err := v6.MigrateICS27ChannelCapability(sdkCtx, ak.Codec, ak.GetStoreKey(capabilitytypes.ModuleName),
+			ak.CapabilityKeeper, moduleName); err != nil {
+			return nil, err
+		}
+
+		// ibc v7
+		if _, err := ibctmmigrations.PruneExpiredConsensusStates(sdkCtx, ak.Codec, ak.IBCKeeper.ClientKeeper); err != nil {
+			return nil, err
+		}
+
+		// sdk 47
+		// consensus params migration is done in app.go FinalizeBlock function to prevent panic
+
+		// sdk 50
+		return mm.RunMigrations(ctx, configurator, fromVM)
+	}
+}
