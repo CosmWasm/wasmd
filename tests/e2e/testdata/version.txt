@@ -1,0 +1,1 @@
+https://github.com/CosmWasm/cw-nfts/releases/download/v0.17.0/cw721_base.wasm
