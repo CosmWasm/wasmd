@@ -35,10 +35,10 @@ func TestNFTSubmessages(t *testing.T) {
 			chain := coord.GetChain(ibctesting.GetChainID(1))
 			minterAddress := chain.SenderAccount.GetAddress()
 
-			codeID := chain.StoreCodeFile("./testdata/code3743.wasm").CodeID
+			codeID := chain.StoreCodeFile("testdata/cw721_base.wasm.gz").CodeID
 			senderContractAddr := chain.InstantiateContract(codeID, []byte(fmt.Sprintf(`{"name":"Reece #00001", "symbol":"juno-reece-test-#00001", "minter":"%s"}`, minterAddress.String())))
 
-			codeID = chain.StoreCodeFile("./testdata/cw721_receiver.wasm.gz").CodeID
+			codeID = chain.StoreCodeFile("testdata/cw721_receiver.wasm.gz").CodeID
 			receiverContractAddr := chain.InstantiateContract(codeID, []byte(`{}`))
 
 			// and token minted
