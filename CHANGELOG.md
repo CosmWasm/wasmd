@@ -2,7 +2,34 @@
 
 ## [Unreleased](https://github.com/CosmWasm/wasmd/tree/HEAD)
 
-[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.45.0...HEAD)
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.50.0...HEAD)
+
+## [v0.50.0](https://github.com/CosmWasm/wasmd/tree/v0.50.0) (2023-11-23)
+
+[Full Changelog](https://github.com/CosmWasm/wasmd/compare/v0.45.0...v0.50.0)
+
+- Fix module migration fails when code upload access is set to `OnlyAddress` [\#1725](https://github.com/CosmWasm/wasmd/issues/1725)
+- Upgrade to SDK v0.50.1 [\#1696](https://github.com/CosmWasm/wasmd/pull/1696)
+- Bump bufbuild/buf-setup-action from 1.27.1 to 1.27.2 [\#1684](https://github.com/CosmWasm/wasmd/pull/1684)
+- Bump google.golang.org/grpc from 1.58.1 to 1.58.3 in /tests/system [\#1682](https://github.com/CosmWasm/wasmd/pull/1682)
+- Rename some more "features" to "capabilities" [\#1679](https://github.com/CosmWasm/wasmd/pull/1679)
+- Bump actions/checkout from 4.1.0 to 4.1.1 [\#1678](https://github.com/CosmWasm/wasmd/pull/1678)
+- Bump bufbuild/buf-setup-action from 1.27.0 to 1.27.1 [\#1677](https://github.com/CosmWasm/wasmd/pull/1677)
+- Upgrade to SDK v0.50 + IBC v8.0 [\#1611](https://github.com/CosmWasm/wasmd/pull/1611)
+
+### Notable changes:
+- Upgrade to [SDK v0.50.1](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.1) Eden release
+- Upgrade to [IBC v8.0.0](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) release
+
+### Migration notes:
+- This release includes state migrations! Please pay careful attention to the doc provided by the [SDK](https://github.com/cosmos/cosmos-sdk/blob/v0.50.1/UPGRADING.md#v050x) team 
+  and the [IBC](https://github.com/cosmos/ibc-go/releases/tag/v8.0.0) team with their releases
+- We have some example upgrade code in the `app/upgrade/v0.50` dir, assuming that you come from a wasmd v0.4x version.
+- We also tested a chain upgrade with wasmd v0.33 to v0.50 directly with a fix to [app.go](https://github.com/CosmWasm/wasmd/blame/b02a4723618629b5bb9603d8298621f6ef449f92/app/app.go#L927)
+  to work around an issue.
+- Disclaimer: the upgrade codes are examples and may require more customization for your chain. Please do proper tests before applying on mainnets
+- Please share your experience and success stories on CosmWasm [discord](https://discord.com/invite/cPjEnPd)
+
 
 ## [v0.45.0](https://github.com/CosmWasm/wasmd/tree/v0.45.0) (2023-11-15)
 
