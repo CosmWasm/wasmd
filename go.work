@@ -1,0 +1,8 @@
+go 1.21
+
+use (
+	./demo
+	./tests/e2e
+	./tests/system
+	./x
+)

@@ -9,7 +9,7 @@ import (
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/demo/app/params"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
