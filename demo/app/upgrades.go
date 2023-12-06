@@ -18,9 +18,9 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/CosmWasm/wasmd/app/upgrades"
-	"github.com/CosmWasm/wasmd/app/upgrades/noop"
-	v050 "github.com/CosmWasm/wasmd/app/upgrades/v050"
+	"github.com/CosmWasm/wasmd/demo/app/upgrades"
+	"github.com/CosmWasm/wasmd/demo/app/upgrades/noop"
+	v050 "github.com/CosmWasm/wasmd/demo/app/upgrades/v050"
 	v2 "github.com/CosmWasm/wasmd/x/wasm/migrations/v2"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )

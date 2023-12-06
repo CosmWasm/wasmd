@@ -7,7 +7,7 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/CosmWasm/wasmd/app/params"
+	"github.com/CosmWasm/wasmd/demo/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )

@@ -20,7 +20,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 
-	"github.com/CosmWasm/wasmd/app"
+	"github.com/CosmWasm/wasmd/demo/app"
 	wasmibctesting "github.com/CosmWasm/wasmd/x/wasm/ibctesting"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
