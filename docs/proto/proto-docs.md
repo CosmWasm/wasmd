@@ -1032,7 +1032,7 @@ method.
 | `code_hash` | [string](#string) |  | CodeHash is the hash of the code |
 | `creator_address` | [string](#string) |  | CreatorAddress is the address of the contract instantiator |
 | `salt` | [string](#string) |  | Salt is a hex encoded salt |
-| `init_args` | [bytes](#bytes) | optional | InitArgs are the json encoded init args to be used in contract address building if provided |
+| `init_args` | [bytes](#bytes) |  | InitArgs are optional json encoded init args to be used in contract address building if provided |
 
 
 

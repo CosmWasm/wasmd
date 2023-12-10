@@ -285,9 +285,9 @@ message QueryBuildAddressRequest {
   string creator_address = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Salt is a hex encoded salt
   string salt = 3;
-  // InitArgs are the json encoded init args to be used in contract address
+  // InitArgs are optional json encoded init args to be used in contract address
   // building if provided
-  optional bytes init_args = 4;
+  bytes init_args = 4;
 }
 
 // QueryBuildAddressResponse is the response type for the Query/BuildAddress RPC
