@@ -1047,3 +1047,60 @@ func TestEnsurePaginationParams(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryBuildAddress(t *testing.T) {
+	specs := map[string]struct {
+		srcQuery *types.QueryBuildAddressRequest
+		exp      *types.QueryBuildAddressResponse
+		expErr   error
+	}{
+		"empty request": {
+			srcQuery: nil,
+			expErr:   status.Error(codes.InvalidArgument, "empty request"),
+		},
+		"valid - without init args": {
+			srcQuery: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos165fz7lnnt6e08knjqsz6fnz9drs7gewezyq3pl5uspc3zgt5lldq4ge3pl",
+			},
+			expErr: nil,
+		},
+		"valid - with init args": {
+			srcQuery: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`{"verifier":"cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz"}`),
+			},
+			exp: &types.QueryBuildAddressResponse{
+				Address: "cosmos150kq3ggdvc9lftcv6ns75t3v6lcpxdmvuwtqr6e9fc029z6h4maqepgss6",
+			},
+			expErr: nil,
+		},
+	}
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	q := Querier(keeper)
+	for msg, spec := range specs {
+		t.Run(msg, func(t *testing.T) {
+			got, gotErr := q.BuildAddress(ctx, spec.srcQuery)
+			if spec.expErr != nil {
+				fmt.Println("here")
+				fmt.Println("err: ", gotErr)
+				require.Error(t, gotErr)
+				assert.ErrorContains(t, gotErr, spec.expErr.Error())
+				return
+			}
+			require.NoError(t, gotErr)
+			require.NotNil(t, got)
+			assert.Equal(t, spec.exp.Address, got.Address)
+		})
+	}
+}
