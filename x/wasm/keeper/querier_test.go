@@ -1092,8 +1092,6 @@ func TestQueryBuildAddress(t *testing.T) {
 		t.Run(msg, func(t *testing.T) {
 			got, gotErr := q.BuildAddress(ctx, spec.srcQuery)
 			if spec.expErr != nil {
-				fmt.Println("here")
-				fmt.Println("err: ", gotErr)
 				require.Error(t, gotErr)
 				assert.ErrorContains(t, gotErr, spec.expErr.Error())
 				return
