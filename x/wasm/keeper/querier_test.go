@@ -1047,3 +1047,30 @@ func TestEnsurePaginationParams(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildAddress(t *testing.T) {
+	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	require.NoError(t, err)
+	codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
+	senderAddr := DeterministicAccountAddress(t, 1)
+	mySalt := []byte(`my salt`)
+
+	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
+	keeper := keepers.WasmKeeper
+
+	t.Run("build address", func(t *testing.T) {
+		q := Querier(keeper)
+		got, err := q.BuildAddress(ctx, &types.QueryBuildAddressRequest{
+			DataHash: codeInfo.CodeHash,
+			Creator:  string(senderAddr),
+			Salt:     mySalt,
+			Msg:      []byte{},
+		})
+		require.NoError(t, err)
+		expectedResponse := &types.QueryBuildAddressResponse{
+			Address: got.Address,
+		}
+		require.NotNil(t, got.Address)
+		require.EqualValues(t, expectedResponse, got)
+	})
+}

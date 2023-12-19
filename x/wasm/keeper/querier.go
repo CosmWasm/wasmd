@@ -385,6 +385,23 @@ func (q GrpcQuerier) ContractsByCreator(c context.Context, req *types.QueryContr
 	}, nil
 }
 
+func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddressRequest) (*types.QueryBuildAddressResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	address := BuildContractAddressPredictable(
+		req.DataHash,
+		sdk.AccAddress(req.Creator),
+		req.Salt,
+		req.Msg,
+	).String()
+
+	return &types.QueryBuildAddressResponse{
+		Address: address,
+	}, nil
+}
+
 // max limit to pagination queries
 const maxResultEntries = 100
 
