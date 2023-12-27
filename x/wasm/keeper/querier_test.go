@@ -1058,6 +1058,42 @@ func TestQueryBuildAddress(t *testing.T) {
 			src:    nil,
 			expErr: status.Error(codes.InvalidArgument, "empty request"),
 		},
+		"invalid code hash": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "invalid",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid code hash"),
+		},
+		"invalid creator address": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "invalid",
+				Salt:           "61",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid creator address"),
+		},
+		"invalid salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "invalid",
+				InitArgs:       nil,
+			},
+			expErr: fmt.Errorf("invalid salt"),
+		},
+		"empty salt": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "",
+				InitArgs:       nil,
+			},
+			expErr: status.Error(codes.InvalidArgument, "empty salt"),
+		},
 		"valid - without init args": {
 			src: &types.QueryBuildAddressRequest{
 				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
