@@ -1094,6 +1094,15 @@ func TestQueryBuildAddress(t *testing.T) {
 			},
 			expErr: status.Error(codes.InvalidArgument, "empty salt"),
 		},
+		"invalid init args": {
+			src: &types.QueryBuildAddressRequest{
+				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
+				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
+				Salt:           "61",
+				InitArgs:       []byte(`invalid`),
+			},
+			expErr: fmt.Errorf("invalid"),
+		},
 		"valid - without init args": {
 			src: &types.QueryBuildAddressRequest{
 				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
