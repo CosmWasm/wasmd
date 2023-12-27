@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"runtime/debug"
 
 	"google.golang.org/grpc/codes"
@@ -414,15 +415,15 @@ func (q GrpcQuerier) BuildAddress(c context.Context, req *types.QueryBuildAddres
 	}
 	codeHash, err := hex.DecodeString(req.CodeHash)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid code hash: %w", err)
 	}
 	creator, err := sdk.AccAddressFromBech32(req.CreatorAddress)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid creator address: %w", err)
 	}
 	salt, err := hex.DecodeString(req.Salt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid salt: %w", err)
 	}
 	if len(salt) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "empty salt")
