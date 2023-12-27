@@ -1050,16 +1050,16 @@ func TestEnsurePaginationParams(t *testing.T) {
 
 func TestQueryBuildAddress(t *testing.T) {
 	specs := map[string]struct {
-		srcQuery *types.QueryBuildAddressRequest
-		exp      *types.QueryBuildAddressResponse
-		expErr   error
+		src    *types.QueryBuildAddressRequest
+		exp    *types.QueryBuildAddressResponse
+		expErr error
 	}{
 		"empty request": {
-			srcQuery: nil,
-			expErr:   status.Error(codes.InvalidArgument, "empty request"),
+			src:    nil,
+			expErr: status.Error(codes.InvalidArgument, "empty request"),
 		},
 		"valid - without init args": {
-			srcQuery: &types.QueryBuildAddressRequest{
+			src: &types.QueryBuildAddressRequest{
 				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
 				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				Salt:           "61",
@@ -1071,7 +1071,7 @@ func TestQueryBuildAddress(t *testing.T) {
 			expErr: nil,
 		},
 		"valid - with init args": {
-			srcQuery: &types.QueryBuildAddressRequest{
+			src: &types.QueryBuildAddressRequest{
 				CodeHash:       "13a1fc994cc6d1c81b746ee0c0ff6f90043875e0bf1d9be6b7d779fc978dc2a5",
 				CreatorAddress: "cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz",
 				Salt:           "61",
@@ -1090,7 +1090,7 @@ func TestQueryBuildAddress(t *testing.T) {
 	q := Querier(keeper)
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			got, gotErr := q.BuildAddress(ctx, spec.srcQuery)
+			got, gotErr := q.BuildAddress(ctx, spec.src)
 			if spec.expErr != nil {
 				require.Error(t, gotErr)
 				assert.ErrorContains(t, gotErr, spec.expErr.Error())
