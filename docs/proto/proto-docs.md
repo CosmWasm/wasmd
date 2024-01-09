@@ -60,6 +60,8 @@
     - [CodeInfoResponse](#cosmwasm.wasm.v1.CodeInfoResponse)
     - [QueryAllContractStateRequest](#cosmwasm.wasm.v1.QueryAllContractStateRequest)
     - [QueryAllContractStateResponse](#cosmwasm.wasm.v1.QueryAllContractStateResponse)
+    - [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest)
+    - [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse)
     - [QueryCodeRequest](#cosmwasm.wasm.v1.QueryCodeRequest)
     - [QueryCodeResponse](#cosmwasm.wasm.v1.QueryCodeResponse)
     - [QueryCodesRequest](#cosmwasm.wasm.v1.QueryCodesRequest)
@@ -1018,6 +1020,41 @@ Query/AllContractState RPC method
 
 
 
+<a name="cosmwasm.wasm.v1.QueryBuildAddressRequest"></a>
+
+### QueryBuildAddressRequest
+QueryBuildAddressRequest is the request type for the Query/BuildAddress RPC
+method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `code_hash` | [string](#string) |  | CodeHash is the hash of the code |
+| `creator_address` | [string](#string) |  | CreatorAddress is the address of the contract instantiator |
+| `salt` | [string](#string) |  | Salt is a hex encoded salt |
+| `init_args` | [bytes](#bytes) |  | InitArgs are optional json encoded init args to be used in contract address building if provided |
+
+
+
+
+
+
+<a name="cosmwasm.wasm.v1.QueryBuildAddressResponse"></a>
+
+### QueryBuildAddressResponse
+QueryBuildAddressResponse is the response type for the Query/BuildAddress RPC
+method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `address` | [string](#string) |  | Address is the contract address |
+
+
+
+
+
+
 <a name="cosmwasm.wasm.v1.QueryCodeRequest"></a>
 
 ### QueryCodeRequest
@@ -1363,6 +1400,7 @@ Query provides defines the gRPC querier service
 | `PinnedCodes` | [QueryPinnedCodesRequest](#cosmwasm.wasm.v1.QueryPinnedCodesRequest) | [QueryPinnedCodesResponse](#cosmwasm.wasm.v1.QueryPinnedCodesResponse) | PinnedCodes gets the pinned code ids | GET|/cosmwasm/wasm/v1/codes/pinned|
 | `Params` | [QueryParamsRequest](#cosmwasm.wasm.v1.QueryParamsRequest) | [QueryParamsResponse](#cosmwasm.wasm.v1.QueryParamsResponse) | Params gets the module params | GET|/cosmwasm/wasm/v1/codes/params|
 | `ContractsByCreator` | [QueryContractsByCreatorRequest](#cosmwasm.wasm.v1.QueryContractsByCreatorRequest) | [QueryContractsByCreatorResponse](#cosmwasm.wasm.v1.QueryContractsByCreatorResponse) | ContractsByCreator gets the contracts by creator | GET|/cosmwasm/wasm/v1/contracts/creator/{creator_address}|
+| `BuildAddress` | [QueryBuildAddressRequest](#cosmwasm.wasm.v1.QueryBuildAddressRequest) | [QueryBuildAddressResponse](#cosmwasm.wasm.v1.QueryBuildAddressResponse) | BuildAddress builds a contract address | GET|/cosmwasm/wasm/v1/contract/build_address|
 
  <!-- end services -->
 
