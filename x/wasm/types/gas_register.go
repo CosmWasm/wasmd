@@ -69,14 +69,13 @@ func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
 
 // GasRegister abstract source for gas costs
 type GasRegister interface {
-	// NewContractInstanceCosts costs to create a new contract instance from code
-	NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCosts(byteLength int) storetypes.Gas
 	// UncompressCosts costs to unpack a new wasm contract
 	UncompressCosts(byteLength int) storetypes.Gas
-	// InstantiateContractCosts costs when interacting with a wasm contract
-	InstantiateContractCosts(pinned bool, msgLen int) storetypes.Gas
+	// SetupContractCost are charged when interacting with a Wasm contract, i.e. every time
+	// the contract is prepared for execution through any entry point (execute/instantiate/sudo/query/ibc_*/...).
+	SetupContractCost(pinned bool, msgLen int) storetypes.Gas
 	// ReplyCosts costs to to handle a message reply
 	ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
 	// EventCosts costs to persist an event
@@ -152,11 +151,6 @@ func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	}
 }
 
-// NewContractInstanceCosts costs to create a new contract instance from code
-func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas {
-	return g.InstantiateContractCosts(pinned, msgLen)
-}
-
 // CompileCosts costs to persist and "compile" a new wasm contract
 func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 	if byteLength < 0 {
@@ -173,8 +167,8 @@ func (g WasmGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
 	return g.c.UncompressCost.Mul(uint64(byteLength)).Floor()
 }
 
-// InstantiateContractCosts costs when interacting with a wasm contract
-func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) storetypes.Gas {
+// SetupContractCost costs when interacting with a wasm contract
+func (g WasmGasRegister) SetupContractCost(pinned bool, msgLen int) storetypes.Gas {
 	if msgLen < 0 {
 		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
 	}
@@ -199,7 +193,7 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storet
 		// apply free tier on the whole set not per event
 		eventGas += g.EventCosts(attrs, nil)
 	}
-	return eventGas + g.InstantiateContractCosts(pinned, msgLen)
+	return eventGas + g.SetupContractCost(pinned, msgLen)
 }
 
 // EventCosts costs to persist an event

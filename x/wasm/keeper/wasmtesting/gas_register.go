@@ -8,21 +8,13 @@ import (
 
 // MockGasRegister mock that implements keeper.GasRegister
 type MockGasRegister struct {
-	CompileCostFn             func(byteLength int) storetypes.Gas
-	NewContractInstanceCostFn func(pinned bool, msgLen int) storetypes.Gas
-	InstantiateContractCostFn func(pinned bool, msgLen int) storetypes.Gas
-	ReplyCostFn               func(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
-	EventCostsFn              func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
-	ToWasmVMGasFn             func(source storetypes.Gas) uint64
-	FromWasmVMGasFn           func(source uint64) storetypes.Gas
-	UncompressCostsFn         func(byteLength int) storetypes.Gas
-}
-
-func (m MockGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas {
-	if m.NewContractInstanceCostFn == nil {
-		panic("not expected to be called")
-	}
-	return m.NewContractInstanceCostFn(pinned, msgLen)
+	CompileCostFn       func(byteLength int) storetypes.Gas
+	SetupContractCostFn func(pinned bool, msgLen int) storetypes.Gas
+	ReplyCostFn         func(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
+	EventCostsFn        func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
+	ToWasmVMGasFn       func(source storetypes.Gas) uint64
+	FromWasmVMGasFn     func(source uint64) storetypes.Gas
+	UncompressCostsFn   func(byteLength int) storetypes.Gas
 }
 
 func (m MockGasRegister) CompileCosts(byteLength int) storetypes.Gas {
@@ -39,11 +31,11 @@ func (m MockGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
 	return m.UncompressCostsFn(byteLength)
 }
 
-func (m MockGasRegister) InstantiateContractCosts(pinned bool, msgLen int) storetypes.Gas {
-	if m.InstantiateContractCostFn == nil {
+func (m MockGasRegister) SetupContractCost(pinned bool, msgLen int) storetypes.Gas {
+	if m.SetupContractCostFn == nil {
 		panic("not expected to be called")
 	}
-	return m.InstantiateContractCostFn(pinned, msgLen)
+	return m.SetupContractCostFn(pinned, msgLen)
 }
 
 func (m MockGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas {
