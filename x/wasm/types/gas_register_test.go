@@ -110,7 +110,7 @@ func TestNewContractInstanceCosts(t *testing.T) {
 	}
 }
 
-func TestContractInstanceCosts(t *testing.T) {
+func TestSetupContractCost(t *testing.T) {
 	// same as TestNewContractInstanceCosts currently
 	specs := map[string]struct {
 		srcLen    int
@@ -163,11 +163,11 @@ func TestContractInstanceCosts(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
 				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
+					NewWasmGasRegister(spec.srcConfig).SetupContractCost(spec.pinned, spec.srcLen)
 				})
 				return
 			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).InstantiateContractCosts(spec.pinned, spec.srcLen)
+			gotGas := NewWasmGasRegister(spec.srcConfig).SetupContractCost(spec.pinned, spec.srcLen)
 			assert.Equal(t, spec.exp, gotGas)
 		})
 	}
