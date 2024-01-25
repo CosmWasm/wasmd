@@ -48,70 +48,7 @@ func TestCompileCosts(t *testing.T) {
 	}
 }
 
-func TestNewContractInstanceCosts(t *testing.T) {
-	specs := map[string]struct {
-		srcLen    int
-		srcConfig WasmGasRegisterConfig
-		pinned    bool
-		exp       storetypes.Gas
-		expPanic  bool
-	}{
-		"small msg - pinned": {
-			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			pinned:    true,
-			exp:       DefaultContractMessageDataCost,
-		},
-		"big msg - pinned": {
-			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
-			pinned:    true,
-			exp:       DefaultContractMessageDataCost * storetypes.Gas(math.MaxUint32),
-		},
-		"empty msg - pinned": {
-			srcLen:    0,
-			pinned:    true,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       storetypes.Gas(0),
-		},
-		"small msg - unpinned": {
-			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost + DefaultInstanceCost,
-		},
-		"big msg - unpinned": {
-			srcLen:    math.MaxUint32,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultContractMessageDataCost*math.MaxUint32 + DefaultInstanceCost,
-		},
-		"empty msg - unpinned": {
-			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       DefaultInstanceCost,
-		},
-
-		"negative len": {
-			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
-			expPanic:  true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			if spec.expPanic {
-				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
-				})
-				return
-			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).NewContractInstanceCosts(spec.pinned, spec.srcLen)
-			assert.Equal(t, spec.exp, gotGas)
-		})
-	}
-}
-
 func TestSetupContractCost(t *testing.T) {
-	// same as TestNewContractInstanceCosts currently
 	specs := map[string]struct {
 		srcLen    int
 		srcConfig WasmGasRegisterConfig

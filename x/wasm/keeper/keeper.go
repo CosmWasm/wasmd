@@ -249,8 +249,8 @@ func (k Keeper) instantiate(
 		return nil, nil, types.ErrEmpty.Wrap("creator")
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(sdkCtx, codeID), len(initMsg))
-	sdkCtx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
+	setupCost := k.gasRegister.SetupContractCost(k.IsPinnedCode(sdkCtx, codeID), len(initMsg))
+	sdkCtx.GasMeter().ConsumeGas(setupCost, "Loading CosmWasm module: instantiate")
 
 	codeInfo := k.GetCodeInfo(ctx, codeID)
 	if codeInfo == nil {

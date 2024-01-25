@@ -8,21 +8,13 @@ import (
 
 // MockGasRegister mock that implements keeper.GasRegister
 type MockGasRegister struct {
-	CompileCostFn             func(byteLength int) storetypes.Gas
-	NewContractInstanceCostFn func(pinned bool, msgLen int) storetypes.Gas
-	SetupContractCostFn       func(pinned bool, msgLen int) storetypes.Gas
-	ReplyCostFn               func(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
-	EventCostsFn              func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
-	ToWasmVMGasFn             func(source storetypes.Gas) uint64
-	FromWasmVMGasFn           func(source uint64) storetypes.Gas
-	UncompressCostsFn         func(byteLength int) storetypes.Gas
-}
-
-func (m MockGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) storetypes.Gas {
-	if m.NewContractInstanceCostFn == nil {
-		panic("not expected to be called")
-	}
-	return m.NewContractInstanceCostFn(pinned, msgLen)
+	CompileCostFn       func(byteLength int) storetypes.Gas
+	SetupContractCostFn func(pinned bool, msgLen int) storetypes.Gas
+	ReplyCostFn         func(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
+	EventCostsFn        func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
+	ToWasmVMGasFn       func(source storetypes.Gas) uint64
+	FromWasmVMGasFn     func(source uint64) storetypes.Gas
+	UncompressCostsFn   func(byteLength int) storetypes.Gas
 }
 
 func (m MockGasRegister) CompileCosts(byteLength int) storetypes.Gas {
