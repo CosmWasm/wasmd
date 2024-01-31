@@ -11,6 +11,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -20,7 +21,7 @@ import (
 // Messenger is an extension point for custom wasmd message handling
 type Messenger interface {
 	// DispatchMsg encodes the wasmVM message and dispatches it.
-	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
+	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error)
 }
 
 // replyer is a subset of keeper that can handle replies to submessages
@@ -42,7 +43,7 @@ func NewMessageDispatcher(messenger Messenger, keeper replyer) *MessageDispatche
 // DispatchMessages sends all messages.
 func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
 	for _, msg := range msgs {
-		events, _, err := d.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
+		events, _, _, err := d.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
 		if err != nil {
 			return err
 		}
@@ -53,7 +54,7 @@ func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.Ac
 }
 
 // dispatchMsgWithGasLimit sends a message with gas limit applied
-func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
+func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 	limitedMeter := storetypes.NewGasMeter(gasLimit)
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
@@ -70,13 +71,13 @@ func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr
 			err = errorsmod.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
 		}
 	}()
-	events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
+	events, data, msgResponses, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
 
 	// make sure we charge the parent what was spent
 	spent := subCtx.GasMeter().GasConsumed()
 	ctx.GasMeter().ConsumeGas(spent, "From limited Sub-Message")
 
-	return events, data, err
+	return events, data, msgResponses, err
 }
 
 // DispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
@@ -101,10 +102,11 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		var err error
 		var events []sdk.Event
 		var data [][]byte
+		var msgResponses [][]*codectypes.Any
 		if limitGas {
-			events, data, err = d.dispatchMsgWithGasLimit(subCtx, contractAddr, ibcPort, msg.Msg, *msg.GasLimit)
+			events, data, msgResponses, err = d.dispatchMsgWithGasLimit(subCtx, contractAddr, ibcPort, msg.Msg, *msg.GasLimit)
 		} else {
-			events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
+			events, data, msgResponses, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg.Msg)
 		}
 
 		// if it succeeds, commit state changes from submessage, and pass on events to Event Manager
@@ -142,10 +144,23 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			if len(data) > 0 {
 				responseData = data[0]
 			}
+
+			// For msgResponses we flatten the nested list into a flat list. In the majority of cases
+			// we only expect one message to be emitted and one response per message. But it might be possible
+			// to create multiple SDK messages from one CosmWasm message or we have multiple responses for one message.
+			// See https://github.com/CosmWasm/cosmwasm/issues/2009 for more information.
+			var msgResponsesFlattened []*codectypes.Any
+			for _, singleMsgResponses := range msgResponses {
+				msgResponsesFlattened = append(msgResponsesFlattened, singleMsgResponses...)
+			}
+
+			_ = msgResponsesFlattened // silences unused lint
+
 			result = wasmvmtypes.SubMsgResult{
 				Ok: &wasmvmtypes.SubMsgResponse{
 					Events: sdkEventsToWasmVMEvents(filteredEvents),
 					Data:   responseData,
+					// msgResponsesFlattened goes here
 				},
 			}
 		} else {
