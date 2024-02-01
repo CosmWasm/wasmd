@@ -419,7 +419,7 @@ func TestOnRecvPacket(t *testing.T) {
 		},
 		"submessage reply can overwrite ack data": {
 			contractAddr:   example.Contract,
-			expContractGas: myContractGas + storageCosts,
+			expContractGas: types.DefaultInstanceCostDiscount + myContractGas + storageCosts,
 			contractResp: &wasmvmtypes.IBCReceiveResult{
 				Ok: &wasmvmtypes.IBCReceiveResponse{
 					Acknowledgement: []byte("myAck"),

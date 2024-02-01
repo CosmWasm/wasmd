@@ -1861,7 +1861,7 @@ func TestPinnedContractLoops(t *testing.T) {
 			},
 		}, 0, nil
 	}
-	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(20000))
+	ctx = ctx.WithGasMeter(storetypes.NewGasMeter(30_000))
 	require.PanicsWithValue(t, storetypes.ErrorOutOfGas{Descriptor: "ReadFlat"}, func() {
 		_, err := k.execute(ctx, example.Contract, RandomAccountAddress(t), anyMsg, nil)
 		require.NoError(t, err)

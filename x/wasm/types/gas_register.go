@@ -35,6 +35,11 @@ const (
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938056803
 	DefaultInstanceCost uint64 = 60_000
+	// DefaultInstanceCostDiscount is charged instead of DefaultInstanceCost for cases where
+	// we assume the contract is loaded from an in-memory cache.
+	// For a long time it was implicitly just 0 in those cases.
+	// Now we use something small that roughly reflects the 45µs startup time (30x cheaper than DefaultInstanceCost).
+	DefaultInstanceCostDiscount uint64 = 2_000
 	// DefaultCompileCost is how much SDK gas is charged *per byte* for compiling WASM code.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938056803
 	DefaultCompileCost uint64 = 3
@@ -75,9 +80,9 @@ type GasRegister interface {
 	UncompressCosts(byteLength int) storetypes.Gas
 	// SetupContractCost are charged when interacting with a Wasm contract, i.e. every time
 	// the contract is prepared for execution through any entry point (execute/instantiate/sudo/query/ibc_*/...).
-	SetupContractCost(pinned bool, msgLen int) storetypes.Gas
+	SetupContractCost(discount bool, msgLen int) storetypes.Gas
 	// ReplyCosts costs to to handle a message reply
-	ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas
+	ReplyCosts(discount bool, reply wasmvmtypes.Reply) storetypes.Gas
 	// EventCosts costs to persist an event
 	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) storetypes.Gas
 	// ToWasmVMGas converts from Cosmos SDK gas units to [CosmWasm gas] (aka. wasmvm gas)
@@ -92,8 +97,16 @@ type GasRegister interface {
 
 // WasmGasRegisterConfig config type
 type WasmGasRegisterConfig struct {
-	// InstanceCost costs when interacting with a wasm contract
+	// InstanceCost are charged when interacting with a Wasm contract.
+	// "Instance" refers to the in-memory Instance of the Wasm runtime, not the contract address on chain.
+	// InstanceCost are part of a contract's setup cost.
 	InstanceCost storetypes.Gas
+	// InstanceCostDiscount is a discounted version of InstanceCost. It is charged whenever
+	// we can reasonably assume that a contract is in one of the in-memory caches. E.g.
+	// when the contract is pinned or we send a reply to a contract that was executed before.
+	// See also https://github.com/CosmWasm/wasmd/issues/1798 for more thinking around
+	// discount cases.
+	InstanceCostDiscount storetypes.Gas
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCost storetypes.Gas
 	// UncompressCost costs per byte to unpack a contract
@@ -120,6 +133,7 @@ type WasmGasRegisterConfig struct {
 func DefaultGasRegisterConfig() WasmGasRegisterConfig {
 	return WasmGasRegisterConfig{
 		InstanceCost:               DefaultInstanceCost,
+		InstanceCostDiscount:       DefaultInstanceCostDiscount,
 		CompileCost:                DefaultCompileCost,
 		GasMultiplier:              DefaultGasMultiplier,
 		EventPerAttributeCost:      DefaultPerAttributeCost,
@@ -167,20 +181,25 @@ func (g WasmGasRegister) UncompressCosts(byteLength int) storetypes.Gas {
 	return g.c.UncompressCost.Mul(uint64(byteLength)).Floor()
 }
 
-// SetupContractCost costs when interacting with a wasm contract
-func (g WasmGasRegister) SetupContractCost(pinned bool, msgLen int) storetypes.Gas {
+// SetupContractCost costs when interacting with a wasm contract.
+// Set discount to true in cases where you can reasonably assume the contract
+// is loaded from an in-memory cache (e.g. pinned contracts or replys).
+func (g WasmGasRegister) SetupContractCost(discount bool, msgLen int) storetypes.Gas {
 	if msgLen < 0 {
 		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
 	}
-	dataCosts := storetypes.Gas(msgLen) * g.c.ContractMessageDataCost
-	if pinned {
-		return dataCosts
+	dataCost := storetypes.Gas(msgLen) * g.c.ContractMessageDataCost
+	if discount {
+		return g.c.InstanceCostDiscount + dataCost
+	} else {
+		return g.c.InstanceCost + dataCost
 	}
-	return g.c.InstanceCost + dataCosts
 }
 
-// ReplyCosts costs to to handle a message reply
-func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storetypes.Gas {
+// ReplyCosts costs to to handle a message reply.
+// Set discount to true in cases where you can reasonably assume the contract
+// is loaded from an in-memory cache (e.g. pinned contracts or replys).
+func (g WasmGasRegister) ReplyCosts(discount bool, reply wasmvmtypes.Reply) storetypes.Gas {
 	var eventGas storetypes.Gas
 	msgLen := len(reply.Result.Err)
 	if reply.Result.Ok != nil {
@@ -193,7 +212,7 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) storet
 		// apply free tier on the whole set not per event
 		eventGas += g.EventCosts(attrs, nil)
 	}
-	return eventGas + g.SetupContractCost(pinned, msgLen)
+	return eventGas + g.SetupContractCost(discount, msgLen)
 }
 
 // EventCosts costs to persist an event
