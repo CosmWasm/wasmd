@@ -42,8 +42,8 @@ func (k Keeper) OnOpenChannel(
 	if execErr != nil {
 		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-	if res != nil {
-		return res.Version, nil
+	if res != nil && res.Ok != nil {
+		return res.Ok.Version, nil
 	}
 	return "", nil
 }
@@ -75,8 +75,11 @@ func (k Keeper) OnConnectChannel(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res.Err != "" {
+		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnCloseChannel calls the contract to let it know the IBC channel is closed.
@@ -106,8 +109,11 @@ func (k Keeper) OnCloseChannel(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res.Err != "" {
+		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnRecvPacket calls the contract to process the incoming IBC packet. The contract fully owns the data processing and
@@ -194,7 +200,11 @@ func (k Keeper) OnAckPacket(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	if res.Err != "" {
+		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+	}
+
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 // OnTimeoutPacket calls the contract to let it know the packet was never received on the destination chain within
@@ -221,8 +231,11 @@ func (k Keeper) OnTimeoutPacket(
 	if execErr != nil {
 		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
+	if res.Err != "" {
+		return errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
+	}
 
-	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
+	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res.Ok)
 }
 
 func (k Keeper) handleIBCBasicContractResponse(ctx sdk.Context, addr sdk.AccAddress, id string, res *wasmvmtypes.IBCBasicResponse) error {

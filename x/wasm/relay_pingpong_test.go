@@ -137,7 +137,7 @@ type player struct {
 
 // Execute starts the ping pong game
 // Contracts finds all connected channels and broadcasts a ping message
-func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 	p.execCalls++
 	// start game
 	var start startGame
@@ -153,39 +153,41 @@ func (p *player) Execute(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.Mes
 
 	p.incrementCounter(sentBallsCountKey, store)
 	store.Set(lastBallSentKey, sdk.Uint64ToBigEndian(start.Value))
-	return &wasmvmtypes.Response{
-		Messages: []wasmvmtypes.SubMsg{
-			{
-				Msg: wasmvmtypes.CosmosMsg{
-					IBC: &wasmvmtypes.IBCMsg{
-						SendPacket: &wasmvmtypes.SendPacketMsg{
-							ChannelID: start.ChannelID,
-							Data:      service.GetBytes(),
-							Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
-								Revision: doNotTimeout.RevisionNumber,
-								Height:   doNotTimeout.RevisionHeight,
-							}},
+	return &wasmvmtypes.ContractResult{
+		Ok: &wasmvmtypes.Response{
+			Messages: []wasmvmtypes.SubMsg{
+				{
+					Msg: wasmvmtypes.CosmosMsg{
+						IBC: &wasmvmtypes.IBCMsg{
+							SendPacket: &wasmvmtypes.SendPacketMsg{
+								ChannelID: start.ChannelID,
+								Data:      service.GetBytes(),
+								Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{
+									Revision: doNotTimeout.RevisionNumber,
+									Height:   doNotTimeout.RevisionHeight,
+								}},
+							},
 						},
 					},
+					ReplyOn: wasmvmtypes.ReplyNever,
 				},
-				ReplyOn: wasmvmtypes.ReplyNever,
 			},
 		},
 	}, 0, nil
 }
 
 // OnIBCChannelOpen ensures to accept only configured version
-func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
+func (p player) IBCChannelOpen(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCChannelOpenResult, uint64, error) {
 	if msg.GetChannel().Version != p.actor {
-		return &wasmvmtypes.IBC3ChannelOpenResponse{}, 0, nil
+		return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
 	}
-	return &wasmvmtypes.IBC3ChannelOpenResponse{}, 0, nil
+	return &wasmvmtypes.IBCChannelOpenResult{Ok: &wasmvmtypes.IBC3ChannelOpenResponse{}}, 0, nil
 }
 
 // OnIBCChannelConnect persists connection endpoints
-func (p player) IBCChannelConnect(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (p player) IBCChannelConnect(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	p.storeEndpoint(store, msg.GetChannel())
-	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
+	return &wasmvmtypes.IBCBasicResult{Ok: &wasmvmtypes.IBCBasicResponse{}}, 0, nil
 }
 
 // connectedChannelsModel is a simple persistence model to store endpoint addresses within the contract's store
@@ -210,7 +212,7 @@ func (p player) storeEndpoint(store wasmvm.KVStore, channel wasmvmtypes.IBCChann
 	store.Set(ibcEndpointsKey, bz)
 }
 
-func (p player) IBCChannelClose(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.IBCChannelCloseMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (p player) IBCChannelClose(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.IBCChannelCloseMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	panic("implement me")
 }
 
@@ -272,7 +274,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 }
 
 // OnIBCPacketAcknowledgement handles the packet acknowledgment frame. Stops the game on an any error
-func (p player) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (p player) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	// parse received data and store
 	var sentBall hit
 	if err := json.Unmarshal(msg.OriginalPacket.Data, &sentBall); err != nil {
@@ -291,10 +293,10 @@ func (p player) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmvmtyp
 	}
 
 	p.incrementCounter(confirmedBallsCountKey, store)
-	return &wasmvmtypes.IBCBasicResponse{}, 0, nil
+	return &wasmvmtypes.IBCBasicResult{Ok: &wasmvmtypes.IBCBasicResponse{}}, 0, nil
 }
 
-func (p player) IBCPacketTimeout(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.IBCPacketTimeoutMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+func (p player) IBCPacketTimeout(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ wasmvmtypes.IBCPacketTimeoutMsg, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResult, uint64, error) {
 	panic("implement me")
 }
 

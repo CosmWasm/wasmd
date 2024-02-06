@@ -563,20 +563,22 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
-	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		if instanceLevel == 2 {
-			return &wasmvmtypes.Response{}, 0, nil
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 0, nil
 		}
 		instanceLevel++
 		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{
-				{
-					ReplyOn: wasmvmtypes.ReplyNever,
-					Msg: wasmvmtypes.CosmosMsg{
-						Wasm: &wasmvmtypes.WasmMsg{Instantiate: &wasmvmtypes.InstantiateMsg{
-							CodeID: 1, Msg: []byte(submsgPayload), Label: "from sub-msg",
-						}},
+		return &wasmvmtypes.ContractResult{
+			Ok: &wasmvmtypes.Response{
+				Messages: []wasmvmtypes.SubMsg{
+					{
+						ReplyOn: wasmvmtypes.ReplyNever,
+						Msg: wasmvmtypes.CosmosMsg{
+							Wasm: &wasmvmtypes.WasmMsg{Instantiate: &wasmvmtypes.InstantiateMsg{
+								CodeID: 1, Msg: []byte(submsgPayload), Label: "from sub-msg",
+							}},
+						},
 					},
 				},
 			},
@@ -650,22 +652,24 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 
 	var instanceLevel int
 	// mock wasvm to return new migrate msgs with the response
-	mockWasmVM.MigrateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mockWasmVM.MigrateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.ContractResult, uint64, error) {
 		if instanceLevel == 1 {
-			return &wasmvmtypes.Response{}, 0, nil
+			return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 0, nil
 		}
 		instanceLevel++
 		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{
-				{
-					ReplyOn: wasmvmtypes.ReplyNever,
-					Msg: wasmvmtypes.CosmosMsg{
-						Wasm: &wasmvmtypes.WasmMsg{Migrate: &wasmvmtypes.MigrateMsg{
-							ContractAddr: example1.Contract.String(),
-							NewCodeID:    example2.CodeID,
-							Msg:          []byte(submsgPayload),
-						}},
+		return &wasmvmtypes.ContractResult{
+			Ok: &wasmvmtypes.Response{
+				Messages: []wasmvmtypes.SubMsg{
+					{
+						ReplyOn: wasmvmtypes.ReplyNever,
+						Msg: wasmvmtypes.CosmosMsg{
+							Wasm: &wasmvmtypes.WasmMsg{Migrate: &wasmvmtypes.MigrateMsg{
+								ContractAddr: example1.Contract.String(),
+								NewCodeID:    example2.CodeID,
+								Msg:          []byte(submsgPayload),
+							}},
+						},
 					},
 				},
 			},
