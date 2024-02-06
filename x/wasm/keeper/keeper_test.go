@@ -43,7 +43,9 @@ import (
 //go:embed testdata/hackatom.wasm
 var hackatomWasm []byte
 
-const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+var AvailableCapabilities = []string{
+	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4",
+}
 
 func TestNewKeeper(t *testing.T) {
 	_, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -1510,8 +1512,8 @@ type sudoMsg struct {
 }
 
 type stealFundsMsg struct {
-	Recipient string            `json:"recipient"`
-	Amount    wasmvmtypes.Coins `json:"amount"`
+	Recipient string                              `json:"recipient"`
+	Amount    wasmvmtypes.Array[wasmvmtypes.Coin] `json:"amount"`
 }
 
 func TestSudo(t *testing.T) {
@@ -1549,7 +1551,7 @@ func TestSudo(t *testing.T) {
 		// to end users (via Tx/Execute).
 		StealFunds: stealFundsMsg{
 			Recipient: community.String(),
-			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(76543, "denom")},
+			Amount:    wasmvmtypes.Array[wasmvmtypes.Coin]{wasmvmtypes.NewCoin(76543, "denom")},
 		},
 	}
 	sudoMsg, err := json.Marshal(msg)

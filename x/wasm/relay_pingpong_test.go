@@ -262,7 +262,7 @@ func (p player) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.Env, msg wasmv
 
 	return &wasmvmtypes.IBCReceiveResult{
 		Ok: &wasmvmtypes.IBCReceiveResponse{
-			Attributes: wasmvmtypes.EventAttributes{
+			Attributes: wasmvmtypes.Array[wasmvmtypes.EventAttribute]{
 				{Key: "empty-value-test"},
 			},
 			Acknowledgement: receivedBall.BuildAck().GetBytes(),

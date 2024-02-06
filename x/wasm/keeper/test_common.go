@@ -197,11 +197,11 @@ type TestKeepers struct {
 
 // CreateDefaultTestInput common settings for CreateTestInput
 func CreateDefaultTestInput(t testing.TB) (sdk.Context, TestKeepers) {
-	return CreateTestInput(t, false, "staking")
+	return CreateTestInput(t, false, []string{"staking"})
 }
 
 // CreateTestInput encoders can be nil to accept the defaults, or set it to override some of the message handlers (like default)
-func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities string, opts ...Option) (sdk.Context, TestKeepers) {
+func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities []string, opts ...Option) (sdk.Context, TestKeepers) {
 	// Load default wasm config
 	return createTestInput(t, isCheckTx, availableCapabilities, types.DefaultWasmConfig(), dbm.NewMemDB(), opts...)
 }
@@ -210,7 +210,7 @@ func CreateTestInput(t testing.TB, isCheckTx bool, availableCapabilities string,
 func createTestInput(
 	t testing.TB,
 	isCheckTx bool,
-	availableCapabilities string,
+	availableCapabilities []string,
 	wasmConfig types.WasmConfig,
 	db dbm.DB,
 	opts ...Option,

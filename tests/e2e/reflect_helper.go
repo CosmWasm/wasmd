@@ -42,7 +42,7 @@ func MustExecViaStargateReflectContract[T sdkMessageType](t *testing.T, chain *i
 		bz, err := chain.Codec.Marshal(m)
 		require.NoError(t, err)
 		vmMsgs[i] = wasmvmtypes.CosmosMsg{
-			Stargate: &wasmvmtypes.StargateMsg{
+			Any: &wasmvmtypes.AnyMsg{
 				TypeURL: sdk.MsgTypeURL(m),
 				Value:   bz,
 			},

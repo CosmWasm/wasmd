@@ -23,8 +23,8 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-const (
-	CyberpunkCapabilities = "staking,mask,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+var (
+	CyberpunkCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4"}
 	ReflectCapabilities   = CyberpunkCapabilities
 )
 

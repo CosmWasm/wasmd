@@ -61,25 +61,25 @@ func TestGovVoteByContract(t *testing.T) {
 	}{
 		"yes": {
 			vote: &wasmvmtypes.VoteMsg{
-				Vote: wasmvmtypes.Yes,
+				Option: wasmvmtypes.Yes,
 			},
 			expPass: true,
 		},
 		"no": {
 			vote: &wasmvmtypes.VoteMsg{
-				Vote: wasmvmtypes.No,
+				Option: wasmvmtypes.No,
 			},
 			expPass: false,
 		},
 		"abstain": {
 			vote: &wasmvmtypes.VoteMsg{
-				Vote: wasmvmtypes.Abstain,
+				Option: wasmvmtypes.Abstain,
 			},
 			expPass: true,
 		},
 		"no with veto": {
 			vote: &wasmvmtypes.VoteMsg{
-				Vote: wasmvmtypes.NoWithVeto,
+				Option: wasmvmtypes.NoWithVeto,
 			},
 			expPass: false,
 		},

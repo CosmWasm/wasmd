@@ -28,19 +28,19 @@ var (
 	}
 )
 
-func humanAddress(canon []byte) (string, uint64, error) {
+func humanizeAddress(canon []byte) (string, uint64, error) {
 	if err := sdk.VerifyAddressFormat(canon); err != nil {
 		return "", costHumanize, err
 	}
 	return sdk.AccAddress(canon).String(), costHumanize, nil
 }
 
-func canonicalAddress(human string) ([]byte, uint64, error) {
+func canonicalizeAddress(human string) ([]byte, uint64, error) {
 	bz, err := sdk.AccAddressFromBech32(human)
 	return bz, costCanonical, err
 }
 
 var cosmwasmAPI = wasmvm.GoAPI{
-	HumanAddress:     humanAddress,
-	CanonicalAddress: canonicalAddress,
+	HumanizeAddress:     humanizeAddress,
+	CanonicalizeAddress: canonicalizeAddress,
 }

@@ -350,7 +350,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	}{
 		"all good": {
 			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+				Amount: wasmvmtypes.Array[wasmvmtypes.Coin]{{
 					Denom:  "denom",
 					Amount: "100",
 				}},
@@ -358,7 +358,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 		},
 		"not enough funds in contract": {
 			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+				Amount: wasmvmtypes.Array[wasmvmtypes.Coin]{{
 					Denom:  "denom",
 					Amount: "101",
 				}},
@@ -367,7 +367,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 		},
 		"zero amount rejected": {
 			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+				Amount: wasmvmtypes.Array[wasmvmtypes.Coin]{{
 					Denom:  "denom",
 					Amount: "0",
 				}},
@@ -376,7 +376,7 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 		},
 		"unknown denom - insufficient funds": {
 			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+				Amount: wasmvmtypes.Array[wasmvmtypes.Coin]{{
 					Denom:  "unknown",
 					Amount: "1",
 				}},

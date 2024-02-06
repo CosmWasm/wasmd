@@ -33,7 +33,7 @@ func NewKeeper(
 	_ GRPCQueryRouter,
 	homeDir string,
 	wasmConfig types.WasmConfig,
-	availableCapabilities string,
+	availableCapabilities []string,
 	authority string,
 	opts ...Option,
 ) Keeper {

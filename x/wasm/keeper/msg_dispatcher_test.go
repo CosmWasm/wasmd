@@ -348,7 +348,7 @@ func TestDispatchSubmessages(t *testing.T) {
 		},
 		"non-wasm reply events get filtered": {
 			// show events from a stargate message gets filtered out
-			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Stargate: &wasmvmtypes.StargateMsg{}}}},
+			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways, Msg: wasmvmtypes.CosmosMsg{Any: &wasmvmtypes.AnyMsg{}}}},
 			replyer: &mockReplyer{
 				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
 					if reply.Result.Err != "" {

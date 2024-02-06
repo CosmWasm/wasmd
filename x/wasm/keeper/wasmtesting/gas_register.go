@@ -45,7 +45,7 @@ func (m MockGasRegister) ReplyCosts(discount bool, reply wasmvmtypes.Reply) stor
 	return m.ReplyCostFn(discount, reply)
 }
 
-func (m MockGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute, _ wasmvmtypes.Events) storetypes.Gas {
+func (m MockGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute, _ wasmvmtypes.Array[wasmvmtypes.Event]) storetypes.Gas {
 	if m.EventCostsFn == nil {
 		panic("not expected to be called")
 	}

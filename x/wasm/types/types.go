@@ -281,7 +281,7 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 	env := wasmvmtypes.Env{
 		Block: wasmvmtypes.BlockInfo{
 			Height:  uint64(ctx.BlockHeight()),
-			Time:    uint64(nano),
+			Time:    wasmvmtypes.Uint64(nano),
 			ChainID: ctx.ChainID(),
 		},
 		Contract: wasmvmtypes.ContractInfo{

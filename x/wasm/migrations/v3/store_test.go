@@ -19,7 +19,7 @@ import (
 )
 
 func TestMigrate3To4(t *testing.T) {
-	const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1"
+	var AvailableCapabilities = []string{"iterator", "staking", "stargate", "cosmwasm_1_1"}
 	ctx, keepers := keeper.CreateTestInput(t, false, AvailableCapabilities)
 	store := ctx.KVStore(keepers.WasmStoreKey)
 	cdc := moduletestutil.MakeTestEncodingConfig(wasm.AppModuleBasic{}).Codec

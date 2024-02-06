@@ -258,7 +258,7 @@ func TestEventCosts(t *testing.T) {
 	// most cases are covered in TestReplyCost already. This ensures some edge cases
 	specs := map[string]struct {
 		srcAttrs  []wasmvmtypes.EventAttribute
-		srcEvents wasmvmtypes.Events
+		srcEvents wasmvmtypes.Array[wasmvmtypes.Event]
 		expGas    storetypes.Gas
 	}{
 		"empty events": {

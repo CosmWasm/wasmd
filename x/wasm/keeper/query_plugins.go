@@ -255,10 +255,10 @@ func IBCQuerier(wasm contractMetaDataSource, channelKeeper types.ChannelKeeper) 
 			if portID == "" { // then fallback to contract port address
 				portID = wasm.GetContractInfo(ctx, caller).IBCPortID
 			}
-			var channels wasmvmtypes.IBCChannels
+			var channels wasmvmtypes.Array[wasmvmtypes.IBCChannel]
 			if portID != "" { // then return empty list for non ibc contracts; no channels possible
 				gotChannels := channelKeeper.GetAllChannelsWithPortPrefix(ctx, portID)
-				channels = make(wasmvmtypes.IBCChannels, 0, len(gotChannels))
+				channels = make(wasmvmtypes.Array[wasmvmtypes.IBCChannel], 0, len(gotChannels))
 				for _, ch := range gotChannels {
 					if ch.State != channeltypes.OPEN {
 						continue
@@ -461,7 +461,7 @@ func StakingQuerier(keeper types.StakingKeeper, distKeeper types.DistributionKee
 	}
 }
 
-func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Delegations, error) {
+func sdkToDelegations(ctx sdk.Context, keeper types.StakingKeeper, delegations []stakingtypes.Delegation) (wasmvmtypes.Array[wasmvmtypes.Delegation], error) {
 	result := make([]wasmvmtypes.Delegation, len(delegations))
 	bondDenom, err := keeper.BondDenom(ctx)
 	if err != nil {
@@ -706,8 +706,8 @@ func ConvertSDKDecCoinsToWasmDecCoins(src sdk.DecCoins) []wasmvmtypes.DecCoin {
 }
 
 // ConvertSdkCoinsToWasmCoins covert sdk type to wasmvm coins type
-func ConvertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmvmtypes.Coins {
-	converted := make(wasmvmtypes.Coins, len(coins))
+func ConvertSdkCoinsToWasmCoins(coins []sdk.Coin) wasmvmtypes.Array[wasmvmtypes.Coin] {
+	converted := make(wasmvmtypes.Array[wasmvmtypes.Coin], len(coins))
 	for i, c := range coins {
 		converted[i] = ConvertSdkCoinToWasmCoin(c)
 	}

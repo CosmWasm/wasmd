@@ -634,7 +634,7 @@ func (s *sendEmulatedIBCTransferContract) IBCPacketTimeout(_ wasmvm.Checksum, _ 
 	returnTokens := &wasmvmtypes.BankMsg{
 		Send: &wasmvmtypes.SendMsg{
 			ToAddress: data.Sender,
-			Amount:    wasmvmtypes.Coins{wasmvmtypes.NewCoin(amount.Uint64(), data.Denom)},
+			Amount:    wasmvmtypes.Array[wasmvmtypes.Coin]{wasmvmtypes.NewCoin(amount.Uint64(), data.Denom)},
 		},
 	}
 
