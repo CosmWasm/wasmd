@@ -1,7 +1,7 @@
 package wasmtesting
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	storetypes "cosmossdk.io/store/types"
 )

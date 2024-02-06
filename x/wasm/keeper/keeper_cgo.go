@@ -5,7 +5,7 @@ package keeper
 import (
 	"path/filepath"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"

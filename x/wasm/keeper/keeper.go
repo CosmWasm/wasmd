@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
