@@ -21,54 +21,55 @@ For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 
 ## Compatibility
 
-A VM can support one or more contract-VM interface versions. The interface
-version is communicated by the contract via a Wasm export. This is the current
-compatibility list:
+### For contract developers
 
-| wasmd | wasmvm       | cosmwasm-vm | cosmwasm-std |
-|-------|--------------|-------------|--------------|
-| 0.51  | v1.5.2       |             | 1.0-1.5      |
-| 0.50  | v1.5.0       |             | 1.0-1.5      |
-| 0.45  | v1.5.0       |             | 1.0-1.5      |
-| 0.44  | v1.5.0       |             | 1.0-1.5      |
-| 0.43  | v1.4.1       |             | 1.0-1.4      |
-| 0.42  | v1.4.0       |             | 1.0-1.4      |
-| 0.41  | v1.3.0       |             | 1.0-1.3      |
-| 0.40  | v1.2.3       |             | 1.0-1.2      |
-| 0.31  | v1.2.0       |             | 1.0-1.2      |
-| 0.30  | v1.1.0       |             | 1.0-1.1      |
-| 0.29  | v1.1.0       |             | 1.0-1.1      |
-| 0.28  | v1.0.0       |             | 1.0-1.1      |
-| 0.27  | v1.0.0       |             | 1.0          |
-| 0.26  | 1.0.0-beta10 |             | 1.0          |
-| 0.25  | 1.0.0-beta10 |             | 1.0          |
-| 0.24  | 1.0.0-beta7  | 1.0.0-beta6 | 1.0          |
-| 0.23  |              | 1.0.0-beta5 | 1.0          |
-| 0.22  |              | 1.0.0-beta5 | 1.0          |
-| 0.21  |              | 1.0.0-beta2 | 1.0          |
-| 0.20  |              | 1.0.0-beta  | 1.0          |
-| 0.19  |              | 0.16        | 0.16         |
-| 0.18  |              | 0.16        | 0.16         |
-| 0.17  |              | 0.14        | 0.14         |
-| 0.16  |              | 0.14        | 0.14         |
-| 0.15  |              | 0.13        | 0.11-0.13    |
-| 0.14  |              | 0.13        | 0.11-0.13    |
-| 0.13  |              | 0.12        | 0.11-0.13    |
-| 0.12  |              | 0.12        | 0.11-0.13    |
-| 0.11  |              | 0.11        | 0.11-0.13    |
-| 0.10  |              | 0.10        | 0.10         |
-| 0.9   |              | 0.9         | 0.9          |
-| 0.8   |              | 0.8         | 0.8          |
+Since CosmWasm 1.0 the contract-host interface has not changed in a breaking way.
+Also CosmWasm 2.0 contracts remain compatible at the Wasm interface level.
 
-Note: `cosmwasm_std v1.0` means it supports contracts compiled by any `v1.0.0-betaX` or `1.0.x`.
-It will also run contracts compiled with 1.x assuming they don't opt into any newer features.
-The 1.x cosmwasm_vm will support all contracts with 1.0 <= version <= 1.x. 
+To extend the feature set over time, contracts can specify required [capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES.md) through cargo features in cosmwasm-std.
+The following table shows which of the [latest capabilities](https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md) are supported by certain wasmd versions.
 
-Note that `cosmwasm-std` version defines which contracts are compatible with this system. The wasm code uploaded must
-have been compiled with one of the supported `cosmwasm-std` versions, or will be rejected upon upload (with some error
-message about "contract too old?" or "contract too new?"). `cosmwasm-vm` version defines the runtime used. It is a
-breaking change to switch runtimes (you will need to organize a chain upgrade). As of `cosmwasm-vm 0.13` we are
-using [wasmer](https://github.com/wasmerio/wasmer/) 1.0, which is significantly more performant than the older versions.
+| capability   | >= 0.42 | >= 0.41 | >= 0.31 | >= 0.29 | 0.28 |
+| ------------ | ------- | ------- | ------- | ------- | ---- |
+| iterator     | x       | x       | x       | x       | x    |
+| stargate     | x       | x       | x       | x       | x    |
+| staking      | x       | x       | x       | x       | x    |
+| cosmwasm_1_1 | x       | x       | x       | x       |      |
+| cosmwasm_1_2 | x       | x       | x       |         |      |
+| cosmwasm_1_3 | x       | x       |         |         |      |
+| cosmwasm_1_4 | x       |         |         |         |      |
+
+### For node developers
+
+The [wasmvm](https://github.com/CosmWasm/wasmvm) dependency works in most aspects like any other Go dependency. When embedding wasmd as a module into your chain, wasmvm becomes a transitive (or "indirect") dependency of the final binary project. You can specify which wasmvm version you want in your node by adding it explicitly to go.mod or using a [`replace` directive](https://go.dev/ref/mod#go-mod-file-replace).
+
+Please note that all minor version bumps of wasmvm are expected to be consensus breaking.
+For patch releases this should not be the case but there are many exceptions and corner cases.
+
+The following table shows
+
+- **Compatible wasmvm version:** the wasmvm dependency that wasmd specifies in its own go.mod
+- **Compatible wasmvm version:** the versions you can use by setting it in your project's go.mod
+
+| wasmd  | compatible | specified                                                         |
+| ------ | ---------- | ----------------------------------------------------------------- |
+| 0.51.0 | 1.5.x      | 1.5.2                                                             |
+| 0.50.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.50.0/go.mod#L6) |
+| 0.45.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.45.0/go.mod#L6) |
+| 0.44.0 | 1.5.x      | [1.5.0](https://github.com/CosmWasm/wasmd/blob/v0.44.0/go.mod#L6) |
+| 0.43.0 | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.43.0/go.mod#L6) |
+| 0.42.0 | 1.4.x      | [1.4.1](https://github.com/CosmWasm/wasmd/blob/v0.42.0/go.mod#L6) |
+| 0.41.0 | 1.3.x      | [1.3.0](https://github.com/CosmWasm/wasmd/blob/v0.41.0/go.mod#L6) |
+
+Dependency resolution in Go is not obvious. In case of doubt, please use
+`go list -m github.com/CosmWasm/wasmvm` to get the dynamically calculated version of the wasmvm dependency. Also check
+
+```sh
+# Replace <node> with you binary name
+<node> query wasm libwasmvm-version
+```
+
+for getting the libwasmvm version loaded at runtime.
 
 ## Supported Systems
 
