@@ -8,20 +8,12 @@ import (
 
 // MockGasRegister mock that implements keeper.GasRegister
 type MockGasRegister struct {
-	CompileCostFn       func(byteLength int) storetypes.Gas
 	SetupContractCostFn func(discount bool, msgLen int) storetypes.Gas
 	ReplyCostFn         func(discount bool, reply wasmvmtypes.Reply) storetypes.Gas
 	EventCostsFn        func(evts []wasmvmtypes.EventAttribute) storetypes.Gas
 	ToWasmVMGasFn       func(source storetypes.Gas) uint64
 	FromWasmVMGasFn     func(source uint64) storetypes.Gas
 	UncompressCostsFn   func(byteLength int) storetypes.Gas
-}
-
-func (m MockGasRegister) CompileCosts(byteLength int) storetypes.Gas {
-	if m.CompileCostFn == nil {
-		panic("not expected to be called")
-	}
-	return m.CompileCostFn(byteLength)
 }
 
 func (m MockGasRegister) UncompressCosts(byteLength int) storetypes.Gas {

@@ -74,8 +74,6 @@ func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
 
 // GasRegister abstract source for gas costs
 type GasRegister interface {
-	// CompileCosts costs to persist and "compile" a new wasm contract
-	CompileCosts(byteLength int) storetypes.Gas
 	// UncompressCosts costs to unpack a new wasm contract
 	UncompressCosts(byteLength int) storetypes.Gas
 	// SetupContractCost are charged when interacting with a Wasm contract, i.e. every time
@@ -163,14 +161,6 @@ func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	return WasmGasRegister{
 		c: c,
 	}
-}
-
-// CompileCosts costs to persist and "compile" a new wasm contract
-func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
-	if byteLength < 0 {
-		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
-	}
-	return g.c.CompileCost * uint64(byteLength)
 }
 
 // UncompressCosts costs to unpack a new wasm contract

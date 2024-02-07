@@ -348,8 +348,8 @@ func NoOpInstantiateFn(wasmvm.Checksum, wasmvmtypes.Env, wasmvmtypes.MessageInfo
 	return &wasmvmtypes.ContractResult{Ok: &wasmvmtypes.Response{}}, 0, nil
 }
 
-func NoOpStoreCodeFn(_ wasmvm.WasmCode) (wasmvm.Checksum, error) {
-	return rand.Bytes(32), nil
+func NoOpStoreCodeFn(wasm wasmvm.WasmCode, gasLimit uint64) (wasmvm.Checksum, uint64, error) {
+	return rand.Bytes(32), uint64(MockStoreCodeCostPerByte * len(wasm)), nil
 }
 
 func HasIBCAnalyzeFn(wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {

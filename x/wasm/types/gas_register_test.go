@@ -11,43 +11,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 )
 
-func TestCompileCosts(t *testing.T) {
-	specs := map[string]struct {
-		srcLen    int
-		srcConfig WasmGasRegisterConfig
-		exp       storetypes.Gas
-		expPanic  bool
-	}{
-		"one byte": {
-			srcLen:    1,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       storetypes.Gas(3), // DefaultCompileCost
-		},
-		"zero byte": {
-			srcLen:    0,
-			srcConfig: DefaultGasRegisterConfig(),
-			exp:       storetypes.Gas(0),
-		},
-		"negative len": {
-			srcLen:    -1,
-			srcConfig: DefaultGasRegisterConfig(),
-			expPanic:  true,
-		},
-	}
-	for name, spec := range specs {
-		t.Run(name, func(t *testing.T) {
-			if spec.expPanic {
-				assert.Panics(t, func() {
-					NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
-				})
-				return
-			}
-			gotGas := NewWasmGasRegister(spec.srcConfig).CompileCosts(spec.srcLen)
-			assert.Equal(t, spec.exp, gotGas)
-		})
-	}
-}
-
 func TestSetupContractCost(t *testing.T) {
 	specs := map[string]struct {
 		srcLen    int

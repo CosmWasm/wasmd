@@ -168,9 +168,8 @@ func (k Keeper) create(ctx context.Context, creator sdk.AccAddress, wasmCode []b
 		}
 	}
 
-	sdkCtx.GasMeter().ConsumeGas(k.gasRegister.CompileCosts(len(wasmCode)), "Compiling wasm bytecode")
-	gas := k.runtimeGasForContract(sdkCtx)
-	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gas)
+	gasLeft := k.runtimeGasForContract(sdkCtx)
+	checksum, gasUsed, err := k.wasmVM.StoreCode(wasmCode, gasLeft)
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return 0, checksum, errorsmod.Wrap(types.ErrCreateFailed, err.Error())
