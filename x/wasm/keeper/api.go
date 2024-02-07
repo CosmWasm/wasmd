@@ -14,6 +14,8 @@ const (
 	DefaultGasCostHumanAddress = 5
 	// DefaultGasCostCanonicalAddress is how much SDK gas we charge to convert to a canonical address format
 	DefaultGasCostCanonicalAddress = 4
+	// DefaultGasCostValidateAddress is how much SDK gas we charge to validate an address
+	DefaultGasCostValidateAddress = 4
 
 	// DefaultDeserializationCostPerByte The formula should be `len(data) * deserializationCostPerByte`
 	DefaultDeserializationCostPerByte = 1
@@ -22,6 +24,7 @@ const (
 var (
 	costHumanize            = DefaultGasCostHumanAddress * types.DefaultGasMultiplier
 	costCanonical           = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
+	costValidate            = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
 	costJSONDeserialization = wasmvmtypes.UFraction{
 		Numerator:   DefaultDeserializationCostPerByte * types.DefaultGasMultiplier,
 		Denominator: 1,
@@ -40,7 +43,13 @@ func canonicalizeAddress(human string) ([]byte, uint64, error) {
 	return bz, costCanonical, err
 }
 
+func validateAddress(human string) (uint64, error) {
+	_, err := sdk.AccAddressFromBech32(human)
+	return costValidate, err
+}
+
 var cosmwasmAPI = wasmvm.GoAPI{
 	HumanizeAddress:     humanizeAddress,
 	CanonicalizeAddress: canonicalizeAddress,
+	ValidateAddress:     validateAddress,
 }
