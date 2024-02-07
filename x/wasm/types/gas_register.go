@@ -21,6 +21,7 @@ const (
 	//     Rough timing have 88k gas at 90us, which is equal to 1k sdk gas... (one read)"
 	// as well as manual Wasmer benchmarks from 2019. This was then multiplied by 150_000
 	// in the 0.16 -> 1.0 upgrade (https://github.com/CosmWasm/cosmwasm/pull/1120).
+	// In the 2.0 upgrade, this was reduced by a factor of 1000 (https://github.com/CosmWasm/cosmwasm/pull/1884).
 	//
 	// The multiplier deserves more reproducible benchmarking and a strategy that allows easy adjustments.
 	// This is tracked in https://github.com/CosmWasm/wasmd/issues/566 and https://github.com/CosmWasm/wasmd/issues/631.
@@ -30,7 +31,7 @@ const (
 	//
 	// Please note that all gas prices returned to wasmvm should have this multiplied.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938055852
-	DefaultGasMultiplier uint64 = 140_000_000
+	DefaultGasMultiplier uint64 = 140_000
 	// DefaultInstanceCost is how much SDK gas we charge each time we load a WASM instance.
 	// Creating a new instance is costly, and this helps put a recursion limit to contracts calling contracts.
 	// Benchmarks and numbers were discussed in: https://github.com/CosmWasm/wasmd/pull/634#issuecomment-938056803
