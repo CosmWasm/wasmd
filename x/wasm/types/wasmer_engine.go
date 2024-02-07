@@ -2,7 +2,6 @@ package types
 
 import (
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	"github.com/CosmWasm/wasmvm/v2/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
 	storetypes "cosmossdk.io/store/types"
@@ -86,7 +85,7 @@ type WasmEngine interface {
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
 		deserCost wasmvmtypes.UFraction,
-	) (*types.QueryResult, uint64, error)
+	) (*wasmvmtypes.QueryResult, uint64, error)
 
 	// Migrate will migrate an existing contract to a new code binary.
 	// This takes storage of the data from the original contract and the CodeID of the new contract that should
