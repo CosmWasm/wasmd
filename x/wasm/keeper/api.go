@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"errors"
+
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 
@@ -15,7 +17,7 @@ const (
 	// DefaultGasCostCanonicalAddress is how much SDK gas we charge to convert to a canonical address format
 	DefaultGasCostCanonicalAddress = 4
 	// DefaultGasCostValidateAddress is how much SDK gas we charge to validate an address
-	DefaultGasCostValidateAddress = 4
+	DefaultGasCostValidateAddress = 9
 
 	// DefaultDeserializationCostPerByte The formula should be `len(data) * deserializationCostPerByte`
 	DefaultDeserializationCostPerByte = 1
@@ -44,7 +46,14 @@ func canonicalizeAddress(human string) ([]byte, uint64, error) {
 }
 
 func validateAddress(human string) (uint64, error) {
-	_, err := sdk.AccAddressFromBech32(human)
+	canonicalized, err := sdk.AccAddressFromBech32(human)
+	if err != nil {
+		return costValidate, err
+	}
+	// AccAddressFromBech32 already calls VerifyAddressFormat, so we can just humanize and compare
+	if sdk.AccAddress(canonicalized).String() != human {
+		return costValidate, errors.New("address not normalized")
+	}
 	return costValidate, err
 }
 
