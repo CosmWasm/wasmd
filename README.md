@@ -49,7 +49,7 @@ For patch releases this should not be the case but there are many exceptions and
 
 The following table shows
 
-- **Compatible wasmvm version:** the wasmvm dependency that wasmd specifies in its own go.mod
+- **Specified wasmvm version:** the wasmvm dependency that wasmd specifies in its own go.mod
 - **Compatible wasmvm version:** the versions you can use by setting it in your project's go.mod
 
 | wasmd  | compatible | specified                                                         |
