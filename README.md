@@ -18,8 +18,6 @@ addition of the `x/wasm` module.
 
 For critical security issues & disclosure, see [SECURITY.md](SECURITY.md).
 
-## Compatibility with CosmWasm contracts
-
 ## Compatibility
 
 ### For contract developers
