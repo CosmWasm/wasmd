@@ -37,6 +37,7 @@ The following table shows which of the [latest capabilities](https://github.com/
 | cosmwasm_1_2 | x       | x       | x       |         |      |
 | cosmwasm_1_3 | x       | x       |         |         |      |
 | cosmwasm_1_4 | x       |         |         |         |      |
+| cosmwasm_2_0 |         |         |         |         |      |
 
 ### For node developers
 
