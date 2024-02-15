@@ -51,7 +51,7 @@ func validateAddress(human string) (uint64, error) {
 		return costValidate, err
 	}
 	// AccAddressFromBech32 already calls VerifyAddressFormat, so we can just humanize and compare
-	if sdk.AccAddress(canonicalized).String() != human {
+	if canonicalized.String() != human {
 		return costValidate, errors.New("address not normalized")
 	}
 	return costValidate, err
