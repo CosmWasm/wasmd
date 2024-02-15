@@ -318,7 +318,6 @@ func TestAppStateDeterminism(t *testing.T) {
 			appOptions.SetDefault(key, value)
 		}
 	}
-	appOptions.SetDefault(flags.FlagHome, t.TempDir()) // ensure a unique folder
 	appOptions.SetDefault(server.FlagInvCheckPeriod, simcli.FlagPeriodValue)
 
 	for i := 0; i < numSeeds; i++ {
@@ -330,6 +329,8 @@ func TestAppStateDeterminism(t *testing.T) {
 			} else {
 				logger = log.NewNopLogger()
 			}
+
+			appOptions.SetDefault(flags.FlagHome, t.TempDir()) // ensure a unique folder per run
 
 			db := dbm.NewMemDB()
 			app := NewWasmApp(logger, db, nil, true, appOptions, emptyWasmOpts, interBlockCacheOpt(), baseapp.SetChainID(SimAppChainID))
