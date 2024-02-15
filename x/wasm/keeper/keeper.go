@@ -550,7 +550,7 @@ func (k Keeper) Sudo(ctx context.Context, contractAddress sdk.AccAddress, msg []
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, res.Err)
+		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
 	}
 
 	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
@@ -590,7 +590,7 @@ func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply was
 		return nil, errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, res.Err)
+		return nil, errorsmod.Wrap(types.ErrExecuteFailed, res.Err)
 	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
@@ -776,7 +776,7 @@ func (k Keeper) QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, req
 		return nil, errorsmod.Wrap(types.ErrQueryFailed, qErr.Error())
 	}
 	if queryResult.Err != "" {
-		return nil, errorsmod.Wrap(types.ErrMigrationFailed, queryResult.Err)
+		return nil, errorsmod.Wrap(types.ErrQueryFailed, queryResult.Err)
 	}
 	return queryResult.Ok, nil
 }
