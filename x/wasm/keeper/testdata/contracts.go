@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	//go:embed reflect.wasm
+	//go:embed reflect_2_0.wasm
 	reflectContract []byte
 	//go:embed reflect_1_1.wasm
 	migrateReflectContract []byte

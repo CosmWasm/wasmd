@@ -794,7 +794,7 @@ func TestIBCListChannelsQuery(t *testing.T) {
 			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
 				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
-				assert.Nil(t, rsp.Channels)
+				assert.Empty(t, rsp.Channels)
 			},
 		},
 		"no matching channels": {

@@ -44,7 +44,7 @@ import (
 var hackatomWasm []byte
 
 var AvailableCapabilities = []string{
-	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4",
+	"iterator", "staking", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0",
 }
 
 func TestNewKeeper(t *testing.T) {
@@ -421,7 +421,7 @@ func TestInstantiate(t *testing.T) {
 
 	gasAfter := ctx.GasMeter().GasConsumed()
 	if types.EnableGasVerification {
-		require.Equal(t, uint64(0x1bc64), gasAfter-gasBefore)
+		require.Equal(t, uint64(0x1bc5a), gasAfter-gasBefore)
 	}
 
 	// ensure it is stored properly
@@ -2459,13 +2459,13 @@ func TestGasConsumed(t *testing.T) {
 			originalMeter:            storetypes.NewGasMeter(100),
 			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
-			expMultipliedGasConsumed: 140000000,
+			expMultipliedGasConsumed: 140000,
 		},
 		"consumeGas = limit": {
 			originalMeter:            storetypes.NewGasMeter(1),
 			gasRegister:              types.NewWasmGasRegister(types.DefaultGasRegisterConfig()),
 			consumeGas:               storetypes.Gas(1),
-			expMultipliedGasConsumed: 140000000,
+			expMultipliedGasConsumed: 140000,
 		},
 		"consumeGas > limit": {
 			originalMeter: storetypes.NewGasMeter(10),

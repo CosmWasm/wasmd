@@ -25,7 +25,7 @@ import (
 
 var (
 	CyberpunkCapabilities = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4"}
-	ReflectCapabilities   = CyberpunkCapabilities
+	ReflectCapabilities   = []string{"staking", "mask", "stargate", "cosmwasm_1_1", "cosmwasm_1_2", "cosmwasm_1_3", "cosmwasm_1_4", "cosmwasm_2_0"}
 )
 
 func mustUnmarshal(t *testing.T, data []byte, res interface{}) {
