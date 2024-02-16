@@ -6,6 +6,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -29,13 +30,13 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 	capturingHandler, gotMsgs := wasmtesting.NewCapturingMessageHandler()
 
 	alwaysUnknownMsgHandler := &wasmtesting.MockMessageHandler{
-		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-			return nil, nil, types.ErrUnknownMsg
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+			return nil, nil, [][]*codectypes.Any{}, types.ErrUnknownMsg
 		},
 	}
 
 	assertNotCalledHandler := &wasmtesting.MockMessageHandler{
-		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 			t.Fatal("not expected to be called")
 			return
 		},
@@ -58,8 +59,8 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 		},
 		"stops iteration on handler error": {
 			handlers: []Messenger{&wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, types.ErrInvalidMsg
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, types.ErrInvalidMsg
 				},
 			}, assertNotCalledHandler},
 			expErr: types.ErrInvalidMsg,
@@ -67,9 +68,9 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 		"return events when handle": {
 			handlers: []Messenger{
 				&wasmtesting.MockMessageHandler{
-					DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-						_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
-						return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
+					DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+						_, data, msgResponses, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
+						return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, msgResponses, nil
 					},
 				},
 			},
@@ -86,7 +87,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 
 			// when
 			h := MessageHandlerChain{spec.handlers}
-			gotEvents, gotData, gotErr := h.DispatchMsg(sdk.Context{}, RandomAccountAddress(t), "anyPort", myMsg)
+			gotEvents, gotData, gotMsgResponses, gotErr := h.DispatchMsg(sdk.Context{}, RandomAccountAddress(t), "anyPort", myMsg)
 
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
@@ -95,6 +96,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 			}
 			assert.Equal(t, []wasmvmtypes.CosmosMsg{myMsg}, *gotMsgs)
 			assert.Equal(t, [][]byte{{1}}, gotData) // {1} is default in capturing handler
+			assert.Equal(t, [][]*codectypes.Any{}, gotMsgResponses)
 			assert.Equal(t, spec.expEvents, gotEvents)
 		})
 	}
@@ -208,7 +210,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 			// when
 			ctx := sdk.Context{}
 			h := NewSDKMessageHandler(MakeTestCodec(t), spec.srcRoute, MessageEncoders{Custom: spec.srcEncoder})
-			gotEvents, gotData, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
+			gotEvents, gotData, gotMsgResponses, gotErr := h.DispatchMsg(ctx, myContractAddr, "myPort", myContractMessage)
 
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
@@ -217,9 +219,11 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 				return
 			}
 			assert.Len(t, gotMsg, spec.expMsgDispatched)
+			assert.Len(t, gotMsgResponses, spec.expMsgDispatched)
 			for i := 0; i < spec.expMsgDispatched; i++ {
 				assert.Equal(t, myEvent, gotEvents[i])
 				assert.Equal(t, []byte(myData), gotData[i])
+				assert.Equal(t, []*codectypes.Any(nil), gotMsgResponses[i])
 			}
 		})
 	}
@@ -308,7 +312,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacket = nil
 			// when
 			h := NewIBCRawPacketHandler(capturePacketsSenderMock, spec.chanKeeper, spec.capKeeper)
-			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}}) //nolint:gosec
+			evts, data, msgResponses, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}}) //nolint:gosec
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
@@ -317,6 +321,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 
 			assert.Nil(t, evts)
 			require.NotNil(t, data)
+			require.Len(t, msgResponses, 0)
 
 			expMsg := types.MsgIBCSendResponse{Sequence: 1}
 

@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
@@ -34,8 +35,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs:    []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplyError}},
 			replyer: noReplyCalled,
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, [][]byte{[]byte("myData")}, nil
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, [][]byte{[]byte("myData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{true},
@@ -44,8 +45,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs:    []wasmvmtypes.SubMsg{{ReplyOn: wasmvmtypes.ReplySuccess}},
 			replyer: noReplyCalled,
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, errors.New("test, ignore")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, errors.New("test, ignore")
 				},
 			},
 			expCommits: []bool{false},
@@ -61,8 +62,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, [][]byte{[]byte("myData")}, nil
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, [][]byte{[]byte("myData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    []byte("myReplyData"),
@@ -78,8 +79,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, errors.New("my error")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, errors.New("my error")
 				},
 			},
 			expData:    []byte("myReplyData"),
@@ -96,9 +97,9 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
-					return myEvents, [][]byte{[]byte("myData")}, nil
+					return myEvents, [][]byte{[]byte("myData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    []byte("myReplyData"),
@@ -117,10 +118,10 @@ func TestDispatchSubmessages(t *testing.T) {
 			}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
 					ctx.EventManager().EmitEvents(myEvents)
-					return nil, nil, nil
+					return nil, nil, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{true},
@@ -135,10 +136,10 @@ func TestDispatchSubmessages(t *testing.T) {
 			}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					myEvents := []sdk.Event{{Type: "myEvent", Attributes: []abci.EventAttribute{{Key: "foo", Value: "bar"}}}}
 					ctx.EventManager().EmitEvents(myEvents)
-					return nil, nil, errors.New("testing")
+					return nil, nil, [][]*codectypes.Any{}, errors.New("testing")
 				},
 			},
 			expCommits: []bool{false},
@@ -154,8 +155,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, nil
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{false},
@@ -172,9 +173,9 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					ctx.GasMeter().ConsumeGas(storetypes.Gas(101), "testing")
-					return nil, [][]byte{[]byte("someData")}, nil
+					return nil, [][]byte{[]byte("someData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    []byte("myReplyData"),
@@ -187,9 +188,9 @@ func TestDispatchSubmessages(t *testing.T) {
 			}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					ctx.GasMeter().ConsumeGas(storetypes.Gas(1), "testing")
-					return nil, [][]byte{[]byte("someData")}, nil
+					return nil, [][]byte{[]byte("someData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{true},
@@ -198,8 +199,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs:    []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever}, {ID: 2, ReplyOn: wasmvmtypes.ReplyNever}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, [][]byte{nil}, nil
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, [][]byte{nil}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{true, true},
@@ -208,8 +209,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs:    []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever}, {ID: 2, ReplyOn: wasmvmtypes.ReplyNever}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, [][]byte{{}}, nil
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, [][]byte{{}}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expCommits: []bool{true, true},
@@ -218,8 +219,8 @@ func TestDispatchSubmessages(t *testing.T) {
 			msgs:    []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever}, {ID: 2, ReplyOn: wasmvmtypes.ReplyNever}},
 			replyer: &mockReplyer{},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, [][]byte{{}}, errors.New("testing")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, [][]byte{{}}, [][]*codectypes.Any{}, errors.New("testing")
 				},
 			},
 			expCommits: []bool{false, false},
@@ -233,8 +234,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, errors.New("my error")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, errors.New("my error")
 				},
 			},
 			expData:    []byte("myReplyData:2"),
@@ -251,8 +252,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, errors.New("my error")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, errors.New("my error")
 				},
 			},
 			expData:    []byte("myReplyData:1"),
@@ -269,8 +270,8 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
-					return nil, nil, errors.New("my error")
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, errors.New("my error")
 				},
 			},
 			expData:    []byte{},
@@ -286,12 +287,12 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					myEvents := []sdk.Event{
 						sdk.NewEvent("message"),
 						sdk.NewEvent("execute", sdk.NewAttribute("foo", "bar")),
 					}
-					return myEvents, [][]byte{[]byte("myData")}, nil
+					return myEvents, [][]byte{[]byte("myData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    nil,
@@ -328,14 +329,14 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					events = []sdk.Event{
 						sdk.NewEvent("message", sdk.NewAttribute("_contract_address", contractAddr.String())),
 						// we don't know what the contarctAddr will be so we can't use it in the final tests
 						sdk.NewEvent("execute", sdk.NewAttribute("_contract_address", "placeholder-random-addr")),
 						sdk.NewEvent("wasm", sdk.NewAttribute("random", "data")),
 					}
-					return events, [][]byte{[]byte("subData")}, nil
+					return events, [][]byte{[]byte("subData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    []byte("subData"),
@@ -370,14 +371,14 @@ func TestDispatchSubmessages(t *testing.T) {
 				},
 			},
 			msgHandler: &wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
 					events = []sdk.Event{
 						// this is filtered out
 						sdk.NewEvent("message", sdk.NewAttribute("stargate", "something-something")),
 						// we still emit this to the client, but not the contract
 						sdk.NewEvent("non-determinstic"),
 					}
-					return events, [][]byte{[]byte("subData")}, nil
+					return events, [][]byte{[]byte("subData")}, [][]*codectypes.Any{}, nil
 				},
 			},
 			expData:    []byte("subData"),

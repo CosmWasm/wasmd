@@ -15,8 +15,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
+
+var _ Messenger = &wasmtesting.MockMessageHandler{}
+var _ Messenger = MessageHandlerChain{}
+var _ Messenger = SDKMessageHandler{}
 
 // Messenger is an extension point for custom wasmd message handling
 type Messenger interface {
