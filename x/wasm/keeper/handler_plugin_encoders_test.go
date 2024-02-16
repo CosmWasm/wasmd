@@ -56,10 +56,8 @@ func TestEncoding(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := map[string]struct {
-		sender             sdk.AccAddress
-		srcMsg             wasmvmtypes.CosmosMsg
-		srcContractIBCPort string
-		transferPortSource types.ICS20TransferPortSource
+		sender sdk.AccAddress
+		srcMsg wasmvmtypes.CosmosMsg
 		// set if valid
 		output []sdk.Msg
 		// set if expect mapping fails
@@ -428,6 +426,43 @@ func TestEncoding(t *testing.T) {
 			},
 			expError: true,
 		},
+	}
+	encodingConfig := MakeEncodingConfig(t)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var ctx sdk.Context
+			encoder := DefaultEncoders(encodingConfig.Codec, wasmtesting.MockIBCTransferKeeper{})
+			res, err := encoder.Encode(ctx, tc.sender, "", tc.srcMsg)
+			if tc.expError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.output, res)
+		})
+	}
+}
+
+func TestEncodeIbcMsg(t *testing.T) {
+	var (
+		addr1 = RandomAccountAddress(t)
+		addr2 = RandomAccountAddress(t)
+	)
+	valAddr := make(sdk.ValAddress, types.SDKAddrLen)
+	valAddr[0] = 12
+	valAddr2 := make(sdk.ValAddress, types.SDKAddrLen)
+	valAddr2[1] = 123
+
+	cases := map[string]struct {
+		sender             sdk.AccAddress
+		srcMsg             wasmvmtypes.CosmosMsg
+		srcContractIBCPort string
+		transferPortSource types.ICS20TransferPortSource
+		// set if valid
+		output []sdk.Msg
+		// set if expect mapping fails
+		expError bool
+	}{
 		"IBC transfer with block timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
@@ -527,6 +562,41 @@ func TestEncoding(t *testing.T) {
 					Receiver:         addr2.String(),
 					TimeoutTimestamp: 100,
 					TimeoutHeight:    clienttypes.NewHeight(2, 1),
+				},
+			},
+		},
+		"IBC transfer with memo": {
+			sender:             addr1,
+			srcContractIBCPort: "myIBCPort",
+			srcMsg: wasmvmtypes.CosmosMsg{
+				IBC: &wasmvmtypes.IBCMsg{
+					Transfer: &wasmvmtypes.TransferMsg{
+						ChannelID: "myChanID",
+						ToAddress: addr2.String(),
+						Amount: wasmvmtypes.Coin{
+							Denom:  "ALX",
+							Amount: "1",
+						},
+						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
+						Memo:    "myMemo",
+					},
+				},
+			},
+			transferPortSource: wasmtesting.MockIBCTransferKeeper{GetPortFn: func(ctx sdk.Context) string {
+				return "myTransferPort"
+			}},
+			output: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					SourcePort:    "myTransferPort",
+					SourceChannel: "myChanID",
+					Token: sdk.Coin{
+						Denom:  "ALX",
+						Amount: sdkmath.NewInt(1),
+					},
+					Sender:           addr1.String(),
+					Receiver:         addr2.String(),
+					TimeoutTimestamp: 100,
+					Memo:             "myMemo",
 				},
 			},
 		},

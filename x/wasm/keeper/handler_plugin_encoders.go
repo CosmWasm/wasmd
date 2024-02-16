@@ -317,6 +317,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 				Receiver:         msg.Transfer.ToAddress,
 				TimeoutHeight:    ConvertWasmIBCTimeoutHeightToCosmosHeight(msg.Transfer.Timeout.Block),
 				TimeoutTimestamp: msg.Transfer.Timeout.Timestamp,
+				Memo:             msg.Transfer.Memo,
 			}
 			return []sdk.Msg{msg}, nil
 		default:
