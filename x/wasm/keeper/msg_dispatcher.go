@@ -19,9 +19,11 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
-var _ Messenger = &wasmtesting.MockMessageHandler{}
-var _ Messenger = MessageHandlerChain{}
-var _ Messenger = SDKMessageHandler{}
+var (
+	_ Messenger = &wasmtesting.MockMessageHandler{}
+	_ Messenger = MessageHandlerChain{}
+	_ Messenger = SDKMessageHandler{}
+)
 
 // Messenger is an extension point for custom wasmd message handling
 type Messenger interface {
