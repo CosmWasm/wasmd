@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
