@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
@@ -346,6 +347,31 @@ func TestDispatchSubmessages(t *testing.T) {
 				sdk.NewEvent("wasm", sdk.NewAttribute("random", "data")),
 				sdk.NewEvent("wasm-reply"),
 			},
+		},
+		"wasm reply gets payload": {
+			// put fake wasmmsg in here to show where it comes from
+			msgs: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyAlways, Payload: []byte("payloadData"), Msg: wasmvmtypes.CosmosMsg{Wasm: &wasmvmtypes.WasmMsg{}}}},
+			replyer: &mockReplyer{
+				replyFn: func(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+					if reply.Result.Err != "" {
+						return nil, errors.New(reply.Result.Err)
+					}
+
+					// ensure we got the payload
+					if !reflect.DeepEqual(reply.Payload, []byte("payloadData")) {
+						return nil, fmt.Errorf("payload mismatch: %s != 'payloadData'", reply.Payload)
+					}
+
+					// update data from what we got in
+					return reply.Result.Ok.Data, nil
+				},
+			},
+			msgHandler: &wasmtesting.MockMessageHandler{
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, msgResponses [][]*codectypes.Any, err error) {
+					return nil, nil, [][]*codectypes.Any{}, nil
+				},
+			},
+			expCommits: []bool{true},
 		},
 		"non-wasm reply events get filtered": {
 			// show events from a stargate message gets filtered out

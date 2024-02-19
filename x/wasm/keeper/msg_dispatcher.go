@@ -183,8 +183,9 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 
 		// now handle the reply, we use the parent context, and abort on error
 		reply := wasmvmtypes.Reply{
-			ID:     msg.ID,
-			Result: result,
+			ID:      msg.ID,
+			Result:  result,
+			Payload: msg.Payload,
 		}
 
 		// we can ignore any result returned as there is nothing to do with the data
